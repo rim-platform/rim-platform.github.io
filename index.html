@@ -1,0 +1,389 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RIM</title>
+<meta name="description" content="RIM: the self-hosted communication workspace you program. Rust server, Tauri desktop and web client, Apache-2.0.">
+<link rel="icon" href="favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<style>
+  /* Layout: the landing page as it should ship (dark, the app's own palette), then the plan
+     for the site below a clear divider. One column, 1100px max, palette-style mono accents. */
+  :root {
+    --bg: #030712;
+    --panel: #0b1324;
+    --panel-soft: #111b30;
+    --line: rgba(255, 255, 255, 0.08);
+    --fg: #e2e8f0;
+    --muted: #94a3b8;
+    --faint: #64748b;
+    --accent: #22d3ee;
+    --accent-strong: #06b6d4;
+    --warm: #f59e0b;
+    --ok: #34d399;
+    --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    color-scheme: dark;
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --bg: #f6f8fb; --panel: #ffffff; --panel-soft: #eef2f7; --line: rgba(15, 23, 42, 0.1);
+      --fg: #0f172a; --muted: #475569; --faint: #64748b; --accent: #0891b2; --accent-strong: #0e7490;
+      --warm: #b45309; --ok: #047857; color-scheme: light;
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #f6f8fb; --panel: #ffffff; --panel-soft: #eef2f7; --line: rgba(15, 23, 42, 0.1);
+    --fg: #0f172a; --muted: #475569; --faint: #64748b; --accent: #0891b2; --accent-strong: #0e7490;
+    --warm: #b45309; --ok: #047857; color-scheme: light;
+  }
+  * { box-sizing: border-box; }
+  body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 16px; line-height: 1.55; margin: 0; }
+  .wrap { max-width: 1100px; margin: 0 auto; padding-block: 0 48px; padding-inline: 20px; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  h1, h2, h3 { line-height: 1.15; text-wrap: balance; margin: 0; }
+  p { margin: 0; max-width: 62ch; }
+  code, .mono { font-family: var(--font-mono); font-size: 0.92em; }
+  .eyebrow { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint); }
+
+  /* Nav */
+  .nav { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-block: 18px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: 0.04em; color: var(--fg); }
+  .brand img { width: 28px; height: 28px; }
+  .nav nav { display: flex; gap: 18px; flex-wrap: wrap; font-size: 14px; color: var(--muted); }
+  .nav nav a { color: var(--muted); }
+  .nav nav a:hover { color: var(--fg); }
+
+  /* Hero */
+  .hero { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr); gap: 40px; align-items: center; padding-block: 56px 48px; }
+  .hero h1 { font-size: clamp(32px, 4.6vw, 52px); font-weight: 700; letter-spacing: -0.02em; }
+  .hero h1 em { font-style: normal; color: var(--accent); }
+  .hero .lede { color: var(--muted); font-size: 18px; margin-top: 18px; }
+  .ctas { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 26px; }
+  .btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 8px; font-weight: 600; font-size: 15px; border: 1px solid var(--line); color: var(--fg); background: var(--panel); }
+  .btn.primary { background: var(--accent); color: #031018; border-color: transparent; }
+  .btn.primary:hover { background: var(--accent-strong); text-decoration: none; }
+  .btn:hover { text-decoration: none; border-color: var(--accent); }
+  .facts { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 22px; font-size: 13px; color: var(--faint); }
+  .facts span::before { content: "▸ "; color: var(--accent); }
+
+  /* Palette mock */
+  .palette { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.35); min-width: 0; }
+  .palette .input { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--line); font-family: var(--font-mono); font-size: 14px; }
+  .palette .input .chev { color: var(--accent); }
+  .palette .input .caret { display: inline-block; width: 8px; height: 16px; background: var(--accent); margin-left: 2px; animation: blink 1.1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .palette .input .caret { animation: none; } }
+  .palette ul { list-style: none; margin: 0; padding: 6px; }
+  .palette li { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 9px 10px; border-radius: 8px; font-size: 14px; }
+  .palette li.sel { background: var(--panel-soft); }
+  .palette li .cmd { font-family: var(--font-mono); color: var(--faint); font-size: 12px; margin-left: 8px; }
+  .palette li .src { font-size: 11px; color: var(--warm); font-family: var(--font-mono); }
+  kbd { font-family: var(--font-mono); font-size: 11px; padding: 2px 6px; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 5px; background: var(--panel-soft); color: var(--muted); white-space: nowrap; }
+  .palette .foot { display: flex; gap: 14px; padding: 8px 14px; border-top: 1px solid var(--line); font-size: 12px; color: var(--faint); }
+
+  /* Sections */
+  section { padding-block: 40px; border-top: 1px solid var(--line); }
+  section > h2 { font-size: 26px; font-weight: 700; letter-spacing: -0.01em; margin-top: 8px; }
+  section > .sub { color: var(--muted); margin-top: 10px; }
+  .grid { display: grid; gap: 16px; margin-top: 24px; }
+  .grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grid.four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 18px; min-width: 0; }
+  .card h3 { font-size: 16px; font-weight: 600; }
+  .card p { color: var(--muted); font-size: 14px; margin-top: 8px; }
+  .card .tag { font-family: var(--font-mono); font-size: 11px; color: var(--accent); }
+
+  /* Diagram */
+  .flow { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; align-items: center; gap: 10px; margin-top: 24px; }
+  .node { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px; min-width: 0; }
+  .node b { display: block; font-size: 14px; }
+  .node span { display: block; color: var(--muted); font-size: 13px; margin-top: 4px; }
+  .node .id { font-family: var(--font-mono); font-size: 11px; color: var(--faint); margin-top: 6px; word-break: break-all; }
+  .arrow { color: var(--accent); font-family: var(--font-mono); font-size: 12px; text-align: center; }
+
+  pre { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; overflow-x: auto; font-family: var(--font-mono); font-size: 13px; line-height: 1.6; margin: 0; }
+  pre .c { color: var(--faint); }
+  pre .k { color: var(--accent); }
+
+  .speclist { list-style: none; padding: 0; margin: 24px 0 0; display: grid; gap: 10px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .speclist li { display: flex; justify-content: space-between; gap: 10px; padding: 12px 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; font-size: 14px; }
+  .speclist li .v { font-family: var(--font-mono); color: var(--faint); font-size: 12px; }
+
+  .status { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 24px; }
+  .status .card .pill { display: inline-block; font-family: var(--font-mono); font-size: 11px; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); margin-top: 10px; }
+  .pill.ok { color: var(--ok); border-color: var(--ok); }
+  .pill.warm { color: var(--warm); border-color: var(--warm); }
+
+  footer.site { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding-block: 24px; border-top: 1px solid var(--line); color: var(--faint); font-size: 13px; }
+
+  /* Plan */
+  .divider { margin-top: 48px; padding: 14px 18px; background: var(--panel-soft); border: 1px dashed var(--warm); border-radius: 10px; color: var(--fg); font-size: 14px; }
+  .divider b { color: var(--warm); }
+  table { width: 100%; border-collapse: collapse; margin-top: 18px; font-size: 14px; }
+  .tablewrap { overflow-x: auto; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--faint); font-weight: 500; }
+  td.mono { color: var(--muted); font-size: 13px; }
+  .st { font-family: var(--font-mono); font-size: 11px; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); white-space: nowrap; }
+  .st.ready { color: var(--ok); border-color: var(--ok); }
+  .st.write { color: var(--accent); border-color: var(--accent); }
+  .st.blocked { color: var(--warm); border-color: var(--warm); }
+  ol.steps { margin: 18px 0 0; padding-left: 22px; color: var(--muted); }
+  ol.steps li { margin-bottom: 8px; }
+  ol.steps li b { color: var(--fg); }
+
+  @media (max-width: 760px) {
+    .hero { grid-template-columns: 1fr; padding-block: 36px 32px; }
+    .grid.three, .grid.two, .grid.four, .status, .speclist { grid-template-columns: 1fr; }
+    .flow { grid-template-columns: 1fr; }
+    .arrow { transform: rotate(90deg); }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ============ Proposed landing page ============ -->
+  <header class="nav">
+    <a class="brand" href="#top" id="top" aria-label="RIM">
+      <img src="assets/rim-mark-inverse.svg" alt="" width="28" height="28">
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="#what">What RIM is</a>
+      <a href="#how">How it works</a>
+      <a href="#download">Download</a>
+      <a href="#selfhost">Self-host</a>
+      <a href="#config">Configure</a>
+      <a href="#docs">Docs</a>
+      <a href="#api">API</a>
+      <a href="#specs">Specs</a>
+      <a href="#contribute">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+
+  <div class="hero">
+    <div>
+      <h1>The self-hosted communication workspace <em>you program</em>.</h1>
+      <p class="lede">Chat is the substrate. On top of it: a command palette, keybinds, macros, pipelines and client plugins. Encrypted DMs and groups with MLS. Your server, or a relay that never holds your keys.</p>
+      <div class="ctas">
+        <a class="btn primary" href="#selfhost">Self-host with one compose file</a>
+        <a class="btn" href="#specs">Read the protocol specs</a>
+      </div>
+      <div class="facts">
+        <span>Apache-2.0</span>
+        <span>Rust server, Tauri desktop, web client</span>
+        <span>Bring-your-own-model AI, behind a confirmation gate</span>
+      </div>
+    </div>
+
+    <div class="palette" role="img" aria-label="The command palette with commands from the app and from plugins">
+      <div class="input"><span class="chev">&gt;</span> pods<span class="caret"></span><span style="margin-left:auto"><kbd>Ctrl</kbd> <kbd>K</kbd></span></div>
+      <ul>
+        <li class="sel"><span>Show pods in this cluster <span class="cmd">plugin.k8s.pods</span></span><span class="src">plugin</span></li>
+        <li><span>Pin message <span class="cmd">chat.pin</span></span><kbd>p</kbd></li>
+        <li><span>Run macro: triage thread <span class="cmd">macro.triage</span></span><kbd>Ctrl Shift T</kbd></li>
+        <li><span>Open encrypted DM <span class="cmd">chat.create_group</span></span><kbd>Ctrl Shift G</kbd></li>
+        <li><span>Switch relay <span class="cmd">relay.switch</span></span><span class="src">host</span></li>
+      </ul>
+      <div class="foot"><span><kbd>↑↓</kbd> move</span><span><kbd>↵</kbd> run</span><span><kbd>:</kbd> vim</span></div>
+    </div>
+  </div>
+
+  <section id="what">
+    <div class="eyebrow">What RIM is</div>
+    <h2>A communication workspace you program, and where it is heading</h2>
+    <p class="sub">RIM is not a Slack, Discord or Matrix replacement. It is for people who want what those do not offer: a chat workspace they can shape with commands, keybinds, macros and plugins, running on a box they control. The closest relatives are VS Code, Raycast and Obsidian, applied to team communication.</p>
+    <div class="grid three">
+      <div class="card"><span class="tag">today</span><h3>What it is now</h3><p>A Rust server and a Tauri desktop and web client. Chat with threads, attachments and search; a command registry with macros and pipelines; client plugins; key-based identity; MLS-encrypted DMs and groups; relays and hosts talking over a signed protocol.</p></div>
+      <div class="card"><span class="tag">direction</span><h3>Where it is heading</h3><p>A vanilla core that is a decentralized chat platform plus the programmable layer. Everything domain-specific lives in plugins, bots and pipelines, never in the server. Release readiness, a first-run path, hybrid post-quantum signatures and a mobile web app are next.</p></div>
+      <div class="card"><span class="tag">not</span><h3>What it will not become</h3><p>A platform that dictates how teams work, a race for integrations and user counts, or a product that competes on chat polish alone. It competes on being the most programmable, keyboard-efficient communication environment.</p></div>
+    </div>
+  </section>
+
+  <section id="pillars">
+    <div class="eyebrow">What makes it RIM</div>
+    <h2>Six things no chat platform offers together</h2>
+    <div class="grid three">
+      <div class="card"><span class="tag">palette</span><h3>Every action is a command</h3><p>Fuzzy-searchable, typed, with sensitivity tiers. Plugins register into the same registry as the built-ins.</p></div>
+      <div class="card"><span class="tag">keybinds</span><h3>Keyboard-first, modal if you want</h3><p>Bind anything to any key, scoped by context. Profiles you can share. An opt-in Vim layer for moving around.</p></div>
+      <div class="card"><span class="tag">macros · pipelines</span><h3>Compose your own workflows</h3><p>Chain commands into one keystroke; react to events with pipelines. The workspace adapts to how you work.</p></div>
+      <div class="card"><span class="tag">plugins</span><h3>Extend the app, not the channel</h3><p>Panels, commands and context actions in a sandbox with capability grants. A signed workspace registry for your team.</p></div>
+      <div class="card"><span class="tag">mls</span><h3>Encrypted where it matters</h3><p>DMs and private groups use MLS with a hybrid post-quantum key agreement. Plugins read messages only through grants.</p></div>
+      <div class="card"><span class="tag">relays · hosts</span><h3>Decentralized by design</h3><p>Your identity is a key, not an account. A relay delivers; a host runs the workspace; the two talk over a signed protocol.</p></div>
+    </div>
+  </section>
+
+  <section id="how">
+    <div class="eyebrow">How it works</div>
+    <h2>The design, in four layers</h2>
+    <p class="sub">Everything a person or a plugin does is a command in one registry. Keybinds, macros, pipelines and the AI agent are all callers of that registry, so adding a plugin command gives every caller a new verb at once.</p>
+    <div class="grid two">
+      <div class="card"><span class="tag">layer 1</span><h3>Chat substrate</h3><p>Workspaces, channels, groups and DMs, threads, attachments, reactions, search, notifications, moderation. Plain for channels; MLS-encrypted for DMs and private groups, with the server seeing only ciphertext.</p></div>
+      <div class="card"><span class="tag">layer 2</span><h3>Command registry</h3><p>Typed commands with sensitivity tiers and a confirmation gate for anything dangerous. The palette, keybinds, macros, pipelines and the agent all call it. The audit log records every run.</p></div>
+      <div class="card"><span class="tag">layer 3</span><h3>Plugins</h3><p>Client-side, sandboxed, with capability grants. Local plugins run as processes on the desktop; web plugins run in an isolated frame. A workspace can publish a signed registry of plugins for its members.</p></div>
+      <div class="card"><span class="tag">layer 4</span><h3>Identity and servers</h3><p>You are a key, with devices certified by it and a recovery phrase. A relay delivers to your devices; a host runs workspaces; servers prove themselves with signed descriptors and RFC 9421 request signatures.</p></div>
+    </div>
+    <h3 style="margin-top:32px;font-size:18px">One binary, two roles</h3>
+    <p class="sub">A single server is its own relay and host. A public relay holds accounts and queues; workspaces live on hosts you or your team run.</p>
+    <div class="flow">
+      <div class="node"><b>Desktop or web client</b><span>Holds your keys and the MLS group state. Linked devices, recovery phrase.</span><div class="id">rimp1_…</div></div>
+      <div class="arrow">GraphQL + WS →</div>
+      <div class="node"><b>Relay</b><span>Your account, devices and profile card. Queues what other servers send you.</span><div class="id">rims1_…</div></div>
+      <div class="arrow">signed S2S →</div>
+      <div class="node"><b>Workspace host</b><span>Channels, groups, plugins, state. Accepts members from any relay.</span><div class="id">RIM_ROLE=host</div></div>
+    </div>
+  </section>
+
+  <section id="download">
+    <div class="eyebrow">Download</div>
+    <h2>The desktop app, for the machine you work on</h2>
+    <p class="sub">Linux, macOS and Windows builds, each with a checksum and signed for the in-app updater. Point it at your own server or at a relay. The web client needs no download: your server serves it on the same domain.</p>
+    <div class="grid three">
+      <div class="card"><h3>Linux</h3><p>AppImage, .deb and .rpm. Keys live in the system keyring or RIM's encrypted vault.</p><span class="pill warm" style="display:inline-block;margin-top:10px;font-family:var(--font-mono);font-size:11px;padding:2px 8px;border:1px solid var(--warm);border-radius:999px;color:var(--warm)">coming with the first release</span></div>
+      <div class="card"><h3>macOS</h3><p>Universal .dmg. Notarized once the organisation has a developer account; the updater verifies its own signature regardless.</p><span class="pill warm" style="display:inline-block;margin-top:10px;font-family:var(--font-mono);font-size:11px;padding:2px 8px;border:1px solid var(--warm);border-radius:999px;color:var(--warm)">coming with the first release</span></div>
+      <div class="card"><h3>Windows</h3><p>.msi and a setup .exe. SmartScreen warns until the installer carries a code-signing certificate.</p><span class="pill warm" style="display:inline-block;margin-top:10px;font-family:var(--font-mono);font-size:11px;padding:2px 8px;border:1px solid var(--warm);border-radius:999px;color:var(--warm)">coming with the first release</span></div>
+    </div>
+    <p class="sub" style="margin-top:18px">Until then: <code>git clone</code>, <code>npm ci</code>, <code>npm run tauri build</code>. The page says exactly that, with the toolchain versions.</p>
+  </section>
+
+  <section id="selfhost">
+    <div class="eyebrow">Self-host</div>
+    <h2>Up in ten minutes with Docker Compose</h2>
+    <p class="sub">PostgreSQL, the server, the web client and Caddy with TLS on one domain. Backup, restore and a restore drill are scripts in the same folder.</p>
+    <div class="grid two" style="margin-top:20px">
+<pre><span class="c"># one server for a team</span>
+cp deploy/.env.example deploy/.env   <span class="c"># POSTGRES_PASSWORD, RIM_DOMAIN</span>
+docker compose -f deploy/compose.yml up -d --build
+docker compose -f deploy/compose.yml exec rim \
+  /app/rim-server <span class="k">invite create</span>     <span class="c"># first signup link</span></pre>
+<pre><span class="c"># a public relay instead</span>
+docker compose -f deploy/compose.yml \
+  -f deploy/compose.relay.yml up -d --build
+
+<span class="c"># switch modules off for this instance</span>
+RIM_FEATURES_DISABLED=attachments,email</pre>
+    </div>
+  </section>
+
+  <section id="config">
+    <div class="eyebrow">Configure</div>
+    <h2>Every server setting on one page</h2>
+    <p class="sub">The server is configured by environment variables, all prefixed <code>RIM_</code>, grouped the way an operator thinks: where it listens, how people sign up, what it stores, what it talks to, what it switches off. Each entry: name, default, what it does, what else it needs.</p>
+    <div class="tablewrap">
+    <table>
+      <thead><tr><th>Group</th><th>Variables</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td><b>Listening</b></td><td class="mono">RIM_SERVER_HOST, RIM_SERVER_PORT, RIM_PUBLIC_BASE_URL, RIM_CORS_ALLOWED_ORIGIN, RIM_TRUST_FORWARDED_HEADERS, RIM_FORCE_SECURE_COOKIES, RIM_KEY_LOGIN_AUDIENCES</td><td>A non-loopback bind needs an audience or the public URL.</td></tr>
+        <tr><td><b>Database and data</b></td><td class="mono">DATABASE_URL, RIM_DATABASE_MAX_CONNECTIONS, RIM_DATA_DIR, RIM_STORAGE_LOCAL_PATH, RIM_MAX_WORKSPACE_STORAGE_BYTES, RIM_SERVER_KEY_FILE, RIM_FRANKING_KEY_FILE</td><td>The data directory is the server's identity; back it up.</td></tr>
+        <tr><td><b>Signups and sessions</b></td><td class="mono">RIM_OPEN_REGISTRATION, RIM_REGISTRATION_POW_BITS, RIM_SESSION_TTL_DAYS, RIM_BOOTSTRAP_TOKEN_TTL_SECONDS</td><td>Invite-only by default; invites come from the CLI.</td></tr>
+        <tr><td><b>Roles and federation</b></td><td class="mono">RIM_ROLE, RIM_S2S_*, RIM_RELAY_*, RIM_HOST_ALLOWED_RELAYS</td><td>relay, host or both; quotas per user on a public relay.</td></tr>
+        <tr><td><b>Mail</b></td><td class="mono">RIM_SMTP_HOST, RIM_SMTP_PORT, RIM_SMTP_USERNAME, RIM_SMTP_PASSWORD, RIM_SMTP_FROM, RIM_SMTP_TLS, RIM_NOTIFICATION_DIGEST_INTERVAL_SECS</td><td>Without SMTP the email feature reports "unavailable".</td></tr>
+        <tr><td><b>Operations</b></td><td class="mono">RIM_METRICS_ADDR, RIM_AUDIT_LOG_PATH, RIM_AUDIT_RETENTION_DAYS, RIM_FEATURES_DISABLED, RUST_LOG, RIM_ENABLE_GRAPHIQL</td><td>Metrics on their own port; features off per instance.</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p class="sub" style="margin-top:14px">Generated from the server's config module and the Dockerfile's variable block, so a new variable cannot ship undocumented.</p>
+  </section>
+
+  <section id="docs">
+    <div class="eyebrow">Docs</div>
+    <h2>Guides for the four people who run RIM</h2>
+    <div class="grid four">
+      <div class="card"><h3>Operators</h3><p>Self-hosting, upgrades, backups, metrics, audit retention, feature switches, the public relay runbook.</p></div>
+      <div class="card"><h3>Plugin authors</h3><p>The plugin protocol, the TypeScript SDK, the web plugin sandbox, signing a workspace plugin.</p></div>
+      <div class="card"><h3>Client authors</h3><p>The GraphQL reference, sessions and CSRF, subscriptions over WebSocket, error codes, pagination, the file routes.</p></div>
+      <div class="card"><h3>People using it</h3><p>Keys and recovery, linking a device, keyboard profiles and Vim mode, encrypted conversations, relays.</p></div>
+    </div>
+  </section>
+
+  <section id="api">
+    <div class="eyebrow">API</div>
+    <h2>One GraphQL endpoint, and the HTTP around it</h2>
+    <p class="sub">Everything a client does goes through <code>POST /api</code>; subscriptions arrive over <code>/api/ws</code>. The schema is published at <code>/api/sdl</code> with a description on every type and field, and the reference on this site is generated from it, so it cannot drift from the server.</p>
+    <div class="grid three">
+      <div class="card"><span class="tag">reference</span><h3>Every query, mutation and subscription</h3><p>228 types, 122 queries, 205 mutations and 7 subscriptions, grouped by domain, each with its description, arguments and the error codes it can answer.</p></div>
+      <div class="card"><span class="tag">contract</span><h3>Talking to a server</h3><p>The session cookie and the key-login challenge that issues it, the CSRF header on mutations, origins, the twenty error codes in <code>extensions.code</code>, cursor pagination, <code>serverInfo</code> for version and feature negotiation.</p></div>
+      <div class="card"><span class="tag">http</span><h3>The routes outside GraphQL</h3><p>Upload and download, avatars, plugin bundles, the signed discovery document at <code>/.well-known/rim-server</code>, the probes and metrics, and the server-to-server API under <code>/s2s/v1</code>.</p></div>
+    </div>
+  </section>
+
+  <section id="specs">
+    <div class="eyebrow">Specifications</div>
+    <h2>Build a client or a server from the published specs</h2>
+    <ul class="speclist">
+      <li><span>Plugin protocol</span><span class="v">v1</span></li>
+      <li><span>Web plugins</span><span class="v">v1</span></li>
+      <li><span>Workspace plugin registry</span><span class="v">v1</span></li>
+      <li><span>Key identity: logs, devices, profile cards, login proofs</span><span class="v">v1</span></li>
+      <li><span>Device linking</span><span class="v">v1</span></li>
+      <li><span>End-to-end encryption with MLS</span><span class="v">v1</span></li>
+      <li><span>Server-to-server: descriptors, RFC 9421 signatures, relays and hosts</span><span class="v">v1</span></li>
+      <li><span>History archive and the backup endpoint</span><span class="v">v1</span></li>
+    </ul>
+  </section>
+
+  <section id="security">
+    <div class="eyebrow">Security</div>
+    <h2>What we claim, and what we don't yet</h2>
+    <div class="grid two">
+      <div class="card"><h3>Threat model</h3><p>What a relay can and cannot see, what a host sees, what a stolen device yields, and what a recovery phrase recovers. Written down, with the limits.</p></div>
+      <div class="card"><h3>Disclosure</h3><p>Report privately through GitHub's vulnerability reporting on the repository concerned; each repository's <code>SECURITY.md</code> says what to include and what response to expect.</p></div>
+    </div>
+  </section>
+
+  <section id="contribute">
+    <div class="eyebrow">Contribute</div>
+    <h2>Pull requests say what they change and why</h2>
+    <p class="sub">Use whatever tools you like to write the code, including AI assistants. What we read is the pull request: it has to describe what it implements and the reason for it, in your words. A diff without that is sent back unread.</p>
+    <div class="grid three">
+      <div class="card"><h3>Every PR carries</h3><p>What changes, for whom, and why now. What it does not do. How you tested it, with the gate output. Which spec or doc it changes, if any.</p></div>
+      <div class="card"><h3>Before you start</h3><p>Open an issue for anything beyond a fix, so the design is agreed first. Server features that belong to one domain are plugins, not core; the roadmap says where the line is.</p></div>
+      <div class="card"><h3>What the repos enforce</h3><p>Formatting, lint with warnings as errors, the full test suites including the database and two-server ones, a comment style that says what code does and not its history, commits without trailers.</p></div>
+    </div>
+
+    <h3 style="margin-top:32px;font-size:18px">How the server code is laid out, and why we keep it that way</h3>
+    <p class="sub">The server is three layers with a contract between each pair. A layer talks only to the one below it, and only through a trait. That is what lets us replace one piece, a repository on a different store, a service with different rules, a transport other than GraphQL, without touching the rest, and what lets every layer be tested against a mock of the one beneath. Pull requests that cut across the layers are sent back, however good the feature.</p>
+    <div class="flow">
+      <div class="node"><b>API</b><span>GraphQL resolvers and the other transports. Parses input, checks who is calling, maps errors to codes. No business rules.</span><div class="id">rim_api · rim_server</div></div>
+      <div class="arrow">service traits →</div>
+      <div class="node"><b>Services</b><span>The rules: permissions, validation, orchestration. Knows nothing about HTTP or SQL; sees repositories as traits.</span><div class="id">rim_services · rim_infra_services</div></div>
+      <div class="arrow">repository traits →</div>
+      <div class="node"><b>Data</b><span>Repositories over PostgreSQL. Store and fetch domain models; no rules, no transport types.</span><div class="id">rim_core · rim_infra_db</div></div>
+    </div>
+    <div class="grid three">
+      <div class="card"><h3>Contracts live apart from implementations</h3><p>Domain models and repository traits sit in one crate, service traits with their commands, queries and DTOs in another. Implementations live in the infra crates. A caller imports the contract, never the implementation.</p></div>
+      <div class="card"><h3>One wiring point</h3><p>Concrete services and repositories meet in a single composition root at boot. Everything downstream holds a trait object, so swapping an implementation is a one-line change there and nowhere else.</p></div>
+      <div class="card"><h3>Errors map at each boundary</h3><p>A database error becomes a repository error, then a service error, then a GraphQL code. Each layer speaks its own error type, so a change in storage never leaks into the API contract.</p></div>
+      <div class="card"><h3>Types stay in their layer</h3><p>No Actix, GraphQL or SeaORM types in the services or the domain. Strongly typed ids everywhere. New modules are private to their crate until something outside needs them.</p></div>
+      <div class="card"><h3>Tests follow the layers</h3><p>Service tests mock the repositories; API tests run the schema end to end against a real database. A behaviour is pinned once, where the logic lives, with shared fixtures rather than repeated setup.</p></div>
+      <div class="card"><h3>Two exceptions, both named</h3><p>The composition root may import implementations, and non-GraphQL transports such as file upload may call service traits directly. Anything else that skips a layer is a bug, not a shortcut.</p></div>
+    </div>
+  </section>
+
+  <section id="status">
+    <div class="eyebrow">Where the project is</div>
+    <h2>Pre-release, honest about it</h2>
+    <div class="status">
+      <div class="card"><h3>Server and clients</h3><p>Version 0.1.0 on every crate. Five roadmap stages shipped: platform, plugins, key identity, MLS encryption, relays and hosts.</p><span class="pill ok">source available</span></div>
+      <div class="card"><h3>Desktop downloads</h3><p>The signed updater is wired but dormant. Builds for Linux, macOS and Windows arrive with the release pipeline.</p><span class="pill warm">no builds yet</span></div>
+      <div class="card"><h3>Cryptography review</h3><p>An outside review of the identity and MLS layers is prepared, with the brief published. Results and fixes will be posted here.</p><span class="pill warm">pending</span></div>
+    </div>
+  </section>
+
+  <footer class="site">
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+    <span>Server · Desktop and web client · Plugin SDK</span>
+  </footer>
+
+
+</div>
+</body>
+</html>
