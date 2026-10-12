@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Context Model · RIM</title>
+<meta name="description" content="This document defines the context model for RIM.">
+<link rel="icon" href="../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../index.html" aria-label="RIM home">
+      <picture><source srcset="../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../index.html#what">What RIM is</a>
+      <a href="../index.html#how">How it works</a>
+      <a href="self-hosting.html">Self-host</a>
+      <a href="../configure/index.html">Configure</a>
+      <a href="index.html" aria-current="page">Docs</a>
+      <a href="../api/index.html">API</a>
+      <a href="../specs/index.html">Specs</a>
+      <a href="contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="index.html">Docs</a><span aria-hidden="true">/</span><a href="project.html">Project</a><span aria-hidden="true">/</span><span>Context Model</span></div>
+  <div class="page with-toc">
+    <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
+<ol>
+<li><a href="#purpose">Purpose</a></li>
+<li><a href="#core-rule">Core Rule</a></li>
+<li><a href="#high-level-model">High-Level Model</a><ol><li><a href="#core-context">Core Context</a></li><li><a href="#extension-context">Extension Context</a></li></ol></li>
+<li><a href="#decision">Decision</a></li>
+<li><a href="#context-categories">Context Categories</a><ol><li><a href="#identity-context">Identity Context</a></li><li><a href="#workspace-context">Workspace Context</a></li><li><a href="#selection-context">Selection Context</a></li></ol></li>
+<li><a href="#decisions">Decisions</a><ol><li><a href="#ui-context">UI Context</a></li><li><a href="#navigation-context">Navigation Context</a></li><li><a href="#call--session-context">Call / Session Context</a></li><li><a href="#plugin--panel-context">Plugin / Panel Context</a></li></ol></li>
+<li><a href="#invocation-time-context">Invocation-Time Context</a></li>
+<li><a href="#commands-and-context">Commands And Context</a></li>
+<li><a href="#decision-1">Decision</a></li>
+<li><a href="#arguments-vs-context">Arguments vs Context</a><ol><li><a href="#arguments">Arguments</a></li><li><a href="#context">Context</a></li></ol></li>
+<li><a href="#required-context">Required Context</a></li>
+<li><a href="#missing-context-behavior">Missing Context Behavior</a></li>
+<li><a href="#decision-2">Decision</a></li>
+<li><a href="#context-availability-across-surfaces">Context Availability Across Surfaces</a></li>
+<li><a href="#context-mutability">Context Mutability</a></li>
+<li><a href="#plugin-context-rules">Plugin Context Rules</a></li>
+<li><a href="#minimal-core-context-for-the-first-useful-version">Minimal Core Context For The First Useful Version</a></li>
+<li><a href="#persistence-and-lifetime">Persistence And Lifetime</a></li>
+<li><a href="#non-goals">Non-Goals</a></li>
+<li><a href="#summary-of-decisions">Summary Of Decisions</a></li>
+</ol>
+</details></aside>
+    <main id="content" class="prose">
+<h1 id="context-model">Context Model</h1>
+<p>This document defines the context model for RIM.</p>
+<p>Context is one of the most important concepts in the product. It is what allows communication to
+turn into action without forcing users to copy state manually between surfaces.</p>
+<p>Examples:</p>
+<ul>
+<li>highlight text and create a YouTrack issue from it</li>
+<li>run a command against the currently selected message</li>
+<li>trigger a keybind that acts on the current thread</li>
+<li>run a plugin action against the entity selected in a panel</li>
+</ul>
+<h2 id="purpose">Purpose <a class="anchor" href="#purpose" aria-label="Link to this section">#</a></h2>
+<p>Context is the structured runtime state available to a command, keybind-triggered action, plugin,
+or automation at invocation time.</p>
+<p>In simpler terms, context is the currently active, selected, focused, or otherwise relevant state
+around the user’s action.</p>
+<h2 id="core-rule">Core Rule <a class="anchor" href="#core-rule" aria-label="Link to this section">#</a></h2>
+<p>Context should be structured and typed, not just an ad-hoc bag of values.</p>
+<p>This is important for:</p>
+<ul>
+<li>command availability checks</li>
+<li>context actions</li>
+<li>keybind behavior</li>
+<li>plugin interoperability</li>
+<li>future automation/event systems</li>
+</ul>
+<h2 id="high-level-model">High-Level Model <a class="anchor" href="#high-level-model" aria-label="Link to this section">#</a></h2>
+<p>The context model should have two layers:</p>
+<h3 id="core-context">Core Context <a class="anchor" href="#core-context" aria-label="Link to this section">#</a></h3>
+<p>Defined by RIM itself.</p>
+<p>Examples:</p>
+<ul>
+<li>current principal</li>
+<li>current workspace/server</li>
+<li>current conversation</li>
+<li>current thread</li>
+<li>selected text</li>
+<li>selected message</li>
+<li>selected messages</li>
+<li>focused surface</li>
+<li>active panel</li>
+</ul>
+<h3 id="extension-context">Extension Context <a class="anchor" href="#extension-context" aria-label="Link to this section">#</a></h3>
+<p>Defined by plugins, panels, or integrations.</p>
+<p>Examples:</p>
+<ul>
+<li>selected Kubernetes pod</li>
+<li>selected cluster</li>
+<li>selected issue</li>
+<li>selected repository path</li>
+</ul>
+<h2 id="decision">Decision <a class="anchor" href="#decision" aria-label="Link to this section">#</a></h2>
+<p>Plugin-defined context should stay scoped to the plugin or panel that owns it, instead of becoming
+globally available everywhere.</p>
+<p>This avoids uncontrolled namespace pollution and unclear coupling between unrelated extensions.</p>
+<h2 id="context-categories">Context Categories <a class="anchor" href="#context-categories" aria-label="Link to this section">#</a></h2>
+<h3 id="identity-context">Identity Context <a class="anchor" href="#identity-context" aria-label="Link to this section">#</a></h3>
+<ul>
+<li>current user</li>
+<li>current principal</li>
+<li>current workspace/server membership</li>
+</ul>
+<h3 id="workspace-context">Workspace Context <a class="anchor" href="#workspace-context" aria-label="Link to this section">#</a></h3>
+<ul>
+<li>current workspace/server</li>
+<li>current conversation</li>
+<li>current thread</li>
+</ul>
+<h3 id="selection-context">Selection Context <a class="anchor" href="#selection-context" aria-label="Link to this section">#</a></h3>
+<ul>
+<li>selected text</li>
+<li>selected message</li>
+<li>selected messages</li>
+<li>selected thread</li>
+<li>selected channel/conversation</li>
+</ul>
+<p>A conversation in context is only ever one the actor can see: public channels for any workspace
+member, private channels, DMs and groups for their members. Commands that take a
+<code>conversation_id</code> fall back to <code>context.conversation_id</code>, and the service re-checks access, so a
+stale or forged context id for a private channel resolves to <code>NOT_FOUND</code>, exactly like an
+unknown id.</p>
+<h2 id="decisions">Decisions <a class="anchor" href="#decisions" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>selected text should be first-class context from the beginning</li>
+<li>multiple selected messages should be first-class context from the beginning</li>
+</ul>
+<p>These are important for workflow actions like issue creation, summarization, follow-up, and command
+composition.</p>
+<h3 id="ui-context">UI Context <a class="anchor" href="#ui-context" aria-label="Link to this section">#</a></h3>
+<ul>
+<li>focused surface</li>
+<li>active panel</li>
+<li>composer focused or not</li>
+<li>command palette open or not</li>
+</ul>
+<h3 id="navigation-context">Navigation Context <a class="anchor" href="#navigation-context" aria-label="Link to this section">#</a></h3>
+<ul>
+<li>recent activity state</li>
+<li>current route or view</li>
+<li>active navigation target</li>
+</ul>
+<h3 id="call--session-context">Call / Session Context <a class="anchor" href="#call--session-context" aria-label="Link to this section">#</a></h3>
+<p>Likely later:</p>
+<ul>
+<li>active voice channel</li>
+<li>active call</li>
+<li>active screen-share session</li>
+</ul>
+<p>These do not need to be fully designed in the first context version.</p>
+<h3 id="plugin--panel-context">Plugin / Panel Context <a class="anchor" href="#plugin--panel-context" aria-label="Link to this section">#</a></h3>
+<p>Plugin-owned contextual entities such as:</p>
+<ul>
+<li>selected pod</li>
+<li>selected issue</li>
+<li>selected repo</li>
+<li>selected deployment target</li>
+</ul>
+<p>Plugin-defined context should be namespaced and scoped.</p>
+<h2 id="invocation-time-context">Invocation-Time Context <a class="anchor" href="#invocation-time-context" aria-label="Link to this section">#</a></h2>
+<p>Context should reflect the runtime state at the time a command runs.</p>
+<p>It is not just static metadata or saved configuration. It should represent what the user is actually
+looking at, selecting, or focusing when the action is invoked.</p>
+<h2 id="commands-and-context">Commands And Context <a class="anchor" href="#commands-and-context" aria-label="Link to this section">#</a></h2>
+<p>Commands may use both:</p>
+<ul>
+<li>implicit context</li>
+<li>explicit arguments</li>
+</ul>
+<h2 id="decision-1">Decision <a class="anchor" href="#decision-1" aria-label="Link to this section">#</a></h2>
+<p>Commands should be allowed to use both implicit context and explicit arguments.</p>
+<p>This gives commands the flexibility to:</p>
+<ul>
+<li>work instantly when context is available</li>
+<li>still be used from the command palette with prompted inputs when context is missing</li>
+</ul>
+<h2 id="arguments-vs-context">Arguments vs Context <a class="anchor" href="#arguments-vs-context" aria-label="Link to this section">#</a></h2>
+<p>Arguments and context must remain separate concepts.</p>
+<h3 id="arguments">Arguments <a class="anchor" href="#arguments" aria-label="Link to this section">#</a></h3>
+<ul>
+<li>explicitly provided by the caller or user</li>
+<li>stable input contract</li>
+</ul>
+<h3 id="context">Context <a class="anchor" href="#context" aria-label="Link to this section">#</a></h3>
+<ul>
+<li>implicitly provided by the current runtime state</li>
+<li>depends on what is focused, selected, or active</li>
+</ul>
+<p>Example:</p>
+<ul>
+<li>command: <code>integration.youtrack.create_issue</code></li>
+<li>arguments:<ul>
+<li>project key</li>
+<li>issue type</li>
+</ul>
+</li>
+<li>context:<ul>
+<li>selected text</li>
+<li>selected message</li>
+<li>current conversation</li>
+<li>current thread</li>
+</ul>
+</li>
+</ul>
+<h2 id="required-context">Required Context <a class="anchor" href="#required-context" aria-label="Link to this section">#</a></h2>
+<p>Commands should declare required context.</p>
+<p>Examples:</p>
+<ul>
+<li><code>chat.reply_to_selected_message</code> requires selected message context</li>
+<li><code>integration.youtrack.create_issue</code> may use selected text or selected message context</li>
+<li><code>plugin.dev.example.k8s-tools.restart_pod</code> may require selected pod context</li>
+</ul>
+<p>If required context is missing, the command must not run blindly.</p>
+<h2 id="missing-context-behavior">Missing Context Behavior <a class="anchor" href="#missing-context-behavior" aria-label="Link to this section">#</a></h2>
+<p>Recommended behavior:</p>
+<ul>
+<li>in context menus or keybind-driven surfaces, a command should be unavailable if required context is
+missing</li>
+<li>in the command palette, a command may still appear if it can prompt for the missing inputs</li>
+</ul>
+<h2 id="decision-2">Decision <a class="anchor" href="#decision-2" aria-label="Link to this section">#</a></h2>
+<p>The command palette should be allowed to show commands that are missing context if those commands
+can ask for input instead.</p>
+<h2 id="context-availability-across-surfaces">Context Availability Across Surfaces <a class="anchor" href="#context-availability-across-surfaces" aria-label="Link to this section">#</a></h2>
+<p>The same context model should be usable across:</p>
+<ul>
+<li>command palette</li>
+<li>keybinds</li>
+<li>context actions</li>
+<li>panels</li>
+<li>plugin UI</li>
+<li>future automations</li>
+</ul>
+<p>This is necessary so the product feels coherent rather than like disconnected feature sets.</p>
+<h2 id="context-mutability">Context Mutability <a class="anchor" href="#context-mutability" aria-label="Link to this section">#</a></h2>
+<p>Recommended rule:</p>
+<ul>
+<li>context is read-only by default</li>
+</ul>
+<p>Commands and plugins should consume context, then mutate application state through commands/services,
+not by mutating context directly.</p>
+<p>This keeps context a view of state rather than the state engine itself.</p>
+<h2 id="plugin-context-rules">Plugin Context Rules <a class="anchor" href="#plugin-context-rules" aria-label="Link to this section">#</a></h2>
+<p>Plugins may publish context into the active scope of the plugin or panel that owns it.</p>
+<p>Rules:</p>
+<ul>
+<li>plugin context should be namespaced</li>
+<li>plugin context should be scoped</li>
+<li>plugin context should not automatically become global shared context</li>
+</ul>
+<p>This keeps extension behavior understandable and reduces accidental coupling.</p>
+<h2 id="minimal-core-context-for-the-first-useful-version">Minimal Core Context For The First Useful Version <a class="anchor" href="#minimal-core-context-for-the-first-useful-version" aria-label="Link to this section">#</a></h2>
+<p>Recommended initial core context set:</p>
+<ul>
+<li><code>principal</code></li>
+<li><code>workspace</code></li>
+<li><code>conversation</code></li>
+<li><code>thread</code></li>
+<li><code>selected_text</code></li>
+<li><code>selected_message</code></li>
+<li><code>selected_messages</code></li>
+<li><code>focused_surface</code></li>
+<li><code>active_panel</code></li>
+</ul>
+<p>This is enough to support:</p>
+<ul>
+<li>message actions</li>
+<li>text-selection workflows</li>
+<li>panel-aware commands</li>
+<li>keybind contexts</li>
+<li>issue creation and similar workflow integrations</li>
+</ul>
+<h2 id="persistence-and-lifetime">Persistence And Lifetime <a class="anchor" href="#persistence-and-lifetime" aria-label="Link to this section">#</a></h2>
+<p>Most context is not something to persist directly as durable product data.</p>
+<p>Recommended lifetime model:</p>
+<ul>
+<li>context is usually ephemeral and runtime-derived</li>
+<li>some navigation/session context may be held in client runtime state</li>
+<li>long-term product state belongs in domain models and services, not in context itself</li>
+</ul>
+<h2 id="non-goals">Non-Goals <a class="anchor" href="#non-goals" aria-label="Link to this section">#</a></h2>
+<p>The context model does not solve:</p>
+<ul>
+<li>a fully reactive context graph</li>
+<li>cross-plugin context negotiation protocols</li>
+<li>complex context transformation pipelines</li>
+<li>distributed shared context sync semantics beyond existing product state</li>
+<li>final call/session context model</li>
+</ul>
+<h2 id="summary-of-decisions">Summary Of Decisions <a class="anchor" href="#summary-of-decisions" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>context is structured runtime state available at invocation time</li>
+<li>context is typed, not an ad-hoc bag of values</li>
+<li>commands may use both implicit context and explicit arguments</li>
+<li>plugin-defined context stays scoped to the plugin/panel that owns it</li>
+<li>selected text is first-class context from the beginning</li>
+<li>multiple selected messages are first-class context from the beginning</li>
+<li>command palette may show commands that are missing context if they can prompt for input</li>
+<li>context should be shared across command palette, keybinds, context actions, and plugin surfaces</li>
+<li>context is read-only by default</li>
+</ul>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/docs/context_model.md">rim-server/docs/context_model.md</a> at <code>c86029b</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+<script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
+</body>
+</html>

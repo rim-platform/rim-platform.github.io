@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The web app as a linked device · RIM</title>
+<meta name="description" content="The web app never holds an identity key. It gets a device key of its own by pasting a link code shown on the desktop app (Settings &gt; Security &gt; Link a device), and signs in with that key. It does not enroll, sign up …">
+<link rel="icon" href="../../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../../index.html" aria-label="RIM home">
+      <picture><source srcset="../../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../../index.html#what">What RIM is</a>
+      <a href="../../index.html#how">How it works</a>
+      <a href="../self-hosting.html">Self-host</a>
+      <a href="../../configure/index.html">Configure</a>
+      <a href="../index.html" aria-current="page">Docs</a>
+      <a href="../../api/index.html">API</a>
+      <a href="../../specs/index.html">Specs</a>
+      <a href="../contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="../index.html">Docs</a><span aria-hidden="true">/</span><a href="../using-rim.html">Using RIM</a><span aria-hidden="true">/</span><span>The web app as a linked device</span></div>
+  <div class="page with-toc">
+    <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
+<ol>
+<li><a href="#what-lives-where">What lives where</a></li>
+<li><a href="#storage">Storage</a></li>
+<li><a href="#encrypted-conversations">Encrypted conversations</a></li>
+<li><a href="#keys-in-a-browser-are-weaker">Keys in a browser are weaker</a></li>
+<li><a href="#known-gaps">Known gaps</a></li>
+<li><a href="#trying-it-against-a-desktop-old-device">Trying it against a desktop old device</a></li>
+</ol>
+</details></aside>
+    <main id="content" class="prose">
+<h1 id="the-web-app-as-a-linked-device">The web app as a linked device</h1>
+<p>The web app never holds an identity key. It gets a device key of its own by pasting a link code
+shown on the desktop app (Settings &gt; Security &gt; Link a device), and signs in with that key. It
+does not enroll, sign up with a key, recover, or link other devices: those need the identity key
+and stay in the desktop app. The contract is <code>../rim-server/docs/specs/device-linking-v1.md</code>
+(&quot;Web client&quot;, &quot;Channel cryptography&quot;, &quot;Client rules — New device&quot;, appendix A) and
+<code>../rim-server/docs/specs/key-identity-v1.md</code>; <a href="device-linking-desktop.html"><code>device-linking-desktop.md</code></a> describes the desktop
+side.</p>
+<h2 id="what-lives-where">What lives where <a class="anchor" href="#what-lives-where" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/src/features/key-identity/api/keyBackend.ts"><code>src/features/key-identity/api/keyBackend.ts</code></a>: the <code>KeyBackend</code> interface for the key work of
+signing in and of becoming a new device (list local accounts, default device name, sign a login
+proof, settle, forget, link offer / open answer / accept / end), with the Tauri implementation
+(<code>tauriKeyBackend</code>, the <code>key_identity_*</code> commands) and <code>keyBackend()</code>, which picks the Tauri one
+inside the desktop app and the browser one otherwise. <code>linkNewDevice</code> (<code>deviceLink.ts</code>) and
+<code>signInWithDeviceKey</code> (<code>keyIdentity.ts</code>) are the same code on both platforms.</li>
+<li><a href="https://github.com/rim-platform/rim-ui/tree/58e3ec03c43064632a6a6f610d92413040229dfd/src/features/key-identity/browser"><code>src/features/key-identity/browser/</code></a>:<ul>
+<li><code>bytes.ts</code>: strict unpadded base64url (no padding, no other alphabet, canonical trailing
+bits), base32, SHA-256.</li>
+<li><code>statements.ts</code>: the login proof (statement version 2, fields in the vectors&#39; order, signed
+over <code>rim.login.v1\0 || payload</code>), and the verifying half of <code>statement.rs</code>: <code>replay</code> of a key
+log (versions 1 and 2, never back from 2 to 1, <code>prev</code>, signer rules, principal id from the
+inception bytes) and <code>certifiedDevice</code>, with Ed25519 <code>verify</code> in SubtleCrypto.</li>
+<li><code>channel.ts</code>: the link code reader (exactly TAB, LF, FF, CR and SPACE removed; 334 characters
+at most; the version a decimal above 0 without leading zeros; strict link id and secret; the
+endpoint&#39;s charset), HKDF-SHA256 per direction derived straight into a non-extractable
+AES-256-GCM key, seal and open with the AAD rule, the offer plaintext (same field order as
+<code>Offer</code> in Rust, <code>platform: &quot;web&quot;</code>), the strict answer reader, and the fingerprint over the
+exact offer bytes.</li>
+<li><code>keyStore.ts</code>: IndexedDB.</li>
+<li><code>browserKeyBackend.ts</code>: <code>browserKeyBackend</code>, the links in progress (in memory), the login
+<code>audience</code>, the default device name (&quot;Firefox on Linux&quot;).</li>
+</ul>
+</li>
+<li><a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/src/core/runtime/ed25519.ts"><code>src/core/runtime/ed25519.ts</code></a>: probes once per page whether the browser can generate a
+non-extractable Ed25519 key and has IndexedDB. <code>RuntimeProvider</code> exposes the answer as
+<code>deviceKeyStore</code> (<code>checking</code>, <code>browser</code>, <code>unsupported</code>) and turns <code>capabilities.deviceKeys</code> on
+for the web when it is <code>browser</code>. <code>capabilities.identityKeys</code> (desktop only) gates enrollment,
+key-only signup, recovery and the old device&#39;s linking.</li>
+<li>On a relay in <code>pow</code> registration mode the sign-in page and <code>/join</code> say to create an account in
+the desktop app or with an invite: a signup without a token there needs a key, which the web
+app cannot make (<a href="relay-client.html"><code>relay-client.md</code></a>, &quot;Signing up on a public relay&quot;).</li>
+<li>Sign-in page: <code>DeviceKeySignIn</code> (&quot;Sign in as … with this device&quot;, for each stored account) and
+<code>LinkThisDevice</code> (&quot;Link this browser with its code&quot;), both with the weaker-keys notice
+(<code>BrowserKeyNotice</code>). A browser without Ed25519 or IndexedDB gets a line saying why it cannot be
+linked. Recovery is not offered.</li>
+</ul>
+<h2 id="storage">Storage <a class="anchor" href="#storage" aria-label="Link to this section">#</a></h2>
+<p>One IndexedDB database, <code>rim-key-identity</code>, store <code>deviceKeys</code>, one record per account on a
+server, keyed by <code>[endpoint, principalId]</code> (the endpoint trimmed, trailing <code>/</code> removed):</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Holds</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>deviceKey</code></td>
+<td>the Ed25519 private key as a <code>CryptoKey</code>, generated with <code>extractable: false</code> and stored by structured clone</td>
+</tr>
+<tr>
+<td><code>deviceId</code>, <code>deviceName</code></td>
+<td>from the certificate the old device signed</td>
+</tr>
+<tr>
+<td><code>confirmed</code></td>
+<td>the server has shown this principal on the signed-in account</td>
+</tr>
+<tr>
+<td><code>userId</code>, <code>username</code></td>
+<td>the account it signs in to; unknown until the first sign-in</td>
+</tr>
+</tbody></table></div>
+<p>The public key is never stored separately: the server has it in the certificate. After a key is
+stored the app asks for persistent storage (<code>navigator.storage.persist()</code>), best effort, so the
+browser does not evict it under storage pressure.</p>
+<p>The link secret, the channel keys and the new device key of a link in progress live only in the
+page&#39;s memory. Nothing is written until the answer&#39;s certificate names exactly the offered device
+id and key and verifies against the account&#39;s <code>keyLog</code> at its <code>keySeq</code>; a reload abandons the link
+(if the old device had already certified the key, it revokes that unused device once the link
+ends). <code>FORBIDDEN</code> at the first sign-in
+removes the keys, as on the desktop; other failures keep them for the sign-in screen. Nothing logs
+the code, the secret or a key.</p>
+<h2 id="encrypted-conversations">Encrypted conversations <a class="anchor" href="#encrypted-conversations" aria-label="Link to this section">#</a></h2>
+<p>A linked browser also reads and sends in end-to-end encrypted DMs and groups: its device key signs
+the <code>mls-key</code> statement of an MLS key the browser keeps, and the decrypted messages live in an
+encrypted-conversation store in IndexedDB (<code>rim-e2ee</code>). See <a href="e2ee-web.html"><code>e2ee-web.md</code></a>.</p>
+<h2 id="keys-in-a-browser-are-weaker">Keys in a browser are weaker <a class="anchor" href="#keys-in-a-browser-are-weaker" aria-label="Link to this section">#</a></h2>
+<p>The key cannot be exported (the browser holds its bytes; the page only holds a handle), but:</p>
+<ul>
+<li>any script that runs in the page (a malicious extension, an XSS bug, a compromised dependency)
+can ask the browser to sign with it while the page is open, so it can sign in as this device;</li>
+<li>clearing the site&#39;s data, or a browser that evicts storage, deletes it;</li>
+<li>private windows may not keep IndexedDB, or keep it only for the session;</li>
+<li>encrypted conversations in this browser are only as safe as this browser profile: their MLS
+keys and decrypted messages are in its IndexedDB (<a href="e2ee-web.html"><code>e2ee-web.md</code></a>, &quot;Limits&quot;).</li>
+</ul>
+<p>The sign-in page says so next to both key actions, and the desktop&#39;s confirmation card says so for
+a <code>web</code> offer. Revoke a browser you no longer use from the desktop&#39;s device list.</p>
+<h2 id="known-gaps">Known gaps <a class="anchor" href="#known-gaps" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><code>JSON.parse</code> keeps the last of two fields with one name, where the Tauri side refuses the
+payload. The answer is authenticated by the channel and its certificate still has to verify, and
+the key log was accepted by a server that refuses duplicates.</li>
+<li>Ed25519 is verified by the browser&#39;s WebCrypto. In front of it the module refuses keys and <code>R</code>
+values of small order (the 8 small-order encodings, sign bit ignored), non-canonical key
+encodings (<code>y</code> at or above the field prime) and scalars at or above the group order, which is at
+least as strict as the desktop&#39;s <code>verify_strict</code>.</li>
+<li>The web app takes a pasted code only (no camera), and only for its own GraphQL endpoint.</li>
+<li>Mobile browsers (<code>platform: &quot;mobile&quot;</code>) keep their reduced capabilities and are not linked.</li>
+</ul>
+<h2 id="trying-it-against-a-desktop-old-device">Trying it against a desktop old device <a class="anchor" href="#trying-it-against-a-desktop-old-device" aria-label="Link to this section">#</a></h2>
+<ol>
+<li>Run the server and the desktop app against it; on the desktop, sign in, set up key sign-in in
+Settings &gt; Security, and choose &quot;Link a device&quot;.</li>
+<li>Run the web app (<code>npm run dev</code>) with <code>VITE_GRAPHQL_ENDPOINT</code> set to the same endpoint the
+desktop uses (the code carries it and the browser refuses another), in a browser with WebCrypto
+Ed25519 (current Chrome, Firefox or Safari). The server&#39;s CORS settings must allow the dev
+origin with credentials.</li>
+<li>On the sign-in page choose &quot;Link this browser with its code&quot;, paste the code, and keep the
+fingerprint in view; on the desktop compare it (the card marks the device as a browser) and
+confirm. The browser signs in; the desktop lists it under Devices.</li>
+<li>Sign out in the browser: the sign-in page now offers &quot;Sign in as … with this device&quot;. Revoking
+the browser on the desktop makes that sign-in answer <code>FORBIDDEN</code>, and the page offers to remove
+its keys.</li>
+</ol>
+<p>The automated tests run the same flow in Vitest against Node&#39;s WebCrypto and <code>fake-indexeddb</code>,
+with the old device simulated from the known-answer keys
+(<a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/src/features/key-identity/browser/browserKeyBackend.test.ts"><code>src/features/key-identity/browser/browserKeyBackend.test.ts</code></a>).</p>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/docs/web-linked-device.md">rim-ui/docs/web-linked-device.md</a> at <code>58e3ec0</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+<script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
+</body>
+</html>

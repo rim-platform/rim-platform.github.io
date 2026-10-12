@@ -1,0 +1,795 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Web plugins v1 · RIM</title>
+<meta name="description" content="Status: implemented, normative. Extends docs/specs/plugin-protocol-v1.md (read it first: the messages, the handshake, capabilities and the dangerous-command gate are defined there and do not change). This document is …">
+<link rel="icon" href="../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../index.html" aria-label="RIM home">
+      <picture><source srcset="../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../index.html#what">What RIM is</a>
+      <a href="../index.html#how">How it works</a>
+      <a href="../docs/self-hosting.html">Self-host</a>
+      <a href="../configure/index.html">Configure</a>
+      <a href="../docs/index.html">Docs</a>
+      <a href="../api/index.html">API</a>
+      <a href="index.html" aria-current="page">Specs</a>
+      <a href="../docs/contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="index.html">Specs</a><span aria-hidden="true">/</span><span>Web plugins v1</span></div>
+  <div class="page with-toc">
+    <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
+<ol>
+<li><a href="#summary">Summary</a></li>
+<li><a href="#manifest">Manifest</a></li>
+<li><a href="#bundles">Bundles</a></li>
+<li><a href="#runtime">Runtime</a><ol><li><a href="#two-kinds-of-frame">Two kinds of frame</a></li><li><a href="#the-frame-shell">The frame shell</a></li><li><a href="#iframe-attributes">Iframe attributes</a></li><li><a href="#policy">Policy</a></li><li><a href="#the-load-rule">The load rule</a></li></ol></li>
+<li><a href="#transport">Transport</a><ol><li><a href="#init">Init</a></li><li><a href="#messages-on-the-port">Messages on the port</a></li><li><a href="#shutdown">Shutdown</a></li></ol></li>
+<li><a href="#host-methods">Host methods</a></li>
+<li><a href="#panels">Panels</a></li>
+<li><a href="#capabilities">Capabilities</a></li>
+<li><a href="#where-bundles-come-from">Where bundles come from</a></li>
+<li><a href="#host-implementation-rim-ui">Host implementation (rim-ui)</a></li>
+<li><a href="#sdk">SDK</a></li>
+<li><a href="#a-web-plugin-without-the-sdk">A web plugin without the SDK</a></li>
+<li><a href="#security">Security</a></li>
+<li><a href="#limits">Limits</a></li>
+<li><a href="#test-plan-rim-ui">Test plan (rim-ui)</a></li>
+<li><a href="#deferred">Deferred</a></li>
+<li><a href="#appendix-a-known-answer-bundle">Appendix A: known-answer bundle</a></li>
+</ol>
+</details></aside>
+    <main id="content" class="prose">
+<h1 id="web-plugins-v1">Web plugins v1</h1>
+<p class="status"><span><b>Web plugins v1</b></span><span>version 1</span><span>status: implemented, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/docs/specs/web-plugins-v1.md">rim-server/docs/specs/web-plugins-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/c86029b35a7ef7770b05e7bda62909f988343f7f">c86029b</a></span></p>
+<p><em>Status: implemented, normative. Extends <a href="plugin-protocol-v1.html"><code>docs/specs/plugin-protocol-v1.md</code></a> (read it first:
+the messages, the handshake, capabilities and the dangerous-command gate are defined there and do
+not change). This document is the contract between the RIM host, on the desktop and on the web,
+and plugins of a second kind, <code>WebSandboxed</code>, which run in a sandboxed iframe instead of a local
+process. <a href="workspace-plugins-v1.html"><code>docs/specs/workspace-plugins-v1.md</code></a> defines signed manifests and the workspace
+registry that web bundles come from.</em></p>
+<h2 id="summary">Summary <a class="anchor" href="#summary" aria-label="Link to this section">#</a></h2>
+<ol>
+<li>A <code>WebSandboxed</code> plugin is a bundle: <code>rim-plugin.json</code>, one self-contained ES module, optional
+panels; no native code, no Node APIs. The same bundle runs in the web app and the desktop app.</li>
+<li>It runs in a hidden <strong>plugin frame</strong>, an <code>&lt;iframe sandbox=&quot;allow-scripts&quot;&gt;</code> with an opaque
+origin; each open panel is a separate <strong>panel frame</strong>, and the host relays panel state between
+them, as <code>PanelRelay</code> does for local processes.</li>
+<li>Both load the <strong>frame shell</strong>, a static page shipped with the client, and get the verified files
+by <code>postMessage</code>. Its CSP comes from <code>&lt;meta&gt;</code> elements, so it never inherits the host page&#39;s
+policy, which <code>srcdoc</code> and <code>blob:</code> documents would.</li>
+<li>Transport: protocol v1&#39;s JSON-RPC 2.0 messages, each a JSON string on a <code>MessagePort</code> the host
+transfers once; no length prefix. Handshake, commands, heartbeats, principals, errors and the
+confirmation gate are v1&#39;s, unchanged.</li>
+<li>Shutdown is <code>rim.shutdown</code>, one second of grace, then the iframe is removed. A frame that
+navigates itself, floods the host or misses two heartbeats is removed.</li>
+<li>The plugin reaches RIM only through host methods behind the same capability prompts. An opaque
+origin has no RIM cookies and cannot read the CSRF token, so it cannot call GraphQL.</li>
+<li><code>ui.panel</code>, <code>ui.notify</code> and <code>plugin.&lt;id&gt;.&lt;verb&gt;</code> are prompted as on the desktop. A new
+<code>network.fetch</code> lets the plugin reach the origins its manifest lists, enforced by CSP.
+<code>local.process</code>, <code>fs.*</code> and <code>network</code> are refused.</li>
+<li>New host methods <code>rim.storage.get</code> and <code>rim.storage.set</code> (not frozen) give 1 MiB per plugin and
+account, because an opaque origin has no <code>localStorage</code> or IndexedDB.</li>
+<li>The desktop installs web plugins like any plugin or from the workspace registry; the web app
+only from a registry entry (signed, <a href="workspace-plugins-v1.html"><code>workspace-plugins-v1.md</code></a>) or a pasted link carrying the bundle&#39;s SHA-256. A
+bundle is one JSON file, hashed again at every start.</li>
+<li>The SDK gets a transport abstraction and a browser build; <code>rim-plugin-bundle</code> writes a
+<code>.rimbundle</code> and prints its hash. Showcase: a pull-request panel for public GitHub
+repositories. The Kubernetes plugin stays desktop-only.</li>
+</ol>
+<h2 id="manifest">Manifest <a class="anchor" href="#manifest" aria-label="Link to this section">#</a></h2>
+<p>Same <code>rim-plugin.json</code>, same <code>manifest_version</code> 1. What differs for this kind:</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Rule</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>runtime_kind</code></td>
+<td><code>&quot;WebSandboxed&quot;</code></td>
+</tr>
+<tr>
+<td><code>entrypoint</code></td>
+<td>Bundle path of one ES module ending in <code>.mjs</code> or <code>.js</code>. Self-contained: no static <code>import</code> and no <code>import()</code> of bundle files, because the shell loads it from a <code>blob:</code> URL where relative specifiers resolve to nothing. No <code>#!</code> line.</td>
+</tr>
+<tr>
+<td><code>network_origins</code></td>
+<td>New, optional. 1 to 16 origins of the form <code>https://host[:port]</code> or, for WebSockets, <code>wss://host[:port]</code>: lowercase, no path, query, fragment, userinfo or wildcard, no duplicates. Present exactly when <code>capabilities</code> lists <code>network.fetch</code> (<code>null</code> counts as absent, as for every optional field). No origin may share the host and port of the app&#39;s or the RIM API&#39;s origin.</td>
+</tr>
+<tr>
+<td><code>capabilities</code></td>
+<td>See <a href="#capabilities">Capabilities</a>.</td>
+</tr>
+<tr>
+<td><code>panels</code></td>
+<td>As today (<code>id</code>, <code>title</code>, <code>description</code>, <code>slot</code>). A panel&#39;s files live under <code>panels/&lt;id&gt;/</code>, so its <code>id</code> is one bundle path segment; <code>index.html</code> is required. The entrypoint is not under <code>panels/</code>.</td>
+</tr>
+</tbody></table></div>
+<p><code>network_origins</code> and <code>network.fetch</code> are refused for <code>DesktopLocalProcess</code>. A host without web plugin
+support refuses a web plugin at install with <code>failed to parse manifest: unknown variant WebSandboxed</code>, because <code>RuntimeKind</code> is a closed enum; it never tries to execute the module.</p>
+<p>The showcase&#39;s manifest, as installed (its source names <code>main.ts</code>, which the bundler
+builds into <code>main.mjs</code>). A panel reaches its plugin only through commands, so adding and
+removing repositories are commands too; they take an argument, so the palette leaves them
+to the panel:</p>
+<pre><code class="language-json">{ &quot;manifest_version&quot;: 1, &quot;plugin_id&quot;: &quot;chat.rim.github-prs&quot;, &quot;display_name&quot;: &quot;GitHub Pull Requests&quot;,
+  &quot;version&quot;: &quot;0.1.0&quot;, &quot;author&quot;: &quot;RIM team&quot;, &quot;runtime_kind&quot;: &quot;WebSandboxed&quot;, &quot;entrypoint&quot;: &quot;main.mjs&quot;,
+  &quot;description&quot;: &quot;Lists the open pull requests of public GitHub repositories you choose. Talks only to GitHub, without a token.&quot;,
+  &quot;capabilities&quot;: [&quot;ui.panel&quot;, &quot;network.fetch&quot;],
+  &quot;network_origins&quot;: [&quot;https://api.github.com&quot;, &quot;https://avatars.githubusercontent.com&quot;],
+  &quot;commands&quot;: [{ &quot;id&quot;: &quot;refresh&quot;, &quot;title&quot;: &quot;Pull requests: Refresh&quot;,
+                 &quot;description&quot;: &quot;Fetches the open pull requests again.&quot;, &quot;keybind_capable&quot;: true },
+               { &quot;id&quot;: &quot;add_repo&quot;, &quot;title&quot;: &quot;Pull requests: Add repository&quot;,
+                 &quot;description&quot;: &quot;Adds a public GitHub repository to the list, at most 10.&quot;,
+                 &quot;arguments&quot;: [{ &quot;name&quot;: &quot;repo&quot;, &quot;type&quot;: &quot;string&quot;, &quot;required&quot;: true }] },
+               { &quot;id&quot;: &quot;remove_repo&quot;, &quot;title&quot;: &quot;Pull requests: Remove repository&quot;,
+                 &quot;description&quot;: &quot;Removes a repository from the list.&quot;,
+                 &quot;arguments&quot;: [{ &quot;name&quot;: &quot;repo&quot;, &quot;type&quot;: &quot;string&quot;, &quot;required&quot;: true }] }],
+  &quot;panels&quot;: [{ &quot;id&quot;: &quot;prs&quot;, &quot;title&quot;: &quot;Pull requests&quot;, &quot;slot&quot;: &quot;tool_panel&quot; }] }</code></pre>
+<h2 id="bundles">Bundles <a class="anchor" href="#bundles" aria-label="Link to this section">#</a></h2>
+<p>A bundle is one UTF-8 JSON file, extension <code>.rimbundle</code>, media type
+<code>application/vnd.rim.plugin-bundle+json</code>:</p>
+<pre><code class="language-json">{&quot;format&quot;:&quot;rim-plugin-bundle&quot;,&quot;v&quot;:1,&quot;files&quot;:[{&quot;path&quot;:&quot;main.mjs&quot;,&quot;text&quot;:&quot;…&quot;},{&quot;path&quot;:&quot;rim-plugin.json&quot;,&quot;text&quot;:&quot;…&quot;}]}</code></pre>
+<ul>
+<li><code>format</code> is <code>rim-plugin-bundle</code> and <code>v</code> is <code>1</code>. Unknown fields at any level are refused.</li>
+<li><code>files</code> has 1 to 256 entries, sorted by <code>path</code> in byte order, each path once. An entry has
+<code>path</code> and exactly one of <code>text</code> (the file&#39;s content as a JSON string; the file must be UTF-8)
+or <code>base64</code> (standard base64 with padding, for any other file).</li>
+<li>A <code>path</code> is 1 to 255 bytes of <code>/</code>-separated segments of <code>A-Z a-z 0-9 . _ -</code>. No segment is
+empty, <code>.</code> or <code>..</code>, or starts with <code>.</code>.</li>
+<li><code>rim-plugin.json</code> and the manifest&#39;s <code>entrypoint</code> are present. In a <code>WebSandboxed</code> bundle every
+other file is under <code>panels/</code>.</li>
+<li>The whole file is at most <strong>8 MiB</strong> (8,388,608 bytes).</li>
+<li><strong>The bundle hash</strong> is the SHA-256 of the file&#39;s bytes exactly as fetched, written as 64
+lowercase hex characters (what <code>sha256sum</code> prints, so a publisher can check it with standard
+tools). Readers never re-serialize a bundle. Writers (the SDK bundler and the desktop signer)
+write <code>files</code> sorted and the JSON compact, without spaces, so the same files give the same hash.</li>
+</ul>
+<p>One JSON file rather than a zip or a tarball: a browser reads it with <code>JSON.parse</code>, no archive
+library, one hash covers every path and byte, and base64 costs a third more only on binary files.</p>
+<p>A bundle reference, in the same words as in <a href="workspace-plugins-v1.html"><code>workspace-plugins-v1.md</code></a>: <strong>a registry entry names a
+web bundle by <code>bundleSha256</code> (64 lowercase hex characters, the SHA-256 of the bundle file&#39;s bytes),
+<code>bundleSize</code> (its length in bytes, at most 8 MiB) and <code>bundleUrl</code> (where to fetch it; by default
+the workspace server&#39;s copy, <code>/api/plugin-bundles/&lt;serverId&gt;/&lt;bundleSha256&gt;</code>). The SHA-256 and the
+size are inside the publisher&#39;s signed statement; the URL is not, because it says only where the
+bytes are, and the hash decides whether they are the right ones.</strong></p>
+<p>The desktop installs a bundle by unpacking it into <code>~/.rim/plugins/&lt;plugin_id&gt;/</code> with the staging
+and path checks of a local-folder install (a <code>DesktopLocalProcess</code> entrypoint gets mode <code>0755</code>,
+every other file <code>0644</code>), then records its bundle fingerprint as today. A <code>WebSandboxed</code> plugin
+installed from a folder or a git checkout must hold exactly what a bundle of it would: entries
+whose name starts with <code>.</code> (<code>.git</code>, <code>.DS_Store</code>) are skipped, and every other file follows the
+rules above.</p>
+<h2 id="runtime">Runtime <a class="anchor" href="#runtime" aria-label="Link to this section">#</a></h2>
+<h3 id="two-kinds-of-frame">Two kinds of frame <a class="anchor" href="#two-kinds-of-frame" aria-label="Link to this section">#</a></h3>
+<ul>
+<li><strong>The plugin frame</strong>, one per enabled plugin, hidden (<code>display: none</code>), runs the entry module
+and speaks protocol v1 over the port. It starts when the plugin is enabled and at app start, like
+a process. On the web, where installs belong to an account, signing out stops every plugin frame
+and signing in starts that account&#39;s; on the desktop it keeps running and gets
+<code>rim.principal.changed</code>, as a process does.</li>
+<li><strong>A panel frame</strong>, one per open panel, created when the panel is shown and removed when it
+closes, has no port. It speaks the existing panel bridge (<a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/docs/local_plugin_host.md"><code>docs/local_plugin_host.md</code></a>,
+&quot;PostMessage Bridge&quot;) through <code>window.parent</code>, exactly as a local-process plugin&#39;s panel does.</li>
+</ul>
+<p>This is the split <code>panel_relay.rs</code> already makes: logic apart from views, the host relaying state
+between them. Commands work from the palette, keybinds and the agent with no panel open, panels
+are written the same way for both kinds, and one SDK serves the logic. <strong>One frame holding both</strong>
+was rejected: the plugin would live only while its panel is visible, and panels would differ by
+kind. <strong>A Web Worker</strong> for the plugin was rejected: a worker the host creates has the host&#39;s
+origin, cookies and credentialed <code>fetch</code>; only a sandboxed frame gets an opaque origin. (A plugin
+may start a worker inside its frame; it inherits the frame&#39;s origin and policy.)</p>
+<h3 id="the-frame-shell">The frame shell <a class="anchor" href="#the-frame-shell" aria-label="Link to this section">#</a></h3>
+<p>A fixed page in rim-ui, <code>public/plugin-frame/v1/index.html</code> and <code>shell.js</code>. The web app serves it
+from its own origin at <code>/plugin-frame/v1/</code>; the desktop serves the same files through
+<code>rim-plugin://shell/v1/index.html</code> (the authority <code>shell</code> cannot collide with a plugin id, which
+has at least three dot-separated segments).</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Verdict</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>srcdoc</code></td>
+<td>Rejected: the document inherits the embedding page&#39;s CSP, so the web app&#39;s <code>script-src 'self'</code> blocks the plugin, and loosening the app&#39;s policy for plugins weakens the host</td>
+</tr>
+<tr>
+<td>A <code>blob:</code> URL made by the host</td>
+<td>Rejected for the same reason: a <code>blob:</code> document takes its creator&#39;s policy</td>
+</tr>
+<tr>
+<td>A page served per plugin with a CSP header (by the RIM server or a sandbox domain)</td>
+<td>Works, but ties the client&#39;s shell to a server route, needs a dynamic header that a static host for the web build cannot set, and a separate domain is one more service for a self-hoster</td>
+</tr>
+<tr>
+<td><strong>A static shell with <code>&lt;meta&gt;</code> CSP, files delivered by <code>postMessage</code></strong></td>
+<td><strong>Chosen</strong>: independent of the host page&#39;s policy, static, identical on both platforms, and the host verifies every byte before handing it over</td>
+</tr>
+</tbody></table></div>
+<p>The web server must not send a CSP header on <code>/plugin-frame/</code> stricter than the shell&#39;s own
+(policies intersect); a CSP header on the app&#39;s pages, if any, must allow <code>frame-src 'self'</code>.</p>
+<h3 id="iframe-attributes">Iframe attributes <a class="anchor" href="#iframe-attributes" aria-label="Link to this section">#</a></h3>
+<pre><code class="language-html">&lt;iframe src=&quot;/plugin-frame/v1/index.html&quot; sandbox=&quot;allow-scripts&quot; referrerpolicy=&quot;no-referrer&quot;
+        allow=&quot;camera 'none'; microphone 'none'; geolocation 'none'; display-capture 'none';
+               clipboard-read 'none'; clipboard-write 'none'; fullscreen 'none'; payment 'none';
+               usb 'none'; serial 'none'; hid 'none'; bluetooth 'none'&quot;
+        credentialless title=&quot;Plugin: GitHub Pull Requests&quot;&gt;&lt;/iframe&gt;</code></pre>
+<p><code>sandbox</code> is exactly <code>allow-scripts</code>: never <code>allow-same-origin</code> (with <code>allow-scripts</code> it lets the
+frame lift its own sandbox), <code>allow-top-navigation*</code>, <code>allow-popups*</code>, <code>allow-modals</code>,
+<code>allow-forms</code>, <code>allow-downloads</code> or <code>allow-pointer-lock</code>. <code>credentialless</code>, where the browser
+supports it, makes the frame&#39;s requests carry no cookies, so a plugin cannot act on a site with the
+cookies the user has there.</p>
+<h3 id="policy">Policy <a class="anchor" href="#policy" aria-label="Link to this section">#</a></h3>
+<p>The baseline, a <code>&lt;meta http-equiv=&quot;Content-Security-Policy&quot;&gt;</code> in the shell file:</p>
+<pre><code>default-src 'none'; script-src 'self' blob: 'wasm-unsafe-eval'; style-src 'self' blob: 'unsafe-inline';
+img-src 'self' blob: data: https:; font-src blob: data:; media-src blob: data:; connect-src https: wss:;
+worker-src blob:; frame-src 'none'; form-action 'none'; base-uri 'none'</code></pre>
+<p><code>connect-src</code> lists <code>wss:</code> beside <code>https:</code> because the scheme source <code>https:</code> does not match a
+<code>wss:</code> URL, and policies intersect: without it no <code>wss://</code> origin a plugin lists could connect.</p>
+<p>and the per-plugin policy, a second <code>&lt;meta&gt;</code> the shell appends to <code>&lt;head&gt;</code> before any plugin file
+loads: <code>connect-src &lt;O&gt;; img-src 'self' blob: data: &lt;O&gt;</code>, where <code>&lt;O&gt;</code> is the granted
+<code>network_origins</code> joined by spaces, or <code>'none'</code> without <code>network.fetch</code> (then <code>img-src 'self' blob: data:</code>). Policies intersect, so nothing a plugin runs later can widen the result.
+<code>blob:</code> scripts and <code>'wasm-unsafe-eval'</code> are allowed (there is no <code>'unsafe-eval'</code>) because the
+shell runs the entry from a <code>blob:</code> URL and the boundary is the sandbox, not where a script came
+from: a plugin can always build code from data its listed origins send. The signature binds what
+ships, not what a plugin downloads later.</p>
+<h3 id="the-load-rule">The load rule <a class="anchor" href="#the-load-rule" aria-label="Link to this section">#</a></h3>
+<p>The host counts the iframe&#39;s <code>load</code> events. The first triggers the init message. Any later one
+means the frame navigated, which only the plugin&#39;s own code can do: the host removes the frame at
+once, marks the plugin stopped with &quot;the plugin navigated its frame&quot;, and does not restart it. The
+port was transferred once, so a navigated document never holds it.</p>
+<h2 id="transport">Transport <a class="anchor" href="#transport" aria-label="Link to this section">#</a></h2>
+<h3 id="init">Init <a class="anchor" href="#init" aria-label="Link to this section">#</a></h3>
+<p>On the first <code>load</code>, the host posts one message to <code>iframe.contentWindow</code> with target origin <code>&quot;*&quot;</code>
+(an opaque origin cannot be named), transferring the port&#39;s other end for a plugin frame:</p>
+<pre><code class="language-js">{ type: &quot;rim.frame.init&quot;, v: 1, kind: &quot;plugin&quot;, pluginId: &quot;chat.rim.github-prs&quot;,
+  manifest: &quot;&lt;rim-plugin.json text&gt;&quot;, policy: { origins: [&quot;https://api.github.com&quot;] },
+  files: [{ path: &quot;main.mjs&quot;, type: &quot;text/javascript&quot;, bytes: ArrayBuffer }] }</code></pre>
+<p>For a panel frame <code>kind</code> is <code>&quot;panel&quot;</code>, <code>panelId</code> names the panel, <code>files</code> holds every file under
+<code>panels/&lt;panelId&gt;/</code> with paths relative to it, and no port is transferred. This message is a
+structured-clone object; every later message on the port is a JSON string.</p>
+<p>The shell ignores messages not from <code>window.parent</code> and every init after the first. On init it
+appends the per-plugin policy, then for a plugin frame defines <code>globalThis.rimPluginPort</code> and
+<code>globalThis.rimPluginManifest</code> (the manifest text) as non-writable, non-configurable properties and
+imports the entry from a <code>blob:</code> URL, or for a panel frame renders the panel (<a href="#panels">Panels</a>).
+If the entry fails to load or throws while evaluating, the shell posts <code>{ type: &quot;rim.frame.error&quot;, v: 1, message }</code> to <code>window.parent</code>, and the host stops the plugin with that message rather than
+waiting for the handshake timeout. From a plugin frame&#39;s window the host accepts nothing else.</p>
+<h3 id="messages-on-the-port">Messages on the port <a class="anchor" href="#messages-on-the-port" aria-label="Link to this section">#</a></h3>
+<ul>
+<li><strong>One JSON-RPC 2.0 message per <code>postMessage</code>, as a string of JSON text</strong>, not a structured-clone
+object: the same text as v1&#39;s frame payloads, checked against the same schema, with no <code>Date</code>,
+<code>Map</code>, <code>ArrayBuffer</code> or <code>undefined</code> that JSON lacks, and a size both sides can compute.</li>
+<li>At most <strong>4 MiB</strong> of UTF-8 per message, both ways; a larger one ends the connection (the frame
+is removed). A message that is not a string, not JSON, or not JSON-RPC is logged and dropped.</li>
+<li>Sections 4 to 14 and 16 of protocol v1 apply unchanged (envelope, ids, handshake and
+negotiation, errors, commands, the confirmation gate, principals, capabilities, heartbeats,
+logging, versioning). This section replaces v1&#39;s sections 2 and 3, and Shutdown below replaces
+section 15. <code>hostVersion</code> is the app&#39;s version. The 10-second handshake timeout counts from the
+init message, so it includes loading the module.</li>
+<li><strong>Heartbeats</strong> stay as in v1 (every 30 s, 5 s to answer): where the browser gives the frame its
+own process, a hung plugin does not hang the host, and the heartbeat is how the host notices.
+Two misses in a row remove the frame (&quot;not responding&quot;); a frame is cheap to remove, unlike a
+process. While <code>document.visibilityState</code> is <code>hidden</code> the host sends none, because browsers
+throttle background timers.</li>
+</ul>
+<h3 id="shutdown">Shutdown <a class="anchor" href="#shutdown" aria-label="Link to this section">#</a></h3>
+<p>The host sends <code>rim.shutdown</code>; for <strong>1 second</strong> it still answers the plugin&#39;s requests (so a
+<code>rim.storage.set</code> in flight lands) and sends nothing else; then it closes its end of the port and
+removes the iframe, which ends the plugin&#39;s scripts, timers and connections. There is no
+escalation and nothing a plugin can do to delay it. App quit, a reload or a closed tab take the
+frame with the page and send no <code>rim.shutdown</code>, so a plugin writes what must survive as it
+changes.</p>
+<h2 id="host-methods">Host methods <a class="anchor" href="#host-methods" aria-label="Link to this section">#</a></h2>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Capability</th>
+<th>For <code>WebSandboxed</code></th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>rim.log</code></td>
+<td>none</td>
+<td>As v1; the host keeps at most 120 lines a minute per plugin and drops the rest, with one warning</td>
+</tr>
+<tr>
+<td><code>rim.ui.update_panel</code></td>
+<td><code>ui.panel</code></td>
+<td>As for a local process (routed, not frozen): <code>panel_id</code>, <code>state</code>, optional <code>patch</code>; 1 MiB per plugin</td>
+</tr>
+<tr>
+<td><code>rim.storage.get</code>, <code>rim.storage.set</code></td>
+<td>none</td>
+<td>New, not frozen; below</td>
+</tr>
+<tr>
+<td><code>rim.chat.*</code></td>
+<td><code>chat.*</code></td>
+<td>The client message service, as for a local process (routed, not frozen; <a href="e2ee-mls-v1.html"><code>e2ee-mls-v1.md</code></a>, &quot;Plugins and the client message service&quot;). Reads need a local message store; until the web app&#39;s service reads the browser&#39;s encrypted store, it answers them <code>INTERNAL_ERROR</code> with <code>data.reason: &quot;noCache&quot;</code></td>
+</tr>
+<tr>
+<td><code>rim.events.subscribe</code></td>
+<td><code>events.read</code></td>
+<td><code>CAPABILITY_DENIED</code>, as v1 section 17</td>
+</tr>
+<tr>
+<td><code>rim.process.*</code>, <code>rim.fs.*</code>, <code>rim.network.*</code></td>
+<td><code>local.process</code>, <code>fs.*</code>, <code>network</code></td>
+<td><code>CAPABILITY_DENIED</code>: this kind can never hold them</td>
+</tr>
+</tbody></table></div>
+<p><strong>Storage.</strong> An opaque origin has no <code>localStorage</code>, IndexedDB or cookies, so the host keeps a
+small store per plugin. <code>rim.storage.get { key }</code> answers <code>{ value }</code> (the stored JSON, or <code>null</code>);
+<code>rim.storage.set { key, value }</code> answers <code>{ ok: true }</code>, and <code>value: null</code> deletes the key.</p>
+<ul>
+<li><code>key</code> is 1 to 128 characters of <code>A-Z a-z 0-9 . _ -</code>; a value is any JSON. At most 1 MiB per
+store (key lengths plus the values&#39; JSON text, in UTF-8 bytes): a <code>set</code> past it is
+<code>INVALID_PARAMS</code> with <code>data: { &quot;reason&quot;: &quot;quota&quot; }</code>. With nobody signed in, both answer
+<code>INVALID_PARAMS</code> (<code>nobody is signed in</code>). 120 calls a minute.</li>
+<li>A store belongs to (plugin id, signed-in account, device). The host names the account by its
+provisional <code>rimp0_</code> principal id, which never changes, so the one switch to a key-based id
+keeps the plugin&#39;s data. It is not synced, is deleted on uninstall, and is not secret: the host
+keeps it unencrypted (IndexedDB on the web, the app data directory on the desktop), so a plugin
+must not keep tokens in it.</li>
+<li>A local-process host answers both with <code>METHOD_NOT_FOUND</code>: a process has its own files.</li>
+</ul>
+<h2 id="panels">Panels <a class="anchor" href="#panels" aria-label="Link to this section">#</a></h2>
+<p>The shell renders a panel&#39;s <code>index.html</code>: it parses it with <code>DOMParser</code>; replaces every relative
+URL in <code>script[src]</code>, <code>link[rel~=stylesheet]</code>, <code>link[rel~=icon]</code>, <code>img</code>, <code>source</code>, <code>audio</code> and
+<code>video</code> that names a file of the panel with a <code>blob:</code> URL of that file (media type from the
+extension), and turns inline <code>&lt;script&gt;</code>s into <code>blob:</code> scripts too; swaps in the panel&#39;s <code>&lt;head&gt;</code> and
+<code>&lt;body&gt;</code>; recreates the scripts in document order with <code>async = false</code>; then dispatches
+<code>DOMContentLoaded</code> and <code>load</code>, and posts <code>{ type: &quot;rim.frame.ready&quot;, v: 1 }</code> to <code>window.parent</code>, on
+which the host sends <code>theme.changed</code> and the panel&#39;s stored state (sent earlier, they would
+reach no listener yet). A relative URL that names no file of the panel is removed rather than
+resolved against the shell&#39;s URL, and so are <code>&lt;base&gt;</code> and <code>&lt;meta http-equiv=&quot;refresh&quot;&gt;</code>.
+Absolute URLs stay and fall under the policy. Not supported: module
+scripts that import other files (bundle them), CSS <code>url()</code> and <code>@import</code> of panel files (use
+<code>data:</code> URIs), and inline event handler attributes, which the policy forbids. The k8s panel&#39;s shape
+(an <code>index.html</code> with a <code>&lt;style&gt;</code> block and <code>&lt;script src=&quot;app.js&quot;&gt;</code>) works unchanged.</p>
+<p>The bridge is unchanged: the host accepts a panel&#39;s message only with origin <code>&quot;null&quot;</code> and
+<code>event.source</code> that panel&#39;s iframe, takes the plugin id from the iframe, lets <code>rim.command.execute</code>
+run only the plugin&#39;s own commands, and sends <code>theme.changed</code> and <code>panel.state_update</code>. A panel
+frame gets its plugin&#39;s policy, so it can show images from the listed origins. The TypeScript relay
+keeps <code>PanelRelay</code>&#39;s semantics (replace or shallow merge, 1 MiB per plugin, <code>state: null</code> to open
+panels when the plugin stops). Focus and Escape work as for other panels.</p>
+<h2 id="capabilities">Capabilities <a class="anchor" href="#capabilities" aria-label="Link to this section">#</a></h2>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Capability</th>
+<th><code>WebSandboxed</code></th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>plugin.&lt;pluginId&gt;.&lt;verb&gt;</code>, <code>ui.panel</code></td>
+<td>Prompted</td>
+<td>As on the desktop</td>
+</tr>
+<tr>
+<td><code>ui.notify</code></td>
+<td>Prompted</td>
+<td>Panel notifications show the plugin&#39;s name, as today</td>
+</tr>
+<tr>
+<td><code>network.fetch</code></td>
+<td>Prompted (new)</td>
+<td>Lists the origins; this kind only; enforced by the policy</td>
+</tr>
+<tr>
+<td><code>chat.read</code>, <code>chat.write</code>, <code>chat.read.encrypted</code>, <code>chat.write.encrypted</code></td>
+<td>Prompted</td>
+<td>As on the desktop, one line each; an encrypted one without its plain one is refused at install</td>
+</tr>
+<tr>
+<td><code>events.read</code></td>
+<td>Refused at install</td>
+<td>As on the desktop: nothing serves it</td>
+</tr>
+<tr>
+<td><code>local.process</code>, <code>fs.read</code>, <code>fs.write</code></td>
+<td>Refused, always</td>
+<td><code>WebSandboxed plugins cannot run programs or read files; use DesktopLocalProcess</code></td>
+</tr>
+<tr>
+<td><code>network</code></td>
+<td>Refused, always</td>
+<td>Names host-brokered requests for local processes</td>
+</tr>
+</tbody></table></div>
+<p><code>rim.log</code> and <code>rim.storage.*</code> need no capability; nothing else is granted without a prompt.
+<code>network.fetch</code> is a new name rather than <code>network</code> because the enforcement differs (a browser
+policy on the plugin&#39;s own requests, not a host method), and per-origin rather than broad because
+the policy can enforce origins and a prompt that names hosts is one a person can judge. It is one
+checkbox for all listed origins; without it the frame runs with <code>connect-src 'none'</code>. The policy is
+fixed when the frame loads, so the host restarts the frame when grants change. Revoking any
+capability stops the plugin, as on the desktop.</p>
+<p><strong>Consent text.</strong> Above the capability list, in the app&#39;s words and apart from the author&#39;s
+description, the prompt says what kind of plugin this is. Both lines are in
+<code>PluginCapabilityPrompt</code>:</p>
+<ul>
+<li><code>WebSandboxed</code>: &quot;Runs sandboxed in this app. It cannot read your files, run programs, or use
+your RIM session. It reaches RIM only through the permissions below.&quot;</li>
+<li><code>DesktopLocalProcess</code>: &quot;Runs as a program on this computer with your account&#39;s access. It is not
+sandboxed: it can read your files and use the network whatever you approve below. Install it
+only if you trust its author.&quot;</li>
+</ul>
+<p><code>network.fetch</code> reads &quot;Connect to listed sites: send and receive data from api.github.com,
+avatars.githubusercontent.com. Anything you show this plugin can be sent to these sites.&quot; (hosts
+without <code>https://</code> or a default port).</p>
+<h2 id="where-bundles-come-from">Where bundles come from <a class="anchor" href="#where-bundles-come-from" aria-label="Link to this section">#</a></h2>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Source</th>
+<th>Desktop</th>
+<th>Web</th>
+<th>Signed</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Local folder (the bundler&#39;s output directory)</td>
+<td>Yes, as today</td>
+<td>No</td>
+<td>No: fingerprint on first use</td>
+</tr>
+<tr>
+<td>Git URL</td>
+<td>Yes; no post-install steps for this kind (<code>web plugins are installed built</code>)</td>
+<td>No</td>
+<td>No: fingerprint on first use</td>
+</tr>
+<tr>
+<td>Workspace registry entry</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Pasted link</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>No</td>
+</tr>
+</tbody></table></div>
+<p><strong>Pasted links.</strong> <code>https://host/path/name.rimbundle#sha256=&lt;64 lowercase hex&gt;</code>. A link without
+the fragment, or with another scheme, is refused. The host fetches it with <code>credentials: &quot;omit&quot;</code>,
+<code>cache: &quot;no-store&quot;</code>, following redirects, and stops reading past 8 MiB; the server must answer with
+<code>Access-Control-Allow-Origin: *</code>. The bytes must hash to the fragment&#39;s value, and the install then
+goes through manifest validation and consent like any other. Settings shows such a plugin as
+&quot;Unsigned · installed from a link (host)&quot;. It is never updated automatically; a new link installs
+over it after showing what changed (version, capabilities).</p>
+<p><strong>Registry entries.</strong> A client verifies a registry entry, in the same words as in
+<a href="workspace-plugins-v1.html"><code>workspace-plugins-v1.md</code></a>:</p>
+<blockquote>
+<p>A client verifies a registry entry before it offers to install it, and again before it installs
+or updates, without trusting the server:</p>
+<ol>
+<li>Read the statement: <code>type</code> <code>plugin-manifest</code>, <code>v</code> 2, payload at most 96 KiB, no unknown or
+duplicate fields (a browser checks duplicates with its own scan, since <code>JSON.parse</code> keeps the
+last one).</li>
+<li>Get the publisher&#39;s key log: <code>keyLog(principalId)</code> from the workspace&#39;s server or, when that
+answers <code>[]</code>, the entry&#39;s <code>publisherKeyLog</code>. Replay it from the inception; its principal id
+must be the statement&#39;s <code>principalId</code>.</li>
+<li><code>keySeq</code> must be an entry of the log, and no later entry may be a recovery rotation
+(<code>&quot;signer&quot;:&quot;recovery&quot;</code>). The signature must verify over <code>rim.plugin-manifest.v1\0</code> followed by
+the payload, under that entry&#39;s <code>identityKey</code>.</li>
+<li>The <code>manifest</code> text must be a valid manifest for this host, with <code>plugin_id</code> equal to
+<code>pluginId</code> and <code>version</code> equal to <code>version</code>. A <code>WebSandboxed</code> manifest must come with a
+<code>bundle</code> source.</li>
+<li>The fetched bundle must have exactly <code>size</code> bytes and the SHA-256 <code>sha256</code>, and its
+<code>rim-plugin.json</code> must be byte-identical to <code>manifest</code>. For a <code>git</code> source (desktop only), the
+checkout of <code>commit</code> must have the tree hash <code>treeSha256</code>.</li>
+<li>Only then does the client show the publisher, the trust badge and the capability consent.</li>
+</ol>
+</blockquote>
+<p><strong>Caching and updates.</strong> The web app keeps verified bundles in IndexedDB (database <code>rim-plugins</code>,
+store <code>bundles</code>, keyed by hash) and install records per account (store <code>installs</code>), and hashes the
+cached bytes again at every start; a mismatch or an evicted bundle is fetched again from its entry
+or link and must hash the same, or the plugin does not start (&quot;bundle damaged or unavailable&quot;). The
+desktop keeps the unpacked directory and checks its fingerprint at enable, as today. Registry
+installs update when the entry&#39;s statement changes; link installs only by a new link.</p>
+<h2 id="host-implementation-rim-ui">Host implementation (rim-ui) <a class="anchor" href="#host-implementation-rim-ui" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><code>src/features/plugins/web/</code>: <code>webPluginHost.ts</code> (frames, the JSON-RPC session, gates, limits,
+heartbeats), <code>webPanelRelay.ts</code>, <code>bundle.ts</code>, <code>manifestRules.ts</code> (the TypeScript port of the
+manifest checks and <code>validation.rs</code>), and a <code>WebPluginStore</code> interface backed by IndexedDB on the
+web and by Tauri commands on the existing <code>PluginStateStore</code> on the desktop, so Settings lists
+both kinds together. <code>dispatchCommand</code> routes <code>plugin.&lt;pluginId&gt;.&lt;command&gt;</code> by runtime kind.</li>
+<li>The command gates run in TypeScript in the order of <code>command_exec.rs</code>: for an agent run, AI
+consent first (on the desktop the Rust host&#39;s own check); then the arguments are an object,
+the command is declared, a panel&#39;s request names its own plugin, the dangerous-command
+confirmation (a host dialog; only the host sets <code>confirmed</code>, and the agent never confirms),
+required capabilities, the plugin running; then 30 seconds to answer. Refusals use the
+desktop&#39;s error kinds (<code>UNKNOWN_COMMAND</code>, <code>CONFIRMATION_REQUIRED</code>, <code>PLUGIN_NOT_RUNNING</code>, …).</li>
+<li>A new runtime capability, <code>webPlugins</code> (on for desktop and web, off for mobile); <code>pluginHost</code>
+keeps meaning local processes. On the web, Settings &gt; Plugins lists web plugins, the workspace
+registry and &quot;Install from link&quot;, and shows local-process entries as &quot;Needs the desktop app&quot;.</li>
+<li><strong>Safe start.</strong> The host records a <code>starting</code> marker before starting a plugin and clears it after
+the handshake. A plugin whose marker is still set at load (the page died while starting it) is
+not started, and Settings says so.</li>
+<li>The web app derives the provisional <code>rimp0_</code> id exactly as <code>protocol.rs</code> does and keeps the
+<code>rimp0_</code> to <code>rimp1_</code> mappings per device in IndexedDB.</li>
+<li>Install records keep their source as <code>{ kind: &quot;local&quot; | &quot;git&quot; | &quot;link&quot; | &quot;registry&quot;, … }</code>: on
+the desktop in the plugin&#39;s <code>PluginRecord</code>, on the web in the <code>installs</code> store.</li>
+</ul>
+<h2 id="sdk">SDK <a class="anchor" href="#sdk" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>Transport.</strong> <code>Session</code> works on JSON text only, and framing moves into the stdio transport:
+<code>interface Transport { readonly messages: AsyncIterable&lt;string&gt;; send(text: string): void; close(): void }</code>, with <code>stdioTransport()</code> (today&#39;s behaviour) and <code>portTransport(port)</code>. <code>run()</code>
+uses the port when <code>globalThis.rimPluginPort</code> exists, taking the manifest check from
+<code>globalThis.rimPluginManifest</code> instead of the disk; <code>RunOptions.transport</code> overrides it.</li>
+<li><strong>Browser build.</strong> <code>exports</code> gains a <code>browser</code> condition, <code>src/index.browser.ts</code>, with no <code>node:</code>
+imports and the same API. <code>host.storage.get</code>/<code>set</code> exist in both builds and reject with
+<code>METHOD_NOT_FOUND</code> on a local-process host.</li>
+<li><strong>Bundler.</strong> For <code>WebSandboxed</code>, <code>rim-plugin-bundle</code> builds with <code>platform: &quot;browser&quot;</code>,
+<code>conditions: [&quot;browser&quot;]</code>, <code>format: &quot;esm&quot;</code>, <code>target: &quot;es2022&quot;</code> and no <code>#!</code> banner, fails when the
+output still has an <code>import</code> or a <code>node:</code> reference, and refuses files outside <code>panels/</code>. For
+both kinds it writes the directory as today plus <code>&lt;plugin_id&gt;-&lt;version&gt;.rimbundle</code> beside it
+(not inside, so the directory stays installable as a folder), and prints
+<code>sha256 &lt;hex&gt;  size &lt;bytes&gt;</code>.</li>
+<li><strong>Testing.</strong> <code>startTestHost</code> gains <code>transport: &quot;port&quot;</code>: the plugin runs over a Node
+<code>MessageChannel</code> with the same assertions as over stdio.</li>
+</ul>
+<p><strong>Showcase: <code>plugins/github-prs/</code></strong> (<code>chat.rim.github-prs</code>, the manifest above), written with the
+SDK. Its panel lists the open pull requests (title, author, age, draft) of up to 10 public
+repositories the user adds, kept with <code>rim.storage</code>; <code>refresh</code> is keybind-capable. It calls the
+GitHub REST API without a token (60 requests an hour per IP address, so it refreshes at most every
+2 minutes and says when GitHub refuses). It exercises both frames, <code>network.fetch</code>, storage, the
+panel bridge and, on the web, a registry install. <code>plugins/k8s-pods/</code> stays <code>DesktopLocalProcess</code>:
+it runs <code>kubectl</code>.</p>
+<h2 id="a-web-plugin-without-the-sdk">A web plugin without the SDK <a class="anchor" href="#a-web-plugin-without-the-sdk" aria-label="Link to this section">#</a></h2>
+<p><code>rim-plugin.json</code>:</p>
+<pre><code class="language-json">{&quot;manifest_version&quot;:1,&quot;plugin_id&quot;:&quot;dev.example.hello-web&quot;,&quot;display_name&quot;:&quot;Hello Web&quot;,&quot;version&quot;:&quot;0.1.0&quot;,&quot;description&quot;:&quot;Says hello from a sandboxed frame.&quot;,&quot;runtime_kind&quot;:&quot;WebSandboxed&quot;,&quot;entrypoint&quot;:&quot;main.mjs&quot;,&quot;commands&quot;:[{&quot;id&quot;:&quot;greet&quot;,&quot;title&quot;:&quot;Hello Web: Greet&quot;,&quot;description&quot;:&quot;Greets the signed-in user.&quot;}]}</code></pre>
+<p><code>main.mjs</code> (it has no <code>rim.shutdown</code> case: removal of the frame stops it):</p>
+<pre><code class="language-js">const port = globalThis.rimPluginPort;
+const ID = &quot;dev.example.hello-web&quot;;
+const send = (m) =&gt; port.postMessage(JSON.stringify({ jsonrpc: &quot;2.0&quot;, ...m }));
+let who = null;
+port.onmessage = (event) =&gt; {
+  let m;
+  try { m = JSON.parse(event.data); } catch { return; }
+  const p = m.params ?? {};
+  switch (m.method) {
+    case &quot;rim.handshake&quot;: {
+      const ok = p.supportedVersions?.includes(1) &amp;&amp; p.pluginId === ID;
+      who = p.principal;
+      send({ id: m.id, result: { accepted: ok, protocolVersion: 1, pluginId: ID } });
+      break;
+    }
+    case &quot;rim.heartbeat&quot;:
+      send({ id: m.id, result: {} });
+      break;
+    case &quot;rim.principal.changed&quot;:
+      who = p.principal;
+      break;
+    case &quot;rim.command.execute&quot;:
+      if (p.commandId === &quot;greet&quot;) send({ id: m.id, result: { payload: `Hello, ${who?.displayName ?? &quot;world&quot;}!` } });
+      else send({ id: m.id, error: { code: -32602, message: `unknown command: ${p.commandId}` } });
+      break;
+    default:
+      if (m.id != null &amp;&amp; m.method) send({ id: m.id, error: { code: -32601, message: `method not found: ${m.method}` } });
+  }
+};</code></pre>
+<p>Messages wait in the port&#39;s queue until <code>onmessage</code> is set, so the handshake the host sent while
+the module loaded is not lost.</p>
+<h2 id="security">Security <a class="anchor" href="#security" aria-label="Link to this section">#</a></h2>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Threat</th>
+<th>Stopped?</th>
+<th>How, or why not</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Reading the host page, the RIM session cookie, the CSRF token, device keys</td>
+<td>Yes</td>
+<td>Opaque origin, no <code>allow-same-origin</code>. Device keys are non-extractable <code>CryptoKey</code>s in the host origin&#39;s IndexedDB.</td>
+</tr>
+<tr>
+<td>Calling GraphQL as the user</td>
+<td>Yes</td>
+<td>A request from an opaque origin is cross-site, so the <code>SameSite=Lax</code> session cookie is not sent; the frame cannot read the CSRF token; the RIM origins are never in its policy.</td>
+</tr>
+<tr>
+<td>Reading files, running programs</td>
+<td>Yes</td>
+<td>The browser</td>
+</tr>
+<tr>
+<td>Reading another plugin&#39;s data</td>
+<td>Yes</td>
+<td>Each frame has its own opaque origin; the host scopes panel state and storage by the plugin id it takes from the iframe, never from a message.</td>
+</tr>
+<tr>
+<td>Drawing over the host, clickjacking host controls</td>
+<td>Yes</td>
+<td>The iframe&#39;s box. Host dialogs render above frames, and frames are <code>inert</code> while one is open.</td>
+</tr>
+<tr>
+<td>Faking host UI inside its own box</td>
+<td>No</td>
+<td>A plugin can draw a fake RIM dialog or password form in its box. Rules: RIM never asks for a password, recovery phrase or confirmation inside a plugin&#39;s area; host chrome around each panel shows the plugin&#39;s name and trust badge; dangerous confirmations are host dialogs naming the plugin.</td>
+</tr>
+<tr>
+<td>Sending data to unlisted origins with <code>fetch</code>, XHR, WebSocket, images, fonts</td>
+<td>Yes</td>
+<td>The policy</td>
+</tr>
+<tr>
+<td>Leaking data by other channels</td>
+<td>No</td>
+<td>A frame can navigate itself to any URL (the load rule removes it after the request left); DNS prefetch, WebRTC ICE and timing are outside CSP. Anything shown to a web plugin should be treated as available to its author, which the <code>network.fetch</code> description says.</td>
+</tr>
+<tr>
+<td>Using the user&#39;s cookies on a listed site</td>
+<td>Partly</td>
+<td><code>credentialless</code> where supported, otherwise the browser&#39;s third-party cookie rules</td>
+</tr>
+<tr>
+<td>CPU and memory exhaustion</td>
+<td>Partly</td>
+<td>Where the browser gives the frame its own process, missed heartbeats remove it. Where the frame shares the host&#39;s thread (WebKit-based webviews), a busy loop freezes the app until reload, and safe start keeps it from starting again.</td>
+</tr>
+<tr>
+<td>Flooding the host with messages</td>
+<td>Yes</td>
+<td><a href="#limits">Limits</a></td>
+</tr>
+</tbody></table></div>
+<p>Rules:</p>
+<ol>
+<li><code>sandbox</code> is exactly <code>allow-scripts</code>.</li>
+<li>The shell appends the per-plugin policy before any plugin byte runs.</li>
+<li>The host never puts the RIM API origin, the web app&#39;s origin, <code>http:</code> or a wildcard into a
+frame&#39;s policy. A manifest whose <code>network_origins</code> names the app&#39;s or the API&#39;s origin is
+refused at install.</li>
+<li>A window message is accepted only with origin <code>&quot;null&quot;</code> and <code>event.source</code> the expected iframe&#39;s
+<code>contentWindow</code>; the plugin id comes from the iframe.</li>
+<li>The port is transferred once, on the first <code>load</code>; a second <code>load</code> removes the frame.</li>
+<li>Every request is checked against capabilities and limits before it is dispatched.</li>
+<li>Bundle bytes are hashed before they reach the shell, at install and at every start.</li>
+<li>Text from a plugin (names, descriptions, messages, notifications) is rendered as text, never as
+HTML, and marked as the plugin&#39;s.</li>
+</ol>
+<h2 id="limits">Limits <a class="anchor" href="#limits" aria-label="Link to this section">#</a></h2>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>What</th>
+<th>Limit</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Bundle</td>
+<td>8 MiB, 256 files</td>
+</tr>
+<tr>
+<td>Message on the port</td>
+<td>4 MiB</td>
+</tr>
+<tr>
+<td>Plugin-to-host messages</td>
+<td>600 a minute per plugin: a request over it gets <code>RATE_LIMITED</code>, a notification is dropped. More than 1,200 in a minute stops the plugin.</td>
+</tr>
+<tr>
+<td>Per capability</td>
+<td>120 calls a minute (v1)</td>
+</tr>
+<tr>
+<td><code>rim.log</code></td>
+<td>120 lines a minute</td>
+</tr>
+<tr>
+<td><code>rim.storage.*</code></td>
+<td>1 MiB per store, 120 calls a minute</td>
+</tr>
+<tr>
+<td>Panel state</td>
+<td>1 MiB per plugin</td>
+</tr>
+<tr>
+<td>Panel bridge messages</td>
+<td>600 a minute per panel frame, the rest dropped</td>
+</tr>
+<tr>
+<td>Handshake / command</td>
+<td>10 s from init / 30 s</td>
+</tr>
+<tr>
+<td>Heartbeat</td>
+<td>Every 30 s, 5 s to answer, frame removed after 2 misses</td>
+</tr>
+<tr>
+<td><code>network_origins</code></td>
+<td>16</td>
+</tr>
+</tbody></table></div>
+<h2 id="test-plan-rim-ui">Test plan (rim-ui) <a class="anchor" href="#test-plan-rim-ui" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>Bundles.</strong> Appendix A byte for byte; refused: unsorted or duplicate paths, <code>..</code>, a dot
+segment, both <code>text</code> and <code>base64</code>, no manifest or entrypoint, a web bundle file outside
+<code>panels/</code>, 8 MiB plus one byte, unknown fields.</li>
+<li><strong>Manifests.</strong> A shared <code>protocol/manifest-vectors.json</code> of valid and invalid manifests (both
+kinds; <code>network_origins</code> with <code>http:</code>, <code>ws:</code>, a path, a wildcard, uppercase, 17 origins, the
+API&#39;s origin), run by <code>validation.rs</code> and <code>manifestRules.ts</code> with identical verdicts.</li>
+<li><strong>Host.</strong> <code>webPluginHost</code> with a fake frame and a real <code>MessageChannel</code>: host messages valid
+against <code>plugin-protocol-v1.schema.json</code>; handshake timeout from init; <code>rim.frame.error</code>; a second
+<code>load</code>; a non-string message; 4 MiB plus one byte; capability denial and limits; two missed
+heartbeats; none while hidden; shutdown grace; the gates in order; storage quota and scoping;
+safe start. <strong>Conformance:</strong> the template&#39;s browser build over <code>portTransport</code> against the host&#39;s
+session code in Node, through every v1 message, as the stdio conformance tests do.</li>
+<li><strong>Shell</strong> (jsdom): the policy <code>&lt;meta&gt;</code> precedes the entry import; panel rendering rewrites
+relative URLs, runs scripts in order, dispatches the load events; messages not from
+<code>window.parent</code> are ignored. <strong>Consent:</strong> each kind&#39;s line; <code>network.fetch</code> lists the hosts.</li>
+<li><strong>Manual, in Chromium, Firefox and the Tauri webview:</strong> the showcase from a registry entry on the
+web and from a folder on the desktop; a <code>fetch</code> to an unlisted origin fails with a CSP error; a
+frame that sets <code>location</code> is removed; a panel&#39;s <code>alert</code> does nothing.</li>
+</ul>
+<h2 id="deferred">Deferred <a class="anchor" href="#deferred" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>Brokered secrets (a GitHub token for private repositories) and <code>settings_schema</code>.</li>
+<li>Wildcard origins and an &quot;any origin&quot; grant.</li>
+<li><code>rim.ui.show_notification</code> from the plugin frame; today only panels notify.</li>
+<li>Installing a <code>.rimbundle</code> file on the web, and live reload for developers.</li>
+<li>Clipboard writes from panels.</li>
+<li>Signed links: a link that carries a signed statement outside any registry.</li>
+<li>Web plugins on mobile, with the PWA.</li>
+<li>The chat and event methods in v1, for both kinds.</li>
+<li>CPU limits per plugin, and a browser test suite in CI.</li>
+</ul>
+<h2 id="appendix-a-known-answer-bundle">Appendix A: known-answer bundle <a class="anchor" href="#appendix-a-known-answer-bundle" aria-label="Link to this section">#</a></h2>
+<p>The bundle of the plugin in <a href="#a-web-plugin-without-the-sdk">A web plugin without the SDK</a>:
+<code>main.mjs</code> is the listing above with a final newline (1,101 bytes), and <code>rim-plugin.json</code> is the
+manifest above, one line with no final newline (306 bytes). Computed with Python&#39;s <code>json</code> and
+<code>hashlib</code>, checked with <code>sha256sum</code>.</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Bundle (<code>files</code> sorted: <code>main.mjs</code>, <code>rim-plugin.json</code>; compact JSON)</td>
+<td>1,605 bytes</td>
+</tr>
+<tr>
+<td>SHA-256</td>
+<td><code>5b154b3eb45c3ebc44f6820ba30a389ce85b43dea34bcbf652b9b1a5416fbe85</code></td>
+</tr>
+</tbody></table></div>
+<p>The bundle file is <code>{&quot;format&quot;:&quot;rim-plugin-bundle&quot;,&quot;v&quot;:1,&quot;files&quot;:[{&quot;path&quot;:&quot;main.mjs&quot;,&quot;text&quot;:</code> +
+the JSON string of <code>main.mjs</code> + <code>},{&quot;path&quot;:&quot;rim-plugin.json&quot;,&quot;text&quot;:</code> + the JSON string of the
+manifest + <code>}]}</code>, where a JSON string escapes only <code>&quot;</code>, <code>\</code> and control characters (<code>\n</code> for a line
+feed), as <code>JSON.stringify</code> does. <a href="workspace-plugins-v1.html"><code>workspace-plugins-v1.md</code></a>, appendix A, signs this bundle.</p>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/docs/specs/web-plugins-v1.md">rim-server/docs/specs/web-plugins-v1.md</a> at <code>c86029b</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+<script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
+</body>
+</html>

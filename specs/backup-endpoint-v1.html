@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Backup endpoint, version 1 · RIM</title>
+<meta name="description" content="The desktop app keeps its history archive (history-archive-v1.md) in a folder, in Google Drive or Dropbox, or on a service the user runs: the backup endpoint. This document is that service's protocol, so anyone can …">
+<link rel="icon" href="../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../index.html" aria-label="RIM home">
+      <picture><source srcset="../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../index.html#what">What RIM is</a>
+      <a href="../index.html#how">How it works</a>
+      <a href="../docs/self-hosting.html">Self-host</a>
+      <a href="../configure/index.html">Configure</a>
+      <a href="../docs/index.html">Docs</a>
+      <a href="../api/index.html">API</a>
+      <a href="index.html" aria-current="page">Specs</a>
+      <a href="../docs/contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="index.html">Specs</a><span aria-hidden="true">/</span><span>Backup endpoint, version 1</span></div>
+  <div class="page with-toc">
+    <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
+<ol>
+<li><a href="#the-url">The URL</a></li>
+<li><a href="#paths">Paths</a></li>
+<li><a href="#requests">Requests</a><ol><li><a href="#read-a-file">Read a file</a></li><li><a href="#list-a-directory">List a directory</a></li><li><a href="#store-a-file">Store a file</a></li><li><a href="#exclusive-create">Exclusive create</a></li></ol></li>
+<li><a href="#authentication">Authentication</a></li>
+<li><a href="#transport">Transport</a></li>
+<li><a href="#the-check">The check</a></li>
+<li><a href="#status-codes">Status codes</a></li>
+<li><a href="#retries">Retries</a></li>
+<li><a href="#size-limits">Size limits</a></li>
+<li><a href="#what-the-service-learns">What the service learns</a></li>
+<li><a href="#writing-a-service">Writing a service</a></li>
+<li><a href="#not-in-version-1">Not in version 1</a></li>
+</ol>
+</details></aside>
+    <main id="content" class="prose">
+<h1 id="backup-endpoint-version-1">Backup endpoint, version 1</h1>
+<p class="status"><span><b>Backup endpoint, version 1</b></span><span>version 1</span><span><a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/docs/specs/backup-endpoint-v1.md">rim-ui/docs/specs/backup-endpoint-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-ui/commit/58e3ec03c43064632a6a6f610d92413040229dfd">58e3ec0</a></span></p>
+<p>The desktop app keeps its history archive (<a href="history-archive-v1.html"><code>history-archive-v1.md</code></a>) in a folder, in Google Drive
+or Dropbox, or on a service the user runs: the <strong>backup endpoint</strong>. This document is that
+service&#39;s protocol, so anyone can write one. It is one URL answering <code>GET</code> and <code>POST</code>; the files
+it stores are the archive&#39;s, already encrypted, and it never needs to understand them.</p>
+<p>The device side is <a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/src-tauri/src/history_archive/cloud/endpoint.rs"><code>src-tauri/src/history_archive/cloud/endpoint.rs</code></a>. A reference service ships
+next to this document: <a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/docs/specs/backup-endpoint-reference.py"><code>backup-endpoint-reference.py</code></a>, a single Python 3 file using only the
+standard library, which keeps the files under one directory. The app&#39;s tests run the endpoint
+provider against it.</p>
+<p>A write-only webhook is deliberately not the protocol: restoring on a new device, and several
+devices sharing one archive, need read and list.</p>
+<h2 id="the-url">The URL <a class="anchor" href="#the-url" aria-label="Link to this section">#</a></h2>
+<p>The user types the endpoint&#39;s URL in Settings &gt; History, &quot;Your own server&quot;. When its path ends
+in <code>/backup</code>, requests go to that URL; otherwise <code>/backup</code> is appended
+(<code>https://backup.example.com</code> and <code>https://backup.example.com/backup</code> are the same endpoint;
+<code>https://example.com/rim</code> becomes <code>https://example.com/rim/backup</code>). The URL has no user name,
+password, query or fragment.</p>
+<p>Every request carries exactly one query parameter, <code>path</code> or <code>list</code>, whose value is an archive
+path, percent-encoded as <code>application/x-www-form-urlencoded</code> (a <code>/</code> may arrive as <code>%2F</code>).</p>
+<h2 id="paths">Paths <a class="anchor" href="#paths" aria-label="Link to this section">#</a></h2>
+<p>Archive paths are relative and <code>/</code>-separated (<code>accounts/&lt;tag&gt;/devices/&lt;id&gt;/head.rimx</code>). Every
+segment is non-empty, is not <code>.</code> or <code>..</code>, and holds no <code>\</code>, <code>:</code> or NUL. Version 1 writes paths
+of lowercase hex, digits, <code>-</code>, <code>.</code> and the fixed names of <a href="history-archive-v1.html"><code>history-archive-v1.md</code></a>, at most about
+110 bytes long; a service may refuse paths over 1,024 bytes with 400.</p>
+<p>A service must refuse (400) any path that would leave its storage, whatever the device sends. It
+maps paths to its storage however it likes (directories on disk, object keys, database rows);
+directories exist exactly while a file is under them.</p>
+<h2 id="requests">Requests <a class="anchor" href="#requests" aria-label="Link to this section">#</a></h2>
+<h3 id="read-a-file">Read a file <a class="anchor" href="#read-a-file" aria-label="Link to this section">#</a></h3>
+<pre><code class="language-http">GET /backup?path=accounts/0011…/devices/0f0e…/head.rimx</code></pre>
+<ul>
+<li><code>200</code> with the file&#39;s bytes exactly as stored. The <code>Content-Type</code> does not matter.</li>
+<li><code>404</code> when there is no file at that path.</li>
+</ul>
+<h3 id="list-a-directory">List a directory <a class="anchor" href="#list-a-directory" aria-label="Link to this section">#</a></h3>
+<pre><code class="language-http">GET /backup?list=accounts/0011…/devices</code></pre>
+<p><code>list=</code> with an empty value is the root.</p>
+<ul>
+<li><p><code>200</code> with a JSON array of the entries directly in that directory, files and directories,
+hidden names (starting with <code>.</code>) included:</p>
+<pre><code class="language-json">[
+  { &quot;name&quot;: &quot;0f0e0d0c-aaaa-4bbb-8ccc-123456789abc&quot;, &quot;dir&quot;: true },
+  { &quot;name&quot;: &quot;head.rimx&quot;, &quot;dir&quot;: false }
+]</code></pre>
+<p><code>name</code> is one path segment; <code>dir</code> says whether it is a directory. Other fields are ignored.
+The order is free, except for a service that ignores <code>If-None-Match</code> (below), which lists in
+the order it stored the entries, oldest first.</p>
+</li>
+<li><p><code>404</code>, or <code>200</code> with <code>[]</code>, for a directory that does not exist. The root always exists.</p>
+</li>
+</ul>
+<h3 id="store-a-file">Store a file <a class="anchor" href="#store-a-file" aria-label="Link to this section">#</a></h3>
+<pre><code class="language-http">POST /backup?path=accounts/0011…/devices/0f0e…/seg-0000000001.rimx
+Content-Type: application/octet-stream
+
+&lt;the file's bytes&gt;</code></pre>
+<p>The service stores the body whole under that path, creating the directories above it and
+replacing any file already there. A reader sees the old bytes or the new ones, never a mix or a
+truncated file: write to a temporary name, then rename over the target.</p>
+<ul>
+<li><code>201</code> when the file is new, <code>204</code> when it replaced one. The device accepts any <code>2xx</code>.</li>
+</ul>
+<h3 id="exclusive-create">Exclusive create <a class="anchor" href="#exclusive-create" aria-label="Link to this section">#</a></h3>
+<pre><code class="language-http">POST /backup?path=rim-archive.json
+If-None-Match: *</code></pre>
+<p>The same, except that the service stores the body only if nothing is at the path, and otherwise
+answers <code>412</code> and leaves the file alone. It must be atomic: of two devices creating one path at
+once, exactly one gets <code>2xx</code> (a hard link of the fully written temporary file, an exclusive
+open, a conditional insert). The device creates only the archive&#39;s manifest this way, once per
+archive.</p>
+<p><strong>A service that ignores the header still works.</strong> The check (below) finds out, and from then on
+the device creates a file without the service&#39;s help:</p>
+<ol>
+<li>It reads the path. A file there means the name is taken.</li>
+<li>It stores the bytes under a claim of its own in the same directory,
+<code>.&lt;name&gt;.&lt;12 random hex digits&gt;.claim</code>.</li>
+<li>It lists the directory and keeps the claim for <code>&lt;name&gt;</code> that the listing names first. Since
+such a service lists in the order it stored, that is the oldest claim, and every device that
+lists agrees on it.</li>
+<li>It copies the kept claim&#39;s bytes to the path. Every device does, so they all write the same
+bytes there; the one whose claim was kept has created the file, the others join it.</li>
+</ol>
+<p>Claims stay behind: version 1 has no delete. They are small, hidden, and only ever made for the
+manifest.</p>
+<h2 id="authentication">Authentication <a class="anchor" href="#authentication" aria-label="Link to this section">#</a></h2>
+<p>The user picks one at setup:</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Mode</th>
+<th>Request header</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>None</td>
+<td>none</td>
+</tr>
+<tr>
+<td>User and password</td>
+<td><code>Authorization: Basic &lt;base64(user:password)&gt;</code> (RFC 7617)</td>
+</tr>
+<tr>
+<td>Token</td>
+<td><code>Authorization: Bearer &lt;token&gt;</code> (RFC 6750)</td>
+</tr>
+<tr>
+<td>Token in a header</td>
+<td><code>&lt;header name the user typed&gt;: &lt;token&gt;</code></td>
+</tr>
+</tbody></table></div>
+<p>The service answers <code>401</code> to missing or wrong credentials and <code>403</code> to valid ones it does not
+allow; it should compare secrets in constant time. On the device, the password or token is kept
+in the secret vault as <code>history-archive-cloud-v1:&lt;connection id&gt;</code>; the account&#39;s archive settings
+file names the URL, the mode, and the user name or header name, never the secret. Stopping
+backups on a device deletes the secret from its vault.</p>
+<h2 id="transport">Transport <a class="anchor" href="#transport" aria-label="Link to this section">#</a></h2>
+<p>HTTPS is required, with the certificate verified against the system&#39;s trust store, unless the
+host is this computer (<code>localhost</code>, <code>127.0.0.0/8</code>, <code>::1</code>) or the user ticks &quot;Allow an
+unencrypted connection&quot;. Over plain HTTP the archive&#39;s files are still encrypted, but the
+credentials travel in the clear and anyone on the way can withhold or replay files. Version 1
+has no certificate pinning, self-signed certificate override or client certificates: use a
+certificate the system trusts, or the override on a network the user controls.</p>
+<h2 id="the-check">The check <a class="anchor" href="#the-check" aria-label="Link to this section">#</a></h2>
+<p>Before an endpoint is used, Settings runs a check, which also stands for the provider&#39;s
+&quot;check writable&quot;:</p>
+<ol>
+<li><code>POST ?path=.rim-probe-&lt;16 random hex digits&gt;</code> with 32 random bytes.</li>
+<li><code>GET ?list=</code> (the root): it must be a JSON array of entries.</li>
+<li><code>GET ?path=.rim-probe-…</code>: it must return the same 32 bytes.</li>
+<li><code>POST ?path=.rim-probe-…</code> again with <code>If-None-Match: *</code>: <code>412</code> means the service honours
+exclusive creates; <code>2xx</code> or <code>501</code> means it does not, and the device uses claims. The answer
+is saved with the connection.</li>
+<li><code>GET ?path=rim-archive.json</code>, to tell the user whether an archive is already there.</li>
+</ol>
+<p>The probe stays; a service may delete <code>.rim-probe-*</code> files whenever it likes. A failed check
+names the problem:</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Found</th>
+<th>Told</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>No connection, timeout, DNS failure</td>
+<td>nothing answers at that address</td>
+</tr>
+<tr>
+<td>TLS handshake or certificate failure</td>
+<td>the secure connection failed</td>
+</tr>
+<tr>
+<td>Plain HTTP to another computer, not allowed</td>
+<td>use <code>https://</code>, or allow an unencrypted connection</td>
+</tr>
+<tr>
+<td><code>401</code></td>
+<td>the credentials were refused</td>
+</tr>
+<tr>
+<td><code>403</code></td>
+<td>the credentials were accepted, access refused</td>
+</tr>
+<tr>
+<td><code>404</code> or <code>405</code> to the probe&#39;s <code>POST</code></td>
+<td>no backup endpoint at that URL</td>
+</tr>
+<tr>
+<td>A listing that is not a JSON array</td>
+<td>not a backup endpoint</td>
+</tr>
+<tr>
+<td>The probe not returned, or other bytes</td>
+<td>the service does not keep files correctly</td>
+</tr>
+</tbody></table></div>
+<p>The check retries once; a TLS failure is not retried.</p>
+<h2 id="status-codes">Status codes <a class="anchor" href="#status-codes" aria-label="Link to this section">#</a></h2>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Status</th>
+<th>To</th>
+<th>Meaning to the device</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>200</code></td>
+<td><code>GET</code></td>
+<td>the file, or the listing</td>
+</tr>
+<tr>
+<td><code>201</code>, <code>204</code> (any <code>2xx</code>)</td>
+<td><code>POST</code></td>
+<td>stored</td>
+</tr>
+<tr>
+<td><code>400</code></td>
+<td>any</td>
+<td>the request is malformed or the path refused; reported as an error</td>
+</tr>
+<tr>
+<td><code>401</code></td>
+<td>any</td>
+<td>credentials missing or wrong</td>
+</tr>
+<tr>
+<td><code>403</code></td>
+<td>any</td>
+<td>credentials valid, access refused</td>
+</tr>
+<tr>
+<td><code>404</code></td>
+<td><code>GET ?path</code></td>
+<td>no such file</td>
+</tr>
+<tr>
+<td><code>404</code></td>
+<td><code>GET ?list</code></td>
+<td>no such directory (an empty listing); at the root, not a backup endpoint</td>
+</tr>
+<tr>
+<td><code>404</code>, <code>405</code></td>
+<td><code>POST</code></td>
+<td>not a backup endpoint at that URL</td>
+</tr>
+<tr>
+<td><code>412</code></td>
+<td><code>POST</code> with <code>If-None-Match: *</code></td>
+<td>the name is taken</td>
+</tr>
+<tr>
+<td><code>413</code></td>
+<td><code>POST</code></td>
+<td>the file is larger than the service takes; the backup fails</td>
+</tr>
+<tr>
+<td><code>429</code></td>
+<td>any</td>
+<td>busy: retried, honouring <code>Retry-After</code></td>
+</tr>
+<tr>
+<td><code>500</code>, <code>502</code>, <code>503</code>, <code>504</code></td>
+<td>any</td>
+<td>retried</td>
+</tr>
+<tr>
+<td><code>501</code></td>
+<td><code>POST</code> with <code>If-None-Match: *</code></td>
+<td>no exclusive create (only during the check)</td>
+</tr>
+<tr>
+<td><code>507</code></td>
+<td><code>POST</code></td>
+<td>the service is full; the backup fails</td>
+</tr>
+</tbody></table></div>
+<h2 id="retries">Retries <a class="anchor" href="#retries" aria-label="Link to this section">#</a></h2>
+<p>As for every provider (<a href="history-archive-v1.html"><code>history-archive-v1.md</code></a>, &quot;Retries and interrupted backups&quot;): a <code>429</code>, a
+<code>5xx</code> or a network failure is retried up to six attempts in all, waiting as <code>Retry-After</code> says
+(at most 60 s) or with exponential backoff and jitter from 0.5 s to 16 s; a TLS failure is not
+retried. A <code>POST</code> is retried like a <code>GET</code>: storing a file whole is idempotent. An exclusive
+create whose <code>2xx</code> was lost is answered <code>412</code> on the retry; the device then joins the manifest,
+which is its own.</p>
+<h2 id="size-limits">Size limits <a class="anchor" href="#size-limits" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>Files.</strong> A segment holds at most 4 MiB of plaintext and its envelope adds 46 bytes; heads,
+key wraps and the manifest are a few KiB, an identity backup under 1 KiB. A service must
+accept bodies of at least <strong>8 MiB</strong>: twice the largest file version 1 writes, which leaves
+room for additive changes within version 1. It answers <code>413</code> beyond its own limit. The
+reference service takes 64 MiB.</li>
+<li><strong>Time.</strong> The device gives a request 180 s, so a 4 MiB upload must complete within that on the
+user&#39;s uplink.</li>
+<li><strong>Listings.</strong> There is no paging. The device lists only the root, <code>devices/</code>, <code>accounts/</code> and
+<code>accounts/&lt;tag&gt;/devices/</code>, which hold one entry per account or device; it never lists a
+device&#39;s own directory, where segments accumulate. A service must answer listings of at least
+10,000 entries.</li>
+<li><strong>Paths.</strong> At most 1,024 bytes (above).</li>
+</ul>
+<h2 id="what-the-service-learns">What the service learns <a class="anchor" href="#what-the-service-learns" aria-label="Link to this section">#</a></h2>
+<p>The same as any drive the archive is kept in: the file names (account tags, device ids, segment
+numbers, none of which reveal the user, their server or their conversations), the files&#39; sizes,
+and when each is written or read, which shows when each device is active (a device exports a few
+minutes after it syncs). It also sees each device&#39;s IP address and the credentials it was given.
+Nothing else: it cannot read the history, the identity key backup or the key wraps. Like any
+drive, it can delete, withhold or roll back files, with the consequences
+<a href="history-archive-v1.html"><code>history-archive-v1.md</code></a> describes.</p>
+<h2 id="writing-a-service">Writing a service <a class="anchor" href="#writing-a-service" aria-label="Link to this section">#</a></h2>
+<p>What a service must get right, in order of how much it matters:</p>
+<ol>
+<li>Store a file whole and atomically: temporary file, then rename.</li>
+<li>Refuse paths that leave the storage.</li>
+<li>Make <code>If-None-Match: *</code> atomic, or ignore it entirely and list in storage order. A service
+that half honours it (checks, then writes) can let two devices create two archives.</li>
+<li>Answer listings as a JSON array of <code>{&quot;name&quot;, &quot;dir&quot;}</code>.</li>
+<li>Require credentials and serve HTTPS when it is reachable from another computer.</li>
+</ol>
+<p>The reference service is plain HTTP on loopback by default:</p>
+<pre><code class="language-sh">python3 docs/specs/backup-endpoint-reference.py --dir ~/rim-backup --bearer &quot;$(openssl rand -hex 24)&quot;</code></pre>
+<p>To reach it from other computers, put a TLS-terminating reverse proxy (Caddy, nginx) in front of
+it.</p>
+<h2 id="not-in-version-1">Not in version 1 <a class="anchor" href="#not-in-version-1" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>Deleting files: probes and claims stay until the service removes them.</li>
+<li>Paged listings, resumable or chunked uploads.</li>
+<li>Certificate pinning, self-signed certificate overrides, client certificates.</li>
+<li>WebDAV (Nextcloud, ownCloud) as a provider of its own; this protocol&#39;s shape resembles it.</li>
+</ul>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/docs/specs/backup-endpoint-v1.md">rim-ui/docs/specs/backup-endpoint-v1.md</a> at <code>58e3ec0</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+<script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
+</body>
+</html>

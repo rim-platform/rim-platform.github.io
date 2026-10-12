@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RIM client · RIM</title>
+<meta name="description" content="RIM is a programmable communication workspace. Chat is the medium; the product is what people build on top of it: a command palette over every action, keybinds for anything, macros that chain commands, pipelines that …">
+<link rel="icon" href="../../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../../index.html" aria-label="RIM home">
+      <picture><source srcset="../../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../../index.html#what">What RIM is</a>
+      <a href="../../index.html#how">How it works</a>
+      <a href="../self-hosting.html">Self-host</a>
+      <a href="../../configure/index.html">Configure</a>
+      <a href="../index.html" aria-current="page">Docs</a>
+      <a href="../../api/index.html">API</a>
+      <a href="../../specs/index.html">Specs</a>
+      <a href="../contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="../index.html">Docs</a><span aria-hidden="true">/</span><a href="../using-rim.html">Using RIM</a><span aria-hidden="true">/</span><span>RIM client</span></div>
+  <div class="page with-toc">
+    <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
+<ol>
+<li><a href="#what-is-in-it">What is in it</a></li>
+<li><a href="#quickstart">Quickstart</a><ol><li><a href="#linux-build-dependencies">Linux build dependencies</a></li></ol></li>
+<li><a href="#build-configuration">Build configuration</a><ol><li><a href="#history-archive-in-google-drive-dropbox-or-onedrive">History archive in Google Drive, Dropbox or OneDrive</a></li><li><a href="#history-archive-in-s3-compatible-storage-or-on-your-own-server">History archive in S3-compatible storage or on your own server</a></li></ol></li>
+<li><a href="#development">Development</a></li>
+<li><a href="#plugins">Plugins</a></li>
+<li><a href="#documentation">Documentation</a></li>
+<li><a href="#security">Security</a></li>
+<li><a href="#license">License</a></li>
+</ol>
+</details></aside>
+    <main id="content" class="prose">
+<h1 id="rim-client">RIM client</h1>
+<p>RIM is a programmable communication workspace. Chat is the medium; the product is what people
+build on top of it: a command palette over every action, keybinds for anything, macros that
+chain commands, pipelines that react to events, plugins that add panels and commands, and a
+bring-your-own-model AI agent that acts through the same commands behind a human confirmation.
+A person is a key pair rather than an account on one server, and DMs and private groups are
+end-to-end encrypted. The product vision and the server live in the separate <code>rim-server</code>
+repository.</p>
+<p>This repository is the client, in two builds from one React 19 and TypeScript code base:</p>
+<ul>
+<li><strong>The desktop app</strong>, a Tauri 2 shell around the React app, for Linux, macOS and Windows. It
+holds the identity key, runs local plugin processes, keeps an encrypted message cache and opens
+offline.</li>
+<li><strong>The web app</strong>, the same React app as static files, which a RIM server deployment serves on
+its own domain. It signs in with a password or as a linked device of a desktop app, and runs
+web plugins. It has no identity key, no local plugin processes, no AI agent and no updater.</li>
+</ul>
+<h2 id="what-is-in-it">What is in it <a class="anchor" href="#what-is-in-it" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>Command palette.</strong> A fuzzy launcher over every built-in, user, macro and plugin command,
+with typed arguments, piping one command&#39;s output into the next with <code>|</code>, and confirmations
+for dangerous commands.</li>
+<li><strong>Keybinds and the Vim profile.</strong> Context-aware keybinds with server-stored layers and
+device-local overrides, three built-in profiles (Minimal, Vim, Mouse-friendly), and profile
+export and import (<a href="keyboard.html"><code>docs/keyboard.md</code></a>).</li>
+<li><strong>Macros and pipelines.</strong> Macros chain commands, and the macro builder can draft one with the
+AI agent; pipelines are server-side rules that run commands when events happen. Channel lenses
+filter a timeline, and workspace state is a key-value store commands can read and write.</li>
+<li><strong>Plugins.</strong> Local process plugins (<code>DesktopLocalProcess</code>) run on the desktop under the plugin
+host, with capability prompts and a trust-on-first-use bundle fingerprint. Web plugins
+(<code>WebSandboxed</code>) run in a sandboxed frame on the desktop and the web. A workspace can keep a
+registry of plugins whose manifests their publisher signed (<a href="web-plugins.html"><code>docs/web-plugins.md</code></a>,
+<a href="workspace-plugins.html"><code>docs/workspace-plugins.md</code></a>, <a href="plugin-chat-methods.html"><code>docs/plugin-chat-methods.md</code></a>).</li>
+<li><strong>Key identity and device linking.</strong> The desktop app enrolls an identity key, signs in with a
+certified device key, recovers the account with a recovery kit, and links other computers or
+a browser with a code (<a href="device-linking-desktop.html"><code>docs/device-linking-desktop.md</code></a>, <a href="web-linked-device.html"><code>docs/web-linked-device.md</code></a>,
+<a href="identity-key-backup.html"><code>docs/identity-key-backup.md</code></a>).</li>
+<li><strong>Encrypted DMs and groups.</strong> MLS through OpenMLS, in Rust on the desktop and compiled to
+WebAssembly in the web app; channels stay plaintext (<a href="e2ee-desktop.html"><code>docs/e2ee-desktop.md</code></a>,
+<a href="e2ee-web.html"><code>docs/e2ee-web.md</code></a>, <a href="rim-mls.html"><code>docs/rim-mls.md</code></a>).</li>
+<li><strong>Relays.</strong> The app talks only to its own server and reaches DMs, groups and workspaces homed
+elsewhere through it, with a request inbox for messages from strangers
+(<a href="relay-client.html"><code>docs/relay-client.md</code></a>).</li>
+<li><strong>Local message cache and history archive.</strong> The desktop app keeps opened conversations in an
+encrypted SQLCipher database with local search, and can export history to an encrypted archive
+in a folder, Google Drive, Dropbox, OneDrive, S3-compatible storage or a backup endpoint the
+user runs (<a href="local-message-cache.html"><code>docs/local-message-cache.md</code></a>, <a href="../../specs/history-archive-v1.html"><code>docs/specs/history-archive-v1.md</code></a>).</li>
+<li><strong>AI agent.</strong> Desktop only. The user brings an Anthropic or OpenAI key, kept in the secret
+vault; the agent calls the server&#39;s AI-callable commands and every dangerous call waits for
+the user&#39;s confirmation. It works in encrypted conversations only where the user switches it
+on.</li>
+<li><strong>Updater.</strong> The desktop app can update itself with Tauri&#39;s signed updater. It ships dormant
+and is configured per release build (<a href="updater.html"><code>docs/updater.md</code></a>).</li>
+<li><strong>The rest of chat.</strong> Threads, replies, reactions, pins, mentions, attachments, link previews,
+custom emoji, full-text search, presence and typing, notification rules and an inbox,
+moderation and the workspace audit log.</li>
+</ul>
+<h2 id="quickstart">Quickstart <a class="anchor" href="#quickstart" aria-label="Link to this section">#</a></h2>
+<p>Prerequisites: Node.js 22 and a RIM server. Start one from <code>rim-server</code> (its README has the
+quickstart); by default the client expects the GraphQL endpoint at <code>http://localhost:8080/api</code>.</p>
+<pre><code class="language-sh">npm ci</code></pre>
+<p><strong>Desktop.</strong> Also needs Rust (stable) and, on Linux, the libraries below.</p>
+<pre><code class="language-sh">npm run tauri dev            # the desktop app with hot reload
+npm run tauri build          # installers for this platform</code></pre>
+<p><strong>Web.</strong> The Vite dev server serves the web app on port 1420. A server reached from that origin
+needs <code>RIM_CORS_ALLOWED_ORIGIN=http://localhost:1420</code>.</p>
+<pre><code class="language-sh">npm run dev</code></pre>
+<p><code>VITE_GRAPHQL_ENDPOINT</code> sets the server, at build time, for both builds (<code>.env.example</code>). For a
+deployment, <code>Dockerfile</code> builds the web app into an nginx image; <code>rim-server</code>&#39;s
+<code>deploy/compose.yml</code> builds it from a checkout of this repository and serves it on the server&#39;s
+domain with the endpoint <code>/api</code>.</p>
+<h3 id="linux-build-dependencies">Linux build dependencies <a class="anchor" href="#linux-build-dependencies" aria-label="Link to this section">#</a></h3>
+<p>Tauri&#39;s WebKitGTK stack, OpenSSL for the encrypted message cache, and libdbus for the desktop
+keyring. On Debian or Ubuntu:</p>
+<pre><code class="language-sh">sudo apt-get install libwebkit2gtk-4.1-dev libssl-dev libdbus-1-dev pkg-config \
+  libayatana-appindicator3-dev librsvg2-dev libxdo-dev</code></pre>
+<p>On Fedora:</p>
+<pre><code class="language-sh">sudo dnf install webkit2gtk4.1-devel openssl-devel dbus-devel pkgconf-pkg-config \
+  libappindicator-gtk3-devel librsvg2-devel libxdo-devel</code></pre>
+<p>At run time the app keeps its secrets (the message cache key, history archive keys, the offline
+session record, device keys, AI provider keys) in an encrypted file whose key is in the desktop
+keyring service, the Secret Service provided by GNOME Keyring, KWallet or KeePassXC
+(<a href="secret-vault.html"><code>docs/secret-vault.md</code></a>). Without one running in the session, saving an AI key fails and the
+local message cache stays off, each with an error that says so, and the app cannot open
+offline.</p>
+<h2 id="build-configuration">Build configuration <a class="anchor" href="#build-configuration" aria-label="Link to this section">#</a></h2>
+<p>A build needs no secrets. The optional services below are compiled in from environment
+variables; a build without them does not offer that service. No client id, secret or key is
+committed to this repository.</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Read by</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>VITE_GRAPHQL_ENDPOINT</code></td>
+<td>Vite</td>
+<td>The server&#39;s GraphQL endpoint (default <code>http://localhost:8080/api</code>)</td>
+</tr>
+<tr>
+<td><code>RIM_GOOGLE_CLIENT_ID</code>, <code>RIM_GOOGLE_CLIENT_SECRET</code></td>
+<td><code>src-tauri</code></td>
+<td>History archive in Google Drive</td>
+</tr>
+<tr>
+<td><code>RIM_DROPBOX_APP_KEY</code></td>
+<td><code>src-tauri</code></td>
+<td>History archive in Dropbox</td>
+</tr>
+<tr>
+<td><code>RIM_DROPBOX_REDIRECT_PORT</code></td>
+<td><code>src-tauri</code></td>
+<td>Dropbox sign-in port (default <code>53241</code>)</td>
+</tr>
+<tr>
+<td><code>RIM_MICROSOFT_CLIENT_ID</code></td>
+<td><code>src-tauri</code></td>
+<td>History archive in OneDrive</td>
+</tr>
+<tr>
+<td><code>TAURI_SIGNING_PRIVATE_KEY</code>, <code>TAURI_SIGNING_PRIVATE_KEY_PASSWORD</code></td>
+<td><code>tauri build</code></td>
+<td>Signs updater artifacts</td>
+</tr>
+</tbody></table></div>
+<p>The <code>RIM_*</code> variables are read when the Rust side is compiled (<code>npm run tauri build</code>) and again
+at start-up, so a development run can set them in the shell before <code>npm run tauri dev</code>. The
+updater also needs its public key and endpoints in <a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/src-tauri/updater.json"><code>src-tauri/updater.json</code></a>, which is committed
+empty; <a href="updater.html"><code>docs/updater.md</code></a> explains the key pair and <code>latest.json</code>.</p>
+<h3 id="history-archive-in-google-drive-dropbox-or-onedrive">History archive in Google Drive, Dropbox or OneDrive <a class="anchor" href="#history-archive-in-google-drive-dropbox-or-onedrive" aria-label="Link to this section">#</a></h3>
+<p>Settings &gt; History can keep the encrypted history archive in the user&#39;s own Google Drive,
+Dropbox or OneDrive, besides a folder on disk. The app talks to those APIs directly; no RIM
+server is involved. Signing in needs an OAuth client of your own.</p>
+<p><strong>Google Drive</strong></p>
+<ol>
+<li>In the <a href="https://console.cloud.google.com/">Google Cloud console</a>, create a project and enable
+the <strong>Google Drive API</strong> for it.</li>
+<li>Configure the OAuth consent screen (External) and add the scope
+<code>https://www.googleapis.com/auth/drive.appdata</code>. It only reaches the app&#39;s hidden
+<code>appDataFolder</code>, never the user&#39;s other files. While the app is in &quot;Testing&quot;, only listed
+test users can sign in and Google expires their sign-in after 7 days; publish it for
+lasting sign-ins.</li>
+<li>Under Credentials, create an <strong>OAuth client ID</strong> of type <strong>Desktop app</strong>. Set its client id
+and client secret as <code>RIM_GOOGLE_CLIENT_ID</code> and <code>RIM_GOOGLE_CLIENT_SECRET</code>. Google treats a
+desktop client&#39;s secret as not confidential (it ships inside the app), but its token endpoint
+still asks for it. Keep it out of the repository anyway.</li>
+</ol>
+<p>Sign-in redirects to <code>http://127.0.0.1:&lt;any free port&gt;/callback</code>, which desktop clients accept
+without registering it.</p>
+<p><strong>Dropbox</strong></p>
+<ol>
+<li>At <a href="https://www.dropbox.com/developers/apps">dropbox.com/developers/apps</a>, create an app with
+<strong>Scoped access</strong> and <strong>App folder</strong> access. The archive lives in <code>Apps/&lt;app name&gt;/</code> in the
+user&#39;s Dropbox, and the app sees nothing else.</li>
+<li>On the Permissions tab, enable <code>files.metadata.read</code>, <code>files.content.read</code>,
+<code>files.content.write</code> and <code>account_info.read</code>.</li>
+<li>On the Settings tab, add the redirect URI <code>http://localhost:53241/callback</code> (or your
+<code>RIM_DROPBOX_REDIRECT_PORT</code>), and allow public clients (PKCE). Set the <strong>App key</strong> as
+<code>RIM_DROPBOX_APP_KEY</code>. The app secret is not used.</li>
+</ol>
+<p><strong>OneDrive</strong></p>
+<ol>
+<li>In the <a href="https://entra.microsoft.com/">Microsoft Entra admin center</a>, App registrations,
+register an app for <strong>accounts in any organizational directory and personal Microsoft
+accounts</strong>.</li>
+<li>Under Authentication, add the platform <strong>Mobile and desktop applications</strong> with the redirect
+URI <code>http://localhost/callback</code> (Microsoft ignores the port of a <code>localhost</code> redirect, so the
+app&#39;s one-shot port is accepted), and set <strong>Allow public client flows</strong> to yes.</li>
+<li>Under API permissions, add the Microsoft Graph delegated permissions
+<code>Files.ReadWrite.AppFolder</code>, <code>User.Read</code> and <code>offline_access</code>. The archive lives in
+<code>Apps/&lt;app name&gt;/</code> in the user&#39;s OneDrive, and the app sees nothing else.</li>
+<li>Set the <strong>Application (client) ID</strong> as <code>RIM_MICROSOFT_CLIENT_ID</code>. No client secret is used.</li>
+</ol>
+<p>Stopping backups on a device forgets its sign-in. RIM revokes a Dropbox sign-in too, but not a
+Google one: Google revokes an app&#39;s access on every device at once, so the user removes RIM under
+Google account settings, Security, Third-party apps with account access, when they want that.
+Microsoft has no way to revoke one device&#39;s sign-in; the user removes RIM&#39;s access under their
+Microsoft account&#39;s privacy settings (apps and services), or My Apps for a work account.</p>
+<p>An archive belongs to the OAuth client that wrote it: a build with a different Google client id
+sees a different <code>appDataFolder</code>, a different Dropbox app a different <code>Apps/</code> folder, and a
+different Microsoft app a different OneDrive app folder.</p>
+<h3 id="history-archive-in-s3-compatible-storage-or-on-your-own-server">History archive in S3-compatible storage or on your own server <a class="anchor" href="#history-archive-in-s3-compatible-storage-or-on-your-own-server" aria-label="Link to this section">#</a></h3>
+<p>These need no build configuration and are always offered.</p>
+<ul>
+<li><p><strong>S3-compatible storage</strong> keeps the archive in a bucket of Amazon S3, Cloudflare R2,
+Backblaze B2, MinIO, Garage or any other S3-compatible storage, under a prefix. The user types
+the endpoint, region, bucket, prefix and an access key. Give that key <code>s3:GetObject</code>,
+<code>s3:PutObject</code> and <code>s3:ListBucket</code> on the bucket or prefix (and <code>s3:DeleteObject</code> to let the
+setup check remove its probe), nothing more.</p>
+</li>
+<li><p><strong>Your own server</strong> keeps the archive on a service the user runs: one URL answering <code>GET</code> and
+<code>POST</code>, specified in <a href="../../specs/backup-endpoint-v1.html"><code>docs/specs/backup-endpoint-v1.md</code></a>. <a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/docs/specs/backup-endpoint-reference.py"><code>docs/specs/backup-endpoint-reference.py</code></a>
+is a complete service in one Python file (standard library only) that stores the files under
+a directory:</p>
+<pre><code class="language-sh">python3 docs/specs/backup-endpoint-reference.py --dir ~/rim-backup --bearer &lt;token&gt;</code></pre>
+</li>
+</ul>
+<h2 id="development">Development <a class="anchor" href="#development" aria-label="Link to this section">#</a></h2>
+<pre><code class="language-sh">npm run lint                 # ESLint, 0 errors required
+npm run format:check         # Prettier
+npm run build                # TypeScript check and Vite build
+npm test                     # Vitest
+npm run sdk:typecheck        # the plugin SDK and the TypeScript example plugins
+
+# The Tauri side, from src-tauri/
+cargo fmt --check
+cargo clippy --all-targets --all-features -- -D warnings
+cargo test</code></pre>
+<p><code>npm run codegen</code> regenerates the GraphQL types from <code>schema.graphql</code>, which is exported from a
+running server. <code>npm run build:wasm</code> rebuilds the web app&#39;s MLS module after a change to the
+Rust MLS crates, and <code>npm run skew:check</code> lists the operations an older server would refuse
+(<a href="version-skew.html"><code>docs/version-skew.md</code></a>). <a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/CLAUDE.md"><code>CLAUDE.md</code></a> has the architecture and the conventions;
+<a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/CONTRIBUTING.md"><code>CONTRIBUTING.md</code></a> has the rules for a pull request.</p>
+<h2 id="plugins">Plugins <a class="anchor" href="#plugins" aria-label="Link to this section">#</a></h2>
+<p><a href="https://github.com/rim-platform/rim-ui/tree/58e3ec03c43064632a6a6f610d92413040229dfd/sdk/plugin-sdk"><code>sdk/plugin-sdk</code></a> is the TypeScript SDK for plugin protocol v1, whose frozen wire contract is
+<a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/protocol/plugin-protocol-v1.schema.json"><code>protocol/plugin-protocol-v1.schema.json</code></a>. <a href="https://github.com/rim-platform/rim-ui/tree/58e3ec03c43064632a6a6f610d92413040229dfd/plugins"><code>plugins/</code></a> holds examples:</p>
+<ul>
+<li><a href="https://github.com/rim-platform/rim-ui/tree/58e3ec03c43064632a6a6f610d92413040229dfd/plugins/hello-world"><code>plugins/hello-world</code></a>: the reference local process plugin, in Python with no dependencies.</li>
+<li><a href="https://github.com/rim-platform/rim-ui/tree/58e3ec03c43064632a6a6f610d92413040229dfd/plugins/template-ts"><code>plugins/template-ts</code></a>: a starting point for a TypeScript plugin.</li>
+<li><a href="https://github.com/rim-platform/rim-ui/tree/58e3ec03c43064632a6a6f610d92413040229dfd/plugins/k8s-pods"><code>plugins/k8s-pods</code></a>: lists a Kubernetes namespace&#39;s pods and restarts one after confirmation.</li>
+<li><a href="https://github.com/rim-platform/rim-ui/tree/58e3ec03c43064632a6a6f610d92413040229dfd/plugins/github-prs"><code>plugins/github-prs</code></a>: a web plugin listing the open pull requests of public GitHub
+repositories.</li>
+</ul>
+<h2 id="documentation">Documentation <a class="anchor" href="#documentation" aria-label="Link to this section">#</a></h2>
+<p><a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/docs/README.md"><code>docs/README.md</code></a> lists every document in <a href="https://github.com/rim-platform/rim-ui/tree/58e3ec03c43064632a6a6f610d92413040229dfd/docs"><code>docs/</code></a>. The product contracts the client implements,
+such as the command, keybind, context, plugin and capability models and the specifications for
+key identity, device linking, encryption and server-to-server, are in <code>rim-server</code>&#39;s <a href="https://github.com/rim-platform/rim-ui/tree/58e3ec03c43064632a6a6f610d92413040229dfd/docs"><code>docs/</code></a>.</p>
+<h2 id="security">Security <a class="anchor" href="#security" aria-label="Link to this section">#</a></h2>
+<p>Report a vulnerability privately, as <a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/SECURITY.md"><code>SECURITY.md</code></a> describes, never in a public issue.</p>
+<h2 id="license">License <a class="anchor" href="#license" aria-label="Link to this section">#</a></h2>
+<p>Apache License 2.0, see <code>LICENSE</code> and <code>NOTICE</code>. The license does not cover the RIM name, so
+forks should use a different name. To contribute, see <a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/CONTRIBUTING.md"><code>CONTRIBUTING.md</code></a>.</p>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/README.md">rim-ui/README.md</a> at <code>58e3ec0</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+<script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
+</body>
+</html>

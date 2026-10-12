@@ -1,0 +1,655 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Query · API · RIM</title>
+<meta name="description" content="Every field of the RIM GraphQL Query type.">
+<link rel="icon" href="../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../index.html" aria-label="RIM home">
+      <picture><source srcset="../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../index.html#what">What RIM is</a>
+      <a href="../index.html#how">How it works</a>
+      <a href="../docs/self-hosting.html">Self-host</a>
+      <a href="../configure/index.html">Configure</a>
+      <a href="../docs/index.html">Docs</a>
+      <a href="index.html" aria-current="page">API</a>
+      <a href="../specs/index.html">Specs</a>
+      <a href="../docs/contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="index.html">API</a><span aria-hidden="true">/</span><span>Query</span></div>
+  <div class="page with-toc">
+    <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
+<ol>
+<li><a href="#group-command">Command (2)</a></li>
+<li><a href="#group-keybind">Keybind (1)</a></li>
+<li><a href="#group-conversation">Conversation (3)</a></li>
+<li><a href="#group-channel">Channel (3)</a></li>
+<li><a href="#group-message">Message (8)</a></li>
+<li><a href="#group-search">Search (1)</a></li>
+<li><a href="#group-server">Server (6)</a></li>
+<li><a href="#group-workspace">Workspace (4)</a></li>
+<li><a href="#group-emoji">Emoji (1)</a></li>
+<li><a href="#group-macro">Macro (2)</a></li>
+<li><a href="#group-pipeline">Pipeline (1)</a></li>
+<li><a href="#group-audit">Audit (1)</a></li>
+<li><a href="#group-invite">Invite (1)</a></li>
+<li><a href="#group-notification">Notification (3)</a></li>
+<li><a href="#group-key">Key (3)</a></li>
+<li><a href="#group-device">Device (4)</a></li>
+<li><a href="#group-relay">Relay (2)</a></li>
+<li><a href="#group-other">Other (11)</a></li>
+</ol>
+</details></aside>
+    <main id="content" class="prose">
+<h1>Query</h1>
+<p class="lede">57 queries, grouped by the domain their name starts with or names, in the order the schema lists them.</p>
+<input id="filter" class="search" type="search" placeholder="Filter fields by name" aria-label="Filter fields by name" autocomplete="off">
+<p id="filter-none" class="muted" hidden>Nothing matches.</p>
+<section data-group>
+<h2 id="group-command">Command <span class="faint">2</span></h2>
+<section class="entry" id="commands" data-name="commands">
+<h3><code>commands</code></h3>
+<div class="sig">commands(surface: <a href="enums.html#CommandSurface">CommandSurface</a>, commandContext: <a href="inputs.html#CommandContextInput">CommandContextInput</a>): [<a href="objects.html#Command">Command</a>!]!</div>
+<div class="desc"><p>The commands the caller may run on <code>surface</code> (default <code>PALETTE</code>), sorted by id.</p>
+<p>A command the server runs is listed only when <code>commandContext.workspaceId</code> names a
+workspace the caller is a member of, their role there may run it, and they hold each of
+its required capabilities. The commands the client runs itself are listed in every
+context. A listed command is one <a href="mutation.html#executeCommand"><code>executeCommand</code></a> runs for the caller in that context,
+apart from a confirmation, a timeout in force and the arguments given. Naming the direct
+space makes the caller a guest of it.</p>
+<p><code>AI</code> lists only the AI-callable commands, plus the caller&#39;s AI-callable macros of the
+workspace, and fails with <code>FEATURE_DISABLED</code> while the AI command surface is off.</p>
+</div>
+
+</section>
+<section class="entry" id="commandDiscover" data-name="commandDiscover">
+<h3><code>commandDiscover</code></h3>
+<div class="sig">commandDiscover(
+  intentPhrase: <a href="scalars.html#String">String</a>
+  limit: <a href="scalars.html#Int">Int</a>
+  workspaceId: <a href="scalars.html#ID">ID</a>
+): [<a href="objects.html#Command">Command</a>!]!</div>
+<div class="desc"><p>The AI-callable commands the caller may run, for an AI agent to discover its tools.</p>
+<p>Filtered as <a href="query.html#commands"><code>commands</code></a> filters: a command the server runs is listed only when
+<code>workspaceId</code> names a workspace the caller is a member of, their role there may run it,
+and they hold each of its required capabilities; the commands the client runs itself are
+always listed. A listed command is one <a href="mutation.html#executeCommand"><code>executeCommand</code></a> runs for the caller in that
+workspace, apart from a confirmation, a timeout in force and the arguments given.</p>
+<p>With <code>intentPhrase</code> the commands are ranked by how well the phrase matches their
+intent samples, title and natural-language description. <code>limit</code> defaults to 50 and is
+capped at 100. <code>workspaceId</code> scopes the list to one workspace, including its AI-callable
+macros.</p>
+<p>Limited to 5 calls per 60-second sliding window per user; more fail with
+<code>RATE_LIMITED</code>. Fails with <code>FEATURE_DISABLED</code> while the AI command surface is off.</p>
+</div>
+
+</section>
+</section>
+<section data-group>
+<h2 id="group-keybind">Keybind <span class="faint">1</span></h2>
+<section class="entry" id="resolvedKeybinds" data-name="resolvedKeybinds">
+<h3><code>resolvedKeybinds</code></h3>
+<div class="sig">resolvedKeybinds(workspaceId: <a href="scalars.html#ID">ID</a>): [<a href="objects.html#Keybind">Keybind</a>!]!</div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+</section>
+<section data-group>
+<h2 id="group-conversation">Conversation <span class="faint">3</span></h2>
+<section class="entry" id="conversation" data-name="conversation">
+<h3><code>conversation</code></h3>
+<div class="sig">conversation(serverId: <a href="scalars.html#ID">ID</a>!, conversationId: <a href="scalars.html#ID">ID</a>!): <a href="objects.html#Conversation">Conversation</a>!</div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+<section class="entry" id="inboxConversations" data-name="inboxConversations">
+<h3><code>inboxConversations</code></h3>
+<div class="sig">inboxConversations(
+  serverId: <a href="scalars.html#ID">ID</a>!
+  dir: <a href="enums.html#PageDir">PageDir</a>!
+  cursor: <a href="inputs.html#InboxCursorInput">InboxCursorInput</a>
+  limit: <a href="scalars.html#Int">Int</a>!
+): <a href="objects.html#ConversationPage">ConversationPage</a>!</div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+<section class="entry" id="mutedConversations" data-name="mutedConversations">
+<h3><code>mutedConversations</code></h3>
+<div class="sig">mutedConversations(serverId: <a href="scalars.html#ID">ID</a>!): [<a href="objects.html#MutedConversation">MutedConversation</a>!]!</div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+</section>
+<section data-group>
+<h2 id="group-channel">Channel <span class="faint">3</span></h2>
+<section class="entry" id="channels" data-name="channels">
+<h3><code>channels</code></h3>
+<div class="sig">channels(
+  serverId: <a href="scalars.html#ID">ID</a>!
+  dir: <a href="enums.html#PageDir">PageDir</a>!
+  cursor: <a href="inputs.html#ChannelCursorInput">ChannelCursorInput</a>
+  limit: <a href="scalars.html#Int">Int</a>!
+  filter: <a href="inputs.html#ChannelListFilter">ChannelListFilter</a>
+): <a href="objects.html#ChannelPage">ChannelPage</a>!</div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+<section class="entry" id="channelLenses" data-name="channelLenses">
+<h3><code>channelLenses</code></h3>
+<div class="sig">channelLenses(serverId: <a href="scalars.html#ID">ID</a>!, conversationId: <a href="scalars.html#ID">ID</a>!): [<a href="objects.html#ChannelLens">ChannelLens</a>!]!</div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+<section class="entry" id="applyChannelLens" data-name="applyChannelLens">
+<h3><code>applyChannelLens</code></h3>
+<div class="sig">applyChannelLens(
+  serverId: <a href="scalars.html#ID">ID</a>!
+  conversationId: <a href="scalars.html#ID">ID</a>!
+  lensId: <a href="scalars.html#ID">ID</a>!
+  limit: <a href="scalars.html#Int">Int</a>! = 50
+): [<a href="objects.html#Message">Message</a>!]!</div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Argument</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>serverId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>conversationId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>lensId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>limit</code></td><td><code><a href="scalars.html#Int">Int</a>!</code> <span class="faint">= 50</span></td><td></td></tr>
+</tbody></table></div>
+</section>
+</section>
+<section data-group>
+<h2 id="group-message">Message <span class="faint">8</span></h2>
+<section class="entry" id="messages" data-name="messages">
+<h3><code>messages</code></h3>
+<div class="sig">messages(
+  serverId: <a href="scalars.html#ID">ID</a>!
+  conversationId: <a href="scalars.html#ID">ID</a>!
+  dir: <a href="enums.html#PageDir">PageDir</a>!
+  cursor: <a href="inputs.html#MessageCursorInput">MessageCursorInput</a>
+  limit: <a href="scalars.html#Int">Int</a>!
+  includeDeleted: <a href="scalars.html#Boolean">Boolean</a>!
+): <a href="objects.html#MessagePage">MessagePage</a>!</div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+<section class="entry" id="message" data-name="message">
+<h3><code>message</code></h3>
+<div class="sig">message(
+  serverId: <a href="scalars.html#ID">ID</a>!
+  conversationId: <a href="scalars.html#ID">ID</a>!
+  messageId: <a href="scalars.html#ID">ID</a>!
+): <a href="objects.html#Message">Message</a>!</div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+<section class="entry" id="messageChanges" data-name="messageChanges">
+<h3><code>messageChanges</code></h3>
+<div class="sig">messageChanges(input: <a href="inputs.html#MessageChangesInput">MessageChangesInput</a>!): [<a href="objects.html#ConversationMessageChanges">ConversationMessageChanges</a>!]!</div>
+<div class="desc"><p>The message change feed: for each conversation, the messages created, edited or deleted
+after its cursor (timeline and thread replies alike), oldest change first. A client cache
+stores each returned <code>cursor</code> and passes it back as <code>after</code>.</p>
+</div>
+
+</section>
+<section class="entry" id="threadByRootMessage" data-name="threadByRootMessage">
+<h3><code>threadByRootMessage</code></h3>
+<div class="sig">threadByRootMessage(
+  serverId: <a href="scalars.html#ID">ID</a>!
+  conversationId: <a href="scalars.html#ID">ID</a>!
+  rootMessageId: <a href="scalars.html#ID">ID</a>!
+): <a href="objects.html#Thread">Thread</a></div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+<section class="entry" id="threadMessages" data-name="threadMessages">
+<h3><code>threadMessages</code></h3>
+<div class="sig">threadMessages(
+  serverId: <a href="scalars.html#ID">ID</a>!
+  conversationId: <a href="scalars.html#ID">ID</a>!
+  threadId: <a href="scalars.html#ID">ID</a>!
+  dir: <a href="enums.html#PageDir">PageDir</a>!
+  cursor: <a href="inputs.html#MessageCursorInput">MessageCursorInput</a>
+  limit: <a href="scalars.html#Int">Int</a>!
+  includeDeleted: <a href="scalars.html#Boolean">Boolean</a>!
+): <a href="objects.html#MessagePage">MessagePage</a>!</div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+<section class="entry" id="pinnedMessages" data-name="pinnedMessages">
+<h3><code>pinnedMessages</code></h3>
+<div class="sig">pinnedMessages(serverId: <a href="scalars.html#ID">ID</a>!, conversationId: <a href="scalars.html#ID">ID</a>!): [<a href="objects.html#Message">Message</a>!]!</div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+<section class="entry" id="messageReports" data-name="messageReports">
+<h3><code>messageReports</code></h3>
+<div class="sig">messageReports(
+  serverId: <a href="scalars.html#ID">ID</a>!
+  status: <a href="enums.html#MessageReportStatus">MessageReportStatus</a>
+  dir: <a href="enums.html#PageDir">PageDir</a>!
+  cursor: <a href="inputs.html#MessageReportCursorInput">MessageReportCursorInput</a>
+  limit: <a href="scalars.html#Int">Int</a>!
+): <a href="objects.html#MessageReportPage">MessageReportPage</a>!</div>
+<div class="desc"><p>Message reports of the workspace (all statuses when <code>status</code> is omitted), ordered
+<code>createdAt ASC, id ASC</code>. Owner/Moderator only. The message body is included only when
+the moderator can read the conversation.</p>
+</div>
+
+</section>
+<section class="entry" id="messageReport" data-name="messageReport">
+<h3><code>messageReport</code></h3>
+<div class="sig">messageReport(serverId: <a href="scalars.html#ID">ID</a>!, reportId: <a href="scalars.html#ID">ID</a>!): <a href="objects.html#MessageReport">MessageReport</a>!</div>
+<div class="desc"><p>One report of the workspace. Owner/Moderator only. For a verified report of an
+encrypted message it includes <code>frankedContent</code>, and records that the moderator viewed
+it (<code>e2ee.report_viewed</code>).</p>
+</div>
+
+</section>
+</section>
+<section data-group>
+<h2 id="group-search">Search <span class="faint">1</span></h2>
+<section class="entry" id="searchMessages" data-name="searchMessages">
+<h3><code>searchMessages</code></h3>
+<div class="sig">searchMessages(input: <a href="inputs.html#SearchMessagesInput">SearchMessagesInput</a>!): <a href="objects.html#SearchResultPage">SearchResultPage</a>!</div>
+<div class="desc"><p>Full-text search over the messages of a workspace the caller can read. <code>input.query</code>
+accepts free text plus the operators <code>from:@user</code>, <code>in:#channel</code>, <code>has:link</code>,
+<code>has:attachment</code>, <code>after:YYYY-MM-DD</code> and <code>before:YYYY-MM-DD</code>.</p>
+<p>Results are cursor-paginated by recency, <code>(sentAt, id)</code>, like every other message list.
+They are not ordered by <code>rank</code>: a relevance score is neither unique nor stable, so paging
+by it would skip or repeat results. <code>rank</code> and <code>headline</code> come with every item for display
+or a sort within the page.</p>
+</div>
+
+</section>
+</section>
+<section data-group>
+<h2 id="group-server">Server <span class="faint">6</span></h2>
+<section class="entry" id="myServers" data-name="myServers">
+<h3><code>myServers</code></h3>
+<div class="sig">myServers: [<a href="objects.html#Server">Server</a>!]!</div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+<section class="entry" id="server" data-name="server">
+<h3><code>server</code></h3>
+<div class="sig">server(serverId: <a href="scalars.html#ID">ID</a>!): <a href="objects.html#Server">Server</a>!</div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+<section class="entry" id="serverMembers" data-name="serverMembers">
+<h3><code>serverMembers</code></h3>
+<div class="sig">serverMembers(serverId: <a href="scalars.html#ID">ID</a>!): [<a href="objects.html#ServerMember">ServerMember</a>!]!</div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+<section class="entry" id="serverBans" data-name="serverBans">
+<h3><code>serverBans</code></h3>
+<div class="sig">serverBans(serverId: <a href="scalars.html#ID">ID</a>!): [<a href="objects.html#ServerBan">ServerBan</a>!]!</div>
+<div class="desc"><p>Active bans of the workspace, newest first. Owner/Moderator only.</p>
+</div>
+
+</section>
+<section class="entry" id="remoteServer" data-name="remoteServer">
+<h3><code>remoteServer</code></h3>
+<div class="sig">remoteServer(origin: <a href="scalars.html#String">String</a>!): <a href="objects.html#RemoteServer">RemoteServer</a>!</div>
+<div class="desc"><p>Pin the server at <code>origin</code> through this relay and return its discovery document.</p>
+</div>
+
+</section>
+<section class="entry" id="serverInfo" data-name="serverInfo">
+<h3><code>serverInfo</code></h3>
+<div class="sig">serverInfo: <a href="objects.html#ServerInfo">ServerInfo</a>!</div>
+<div class="desc"><p>The server&#39;s release version, API version, features, audit retention, instance notice
+and terms URL. Readable without a session.</p>
+</div>
+
+</section>
+</section>
+<section data-group>
+<h2 id="group-workspace">Workspace <span class="faint">4</span></h2>
+<section class="entry" id="workspacePresence" data-name="workspacePresence">
+<h3><code>workspacePresence</code></h3>
+<div class="sig">workspacePresence(workspaceId: <a href="scalars.html#ID">ID</a>!): [<a href="objects.html#UserPresenceGql">UserPresenceGql</a>!]!</div>
+<div class="desc"><p>Presence of the workspace&#39;s members who sent a heartbeat. A guest sees only the members
+they share a conversation with, as in the member directory.</p>
+</div>
+
+</section>
+<section class="entry" id="workspaceState" data-name="workspaceState">
+<h3><code>workspaceState</code></h3>
+<div class="sig">workspaceState(
+  serverId: <a href="scalars.html#ID">ID</a>!
+  key: <a href="scalars.html#String">String</a>!
+  scope: <a href="enums.html#WorkspaceStateScopeGql">WorkspaceStateScopeGql</a>!
+): <a href="objects.html#WorkspaceStateEntryGql">WorkspaceStateEntryGql</a></div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+<section class="entry" id="workspaceStateList" data-name="workspaceStateList">
+<h3><code>workspaceStateList</code></h3>
+<div class="sig">workspaceStateList(
+  serverId: <a href="scalars.html#ID">ID</a>!
+  prefix: <a href="scalars.html#String">String</a>!
+  scope: <a href="enums.html#WorkspaceStateScopeGql">WorkspaceStateScopeGql</a>!
+  limit: <a href="scalars.html#Int">Int</a>
+): [<a href="objects.html#WorkspaceStateEntryGql">WorkspaceStateEntryGql</a>!]!</div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+<section class="entry" id="workspacePlugins" data-name="workspacePlugins">
+<h3><code>workspacePlugins</code></h3>
+<div class="sig">workspacePlugins(serverId: <a href="scalars.html#ID">ID</a>!): [<a href="objects.html#WorkspacePlugin">WorkspacePlugin</a>!]!</div>
+<div class="desc"><p>The workspace&#39;s plugin registry, ordered by plugin id. Any member, guests included.</p>
+</div>
+
+</section>
+</section>
+<section data-group>
+<h2 id="group-emoji">Emoji <span class="faint">1</span></h2>
+<section class="entry" id="customEmojis" data-name="customEmojis">
+<h3><code>customEmojis</code></h3>
+<div class="sig">customEmojis(serverId: <a href="scalars.html#ID">ID</a>!): [<a href="objects.html#CustomEmoji">CustomEmoji</a>!]!</div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+</section>
+<section data-group>
+<h2 id="group-macro">Macro <span class="faint">2</span></h2>
+<section class="entry" id="myMacros" data-name="myMacros">
+<h3><code>myMacros</code></h3>
+<div class="sig">myMacros(serverId: <a href="scalars.html#ID">ID</a>!): [<a href="objects.html#MacroDef">MacroDef</a>!]!</div>
+<div class="desc"><p>The caller&#39;s own macros in the workspace. <code>FORBIDDEN</code> for a non-member.</p>
+</div>
+
+</section>
+<section class="entry" id="macroByName" data-name="macroByName">
+<h3><code>macroByName</code></h3>
+<div class="sig">macroByName(serverId: <a href="scalars.html#ID">ID</a>!, name: <a href="scalars.html#String">String</a>!): <a href="objects.html#MacroDef">MacroDef</a></div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+</section>
+<section data-group>
+<h2 id="group-pipeline">Pipeline <span class="faint">1</span></h2>
+<section class="entry" id="pipelines" data-name="pipelines">
+<h3><code>pipelines</code></h3>
+<div class="sig">pipelines(serverId: <a href="scalars.html#ID">ID</a>!, enabled: <a href="scalars.html#Boolean">Boolean</a>): [<a href="objects.html#PipelineGql">PipelineGql</a>!]!</div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+</section>
+<section data-group>
+<h2 id="group-audit">Audit <span class="faint">1</span></h2>
+<section class="entry" id="listAuditLog" data-name="listAuditLog">
+<h3><code>listAuditLog</code></h3>
+<div class="sig">listAuditLog(filter: <a href="inputs.html#AuditLogFilterInput">AuditLogFilterInput</a>, pagination: <a href="inputs.html#AuditLogPaginationInput">AuditLogPaginationInput</a>): <a href="objects.html#AuditLogPage">AuditLogPage</a>!</div>
+<div class="desc"><p>Query the command audit log. Owners and moderators of a workspace read its whole log by
+setting <code>filter.serverId</code>. Everyone reads their own rows by setting <code>filter.actorUserId</code>
+to themselves. A filter with neither is rejected.</p>
+</div>
+
+</section>
+</section>
+<section data-group>
+<h2 id="group-invite">Invite <span class="faint">1</span></h2>
+<section class="entry" id="previewInviteToken" data-name="previewInviteToken">
+<h3><code>previewInviteToken</code></h3>
+<div class="sig">previewInviteToken(token: <a href="scalars.html#String">String</a>!): <a href="objects.html#InviteTokenPreviewGql">InviteTokenPreviewGql</a>!</div>
+<div class="desc"><p>Preview a registration token without consuming it.</p>
+<p>Returns minimal metadata so the frontend can render the correct signup
+copy before the user submits credentials. Rate-limited at 30 req / 5 min
+per IP; no authentication required.</p>
+</div>
+
+</section>
+</section>
+<section data-group>
+<h2 id="group-notification">Notification <span class="faint">3</span></h2>
+<section class="entry" id="myNotificationSettings" data-name="myNotificationSettings">
+<h3><code>myNotificationSettings</code></h3>
+<div class="sig">myNotificationSettings(serverId: <a href="scalars.html#ID">ID</a>!): <a href="objects.html#NotificationSettings">NotificationSettings</a>!</div>
+<div class="desc"><p>The viewer&#39;s notification settings in the workspace (defaults until first saved).</p>
+</div>
+
+</section>
+<section class="entry" id="myNotifications" data-name="myNotifications">
+<h3><code>myNotifications</code></h3>
+<div class="sig">myNotifications(
+  serverId: <a href="scalars.html#ID">ID</a>!
+  unreadOnly: <a href="scalars.html#Boolean">Boolean</a>
+  dir: <a href="enums.html#PageDir">PageDir</a>
+  cursor: <a href="inputs.html#NotificationCursorInput">NotificationCursorInput</a>
+  limit: <a href="scalars.html#Int">Int</a>
+): <a href="objects.html#NotificationPage">NotificationPage</a>!</div>
+<div class="desc"><p>The viewer&#39;s notifications in the workspace, newest first (<code>createdAt DESC, id DESC</code>).
+<code>AFTER</code> pages go to older notifications. Defaults: <code>unreadOnly</code> false, <code>dir</code> <code>AFTER</code>,
+<code>limit</code> 50 (clamped to 1..=100).</p>
+</div>
+
+</section>
+<section class="entry" id="myUnreadNotificationCount" data-name="myUnreadNotificationCount">
+<h3><code>myUnreadNotificationCount</code></h3>
+<div class="sig">myUnreadNotificationCount(serverId: <a href="scalars.html#ID">ID</a>!): <a href="scalars.html#Int">Int</a>!</div>
+<div class="desc"><p>Unread notifications of the viewer in the workspace (the bell badge).</p>
+</div>
+
+</section>
+</section>
+<section data-group>
+<h2 id="group-key">Key <span class="faint">3</span></h2>
+<section class="entry" id="myKeyIdentity" data-name="myKeyIdentity">
+<h3><code>myKeyIdentity</code></h3>
+<div class="sig">myKeyIdentity: <a href="objects.html#KeyIdentity">KeyIdentity</a>!</div>
+<div class="desc"><p>The signed-in account&#39;s key log, devices and profile card on this server.</p>
+</div>
+
+</section>
+<section class="entry" id="keyLog" data-name="keyLog">
+<h3><code>keyLog</code></h3>
+<div class="sig">keyLog(principalId: <a href="scalars.html#String">String</a>!): [<a href="objects.html#KeyLogEntry">KeyLogEntry</a>!]!</div>
+<div class="desc"><p>The public key log of a principal enrolled on this server, oldest first; empty when none
+is. No session needed: a person who lost every device reads the head here to sign a
+recovery rotation (<a href="mutation.html#rotateIdentityKey"><code>rotateIdentityKey</code></a>).</p>
+</div>
+
+</section>
+<section class="entry" id="myMlsKeyPackageStatus" data-name="myMlsKeyPackageStatus">
+<h3><code>myMlsKeyPackageStatus</code></h3>
+<div class="sig">myMlsKeyPackageStatus: [<a href="objects.html#MlsKeyPackageStatus">MlsKeyPackageStatus</a>!]!</div>
+<div class="desc"><p>The session device&#39;s stored key packages, per cipher suite.</p>
+</div>
+
+</section>
+</section>
+<section data-group>
+<h2 id="group-device">Device <span class="faint">4</span></h2>
+<section class="entry" id="deviceLink" data-name="deviceLink">
+<h3><code>deviceLink</code></h3>
+<div class="sig">deviceLink(linkId: <a href="scalars.html#String">String</a>!): <a href="objects.html#DeviceLink">DeviceLink</a>!</div>
+<div class="desc"><p>One of the signed-in account&#39;s device links: its state, expiry and, once the new device
+sent it, the sealed offer.</p>
+</div>
+
+</section>
+<section class="entry" id="deviceLinkAnswer" data-name="deviceLinkAnswer">
+<h3><code>deviceLinkAnswer</code></h3>
+<div class="sig">deviceLinkAnswer(linkId: <a href="scalars.html#String">String</a>!): <a href="objects.html#SealedMessage">SealedMessage</a></div>
+<div class="desc"><p>The sealed answer for the new device, <code>null</code> until the old device sends it. No session
+needed: the link id is the capability.</p>
+</div>
+
+</section>
+<section class="entry" id="principalDevices" data-name="principalDevices">
+<h3><code>principalDevices</code></h3>
+<div class="sig">principalDevices(principalIds: [<a href="scalars.html#String">String</a>!]!): [<a href="objects.html#PrincipalDevices">PrincipalDevices</a>!]!</div>
+<div class="desc"><p>The certified devices of principals who share a workspace with the caller (the direct
+space included); an empty list for any other principal. At most 100 ids.</p>
+</div>
+
+</section>
+<section class="entry" id="deviceRevocationStatus" data-name="deviceRevocationStatus">
+<h3><code>deviceRevocationStatus</code></h3>
+<div class="sig">deviceRevocationStatus(deviceId: <a href="scalars.html#ID">ID</a>!): [<a href="objects.html#RevocationFanout">RevocationFanout</a>!]!</div>
+<div class="desc"><p>Where the revocation of one of the caller&#39;s devices stands at each host holding them.</p>
+</div>
+
+</section>
+</section>
+<section data-group>
+<h2 id="group-relay">Relay <span class="faint">2</span></h2>
+<section class="entry" id="relayInfo" data-name="relayInfo">
+<h3><code>relayInfo</code></h3>
+<div class="sig">relayInfo: <a href="objects.html#RelayInfo">RelayInfo</a>!</div>
+<div class="desc"><p>This server&#39;s id, roles and direct space. Readable without a session; a signed-in local
+user of a relay becomes a guest of the direct space, if not one yet.</p>
+</div>
+
+</section>
+<section class="entry" id="relayItems" data-name="relayItems">
+<h3><code>relayItems</code></h3>
+<div class="sig">relayItems(after: <a href="scalars.html#ID">ID</a>, limit: <a href="scalars.html#Int">Int</a>): <a href="objects.html#RelayItemPage">RelayItemPage</a>!</div>
+<div class="desc"><p>The session device&#39;s queued host events above <code>after</code> (its cursor when omitted).
+<code>limit</code> is 1 to 500, 200 by default.</p>
+</div>
+
+</section>
+</section>
+<section data-group>
+<h2 id="group-other">Other <span class="faint">11</span></h2>
+<section class="entry" id="thread" data-name="thread">
+<h3><code>thread</code></h3>
+<div class="sig">thread(
+  serverId: <a href="scalars.html#ID">ID</a>!
+  conversationId: <a href="scalars.html#ID">ID</a>!
+  threadId: <a href="scalars.html#ID">ID</a>!
+): <a href="objects.html#Thread">Thread</a>!</div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+<section class="entry" id="me" data-name="me">
+<h3><code>me</code></h3>
+<div class="sig">me: <a href="objects.html#User">User</a>!</div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+<section class="entry" id="unreadCounts" data-name="unreadCounts">
+<h3><code>unreadCounts</code></h3>
+<div class="sig">unreadCounts(workspaceId: <a href="scalars.html#ID">ID</a>!): [<a href="objects.html#UnreadCount">UnreadCount</a>!]!</div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+<section class="entry" id="registrationMode" data-name="registrationMode">
+<h3><code>registrationMode</code></h3>
+<div class="sig">registrationMode: <a href="enums.html#RegistrationModeGql">RegistrationModeGql</a>!</div>
+<div class="desc"><p>Return the deployment-wide registration mode.</p>
+<p>Used by the login page to decide whether to render a &quot;Sign up&quot; link.
+No authentication required — this is public configuration metadata.</p>
+</div>
+
+</section>
+<section class="entry" id="myMlsWelcomes" data-name="myMlsWelcomes">
+<h3><code>myMlsWelcomes</code></h3>
+<div class="sig">myMlsWelcomes: [<a href="objects.html#MlsWelcome">MlsWelcome</a>!]!</div>
+<div class="desc"><p>The session device&#39;s unacknowledged Welcomes, oldest first.</p>
+</div>
+
+</section>
+<section class="entry" id="mlsCommits" data-name="mlsCommits">
+<h3><code>mlsCommits</code></h3>
+<div class="sig">mlsCommits(
+  serverId: <a href="scalars.html#ID">ID</a>!
+  conversationId: <a href="scalars.html#ID">ID</a>!
+  incarnation: <a href="scalars.html#Int">Int</a>!
+  afterEpoch: <a href="scalars.html#Int">Int</a>
+  limit: <a href="scalars.html#Int">Int</a>
+): <a href="objects.html#MlsCommitPage">MlsCommitPage</a>!</div>
+<div class="desc"><p>Accepted Commits of an incarnation after <code>afterEpoch</code> (exclusive; from 0 when null),
+oldest first. <code>limit</code> is 1 to 100, 50 by default.</p>
+</div>
+
+</section>
+<section class="entry" id="remoteIdentity" data-name="remoteIdentity">
+<h3><code>remoteIdentity</code></h3>
+<div class="sig">remoteIdentity(principalId: <a href="scalars.html#String">String</a>!, relayUrl: <a href="scalars.html#String">String</a>): <a href="objects.html#RemoteIdentity">RemoteIdentity</a>!</div>
+<div class="desc"><p>A principal&#39;s identity: a local one directly, else fetched from <code>relayUrl</code> (pinning it)
+and cached for 24 hours.</p>
+</div>
+
+</section>
+<section class="entry" id="contacts" data-name="contacts">
+<h3><code>contacts</code></h3>
+<div class="sig">contacts: [<a href="objects.html#Contact">Contact</a>!]!</div>
+<div class="desc"><p>The caller&#39;s contacts, oldest first.</p>
+</div>
+
+</section>
+<section class="entry" id="dmRequests" data-name="dmRequests">
+<h3><code>dmRequests</code></h3>
+<div class="sig">dmRequests(status: <a href="enums.html#DmRequestStatus">DmRequestStatus</a>): [<a href="objects.html#DmRequest">DmRequest</a>!]!</div>
+<div class="desc"><p>The caller&#39;s DM requests, newest first.</p>
+</div>
+
+</section>
+<section class="entry" id="streamHeads" data-name="streamHeads">
+<h3><code>streamHeads</code></h3>
+<div class="sig">streamHeads(serverId: <a href="scalars.html#ID">ID</a>!, streams: [<a href="scalars.html#String">String</a>!]!): [<a href="objects.html#StreamHead">StreamHead</a>!]!</div>
+<div class="desc"><p>The current <code>seq</code> of each named event stream of a space hosted here that the caller can
+see; streams the caller cannot see are left out.</p>
+</div>
+
+</section>
+<section class="entry" id="remoteSubscriptions" data-name="remoteSubscriptions">
+<h3><code>remoteSubscriptions</code></h3>
+<div class="sig">remoteSubscriptions: [<a href="objects.html#RemoteSubscription">RemoteSubscription</a>!]!</div>
+<div class="desc"><p>The caller&#39;s subscriptions to workspaces on other hosts.</p>
+</div>
+
+</section>
+</section>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Generated from <a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>58e3ec0</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+<script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
+<script>
+(() => {
+  const q = document.getElementById("filter");
+  if (!q) return;
+  const items = [...document.querySelectorAll("[data-name]")];
+  const groups = [...document.querySelectorAll("[data-group]")];
+  const none = document.getElementById("filter-none");
+  const run = () => {
+    const v = q.value.trim().toLowerCase();
+    let shown = 0;
+    for (const el of items) {
+      const hit = v ? el.dataset.name.toLowerCase().includes(v) : !el.closest("[data-search-only]");
+      el.hidden = !hit;
+      if (hit) shown += 1;
+    }
+    for (const g of groups) g.hidden = !g.querySelector("[data-name]:not([hidden])");
+    if (none) none.hidden = shown > 0 || !v;
+  };
+  q.addEventListener("input", run);
+  run();
+})();
+</script>
+</body>
+</html>

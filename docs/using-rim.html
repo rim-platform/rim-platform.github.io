@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Using RIM · RIM</title>
+<meta name="description" content="The desktop and web client: building it, the keyboard, keys and recovery, linking a device, encrypted conversations, relays and the local message cache.">
+<link rel="icon" href="../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../index.html" aria-label="RIM home">
+      <picture><source srcset="../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../index.html#what">What RIM is</a>
+      <a href="../index.html#how">How it works</a>
+      <a href="self-hosting.html">Self-host</a>
+      <a href="../configure/index.html">Configure</a>
+      <a href="index.html" aria-current="page">Docs</a>
+      <a href="../api/index.html">API</a>
+      <a href="../specs/index.html">Specs</a>
+      <a href="contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="index.html">Docs</a><span aria-hidden="true">/</span><span>Using RIM</span></div>
+  <div class="page">
+
+    <main id="content" class="prose">
+<h1>Using RIM</h1>
+<p class="lede">The desktop and web client: building it, the keyboard, keys and recovery, linking a device, encrypted conversations, relays and the local message cache.</p>
+<h2 id="the-client">The client</h2>
+<ul class="cards">
+<li><a href="client/guide.html"><b>RIM client</b><span>RIM is a programmable communication workspace. Chat is the medium; the product is what people build on top of it: a command palette over every action, keybinds for anything, macros that chain commands, pipelines that …</span><span class="src">rim-ui/README.md</span></a></li>
+<li><a href="client/keyboard.html"><b>Keyboard</b><span>Everything in the shell is reachable without a mouse. This page describes how keys are resolved, the keybind profile file, and the opt-in Vim layer.</span><span class="src">rim-ui/docs/keyboard.md</span></a></li>
+<li><a href="client/search-ui.html"><b>Search UI</b><span>Covers the frontend of full-text message search: the paginated useSearchMessages hook, the SearchOverlay flat-list UI, SearchSnippet's sanitization, and the operator-discovery affordance. Backend contract and operator …</span><span class="src">rim-ui/docs/search-ui.md</span></a></li>
+<li><a href="client/updater.html"><b>In-app updates</b><span>The desktop app can check for, download and install new versions of itself with Tauri's updater plugin. It ships dormant: src-tauri/updater.json is committed empty, and an app built from it never contacts an update …</span><span class="src">rim-ui/docs/updater.md</span></a></li>
+<li><a href="client/version-skew.html"><b>Version skew between client and server</b><span>A desktop client lives longer than the server it talks to: users update the app when they choose, and an operator updates the server when they choose. A client release that sends a field or a mutation an older server …</span><span class="src">rim-ui/docs/version-skew.md</span></a></li>
+</ul>
+<h2 id="keys-devices-and-encryption">Keys, devices and encryption</h2>
+<ul class="cards">
+<li><a href="client/identity-key-backup.html"><b>Identity key backup (desktop)</b><span>The identity key adds and removes devices, replaces itself and signs the profile card. Without a backup it lives only on the computer that enrolled the account (or recovered it), and losing that computer leaves the …</span><span class="src">rim-ui/docs/identity-key-backup.md</span></a></li>
+<li><a href="client/device-linking-desktop.html"><b>Device linking (desktop)</b><span>A computer that holds the account's identity key shows a code; another computer pastes it and gets a device key of its own, certified by the identity key, and signs in with it. The contract, with the code format, the …</span><span class="src">rim-ui/docs/device-linking-desktop.md</span></a></li>
+<li><a href="client/web-linked-device.html"><b>The web app as a linked device</b><span>The web app never holds an identity key. It gets a device key of its own by pasting a link code shown on the desktop app (Settings &gt; Security &gt; Link a device), and signs in with that key. It does not enroll, sign up …</span><span class="src">rim-ui/docs/web-linked-device.md</span></a></li>
+<li><a href="client/e2ee-desktop.html"><b>End-to-end encrypted DMs and groups on the desktop</b><span>DMs and groups are end-to-end encrypted with MLS (RFC 9420); channels stay plaintext. The contract is rim-server docs/specs/e2ee-mls-v1.md; the engine is the rim_mls crate (docs/rim-mls.md). This page is how the desktop …</span><span class="src">rim-ui/docs/e2ee-desktop.md</span></a></li>
+<li><a href="client/e2ee-web.html"><b>End-to-end encrypted DMs and groups in the web app</b><span>A browser set up as a linked device (web-linked-device.md) reads and sends in encrypted DMs and groups like the desktop app. It runs the same rim_mls crate (docs/rim-mls.md) compiled to WebAssembly, keeps its MLS state …</span><span class="src">rim-ui/docs/e2ee-web.md</span></a></li>
+<li><a href="client/secret-vault.html"><b>Secret vault</b><span>The desktop app keeps its secrets in one encrypted file: the message cache key, the history archive keys and cloud refresh tokens, the offline session record, the key identity records and pending device links, and the …</span><span class="src">rim-ui/docs/secret-vault.md</span></a></li>
+<li><a href="client/local-message-cache.html"><b>Local message cache</b><span>The desktop app keeps the messages of the conversations you open in an encrypted database on this device. The timeline shows the cached copy first and falls back to it when the server cannot be reached. The web app has …</span><span class="src">rim-ui/docs/local-message-cache.md</span></a></li>
+</ul>
+<h2 id="relays">Relays</h2>
+<ul class="cards">
+<li><a href="client/relay-client.html"><b>Relays: the client</b><span>The app talks only to its own server, its relay. A DM or group homed on another relay (its creator's), and a workspace hosted elsewhere, is reached through the relay: requests are signed by this device and forwarded …</span><span class="src">rim-ui/docs/relay-client.md</span></a></li>
+</ul>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/tree/c86029b35a7ef7770b05e7bda62909f988343f7f">rim-server</a> <code>c86029b</code> and <a href="https://github.com/rim-platform/rim-ui/tree/58e3ec03c43064632a6a6f610d92413040229dfd">rim-ui</a> <code>58e3ec0</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+
+</body>
+</html>

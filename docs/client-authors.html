@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Client authors · RIM</title>
+<meta name="description" content="Talking to a RIM server from your own client: the HTTP and GraphQL contract, sessions and CSRF, pagination, messaging, search and the change feed.">
+<link rel="icon" href="../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../index.html" aria-label="RIM home">
+      <picture><source srcset="../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../index.html#what">What RIM is</a>
+      <a href="../index.html#how">How it works</a>
+      <a href="self-hosting.html">Self-host</a>
+      <a href="../configure/index.html">Configure</a>
+      <a href="index.html" aria-current="page">Docs</a>
+      <a href="../api/index.html">API</a>
+      <a href="../specs/index.html">Specs</a>
+      <a href="contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="index.html">Docs</a><span aria-hidden="true">/</span><span>Client authors</span></div>
+  <div class="page">
+
+    <main id="content" class="prose">
+<h1>Client authors</h1>
+<p class="lede">Talking to a RIM server from your own client: the HTTP and GraphQL contract, sessions and CSRF, pagination, messaging, search and the change feed.</p>
+<h2 id="the-api">The API</h2>
+<ul class="cards">
+<li><a href="api.html"><b>Talking to a server over HTTP</b><span>The HTTP contract a client sees: the routes, how a session and its CSRF token work, which origins a browser may call from, the error codes, pagination and how a client tells which server version it talks to. The GraphQL …</span><span class="src">rim-server/docs/api.md</span></a></li>
+<li><a href="pagination.html"><b>Pagination Contract</b><span>This repo uses cursor-based pagination for any list that can grow without bound (messages, inbox conversations, etc.). The goal is: stable ordering, no duplicates between pages, and consistent semantics across all …</span><span class="src">rim-server/docs/pagination.md</span></a></li>
+<li><a href="messaging.html"><b>Messaging Contract</b><span>This document describes the backend contract for conversations, messages, threads, and attachments.</span><span class="src">rim-server/docs/messaging.md</span></a></li>
+<li><a href="search.html"><b>Message Search (Full-Text Search)</b><span>searchMessages runs Postgres full-text search over message text, scoped to conversations the requesting actor can see. This document covers the query operator syntax, the ranking/pagination design, and the visibility …</span><span class="src">rim-server/docs/search.md</span></a></li>
+<li><a href="message-change-feed.html"><b>Message Change Feed</b><span>The change feed lets a client ask &quot;what changed in these channels since I last synced&quot; and get every message created, edited or deleted since then, in order, with a cursor it can store. It is the server half of the …</span><span class="src">rim-server/docs/message-change-feed.md</span></a></li>
+</ul>
+<h2 id="see-also">See also</h2>
+<ul class="cards">
+<li><a href="../api/index.html"><b>GraphQL reference</b><span>Every query, mutation, subscription and type, generated from the schema.</span></a></li>
+</ul>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/tree/c86029b35a7ef7770b05e7bda62909f988343f7f">rim-server</a> <code>c86029b</code> and <a href="https://github.com/rim-platform/rim-ui/tree/58e3ec03c43064632a6a6f610d92413040229dfd">rim-ui</a> <code>58e3ec0</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+
+</body>
+</html>

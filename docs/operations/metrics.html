@@ -1,0 +1,496 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Metrics · RIM</title>
+<meta name="description" content="rim-server exposes Prometheus metrics in the text exposition format at GET /metrics on a listener of its own. The API port never serves them.">
+<link rel="icon" href="../../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../../index.html" aria-label="RIM home">
+      <picture><source srcset="../../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../../index.html#what">What RIM is</a>
+      <a href="../../index.html#how">How it works</a>
+      <a href="../self-hosting.html">Self-host</a>
+      <a href="../../configure/index.html">Configure</a>
+      <a href="../index.html" aria-current="page">Docs</a>
+      <a href="../../api/index.html">API</a>
+      <a href="../../specs/index.html">Specs</a>
+      <a href="../contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="../index.html">Docs</a><span aria-hidden="true">/</span><a href="../operators.html">Operators</a><span aria-hidden="true">/</span><span>Metrics</span></div>
+  <div class="page with-toc">
+    <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
+<ol>
+<li><a href="#turning-them-on">Turning them on</a></li>
+<li><a href="#the-metrics">The metrics</a><ol><li><a href="#requests">Requests</a></li><li><a href="#refusals">Refusals</a></li><li><a href="#state">State</a></li><li><a href="#audit-retention">Audit retention</a></li><li><a href="#scheduled-purges">Scheduled purges</a></li></ol></li>
+<li><a href="#example-alert-rules">Example alert rules</a></li>
+</ol>
+</details></aside>
+    <main id="content" class="prose">
+<h1 id="metrics">Metrics</h1>
+<p>rim-server exposes Prometheus metrics in the text exposition format at <code>GET /metrics</code> on a
+listener of its own. The API port never serves them.</p>
+<h2 id="turning-them-on">Turning them on <a class="anchor" href="#turning-them-on" aria-label="Link to this section">#</a></h2>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>RIM_METRICS_ADDR</code></td>
+<td><code>ip:port</code> of the metrics listener. Unset (the default), no recorder is installed and no listener opens. A value that is not an <code>ip:port</code> address stops the server at boot.</td>
+</tr>
+</tbody></table></div>
+<p>On a host, <code>127.0.0.1:9090</code> keeps the endpoint on the machine; run Prometheus there or scrape it
+through an SSH tunnel. In a container, <code>127.0.0.1</code> is the container itself, so bind
+<code>0.0.0.0:9090</code> and do not publish the port: Prometheus reaches it over the compose network.
+<a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/deploy/compose.yml"><code>deploy/compose.yml</code></a> has the line commented out in the <code>rim</code> service.</p>
+<p>The endpoint has no authentication. Keep it on an internal network, and never route it through
+Caddy or any other public reverse proxy: it shows request rates, limiter names and queue sizes
+to whoever can read it.</p>
+<p>A minimal scrape configuration:</p>
+<pre><code class="language-yaml">scrape_configs:
+  - job_name: rim
+    static_configs:
+      - targets: [&quot;rim:9090&quot;]</code></pre>
+<h2 id="the-metrics">The metrics <a class="anchor" href="#the-metrics" aria-label="Link to this section">#</a></h2>
+<p>Names start with <code>rim_</code>; counters end in <code>_total</code>, and the unit is part of the name
+(<code>_seconds</code>, <code>_bytes</code>, <code>_connections</code>, <code>_items</code>).</p>
+<h3 id="requests">Requests <a class="anchor" href="#requests" aria-label="Link to this section">#</a></h3>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Type</th>
+<th>Labels</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>rim_http_requests_total</code></td>
+<td>counter</td>
+<td><code>route</code>, <code>status</code></td>
+<td>HTTP requests on the API port.</td>
+</tr>
+<tr>
+<td><code>rim_http_request_duration_seconds</code></td>
+<td>histogram</td>
+<td><code>route</code>, <code>status</code></td>
+<td>Time from receiving a request to sending its response head. Buckets from 5 ms to 30 s. A WebSocket upgrade counts until the <code>101</code>, not for the life of the socket.</td>
+</tr>
+<tr>
+<td><code>rim_s2s_requests_total</code></td>
+<td>counter</td>
+<td><code>outcome</code></td>
+<td>Requests received under <code>/s2s/v1/</code>, counted once server-to-server traffic is on.</td>
+</tr>
+<tr>
+<td><code>rim_forwarded_requests_total</code></td>
+<td>counter</td>
+<td><code>direction</code>, <code>outcome</code></td>
+<td>Requests forwarded to a host.</td>
+</tr>
+</tbody></table></div>
+<p><code>route</code> is a route class, never the raw path, so the number of series stays fixed:</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th><code>route</code></th>
+<th>Paths</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>api</code></td>
+<td><code>/api</code>, <code>/api/ws</code>, <code>/api/sdl</code>, <code>/api/hooks/…</code> and anything else under <code>/api</code> not listed below</td>
+</tr>
+<tr>
+<td><code>files</code></td>
+<td><code>/api/files/…</code>, <code>/api/attachments/…</code>, <code>/api/reports/…</code>, <code>/api/plugin-bundles/…</code></td>
+</tr>
+<tr>
+<td><code>remote-forward</code></td>
+<td><code>/api/remote/…</code>, a local user&#39;s request to a space hosted elsewhere</td>
+</tr>
+<tr>
+<td><code>s2s</code></td>
+<td><code>/s2s/…</code></td>
+</tr>
+<tr>
+<td><code>wellknown</code></td>
+<td><code>/.well-known/…</code></td>
+</tr>
+<tr>
+<td><code>health</code></td>
+<td><code>/healthz</code>, <code>/readyz</code>, <code>/livez</code></td>
+</tr>
+<tr>
+<td><code>other</code></td>
+<td>everything else, including unknown paths that answer <code>404</code></td>
+</tr>
+</tbody></table></div>
+<p><code>status</code> is the status class: <code>1xx</code>, <code>2xx</code>, <code>3xx</code>, <code>4xx</code> or <code>5xx</code>.</p>
+<p><code>rim_s2s_requests_total{outcome}</code>:</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th><code>outcome</code></th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>ok</code></td>
+<td>Every check passed and the endpoint answered below <code>500</code>; a <code>404</code> for an unknown principal is <code>ok</code>.</td>
+</tr>
+<tr>
+<td><code>signature_invalid</code></td>
+<td>The signature, its parameters, the key, the body digest or the clock window was refused (<code>401</code>), or the nonce was a replay (<code>409</code>).</td>
+</tr>
+<tr>
+<td><code>peer_blocked</code></td>
+<td>The peer is denied, outside the host allow-list, blocked, could not be pinned from its origin, or its key log forked (<code>403</code>).</td>
+</tr>
+<tr>
+<td><code>rate_limited</code></td>
+<td>The per-peer limit refused it, or the endpoint answered <code>429</code>.</td>
+</tr>
+<tr>
+<td><code>error</code></td>
+<td>A malformed or oversized request before the checks, or an answer of <code>500</code> or above.</td>
+</tr>
+</tbody></table></div>
+<p><code>rim_forwarded_requests_total{direction, outcome}</code>: <code>direction=&quot;outgoing&quot;</code> is this server as a
+relay sending a local user&#39;s request through <code>/api/remote/…</code>; <code>direction=&quot;incoming&quot;</code> is this
+server as a host running a forwarded request at <code>/s2s/v1/forward/…</code>.</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th><code>outcome</code></th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>ok</code></td>
+<td>Answered below <code>400</code>.</td>
+</tr>
+<tr>
+<td><code>refused</code></td>
+<td>Answered <code>4xx</code> other than <code>429</code>: no session, a bad device request, not delegated, a replayed device seq, refused by the host.</td>
+</tr>
+<tr>
+<td><code>rate_limited</code></td>
+<td>Answered <code>429</code>, by this server or passed through from the host.</td>
+</tr>
+<tr>
+<td><code>upstream_unavailable</code></td>
+<td>Outgoing only: the host could not be reached or gave no verified answer (<code>502</code>).</td>
+</tr>
+<tr>
+<td><code>error</code></td>
+<td>Answered <code>500</code> or above.</td>
+</tr>
+</tbody></table></div>
+<h3 id="refusals">Refusals <a class="anchor" href="#refusals" aria-label="Link to this section">#</a></h3>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Type</th>
+<th>Labels</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>rim_rate_limit_rejections_total</code></td>
+<td>counter</td>
+<td><code>limiter</code></td>
+<td>Requests a rate limiter or quota refused.</td>
+</tr>
+<tr>
+<td><code>rim_ip_blocked_requests_total</code></td>
+<td>counter</td>
+<td></td>
+<td>Requests refused because their address is on the IP deny list (<code>rim_server ip block</code>).</td>
+</tr>
+<tr>
+<td><code>rim_pow_rejections_total</code></td>
+<td>counter</td>
+<td></td>
+<td>Key-only signups whose proof-of-work did not meet <code>RIM_REGISTRATION_POW_BITS</code> or was malformed.</td>
+</tr>
+</tbody></table></div>
+<p><code>limiter</code> values:</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th><code>limiter</code></th>
+<th>What it limits</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>login</code></td>
+<td>Password logins per address, per address and account, and per account.</td>
+</tr>
+<tr>
+<td><code>key_auth_failure</code></td>
+<td>Failed key logins per address.</td>
+</tr>
+<tr>
+<td><code>key_challenge</code></td>
+<td>Key login challenges per address.</td>
+</tr>
+<tr>
+<td><code>signup</code></td>
+<td>Open and proof-of-work signups per address.</td>
+</tr>
+<tr>
+<td><code>preview_invite</code></td>
+<td>Invite token previews per address.</td>
+</tr>
+<tr>
+<td><code>password_reset</code></td>
+<td>Password reset requests per address.</td>
+</tr>
+<tr>
+<td><code>password_reset_account</code></td>
+<td>Password reset requests per account; the caller sees success and no email is sent.</td>
+</tr>
+<tr>
+<td><code>device_link_start</code>, <code>device_link_offer</code>, <code>device_link_answer</code>, <code>device_link_refusal</code></td>
+<td>Device linking steps.</td>
+</tr>
+<tr>
+<td><code>mls_claim</code>, <code>mls_one_time_claim</code>, <code>mls_readd</code></td>
+<td>MLS key package claims and re-add requests.</td>
+</tr>
+<tr>
+<td><code>command</code>, <code>command_discover</code></td>
+<td>Command runs per user and command, and command discovery.</td>
+</tr>
+<tr>
+<td><code>workspace_plugin_change</code>, <code>plugin_bundle_upload</code></td>
+<td>Workspace plugin changes and bundle uploads per user.</td>
+</tr>
+<tr>
+<td><code>s2s_peer</code></td>
+<td>Server-to-server requests per peer (<code>RIM_S2S_PEER_RATE_PER_MIN</code>).</td>
+</tr>
+<tr>
+<td><code>peer_discovery</code></td>
+<td>Discovery document fetches, one per peer and sixty in all per minute.</td>
+</tr>
+<tr>
+<td><code>relay_forward_device</code>, <code>relay_forward_user</code></td>
+<td>Requests a local user forwards, per device per minute and per user per day.</td>
+</tr>
+<tr>
+<td><code>host_forward_device</code></td>
+<td>Forwarded requests run here, per remote device per minute.</td>
+</tr>
+<tr>
+<td><code>dm_invites</code></td>
+<td>Invites a local user sends to people on other servers per day.</td>
+</tr>
+<tr>
+<td><code>dm_requests</code></td>
+<td>DM requests filed here by one sender per day, or past the recipient&#39;s pending limit.</td>
+</tr>
+<tr>
+<td><code>stranger_claim</code></td>
+<td>Key package claims by servers with no tie to the user.</td>
+</tr>
+<tr>
+<td><code>delegations_per_relay</code></td>
+<td>Active delegations one relay holds on this host (<code>RIM_S2S_SUBSCRIPTIONS_PER_PEER</code>).</td>
+</tr>
+<tr>
+<td><code>direct_revocation</code></td>
+<td>Device revocations brought directly, per address.</td>
+</tr>
+<tr>
+<td><code>api_ip</code></td>
+<td>Requests to <code>/api</code> routes per client address (<code>RIM_RATE_REQUESTS_PER_MIN_PER_IP</code>).</td>
+</tr>
+<tr>
+<td><code>api_mutations</code></td>
+<td>Mutation fields per session, or per address without one (<code>RIM_RATE_MUTATIONS_PER_MIN_PER_SESSION</code>).</td>
+</tr>
+<tr>
+<td><code>messages</code></td>
+<td>Messages per user (<code>RIM_RATE_MESSAGES_PER_MIN_PER_USER</code>).</td>
+</tr>
+<tr>
+<td><code>ws_connections</code></td>
+<td>Open WebSocket connections per user (<code>RIM_RATE_WS_CONNECTIONS_PER_USER</code>).</td>
+</tr>
+<tr>
+<td><code>ws_subscriptions</code></td>
+<td>Subscriptions per WebSocket connection (<code>RIM_RATE_SUBSCRIPTIONS_PER_CONNECTION</code>).</td>
+</tr>
+</tbody></table></div>
+<p>Slow mode in a conversation is not counted here.</p>
+<h3 id="state">State <a class="anchor" href="#state" aria-label="Link to this section">#</a></h3>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Type</th>
+<th>Labels</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>rim_db_pool_connections</code></td>
+<td>gauge</td>
+<td></td>
+<td>Open connections in the database pool, read on each scrape.</td>
+</tr>
+<tr>
+<td><code>rim_db_pool_connections_in_use</code></td>
+<td>gauge</td>
+<td></td>
+<td>Pool connections checked out by a query or transaction, read on each scrape.</td>
+</tr>
+<tr>
+<td><code>rim_db_pool_max_connections</code></td>
+<td>gauge</td>
+<td></td>
+<td>The most connections the pool opens.</td>
+</tr>
+<tr>
+<td><code>rim_relay_queue_items</code></td>
+<td>gauge</td>
+<td><code>state</code></td>
+<td>Items queued for local users&#39; devices.</td>
+</tr>
+<tr>
+<td><code>rim_relay_queue_bytes</code></td>
+<td>gauge</td>
+<td><code>state</code></td>
+<td>Bytes of those items.</td>
+</tr>
+<tr>
+<td><code>rim_pending_migrations</code></td>
+<td>gauge</td>
+<td></td>
+<td>Migrations this binary has that the database has not applied.</td>
+</tr>
+<tr>
+<td><code>rim_build_info</code></td>
+<td>gauge</td>
+<td><code>version</code></td>
+<td>Always <code>1</code>; <code>version</code> is the server version.</td>
+</tr>
+</tbody></table></div>
+<p><code>state</code> is <code>queued</code> for items waiting for devices to read them, <code>held</code> for items behind a DM
+request the recipient has not answered. The relay queue and the pending migrations are read from
+the database when the listener starts and every 30 seconds after; a read that fails or takes over
+5 seconds leaves the last value in place and logs a warning.</p>
+<h3 id="audit-retention">Audit retention <a class="anchor" href="#audit-retention" aria-label="Link to this section">#</a></h3>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Type</th>
+<th>Labels</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>rim_audit_rows_purged_total</code></td>
+<td>counter</td>
+<td></td>
+<td>Command audit rows the daily retention purge deleted (<a href="audit-retention.html"><code>docs/operations/audit-retention.md</code></a>).</td>
+</tr>
+<tr>
+<td><code>rim_audit_retention_days</code></td>
+<td>gauge</td>
+<td></td>
+<td><code>RIM_AUDIT_RETENTION_DAYS</code>, set at boot; <code>0</code> when rows are kept forever.</td>
+</tr>
+</tbody></table></div>
+<h3 id="scheduled-purges">Scheduled purges <a class="anchor" href="#scheduled-purges" aria-label="Link to this section">#</a></h3>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Type</th>
+<th>Labels</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>rim_attachments_cleaned_total</code></td>
+<td>counter</td>
+<td></td>
+<td>Attachment uploads the daily cleanup marked failed because they never completed (<a href="background-jobs.html"><code>docs/operations/background-jobs.md</code></a>).</td>
+</tr>
+<tr>
+<td><code>rim_workspace_state_purged_total</code></td>
+<td>counter</td>
+<td></td>
+<td>Expired workspace state entries the hourly purge deleted.</td>
+</tr>
+</tbody></table></div>
+<h2 id="example-alert-rules">Example alert rules <a class="anchor" href="#example-alert-rules" aria-label="Link to this section">#</a></h2>
+<p>Readiness is checked from outside, by probing <code>/readyz</code> on the API port with the Prometheus
+blackbox exporter (module <code>http_2xx</code>, job <code>rim-readyz</code>). The second rule fires when peers&#39; signatures
+start failing: a peer whose key changed without a rotation, clock skew, or someone probing the
+S2S API.</p>
+<pre><code class="language-yaml">groups:
+  - name: rim
+    rules:
+      - alert: RimNotReady
+        expr: probe_success{job=&quot;rim-readyz&quot;} == 0
+        for: 2m
+        labels:
+          severity: page
+        annotations:
+          summary: &quot;rim-server at {{ $labels.instance }} has failed its readiness check for 2 minutes&quot;
+
+      - alert: RimS2sSignatureFailures
+        expr: sum by (instance) (rate(rim_s2s_requests_total{outcome=&quot;signature_invalid&quot;}[5m])) &gt; 0.2
+        for: 10m
+        labels:
+          severity: ticket
+        annotations:
+          summary: &quot;rim-server at {{ $labels.instance }} refuses over 12 server-to-server signatures a minute&quot;
+          description: &quot;Check the warnings 'refused a server-to-server signature' for the peer and reason.&quot;</code></pre>
+<p>Other useful expressions:</p>
+<pre><code class="language-promql"># Share of API requests answered with 5xx
+sum(rate(rim_http_requests_total{route=&quot;api&quot;,status=&quot;5xx&quot;}[5m]))
+  / sum(rate(rim_http_requests_total{route=&quot;api&quot;}[5m]))
+
+# 95th percentile API latency
+histogram_quantile(0.95, sum by (le) (rate(rim_http_request_duration_seconds_bucket{route=&quot;api&quot;}[5m])))
+
+# A deploy that started before its migrations ran
+rim_pending_migrations &gt; 0
+
+# The pool is close to exhausted
+rim_db_pool_connections_in_use / rim_db_pool_max_connections &gt; 0.9</code></pre>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/docs/operations/metrics.md">rim-server/docs/operations/metrics.md</a> at <code>c86029b</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+<script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
+</body>
+</html>

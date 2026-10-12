@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Server identity and server-to-server traffic · RIM</title>
+<meta name="description" content="Every rim-server has its own server key, an Ed25519 key whose signed history (the key log) fixes the server's id, rims1_…. Other servers use the id and key to tell this server apart from any other, to check the requests …">
+<link rel="icon" href="../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../index.html" aria-label="RIM home">
+      <picture><source srcset="../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../index.html#what">What RIM is</a>
+      <a href="../index.html#how">How it works</a>
+      <a href="self-hosting.html">Self-host</a>
+      <a href="../configure/index.html">Configure</a>
+      <a href="index.html" aria-current="page">Docs</a>
+      <a href="../api/index.html">API</a>
+      <a href="../specs/index.html">Specs</a>
+      <a href="contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="index.html">Docs</a><span aria-hidden="true">/</span><a href="operators.html">Operators</a><span aria-hidden="true">/</span><span>Server identity and server-to-server traffic</span></div>
+  <div class="page with-toc">
+    <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
+<ol>
+<li><a href="#the-key-file">The key file</a></li>
+<li><a href="#first-start">First start</a></li>
+<li><a href="#commands">Commands</a></li>
+<li><a href="#the-franking-key-file">The franking key file</a></li>
+<li><a href="#key-login-audiences">Key login audiences</a></li>
+<li><a href="#the-discovery-document">The discovery document</a></li>
+<li><a href="#roles-and-server-to-server-configuration">Roles and server-to-server configuration</a></li>
+<li><a href="#what-a-peer-sees">What a peer sees</a></li>
+</ol>
+</details></aside>
+    <main id="content" class="prose">
+<h1 id="server-identity-and-server-to-server-traffic">Server identity and server-to-server traffic</h1>
+<p>Every rim-server has its own <strong>server key</strong>, an Ed25519 key whose signed history (the <strong>key log</strong>)
+fixes the server&#39;s id, <code>rims1_…</code>. Other servers use the id and key to tell this server apart from
+any other, to check the requests it sends them and the answers it gives. The format and protocol
+are in <a href="../specs/server-to-server-v1.html"><code>docs/specs/server-to-server-v1.md</code></a>; this page is the operator&#39;s view of the server&#39;s own
+identity. What a relay and a host do with it is in <a href="relay.html"><code>docs/relay.md</code></a>; running the public relay is
+in <a href="operations/relay-public.html"><code>docs/operations/relay-public.md</code></a>.</p>
+<h2 id="the-key-file">The key file <a class="anchor" href="#the-key-file" aria-label="Link to this section">#</a></h2>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>What</th>
+<th>Where</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Server key seed</td>
+<td><code>RIM_SERVER_KEY_FILE</code>, default <code>&lt;RIM_DATA_DIR&gt;/server-key.json</code> (<code>RIM_DATA_DIR</code> defaults to <code>./data</code>)</td>
+</tr>
+<tr>
+<td>Key log, descriptor, pinned peers</td>
+<td>The database (<code>server_key_log_entry</code>, <code>server_descriptor</code>, <code>peer_server</code>)</td>
+</tr>
+<tr>
+<td>Recovery key, after first start</td>
+<td><code>&lt;RIM_DATA_DIR&gt;/server-recovery-key.txt</code> until you move it</td>
+</tr>
+</tbody></table></div>
+<p>The key file is <code>{&quot;v&quot;:1,&quot;seed&quot;:&quot;&lt;base64url&gt;&quot;}</code>, mode <code>0600</code>. The server refuses to start when:</p>
+<ul>
+<li>the file is readable by group or others (<code>chmod 600</code> it);</li>
+<li>the file exists but the key log is empty (a new database next to an old key), or the log exists
+but the file is missing (a lost key: restore the file or run <code>server-key recover</code>);</li>
+<li>the file holds another key than the one the log&#39;s head names.</li>
+</ul>
+<p>Back the key file up with the database: the database without the file cannot sign, the file
+without the database is a key nobody can prove belongs to this server id. Never copy the key file
+to another deployment; two servers with one key are one server to everyone else.</p>
+<p>While the server runs, <code>GET /readyz</code> answers 503 with the <code>serverKey</code> check failed when the key
+file cannot be opened for reading, and <code>frankingKey</code> likewise for the franking key file.</p>
+<h2 id="first-start">First start <a class="anchor" href="#first-start" aria-label="Link to this section">#</a></h2>
+<p>With neither a key file nor a key log, the server creates a server key and a recovery key, signs
+the log&#39;s first entry, writes the key file and writes the recovery key to
+<code>&lt;RIM_DATA_DIR&gt;/server-recovery-key.txt</code> (one line, <code>rim-server-recovery:1:&lt;base64url&gt;</code>, mode
+<code>0600</code>). It logs a warning at every start while that file is there:</p>
+<blockquote>
+<p>move the server recovery key offline: anyone who can read it can replace this server&#39;s key</p>
+</blockquote>
+<p>Copy the file to offline storage (a password manager, a printed copy in a safe) and delete it
+from the server. The recovery key is only needed if the server key is lost or stolen.</p>
+<h2 id="commands">Commands <a class="anchor" href="#commands" aria-label="Link to this section">#</a></h2>
+<pre><code class="language-sh">rim_server server-key show      # server id, key seq, keys, key hash
+rim_server server-key rotate    # a routine rotation, signed by the current key
+rim_server server-key recover --recovery-key-file /path/to/recovery.txt [--new-recovery-key]
+rim_server peer reset &lt;server-id&gt;
+rim_server peer block &lt;server-id&gt;
+rim_server peer unblock &lt;server-id&gt;</code></pre>
+<p>They read the same configuration as the server (<code>DATABASE_URL</code>, <code>RIM_DATA_DIR</code>,
+<code>RIM_SERVER_KEY_FILE</code>). A running server notices a rotation or recovery within a minute and
+switches to the new key; no restart is needed. With several nodes, every node needs the new key
+file: copy it before the minute passes, or nodes still holding the old file refuse to pick the
+rotation up and keep signing with the old key until they get it.</p>
+<ul>
+<li><strong>Rotate</strong> when you want a new key while the current one is safe (a schedule, a staff change).
+Peers keep accepting the previous key for 24 hours after they see the rotation, so in-flight
+requests keep working.</li>
+<li><strong>Recover</strong> when the server key is lost or may be stolen. The rotation is signed by the
+recovery key; peers stop accepting the previous key at once. Works without the key file. With
+<code>--new-recovery-key</code> the recovery key is replaced too and the new one is written to
+<code>&lt;RIM_DATA_DIR&gt;/server-recovery-key.txt</code> (the command refuses to overwrite a file there): move it
+offline again.</li>
+<li><strong>Peer reset</strong> forgets a peer this server refuses because its key log forked (its history was
+rewritten: a restored backup, a stolen key, or an attack). Check with the peer&#39;s operator first,
+out of band; its next request pins it afresh.</li>
+<li><strong>Peer block</strong> refuses a pinned peer both ways from its next request, without a restart: its
+requests get <code>403 peer_not_allowed</code> and nothing is sent to it. <strong>Peer unblock</strong> lifts it. A
+peer never pinned cannot be blocked this way; list it in <code>RIM_S2S_DENIED_PEERS</code>.</li>
+</ul>
+<h2 id="the-franking-key-file">The franking key file <a class="anchor" href="#the-franking-key-file" aria-label="Link to this section">#</a></h2>
+<p>Reports of encrypted messages are checked with the server&#39;s <strong>franking keys</strong>
+(<a href="../specs/e2ee-mls-v1.html"><code>docs/specs/e2ee-mls-v1.md</code></a>, &quot;Franking&quot;). They live in their own file, next to the server key
+and with the same rules:</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>What</th>
+<th>Where</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Franking keys</td>
+<td><code>RIM_FRANKING_KEY_FILE</code>, default <code>&lt;RIM_DATA_DIR&gt;/franking-key.json</code></td>
+</tr>
+</tbody></table></div>
+<p>The file is <code>{&quot;v&quot;:1,&quot;keys&quot;:[{&quot;id&quot;:1,&quot;key&quot;:&quot;&lt;base64url&gt;&quot;,&quot;createdAt&quot;:&quot;…&quot;}]}</code>, mode <code>0600</code>; the
+server refuses to start when the group or others can read it. The first start creates it with
+one key. The server refuses
+to start when the file is missing but messages carry receipts under a key it no longer has:
+restore the file from a backup.</p>
+<pre><code class="language-sh">rim_server franking-key show      # the keys and which one signs
+rim_server franking-key rotate    # a new signing key; every older key keeps verifying</code></pre>
+<p>Rotate on a schedule or when the file may have leaked. Rotation never removes a key: a receipt is
+never signed again, so the key that signed it must stay for as long as the message can be
+reported. A running server picks the new file up within a minute. With several nodes, every node needs
+the same file: copy it to each node after a rotation.</p>
+<p>Back the file up with the database. Whoever reads it can make receipts, but a report must also
+match the content commitment stored with the message, so the file alone does not let anyone have
+a forged report verified.</p>
+<h2 id="key-login-audiences">Key login audiences <a class="anchor" href="#key-login-audiences" aria-label="Link to this section">#</a></h2>
+<p>A device&#39;s login proof names the server it is meant for (<code>host[:port]</code>), so a proof sent to one
+server cannot be replayed at another. The server accepts the names in <code>RIM_KEY_LOGIN_AUDIENCES</code>
+(comma-separated), else the host of <code>RIM_PUBLIC_BASE_URL</code>, plus its own server id. With neither
+variable set it falls back to <code>localhost:PORT</code> and <code>127.0.0.1:PORT</code>, and only when
+<code>RIM_SERVER_HOST</code> is <code>localhost</code> or a loopback address. A server bound to any other address,
+<code>0.0.0.0</code> (the default and the Docker image&#39;s) included, refuses to start until one of the two
+variables is set:</p>
+<pre><code class="language-text">RIM_SERVER_HOST=0.0.0.0 accepts connections from other machines: set RIM_KEY_LOGIN_AUDIENCES or
+RIM_PUBLIC_BASE_URL to the host[:port] clients reach this server at (the localhost default is
+only for loopback binds)</code></pre>
+<p>For local development bind <code>RIM_SERVER_HOST=127.0.0.1</code>, or set
+<code>RIM_KEY_LOGIN_AUDIENCES=localhost:8080,127.0.0.1:8080</code>.</p>
+<h2 id="the-discovery-document">The discovery document <a class="anchor" href="#the-discovery-document" aria-label="Link to this section">#</a></h2>
+<p><code>GET /.well-known/rim-server</code> answers, to anyone and cacheable for five minutes, the key log and
+the <strong>descriptor</strong>: a statement signed by the current key with the server&#39;s roles, its endpoints
+(<code>/api</code>, <code>/api/ws</code>, and <code>/s2s/v1</code> when server-to-server traffic is on), the protocol versions,
+MLS cipher suites, limits and registration mode. The server signs a new descriptor with a higher
+<code>version</code> whenever its configuration changes it and after every rotation.</p>
+<h2 id="roles-and-server-to-server-configuration">Roles and server-to-server configuration <a class="anchor" href="#roles-and-server-to-server-configuration" aria-label="Link to this section">#</a></h2>
+<p>With nothing configured a server is what it always was: its own users&#39; server and the host of its
+workspaces (<code>RIM_ROLE=both</code>), with server-to-server traffic off.</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>RIM_PUBLIC_BASE_URL</code></td>
+<td>unset</td>
+<td>The URL clients and peers reach this server at. Server-to-server traffic is on only when it is <code>https</code>. Its origin is sent as <code>Rim-Origin</code> and is the base every signed request is checked against, so it must be the URL peers actually use, also behind a TLS-terminating proxy</td>
+</tr>
+<tr>
+<td><code>RIM_ROLE</code></td>
+<td><code>both</code></td>
+<td><code>relay</code> (its users&#39; server and their direct messages), <code>host</code> (workspaces only) or <code>both</code></td>
+</tr>
+<tr>
+<td><code>RIM_SERVER_KEY_FILE</code></td>
+<td><code>&lt;RIM_DATA_DIR&gt;/server-key.json</code></td>
+<td>The server key seed</td>
+</tr>
+<tr>
+<td><code>RIM_HOST_ALLOWED_RELAYS</code></td>
+<td>empty, any</td>
+<td>Comma-separated server ids allowed to use this server&#39;s workspaces as a host</td>
+</tr>
+<tr>
+<td><code>RIM_S2S_DENIED_PEERS</code></td>
+<td>empty</td>
+<td>Comma-separated server ids refused everywhere</td>
+</tr>
+<tr>
+<td><code>RIM_S2S_PEER_RATE_PER_MIN</code></td>
+<td>600</td>
+<td>Requests accepted per peer per minute, per node</td>
+</tr>
+<tr>
+<td><code>RIM_S2S_MAX_BODY_BYTES</code></td>
+<td>8388608</td>
+<td>Largest request body from a peer</td>
+</tr>
+<tr>
+<td><code>RIM_S2S_ALLOW_HTTP</code></td>
+<td>false</td>
+<td>Development and tests only: allow <code>http</code></td>
+</tr>
+<tr>
+<td><code>RIM_S2S_ALLOW_PRIVATE_ADDRESSES</code></td>
+<td>false</td>
+<td>Development and tests only: allow peers on loopback and private networks</td>
+</tr>
+</tbody></table></div>
+<p>Server ids in the lists must be exact (<code>rims1_</code> and 43 characters); the server refuses to start on
+anything else, so a typo cannot silently allow or deny the wrong server.</p>
+<p>Behind a reverse proxy, pass <code>/.well-known/rim-server</code> and <code>/s2s/v1/</code> through unchanged; the
+signature covers the method, the full URL and the body. A peer&#39;s clock must be within five minutes
+of this server&#39;s.</p>
+<h2 id="what-a-peer-sees">What a peer sees <a class="anchor" href="#what-a-peer-sees" aria-label="Link to this section">#</a></h2>
+<p>A peer learns this server&#39;s id from a request, an invite or a profile card, fetches the discovery
+document from the origin, checks that the log hashes to the id, and pins the log. From then on it
+accepts only requests and answers signed by the pinned key (or the previous key for 24 hours after
+a routine rotation). If the log it fetches later does not extend the pin, it refuses this server
+until its operator resets the pin. Each peer appears in the log as <code>s2s.peer_pinned</code>,
+<code>s2s.peer_rotated</code>, <code>s2s.peer_forked</code>, <code>s2s.peer_blocked</code> and <code>s2s.peer_unblocked</code> events (target
+<code>audit</code>), with server ids only.</p>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/docs/server-identity.md">rim-server/docs/server-identity.md</a> at <code>c86029b</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+<script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
+</body>
+</html>

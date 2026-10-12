@@ -1,0 +1,711 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Workspace plugins v1 · RIM</title>
+<meta name="description" content="Status: implemented, normative. Extends docs/specs/key-identity-v1.md (signed statements, version 2 tagged keys, the public keyLog) and docs/specs/web-plugins-v1.md (the WebSandboxed kind and the bundle format). This …">
+<link rel="icon" href="../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../index.html" aria-label="RIM home">
+      <picture><source srcset="../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../index.html#what">What RIM is</a>
+      <a href="../index.html#how">How it works</a>
+      <a href="../docs/self-hosting.html">Self-host</a>
+      <a href="../configure/index.html">Configure</a>
+      <a href="../docs/index.html">Docs</a>
+      <a href="../api/index.html">API</a>
+      <a href="index.html" aria-current="page">Specs</a>
+      <a href="../docs/contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="index.html">Specs</a><span aria-hidden="true">/</span><span>Workspace plugins v1</span></div>
+  <div class="page with-toc">
+    <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
+<ol>
+<li><a href="#summary">Summary</a></li>
+<li><a href="#roles">Roles</a></li>
+<li><a href="#signed-manifests">Signed manifests</a><ol><li><a href="#the-statement">The statement</a></li><li><a href="#verification">Verification</a></li><li><a href="#rotation-and-recovery">Rotation and recovery</a></li><li><a href="#rim_identity">rim_identity</a></li></ol></li>
+<li><a href="#bundles-on-the-server">Bundles on the server</a></li>
+<li><a href="#storage">Storage</a></li>
+<li><a href="#graphql">GraphQL</a></li>
+<li><a href="#client-behaviour-rim-ui">Client behaviour (rim-ui)</a><ol><li><a href="#signing-and-publishing">Signing and publishing</a></li><li><a href="#the-registry-in-the-palette">The registry in the palette</a></li><li><a href="#installing">Installing</a></li><li><a href="#required-plugins">Required plugins</a></li><li><a href="#updates-removal-and-other-sources">Updates, removal and other sources</a></li></ol></li>
+<li><a href="#marketplace-v0-out-of-scope">Marketplace v0 (out of scope)</a></li>
+<li><a href="#limits-and-audit">Limits and audit</a></li>
+<li><a href="#test-plan">Test plan</a></li>
+<li><a href="#deferred">Deferred</a></li>
+<li><a href="#appendix-a-known-answer-statement">Appendix A: known-answer statement</a></li>
+</ol>
+</details></aside>
+    <main id="content" class="prose">
+<h1 id="workspace-plugins-v1">Workspace plugins v1</h1>
+<p class="status"><span><b>Workspace plugins v1</b></span><span>version 1</span><span>status: implemented, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/docs/specs/workspace-plugins-v1.md">rim-server/docs/specs/workspace-plugins-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/c86029b35a7ef7770b05e7bda62909f988343f7f">c86029b</a></span></p>
+<p><em>Status: implemented, normative. Extends <a href="key-identity-v1.html"><code>docs/specs/key-identity-v1.md</code></a> (signed statements,
+version 2 tagged keys, the public <code>keyLog</code>) and <a href="web-plugins-v1.html"><code>docs/specs/web-plugins-v1.md</code></a> (the <code>WebSandboxed</code>
+kind and the bundle format). This document is the contract between the server
+(<code>WorkspacePluginService</code> and the bundle endpoints) and the clients for a per-workspace plugin
+registry whose entries carry manifests signed by their publisher.</em></p>
+<h2 id="summary">Summary <a class="anchor" href="#summary" aria-label="Link to this section">#</a></h2>
+<ol>
+<li>Each workspace has a registry, the <code>workspace_plugin</code> table: at most one entry per <code>plugin_id</code>,
+holding the publisher&#39;s signed statement, its source (bundle hash or git commit), a status
+(<code>recommended</code> or <code>required</code>), and who approved it and when. An entry pins one exact version.</li>
+<li>A publisher is a person: their identity key (key-identity-v1, version 2) signs, with context
+<code>rim.plugin-manifest.v1\0</code>, a payload embedding the exact <code>rim-plugin.json</code> text and binding the
+version and the bundle&#39;s SHA-256 and size (or a git commit and tree hash).</li>
+<li>The server verifies against the publisher&#39;s key log (its own copy when the publisher is enrolled
+here, else one the submitter supplies, as for <code>enrollIdentityKey</code>). Every client verifies again
+before consent; the server is never trusted for the signature.</li>
+<li>A statement stays valid across identity rotations; a later recovery rotation invalidates it.</li>
+<li>Owners and Moderators manage entries; Members and Guests read. <code>workspacePlugins</code>,
+<code>addWorkspacePlugin</code>, <code>updateWorkspacePlugin</code>, <code>removeWorkspacePlugin</code>, and a
+<code>WorkspacePluginChanged</code> event.</li>
+<li>Bundles are stored on the workspace&#39;s server, because the web app can fetch only from hosts that
+send CORS headers. The hash, not the server, decides whether bytes are right.</li>
+<li>Signing happens in the desktop app, on a device holding the identity key: Settings &gt; Plugins &gt;
+&quot;Sign and publish&quot;. No CLI signing in v1.</li>
+<li>Clients list the registry in the palette with a trust badge; <code>required</code> plugins are offered once
+when the workspace opens, never installed silently; installs follow the pinned statement;
+removing an entry stops the plugin and offers to uninstall it. The web app installs only
+<code>WebSandboxed</code> entries.</li>
+<li>Migration <code>add_workspace_plugin</code> adds two tables and touches nothing else.</li>
+</ol>
+<h2 id="roles">Roles <a class="anchor" href="#roles" aria-label="Link to this section">#</a></h2>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Action</th>
+<th>Owner</th>
+<th>Moderator</th>
+<th>Member</th>
+<th>Guest</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Read the registry, download a bundle</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Upload a bundle</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>No</td>
+<td>No</td>
+</tr>
+<tr>
+<td>Add, update (statement or status) or remove an entry</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>No</td>
+<td>No</td>
+</tr>
+</tbody></table></div>
+<p>Signing is not a role: any person with a key identity signs, on a device that holds their identity
+key, and the publisher need not be a member of the workspace or enrolled on its server. Approving
+is the workspace&#39;s decision, held by the roles that manage it. Guests read the registry because an
+entry holds nothing beyond which plugins the workspace uses, and a guest asked to install a
+required plugin needs the entry to verify it.</p>
+<h2 id="signed-manifests">Signed manifests <a class="anchor" href="#signed-manifests" aria-label="Link to this section">#</a></h2>
+<h3 id="the-statement">The statement <a class="anchor" href="#the-statement" aria-label="Link to this section">#</a></h3>
+<pre><code class="language-json">{&quot;v&quot;:2,&quot;type&quot;:&quot;plugin-manifest&quot;,&quot;principalId&quot;:&quot;rimp1_txDLbnipi5i3kCJtJwBOUixzv_MY8OnU0mcy--Tyje0&quot;,&quot;keySeq&quot;:0,&quot;publisherName&quot;:&quot;Ada&quot;,&quot;pluginId&quot;:&quot;dev.example.hello-web&quot;,&quot;version&quot;:&quot;0.1.0&quot;,&quot;manifest&quot;:&quot;{\&quot;manifest_version\&quot;:1,…}&quot;,&quot;source&quot;:{&quot;kind&quot;:&quot;bundle&quot;,&quot;sha256&quot;:&quot;5b154b3eb45c3ebc44f6820ba30a389ce85b43dea34bcbf652b9b1a5416fbe85&quot;,&quot;size&quot;:1605},&quot;issuedAt&quot;:&quot;2026-10-09T00:00:00Z&quot;}</code></pre>
+<p>Every rule of key-identity-v1&#39;s &quot;Signed statements&quot; applies: it travels as <code>{ payload, signature }</code>, the payload is the exact UTF-8 text that was signed and is never re-serialized, the signature
+covers <code>context || payload</code> in tagged form, and unknown fields, duplicate fields and a wrong <code>type</code>
+are refused.</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Purpose</th>
+<th>Context bytes</th>
+<th>Signed by</th>
+<th>Max payload</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Plugin manifest</td>
+<td><code>rim.plugin-manifest.v1\0</code></td>
+<td>The identity key of the log entry at <code>keySeq</code></td>
+<td>96 KiB</td>
+</tr>
+</tbody></table></div>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Rule</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>v</code></td>
+<td><code>2</code>. Version 1 is not accepted for this type: it has no statements to keep valid</td>
+</tr>
+<tr>
+<td><code>type</code></td>
+<td><code>plugin-manifest</code></td>
+</tr>
+<tr>
+<td><code>principalId</code></td>
+<td>The publisher&#39;s principal id (<code>rimp1_…</code>)</td>
+</tr>
+<tr>
+<td><code>keySeq</code></td>
+<td>The <code>seq</code> of the key log entry whose <code>identityKey</code> signed</td>
+</tr>
+<tr>
+<td><code>publisherName</code></td>
+<td>The name the publisher chose: trimmed, 1 to 80 characters, no control characters. Self-asserted</td>
+</tr>
+<tr>
+<td><code>pluginId</code>, <code>version</code></td>
+<td>Equal to the manifest&#39;s <code>plugin_id</code> and <code>version</code>; <code>version</code> is 1 to 64 characters</td>
+</tr>
+<tr>
+<td><code>manifest</code></td>
+<td>The exact text of <code>rim-plugin.json</code>, at most 64 KiB, a JSON object</td>
+</tr>
+<tr>
+<td><code>source</code></td>
+<td>Below</td>
+</tr>
+<tr>
+<td><code>issuedAt</code></td>
+<td>RFC 3339, informational</td>
+</tr>
+</tbody></table></div>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th><code>source.kind</code></th>
+<th>Fields</th>
+<th>Allowed for</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>bundle</code></td>
+<td><code>sha256</code>: 64 lowercase hex characters, the bundle hash (web-plugins-v1, &quot;Bundles&quot;); <code>size</code>: 1 to 8,388,608</td>
+<td>Both kinds</td>
+</tr>
+<tr>
+<td><code>git</code></td>
+<td><code>url</code>: an <code>https://</code> or <code>ssh://</code> URL the desktop&#39;s git install accepts, at most 2,048 bytes; <code>commit</code>: 40 or 64 lowercase hex characters; <code>treeSha256</code>: 64 lowercase hex characters</td>
+<td><code>DesktopLocalProcess</code> only</td>
+</tr>
+</tbody></table></div>
+<p><strong><code>treeSha256</code></strong> is SHA-256 over every file of the commit&#39;s tree, sorted by path in byte order:
+the path&#39;s bytes, a zero byte, the file&#39;s bytes, a zero byte. That is the layout of the desktop&#39;s
+bundle fingerprint (<code>compute_bundle_fingerprint</code>), applied to committed files only: no <code>.git</code>,
+nothing untracked or ignored, so dependencies installed after the checkout do not count. A tree
+with a symbolic link or a submodule cannot be signed. It gives a git source a SHA-256 binding,
+which a SHA-1 commit id alone would not.</p>
+<p>Decisions:</p>
+<ul>
+<li><strong>The manifest is embedded, not hashed.</strong> The statement is then self-contained: the registry,
+the palette and the consent prompt read the plugin&#39;s name, commands and capabilities from signed
+bytes before anything is downloaded, and the bundle check (its <code>rim-plugin.json</code> byte-identical
+to <code>manifest</code>) still ties them to the code. The cost is at most 64 KiB per entry.</li>
+<li><strong>The identity key signs, not a device key or a new publisher key.</strong> A device key is one of
+many, revocable, and would make every verifier check a certificate chain and revocations. A
+separate publisher key would be a new kind of key with its own rotation story, where the roadmap
+wants every identity to go through one principal model. The identity key is the person, and its
+log is public.</li>
+<li><strong>Hashes are lowercase hex</strong>, unlike key-identity&#39;s base64url, because publishers compare them
+with <code>sha256sum</code> and the bundler&#39;s output.</li>
+</ul>
+<h3 id="verification">Verification <a class="anchor" href="#verification" aria-label="Link to this section">#</a></h3>
+<p>In the same words as in <a href="web-plugins-v1.html"><code>web-plugins-v1.md</code></a>:</p>
+<blockquote>
+<p>A client verifies a registry entry before it offers to install it, and again before it installs
+or updates, without trusting the server:</p>
+<ol>
+<li>Read the statement: <code>type</code> <code>plugin-manifest</code>, <code>v</code> 2, payload at most 96 KiB, no unknown or
+duplicate fields (a browser checks duplicates with its own scan, since <code>JSON.parse</code> keeps the
+last one).</li>
+<li>Get the publisher&#39;s key log: <code>keyLog(principalId)</code> from the workspace&#39;s server or, when that
+answers <code>[]</code>, the entry&#39;s <code>publisherKeyLog</code>. Replay it from the inception; its principal id
+must be the statement&#39;s <code>principalId</code>.</li>
+<li><code>keySeq</code> must be an entry of the log, and no later entry may be a recovery rotation
+(<code>&quot;signer&quot;:&quot;recovery&quot;</code>). The signature must verify over <code>rim.plugin-manifest.v1\0</code> followed by
+the payload, under that entry&#39;s <code>identityKey</code>.</li>
+<li>The <code>manifest</code> text must be a valid manifest for this host, with <code>plugin_id</code> equal to
+<code>pluginId</code> and <code>version</code> equal to <code>version</code>. A <code>WebSandboxed</code> manifest must come with a
+<code>bundle</code> source.</li>
+<li>The fetched bundle must have exactly <code>size</code> bytes and the SHA-256 <code>sha256</code>, and its
+<code>rim-plugin.json</code> must be byte-identical to <code>manifest</code>. For a <code>git</code> source (desktop only), the
+checkout of <code>commit</code> must have the tree hash <code>treeSha256</code>.</li>
+<li>Only then does the client show the publisher, the trust badge and the capability consent.</li>
+</ol>
+</blockquote>
+<p>The desktop checks a git source after the clone and checkout of <code>commit</code>, before any post-install
+step runs. The server runs steps 1 to 4 when an entry is added or its statement replaced, with two
+differences: in step 2 it uses its own <code>key_log_entry</code> rows when the principal is enrolled here and
+ignores a supplied log, and otherwise requires <code>publisherKeyLog</code> (at most 256 entries); in step 4 it
+checks only what it needs to store the entry (a JSON object; <code>manifest_version</code> 1; a reverse-domain
+<code>plugin_id</code> with at least three segments of ASCII letters, digits and hyphens, not under <code>dev.rim.</code>
+or <code>com.rim.</code>; <code>display_name</code> 1 to 80 characters; <code>runtime_kind</code> one of the two kinds). Capability
+and command rules are the host&#39;s, which is the authority on what it will run. The server never
+fetches a bundle or a repository.</p>
+<h3 id="rotation-and-recovery">Rotation and recovery <a class="anchor" href="#rotation-and-recovery" aria-label="Link to this section">#</a></h3>
+<p>A statement signed at <code>keySeq</code> n is valid while no recovery rotation follows entry n in the
+publisher&#39;s log; after one it is refused with <code>the publisher recovered their key after keySeq n</code>.</p>
+<ul>
+<li><strong>Identity rotations keep it valid</strong>, like device certificates: rotations are meant to be cheap,
+and invalidating on every rotation would make a publisher re-sign every plugin in every
+workspace each time.</li>
+<li><strong>A recovery rotation invalidates it</strong>, because a recovery says the identity key was lost and
+may be in someone else&#39;s hands, who could sign new statements naming the old <code>keySeq</code>. A
+publisher who suspects a leak rotates with the recovery key for this reason; that is also the
+rotation that revokes every device.</li>
+<li><strong>Rejected:</strong> valid only at the head (as above, too costly), and valid whatever follows (a thief
+of a lost key could publish under the person&#39;s name indefinitely).</li>
+<li><strong>Residual risk:</strong> after an identity rotation the retired key can still sign statements naming
+its own <code>keySeq</code>. That is accepted, because an identity rotation is made by the holder of the
+current key, who chooses it over a recovery only when the old key is not compromised.</li>
+</ul>
+<p>After an invalidation the server reports <code>signatureStatus: PUBLISHER_RECOVERED</code> (computed when the
+entry is read, from the <code>signer</code> of the log entries after <code>keySeq</code>; their signatures were verified
+when stored). Clients refuse new installs and updates of the entry. An installed copy keeps running,
+because its bytes are the ones the person consented to and are pinned by hash, and shows &quot;The
+publisher recovered their key: ask for a re-signed version&quot;. A moderator fixes the entry with
+<code>updateWorkspacePlugin</code> and a statement at the new <code>keySeq</code>.</p>
+<h3 id="rim_identity"><code>rim_identity</code> <a class="anchor" href="#rim_identity" aria-label="Link to this section">#</a></h3>
+<p>A new module, <code>plugin_manifest</code>: <code>Purpose::PluginManifest</code> (the context and the 96 KiB cap); a
+<code>KeyHistory</code>, the replayed log keeping each entry&#39;s identity key and signer; and
+<code>verify_plugin_manifest(&amp;KeyHistory, &amp;SignedStatement)</code>, which runs steps 1 and 3 and the field
+rules, and answers the parsed statement with <code>Validity::Valid</code> or <code>Validity::PublisherRecovered { at_seq }</code>, where <code>at_seq</code> is the seq of the first recovery rotation after <code>keySeq</code>. Of the
+manifest it reads only <code>manifest_version</code>, <code>plugin_id</code>, <code>display_name</code>, <code>version</code> and
+<code>runtime_kind</code> (each must be present with its JSON type); the server&#39;s step 4 checks on their
+values live in the server. <code>read_plugin_manifest</code> runs the field rules without the signature, for
+statements read back from storage. The server and the Tauri host call it; the web app&#39;s
+TypeScript port is checked against appendix A.</p>
+<h2 id="bundles-on-the-server">Bundles on the server <a class="anchor" href="#bundles-on-the-server" aria-label="Link to this section">#</a></h2>
+<p>A bundle reference, in the same words as in <a href="web-plugins-v1.html"><code>web-plugins-v1.md</code></a>: <strong>a registry entry names a web
+bundle by <code>bundleSha256</code> (64 lowercase hex characters, the SHA-256 of the bundle file&#39;s bytes),
+<code>bundleSize</code> (its length in bytes, at most 8 MiB) and <code>bundleUrl</code> (where to fetch it; by default
+the workspace server&#39;s copy, <code>/api/plugin-bundles/&lt;serverId&gt;/&lt;bundleSha256&gt;</code>). The SHA-256 and the
+size are inside the publisher&#39;s signed statement; the URL is not, because it says only where the
+bytes are, and the hash decides whether they are the right ones.</strong></p>
+<p>The server keeps copies because the web app fetches with <code>fetch()</code>, which needs CORS headers that
+release hosts (GitHub releases, most object stores by default) do not send; a copy also keeps a
+required plugin installable when the publisher&#39;s host goes away. An entry may still name an external
+<code>https://</code> URL: clients fetch it with <code>credentials: &quot;omit&quot;</code>, and the web app needs that host to send
+<code>Access-Control-Allow-Origin: *</code>. The server&#39;s own copy (a <code>bundleUrl</code> that is a path, or a URL on
+the API&#39;s origin) needs the session, so clients fetch it with credentials, and send credentials to
+no other host.</p>
+<p>Two endpoints in <code>rim_server</code>, in the <code>file_handlers.rs</code> pattern (a non-GraphQL transport that
+depends on a <code>PluginBundleService</code> trait in <code>rim_services</code>, never on its implementation):</p>
+<ul>
+<li><strong><code>POST /api/plugin-bundles/{serverId}</code></strong>: session and CSRF header; the caller is an Owner or
+Moderator of <code>serverId</code>. The body is the bundle file (<code>Content-Type: application/vnd.rim.plugin-bundle+json</code>; one file and no fields, so not multipart, and the
+server hashes it as it reads), at most 8 MiB. The server checks the bundle&#39;s structure (format,
+version, sorted unique paths, path rules, <code>rim-plugin.json</code> present), stores the bytes through
+<code>StorageService</code> under <code>plugin-bundles/&lt;serverId&gt;/&lt;sha256&gt;</code>, and answers <code>201</code> (<code>200</code> when that
+hash was already there) with <code>{ &quot;sha256&quot;: &quot;…&quot;, &quot;size&quot;: 1605, &quot;url&quot;: &quot;/api/plugin-bundles/&lt;serverId&gt;/&lt;sha256&gt;&quot; }</code>. Refusals, checked in this order: <code>401</code> without a
+session, <code>403</code> for a missing CSRF header, <code>403</code> for a <code>serverId</code> that is not a UUID, <code>415</code> for
+another <code>Content-Type</code>, <code>413</code> over 8 MiB, then <code>429</code> over the rate limit, <code>403</code> for a non-member
+or a role below Moderator, <code>422</code> not a bundle or over the storage quota (with the reason).
+Bundle bytes count toward the workspace&#39;s storage quota, which attachments and bundles share.</li>
+<li><strong><code>GET /api/plugin-bundles/{serverId}/{sha256}</code></strong>: session; the caller is a member of
+<code>serverId</code>, else <code>404</code>, as for an unknown hash. Answers the bytes with <code>Content-Type: application/vnd.rim.plugin-bundle+json</code>, <code>X-Content-Type-Options: nosniff</code>,
+<code>Content-Disposition: attachment</code> and <code>Cache-Control: private, max-age=31536000, immutable</code>, with
+the CORS headers of <code>/api</code> (the server&#39;s CORS policy covers every route).</li>
+</ul>
+<p>Each upload that passes the role and structure checks also deletes, best effort, the workspace&#39;s
+bundles no entry names that are over 24 hours old. It runs before the upload looks for the hash,
+so a bundle re-uploaded after it aged out is stored again (<code>201</code>) rather than deleted after a
+<code>200</code>.</p>
+<h2 id="storage">Storage <a class="anchor" href="#storage" aria-label="Link to this section">#</a></h2>
+<p>Migration <code>add_workspace_plugin</code>, generated with <code>sea migrate generate add_workspace_plugin</code>:</p>
+<pre><code class="language-sql">CREATE TABLE plugin_bundle (
+    server_id uuid NOT NULL,
+    sha256 text NOT NULL,
+    size_bytes bigint NOT NULL,
+    storage_key text NOT NULL,
+    uploaded_by uuid NULL,
+    created_at timestamptz NOT NULL DEFAULT now(),
+    CONSTRAINT pk_plugin_bundle PRIMARY KEY (server_id, sha256),
+    CONSTRAINT chk_plugin_bundle_sha256 CHECK (sha256 ~ '^[0-9a-f]{64}$'),
+    CONSTRAINT chk_plugin_bundle_size CHECK (size_bytes BETWEEN 1 AND 8388608),
+    CONSTRAINT fk_plugin_bundle_server FOREIGN KEY (server_id)
+        REFERENCES server (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_plugin_bundle_uploaded_by FOREIGN KEY (uploaded_by)
+        REFERENCES &quot;user&quot; (id) ON DELETE SET NULL ON UPDATE CASCADE
+);
+CREATE INDEX idx_plugin_bundle_created_at ON plugin_bundle (created_at);
+
+CREATE TABLE workspace_plugin (
+    id uuid PRIMARY KEY,
+    server_id uuid NOT NULL,
+    plugin_id text NOT NULL,
+    version text NOT NULL,
+    display_name text NOT NULL,
+    runtime_kind text NOT NULL,
+    status text NOT NULL,
+    source_kind text NOT NULL,
+    git_url text NULL,
+    git_commit text NULL,
+    git_tree_sha256 text NULL,
+    bundle_url text NULL,
+    bundle_sha256 text NULL,
+    bundle_size bigint NULL,
+    statement_payload text NOT NULL,
+    statement_signature text NOT NULL,
+    publisher_principal_id text NOT NULL,
+    publisher_key_seq integer NOT NULL,
+    publisher_key_log jsonb NULL,
+    approved_by uuid NULL,
+    approved_at timestamptz NOT NULL,
+    created_at timestamptz NOT NULL DEFAULT now(),
+    updated_at timestamptz NOT NULL DEFAULT now(),
+    CONSTRAINT uq_workspace_plugin_server_plugin UNIQUE (server_id, plugin_id),
+    CONSTRAINT chk_workspace_plugin_runtime_kind
+        CHECK (runtime_kind IN ('desktop_local_process', 'web_sandboxed')),
+    CONSTRAINT chk_workspace_plugin_status CHECK (status IN ('recommended', 'required')),
+    CONSTRAINT chk_workspace_plugin_source CHECK (
+        (source_kind = 'git'
+            AND git_url IS NOT NULL AND git_commit IS NOT NULL AND git_tree_sha256 IS NOT NULL
+            AND bundle_url IS NULL AND bundle_sha256 IS NULL AND bundle_size IS NULL)
+        OR (source_kind = 'bundle'
+            AND bundle_url IS NOT NULL AND bundle_sha256 IS NOT NULL AND bundle_size IS NOT NULL
+            AND git_url IS NULL AND git_commit IS NULL AND git_tree_sha256 IS NULL)),
+    CONSTRAINT chk_workspace_plugin_web_bundle
+        CHECK (runtime_kind &lt;&gt; 'web_sandboxed' OR source_kind = 'bundle'),
+    CONSTRAINT chk_workspace_plugin_key_seq CHECK (publisher_key_seq &gt;= 0),
+    CONSTRAINT fk_workspace_plugin_server FOREIGN KEY (server_id)
+        REFERENCES server (id) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_workspace_plugin_approved_by FOREIGN KEY (approved_by)
+        REFERENCES &quot;user&quot; (id) ON DELETE SET NULL ON UPDATE CASCADE
+);
+CREATE INDEX idx_workspace_plugin_bundle ON workspace_plugin (server_id, bundle_sha256)
+    WHERE bundle_sha256 IS NOT NULL;</code></pre>
+<ul>
+<li>The unique constraint&#39;s index serves the registry listing (by <code>server_id</code>, ordered by
+<code>plugin_id</code>); <code>idx_workspace_plugin_bundle</code> serves the download check and the cleanup.</li>
+<li><code>statement_payload</code> and <code>statement_signature</code> are the statement as signed. Every other column
+except <code>status</code>, <code>bundle_url</code>, <code>publisher_key_log</code> and the approval columns is copied from the
+verified payload, never from input. <code>publisher_key_log</code> holds the supplied log (a JSON array of
+<code>{ payload, signature }</code>) only for a publisher not enrolled here; an update may replace it with a
+longer log that extends it, and a log that diverges from it is <code>VALIDATION</code>.</li>
+<li><code>approved_by</code> and <code>approved_at</code> are set on add and on every update. <code>approved_by</code> becomes null
+if that account is deleted.</li>
+<li>The registry belongs to the workspace and lives on the server that hosts it, next to its roles
+and bans (<a href="server-to-server-v1.html"><code>server-to-server-v1.md</code></a>), so it needs no origin column.</li>
+<li><strong>Rollback.</strong> <code>down</code> drops <code>workspace_plugin</code>, then <code>plugin_bundle</code>. Nothing references them.
+Files under <code>plugin-bundles/</code> stay in storage, and an operator may delete that prefix. Clients
+keep what they installed; a registry install whose entry is gone is treated as removed.</li>
+</ul>
+<p>Code: a <code>workspace_plugin</code> module in <code>rim_core</code>, <code>rim_services</code>, <code>rim_infra_services</code>
+(<code>DefaultWorkspacePluginService</code>) and <code>rim_infra_db</code>, and the endpoints above in <code>rim_server</code>.</p>
+<h2 id="graphql">GraphQL <a class="anchor" href="#graphql" aria-label="Link to this section">#</a></h2>
+<pre><code class="language-graphql">enum PluginRuntimeKind { DESKTOP_LOCAL_PROCESS WEB_SANDBOXED }
+enum WorkspacePluginStatus { RECOMMENDED REQUIRED }
+enum PluginSourceKind { BUNDLE GIT }
+enum PluginSignatureStatus { VALID PUBLISHER_RECOVERED }
+
+type PluginSource {
+  kind: PluginSourceKind!
+  bundleUrl: String  bundleSha256: String  bundleSize: Int     # BUNDLE
+  gitUrl: String  gitCommit: String  gitTreeSha256: String      # GIT
+}
+
+type WorkspacePlugin {
+  id: ID!
+  serverId: ID!
+  pluginId: String!
+  version: String!
+  displayName: String!
+  runtimeKind: PluginRuntimeKind!
+  status: WorkspacePluginStatus!
+  source: PluginSource!
+  manifest: String!                       # the exact text inside the statement
+  statement: SignedStatement!
+  publisherPrincipalId: String!
+  publisherName: String!
+  publisherKeySeq: Int!
+  publisherKeyLog: [SignedStatement!]!    # this server's log when enrolled here, else the stored one
+  signatureStatus: PluginSignatureStatus!
+  approvedBy: User
+  approvedAt: DateTime!
+  updatedAt: DateTime!
+}
+
+input AddWorkspacePluginInput {
+  serverId: ID!
+  statement: SignedStatementInput!
+  status: WorkspacePluginStatus!
+  bundleUrl: String                        # BUNDLE only; omitted: this server's copy
+  publisherKeyLog: [SignedStatementInput!] # required when the publisher is not enrolled here
+}
+
+input UpdateWorkspacePluginInput {
+  serverId: ID!
+  pluginId: String!
+  statement: SignedStatementInput          # a new version, or a re-signed one
+  status: WorkspacePluginStatus
+  bundleUrl: String
+  publisherKeyLog: [SignedStatementInput!]
+}
+
+type Query {
+  workspacePlugins(serverId: ID!): [WorkspacePlugin!]!                  # members and guests
+}
+type Mutation {
+  addWorkspacePlugin(input: AddWorkspacePluginInput!): WorkspacePlugin!       # Owner, Moderator
+  updateWorkspacePlugin(input: UpdateWorkspacePluginInput!): WorkspacePlugin! # Owner, Moderator
+  removeWorkspacePlugin(serverId: ID!, pluginId: String!): Boolean!         # Owner, Moderator
+}</code></pre>
+<ul>
+<li><code>addWorkspacePlugin</code> creates the entry for the statement&#39;s <code>pluginId</code>. With a <code>bundle</code> source
+and no <code>bundleUrl</code>, a bundle with that hash and size must have been uploaded to this workspace;
+a given <code>bundleUrl</code> must be <code>https://</code> and at most 2,048 bytes, and is not allowed for a <code>git</code>
+source.</li>
+<li><code>updateWorkspacePlugin</code> changes any of statement, status and URL (at least one; a
+<code>publisherKeyLog</code> alone changes nothing). A new statement must name the same <code>pluginId</code>; its
+version and runtime kind may change, and a lower version is an ordinary update, because a pin is
+exact and versions are never compared. A new statement with a <code>bundle</code> source and no <code>bundleUrl</code>
+points at this server&#39;s copy, which must be uploaded, even when the entry had an external URL.
+A <code>publisherKeyLog</code> without a statement re-verifies the stored statement against it, keeping the
+stored source. Without a <code>publisherKeyLog</code>, a publisher not enrolled here is verified against
+the log the entry keeps, when the statement names the same publisher.</li>
+<li><code>removeWorkspacePlugin</code> deletes the entry and answers <code>true</code>. The bundle goes with the next
+cleanup.</li>
+</ul>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Situation</th>
+<th>Code</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>No session</td>
+<td><code>UNAUTHENTICATED</code></td>
+</tr>
+<tr>
+<td>Not a member of <code>serverId</code>; a mutation by a Member or Guest</td>
+<td><code>FORBIDDEN</code></td>
+</tr>
+<tr>
+<td><code>add</code> for a <code>pluginId</code> the registry has</td>
+<td><code>CONFLICT</code> (<code>dev.example.hello-web is already in this workspace's plugins</code>)</td>
+</tr>
+<tr>
+<td><code>add</code> when the registry holds 100 entries</td>
+<td><code>CONFLICT</code></td>
+</tr>
+<tr>
+<td><code>update</code> or <code>remove</code> of an entry that does not exist</td>
+<td><code>NOT_FOUND</code></td>
+</tr>
+<tr>
+<td>A statement that fails verification, with the reason (<code>signature does not verify</code>, <code>the publisher recovered their key after keySeq 0</code>, <code>pluginId does not match the manifest</code>)</td>
+<td><code>VALIDATION</code></td>
+</tr>
+<tr>
+<td>Publisher not enrolled here and no <code>publisherKeyLog</code>; a log that does not replay</td>
+<td><code>VALIDATION</code></td>
+</tr>
+<tr>
+<td><code>bundle 5b154b3e… is not uploaded to this workspace</code>; a bad <code>bundleUrl</code></td>
+<td><code>VALIDATION</code></td>
+</tr>
+<tr>
+<td><code>update</code> naming another <code>pluginId</code>, or changing nothing</td>
+<td><code>VALIDATION</code></td>
+</tr>
+<tr>
+<td>Over a rate limit</td>
+<td><code>RATE_LIMITED</code></td>
+</tr>
+</tbody></table></div>
+<p>The three mutations need the CSRF header like any session mutation. The resolvers are new
+<code>WorkspacePluginQueries</code> and <code>WorkspacePluginMutations</code> objects appended to the last query and
+mutation groups (<code>QueryGroup7</code>, <code>MutationGroup7</code>), or to a new group when the last one already
+holds five.</p>
+<p><strong>Event.</strong> <code>WorkspaceEvent::WorkspacePluginChanged { workspace_id, plugin_id, change }</code>, with
+<code>change</code> one of <code>added</code>, <code>updated</code> or <code>removed</code>, serialized like the other events (<code>{&quot;type&quot;: &quot;WorkspacePluginChanged&quot;, …}</code>). It is visible to every member, guests included, like
+<code>PipelineFired</code>. It carries no entry data: clients refetch <code>workspacePlugins</code>.</p>
+<h2 id="client-behaviour-rim-ui">Client behaviour (rim-ui) <a class="anchor" href="#client-behaviour-rim-ui" aria-label="Link to this section">#</a></h2>
+<h3 id="signing-and-publishing">Signing and publishing <a class="anchor" href="#signing-and-publishing" aria-label="Link to this section">#</a></h3>
+<p>Settings &gt; Plugins offers &quot;Sign and publish…&quot; on an installed plugin when the device holds the
+account&#39;s identity key (<code>identityKeys</code> and <code>LogStatus.holdsIdentityKey</code>, which includes a linked
+device that took the key over with the recovery phrase). The dialog:</p>
+<ol>
+<li>Builds the source: <code>git</code> for a plugin installed from git (the checkout&#39;s remote URL, <code>HEAD</code> and
+its <code>treeSha256</code>); otherwise <code>bundle</code>, a <code>.rimbundle</code> built from the installed directory with
+the SDK bundler&#39;s algorithm (refused past 8 MiB or 256 files, pointing to <code>rim-plugin-bundle</code>),
+or a <code>.rimbundle</code> the developer picks. It shows id, version, kind, SHA-256 and size, to compare
+with what <code>rim-plugin-bundle</code> printed.</li>
+<li>Takes <code>publisherName</code>, defaulting to the profile card&#39;s display name, replays the account&#39;s log,
+signs at its head <code>keySeq</code> on the Tauri side (the key never reaches the webview), and verifies
+the result with <code>rim_identity</code>.</li>
+<li>For an Owner or Moderator of the current workspace: a status, then &quot;Publish&quot; (upload the bundle
+if the source is one, then <code>addWorkspacePlugin</code>, or <code>updateWorkspacePlugin</code> after showing
+&quot;Replaces 0.1.0 signed by Ada&quot;). For anyone else: &quot;Export&quot; saves
+<code>&lt;plugin_id&gt;-&lt;version&gt;.rimsig.json</code>, <code>{&quot;format&quot;:&quot;rim-plugin-signature&quot;,&quot;v&quot;:1,&quot;statement&quot;:{…}, &quot;publisherKeyLog&quot;:[…]}</code>, beside the <code>.rimbundle</code>, for a moderator to verify and add with
+Workspace settings &gt; Plugins &gt; &quot;Add from files&quot; (desktop or web).</li>
+</ol>
+<p>No CLI signs in v1, and the web app never signs: it holds no identity key.</p>
+<h3 id="the-registry-in-the-palette">The registry in the palette <a class="anchor" href="#the-registry-in-the-palette" aria-label="Link to this section">#</a></h3>
+<p>A &quot;Workspace plugins&quot; source lists the entries this device has not installed, or has at another
+statement:</p>
+<pre><code>Install Kubernetes Pods                  Recommended by Acme · signed by Ada (rimp1_txDLbnip)
+Install GitHub Pull Requests             Required by Acme · signed by RIM team (rimp1_nz1POml8)</code></pre>
+<p>The <strong>trust badge</strong> is <code>Signed by &lt;publisherName&gt; · rimp1_&lt;first 8 characters after the prefix&gt;</code>,
+with the whole id on hover and copy. <code>publisherName</code> is self-asserted, so when a member of the
+workspace has this <code>principalId</code> (<code>ServerMember.principalId</code>, from <code>serverMembers</code>), the badge
+shows that member&#39;s name from the workspace instead; otherwise the name is quoted and marked &quot;not a
+member of this workspace&quot;. On the
+web, <code>DesktopLocalProcess</code> entries are listed with &quot;Needs the desktop app&quot; and cannot be chosen.
+An entry that fails verification is listed as &quot;Signature does not verify&quot; with the reason, and is
+never offered.</p>
+<h3 id="installing">Installing <a class="anchor" href="#installing" aria-label="Link to this section">#</a></h3>
+<p>Choosing an entry runs the verification steps, then opens the install dialog: the badge, the
+workspace&#39;s status, the source (<code>Bundle 5b154b3e… · 1.6 KB</code>, or <code>git github.com/acme/k8s-pods @ 1a2b3c4d</code>), then the capability prompt with its kind line (web-plugins-v1, &quot;Consent text&quot;), and for
+a git source the post-install consent as today. The install record keeps <code>{ kind: &quot;registry&quot;, endpoint, serverId, pluginId, statementSha256, publisherPrincipalId }</code>, where <code>statementSha256</code> is
+the SHA-256 of the statement&#39;s payload.</p>
+<h3 id="required-plugins">Required plugins <a class="anchor" href="#required-plugins" aria-label="Link to this section">#</a></h3>
+<p>When a workspace opens, after the registry loads, one dialog lists its <code>required</code> entries that
+this device can install and has not (or has at another statement), each with its badge and &quot;Review
+and install&quot;, plus &quot;Not now&quot;. Nothing installs without the person going through consent. &quot;Not now&quot;
+is remembered per (server, plugin id, statement hash), so the dialog returns only when the entry&#39;s
+statement or status changes; Settings and the palette keep showing &quot;Required by Acme, not
+installed&quot;. The web app lists required desktop-kind entries once as &quot;Needs the desktop app&quot;. The
+server enforces nothing: <code>required</code> is the workspace&#39;s strong recommendation.</p>
+<h3 id="updates-removal-and-other-sources">Updates, removal and other sources <a class="anchor" href="#updates-removal-and-other-sources" aria-label="Link to this section">#</a></h3>
+<ul>
+<li><strong>Updates.</strong> On workspace open and on <code>WorkspacePluginChanged</code>, the client compares each registry
+install&#39;s <code>statementSha256</code> with the entry&#39;s. A changed entry is verified, then installed at once
+when it keeps the runtime kind and the publisher, asks for no capability the installed copy did
+not ask for and the person has not approved, adds no AI-callable command beyond the installed
+copy&#39;s and those consented, and adds no post-install step; the approvals carry over to the new
+copy, and the person sees &quot;Updated Kubernetes Pods to 0.3.0&quot;. Otherwise the update waits behind a prompt that
+shows what is new, with a warning when the publisher changed. A failed update keeps the old copy.</li>
+<li><strong>Removal.</strong> When the entry disappears, the client stops and disables the plugin and asks &quot;Acme
+removed Kubernetes Pods from its plugins. Remove it from this device?&quot; &quot;Remove&quot; uninstalls it and
+deletes its storage; &quot;Keep&quot; turns it into a local install with no registry source and no updates.
+It is stopped first because a plugin may be removed for being harmful.</li>
+<li><strong>Other sources.</strong> Another workspace&#39;s entry for an installed plugin id shows &quot;Installed&quot; when
+its statement hash matches, or &quot;Installed from &lt;other workspace&gt;&quot; with an offer to switch
+(verification and consent again). A different publisher than the installed copy&#39;s is called out.
+A local, unsigned copy with the same id is offered &quot;Replace with Acme&#39;s signed version&quot;.</li>
+</ul>
+<h2 id="marketplace-v0-out-of-scope">Marketplace v0 (out of scope) <a class="anchor" href="#marketplace-v0-out-of-scope" aria-label="Link to this section">#</a></h2>
+<p>A curated git-backed index would be a repository of <code>.rimsig.json</code> files and their bundles, which
+any client verifies with the steps above and a workspace adds with <code>addWorkspacePlugin</code>, so it needs
+no new statement.</p>
+<h2 id="limits-and-audit">Limits and audit <a class="anchor" href="#limits-and-audit" aria-label="Link to this section">#</a></h2>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>What</th>
+<th>Limit</th>
+<th>Key</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>addWorkspacePlugin</code>, <code>updateWorkspacePlugin</code>, <code>removeWorkspacePlugin</code></td>
+<td>60 an hour</td>
+<td>User</td>
+</tr>
+<tr>
+<td>Bundle uploads</td>
+<td>20 an hour, 8 MiB each</td>
+<td>User</td>
+</tr>
+<tr>
+<td>Registry entries</td>
+<td>100</td>
+<td>Workspace</td>
+</tr>
+<tr>
+<td><code>publisherKeyLog</code></td>
+<td>256 entries</td>
+<td>Input</td>
+</tr>
+<tr>
+<td>Stored bundles</td>
+<td>The workspace&#39;s storage quota</td>
+<td>Workspace</td>
+</tr>
+</tbody></table></div>
+<p>The limiters are the in-memory <code>RegistrationRateLimiter</code>, per node; correctness never depends on
+them. Audit events <code>workspace_plugin_added</code>, <code>workspace_plugin_updated</code>, <code>workspace_plugin_removed</code>
+and <code>plugin_bundle_uploaded</code> carry the server id, the acting user id, the plugin id, version,
+status, publisher principal id and bundle hash (a bundle upload: the hash, the size and whether it
+was stored or already there), never the statement text or bundle bytes.</p>
+<h2 id="test-plan">Test plan <a class="anchor" href="#test-plan" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong><code>rim_identity::plugin_manifest</code>.</strong> Appendix A verifies, with key-identity appendix B&#39;s inception
+as the log. Refused: a flipped payload byte; the key log context; <code>v</code> 1; an unknown and a
+duplicate field; <code>keySeq</code> 1 on a one-entry log; <code>pluginId</code> or <code>version</code> unlike the manifest&#39;s; a
+web manifest with a <code>git</code> source; <code>size</code> 0 or 8 MiB plus one; uppercase hex; a manifest over 64
+KiB. An appended identity rotation keeps it <code>Valid</code>; a recovery rotation makes it
+<code>PublisherRecovered { at_seq }</code>.</li>
+<li><strong>Service</strong> (mock repositories): the roles table, every errors row, the local log winning over a
+supplied one, a snapshot only for a publisher not enrolled here and replaced only by an extending
+log, the default URL needing an uploaded bundle of that size, the approval columns, the cap, one
+event per change.</li>
+<li><strong><code>db-tests</code>:</strong> unique and check constraints; cascade on workspace delete; <code>approved_by</code> set null
+on user delete; cleanup deleting only unnamed bundles over 24 hours old; migration up and down.</li>
+<li><strong>e2e</strong> (<a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/rim_api/tests/workspace_plugin_e2e.rs"><code>rim_api/tests/workspace_plugin_e2e.rs</code></a>): upload web-plugins-v1 appendix A&#39;s bundle
+(<code>201</code>, then <code>200</code>); add appendix A&#39;s statement as an Owner with the inception as
+<code>publisherKeyLog</code> (<code>VALID</code>); read as a Member and a Guest; download as a member (<code>200</code>) and a
+non-member (<code>404</code>); a Member&#39;s add <code>FORBIDDEN</code>; a tampered signature <code>VALIDATION</code>; a status update
+emitting the event; removal, then <code>NOT_FOUND</code>. The e2e harness executes the schema directly, so
+it drives the bundle endpoints through <code>PluginBundleService</code>; the endpoints&#39; status codes and
+headers, and the CSRF header on the upload and the mutations, are tested in <code>rim_server</code> with
+actix test requests.</li>
+<li><strong>Clients:</strong> verification in the Tauri host and in TypeScript on appendix A and one refusal per
+step; <code>treeSha256</code> on a fixture repository; the signing dialog&#39;s statement verifying with
+<code>rim_identity</code> and its hash equal to <code>rim-plugin-bundle</code>&#39;s; the badge with and without a
+matching member; the required dialog shown once and again after a statement change, never
+installing on its own; each update rule; removal with &quot;Remove&quot; and &quot;Keep&quot;; the web app refusing
+desktop-kind entries.</li>
+</ul>
+<h2 id="deferred">Deferred <a class="anchor" href="#deferred" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>Signed approvals</strong>: an Owner&#39;s signature over the entry&#39;s status, so a client stops trusting
+the server for &quot;recommended by Acme&quot;.</li>
+<li><strong>Freshness of the publisher&#39;s log.</strong> A server could withhold a later recovery rotation, keeping
+old signatures valid for its clients. Fetching profile cards from several relays would answer
+this; relays do not fan out reads yet.</li>
+<li>Enforcing required plugins, and per-workspace limits on capabilities (<code>capability_security_model.md</code>,
+&quot;Admin Restriction Direction&quot;).</li>
+<li>CLI signing; release channels (more than one version per entry); the server mirroring external
+bundles; pushing re-verification to clients when a publisher recovers.</li>
+<li>The marketplace v0 index and its economics.</li>
+</ul>
+<h2 id="appendix-a-known-answer-statement">Appendix A: known-answer statement <a class="anchor" href="#appendix-a-known-answer-statement" aria-label="Link to this section">#</a></h2>
+<p>Publisher: key-identity-v1 appendix B (identity key from seed 1, principal
+<code>rimp1_txDLbnipi5i3kCJtJwBOUixzv_MY8OnU0mcy--Tyje0</code>); its key log is appendix B&#39;s inception alone,
+so <code>keySeq</code> is 0. The bundle is web-plugins-v1 appendix A. The <code>manifest</code> field holds that
+bundle&#39;s <code>rim-plugin.json</code>. Signed with Python&#39;s <code>cryptography</code>, checked with Node&#39;s <code>crypto</code>. Never
+use these keys for real statements.</p>
+<p>Payload (693 bytes):</p>
+<pre><code>{&quot;v&quot;:2,&quot;type&quot;:&quot;plugin-manifest&quot;,&quot;principalId&quot;:&quot;rimp1_txDLbnipi5i3kCJtJwBOUixzv_MY8OnU0mcy--Tyje0&quot;,&quot;keySeq&quot;:0,&quot;publisherName&quot;:&quot;Ada&quot;,&quot;pluginId&quot;:&quot;dev.example.hello-web&quot;,&quot;version&quot;:&quot;0.1.0&quot;,&quot;manifest&quot;:&quot;{\&quot;manifest_version\&quot;:1,\&quot;plugin_id\&quot;:\&quot;dev.example.hello-web\&quot;,\&quot;display_name\&quot;:\&quot;Hello Web\&quot;,\&quot;version\&quot;:\&quot;0.1.0\&quot;,\&quot;description\&quot;:\&quot;Says hello from a sandboxed frame.\&quot;,\&quot;runtime_kind\&quot;:\&quot;WebSandboxed\&quot;,\&quot;entrypoint\&quot;:\&quot;main.mjs\&quot;,\&quot;commands\&quot;:[{\&quot;id\&quot;:\&quot;greet\&quot;,\&quot;title\&quot;:\&quot;Hello Web: Greet\&quot;,\&quot;description\&quot;:\&quot;Greets the signed-in user.\&quot;}]}&quot;,&quot;source&quot;:{&quot;kind&quot;:&quot;bundle&quot;,&quot;sha256&quot;:&quot;5b154b3eb45c3ebc44f6820ba30a389ce85b43dea34bcbf652b9b1a5416fbe85&quot;,&quot;size&quot;:1605},&quot;issuedAt&quot;:&quot;2026-10-09T00:00:00Z&quot;}</code></pre>
+<p>Signature:</p>
+<pre><code>ed25519:FRHxrYnev03jlVo484kL4PLh7GMArjEE4q1wiBNMSx7rD8CAis8YIivjSccshXkEdvYEw-wAIjzQgzDRj6kGCg</code></pre>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/docs/specs/workspace-plugins-v1.md">rim-server/docs/specs/workspace-plugins-v1.md</a> at <code>c86029b</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+<script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
+</body>
+</html>

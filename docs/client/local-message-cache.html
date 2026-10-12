@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Local message cache · RIM</title>
+<meta name="description" content="The desktop app keeps the messages of the conversations you open in an encrypted database on this device. The timeline shows the cached copy first and falls back to it when the server cannot be reached. The web app has …">
+<link rel="icon" href="../../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../../index.html" aria-label="RIM home">
+      <picture><source srcset="../../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../../index.html#what">What RIM is</a>
+      <a href="../../index.html#how">How it works</a>
+      <a href="../self-hosting.html">Self-host</a>
+      <a href="../../configure/index.html">Configure</a>
+      <a href="../index.html" aria-current="page">Docs</a>
+      <a href="../../api/index.html">API</a>
+      <a href="../../specs/index.html">Specs</a>
+      <a href="../contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="../index.html">Docs</a><span aria-hidden="true">/</span><a href="../using-rim.html">Using RIM</a><span aria-hidden="true">/</span><span>Local message cache</span></div>
+  <div class="page with-toc">
+    <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
+<ol>
+<li><a href="#storage">Storage</a></li>
+<li><a href="#local-search">Local search</a></li>
+<li><a href="#history-archive">History archive</a></li>
+<li><a href="#sync">Sync</a></li>
+<li><a href="#offline-start">Offline start</a></li>
+<li><a href="#not-yet">Not yet</a></li>
+</ol>
+</details></aside>
+    <main id="content" class="prose">
+<h1 id="local-message-cache">Local message cache</h1>
+<p>The desktop app keeps the messages of the conversations you open in an encrypted database on
+this device. The timeline shows the cached copy first and falls back to it when the server
+cannot be reached. The web app has no cache and behaves as before.</p>
+<h2 id="storage">Storage <a class="anchor" href="#storage" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><a href="https://github.com/rim-platform/rim-ui/tree/58e3ec03c43064632a6a6f610d92413040229dfd/src-tauri/src/message_cache"><code>src-tauri/src/message_cache/</code></a>: SQLCipher through <code>rusqlite</code> (<code>bundled-sqlcipher</code>; Windows
+builds a vendored OpenSSL). Files live in <code>&lt;app data&gt;/message-cache/</code>, one per account, named
+after a hash of (GraphQL endpoint, user id). The account is also written inside the file, so a
+database is never served to another account.</li>
+<li>One random 256-bit key per installation, stored in the secret vault (<code>message-cache-key-v1</code>, see
+<a href="secret-vault.html"><code>secret-vault.md</code></a>), whose own key is in the OS credential store (on Linux the desktop keyring
+service, see below). All key handling is in <code>key.rs</code>; key identity re-wraps this key under the
+device key. If the key is lost, the unreadable files are deleted and the cache refills from the
+server. If the vault cannot be opened, every cache call fails softly, the timeline reads from
+the server, and the app says once per run that the local cache is off and why. The failure is
+kept until the app restarts, so a locked keyring&#39;s unlock prompt, once dismissed, is not shown
+again on every cache call.</li>
+<li>On Linux the credential store is the Secret Service (GNOME Keyring, KWallet, KeePassXC) over
+D-Bus. With none running, or with the keyring locked, the cache stays off with an error that
+says so; nothing falls back to a store that would not survive a reboot.</li>
+<li>Signing out keeps the account&#39;s database on the device (it is encrypted, and history on the
+user&#39;s own device is the point of the cache); signing back in to the same account reuses it. A
+sync still in flight when the signed-in account changes is discarded before it is applied.</li>
+<li><code>message.text</code> is its own column, and <code>message.seq</code> is an <code>INTEGER PRIMARY KEY</code> that upserts
+never change, so the local search index (below) points at rows that survive a <code>VACUUM</code>.
+Deleted messages stay as tombstones with no text, attachments, link previews or reactions.</li>
+<li>The schema is versioned with <code>PRAGMA user_version</code> (<code>SCHEMA_VERSION</code> in <code>store.rs</code>); each
+version is one migration step that commits with its version number.</li>
+</ul>
+<h2 id="local-search">Local search <a class="anchor" href="#local-search" aria-label="Link to this section">#</a></h2>
+<p>Schema v2 adds <code>message_fts</code>, an external-content FTS5 index over <code>message.text</code>
+(<code>content='message'</code>, <code>content_rowid='seq'</code>, <code>unicode61</code> with diacritics folded). It is a table of
+the same SQLCipher database, so it is encrypted like the rest; there is no sidecar file.</p>
+<ul>
+<li>FTS5&#39;s standard external-content triggers on <code>message</code> keep it in step with every write the sync
+makes: a create indexes the text, an edit replaces the old entry, a delete (<code>NO_ACCESS</code>,
+<code>RESET</code>) removes it. Tombstones have no text, so a message deleted on the server is not
+searchable; nor is anything in a conversation the user lost access to, which the sync drops.</li>
+<li>Upgrading a v1 cache backfills the index once (<code>'rebuild'</code>) in the same transaction as the
+version bump.</li>
+<li><code>message_cache_search</code> takes the free text and the parsed operators (<code>from:</code>, <code>in:</code>, <code>has:link</code>,
+<code>has:attachment</code>, <code>before:</code>, <code>after:</code>; the webview parses them, see
+<a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/src/features/messages/api/localSearch.ts"><code>src/features/messages/api/localSearch.ts</code></a>) and returns hits newest first with the timeline&#39;s
+<code>(sentAt, id)</code> cursor, a <code>-bm25</code> rank, and a snippet that is HTML-escaped apart from its
+<code>&lt;mark&gt;</code> tags. Free text is never FTS5 syntax: each word becomes a quoted prefix term (<code>depl</code>
+finds <code>deploy</code>), <code>&quot;quoted words&quot;</code> a phrase, all of them required.</li>
+<li>Search covers one workspace of the signed-in account&#39;s own database, live messages only.</li>
+</ul>
+<p>How the search overlay uses it is in <a href="search-ui.html"><code>docs/search-ui.md</code></a>.</p>
+<h2 id="history-archive">History archive <a class="anchor" href="#history-archive" aria-label="Link to this section">#</a></h2>
+<p>Schema v3 numbers every change to a message or to a conversation&#39;s sync state (<code>change_seq</code>,
+from <code>change_counter</code>, set by triggers), so the history archive exports exactly what changed
+since its last export; <code>archive_export</code> keeps how far each (archive, device) got.
+<code>conversation_sync.reset_at</code> records when the server last answered <code>RESET</code>. A restore from the
+archive writes through the sync&#39;s own upsert (higher version wins, a tie keeps the cached copy)
+and follows restored conversations from the archive&#39;s cursor. Restored rows are marked with
+the archive they came from (<code>restored_from</code>), so they are not exported back into it but are
+exported to any other archive the device moves to. The format and the rules are in
+<a href="../../specs/history-archive-v1.html"><code>docs/specs/history-archive-v1.md</code></a>; the code is <a href="https://github.com/rim-platform/rim-ui/tree/58e3ec03c43064632a6a6f610d92413040229dfd/src-tauri/src/history_archive"><code>src-tauri/src/history_archive/</code></a> and
+<code>message_cache/archive.rs</code>. The archive also keeps a sealed copy of the identity key and a wrap
+of the archive key under it: <a href="identity-key-backup.html"><code>docs/identity-key-backup.md</code></a>.</p>
+<h2 id="sync">Sync <a class="anchor" href="#sync" aria-label="Link to this section">#</a></h2>
+<p>The server contract is rim-server <code>docs/message-change-feed.md</code>. The cache stores a cursor per
+conversation and decides what to ask for; the webview makes the <code>messageChanges</code> call because it
+holds the session cookie (<a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/src/features/messages/runtime/messageCacheSync.ts"><code>src/features/messages/runtime/messageCacheSync.ts</code></a>):</p>
+<pre><code class="language-text">input = message_cache_sync_begin(conversations)
+while input: input = message_cache_sync_apply(await messageChanges(input))</code></pre>
+<ul>
+<li>When: on startup and every WebSocket (re)connect for the 50 most recently viewed
+conversations, and for one conversation when a real-time message event for it arrives.
+Events carry no version, so they are only a signal. Opening a conversation starts following it.</li>
+<li>Changes are upserts keyed by message id that keep the higher <code>version</code>, so an edit seen before
+its create, or a stale page, never overwrites newer state.</li>
+<li><code>hasMore</code> keeps a conversation pending; an interrupted sync resumes from the stored cursor.</li>
+<li><code>RESET</code> drops the conversation&#39;s cached messages and applies the changes from the beginning.</li>
+<li><code>NO_ACCESS</code> drops the conversation&#39;s messages and stops following it.</li>
+<li>A conversation is served from the cache only once a sync reached its end: a partial initial
+sync holds the oldest messages, which must not pass for the latest.</li>
+</ul>
+<h2 id="offline-start">Offline start <a class="anchor" href="#offline-start" aria-label="Link to this section">#</a></h2>
+<p>A user who signed in on this device before can open the app without a connection:</p>
+<ul>
+<li>The session record (<a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/src-tauri/src/offline_session.rs"><code>src-tauri/src/offline_session.rs</code></a>) is kept in the secret vault (like the
+cache key, see <a href="secret-vault.html"><code>secret-vault.md</code></a>): which
+account was signed in to which server, or that the user signed out. No token is stored; the
+session stays in the webview&#39;s cookie. When the startup session check cannot reach the
+server, the recorded account opens offline. When the server answers that the session is no
+longer valid, the app goes to sign-in as before.</li>
+<li>Snapshots (<code>message_cache/snapshot.rs</code>, schema v4) keep the last server answer of the
+signed-in user, the workspace list, and each workspace&#39;s joined channels, DMs and members in
+the same encrypted database. Each answer is saved; a query the server cannot be reached for
+is answered from its snapshot (<a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/src/features/offline/api/offlineSnapshot.ts"><code>src/features/offline/api/offlineSnapshot.ts</code></a>). Those queries
+and the timeline run with TanStack Query&#39;s <code>offlineFirst</code> network mode, so they still try
+(and fall back) while the OS reports no network.</li>
+<li>Schema v5 adds <code>mls_storage</code>, the MLS group state of end-to-end encrypted conversations
+(<code>rim_mls</code>, see <a href="rim-mls.html"><code>rim-mls.md</code></a>): in the same encrypted file, so decrypting a message, storing its
+plaintext and advancing the group&#39;s ratchet commit in one transaction. It is never archived.</li>
+<li>Schema v6 adds what the desktop keeps about encrypted conversations beside that state
+(<code>message.e2ee_state</code>, <code>e2ee_conversation</code>, <code>e2ee_outgoing</code>, <code>e2ee_verified_device</code>,
+<code>e2ee_readd_honored</code>); see <a href="e2ee-desktop.html"><code>e2ee-desktop.md</code></a>.</li>
+<li>While offline a banner says so and sending is off (typing still works). Writes fail at once
+instead of waiting to be replayed: mutations run with the <code>always</code> network mode.</li>
+<li>Offline mode re-checks the session on a timer that starts at 15 seconds and doubles after each
+miss up to two minutes (skipped while the OS reports no network or the window is hidden), and
+right away when the network, the window or the WebSocket comes back. The first answer leaves
+offline mode and refetches everything, or signs out when the server refuses the session
+(<code>UNAUTHENTICATED</code>, 401, 403); any other error keeps the app offline.</li>
+<li>A list served from its snapshot while the app thought it was online (a 5xx, a dropped
+network) switches the app to offline mode, so saved copies never pass for live ones.</li>
+<li>An explicit sign-out records <code>signedOut</code>, so the next start lands on sign-in without asking
+the server, even if the sign-out request never reached it. The encrypted cache stays.</li>
+</ul>
+<h2 id="not-yet">Not yet <a class="anchor" href="#not-yet" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>Thread panes, pins, reactions and link previews still read from the server; the feed does not
+version reactions, pins or previews, so cached copies of those are as of the last sync.</li>
+<li>Local search covers the conversations the cache follows (opened on this device, or restored
+from the history archive), not every conversation of the workspace.</li>
+</ul>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/docs/local-message-cache.md">rim-ui/docs/local-message-cache.md</a> at <code>58e3ec0</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+<script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
+</body>
+</html>

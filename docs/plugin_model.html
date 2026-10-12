@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Plugin Model · RIM</title>
+<meta name="description" content="This document explains what a RIM plugin is, who owns which part of the plugin system, and how plugins fit the command, keybind and agent model. It is an overview: the contracts are the specs it links to, and when this …">
+<link rel="icon" href="../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../index.html" aria-label="RIM home">
+      <picture><source srcset="../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../index.html#what">What RIM is</a>
+      <a href="../index.html#how">How it works</a>
+      <a href="self-hosting.html">Self-host</a>
+      <a href="../configure/index.html">Configure</a>
+      <a href="index.html" aria-current="page">Docs</a>
+      <a href="../api/index.html">API</a>
+      <a href="../specs/index.html">Specs</a>
+      <a href="contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="index.html">Docs</a><span aria-hidden="true">/</span><a href="plugin-authors.html">Plugin authors</a><span aria-hidden="true">/</span><span>Plugin Model</span></div>
+  <div class="page with-toc">
+    <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
+<ol>
+<li><a href="#what-a-plugin-is">What a plugin is</a></li>
+<li><a href="#two-kinds">Two kinds</a></li>
+<li><a href="#who-owns-what">Who owns what</a></li>
+<li><a href="#plugins-and-the-command-model">Plugins and the command model</a></li>
+<li><a href="#security-model">Security model</a></li>
+<li><a href="#not-built">Not built</a></li>
+</ol>
+</details></aside>
+    <main id="content" class="prose">
+<h1 id="plugin-model">Plugin Model</h1>
+<p>This document explains what a RIM plugin is, who owns which part of the plugin system, and how
+plugins fit the command, keybind and agent model. It is an overview: the contracts are the specs
+it links to, and when this page and a spec disagree, the spec wins.</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Contract</th>
+<th>What it defines</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><a href="../specs/plugin-protocol-v1.html"><code>specs/plugin-protocol-v1.md</code></a></td>
+<td>The protocol between the host and a plugin: transport, framing, handshake, commands, the dangerous-command gate, principals, capabilities, heartbeats, shutdown</td>
+</tr>
+<tr>
+<td><a href="../specs/web-plugins-v1.html"><code>specs/web-plugins-v1.md</code></a></td>
+<td>The <code>WebSandboxed</code> kind: bundles, the sandboxed frames, the <code>MessagePort</code> transport, <code>network.fetch</code>, storage, install sources</td>
+</tr>
+<tr>
+<td><a href="../specs/workspace-plugins-v1.html"><code>specs/workspace-plugins-v1.md</code></a></td>
+<td>Manifests signed by their publisher and the per-workspace registry the server keeps</td>
+</tr>
+<tr>
+<td><a href="../specs/e2ee-mls-v1.html"><code>specs/e2ee-mls-v1.md</code></a>, &quot;Plugins and the client message service&quot;</td>
+<td>What a plugin may read and write in encrypted conversations</td>
+</tr>
+</tbody></table></div>
+<p><a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/docs/local_plugin_host.md"><code>local_plugin_host.md</code></a> describes how the desktop app installs, starts and hosts local-process
+plugins.</p>
+<h2 id="what-a-plugin-is">What a plugin is <a class="anchor" href="#what-a-plugin-is" aria-label="Link to this section">#</a></h2>
+<p>A plugin is an extension of the client application, in the spirit of VS Code or Obsidian
+extensions. It is a package with a manifest (<code>rim-plugin.json</code>) that contributes some of:</p>
+<ul>
+<li>commands, which appear in the palette, can be bound to keys and, when the plugin marks them
+<code>ai_callable</code>, can be run by the AI agent;</li>
+<li>keybind suggestions, which the user approves;</li>
+<li>context actions on messages;</li>
+<li>panels, rendered in sandboxed iframes inside the shell;</li>
+<li>settings.</li>
+</ul>
+<p>A plugin with no panels is headless: it contributes commands only. The canonical examples live in
+rim-ui&#39;s <code>plugins/</code> directory: <code>k8s-pods</code> lists the pods of the user&#39;s Kubernetes cluster and
+restarts one through a dangerous command, <code>github-prs</code> lists pull requests of public GitHub
+repositories, <code>hello-world</code> and <code>template-ts</code> are starting points.</p>
+<h2 id="two-kinds">Two kinds <a class="anchor" href="#two-kinds" aria-label="Link to this section">#</a></h2>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Kind</th>
+<th>Where it runs</th>
+<th>What it can reach</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>DesktopLocalProcess</code></td>
+<td>A process the desktop app starts, speaking protocol v1 over stdin and stdout</td>
+<td>Whatever the user can do on the machine (it runs as the user), plus the host methods its granted capabilities allow</td>
+</tr>
+<tr>
+<td><code>WebSandboxed</code></td>
+<td>A sandboxed iframe with an opaque origin, in the desktop app and in the web app</td>
+<td>Only the host methods its granted capabilities allow, and the network origins its manifest lists when <code>network.fetch</code> is granted</td>
+</tr>
+</tbody></table></div>
+<p>A local-process plugin can be written in any language that reads stdin and writes stdout; the
+protocol spec ends with a complete plugin in Python. A web plugin is one self-contained ES module
+plus optional panel files, shipped as a bundle whose SHA-256 the client checks at every start.
+rim-ui&#39;s TypeScript SDK (<code>sdk/plugin-sdk</code>) builds both kinds from the same source.</p>
+<h2 id="who-owns-what">Who owns what <a class="anchor" href="#who-owns-what" aria-label="Link to this section">#</a></h2>
+<p>Plugins run in the client. The server never runs plugin code.</p>
+<p><strong>The client&#39;s plugin host owns</strong> installation (from a local folder, a git URL, a pasted bundle
+link or a workspace registry entry), manifest validation, the capability consent and its
+revocation, starting and stopping plugins, routing commands to them, enforcing the
+dangerous-command confirmation, and hosting panels.</p>
+<p><strong>The server owns</strong> what a workspace shares about plugins: the per-workspace registry of
+recommended or required plugins, each entry carrying a manifest its publisher signed with their
+identity key, and the storage of web plugin bundles for those entries. Owners and moderators
+manage the registry; clients verify every entry against the publisher&#39;s key log before they offer
+it, so they do not have to trust the server for what a plugin is. The registry can be switched
+off per instance (<code>workspace_plugins</code> in <a href="operations/features.html"><code>operations/features.md</code></a>).</p>
+<p>Plugins reach shared data only through the host, with the user&#39;s own session and under the
+capabilities the user granted. A web plugin&#39;s opaque origin has no cookies and cannot read the
+CSRF token, so it cannot call the GraphQL API directly.</p>
+<h2 id="plugins-and-the-command-model">Plugins and the command model <a class="anchor" href="#plugins-and-the-command-model" aria-label="Link to this section">#</a></h2>
+<p>Plugins join the shared systems instead of building parallel ones:</p>
+<ul>
+<li>A plugin command is <code>plugin.&lt;plugin_id&gt;.&lt;command&gt;</code> in the same registry as builtins and user
+commands, so it shows up in the palette and the keybind picker and can be used in macros
+(<a href="command_model.html"><code>command_model.md</code></a>).</li>
+<li>A command the manifest marks <code>dangerous</code> runs only after the user confirms that run in a host
+dialog. The agent can never confirm one, and a panel cannot confirm one for its own plugin.</li>
+<li>A command marked <code>ai_callable</code> is offered to the agent under the same confirmation gate as
+builtins, so the agent can operate whatever a workspace has plugged in.</li>
+<li>Plugins see a person only as <code>{ principalId, displayName }</code>, never a server-local id.</li>
+</ul>
+<h2 id="security-model">Security model <a class="anchor" href="#security-model" aria-label="Link to this section">#</a></h2>
+<p>A capability is a permission the user grants a plugin over something the host does for it. The
+manifest asks for capabilities, the consent prompt names each one, the user approves some or
+all, and revoking one stops the plugin. The names and what each guards are in protocol v1,
+section 12, and in the web plugin spec&#39;s capability table.</p>
+<p>Capabilities are not a sandbox for a local process: a <code>DesktopLocalProcess</code> plugin runs as the
+user and can do anything the user can, and the consent prompt says so. They govern what the
+host will do for the plugin. A <code>WebSandboxed</code> plugin is confined by the browser: the iframe
+sandbox, an opaque origin and a content security policy built from its granted origins.</p>
+<p>Decrypted text of encrypted DMs and groups reaches a plugin only through the client message
+service and only with the separate <code>chat.read.encrypted</code> or <code>chat.write.encrypted</code> grant; plugins
+never see keys, MLS state or ciphertext.</p>
+<h2 id="not-built">Not built <a class="anchor" href="#not-built" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>Panel slots beyond what the manifest&#39;s <code>slot</code> names today, a plugin UI component kit, and a
+frozen panel bridge: the bridge between a panel and the host is not part of protocol v1, and
+<a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/docs/local_plugin_host.md"><code>local_plugin_host.md</code></a> lists which of its messages work.</li>
+<li>Event subscriptions (<code>rim.events.subscribe</code>) and automations triggered by events.</li>
+<li>Lazy start on first use and an idle stop for local-process plugins.</li>
+<li>Enforcing required registry plugins, and per-workspace limits on what capabilities a plugin
+may be granted.</li>
+<li>Plugin sync across a person&#39;s devices.</li>
+</ul>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/docs/plugin_model.md">rim-server/docs/plugin_model.md</a> at <code>c86029b</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+<script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
+</body>
+</html>

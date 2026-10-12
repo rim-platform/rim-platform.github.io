@@ -1,0 +1,712 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>History archive format, version 1 · RIM</title>
+<meta name="description" content="The desktop app writes the user's message history to a folder the user picks, encrypted, and reads it back on another device. There is no RIM server in this picture: the folder is the user's own (a local disk, a USB …">
+<link rel="icon" href="../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../index.html" aria-label="RIM home">
+      <picture><source srcset="../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../index.html#what">What RIM is</a>
+      <a href="../index.html#how">How it works</a>
+      <a href="../docs/self-hosting.html">Self-host</a>
+      <a href="../configure/index.html">Configure</a>
+      <a href="../docs/index.html">Docs</a>
+      <a href="../api/index.html">API</a>
+      <a href="index.html" aria-current="page">Specs</a>
+      <a href="../docs/contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="index.html">Specs</a><span aria-hidden="true">/</span><span>History archive format, version 1</span></div>
+  <div class="page with-toc">
+    <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
+<ol>
+<li><a href="#goals">Goals</a></li>
+<li><a href="#layout">Layout</a></li>
+<li><a href="#keys">Keys</a></li>
+<li><a href="#manifest">Manifest</a></li>
+<li><a href="#sealed-files-rimx">Sealed files (.rimx)</a></li>
+<li><a href="#head">Head</a></li>
+<li><a href="#segments">Segments</a><ol><li><a href="#msg-a-message-at-one-version">msg: a message at one version</a></li><li><a href="#conv-where-a-devices-sync-of-a-conversation-stood">conv: where a device's sync of a conversation stood</a></li></ol></li>
+<li><a href="#writing-export">Writing (export)</a></li>
+<li><a href="#reading-and-restoring">Reading and restoring</a></li>
+<li><a href="#identity-key-backup">Identity key backup</a><ol><li><a href="#backup-key">Backup key</a></li><li><a href="#the-backup-record">The backup record</a></li><li><a href="#when-it-is-written">When it is written</a></li><li><a href="#taking-the-identity-key-over">Taking the identity key over</a></li><li><a href="#wraps-under-the-identity-key-identity-v1">Wraps under the identity key (identity-v1)</a></li><li><a href="#what-a-drive-provider-learns">What a drive provider learns</a></li><li><a href="#known-answer-vectors">Known-answer vectors</a></li></ol></li>
+<li><a href="#versioning">Versioning</a></li>
+<li><a href="#providers">Providers</a><ol><li><a href="#local-folder">Local folder</a></li><li><a href="#google-drive">Google Drive</a></li><li><a href="#dropbox">Dropbox</a></li><li><a href="#onedrive">OneDrive</a></li><li><a href="#s3-compatible-storage">S3-compatible storage</a></li><li><a href="#backup-endpoint">Backup endpoint</a></li><li><a href="#sign-in-and-tokens">Sign-in and tokens</a></li><li><a href="#retries-and-interrupted-backups">Retries and interrupted backups</a></li></ol></li>
+<li><a href="#not-in-version-1">Not in version 1</a></li>
+</ol>
+</details></aside>
+    <main id="content" class="prose">
+<h1 id="history-archive-format-version-1">History archive format, version 1</h1>
+<p class="status"><span><b>History archive format, version 1</b></span><span>version 1</span><span><a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/docs/specs/history-archive-v1.md">rim-ui/docs/specs/history-archive-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-ui/commit/58e3ec03c43064632a6a6f610d92413040229dfd">58e3ec0</a></span></p>
+<p>The desktop app writes the user&#39;s message history to a folder the user picks, encrypted, and
+reads it back on another device. There is no RIM server in this picture:
+the folder is the user&#39;s own (a local disk, a USB drive, a folder that Dropbox, Google Drive,
+OneDrive, iCloud Drive or Syncthing keeps in sync, the app&#39;s own folder in the user&#39;s Google
+Drive, Dropbox or OneDrive, reached through their APIs, a bucket of S3-compatible storage, or a
+backup endpoint the user runs), and only someone with the passphrase can read it.</p>
+<p>This document is the format. Anyone may write a reader or writer from it. The implementation is
+<a href="https://github.com/rim-platform/rim-ui/tree/58e3ec03c43064632a6a6f610d92413040229dfd/src-tauri/src/history_archive"><code>src-tauri/src/history_archive/</code></a>; the cache it is written from is <a href="../docs/client/local-message-cache.html"><code>docs/local-message-cache.md</code></a>.</p>
+<h2 id="goals">Goals <a class="anchor" href="#goals" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>A new device with nothing but the folder and the passphrase gets the history back, and shows
+it before asking any server.</li>
+<li>Several devices write into one folder at the same time without ever writing the same file, so
+a sync client never has a conflict to resolve and one device can never clobber another&#39;s data.</li>
+<li>The folder holds ciphertext only. File names reveal neither the server, the user, nor the
+conversations.</li>
+<li>The key that encrypts the files is not derived from the passphrase, so it can be unlocked
+another way too (the identity key, &quot;Identity key backup&quot;) without re-encrypting anything.</li>
+</ul>
+<h2 id="layout">Layout <a class="anchor" href="#layout" aria-label="Link to this section">#</a></h2>
+<pre><code class="language-text">&lt;folder&gt;/
+  rim-archive.json                                  manifest
+  devices/&lt;device id&gt;/
+    key-wraps.json                                  the archive key under identity keys
+  accounts/&lt;account tag&gt;/
+    devices/&lt;device id&gt;/
+      head.rimx                                     the device's segment list
+      seg-0000000001.rimx                           segments, numbered from 1
+      seg-0000000002.rimx
+      ...
+      identity-backup.rimx                          the identity key, sealed under the backup key</code></pre>
+<ul>
+<li><strong>Manifest</strong> (<code>rim-archive.json</code>): plain JSON, written once by the device that creates the
+archive. Version 1 never rewrites it.</li>
+<li><strong>Account tag</strong>: <code>hex(HMAC-SHA256(name key, account label))[0..32]</code>, where the account label
+is <code>&lt;GraphQL endpoint without trailing slash&gt;\n&lt;user id&gt;</code> (the same label the local cache
+writes into its database) and the name key is derived from the archive key (below). One folder
+can hold several accounts under one passphrase; nobody without the key can tell whose they are.</li>
+<li><strong>Device id</strong>: a random UUID (lowercase, with dashes) per installation of the app, kept in
+<code>&lt;app data&gt;/history-archive/device-id</code>. Copying the app&#39;s data directory to another computer
+copies the id; the copy must not write to the same archive as the original.</li>
+<li><strong>Segments</strong> are immutable: once a device&#39;s head lists a segment, its bytes never change.</li>
+<li><strong>Head</strong>: the device&#39;s list of its segments. Only that device ever writes its head, and it
+writes it whole (temporary file, then rename) after the segments it lists.</li>
+</ul>
+<p><strong>Why immutable per-device files.</strong> An earlier sketch had one file per conversation and
+month, appended in place. Version 1 deliberately departs from that: a sync client (Dropbox,
+Google Drive, OneDrive, Syncthing) that uploads a file while another device appends to it turns
+the race into a &quot;conflicted copy&quot; or a lost write, and the Google Drive and Dropbox APIs cannot
+append at all. Files that are written once, by one device, and never changed have neither
+problem. The cost is more, smaller files; compaction (below) is left to a later version.</p>
+<p>A device writes only inside <code>accounts/&lt;tag&gt;/devices/&lt;its own id&gt;/</code> and <code>devices/&lt;its own id&gt;/</code>.
+Readers ignore any name they do not expect: hidden temporary files (<code>.*.tmp</code>), a sync client&#39;s &quot;conflicted copy&quot; files, and
+directories whose name is not an id (lowercase hex and <code>-</code>, 8 to 64 characters).</p>
+<h2 id="keys">Keys <a class="anchor" href="#keys" aria-label="Link to this section">#</a></h2>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Key</th>
+<th>What it is</th>
+<th>Where it lives</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Archive key</td>
+<td>32 random bytes, one per archive</td>
+<td>Wrapped in the manifest; this device&#39;s copy in the secret vault (<code>history-archive-key-v1:&lt;archive id&gt;</code>)</td>
+</tr>
+<tr>
+<td>Passphrase key</td>
+<td>Argon2id(passphrase, salt), 32 bytes</td>
+<td>Never stored</td>
+</tr>
+<tr>
+<td>File key</td>
+<td>HKDF-SHA256(archive key, no salt, info <code>rim-history-archive v1 file key</code>)</td>
+<td>Derived</td>
+</tr>
+<tr>
+<td>Name key</td>
+<td>HKDF-SHA256(archive key, no salt, info <code>rim-history-archive v1 name key</code>)</td>
+<td>Derived</td>
+</tr>
+<tr>
+<td>Identity wrap key</td>
+<td>HKDF-SHA256(identity seed, salt <code>rim.history-archive.v1</code>, info <code>archive key wrap</code>)</td>
+<td>Derived by a device holding the identity key</td>
+</tr>
+<tr>
+<td>Backup key</td>
+<td>HKDF-SHA256(recovery phrase entropy, or a version 1 kit&#39;s seed, salt <code>rim.recovery-phrase.v1</code>, info <code>identity backup key</code>)</td>
+<td>The secret vault record of a device that holds the identity key</td>
+</tr>
+</tbody></table></div>
+<ul>
+<li>The passphrase must be at least 12 characters. There is no recovery: losing the passphrase and
+every device that holds the key loses the archive, by design.</li>
+<li>Argon2id parameters are stored with the wrap. Version 1 writes 64 MiB memory, 3 iterations,
+1 lane, and a 16-byte random salt. Readers refuse parameters outside 8 KiB to 1 GiB of memory,
+1 to 16 iterations or 1 to 16 lanes, since the manifest comes from a shared folder.</li>
+<li>Wrapping is XChaCha20-Poly1305 under the passphrase key with a random 24-byte nonce and the
+associated data <code>rim-history-archive v1 key wrap\0&lt;archive id&gt;</code>.</li>
+</ul>
+<h2 id="manifest">Manifest <a class="anchor" href="#manifest" aria-label="Link to this section">#</a></h2>
+<pre><code class="language-json">{
+  &quot;format&quot;: &quot;rim-history-archive&quot;,
+  &quot;version&quot;: 1,
+  &quot;archiveId&quot;: &quot;6f1c8a52-1d7e-4f0a-9a43-1c2b8a1f0e55&quot;,
+  &quot;createdAt&quot;: &quot;2026-10-09T08:00:00+00:00&quot;,
+  &quot;keyWraps&quot;: [
+    {
+      &quot;kind&quot;: &quot;passphrase&quot;,
+      &quot;kdf&quot;: {
+        &quot;algorithm&quot;: &quot;argon2id&quot;,
+        &quot;memoryKib&quot;: 65536,
+        &quot;iterations&quot;: 3,
+        &quot;parallelism&quot;: 1,
+        &quot;salt&quot;: &quot;&lt;base64, 16 bytes&gt;&quot;
+      },
+      &quot;nonce&quot;: &quot;&lt;base64, 24 bytes&gt;&quot;,
+      &quot;wrapped&quot;: &quot;&lt;base64, 32-byte key + 16-byte tag&gt;&quot;
+    }
+  ]
+}</code></pre>
+<p>A reader tries every <code>passphrase</code> wrap it understands and skips wraps of a <code>kind</code> it does not
+know. The manifest only ever holds <code>passphrase</code> wraps: the archive key&#39;s wraps under identity keys
+(<code>identity-v1</code>, &quot;Identity key backup&quot;) have the same entry shape but live in per-device files,
+because they change with every identity rotation and the manifest is never rewritten. Creating an archive is an exclusive create of the manifest (a hard link of a fully written
+temporary file, or an exclusive open where the file system has no hard links): if two devices
+create one in the same folder at once, one wins and the other joins it.</p>
+<h2 id="sealed-files-rimx">Sealed files (<code>.rimx</code>) <a class="anchor" href="#sealed-files-rimx" aria-label="Link to this section">#</a></h2>
+<p>Heads and segments share one envelope:</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Bytes</th>
+<th>Field</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>4</td>
+<td><code>RIMX</code></td>
+</tr>
+<tr>
+<td>1</td>
+<td>envelope version, <code>1</code></td>
+</tr>
+<tr>
+<td>1</td>
+<td>kind: <code>1</code> segment, <code>2</code> head, <code>3</code> identity backup</td>
+</tr>
+<tr>
+<td>24</td>
+<td>XChaCha20-Poly1305 nonce, random</td>
+</tr>
+<tr>
+<td>rest</td>
+<td>ciphertext with its 16-byte tag</td>
+</tr>
+</tbody></table></div>
+<p>The cipher key is the file key, except for an identity backup, which is sealed under the backup
+key (&quot;Identity key backup&quot;). The associated data is the 30-byte header followed by
+<code>\0&lt;archive id&gt;\0&lt;account tag&gt;\0&lt;device id&gt;\0&lt;file name&gt;</code>. A file moved to another device&#39;s
+folder, renamed to another sequence number, or swapped between a head and a segment therefore
+fails to decrypt.</p>
+<h2 id="head">Head <a class="anchor" href="#head" aria-label="Link to this section">#</a></h2>
+<p>The plaintext of <code>head.rimx</code> is JSON:</p>
+<pre><code class="language-json">{
+  &quot;v&quot;: 1,
+  &quot;archiveId&quot;: &quot;6f1c8a52-…&quot;,
+  &quot;deviceId&quot;: &quot;0f0e0d0c-…&quot;,
+  &quot;updatedAtMs&quot;: 1760000000000,
+  &quot;segments&quot;: [
+    { &quot;seq&quot;: 1, &quot;sha256&quot;: &quot;&lt;hex of the sealed file&gt;&quot;, &quot;events&quot;: 812, &quot;createdAtMs&quot;: 1759990000000 }
+  ]
+}</code></pre>
+<p>A device&#39;s <code>updatedAtMs</code> is when it last exported something. Settings shows it per device as
+the device&#39;s last backup, and points out a device whose last backup is older than seven days
+(one that has nothing new to back up writes no head, so this is a hint, not an alarm).</p>
+<p>A reader takes a device&#39;s segments from its head, not from a directory listing, and checks each
+file against its <code>sha256</code>. A listed segment that is not in the folder yet (a sync client still
+downloading it) is reported as missing, not as an error; a later read picks it up.</p>
+<h2 id="segments">Segments <a class="anchor" href="#segments" aria-label="Link to this section">#</a></h2>
+<p>The plaintext of a segment is UTF-8 JSON lines. The first line is the segment header, every
+other line an event. Each line is an object with a <code>t</code> field naming its type.</p>
+<pre><code class="language-text">{&quot;t&quot;:&quot;segment&quot;,&quot;v&quot;:1,&quot;archiveId&quot;:&quot;…&quot;,&quot;deviceId&quot;:&quot;…&quot;,&quot;seq&quot;:3,&quot;createdAtMs&quot;:1760000000000}
+{&quot;t&quot;:&quot;msg&quot;,&quot;workspaceId&quot;:&quot;…&quot;,&quot;conversationId&quot;:&quot;…&quot;,&quot;id&quot;:&quot;…&quot;,&quot;threadId&quot;:null,&quot;authorId&quot;:&quot;…&quot;,&quot;version&quot;:42,&quot;sentAtUs&quot;:1759999999000000,&quot;editedAt&quot;:null,&quot;deleted&quot;:false,&quot;text&quot;:&quot;hello&quot;,&quot;payload&quot;:{…},&quot;sig&quot;:null}
+{&quot;t&quot;:&quot;conv&quot;,&quot;workspaceId&quot;:&quot;…&quot;,&quot;conversationId&quot;:&quot;…&quot;,&quot;cursor&quot;:&quot;42&quot;,&quot;complete&quot;:true,&quot;lastViewedAt&quot;:1759999990000,&quot;resetAt&quot;:null,&quot;maxVersion&quot;:42}</code></pre>
+<p>A segment holds at most 4 MiB of plaintext; one export writes as many as it needs.</p>
+<h3 id="msg-a-message-at-one-version"><code>msg</code>: a message at one version <a class="anchor" href="#msg-a-message-at-one-version" aria-label="Link to this section">#</a></h3>
+<p>The message as the server&#39;s change feed (rim-server <code>docs/message-change-feed.md</code>) last gave it
+to the device. Creates, edits and deletes are not separate event kinds: an edit is the same
+message at a higher <code>version</code>, a delete is a tombstone (<code>deleted: true</code>, <code>text: null</code>, no
+attachments, link previews or reactions in <code>payload</code>).</p>
+<ul>
+<li><p><code>version</code>: the feed&#39;s per-conversation version. Higher wins.</p>
+</li>
+<li><p><code>sentAtUs</code>: microseconds since the epoch.</p>
+</li>
+<li><p><code>payload</code>: the rest of the message as the app renders it (the <code>MessageWithReactions</code>
+fragment), without <code>text</code>.</p>
+</li>
+<li><p><code>sig</code>: the author&#39;s signature. Messages archived before identity keys carry <code>null</code>
+and are <strong>unsigned</strong>: readers accept them and must not treat them as a failed verification.
+Until then, integrity comes from the AEAD: nobody without the archive key can forge or alter a
+file.</p>
+</li>
+<li><p><code>payload.e2ee</code> (additive, optional): set on a message of an end-to-end encrypted DM or group
+(rim-server <code>docs/specs/e2ee-mls-v1.md</code>) that the writing device decrypted. <code>text</code> is its
+decrypted body; the server holds only ciphertext, so the archive is the only way another device
+of the user gets it back. The object&#39;s fields:</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>status</code></td>
+<td><code>decrypted</code>, or <code>invalid</code> (decrypted but broke a rule: no content, no <code>text</code>)</td>
+</tr>
+<tr>
+<td><code>incarnation</code>, <code>epoch</code></td>
+<td>The group incarnation and epoch the message was sent in</td>
+</tr>
+<tr>
+<td><code>senderDeviceId</code></td>
+<td>The sending device</td>
+</tr>
+<tr>
+<td><code>senderPrincipalId</code></td>
+<td>The sending principal, as the MLS credential named it</td>
+</tr>
+<tr>
+<td><code>frankingKey</code></td>
+<td>The message&#39;s 32-byte franking key, base64url</td>
+</tr>
+<tr>
+<td><code>receipt</code>, <code>receiptKeyId</code>, <code>sentAtUs</code></td>
+<td>The server&#39;s franking receipt (base64url), its key id, and <code>sent_at</code> in decimal microseconds</td>
+</tr>
+<tr>
+<td><code>rev</code></td>
+<td>The content&#39;s revision (0, +1 per edit)</td>
+</tr>
+<tr>
+<td><code>content</code></td>
+<td>The exact decrypted content JSON, as signed: what a report reveals, and where the attachments&#39; secrets are</td>
+</tr>
+<tr>
+<td><code>reason</code></td>
+<td>For <code>invalid</code>: why</td>
+</tr>
+</tbody></table></div>
+<p>Group state and MLS keys are never archived. Messages this device could not decrypt (sent
+before it joined) and its own messages the server has not acknowledged are not archived
+either. A restored row with <code>payload.e2ee</code> replaces the cache&#39;s &quot;could not decrypt here&quot;
+placeholder of the same message whatever their versions, and a placeholder never replaces it.</p>
+</li>
+</ul>
+<h3 id="conv-where-a-devices-sync-of-a-conversation-stood"><code>conv</code>: where a device&#39;s sync of a conversation stood <a class="anchor" href="#conv-where-a-devices-sync-of-a-conversation-stood" aria-label="Link to this section">#</a></h3>
+<ul>
+<li><code>cursor</code>: the change-feed cursor. Every message up to it is in this device&#39;s segments, in this
+segment or an earlier one (a writer must write a <code>conv</code> event only after, or with, every
+message it covers).</li>
+<li><code>complete</code>: the device held the conversation&#39;s whole history at <code>cursor</code>.</li>
+<li><code>resetAt</code>: when the device last saw the server answer <code>RESET</code> for the conversation (Unix ms),
+or <code>null</code>. A <code>RESET</code> means the server was restored from a backup and its versions started over.</li>
+<li><code>maxVersion</code>: the highest message version the device held.</li>
+</ul>
+<h2 id="writing-export">Writing (export) <a class="anchor" href="#writing-export" aria-label="Link to this section">#</a></h2>
+<p>A device exports from its local cache, incrementally. The cache numbers every change to a
+message or to a conversation&#39;s sync state, and remembers per archive and device how far it has
+exported. An export:</p>
+<ol>
+<li>Reads a batch of changed messages (at most 5,000) in one transaction. The last batch also
+reads the changed conversation states, in the same transaction as its messages.</li>
+<li>Writes the batch as new segments, numbered after the last one in its head.</li>
+<li>Rewrites its head to list them.</li>
+<li>Records in the cache that the batch is archived.</li>
+</ol>
+<p>A crash between steps repeats the batch next time, which the version rule makes harmless. The
+app exports a few minutes after the cache syncs and on demand from Settings &gt; History.</p>
+<p>Rows a device restored from an archive are not exported back into that archive. If the device
+later moves to another archive, they are exported there like any other row, so the new archive
+holds the device&#39;s whole history.</p>
+<h2 id="reading-and-restoring">Reading and restoring <a class="anchor" href="#reading-and-restoring" aria-label="Link to this section">#</a></h2>
+<ol>
+<li>Unlock the archive key (passphrase, or the device&#39;s stored copy). Check the manifest&#39;s
+<code>archiveId</code> before writing: a device never writes into a folder that now holds another
+archive, or into an empty folder where its archive used to be (an unplugged drive).</li>
+<li>List <code>accounts/&lt;tag&gt;/devices/</code>, read each head, then each listed segment.</li>
+<li>Merge:<ul>
+<li><strong>Messages</strong>: per message id, the highest <code>version</code> wins across all devices. A message
+event in a segment created before the conversation&#39;s latest <code>resetAt</code> (from any device) is
+stale and skipped.</li>
+<li><strong>Conversation state</strong>: taken only from a device whose segments were all readable, from a
+segment created at or after the latest reset, and whose own <code>resetAt</code> equals that latest
+reset. Among those, a complete state wins over an incomplete one, then the higher
+<code>maxVersion</code>, then the later segment.</li>
+<li>A conversation with archived messages but no state to trust is restored with no cursor: the
+app syncs it from the beginning.</li>
+</ul>
+</li>
+<li>Write into the cache in one transaction. Between the archive and the cache, and later between
+the cache and the server, the <strong>higher version wins; on a tie the copy already in the cache
+stays</strong> (both are the same server state). A conversation the cache did not follow is followed
+from the archive&#39;s cursor, so its history shows at once and the next sync asks the server only
+for what is newer. A conversation the cache already follows keeps its own sync state.</li>
+</ol>
+<p>When the server is the authority (it answers <code>RESET</code> for a restored cursor, or <code>NO_ACCESS</code>),
+the cache does what it does for any cursor: drops the conversation and refetches it, or drops it
+and stops following it.</p>
+<h2 id="identity-key-backup">Identity key backup <a class="anchor" href="#identity-key-backup" aria-label="Link to this section">#</a></h2>
+<p>The identity key (rim-server <code>docs/specs/key-identity-v1.md</code>) adds devices, rotates and publishes
+the profile card. It lives in the secret vault of the device that enrolled the account. The
+archive keeps two things for it, both written only by a device that holds the account&#39;s current
+identity key:</p>
+<ul>
+<li>a <strong>backup of the identity key</strong>, sealed under a key that only the recovery phrase gives, so
+another of the person&#39;s devices can take the identity key over when the first one is gone;</li>
+<li>a <strong>wrap of the archive key under the identity key</strong>, a second way to unlock the archive
+beside the passphrase.</li>
+</ul>
+<h3 id="backup-key">Backup key <a class="anchor" href="#backup-key" aria-label="Link to this section">#</a></h3>
+<p><code>HKDF-SHA256(ikm = the 16 bytes of the recovery phrase, salt = &quot;rim.recovery-phrase.v1&quot;, info = &quot;identity backup key&quot;)</code>, 32 bytes. The recovery key uses the same salt with
+<code>info = &quot;recovery key&quot;</code>, so neither key can be derived from the other.</p>
+<p>An account enrolled with a version 1 kit (<code>RK1-</code>) has no phrase: its backup key is the same HKDF
+over the kit&#39;s 32-byte recovery seed. There, whoever holds the recovery seed can derive the
+backup key (but not the other way round), which gives them nothing they could not already do
+with a recovery.</p>
+<p>The entropy exists only while the kit is shown (enrollment, key-only signup) or typed
+(recovery). The device keeps the <strong>backup key</strong>, never the entropy, in its secret vault record
+next to the identity key. A device that holds the identity key without a backup key (enrolled before
+the backup existed) gets one when the person types the phrase or <code>RK1-</code> key in Settings &gt;
+Security; the app checks it against the key log&#39;s <code>recoveryKey</code> first.</p>
+<h3 id="the-backup-record">The backup record <a class="anchor" href="#the-backup-record" aria-label="Link to this section">#</a></h3>
+<p><code>accounts/&lt;account tag&gt;/devices/&lt;device id&gt;/identity-backup.rimx</code>, a sealed file of kind <code>3</code>
+whose cipher key is the backup key (not the file key), with a fresh random nonce per write. Its
+associated data binds it, like every sealed file, to the archive, the account, the device and the
+file name. The plaintext is JSON:</p>
+<pre><code class="language-json">{
+  &quot;v&quot;: 1,
+  &quot;principalId&quot;: &quot;rimp1_…&quot;,
+  &quot;keySeq&quot;: 3,
+  &quot;identitySeed&quot;: &quot;ed25519:&lt;base64url, 32 bytes&gt;&quot;,
+  &quot;pendingIdentitySeed&quot;: &quot;ed25519:&lt;base64url, 32 bytes&gt;&quot;,
+  &quot;pendingKeySeq&quot;: 4
+}</code></pre>
+<ul>
+<li><code>keySeq</code>: the key log <code>seq</code> whose head names <code>identitySeed</code>, as the writer verified it.</li>
+<li><code>identitySeed</code>: the identity key as the secret vault stores it, algorithm tag and seed.</li>
+<li><code>pendingIdentitySeed</code>, <code>pendingKeySeq</code>: present while a rotation the writer sent has not been
+confirmed: the new key and the <code>seq</code> its rotation creates.</li>
+</ul>
+<p>The file is not listed in the device&#39;s head; readers that do not know it never open it.</p>
+<h3 id="when-it-is-written">When it is written <a class="anchor" href="#when-it-is-written" aria-label="Link to this section">#</a></h3>
+<p>A device writes its backup and its wrap whenever it holds the head&#39;s identity key and the
+archive is unlocked on it: when the archive is set up or joined, when the identity key is
+enrolled, recovered or taken over, after a rotation, and whenever Settings &gt; Security checks the
+key log. It writes only what changed: a backup that already opens to the same plaintext and a
+wrap that already opens to the archive key are left alone.</p>
+<h3 id="taking-the-identity-key-over">Taking the identity key over <a class="anchor" href="#taking-the-identity-key-over" aria-label="Link to this section">#</a></h3>
+<p>On a device that holds only a device key for the account, with the archive set up and unlocked:</p>
+<ol>
+<li>The person types the recovery phrase (or <code>RK1-</code> key). The app derives the recovery key and
+checks it is the <code>recoveryKey</code> of the server&#39;s key log, replayed on the device.</li>
+<li>It derives the backup key, lists <code>accounts/&lt;tag&gt;/devices/</code>, and opens every
+<code>identity-backup.rimx</code> it finds. A file that does not open, or names another <code>principalId</code>,
+is skipped.</li>
+<li>It keeps the seed (current or pending) whose public key is the head&#39;s <code>identityKey</code>. If none
+is, every backup predates the last rotation, and the takeover stops: the device that holds
+the current key backs it up the next time it runs.</li>
+<li>It stores the identity key and the backup key in its secret vault record and writes a backup
+and a wrap of its own.</li>
+</ol>
+<p>The old device keeps its copy; nothing is revoked or signed. The new holder can add and revoke
+devices, rotate and publish the profile card from then on.</p>
+<h3 id="wraps-under-the-identity-key-identity-v1">Wraps under the identity key (<code>identity-v1</code>) <a class="anchor" href="#wraps-under-the-identity-key-identity-v1" aria-label="Link to this section">#</a></h3>
+<p><code>devices/&lt;device id&gt;/key-wraps.json</code>, plain JSON, written whole by that device only:</p>
+<pre><code class="language-json">{
+  &quot;format&quot;: &quot;rim-history-archive-key-wraps&quot;,
+  &quot;v&quot;: 1,
+  &quot;archiveId&quot;: &quot;6f1c8a52-…&quot;,
+  &quot;deviceId&quot;: &quot;0f0e0d0c-…&quot;,
+  &quot;keyWraps&quot;: [
+    {
+      &quot;kind&quot;: &quot;identity-v1&quot;,
+      &quot;account&quot;: &quot;&lt;account tag&gt;&quot;,
+      &quot;nonce&quot;: &quot;&lt;base64, 24 bytes&gt;&quot;,
+      &quot;wrapped&quot;: &quot;&lt;base64, 32-byte key + 16-byte tag&gt;&quot;
+    }
+  ]
+}</code></pre>
+<ul>
+<li>The cipher key is the <strong>identity wrap key</strong>, <code>HKDF-SHA256(ikm = identity seed, salt = &quot;rim.history-archive.v1&quot;, info = &quot;archive key wrap&quot;)</code>, the nonce is random, and the
+associated data is <code>rim-history-archive v1 identity key wrap\0&lt;archive id&gt;\0&lt;account tag&gt;</code>.</li>
+<li>A device keeps one <code>identity-v1</code> entry per account: writing a wrap under a new identity key
+(after a rotation) replaces its entry for that account, so the old key&#39;s wrap is gone. Entries
+of a kind it does not know are kept as they are.</li>
+<li><strong>Unlocking</strong> (&quot;Unlock with this device&#39;s keys&quot;, beside the passphrase when this device holds
+an identity key for the account): list <code>devices/</code>, read each <code>key-wraps.json</code> of this archive,
+and try each <code>identity-v1</code> entry with the wrap key of every identity key the device holds
+(current and pending). A wrap under a key it does not hold fails authentication and is
+skipped. The unwrapped key is used only if its account tag for this account equals the
+entry&#39;s <code>account</code>.</li>
+</ul>
+<p>The file sits outside <code>accounts/</code> because a device that needs it does not have the archive key
+yet, and the account tag is derived from that key.</p>
+<h3 id="what-a-drive-provider-learns">What a drive provider learns <a class="anchor" href="#what-a-drive-provider-learns" aria-label="Link to this section">#</a></h3>
+<p>It sees which devices hold an identity key for which account tag, how big the backup is (larger
+while a rotation is pending), and when each file is rewritten (after setup, enrollment, rotation
+or takeover). It learns neither the identity key, its public key, nor whose account it is. The
+backup key carries the phrase&#39;s 128 bits and the wrap key the identity key&#39;s 256: neither can be
+guessed offline. Someone with the archive&#39;s passphrase can read the history but not the backup.
+A provider can delete or roll back these files: a deleted backup stops a takeover, and a backup
+older than the last rotation is refused by the key log check; a forged one fails authentication.</p>
+<h3 id="known-answer-vectors">Known-answer vectors <a class="anchor" href="#known-answer-vectors" aria-label="Link to this section">#</a></h3>
+<p>Never use these for a real account.</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Phrase entropy</td>
+<td><code>000102030405060708090a0b0c0d0e0f</code></td>
+</tr>
+<tr>
+<td>Backup key from it</td>
+<td><code>2438cbcffe2da40ecca624572cc87e128658014f3c05c2431ba039b03a4035bf</code></td>
+</tr>
+<tr>
+<td>Version 1 recovery seed</td>
+<td><code>000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f</code></td>
+</tr>
+<tr>
+<td>Backup key from it</td>
+<td><code>4262b4cecee03da62eaa49f56889412370a08500e57b11e3ac9a06f7b1a8c302</code></td>
+</tr>
+<tr>
+<td>Identity seed</td>
+<td><code>202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f</code> (stored as <code>ed25519:ICEiIyQlJicoKSorLC0uLzAxMjM0NTY3ODk6Ozw9Pj8</code>)</td>
+</tr>
+<tr>
+<td>Identity wrap key from it</td>
+<td><code>4a91b2fbae43381b5dc85eb455dce1c22ed89ed182aeb4e6b31ff46cbf2f57c9</code></td>
+</tr>
+</tbody></table></div>
+<p>A sealed backup under the phrase&#39;s backup key, archive id
+<code>6f1c8a52-1d7e-4f0a-9a43-1c2b8a1f0e55</code>, account tag <code>00112233445566778899aabbccddeeff</code>, device id
+<code>0f0e0d0c-0b0a-4908-8706-050403020100</code>, nonce <code>404142434445464748494a4b4c4d4e4f5051525354555657</code>,
+and the plaintext (no whitespace)</p>
+<pre><code class="language-text">{&quot;v&quot;:1,&quot;principalId&quot;:&quot;rimp1_nz1POml8JmCMcFDECrtu60ibohPKnywhcExmOPMvTUo&quot;,&quot;keySeq&quot;:0,&quot;identitySeed&quot;:&quot;ed25519:ICEiIyQlJicoKSorLC0uLzAxMjM0NTY3ODk6Ozw9Pj8&quot;}</code></pre>
+<p>is these 199 bytes (SHA-256 <code>605e2cd7439fecc24fdcec24950a7ec63d700eb4d8660f1251385557053bc315</code>):</p>
+<pre><code class="language-text">52494d580103404142434445464748494a4b4c4d4e4f50515253545556572c99
+273079b132162a65eb3fedb5f5250ee55435c15895077b742fb1f2b709847ec9
+124e45c8d94a4ddeb6ac6930670ce9752afd0a96a0ccc85fc164349d35ac667e
+4848c3c32ebf0af8090fccd7e804aaae05cf481c4b177f185facaac4635db959
+0bcd6f6f08607adca293a305e98ed592aa712c602e443752ccf6eee733b92f05
+5243e1cd6e338f9fcf35f1f58d6076d4fabcf69c4133f0edf402da8c60a58807
+bd105bb3844de3</code></pre>
+<p>An <code>identity-v1</code> wrap of the archive key <code>606162…7f</code> (32 bytes counting up) under the identity
+seed&#39;s wrap key, for the same archive id and account tag, with nonce
+<code>gIGCg4SFhoeIiYqLjI2Oj5CRkpOUlZaX</code> (bytes <code>80</code> to <code>97</code>), has <code>wrapped</code>
+<code>7V00oND8ZorkpfnJFKA1z3b3F5NjQ06pY20vPcfQuPMCMMGaNR231yQTWGP0EPFv</code>.</p>
+<h2 id="versioning">Versioning <a class="anchor" href="#versioning" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><code>version</code> in the manifest is the archive format version; the envelope byte and <code>v</code> in heads
+and segment headers are 1 in this version.</li>
+<li><strong>Within version 1, changes are additive only</strong>: new event types (<code>t</code>), new key wrap kinds,
+new optional fields. Readers skip event types and wrap kinds they do not know and ignore
+unknown fields. A writer never changes the meaning of an existing field.</li>
+<li><strong>Anything else is version 2</strong>: a new envelope, cipher, key derivation, layout, or a change in
+what an existing field means. A reader refuses an archive whose <code>version</code> is newer than it
+knows, and tells the user to update.</li>
+<li>By the project&#39;s compatibility rule, each release reads the current and the
+previous version. A writer that upgrades an archive must keep it readable by the previous
+release until the archive&#39;s manifest says otherwise.</li>
+</ul>
+<h2 id="providers">Providers <a class="anchor" href="#providers" aria-label="Link to this section">#</a></h2>
+<p>The layout above is written through a provider with five operations: read a file, write a file
+whole (replacing it), create a file only if its name is free, list the directories in a
+directory, and check that the place can be written. Nothing appends or renames, so any storage
+with whole-file uploads can hold an archive. The implementation is
+<a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/src-tauri/src/history_archive/provider.rs"><code>src-tauri/src/history_archive/provider.rs</code></a> and <code>cloud/</code>.</p>
+<h3 id="local-folder">Local folder <a class="anchor" href="#local-folder" aria-label="Link to this section">#</a></h3>
+<p>Archive paths are paths under the folder. A write goes to a hidden temporary file
+(<code>.&lt;name&gt;.&lt;random&gt;.tmp</code>) and is renamed over the target; a create is a hard link of the
+temporary file (or an exclusive open where there are no hard links).</p>
+<h3 id="google-drive">Google Drive <a class="anchor" href="#google-drive" aria-label="Link to this section">#</a></h3>
+<ul>
+<li><strong>Place</strong>: the app&#39;s <code>appDataFolder</code>, with the scope <code>drive.appdata</code>. It is hidden from the
+Drive interface and from every other app, and the app cannot see any other file. The user can
+delete it under Drive settings, Manage apps, &quot;Delete hidden app data&quot;. It belongs to the OAuth
+client: a build with another client id has another <code>appDataFolder</code>.</li>
+<li><strong>Names</strong>: Drive has file ids, not paths, and allows several files with one name. Every file
+is stored directly in <code>appDataFolder</code> with its whole archive path as its name
+(<code>accounts/&lt;tag&gt;/devices/&lt;id&gt;/head.rimx</code>); directories are the prefixes of those names.</li>
+<li><strong>Several files with one name</strong>: the oldest (<code>createdTime</code>, then file id) is the file. They
+arise from two devices creating the manifest at once, or from an upload that is retried after
+its answer was lost.</li>
+<li><strong>Create</strong>: Drive has no exclusive create. The device uploads, then lists the name: when an
+older file exists, it deletes its own upload and joins that one. Two devices racing see the
+same two files and agree on the older.</li>
+<li><strong>Write</strong>: an existing file&#39;s content is replaced in place (a media upload to its id), so a
+segment left behind by an interrupted export is overwritten, not joined by a second file.</li>
+</ul>
+<h3 id="dropbox">Dropbox <a class="anchor" href="#dropbox" aria-label="Link to this section">#</a></h3>
+<ul>
+<li><strong>Place</strong>: the app folder (<code>Apps/&lt;app name&gt;/</code>) of a Dropbox app with &quot;App folder&quot; access,
+which sees nothing else in the user&#39;s Dropbox. Archive paths are paths under it, so the folder
+holds exactly the local layout: copied to a disk, it is a local folder archive, and the other
+way round.</li>
+<li><strong>Write</strong>: an upload in <code>overwrite</code> mode, which replaces the file whole.</li>
+<li><strong>Create</strong>: an upload in <code>add</code> mode with <code>autorename</code> off and <code>strict_conflict</code> on, which fails
+when the name is taken.</li>
+</ul>
+<h3 id="onedrive">OneDrive <a class="anchor" href="#onedrive" aria-label="Link to this section">#</a></h3>
+<ul>
+<li><strong>Place</strong>: the app folder (<code>Apps/&lt;app name&gt;/</code>, Microsoft Graph&#39;s special folder <code>approot</code>) of
+the user&#39;s OneDrive, with the scope <code>Files.ReadWrite.AppFolder</code>: the app sees nothing else.
+Personal and work or school accounts sign in alike (the <code>common</code> authority). Archive paths are
+Graph item paths under the folder (<code>/me/drive/special/approot:/&lt;path&gt;:</code>), so the folder holds
+exactly the local layout, as with Dropbox.</li>
+<li><strong>Write</strong>: an upload with <code>@microsoft.graph.conflictBehavior=replace</code>, which replaces the file
+whole: one <code>PUT</code> of the content up to 4 MiB, and above that an upload session
+(<code>createUploadSession</code>, then chunks of 3.2 MiB, a multiple of the 320 KiB Graph asks for, sent
+to the session&#39;s own URL without the access token). A segment at its size limit is a little
+over 4 MiB, so it takes a session.</li>
+<li><strong>Create</strong>: the same upload with <code>@microsoft.graph.conflictBehavior=fail</code>, which Graph answers
+<code>409</code> when the name is taken (at the session&#39;s creation or its last chunk).</li>
+<li><strong>What it learns</strong>: file names, sizes and times, and each device&#39;s IP address; nothing else.</li>
+</ul>
+<h3 id="s3-compatible-storage">S3-compatible storage <a class="anchor" href="#s3-compatible-storage" aria-label="Link to this section">#</a></h3>
+<ul>
+<li><strong>Place</strong>: a bucket of any S3-compatible storage (Amazon S3, Cloudflare R2, Backblaze B2,
+MinIO, Garage), under a prefix the user picks. The user types the endpoint URL, the region
+(<code>us-east-1</code> when left empty; R2 takes <code>auto</code>), the bucket, the prefix, the access key id and
+the secret access key. The secret is kept in the secret vault as
+<code>history-archive-cloud-v1:&lt;connection id&gt;</code>; the settings file names the rest.</li>
+<li><strong>Names</strong>: an archive path&#39;s object key is <code>&lt;prefix&gt;/&lt;path&gt;</code>, so the bucket holds the local
+layout under the prefix. Directories are the common prefixes of a <code>ListObjectsV2</code> listing
+delimited by <code>/</code>, followed across every page.</li>
+<li><strong>Addressing</strong>: path-style (<code>&lt;endpoint&gt;/&lt;bucket&gt;/&lt;key&gt;</code>) or virtual-hosted
+(<code>&lt;bucket&gt;.&lt;endpoint host&gt;/&lt;key&gt;</code>). Endpoints on <code>amazonaws.com</code> default to virtual-hosted,
+every other endpoint to path-style; the user can switch.</li>
+<li><strong>Signing</strong>: AWS Signature Version 4 for the service <code>s3</code>, with the payload&#39;s SHA-256 in
+<code>x-amz-content-sha256</code>, computed by the app (no AWS SDK) and pinned by the AWS test suite&#39;s
+vectors.</li>
+<li><strong>Write</strong>: a <code>PutObject</code> of the whole file.</li>
+<li><strong>Create</strong>: a <code>PutObject</code> with <code>If-None-Match: *</code>, which the storage answers <code>412</code> when the
+key is taken (a <code>409 ConditionalRequestConflict</code>, another device&#39;s conditional write of the
+same key in flight, is retried). Storage that answers <code>501</code>, or that ignored the header during
+the check, gets claims: the device stores the file as <code>.&lt;name&gt;.&lt;12 random hex digits&gt;.claim</code>
+next to the target, lists the claims, keeps the oldest (<code>LastModified</code>, then key, so every
+device picks the same one), and copies it to the target. <code>LastModified</code> has a resolution of
+one second, so two devices that create an archive in the same second on such storage may
+both keep their own claim when one lists before the other&#39;s claim is visible; the one whose
+manifest was overwritten finds a different archive there on its next backup and is told so.</li>
+<li><strong>Check</strong>: <code>PutObject</code> of <code>.rim-probe-&lt;16 random hex digits&gt;</code> under the prefix, read back, the
+same <code>PutObject</code> with <code>If-None-Match: *</code> (<code>412</code> means conditional writes), a listing of the
+prefix, and a <code>DeleteObject</code> of the probe. A key that may not delete still passes (the archive
+never deletes; the probe then stays). A failed check names the problem: the key or secret
+refused, access denied, no such bucket, the wrong region, this computer&#39;s clock off, an
+endpoint that is not S3, or the network and TLS failures every provider reports.</li>
+<li><strong>The key needs</strong>: <code>s3:GetObject</code>, <code>s3:PutObject</code> and <code>s3:ListBucket</code> on the bucket or prefix;
+<code>s3:DeleteObject</code> only to remove the probe.</li>
+<li><strong>What it learns</strong>: object keys (file names), sizes and times, each device&#39;s IP address and
+the access key id; nothing else.</li>
+<li>HTTPS is required unless the endpoint is this computer or the user allows an unencrypted
+connection.</li>
+</ul>
+<h3 id="backup-endpoint">Backup endpoint <a class="anchor" href="#backup-endpoint" aria-label="Link to this section">#</a></h3>
+<ul>
+<li><strong>Place</strong>: a service the user runs, at a URL they type, speaking the protocol of
+<a href="backup-endpoint-v1.html"><code>backup-endpoint-v1.md</code></a> (<code>GET</code> and <code>POST</code> on one <code>/backup</code> URL). Archive paths are its paths,
+so the service holds exactly the local layout.</li>
+<li><strong>Write</strong>: a <code>POST</code> of the whole file.</li>
+<li><strong>Create</strong>: a <code>POST</code> with <code>If-None-Match: *</code>, which the service answers <code>412</code> when the name is
+taken. A service that ignores the header gets claims instead: the device stores the file under
+a hidden claim name, lists the directory, and copies the claim the listing names first to the
+path.</li>
+<li><strong>Sign-in</strong>: none, HTTP Basic, or a token (<code>Authorization: Bearer</code>, or a header the user
+names). The password or token is kept in the secret vault as
+<code>history-archive-cloud-v1:&lt;connection id&gt;</code>, like a refresh token; the settings file names the
+URL, the mode, and the user name or header name.</li>
+<li><strong>What it learns</strong>: file names, sizes and times, and each device&#39;s IP address; nothing else.</li>
+<li>HTTPS is required unless the host is this computer or the user allows an unencrypted
+connection.</li>
+</ul>
+<h3 id="sign-in-and-tokens">Sign-in and tokens <a class="anchor" href="#sign-in-and-tokens" aria-label="Link to this section">#</a></h3>
+<ul>
+<li>OAuth 2.0 for native apps (RFC 8252): the system browser signs the user in and redirects to a
+one-shot listener on the loopback interface; PKCE (S256) protects the code, and a random
+<code>state</code> must match. Google redirects to <code>http://127.0.0.1:&lt;any free port&gt;/callback</code>; Dropbox
+only accepts registered redirect URIs, so it uses <code>http://localhost:&lt;fixed port&gt;/callback</code>
+(53241 unless the build says otherwise); Microsoft takes the registered
+<code>http://localhost/callback</code> on any port, so it uses <code>http://localhost:&lt;any free port&gt;/callback</code>.</li>
+<li>The refresh token is kept in the secret vault as <code>history-archive-cloud-v1:&lt;connection id&gt;</code>.
+The account&#39;s archive settings file names the provider, the connection id and the signed-in
+email address, never a token. Access tokens live in memory and are refreshed shortly before
+they expire, or once when the service refuses one.</li>
+<li>A sign-in is kept only when the user connects the archive with its passphrase. Stopping
+backups on a device, or leaving a sign-in unused, deletes its refresh token from the secret
+vault first and then, for Dropbox only, revokes it (once, best effort; a failed revoke is logged
+and does not undo the sign-out). Dropbox revokes one token and leaves the user&#39;s other
+devices signed in. Google cannot: revoking any token removes the user&#39;s whole grant to the
+OAuth client and invalidates every device&#39;s refresh tokens, so RIM never calls Google&#39;s
+revoke endpoint, and a user who wants RIM&#39;s access gone everywhere removes it in their
+Google account settings (Security, Third-party apps with account access). Microsoft&#39;s identity
+platform has no endpoint that revokes one refresh token, so a OneDrive sign-in is only
+forgotten on the device too; the user removes RIM&#39;s access in their Microsoft account&#39;s
+privacy settings (or My Apps, for a work account). Google keeps a
+limited number of refresh tokens per user and client and silently drops the oldest beyond
+it, so a device that has been signed in very many times may need to sign in again. The
+archive itself stays.</li>
+<li>Client ids are build configuration (the README says how to get them); none is committed.</li>
+</ul>
+<h3 id="retries-and-interrupted-backups">Retries and interrupted backups <a class="anchor" href="#retries-and-interrupted-backups" aria-label="Link to this section">#</a></h3>
+<p>A rate limit (HTTP 429, or a 403 naming a rate limit on Drive), a 5xx answer or a network
+failure is retried up to six attempts in all, waiting as <code>Retry-After</code> says (at most 60 s) or
+with exponential backoff and jitter from 0.5 s to 16 s. A TLS handshake or certificate failure
+is not retried: it is not transient. A service that stays busy fails the export, which runs
+again later.</p>
+<p>An export interrupted at any point resumes safely, because the head is the commit point:
+segments are written before the head that lists them, readers take segments only from the head,
+and the cache marks a batch archived only after its head is written. The next export writes the
+same batch again under the same sequence numbers, replacing whatever the interrupted one left.</p>
+<h2 id="not-in-version-1">Not in version 1 <a class="anchor" href="#not-in-version-1" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>iCloud Drive and other cloud APIs: a folder kept in sync by their desktop clients works.</li>
+<li>WebDAV (Nextcloud, ownCloud); the backup endpoint&#39;s shape resembles it.</li>
+<li>Telling a device that a cloud sign-in was revoked elsewhere before the next backup fails.</li>
+<li>Compaction: every export adds segments. A later writer may merge a device&#39;s own segments into
+fewer (only that device may), listing the new ones in its head before deleting the old.</li>
+<li>Signed messages and rollback detection (a drive restoring an older head) come with identity
+keys.</li>
+<li>Unlocking with the identity key when joining an archive on a new device: the wrap is offered
+only to a device that already has the archive set up and lost its key.</li>
+<li>Restore reads the whole account into memory before writing it to the cache.</li>
+<li>Device clocks order resets (<code>resetAt</code> against <code>createdAtMs</code>); a device whose clock is far off
+can have its archived copies of a reset conversation skipped. They are the server&#39;s to resend.</li>
+</ul>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/docs/specs/history-archive-v1.md">rim-ui/docs/specs/history-archive-v1.md</a> at <code>58e3ec0</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+<script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
+</body>
+</html>

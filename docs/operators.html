@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Operators · RIM</title>
+<meta name="description" content="Running a RIM server: installing it with Docker Compose, upgrading and backing it up, watching it, switching features off, and running a public relay.">
+<link rel="icon" href="../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../index.html" aria-label="RIM home">
+      <picture><source srcset="../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../index.html#what">What RIM is</a>
+      <a href="../index.html#how">How it works</a>
+      <a href="self-hosting.html">Self-host</a>
+      <a href="../configure/index.html">Configure</a>
+      <a href="index.html" aria-current="page">Docs</a>
+      <a href="../api/index.html">API</a>
+      <a href="../specs/index.html">Specs</a>
+      <a href="contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="index.html">Docs</a><span aria-hidden="true">/</span><span>Operators</span></div>
+  <div class="page">
+
+    <main id="content" class="prose">
+<h1>Operators</h1>
+<p class="lede">Running a RIM server: installing it with Docker Compose, upgrading and backing it up, watching it, switching features off, and running a public relay.</p>
+<h2 id="install-and-run">Install and run</h2>
+<ul class="cards">
+<li><a href="self-hosting.html"><b>Self-hosting a RIM server</b><span>deploy/compose.yml runs one RIM server on one domain: rim-server with RIM_ROLE=both (it hosts workspaces and is its users' relay), PostgreSQL 17, the web client, and Caddy terminating TLS. Caddy sends /api (with …</span><span class="src">rim-server/docs/self-hosting.md</span></a></li>
+<li><a href="email.html"><b>Transactional Email</b><span>RIM sends transactional email for password resets, invites, and notification digests. This document covers the RIM_SMTP_* config matrix, TLS modes, the three wired flows, retry policy, and the &quot;unconfigured → log-only&quot; …</span><span class="src">rim-server/docs/email.md</span></a></li>
+</ul>
+<h2 id="operations">Operations</h2>
+<ul class="cards">
+<li><a href="operations/audit-retention.html"><b>Audit retention</b><span>rim-server keeps two audit records, and retention treats them differently:</span><span class="src">rim-server/docs/operations/audit-retention.md</span></a></li>
+<li><a href="operations/background-jobs.html"><b>Background jobs</b><span>rim-server runs these jobs inside its own process on a timer; there is no cron to set up. Each starts with the server and stops when it shuts down. A run that fails logs an error and the next run tries again. More than …</span><span class="src">rim-server/docs/operations/background-jobs.md</span></a></li>
+<li><a href="operations/features.html"><b>Instance features</b><span>An operator can switch off optional modules of rim-server with RIM_FEATURES_DISABLED. Unset, nothing changes: every feature works as before, except that email reports unavailable when SMTP is not configured, which is …</span><span class="src">rim-server/docs/operations/features.md</span></a></li>
+<li><a href="operations/metrics.html"><b>Metrics</b><span>rim-server exposes Prometheus metrics in the text exposition format at GET /metrics on a listener of its own. The API port never serves them.</span><span class="src">rim-server/docs/operations/metrics.md</span></a></li>
+<li><a href="operations/relay-public.html"><b>Public relay runbook</b><span>The public relay is the server anyone's app can use as its relay: accounts, devices, profile cards, the queue of what other servers send, the request inbox, and the forward path to the servers that host people's …</span><span class="src">rim-server/docs/operations/relay-public.md</span></a></li>
+<li><a href="operations/release-checklist.html"><b>Release checklist</b><span>The steps that cut a rim-server release v&lt;version&gt;, in order. Copy the list into the release pull request and tick it there. Steps marked FILL wait for decisions not taken yet, such as the desktop release workflow and …</span><span class="src">rim-server/docs/operations/release-checklist.md</span></a></li>
+<li><a href="operations/upgrade.html"><b>Upgrading a server</b><span>How a running server moves to a new release, and back. docs/self-hosting.md, &quot;Updates&quot;, is the short form for deploy/compose.yml; this page adds what to read first, the rollback and why it works. The commands use the dc …</span><span class="src">rim-server/docs/operations/upgrade.md</span></a></li>
+</ul>
+<h2 id="identity-and-federation">Identity and federation</h2>
+<ul class="cards">
+<li><a href="server-identity.html"><b>Server identity and server-to-server traffic</b><span>Every rim-server has its own server key, an Ed25519 key whose signed history (the key log) fixes the server's id, rims1_…. Other servers use the id and key to tell this server apart from any other, to check the requests …</span><span class="src">rim-server/docs/server-identity.md</span></a></li>
+<li><a href="relay.html"><b>The relay</b><span>A relay is the server a person's app talks to. It keeps their account, devices and profile card, queues what other servers send them, files conversations from strangers in a request inbox, and forwards their requests to …</span><span class="src">rim-server/docs/relay.md</span></a></li>
+</ul>
+<h2 id="see-also">See also</h2>
+<ul class="cards">
+<li><a href="../configure/index.html"><b>Configuration reference</b><span>Every RIM_ variable with its default and meaning, and the command line.</span></a></li>
+</ul>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/tree/c86029b35a7ef7770b05e7bda62909f988343f7f">rim-server</a> <code>c86029b</code> and <a href="https://github.com/rim-platform/rim-ui/tree/58e3ec03c43064632a6a6f610d92413040229dfd">rim-ui</a> <code>58e3ec0</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+
+</body>
+</html>

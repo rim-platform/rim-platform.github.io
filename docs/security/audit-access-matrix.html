@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Audit Log Access Matrix · RIM</title>
+<meta name="description" content="This document is the reference for which actor can read which rows of the command audit log (command_audit_log, GraphQL listAuditLog) under which conditions. Anyone changing list_entries in …">
+<link rel="icon" href="../../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../../index.html" aria-label="RIM home">
+      <picture><source srcset="../../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../../index.html#what">What RIM is</a>
+      <a href="../../index.html#how">How it works</a>
+      <a href="../self-hosting.html">Self-host</a>
+      <a href="../../configure/index.html">Configure</a>
+      <a href="../index.html" aria-current="page">Docs</a>
+      <a href="../../api/index.html">API</a>
+      <a href="../../specs/index.html">Specs</a>
+      <a href="../contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="../index.html">Docs</a><span aria-hidden="true">/</span><a href="../project.html">Project</a><span aria-hidden="true">/</span><span>Audit Log Access Matrix</span></div>
+  <div class="page with-toc">
+    <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
+<ol>
+<li><a href="#1-actors">1. Actors</a></li>
+<li><a href="#2-resource-scopes">2. Resource scopes</a></li>
+<li><a href="#3-required-capabilities">3. Required capabilities</a></li>
+<li><a href="#4-filters-enforced-at-the-service-layer">4. Filters enforced at the service layer</a><ol><li><a href="#41-workspace-scope-is-required-for-non-self-reads">4.1 Workspace scope is required for non-self reads</a></li><li><a href="#42-the-cross-user-filter-is-stripped">4.2 The cross-user filter is stripped</a></li><li><a href="#43-no-membership-bypass-through-a-missing-workspace">4.3 No membership bypass through a missing workspace</a></li></ol></li>
+<li><a href="#5-outcome-values">5. Outcome values</a></li>
+<li><a href="#6-closed-bypasses-do-not-reopen">6. Closed bypasses (do not reopen)</a><ol><li><a href="#cross-user-read-without-a-workspace">Cross-user read without a workspace</a></li><li><a href="#cross-user-enumeration">Cross-user enumeration</a></li><li><a href="#membership-skipped-for-a-capability-without-a-workspace">Membership skipped for a capability without a workspace</a></li><li><a href="#every-member-read-the-whole-workspace-log">Every member read the whole workspace log</a></li></ol></li>
+<li><a href="#7-where-the-tests-are">7. Where the tests are</a></li>
+<li><a href="#8-retention">8. Retention</a></li>
+</ol>
+</details></aside>
+    <main id="content" class="prose">
+<h1 id="audit-log-access-matrix">Audit Log Access Matrix</h1>
+<p>This document is the reference for which actor can read which rows of the command audit log
+(<code>command_audit_log</code>, GraphQL <code>listAuditLog</code>) under which conditions. Anyone changing
+<code>list_entries</code> in <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/rim_infra_services/src/audit/mod.rs"><code>rim_infra_services/src/audit/mod.rs</code></a> or <code>check</code> in
+<a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/rim_infra_services/src/capability.rs"><code>rim_infra_services/src/capability.rs</code></a> reads this first. Section 6 lists the bypasses that were
+closed, so they are not reintroduced.</p>
+<hr>
+<h2 id="1-actors">1. Actors <a class="anchor" href="#1-actors" aria-label="Link to this section">#</a></h2>
+<p>The audit-read gate is capability-based: it asks whether the caller holds <code>audit.read</code> or
+<code>audit.read.self</code>. A capability check is a registry lookup plus, for a workspace-scoped
+capability, workspace membership. <code>audit.read</code> also requires a role: only the Owners and
+Moderators of a workspace hold it there. Members and guests do not; like everyone else they read
+only their own rows.</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Actor type</th>
+<th>Capability that passes</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Owner or Moderator of workspace W</td>
+<td><code>audit.read</code> in W, <code>audit.read.self</code></td>
+<td>Full dump of W&#39;s rows</td>
+</tr>
+<tr>
+<td>Member or Guest of workspace W</td>
+<td><code>audit.read.self</code></td>
+<td>Own rows only; <code>audit.read</code> in W is <code>PermissionDenied</code></td>
+</tr>
+<tr>
+<td>Any authenticated user</td>
+<td><code>audit.read.self</code></td>
+<td>Own rows only, no workspace needed</td>
+</tr>
+<tr>
+<td>Server-internal code</td>
+<td>none: <code>write_entry</code> has no capability check</td>
+<td>Only server code writes rows (see section 3)</td>
+</tr>
+</tbody></table></div>
+<p>Only the builtin capabilities are in the registry; nothing registers plugin capabilities on the
+server.</p>
+<hr>
+<h2 id="2-resource-scopes">2. Resource scopes <a class="anchor" href="#2-resource-scopes" aria-label="Link to this section">#</a></h2>
+<p><code>list_entries</code> branches on two optional filter fields supplied by the caller: <code>actor_user_id</code>
+and <code>server_id</code>. Their combination decides the scope:</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Scope</th>
+<th><code>actor_user_id</code></th>
+<th><code>server_id</code></th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Self-read</td>
+<td><code>Some(caller)</code></td>
+<td><code>None</code> or <code>Some(W)</code></td>
+<td>The caller&#39;s own rows</td>
+</tr>
+<tr>
+<td>Workspace read</td>
+<td><code>None</code></td>
+<td><code>Some(W)</code></td>
+<td>Every row of W, for an Owner or Moderator of W</td>
+</tr>
+<tr>
+<td>Cross-user read</td>
+<td><code>Some(other)</code></td>
+<td><code>Some(W)</code></td>
+<td>Every row of W, for an Owner or Moderator of W: the user filter is stripped</td>
+</tr>
+<tr>
+<td>Cross-user unscoped</td>
+<td><code>Some(other)</code></td>
+<td><code>None</code></td>
+<td>Always <code>PermissionDenied</code></td>
+</tr>
+<tr>
+<td>Unscoped</td>
+<td><code>None</code></td>
+<td><code>None</code></td>
+<td>Always <code>PermissionDenied</code></td>
+</tr>
+</tbody></table></div>
+<p>A Member or Guest of W gets <code>PermissionDenied</code> on the workspace and cross-user reads. In a
+cross-user read the caller may read W, but the <code>actor_user_id</code> filter is removed from the
+database query. The response is the full workspace dump, not one user&#39;s timeline, so a caller
+cannot learn whether a given user ever acted in W from an empty or non-empty answer. Section 4.2
+has the details.</p>
+<hr>
+<h2 id="3-required-capabilities">3. Required capabilities <a class="anchor" href="#3-required-capabilities" aria-label="Link to this section">#</a></h2>
+<p>Two capabilities gate audit reads. Both are seeded at startup from <code>builtin_capabilities()</code> in
+<a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/rim_infra_services/src/capability.rs"><code>rim_infra_services/src/capability.rs</code></a>.</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Capability</th>
+<th><code>is_self_scoped</code></th>
+<th><code>requires_moderator</code></th>
+<th>Required for</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>audit.read</code></td>
+<td><code>false</code> (workspace-scoped)</td>
+<td><code>true</code> (Owner or Moderator)</td>
+<td>Workspace read, cross-user read</td>
+</tr>
+<tr>
+<td><code>audit.read.self</code></td>
+<td><code>true</code> (self-scoped)</td>
+<td><code>false</code></td>
+<td>Self-read, no workspace membership needed</td>
+</tr>
+</tbody></table></div>
+<p><code>is_self_scoped</code> is read from the <code>capability_registry</code> row, not hardcoded in the check. A
+workspace-scoped capability checked without a <code>workspace_id</code> is <code>PermissionDenied</code> before the
+workspace leg runs, so passing <code>None</code> cannot skip membership.</p>
+<p><code>requires_moderator</code> is not in the registry table. It lives only on <code>BuiltinCapabilitySpec</code>, and
+the check reads it from <code>builtin_capabilities()</code> by key. <code>audit.read</code> is the only builtin with it
+set; every other workspace-scoped capability needs membership alone.</p>
+<p><strong><code>DefaultCapabilityService::check</code>:</strong></p>
+<pre><code>step 1: empty or whitespace key → Validation
+step 2: registry lookup; unknown or retired key → PermissionDenied (strict default-deny)
+step 2b: workspace-scoped capability with workspace_id = None → PermissionDenied
+step 3: workspace_id = None (self-scoped only) → allowed
+        not a member of workspace_id → PermissionDenied
+        requires_moderator and role is Member or Guest → PermissionDenied</code></pre>
+<p><code>check_many</code> looks up the caller&#39;s role once and applies the same rules to every key.</p>
+<p><strong>Write path.</strong> <code>write_entry</code> has no capability check. Only server-internal code calls it: the
+command executor, the macro executor, the moderation audit helper and the remote-workspace host.
+It is never exposed to clients.</p>
+<hr>
+<h2 id="4-filters-enforced-at-the-service-layer">4. Filters enforced at the service layer <a class="anchor" href="#4-filters-enforced-at-the-service-layer" aria-label="Link to this section">#</a></h2>
+<p>The resolver (<code>list_audit_log</code> in <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/rim_api/src/query/audit.rs"><code>rim_api/src/query/audit.rs</code></a>) passes the client&#39;s filter
+values through unchanged. The service is the only trust boundary.</p>
+<h3 id="41-workspace-scope-is-required-for-non-self-reads">4.1 Workspace scope is required for non-self reads <a class="anchor" href="#41-workspace-scope-is-required-for-non-self-reads" aria-label="Link to this section">#</a></h3>
+<p><code>list_entries</code> matches on <code>(actor_user_id, server_id)</code> together:</p>
+<ul>
+<li><code>actor_user_id = Some(other)</code> with <code>server_id = None</code> is <code>PermissionDenied</code> before any
+capability check or database call.</li>
+<li>Every non-self path needs a <code>server_id</code>; the <code>audit.read</code> check passes
+<code>workspace_id = Some(W)</code> to <code>CapabilityService::check</code>, which runs the workspace leg and
+requires an Owner or Moderator of W.</li>
+</ul>
+<h3 id="42-the-cross-user-filter-is-stripped">4.2 The cross-user filter is stripped <a class="anchor" href="#42-the-cross-user-filter-is-stripped" aria-label="Link to this section">#</a></h3>
+<p>When the caller sends <code>actor_user_id = Some(other)</code> with <code>server_id = Some(W)</code>, the service:</p>
+<ol>
+<li>checks <code>audit.read</code> in W (Owner or Moderator of W);</li>
+<li>logs a <code>cross_user_filter_stripped</code> warning on the <code>audit</code> target;</li>
+<li>sets <code>actor_user_id = None</code> in the repository query.</li>
+</ol>
+<p>The database returns every row of W, so the response cannot reveal whether a specific user ever
+acted there.</p>
+<h3 id="43-no-membership-bypass-through-a-missing-workspace">4.3 No membership bypass through a missing workspace <a class="anchor" href="#43-no-membership-bypass-through-a-missing-workspace" aria-label="Link to this section">#</a></h3>
+<p>Step 3 of <code>check</code> allows a check with no workspace without looking at membership. Step 2b makes
+sure only self-scoped capabilities reach it with <code>None</code>: a workspace-scoped capability without a
+workspace is refused first.</p>
+<hr>
+<h2 id="5-outcome-values">5. Outcome values <a class="anchor" href="#5-outcome-values" aria-label="Link to this section">#</a></h2>
+<p>Every audit row carries one of seven outcomes, the <code>AuditOutcome</code> enum in
+<a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/rim_services/src/audit/dto.rs"><code>rim_services/src/audit/dto.rs</code></a>. Writers use the enum, never string literals; the conversion to
+the <code>text</code> column happens at the repository boundary (<code>AuditOutcome::as_str</code>,
+<code>TryFrom&lt;&amp;str&gt;</code>).</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Rust variant</th>
+<th>DB string</th>
+<th>GraphQL value</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Success</code></td>
+<td><code>success</code></td>
+<td><code>SUCCESS</code></td>
+<td>Command completed without error</td>
+</tr>
+<tr>
+<td><code>Error</code></td>
+<td><code>error</code></td>
+<td><code>ERROR</code></td>
+<td>Command ended with an error</td>
+</tr>
+<tr>
+<td><code>ConfirmationRequired</code></td>
+<td><code>confirmation_required</code></td>
+<td><code>CONFIRMATION_REQUIRED</code></td>
+<td>Execution stopped; a confirmation was requested</td>
+</tr>
+<tr>
+<td><code>PermissionDenied</code></td>
+<td><code>permission_denied</code></td>
+<td><code>PERMISSION_DENIED</code></td>
+<td>Capability or membership check refused the command</td>
+</tr>
+<tr>
+<td><code>RateLimited</code></td>
+<td><code>rate_limited</code></td>
+<td><code>RATE_LIMITED</code></td>
+<td>Per-actor rate limit exceeded</td>
+</tr>
+<tr>
+<td><code>StepError</code></td>
+<td><code>step_error</code></td>
+<td><code>STEP_ERROR</code></td>
+<td>One step inside a macro returned an error</td>
+</tr>
+<tr>
+<td><code>MacroPartialFailure</code></td>
+<td><code>macro_partial_failure</code></td>
+<td><code>MACRO_PARTIAL_FAILURE</code></td>
+<td>A macro ran some steps before one failed</td>
+</tr>
+</tbody></table></div>
+<p>The GraphQL type is <code>AuditOutcomeGql</code> in <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/rim_api/src/types/audit.rs"><code>rim_api/src/types/audit.rs</code></a>. The database column has a
+CHECK constraint from migration <code>m20260427_000001_audit_outcome_widen_check</code>.</p>
+<p><code>StepError</code> and <code>MacroPartialFailure</code> appear on the child rows written for macro steps.
+<code>parent_audit_id</code> links a child row to the top-level macro row; <code>None</code> marks a top-level row.</p>
+<hr>
+<h2 id="6-closed-bypasses-do-not-reopen">6. Closed bypasses (do not reopen) <a class="anchor" href="#6-closed-bypasses-do-not-reopen" aria-label="Link to this section">#</a></h2>
+<h3 id="cross-user-read-without-a-workspace">Cross-user read without a workspace <a class="anchor" href="#cross-user-read-without-a-workspace" aria-label="Link to this section">#</a></h3>
+<p><strong>Vector:</strong> the caller sends <code>actor_user_id = &lt;victim&gt;</code> and omits <code>server_id</code>. The query reached
+the repository with no workspace context, so anyone could read another user&#39;s history.</p>
+<p><strong>Fix:</strong> the <code>(Some(other), None)</code> arm of <code>list_entries</code> returns <code>PermissionDenied</code> before any
+capability check or database call.</p>
+<h3 id="cross-user-enumeration">Cross-user enumeration <a class="anchor" href="#cross-user-enumeration" aria-label="Link to this section">#</a></h3>
+<p><strong>Vector:</strong> a caller with <code>audit.read</code> in W sends <code>actor_user_id = &lt;victim&gt;, server_id = W</code>. The
+filter reached the database, so the answer told the caller whether the victim ever acted in W
+and returned their whole timeline there.</p>
+<p><strong>Fix:</strong> the <code>(Some(other), Some(W))</code> arm sets <code>strip_actor_filter</code>, and the repository query is
+built with <code>actor_user_id = None</code>, returning the full workspace dump.</p>
+<h3 id="membership-skipped-for-a-capability-without-a-workspace">Membership skipped for a capability without a workspace <a class="anchor" href="#membership-skipped-for-a-capability-without-a-workspace" aria-label="Link to this section">#</a></h3>
+<p><strong>Vector:</strong> a workspace-scoped capability (for example <code>audit.read</code>) checked with
+<code>workspace_id = None</code> reached the membership leg, which answered &quot;allowed&quot; for any actor when
+there was no workspace.</p>
+<p><strong>Fix:</strong> step 2b of <code>check</code> refuses <code>workspace_id.is_none() &amp;&amp; !reg.is_self_scoped</code> before the
+workspace leg runs. Self-scoped capabilities such as <code>audit.read.self</code> are exempt by design.</p>
+<h3 id="every-member-read-the-whole-workspace-log">Every member read the whole workspace log <a class="anchor" href="#every-member-read-the-whole-workspace-log" aria-label="Link to this section">#</a></h3>
+<p><strong>Vector:</strong> <code>audit.read</code> was granted on membership alone, so any member of W, guests included,
+could read every row of W, including other members&#39; commands and moderation actions.</p>
+<p><strong>Fix:</strong> <code>audit.read</code> carries <code>requires_moderator</code>, and step 3 of <code>check</code> denies it to a Member or
+Guest of W. They keep <code>audit.read.self</code> for their own rows.</p>
+<hr>
+<h2 id="7-where-the-tests-are">7. Where the tests are <a class="anchor" href="#7-where-the-tests-are" aria-label="Link to this section">#</a></h2>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>File</th>
+<th>Coverage</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/rim_infra_services/src/audit/mod.rs"><code>rim_infra_services/src/audit/mod.rs</code></a></td>
+<td>Unit tests of the whole matrix in section 2, including the regressions for the first two bypasses of section 6, and the role outcome of every arm through the real capability gate</td>
+</tr>
+<tr>
+<td><a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/rim_infra_services/src/capability.rs"><code>rim_infra_services/src/capability.rs</code></a></td>
+<td>Unit tests of the capability gate: strict default-deny, <code>check</code> / <code>check_many</code> with a workspace-scoped capability and no workspace (the third bypass), and the Owner/Moderator requirement of <code>audit.read</code> (the fourth)</td>
+</tr>
+<tr>
+<td><a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/rim_api/src/tests/audit.rs"><code>rim_api/src/tests/audit.rs</code></a></td>
+<td><code>listAuditLog</code> refuses an unauthenticated caller; an authenticated query returns a page and maps <code>AuditOutcome::Success</code> to <code>SUCCESS</code></td>
+</tr>
+<tr>
+<td><a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/rim_api/tests/moderation_e2e.rs"><code>rim_api/tests/moderation_e2e.rs</code></a></td>
+<td><code>listAuditLog</code> through GraphQL and Postgres under <code>--features e2e-tests</code>: Owners and Moderators read the workspace log, Members and Guests are <code>FORBIDDEN</code> and still read their own rows</td>
+</tr>
+<tr>
+<td><a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/rim_infra_db/tests/audit_log_repo.rs"><code>rim_infra_db/tests/audit_log_repo.rs</code></a></td>
+<td>Repository insert and list under <code>--features db-tests</code>; all seven outcomes written and read back</td>
+</tr>
+</tbody></table></div>
+<p>A test asserting that this matrix holds end to end belongs in <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/rim_infra_services/src/audit/mod.rs"><code>rim_infra_services/src/audit/mod.rs</code></a>
+(the service gate) and <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/rim_api/src/tests/audit.rs"><code>rim_api/src/tests/audit.rs</code></a> (the GraphQL surface). The repository tests
+cover persistence, not access control.</p>
+<hr>
+<h2 id="8-retention">8. Retention <a class="anchor" href="#8-retention" aria-label="Link to this section">#</a></h2>
+<p>Audit rows are purged only when the operator sets a retention. A purge runs a minute after boot
+and then daily; it exports the rows to the data directory before deleting them.</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Default retention</td>
+<td>none: rows are kept forever</td>
+</tr>
+<tr>
+<td>Range (operator-configurable)</td>
+<td>1 to 3650 days</td>
+</tr>
+<tr>
+<td>Env var</td>
+<td><code>RIM_AUDIT_RETENTION_DAYS</code></td>
+</tr>
+<tr>
+<td>Shown to clients</td>
+<td><code>serverInfo.auditRetentionDays</code>, null when rows are kept forever</td>
+</tr>
+</tbody></table></div>
+<p>Source: <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/rim_infra_services/src/audit_retention.rs"><code>rim_infra_services/src/audit_retention.rs</code></a>. Operator view, the export format and the
+<code>audit purge</code> command: <a href="../operations/audit-retention.html"><code>docs/operations/audit-retention.md</code></a>.</p>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/docs/security/audit-access-matrix.md">rim-server/docs/security/audit-access-matrix.md</a> at <code>c86029b</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+<script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
+</body>
+</html>

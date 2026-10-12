@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Message Change Feed · RIM</title>
+<meta name="description" content="The change feed lets a client ask &quot;what changed in these channels since I last synced&quot; and get every message created, edited or deleted since then, in order, with a cursor it can store. It is the server half of the …">
+<link rel="icon" href="../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../index.html" aria-label="RIM home">
+      <picture><source srcset="../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../index.html#what">What RIM is</a>
+      <a href="../index.html#how">How it works</a>
+      <a href="self-hosting.html">Self-host</a>
+      <a href="../configure/index.html">Configure</a>
+      <a href="index.html" aria-current="page">Docs</a>
+      <a href="../api/index.html">API</a>
+      <a href="../specs/index.html">Specs</a>
+      <a href="contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="index.html">Docs</a><span aria-hidden="true">/</span><a href="client-authors.html">Client authors</a><span aria-hidden="true">/</span><span>Message Change Feed</span></div>
+  <div class="page with-toc">
+    <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
+<ol>
+<li><a href="#query">Query</a></li>
+<li><a href="#semantics">Semantics</a></li>
+<li><a href="#what-the-feed-does-not-carry">What the feed does not carry</a></li>
+<li><a href="#real-time-events">Real-time events</a></li>
+<li><a href="#how-versions-are-assigned">How versions are assigned</a></li>
+</ol>
+</details></aside>
+    <main id="content" class="prose">
+<h1 id="message-change-feed">Message Change Feed</h1>
+<p>The change feed lets a client ask &quot;what changed in these channels since I last synced&quot; and get
+every message created, edited or deleted since then, in order, with a cursor it can store. It is
+the server half of the client-side history cache. This document is the
+contract the cache builds on: <strong>the GraphQL shape and the cursor semantics below are frozen.</strong>
+Additive changes (a new optional input field, a new output field) are fine; anything else needs a
+new field or query next to this one.</p>
+<h2 id="query">Query <a class="anchor" href="#query" aria-label="Link to this section">#</a></h2>
+<pre><code class="language-graphql">query MessageChanges($input: MessageChangesInput!) {
+  messageChanges(input: $input) {
+    conversationId
+    status          # OK | NO_ACCESS | RESET
+    cursor          # store this; pass it back as `after`
+    hasMore         # more changes follow `cursor`; ask again right away
+    changes {
+      kind          # CREATED | EDITED | DELETED
+      version       # decimal string, increases with every change of the message
+      editedAt      # null for a never-edited message
+      message { id threadId authorId text isDeleted sentAt ... }
+    }
+  }
+}</code></pre>
+<pre><code class="language-graphql">input MessageChangesInput {
+  serverId: ID!
+  conversations: [MessageChangeCursorInput!]!   # at most 100
+  limit: Int                                     # per conversation; clamped to 1..=200, default 100,
+                                                 # lowered so one request returns at most 1000 changes
+}
+
+input MessageChangeCursorInput {
+  conversationId: ID!
+  after: String       # a cursor from a previous call; null reads from the beginning
+}</code></pre>
+<p>The result has one entry per requested conversation, in request order.</p>
+<h2 id="semantics">Semantics <a class="anchor" href="#semantics" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>Scope.</strong> Every message of the conversation: timeline messages and thread replies (a reply
+carries <code>threadId</code>). An <code>after</code> that is not a cursor this API returned fails the request with
+<code>VALIDATION</code>; a caller who is not a member of the workspace gets <code>FORBIDDEN</code>.</li>
+<li><strong>Status, per conversation.</strong> Each entry says how its conversation was answered, so one
+conversation never stalls the sync of the others:<ul>
+<li><code>OK</code>: the changes after <code>after</code>.</li>
+<li><code>NO_ACCESS</code>: the caller cannot read the conversation (same gate as <code>messages</code>: removed from
+it, not a member of a private one, or it does not exist in the workspace). <code>changes</code> is
+empty, <code>hasMore</code> is false and <code>cursor</code> echoes <code>after</code>. Stop syncing it; whether the cached
+copy is kept is the client&#39;s policy.</li>
+<li><code>RESET</code>: the stored cursor is ahead of the conversation, because the server&#39;s counters were
+reset after the client stored it (the migration rolled back and re-run, or a database
+restored from an older backup). The changes are read from the beginning instead. The client
+drops its cached copy of the conversation, then applies them and follows <code>hasMore</code> as in an
+initial sync. Without this the feed would silently return nothing until the counter caught
+up, skipping real changes.</li>
+</ul>
+</li>
+<li><strong>Budget.</strong> One request returns at most 1000 changes in total: with many conversations the
+per-conversation <code>limit</code> is lowered to share that budget (never below 1). Follow <code>hasMore</code>.</li>
+<li><strong>Order.</strong> Changes come oldest first, ordered by <code>version</code>.</li>
+<li><strong>One entry per message.</strong> A message appears once, at its newest version, carrying its current
+state. Three edits since the cursor give one <code>EDITED</code> entry with the latest text, not three.</li>
+<li><strong>Kind.</strong> Judged from the current state: <code>DELETED</code> if <code>message.isDeleted</code>, else <code>EDITED</code> if
+<code>editedAt</code> is set, else <code>CREATED</code>. A client cache can treat every entry as an upsert keyed by
+<code>message.id</code> and keep the copy with the higher <code>version</code>.</li>
+<li><strong>Deletes are tombstones.</strong> A deleted message comes back with <code>isDeleted: true</code>, <code>text: null</code>
+and no <code>attachments</code> (soft delete; the row stays). Hard delete is not supported.</li>
+<li><strong>Edits made before the feed existed.</strong> Messages edited before migration
+<code>m20261008_211159_add_message_change_feed</code> ran have no <code>editedAt</code>, so they come back as
+<code>CREATED</code> until they change again.</li>
+<li><strong>Cursor.</strong> Opaque string; today it is the conversation&#39;s last returned <code>version</code>. When
+nothing changed it echoes the cursor that was sent (<code>&quot;0&quot;</code> for a null one). Store it per
+conversation.</li>
+<li><strong>No skipped changes.</strong> Versions become visible in increasing order with no gaps that fill in
+later, so storing the last cursor and asking again never misses a change. See &quot;How versions
+are assigned&quot;.</li>
+<li><strong>Initial sync.</strong> <code>after: null</code> returns the conversation&#39;s whole history, page by page
+(<code>hasMore</code>), oldest first.</li>
+</ul>
+<h2 id="what-the-feed-does-not-carry">What the feed does not carry <a class="anchor" href="#what-the-feed-does-not-carry" aria-label="Link to this section">#</a></h2>
+<p>Only changes to the message row itself bump a version: creation, text edits, soft delete, and
+<code>hasAttachments</code>. Reactions, pins, mentions, link previews and a message becoming a thread root
+(<code>rootThreadId</code>) do not; those stay on their own queries and real-time events.</p>
+<h2 id="real-time-events">Real-time events <a class="anchor" href="#real-time-events" aria-label="Link to this section">#</a></h2>
+<p>The WebSocket subscription keeps delivering new, edited and deleted messages as before; its
+events carry no <code>version</code>. A client cache treats an event as a hint: it may show the message
+right away, and it then calls <code>messageChanges</code> with the conversation&#39;s stored cursor to record
+the change at its version. A client that reconnects after a gap does the same for every cached
+conversation, so a missed event never leaves the cache behind.</p>
+<h2 id="how-versions-are-assigned">How versions are assigned <a class="anchor" href="#how-versions-are-assigned" aria-label="Link to this section">#</a></h2>
+<p>Migration <code>m20261008_211159_add_message_change_feed</code> adds <code>message.version</code>,
+<code>message.edited_at</code> and a <code>message_change_seq</code> table holding one counter per conversation. A
+database trigger runs before every insert into <code>message</code>, and before every update that changes
+<code>text</code>, <code>is_deleted</code> or <code>has_attachments</code>. It upserts the conversation&#39;s counter row and writes
+the new value to <code>version</code>; on a text change it also sets <code>edited_at</code>. Because this lives in the
+database, every write path (send, reply, forward, edit, delete, attachments, and any added later)
+feeds the change log without service code.</p>
+<p>The counter row stays locked until the writing transaction commits. A second writer in the same
+conversation waits, then takes the next number; after a rollback the number is reused. So a
+reader cannot see version N+1 while N is still uncommitted, which is what makes &quot;store the last
+cursor&quot; safe. A global sequence would not give this: it hands out numbers at insert time, so a
+later number can commit and become visible first.</p>
+<p>Deleting a conversation while a message is being written into it can deadlock (the delete
+cascades to the counter row while the send holds it and waits on the conversation row);
+Postgres aborts one of the two and nothing else is affected.</p>
+<p>Existing messages were numbered <code>1..n</code> per conversation in <code>(sent_at, id)</code> order when the
+migration ran. The back-fill rewrites every message row while <code>message</code> is locked, so on a large
+table run the migration in a maintenance window. The migration is additive; <code>down</code> drops the trigger, the counter table and the
+two columns, and clients then re-sync from the beginning once it runs again.</p>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/docs/message-change-feed.md">rim-server/docs/message-change-feed.md</a> at <code>c86029b</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+<script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
+</body>
+</html>

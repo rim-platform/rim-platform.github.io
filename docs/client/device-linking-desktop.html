@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Device linking (desktop) · RIM</title>
+<meta name="description" content="A computer that holds the account's identity key shows a code; another computer pastes it and gets a device key of its own, certified by the identity key, and signs in with it. The contract, with the code format, the …">
+<link rel="icon" href="../../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../../index.html" aria-label="RIM home">
+      <picture><source srcset="../../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../../index.html#what">What RIM is</a>
+      <a href="../../index.html#how">How it works</a>
+      <a href="../self-hosting.html">Self-host</a>
+      <a href="../../configure/index.html">Configure</a>
+      <a href="../index.html" aria-current="page">Docs</a>
+      <a href="../../api/index.html">API</a>
+      <a href="../../specs/index.html">Specs</a>
+      <a href="../contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="../index.html">Docs</a><span aria-hidden="true">/</span><a href="../using-rim.html">Using RIM</a><span aria-hidden="true">/</span><span>Device linking (desktop)</span></div>
+  <div class="page with-toc">
+    <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
+<ol>
+<li><a href="#what-lives-where">What lives where</a></li>
+<li><a href="#the-old-device">The old device</a></li>
+<li><a href="#the-new-device">The new device</a></li>
+<li><a href="#trying-it-with-two-app-instances">Trying it with two app instances</a></li>
+<li><a href="#not-in-v1">Not in v1</a></li>
+<li><a href="#web-client">Web client</a></li>
+<li><a href="#limits">Limits</a></li>
+</ol>
+</details></aside>
+    <main id="content" class="prose">
+<h1 id="device-linking-desktop">Device linking (desktop)</h1>
+<p>A computer that holds the account&#39;s identity key shows a code; another computer pastes it and
+gets a device key of its own, certified by the identity key, and signs in with it. The contract,
+with the code format, the channel cryptography and the known-answer vectors, is
+<code>../rim-server/docs/specs/device-linking-v1.md</code>; this page says where the desktop app implements
+it.</p>
+<h2 id="what-lives-where">What lives where <a class="anchor" href="#what-lives-where" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/src-tauri/src/key_identity/device_link.rs"><code>src-tauri/src/key_identity/device_link.rs</code></a>: everything secret. The link code (format and the
+spec&#39;s reader rules), HKDF-SHA256 per direction, AES-256-GCM seal and open with the AAD rule,
+the fingerprint, the offer and answer plaintexts (<code>serde</code> with <code>deny_unknown_fields</code>; serde&#39;s
+derive refuses a field named twice), and the <code>KeyIdentityState</code> methods behind the
+<code>key_identity_link_*</code> commands. Its tests check appendix A byte for byte; the two-device flow
+tests are in <code>key_identity/tests.rs</code>.</li>
+<li><a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/src/features/key-identity/api/deviceLink.ts"><code>src/features/key-identity/api/deviceLink.ts</code></a>: the GraphQL documents, the command wrappers, and
+the two flows. <code>linkNewDevice</code> is the new device from the code to the session.
+<code>startLinkingDevice</code>, <code>waitForOffer</code>, <code>confirmLink</code> and <code>cancelLink</code> are the old device, driven
+by the settings panel; <code>resumePendingDeviceLinks</code> finishes links an earlier run left open.
+Every way a link can end early has its message in <code>DEVICE_LINK_MESSAGES</code>.</li>
+<li><code>components/LinkDevicePanel.tsx</code>: Settings &gt; Security &gt; &quot;Link a device&quot;, shown only when this
+computer holds the head&#39;s identity key. QR code (<code>qrcode.react</code>, byte mode, level M, no
+boost) and the text code with a copy button and the time left, then the confirmation card:
+the name (editable before signing), the platform (a web device gets the weaker-keys note), the
+fingerprint <code>XXXX-XXXX</code>, Confirm or Decline.</li>
+<li><code>components/LinkThisDevice.tsx</code>: &quot;Link this device&quot; on the sign-in screen: the code, the device
+name, then the fingerprint with &quot;Confirm this code on your other device&quot; while it waits.</li>
+<li><code>runtime/useResumeDeviceLinks.ts</code>: mounted in the app shell; once per signed-in account and run,
+while online, calls <code>resumePendingDeviceLinks</code>.</li>
+</ul>
+<p>The webview sees the code text (to show and copy), sealed bytes, fingerprints, names and link
+states. The secret, the new device&#39;s key and the identity key never leave the Tauri side.</p>
+<h2 id="the-old-device">The old device <a class="anchor" href="#the-old-device" aria-label="Link to this section">#</a></h2>
+<p>The secret is generated by <code>key_identity_link_begin</code> and kept in memory only. When the server
+says <code>OFFERED</code>, <code>key_identity_link_review_offer</code> opens the offer and checks it against
+<code>myKeyIdentity</code> (its key log replayed here, its devices revoked ones included): a key or device id
+already used, one of the account&#39;s own keys, a key that is malformed, weak or of an algorithm
+this app cannot verify, or a bad name refuses the offer, and the link is cancelled. An offer that
+does not open means someone else used the code.</p>
+<p>On Confirm, <code>key_identity_link_confirm</code> signs the certificate at the head&#39;s <code>keySeq</code>, seals the
+answer, and writes the <strong>pending link</strong> record before the webview sends <code>addDeviceKey</code>:</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Secret vault record</th>
+<th>Holds</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>device-link-v1:&lt;link id&gt;</code></td>
+<td>link id, secret, endpoint, principal id, device id and key, certificate, sealed answer (resent byte for byte)</td>
+</tr>
+<tr>
+<td><code>device-links-v1</code></td>
+<td>the list of link ids that have a record</td>
+</tr>
+</tbody></table></div>
+<p>The record is removed when the link ends <code>CONSUMED</code>, or once a link that ended <code>CANCELLED</code> or
+<code>EXPIRED</code> has been settled: a certified device whose <code>lastUsedAt</code> is still empty is revoked with
+the identity key. If revoking fails, the record stays for the next start-up. On start-up a record
+whose link is still <code>OFFERED</code> is answered again with the same sealed bytes (the device added first if the list lacks it),
+<code>ANSWERED</code> waits for the new device, and anything else is settled as above. Records of another
+account on the same server wait for that account&#39;s sign-in.</p>
+<p>Cancelling after Confirm aborts the flow, waits for any <code>addDeviceKey</code> in flight, then cancels
+and settles, so an added device is never left unrevoked. Closing the panel after Confirm does
+not stop the flow. A network failure past Confirm offers Retry, which sends the same certificate
+and answer.</p>
+<p>An <code>addDeviceKey</code> refused with <code>CONFLICT</code> while the device list already shows this device id with
+this key is a retry after a lost answer and carries on; any other refusal cancels the link.</p>
+<h2 id="the-new-device">The new device <a class="anchor" href="#the-new-device" aria-label="Link to this section">#</a></h2>
+<p><code>key_identity_link_offer</code> reads the pasted code, refuses a code for another server (compared as
+the key store compares endpoints), and makes the device key and a UUID v7 device id in memory.
+Nothing is written to the secret vault until <code>key_identity_link_open_answer</code> has found a certificate
+for exactly this device id and key, and <code>key_identity_link_accept</code> has verified it against the
+account&#39;s <code>keyLog</code> at its <code>keySeq</code>. Then the key, id and name are stored like a recovered device&#39;s
+(no identity key, user id unknown), and the existing <code>signInWithDeviceKey</code> signs in and settles
+them. <code>completeDeviceLink</code> is tried twice at most. <code>FORBIDDEN</code> at that sign-in removes the keys;
+other failures keep them for the sign-in screen. A computer that already holds keys for the
+account refuses to link over them.</p>
+<h2 id="trying-it-with-two-app-instances">Trying it with two app instances <a class="anchor" href="#trying-it-with-two-app-instances" aria-label="Link to this section">#</a></h2>
+<p>Both instances must use the same server (the code carries the endpoint and the new device refuses
+another), and each needs its own secret vault and credential store entry, so run them as two OS
+users or on two machines:</p>
+<ol>
+<li>On the first, sign in, set up key sign-in in Settings &gt; Security, and choose &quot;Link a device&quot;.</li>
+<li>On the second, open the sign-in screen, choose &quot;Link this device with its code&quot;, paste the
+code, and keep the fingerprint in view.</li>
+<li>On the first, compare the fingerprint, adjust the name, and confirm. The second signs in; the
+first says the device is linked and lists it under Devices.</li>
+</ol>
+<p>To try the restart path, quit the first app after confirming and before the second signs in;
+the next start finishes the link, or revokes the device if the link expired meanwhile.</p>
+<h2 id="not-in-v1">Not in v1 <a class="anchor" href="#not-in-v1" aria-label="Link to this section">#</a></h2>
+<p>QR scanning, the archive key in the answer, moving the identity key, short typed codes, and a
+subscription instead of polling: see the spec&#39;s &quot;Deferred&quot; section. A linked device can take the
+identity key over from its backup in the history archive instead: <a href="identity-key-backup.html"><code>identity-key-backup.md</code></a>.</p>
+<h2 id="web-client">Web client <a class="anchor" href="#web-client" aria-label="Link to this section">#</a></h2>
+<p>The web app is only ever the new device: a browser with WebCrypto Ed25519 pastes the code, keeps a
+non-extractable key in IndexedDB and signs in with it, through the same <code>linkNewDevice</code> and
+<code>signInWithDeviceKey</code> behind the <code>KeyBackend</code> interface. See <a href="web-linked-device.html"><code>web-linked-device.md</code></a>.</p>
+<h2 id="limits">Limits <a class="anchor" href="#limits" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>Polling gives up 25 minutes after it started: a link lives 10 minutes and an answer 10 more.</li>
+<li>The desktop does not scan QR codes; the new device takes the pasted code.</li>
+</ul>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/docs/device-linking-desktop.md">rim-ui/docs/device-linking-desktop.md</a> at <code>58e3ec0</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+<script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
+</body>
+</html>

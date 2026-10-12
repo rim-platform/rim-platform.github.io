@@ -1,0 +1,416 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Architecture · RIM</title>
+<meta name="description" content="This document describes the architecture of the RIM server.">
+<link rel="icon" href="../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../index.html" aria-label="RIM home">
+      <picture><source srcset="../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../index.html#what">What RIM is</a>
+      <a href="../index.html#how">How it works</a>
+      <a href="self-hosting.html">Self-host</a>
+      <a href="../configure/index.html">Configure</a>
+      <a href="index.html" aria-current="page">Docs</a>
+      <a href="../api/index.html">API</a>
+      <a href="../specs/index.html">Specs</a>
+      <a href="contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="index.html">Docs</a><span aria-hidden="true">/</span><a href="project.html">Project</a><span aria-hidden="true">/</span><span>Architecture</span></div>
+  <div class="page with-toc">
+    <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
+<ol>
+<li><a href="#product-framing">Product Framing</a></li>
+<li><a href="#architectural-principles">Architectural Principles</a><ol><li><a href="#layered-boundaries">Layered Boundaries</a></li><li><a href="#extensibility-first">Extensibility First</a></li><li><a href="#backend-owned-vs-client-owned-responsibilities">Backend-Owned vs Client-Owned Responsibilities</a></li><li><a href="#security-by-default">Security By Default</a></li></ol></li>
+<li><a href="#current-crate-responsibilities">Current Crate Responsibilities</a><ol><li><a href="#rim_core">rim_core</a></li><li><a href="#rim_services">rim_services</a></li><li><a href="#rim_infra_db">rim_infra_db</a></li><li><a href="#rim_infra_services">rim_infra_services</a></li><li><a href="#rim_api">rim_api</a></li><li><a href="#rim_server">rim_server</a></li><li><a href="#rim_auth-rim_identity-rim_s2s">rim_auth, rim_identity, rim_s2s</a></li><li><a href="#rim_logging">rim_logging</a></li><li><a href="#entity">entity</a></li><li><a href="#migration">migration</a></li></ol></li>
+<li><a href="#core-domain-model">Core Domain Model</a><ol><li><a href="#workspace--server">Workspace / Server</a></li><li><a href="#conversation">Conversation</a></li><li><a href="#message">Message</a></li><li><a href="#thread">Thread</a></li><li><a href="#attachment">Attachment</a></li><li><a href="#principal">Principal</a></li><li><a href="#command">Command</a></li><li><a href="#keybind">Keybind</a></li><li><a href="#platform-primitives">Platform Primitives</a></li></ol></li>
+<li><a href="#commands-keybinds-plugins-and-context">Commands, Keybinds, Plugins, and Context</a><ol><li><a href="#commands">Commands</a></li><li><a href="#keybinds">Keybinds</a></li><li><a href="#plugins">Plugins</a></li><li><a href="#context">Context</a></li></ol></li>
+<li><a href="#persisted-vs-runtime-layers">Persisted vs Runtime Layers</a><ol><li><a href="#persisted-backend-state">Persisted Backend State</a></li><li><a href="#backend-resolved-but-not-runtime-final">Backend-Resolved But Not Runtime-Final</a></li><li><a href="#runtime-local-client-state">Runtime-Local Client State</a></li></ol></li>
+<li><a href="#security-model">Security Model</a><ol><li><a href="#permissions-vs-capabilities">Permissions vs Capabilities</a></li><li><a href="#dangerous-behavior">Dangerous Behavior</a></li><li><a href="#trust-boundaries">Trust Boundaries</a></li></ol></li>
+<li><a href="#scaling-limits">Scaling Limits</a></li>
+<li><a href="#contributor-rules">Contributor Rules</a></li>
+</ol>
+</details></aside>
+    <main id="content" class="prose">
+<h1 id="architecture">Architecture</h1>
+<p>This document describes the architecture of the RIM server.</p>
+<p>It is intentionally higher level than crate-specific implementation notes. The goal is to explain:</p>
+<ul>
+<li>what RIM is architecturally</li>
+<li>how the system is layered today</li>
+<li>what each crate is responsible for</li>
+<li>where state and behavior should live</li>
+<li>which rules keep new features compatible with encryption and more than one server</li>
+</ul>
+<h2 id="product-framing">Product Framing <a class="anchor" href="#product-framing" aria-label="Link to this section">#</a></h2>
+<p>RIM is a programmable communication workspace (<a href="vision.html"><code>docs/vision.md</code></a>).</p>
+<p>Communication is the base surface, but the product is differentiated by:</p>
+<ul>
+<li>plugins</li>
+<li>commands</li>
+<li>keybinds</li>
+<li>context-aware workflows</li>
+</ul>
+<p>The core product idea is that communication and action should live in the same environment.</p>
+<p>Examples:</p>
+<ul>
+<li>highlight text and create a YouTrack issue</li>
+<li>open a Kubernetes panel from chat context</li>
+<li>bind a custom workflow to a keybind</li>
+<li>run a command chain without leaving the app</li>
+</ul>
+<p>Privacy and security are first-class principles. DMs and private groups are end-to-end encrypted
+with MLS, a person is a key pair rather than an account on one server, and servers act as relays
+and workspace hosts for each other (<a href="https://github.com/rim-platform/rim-server/tree/c86029b35a7ef7770b05e7bda62909f988343f7f/docs/specs"><code>docs/specs/</code></a>).</p>
+<h2 id="architectural-principles">Architectural Principles <a class="anchor" href="#architectural-principles" aria-label="Link to this section">#</a></h2>
+<h3 id="layered-boundaries">Layered Boundaries <a class="anchor" href="#layered-boundaries" aria-label="Link to this section">#</a></h3>
+<p>The system is designed around clean boundaries between:</p>
+<ul>
+<li>domain/repository contracts</li>
+<li>service contracts</li>
+<li>default infrastructure implementations</li>
+<li>transport adapters</li>
+<li>runtime startup wiring</li>
+</ul>
+<h3 id="extensibility-first">Extensibility First <a class="anchor" href="#extensibility-first" aria-label="Link to this section">#</a></h3>
+<p>Developers should be able to:</p>
+<ul>
+<li>implement their own repositories</li>
+<li>implement their own services</li>
+<li>build alternate API adapters</li>
+<li>write plugins and integrations</li>
+</ul>
+<p>This means contracts and boundaries matter more than local convenience.</p>
+<h3 id="backend-owned-vs-client-owned-responsibilities">Backend-Owned vs Client-Owned Responsibilities <a class="anchor" href="#backend-owned-vs-client-owned-responsibilities" aria-label="Link to this section">#</a></h3>
+<p>The backend should own:</p>
+<ul>
+<li>persisted shared state</li>
+<li>workspace/server state</li>
+<li>messaging state</li>
+<li>user-defined commands</li>
+<li>persisted keybind layers</li>
+<li>auth/session validation</li>
+<li>shared permissions/capabilities</li>
+</ul>
+<p>The client/runtime should own:</p>
+<ul>
+<li>actual input handling</li>
+<li>device-local configuration</li>
+<li>UI session state</li>
+<li>runtime-local navigation behaviors</li>
+<li>desktop-local command execution</li>
+</ul>
+<h3 id="security-by-default">Security By Default <a class="anchor" href="#security-by-default" aria-label="Link to this section">#</a></h3>
+<p>The system should separate:</p>
+<ul>
+<li>user permissions</li>
+<li>extension capabilities</li>
+<li>local vs remote trust boundaries</li>
+<li>dangerous vs ordinary behavior</li>
+</ul>
+<p>No subsystem should silently gain power just because it exists.</p>
+<h2 id="current-crate-responsibilities">Current Crate Responsibilities <a class="anchor" href="#current-crate-responsibilities" aria-label="Link to this section">#</a></h2>
+<h3 id="rim_core"><code>rim_core</code> <a class="anchor" href="#rim_core" aria-label="Link to this section">#</a></h3>
+<p>Owns:</p>
+<ul>
+<li>domain models</li>
+<li>strongly typed ids</li>
+<li>repository traits</li>
+</ul>
+<p>This crate should stay transport-agnostic and mostly infrastructure-agnostic.</p>
+<h3 id="rim_services"><code>rim_services</code> <a class="anchor" href="#rim_services" aria-label="Link to this section">#</a></h3>
+<p>Owns:</p>
+<ul>
+<li>service traits</li>
+<li>commands/queries</li>
+<li>DTOs</li>
+<li>provider contracts</li>
+</ul>
+<p>This is the main contract layer between product behavior and transport/runtime adapters.</p>
+<h3 id="rim_infra_db"><code>rim_infra_db</code> <a class="anchor" href="#rim_infra_db" aria-label="Link to this section">#</a></h3>
+<p>Owns:</p>
+<ul>
+<li>SeaORM-backed repository implementations</li>
+<li>DB error mapping</li>
+<li>persistence concerns</li>
+</ul>
+<p>It should implement repository contracts, not product workflows.</p>
+<h3 id="rim_infra_services"><code>rim_infra_services</code> <a class="anchor" href="#rim_infra_services" aria-label="Link to this section">#</a></h3>
+<p>Owns:</p>
+<ul>
+<li>default service implementations</li>
+<li>orchestration across repositories</li>
+<li>validation and policy checks</li>
+<li>execution routing for the current product slices</li>
+</ul>
+<p>This crate is the main default business-logic layer.</p>
+<h3 id="rim_api"><code>rim_api</code> <a class="anchor" href="#rim_api" aria-label="Link to this section">#</a></h3>
+<p>Owns:</p>
+<ul>
+<li>GraphQL types</li>
+<li>query/mutation mapping</li>
+<li>transport-level validation/mapping</li>
+</ul>
+<p>It should remain an adapter over service traits, not a business-logic owner.</p>
+<p>Layout: resolvers are split per domain under <a href="https://github.com/rim-platform/rim-server/tree/c86029b35a7ef7770b05e7bda62909f988343f7f/rim_api/src/query"><code>rim_api/src/query/</code></a> and
+<a href="https://github.com/rim-platform/rim-server/tree/c86029b35a7ef7770b05e7bda62909f988343f7f/rim_api/src/mutation"><code>rim_api/src/mutation/</code></a> (one <code>#[Object]</code> per domain, merged into <code>Query</code> and
+<code>Mutation</code> with <code>#[derive(MergedObject)]</code> in each <code>mod.rs</code>, in groups of at
+most five to stay under rustc&#39;s recursion limit; member order is the SDL field
+order, so new objects are appended). GraphQL types mirror that split
+under <a href="https://github.com/rim-platform/rim-server/tree/c86029b35a7ef7770b05e7bda62909f988343f7f/rim_api/src/types"><code>rim_api/src/types/</code></a> and are all re-exported from <code>types/mod.rs</code>.
+Resolver unit tests live in <a href="https://github.com/rim-platform/rim-server/tree/c86029b35a7ef7770b05e7bda62909f988343f7f/rim_api/src/tests"><code>rim_api/src/tests/</code></a> (shared mock fixtures in
+<code>mod.rs</code>, one submodule per domain). Shared resolver helpers stay in their own
+modules: <code>auth_context</code> (<code>require_actor</code>, <code>require_session_id</code>,
+<code>require_server_member</code>), <code>auth_intent</code>, <code>errors</code> (<code>map_service_error</code>), <code>ids</code>
+(<code>parse_uuid_id</code>) and <code>resolve</code> (DataLoader accessors).</p>
+<h3 id="rim_server"><code>rim_server</code> <a class="anchor" href="#rim_server" aria-label="Link to this section">#</a></h3>
+<p>Owns:</p>
+<ul>
+<li>app/runtime assembly</li>
+<li>HTTP wiring</li>
+<li>request/session/startup wiring</li>
+</ul>
+<p>It should stay focused on composition and request orchestration.</p>
+<p>It is also the composition root (<code>app.rs</code>) and serves the transports that are not GraphQL:
+uploads and downloads, plugin bundles, health and metrics, the server-to-server routes and the
+relay&#39;s forwarding route. <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/CLAUDE.md"><code>CLAUDE.md</code></a> describes these two exceptions to the layer chain.</p>
+<h3 id="rim_auth-rim_identity-rim_s2s"><code>rim_auth</code>, <code>rim_identity</code>, <code>rim_s2s</code> <a class="anchor" href="#rim_auth-rim_identity-rim_s2s" aria-label="Link to this section">#</a></h3>
+<p>Leaf crates with no database or HTTP code:</p>
+<ul>
+<li><code>rim_auth</code>: password hashing, session and CSRF tokens.</li>
+<li><code>rim_identity</code>: verification of key identity statements (key logs, device certificates,
+profile cards, login proofs, plugin manifests, MLS credentials).</li>
+<li><code>rim_s2s</code>: the server key log and <code>rims1_</code> ids, the signed descriptor, server-signed
+statements and the RFC 9421 signature profile of the server-to-server transport.</li>
+</ul>
+<h3 id="rim_logging"><code>rim_logging</code> <a class="anchor" href="#rim_logging" aria-label="Link to this section">#</a></h3>
+<p>Structured JSON logging and the audit log file.</p>
+<h3 id="entity"><code>entity</code> <a class="anchor" href="#entity" aria-label="Link to this section">#</a></h3>
+<p>Owns:</p>
+<ul>
+<li>SeaORM entity definitions</li>
+<li>entity-to-domain mapping helpers</li>
+</ul>
+<h3 id="migration"><code>migration</code> <a class="anchor" href="#migration" aria-label="Link to this section">#</a></h3>
+<p>Owns:</p>
+<ul>
+<li>schema evolution</li>
+<li>DB migration history</li>
+</ul>
+<h2 id="core-domain-model">Core Domain Model <a class="anchor" href="#core-domain-model" aria-label="Link to this section">#</a></h2>
+<h3 id="workspace--server">Workspace / Server <a class="anchor" href="#workspace--server" aria-label="Link to this section">#</a></h3>
+<p>The persisted/core identifier still uses <code>ServerId</code>, but product terminology prefers <code>workspace</code>.</p>
+<p>Today:</p>
+<ul>
+<li>a server/workspace is the top-level shared container</li>
+<li>members hold one of four roles: <code>Owner</code>, <code>Moderator</code>, <code>Member</code> (default), <code>Guest</code>
+(restricted to conversations they were added to). Moderation state — bans, timeouts and
+message reports — lives in <code>rim_core::moderation</code> (<code>ModerationRepository</code>) and is managed by
+<code>ModerationService</code> (<a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/rim_infra_services/src/moderation.rs"><code>rim_infra_services/src/moderation.rs</code></a>), which also owns the shared
+moderation audit writer (<code>record_moderation_action</code>). See <a href="messaging.html"><code>docs/messaging.md</code></a>, Roles And
+Moderation.</li>
+</ul>
+<h3 id="conversation">Conversation <a class="anchor" href="#conversation" aria-label="Link to this section">#</a></h3>
+<p>A conversation lives inside a server/workspace and represents one of:</p>
+<ul>
+<li>channel (public, readable by every workspace member, or private, readable by its members only)</li>
+<li>DM</li>
+<li>group chat</li>
+</ul>
+<p>Access rules (<a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/rim_infra_services/src/util.rs"><code>rim_infra_services/src/util.rs</code></a>): <code>ensure_conversation_member_access</code>
+lets any workspace member read a public channel; private channels, DMs and groups need a
+<code>conversation_member</code> row (a private-channel non-member gets <code>NotFound</code>, a DM/group non-member
+<code>PermissionDenied</code>). <code>ensure_conversation_writable</code> adds the archive check
+(<code>ConversationArchived</code>) for every write path. See <a href="messaging.html"><code>docs/messaging.md</code></a>.</p>
+<p>The gate is role-aware: it loads the actor&#39;s <code>MemberStanding</code> (role plus any active
+timeout, <code>ServerMemberRepository::get_member_standing</code>) instead of a bare membership check. A
+<code>Guest</code> needs a <code>conversation_member</code> row even for a public channel (<code>NotFound</code> otherwise), and
+<code>ensure_conversation_writable</code> also refuses a timed-out member (<code>TimedOut</code>). Slow mode is
+checked in <code>MessageService</code> on send/reply/forward.</p>
+<h3 id="message">Message <a class="anchor" href="#message" aria-label="Link to this section">#</a></h3>
+<p>A message belongs to a conversation.</p>
+<p>Messages exist in two major forms:</p>
+<ul>
+<li>timeline messages</li>
+<li>thread replies</li>
+</ul>
+<h3 id="thread">Thread <a class="anchor" href="#thread" aria-label="Link to this section">#</a></h3>
+<p>A thread is a separate entity anchored to a root timeline message.</p>
+<p>Rules:</p>
+<ul>
+<li>the root message remains in the timeline</li>
+<li>thread replies live in the thread view</li>
+</ul>
+<h3 id="attachment">Attachment <a class="anchor" href="#attachment" aria-label="Link to this section">#</a></h3>
+<p>An attachment belongs to a message.</p>
+<h3 id="principal">Principal <a class="anchor" href="#principal" aria-label="Link to this section">#</a></h3>
+<p>A principal is who acts. Every user with a key identity has a stable principal id (<code>rimp1_…</code>)
+that plugins and other servers see instead of a server-local id; a person from another server is
+a <code>user</code> row of kind <code>remote</code> keyed by that id. <code>Principal</code> and <code>PrincipalKind</code> in <code>rim_core</code> are
+the seam for further kinds such as bots, which do not exist yet.</p>
+<h3 id="command">Command <a class="anchor" href="#command" aria-label="Link to this section">#</a></h3>
+<p>Commands are the common execution unit across:</p>
+<ul>
+<li>command palette</li>
+<li>keybinds</li>
+<li>context actions</li>
+<li>user-defined workflows</li>
+<li>plugins and the AI agent</li>
+</ul>
+<p>Current backend state:</p>
+<ul>
+<li>built-in command registry/metadata exists</li>
+<li>backend command execution exists</li>
+<li>persisted user-defined command composition exists</li>
+<li>command lookup/listing/filtering exists as a service/API contract</li>
+</ul>
+<h3 id="keybind">Keybind <a class="anchor" href="#keybind" aria-label="Link to this section">#</a></h3>
+<p>Keybinds map key combinations to commands.</p>
+<p>The backend currently owns persisted/shared keybind layers, while the client is expected to own
+device-local bindings and actual runtime key handling.</p>
+<p>The intended final runtime precedence is:</p>
+<ul>
+<li><code>device_local &gt; workspace &gt; user &gt; default</code></li>
+</ul>
+<h3 id="platform-primitives">Platform Primitives <a class="anchor" href="#platform-primitives" aria-label="Link to this section">#</a></h3>
+<p>Of the early platform foundations, only capabilities remain: the capability registry backs the
+runtime gate. The hardcoded <code>actions</code>,
+<code>events</code>, <code>integrations</code> and <code>settings</code> stubs were removed; actions are commands, events are the
+workspace event stream, and integrations and settings will get real models when they are built.</p>
+<h2 id="commands-keybinds-plugins-and-context">Commands, Keybinds, Plugins, and Context <a class="anchor" href="#commands-keybinds-plugins-and-context" aria-label="Link to this section">#</a></h2>
+<h3 id="commands">Commands <a class="anchor" href="#commands" aria-label="Link to this section">#</a></h3>
+<p>Commands are the backbone for execution.</p>
+<p>Important rule:</p>
+<ul>
+<li>commands own behavior</li>
+<li>transports, keybinds, and context actions trigger commands</li>
+</ul>
+<h3 id="keybinds">Keybinds <a class="anchor" href="#keybinds" aria-label="Link to this section">#</a></h3>
+<p>Keybinds should stay simple:</p>
+<ul>
+<li>they trigger commands</li>
+<li>they do not own workflow logic</li>
+</ul>
+<h3 id="plugins">Plugins <a class="anchor" href="#plugins" aria-label="Link to this section">#</a></h3>
+<p>Plugins are extension packages that may contribute multiple extension points, such as:</p>
+<ul>
+<li>commands</li>
+<li>panels</li>
+<li>context actions</li>
+<li>automations</li>
+<li>integrations</li>
+</ul>
+<p>Plugins run in the client, never on the server. The client&#39;s plugin host owns installation,
+consent and runtime; the server keeps per-workspace registries of signed plugins and serves web
+plugin bundles. See <a href="plugin_model.html"><code>docs/plugin_model.md</code></a>.</p>
+<h3 id="context">Context <a class="anchor" href="#context" aria-label="Link to this section">#</a></h3>
+<p>Context is structured runtime state available at invocation time.</p>
+<p>Examples:</p>
+<ul>
+<li>selected text</li>
+<li>selected message</li>
+<li>current conversation</li>
+<li>active panel</li>
+<li>focused surface</li>
+</ul>
+<p>Context should be typed and shared across command palette, keybinds, and context actions.</p>
+<h2 id="persisted-vs-runtime-layers">Persisted vs Runtime Layers <a class="anchor" href="#persisted-vs-runtime-layers" aria-label="Link to this section">#</a></h2>
+<h3 id="persisted-backend-state">Persisted Backend State <a class="anchor" href="#persisted-backend-state" aria-label="Link to this section">#</a></h3>
+<p>Examples:</p>
+<ul>
+<li>users</li>
+<li>workspaces/servers</li>
+<li>conversations</li>
+<li>messages</li>
+<li>threads</li>
+<li>attachments</li>
+<li>user-defined commands</li>
+<li>user keybinds</li>
+<li>workspace keybinds</li>
+</ul>
+<h3 id="backend-resolved-but-not-runtime-final">Backend-Resolved But Not Runtime-Final <a class="anchor" href="#backend-resolved-but-not-runtime-final" aria-label="Link to this section">#</a></h3>
+<p>Examples:</p>
+<ul>
+<li>default keybind suggestions</li>
+<li>resolved persisted keybind layers</li>
+</ul>
+<p>These are useful to clients, but they are not the full final runtime behavior.</p>
+<h3 id="runtime-local-client-state">Runtime-Local Client State <a class="anchor" href="#runtime-local-client-state" aria-label="Link to this section">#</a></h3>
+<p>Examples:</p>
+<ul>
+<li>device-local keybinds</li>
+<li>current selection/focus state</li>
+<li>recent-activity cycling state</li>
+<li>open panels/routes</li>
+<li>desktop-local command execution state</li>
+</ul>
+<h2 id="security-model">Security Model <a class="anchor" href="#security-model" aria-label="Link to this section">#</a></h2>
+<h3 id="permissions-vs-capabilities">Permissions vs Capabilities <a class="anchor" href="#permissions-vs-capabilities" aria-label="Link to this section">#</a></h3>
+<ul>
+<li>users primarily operate through membership/permission rules</li>
+<li>plugins/integrations/future non-user principals operate through capabilities</li>
+</ul>
+<h3 id="dangerous-behavior">Dangerous Behavior <a class="anchor" href="#dangerous-behavior" aria-label="Link to this section">#</a></h3>
+<p>Dangerous behaviors should be explicit, especially for:</p>
+<ul>
+<li>local process execution</li>
+<li>local filesystem access</li>
+<li>broad outbound network access</li>
+</ul>
+<h3 id="trust-boundaries">Trust Boundaries <a class="anchor" href="#trust-boundaries" aria-label="Link to this section">#</a></h3>
+<p>The architecture should preserve visible trust boundaries between:</p>
+<ul>
+<li>built-in behavior</li>
+<li>user-defined behavior</li>
+<li>plugin behavior</li>
+<li>integration behavior</li>
+</ul>
+<h2 id="scaling-limits">Scaling Limits <a class="anchor" href="#scaling-limits" aria-label="Link to this section">#</a></h2>
+<p>One server process holds some state in memory behind traits: the event broadcaster, the
+confirmation store, rate limiters, presence and typing. Some background jobs, such as the notification digest, assume one node. Running
+several nodes of one server needs those traits backed by shared stores first; new features must
+not depend on single-node semantics (<a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/ROADMAP.md"><code>ROADMAP.md</code></a>, &quot;Architecture guardrails&quot;).</p>
+<h2 id="contributor-rules">Contributor Rules <a class="anchor" href="#contributor-rules" aria-label="Link to this section">#</a></h2>
+<p>When adding new features:</p>
+<ul>
+<li>add new domain models/repo traits to <code>rim_core</code></li>
+<li>add service contracts to <code>rim_services</code></li>
+<li>add default implementations to <code>rim_infra_services</code></li>
+<li>keep DB-specific logic in <code>rim_infra_db</code></li>
+<li>keep transport logic in <code>rim_api</code></li>
+<li>keep HTTP/runtime composition in <code>rim_server</code></li>
+</ul>
+<p>Avoid:</p>
+<ul>
+<li>business logic in GraphQL resolvers</li>
+<li>transport concerns in domain models</li>
+<li>persistence details leaking into service contracts unnecessarily</li>
+<li>runtime-local concerns being pushed into backend persistence just for convenience</li>
+</ul>
+<p>Every new server feature also answers two questions: what it does when the message content is
+encrypted, and what it does when the people involved are on more than one server.</p>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/docs/architecture.md">rim-server/docs/architecture.md</a> at <code>c86029b</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+<script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
+</body>
+</html>

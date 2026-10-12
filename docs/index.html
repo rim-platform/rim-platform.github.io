@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Docs · RIM</title>
+<meta name="description" content="RIM documentation for operators, client authors, plugin authors, people using it, and contributors.">
+<link rel="icon" href="../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../index.html" aria-label="RIM home">
+      <picture><source srcset="../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../index.html#what">What RIM is</a>
+      <a href="../index.html#how">How it works</a>
+      <a href="self-hosting.html">Self-host</a>
+      <a href="../configure/index.html">Configure</a>
+      <a href="index.html" aria-current="page">Docs</a>
+      <a href="../api/index.html">API</a>
+      <a href="../specs/index.html">Specs</a>
+      <a href="contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+
+  <div class="page with-toc">
+    <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
+<ol>
+<li><a href="#operators">Operators</a></li>
+<li><a href="#client-authors">Client authors</a></li>
+<li><a href="#plugin-authors">Plugin authors</a></li>
+<li><a href="#using-rim">Using RIM</a></li>
+<li><a href="#project">Project</a></li>
+</ol>
+</details></aside>
+    <main id="content" class="prose">
+<h1>Docs</h1>
+<p class="lede">Guides for the people who run RIM, build clients and plugins for it, use it, and work on it. Rendered from the server and client repositories at the commits named below.</p>
+<h2 id="operators"><a href="operators.html">Operators</a></h2>
+<p class="muted">Running a RIM server: installing it with Docker Compose, upgrading and backing it up, watching it, switching features off, and running a public relay.</p>
+<ul>
+<li><a href="self-hosting.html">Self-hosting a RIM server</a></li>
+<li><a href="email.html">Transactional Email</a></li>
+<li><a href="operations/audit-retention.html">Audit retention</a></li>
+<li><a href="operations/background-jobs.html">Background jobs</a></li>
+<li><a href="operations/features.html">Instance features</a></li>
+<li><a href="operations/metrics.html">Metrics</a></li>
+<li><a href="operations/relay-public.html">Public relay runbook</a></li>
+<li><a href="operations/release-checklist.html">Release checklist</a></li>
+<li><a href="operations/upgrade.html">Upgrading a server</a></li>
+<li><a href="server-identity.html">Server identity and server-to-server traffic</a></li>
+<li><a href="relay.html">The relay</a></li>
+</ul>
+<h2 id="client-authors"><a href="client-authors.html">Client authors</a></h2>
+<p class="muted">Talking to a RIM server from your own client: the HTTP and GraphQL contract, sessions and CSRF, pagination, messaging, search and the change feed.</p>
+<ul>
+<li><a href="api.html">Talking to a server over HTTP</a></li>
+<li><a href="pagination.html">Pagination Contract</a></li>
+<li><a href="messaging.html">Messaging Contract</a></li>
+<li><a href="search.html">Message Search (Full-Text Search)</a></li>
+<li><a href="message-change-feed.html">Message Change Feed</a></li>
+</ul>
+<h2 id="plugin-authors"><a href="plugin-authors.html">Plugin authors</a></h2>
+<p class="muted">Extending the client: what a plugin is, the capabilities it asks for, the TypeScript SDK, web plugins in a sandboxed frame and signed workspace plugins.</p>
+<ul>
+<li><a href="plugin_model.html">Plugin Model</a></li>
+<li><a href="capability_security_model.html">Capability And Security Model</a></li>
+<li><a href="client/plugin-sdk.html">@rim/plugin-sdk</a></li>
+<li><a href="client/web-plugins.html">Web plugins</a></li>
+<li><a href="client/workspace-plugins.html">Workspace plugins</a></li>
+<li><a href="client/plugin-chat-methods.html">Plugin chat methods (rim.chat.*)</a></li>
+</ul>
+<h2 id="using-rim"><a href="using-rim.html">Using RIM</a></h2>
+<p class="muted">The desktop and web client: building it, the keyboard, keys and recovery, linking a device, encrypted conversations, relays and the local message cache.</p>
+<ul>
+<li><a href="client/guide.html">RIM client</a></li>
+<li><a href="client/keyboard.html">Keyboard</a></li>
+<li><a href="client/search-ui.html">Search UI</a></li>
+<li><a href="client/updater.html">In-app updates</a></li>
+<li><a href="client/version-skew.html">Version skew between client and server</a></li>
+<li><a href="client/identity-key-backup.html">Identity key backup (desktop)</a></li>
+<li><a href="client/device-linking-desktop.html">Device linking (desktop)</a></li>
+<li><a href="client/web-linked-device.html">The web app as a linked device</a></li>
+<li><a href="client/e2ee-desktop.html">End-to-end encrypted DMs and groups on the desktop</a></li>
+<li><a href="client/e2ee-web.html">End-to-end encrypted DMs and groups in the web app</a></li>
+<li><a href="client/secret-vault.html">Secret vault</a></li>
+<li><a href="client/local-message-cache.html">Local message cache</a></li>
+<li><a href="client/relay-client.html">Relays: the client</a></li>
+</ul>
+<h2 id="project"><a href="project.html">Project</a></h2>
+<p class="muted">Where RIM is heading and how it is built: the vision, the server architecture and the design models, how to contribute, and security.</p>
+<ul>
+<li><a href="vision.html">RIM — Product Vision</a></li>
+<li><a href="architecture.html">Architecture</a></li>
+<li><a href="command_model.html">Command Model</a></li>
+<li><a href="keybind_model.html">Keybind Model</a></li>
+<li><a href="context_model.html">Context Model</a></li>
+<li><a href="contributing.html">Contributing</a></li>
+<li><a href="code-of-conduct.html">Contributor Covenant Code of Conduct</a></li>
+<li><a href="changelog.html">Changelog</a></li>
+<li><a href="security.html">Security policy</a></li>
+<li><a href="security/crypto-review-brief-2026-10.html">Outside cryptographic review: brief for Stages 3 and 4</a></li>
+<li><a href="security/audit-access-matrix.html">Audit Log Access Matrix</a></li>
+<li><a href="client/ui-shell.html">RIM Desktop UI Shell</a></li>
+<li><a href="client/error-boundaries.html">Error boundaries</a></li>
+<li><a href="client/eslint-prettier.html">ESLint + Prettier</a></li>
+<li><a href="client/rim-mls.html">rim_mls</a></li>
+</ul>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/tree/c86029b35a7ef7770b05e7bda62909f988343f7f">rim-server</a> <code>c86029b</code> and <a href="https://github.com/rim-platform/rim-ui/tree/58e3ec03c43064632a6a6f610d92413040229dfd">rim-ui</a> <code>58e3ec0</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+<script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
+</body>
+</html>

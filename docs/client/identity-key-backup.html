@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Identity key backup (desktop) · RIM</title>
+<meta name="description" content="The identity key adds and removes devices, replaces itself and signs the profile card. Without a backup it lives only on the computer that enrolled the account (or recovered it), and losing that computer leaves the …">
+<link rel="icon" href="../../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../../index.html" aria-label="RIM home">
+      <picture><source srcset="../../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../../index.html#what">What RIM is</a>
+      <a href="../../index.html#how">How it works</a>
+      <a href="../self-hosting.html">Self-host</a>
+      <a href="../../configure/index.html">Configure</a>
+      <a href="../index.html" aria-current="page">Docs</a>
+      <a href="../../api/index.html">API</a>
+      <a href="../../specs/index.html">Specs</a>
+      <a href="../contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="../index.html">Docs</a><span aria-hidden="true">/</span><a href="../using-rim.html">Using RIM</a><span aria-hidden="true">/</span><span>Identity key backup (desktop)</span></div>
+  <div class="page with-toc">
+    <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
+<ol>
+<li><a href="#what-lives-where">What lives where</a></li>
+<li><a href="#when-the-backup-is-written">When the backup is written</a></li>
+<li><a href="#trying-it">Trying it</a></li>
+<li><a href="#limits">Limits</a></li>
+</ol>
+</details></aside>
+    <main id="content" class="prose">
+<h1 id="identity-key-backup-desktop">Identity key backup (desktop)</h1>
+<p>The identity key adds and removes devices, replaces itself and signs the profile card. Without a
+backup it lives only on the computer that enrolled the account (or recovered it), and losing that
+computer leaves the recovery rotation as the only way back, which signs out every device. With
+the history archive set up, the computer that holds the identity key keeps a copy of it in the
+archive, sealed under a key only the recovery phrase gives; another of the person&#39;s computers
+takes the identity key over from that copy with the phrase. The holder also wraps the archive key
+under the identity key, a second way to unlock the archive beside the passphrase.</p>
+<p>The format, the derivations and the known-answer vectors are in
+<a href="../../specs/history-archive-v1.html"><code>docs/specs/history-archive-v1.md</code></a>, &quot;Identity key backup&quot;. This page says what lives where and
+how to try it.</p>
+<h2 id="what-lives-where">What lives where <a class="anchor" href="#what-lives-where" aria-label="Link to this section">#</a></h2>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>What</th>
+<th>Where</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Identity key, backup key</td>
+<td>This computer&#39;s secret vault record for the account (<code>key-identity-v1:&lt;account id&gt;</code>, see <a href="secret-vault.html"><code>secret-vault.md</code></a>). The backup key is derived from the recovery phrase at enrollment, key-only signup, recovery or takeover; the phrase itself is never stored.</td>
+</tr>
+<tr>
+<td>Backup record</td>
+<td><code>accounts/&lt;account tag&gt;/devices/&lt;device id&gt;/identity-backup.rimx</code> in the archive, one per computer that holds the identity key, sealed under the backup key.</td>
+</tr>
+<tr>
+<td>Archive key wrap</td>
+<td><code>devices/&lt;device id&gt;/key-wraps.json</code> in the archive, one <code>identity-v1</code> entry per account, under a key derived from the identity key.</td>
+</tr>
+</tbody></table></div>
+<p>The code:</p>
+<ul>
+<li><a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/src-tauri/src/key_identity/backup.rs"><code>src-tauri/src/key_identity/backup.rs</code></a>: the backup record&#39;s plaintext, the archive key wrap
+key, and the takeover against the replayed key log. <code>recovery_kit.rs</code> derives the backup key
+from a phrase or a <code>RK1-</code> key.</li>
+<li><a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/src-tauri/src/history_archive/identity.rs"><code>src-tauri/src/history_archive/identity.rs</code></a>: writes and reads the backup files and the wrap
+files, and unlocks the archive from a wrap.</li>
+<li><a href="https://github.com/rim-platform/rim-ui/tree/58e3ec03c43064632a6a6f610d92413040229dfd/src-tauri/src/identity_backup"><code>src-tauri/src/identity_backup/</code></a>: joins the two and holds the <code>identity_backup_*</code> commands. The
+webview passes the server&#39;s key log and, for a takeover or turning the backup on, the phrase
+once; seeds, the backup key and the wrap key never reach it.</li>
+<li><a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/src/features/key-identity/api/identityBackup.ts"><code>src/features/key-identity/api/identityBackup.ts</code></a> and <code>components/IdentityKeyBackup.tsx</code>:
+Settings &gt; Security, &quot;Identity key backup&quot;.</li>
+<li><a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/src/features/history-archive/components/HistoryArchiveSettings.tsx"><code>src/features/history-archive/components/HistoryArchiveSettings.tsx</code></a>: &quot;Unlock with this
+device&#39;s keys&quot; when the archive is locked here and this computer&#39;s identity key opens a wrap,
+and a backup right after the archive is set up or unlocked.</li>
+</ul>
+<h2 id="when-the-backup-is-written">When the backup is written <a class="anchor" href="#when-the-backup-is-written" aria-label="Link to this section">#</a></h2>
+<p>Whenever Settings &gt; Security checks the key log on the computer that holds the identity key,
+and right after the archive is set up, joined or unlocked there. Nothing that is already in the
+archive is written again, so a rewrite happens only after enrollment, a rotation (the backup
+then carries the new key, and the wrap under the old key is replaced), a recovery or a takeover.
+A computer that holds the identity key but enrolled before the backup existed asks for the
+recovery phrase once (&quot;Turn on backup&quot;) and keeps the backup key from then on.</p>
+<h2 id="trying-it">Trying it <a class="anchor" href="#trying-it" aria-label="Link to this section">#</a></h2>
+<p>Two computers (or two OS users, each with its own secret vault), the same server, and an archive
+both can reach (a shared folder, the same Google Drive, Dropbox or OneDrive account, the same S3
+bucket, or the same backup endpoint):</p>
+<ol>
+<li>On computer A, sign in and set up key sign-in in Settings &gt; Security. Save the recovery kit.</li>
+<li>On A, set up the history archive in Settings &gt; History. Back in Settings &gt; Security,
+&quot;Identity key backup&quot; says the archive holds a copy.</li>
+<li>Link computer B from A (&quot;Link a device&quot;), and on B join the same archive with its passphrase
+in Settings &gt; History.</li>
+<li>On B, open Settings &gt; Security, choose &quot;Take over the identity key...&quot;, and type the
+recovery phrase. B now says it holds the identity key: &quot;Link a device&quot;, &quot;Replace identity
+key...&quot; and the profile card are available there. A keeps its copy.</li>
+</ol>
+<p>If A replaces its identity key while its archive is out of reach (a drive unplugged), B&#39;s
+takeover says the copy is of an older key until A, with the archive back, backs up the new one.</p>
+<p>To try the unlock path, quit A and remove the archive key from its secret vault (the
+<code>history-archive-key-v1:&lt;archive id&gt;</code> record in <code>secrets.vault</code>; the other records still open);
+Settings &gt; History then offers &quot;Unlock with this device&#39;s keys&quot; beside the passphrase.</p>
+<h2 id="limits">Limits <a class="anchor" href="#limits" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>A takeover needs the archive set up and unlocked on the computer taking over, so the person
+needs both the archive&#39;s passphrase and the recovery phrase.</li>
+<li>Unlocking with the identity key is offered only where the archive is already set up and its
+key was lost; joining an archive on a new computer still takes the passphrase.</li>
+<li>The old holder is not told about a takeover; both computers hold the identity key until one of
+them replaces it.</li>
+</ul>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/docs/identity-key-backup.md">rim-ui/docs/identity-key-backup.md</a> at <code>58e3ec0</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+<script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
+</body>
+</html>

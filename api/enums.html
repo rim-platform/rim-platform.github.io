@@ -1,0 +1,568 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Enums · API · RIM</title>
+<meta name="description" content="The enums of the RIM GraphQL schema.">
+<link rel="icon" href="../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../index.html" aria-label="RIM home">
+      <picture><source srcset="../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../index.html#what">What RIM is</a>
+      <a href="../index.html#how">How it works</a>
+      <a href="../docs/self-hosting.html">Self-host</a>
+      <a href="../configure/index.html">Configure</a>
+      <a href="../docs/index.html">Docs</a>
+      <a href="index.html" aria-current="page">API</a>
+      <a href="../specs/index.html">Specs</a>
+      <a href="../docs/contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="index.html">API</a><span aria-hidden="true">/</span><span>Enums</span></div>
+  <div class="page with-toc">
+    <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
+<ol>
+<li><a href="#AttachmentStatusEnum">AttachmentStatusEnum</a><ol><li><a href="#AuditOutcomeGql">AuditOutcomeGql</a></li><li><a href="#CommandArgumentType">CommandArgumentType</a></li><li><a href="#CommandExecutionTarget">CommandExecutionTarget</a></li><li><a href="#CommandInitiator">CommandInitiator</a></li><li><a href="#CommandResultStatus">CommandResultStatus</a></li><li><a href="#CommandSensitivity">CommandSensitivity</a></li><li><a href="#CommandSourceKind">CommandSourceKind</a></li><li><a href="#CommandSurface">CommandSurface</a></li><li><a href="#ConversationChangesStatus">ConversationChangesStatus</a></li><li><a href="#ConversationTypeEnum">ConversationTypeEnum</a></li><li><a href="#DeviceLinkState">DeviceLinkState</a></li><li><a href="#DigestFrequency">DigestFrequency</a></li><li><a href="#DmRequestStatus">DmRequestStatus</a></li><li><a href="#FilterField">FilterField</a></li><li><a href="#FilterLogic">FilterLogic</a></li><li><a href="#FilterOp">FilterOp</a></li><li><a href="#InviteTokenTypeGql">InviteTokenTypeGql</a></li><li><a href="#KeyLogEntryKind">KeyLogEntryKind</a></li><li><a href="#KeybindContext">KeybindContext</a></li><li><a href="#KeybindScope">KeybindScope</a></li><li><a href="#KeybindSource">KeybindSource</a></li><li><a href="#MessageChangeKind">MessageChangeKind</a></li><li><a href="#MessageReportStatus">MessageReportStatus</a></li><li><a href="#NotificationLevel">NotificationLevel</a></li><li><a href="#NotificationReason">NotificationReason</a></li><li><a href="#PageDir">PageDir</a></li><li><a href="#PipelineTriggerKindGql">PipelineTriggerKindGql</a></li><li><a href="#PluginRuntimeKind">PluginRuntimeKind</a></li><li><a href="#PluginSignatureStatus">PluginSignatureStatus</a></li><li><a href="#PluginSourceKind">PluginSourceKind</a></li><li><a href="#PresenceStatus">PresenceStatus</a></li><li><a href="#RegistrationModeGql">RegistrationModeGql</a></li><li><a href="#ReportOutcome">ReportOutcome</a></li><li><a href="#RevocationFanoutStatus">RevocationFanoutStatus</a></li><li><a href="#ServerFeatureState">ServerFeatureState</a></li><li><a href="#ServerMemberRoleGql">ServerMemberRoleGql</a></li><li><a href="#TypedVerbGql">TypedVerbGql</a></li><li><a href="#WorkspacePluginStatus">WorkspacePluginStatus</a></li><li><a href="#WorkspaceStateScopeGql">WorkspaceStateScopeGql</a></li></ol></li>
+</ol>
+</details></aside>
+    <main id="content" class="prose">
+<h1>Enums</h1>
+<p class="lede">40 enums, in the order the schema defines them.</p>
+<input id="filter" class="search" type="search" placeholder="Filter enums by name" aria-label="Filter enums by name" autocomplete="off">
+<p id="filter-none" class="muted" hidden>Nothing matches.</p>
+<section class="entry" id="AttachmentStatusEnum" data-name="AttachmentStatusEnum">
+<h3><code>AttachmentStatusEnum</code><span class="kind">enum</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Value</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>PENDING_UPLOAD</code></td><td></td></tr>
+<tr><td><code>UPLOADED</code></td><td></td></tr>
+<tr><td><code>READY</code></td><td></td></tr>
+<tr><td><code>FAILED</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="objects.html#Attachment">Attachment</a></p>
+</section>
+<section class="entry" id="AuditOutcomeGql" data-name="AuditOutcomeGql">
+<h3><code>AuditOutcomeGql</code><span class="kind">enum</span></h3>
+<div class="desc"><p>How an audited command or macro execution ended.</p>
+</div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Value</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>SUCCESS</code></td><td></td></tr>
+<tr><td><code>ERROR</code></td><td></td></tr>
+<tr><td><code>CONFIRMATION_REQUIRED</code></td><td></td></tr>
+<tr><td><code>PERMISSION_DENIED</code></td><td></td></tr>
+<tr><td><code>RATE_LIMITED</code></td><td></td></tr>
+<tr><td><code>STEP_ERROR</code></td><td></td></tr>
+<tr><td><code>MACRO_PARTIAL_FAILURE</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="objects.html#AuditLogEntry">AuditLogEntry</a></p>
+</section>
+<section class="entry" id="CommandArgumentType" data-name="CommandArgumentType">
+<h3><code>CommandArgumentType</code><span class="kind">enum</span></h3>
+<div class="desc"><p>The type of a command argument. Clients map each value to a form control and to a JSON
+schema fragment when they describe the command to an AI agent.</p>
+</div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Value</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>STRING</code></td><td></td></tr>
+<tr><td><code>INTEGER</code></td><td></td></tr>
+<tr><td><code>FLOAT</code></td><td></td></tr>
+<tr><td><code>BOOLEAN</code></td><td></td></tr>
+<tr><td><code>ENUM</code></td><td></td></tr>
+<tr><td><code>USER_ID</code></td><td></td></tr>
+<tr><td><code>CONVERSATION_ID</code></td><td></td></tr>
+<tr><td><code>MESSAGE_ID</code></td><td></td></tr>
+<tr><td><code>THREAD_ID</code></td><td></td></tr>
+<tr><td><code>WORKSPACE_ID</code></td><td></td></tr>
+<tr><td><code>SELECTION_TEXT</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="objects.html#CommandArgument">CommandArgument</a></p>
+</section>
+<section class="entry" id="CommandExecutionTarget" data-name="CommandExecutionTarget">
+<h3><code>CommandExecutionTarget</code><span class="kind">enum</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Value</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>BACKEND</code></td><td></td></tr>
+<tr><td><code>DESKTOP_LOCAL</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="objects.html#Command">Command</a></p>
+</section>
+<section class="entry" id="CommandInitiator" data-name="CommandInitiator">
+<h3><code>CommandInitiator</code><span class="kind">enum</span></h3>
+<div class="desc"><p>Where a command execution came from. The server uses it for the audit log and the
+confirmation policy: <code>AGENT</code> and <code>PLUGIN</code> executions of mutating commands need a
+confirmation proof.</p>
+</div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Value</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>PALETTE</code></td><td><p>User typed/clicked in the command palette.</p>
+</td></tr>
+<tr><td><code>AGENT</code></td><td><p>AI agent issued the command via the dispatcher.</p>
+</td></tr>
+<tr><td><code>MACRO</code></td><td><p>Inside a macro / user command expansion.</p>
+</td></tr>
+<tr><td><code>KEYBIND</code></td><td><p>Keyboard shortcut bound to a command.</p>
+</td></tr>
+<tr><td><code>CONTEXT_MENU</code></td><td><p>Context menu (right-click) on a chat element.</p>
+</td></tr>
+<tr><td><code>PLUGIN</code></td><td><p>Plugin&#39;s own runtime invoked the command.</p>
+</td></tr>
+<tr><td><code>CLI</code></td><td><p>Out-of-process CLI client (rim-cli).</p>
+</td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="inputs.html#ExecuteCommandInput">ExecuteCommandInput</a>, <a href="inputs.html#ExecuteMacroInput">ExecuteMacroInput</a></p>
+</section>
+<section class="entry" id="CommandResultStatus" data-name="CommandResultStatus">
+<h3><code>CommandResultStatus</code><span class="kind">enum</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Value</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>SUCCESS</code></td><td></td></tr>
+<tr><td><code>ERROR</code></td><td></td></tr>
+<tr><td><code>CONFIRMATION_REQUIRED</code></td><td><p>The command needs a confirmation and the call carried no matching proof. That is the
+case for a <code>dangerous</code> or <code>RESTRICTED</code> command, and for a <code>MUTATING</code> one an <code>AGENT</code> or
+<code>PLUGIN</code> initiator runs. <code>confirmationRequired</code> on the result carries the challenge:
+show it to the user, then re-submit with
+<code>confirmation: { inBandToken: { token, argsHash } }</code>.</p>
+</td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="objects.html#CommandResult">CommandResult</a>, <a href="objects.html#PipeStageResult">PipeStageResult</a></p>
+</section>
+<section class="entry" id="CommandSensitivity" data-name="CommandSensitivity">
+<h3><code>CommandSensitivity</code><span class="kind">enum</span></h3>
+<div class="desc"><p>How much a command can affect. It decides whether a call needs a confirmation proof and is
+recorded in the audit log; clients use it to cap an agent&#39;s mutating calls.</p>
+</div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Value</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>SAFE</code></td><td><p>Read-only, no user-visible side effects.</p>
+</td></tr>
+<tr><td><code>SENSITIVE</code></td><td><p>Tracked in audit but low blast radius.</p>
+</td></tr>
+<tr><td><code>MUTATING</code></td><td><p>Mutates durable state; counts against agent mutating-call cap.</p>
+</td></tr>
+<tr><td><code>RESTRICTED</code></td><td><p>High-blast-radius admin/destructive; always requires confirmation.</p>
+</td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="objects.html#Command">Command</a>, <a href="inputs.html#CreateMacroInput">CreateMacroInput</a>, <a href="objects.html#MacroDef">MacroDef</a>, <a href="inputs.html#UpdateMacroInput">UpdateMacroInput</a></p>
+</section>
+<section class="entry" id="CommandSourceKind" data-name="CommandSourceKind">
+<h3><code>CommandSourceKind</code><span class="kind">enum</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Value</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>BUILT_IN</code></td><td></td></tr>
+<tr><td><code>PLUGIN</code></td><td></td></tr>
+<tr><td><code>INTEGRATION</code></td><td></td></tr>
+<tr><td><code>USER</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="objects.html#Command">Command</a></p>
+</section>
+<section class="entry" id="CommandSurface" data-name="CommandSurface">
+<h3><code>CommandSurface</code><span class="kind">enum</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Value</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>PALETTE</code></td><td></td></tr>
+<tr><td><code>CONTEXT_MENU</code></td><td></td></tr>
+<tr><td><code>KEYBIND_PICKER</code></td><td></td></tr>
+<tr><td><code>AI</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="query.html#commands">Query.commands</a></p>
+</section>
+<section class="entry" id="ConversationChangesStatus" data-name="ConversationChangesStatus">
+<h3><code>ConversationChangesStatus</code><span class="kind">enum</span></h3>
+<div class="desc"><p>How one conversation of a <a href="query.html#messageChanges"><code>messageChanges</code></a> request was answered.</p>
+</div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Value</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>OK</code></td><td><p>The changes after the requested cursor.</p>
+</td></tr>
+<tr><td><code>NO_ACCESS</code></td><td><p>The caller cannot read this conversation (removed from it, not a member of a private one,
+or it does not exist). No changes; the cursor is echoed. Stop syncing it.</p>
+</td></tr>
+<tr><td><code>RESET</code></td><td><p>The stored cursor is ahead of the server (its counters were reset). The changes start
+from the beginning: drop the cached copy of this conversation, then apply them.</p>
+</td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="objects.html#ConversationMessageChanges">ConversationMessageChanges</a></p>
+</section>
+<section class="entry" id="ConversationTypeEnum" data-name="ConversationTypeEnum">
+<h3><code>ConversationTypeEnum</code><span class="kind">enum</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Value</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>DIRECT</code></td><td></td></tr>
+<tr><td><code>GROUP</code></td><td></td></tr>
+<tr><td><code>CHANNEL</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="objects.html#Conversation">Conversation</a>, <a href="objects.html#SearchResultMessage">SearchResultMessage</a></p>
+</section>
+<section class="entry" id="DeviceLinkState" data-name="DeviceLinkState">
+<h3><code>DeviceLinkState</code><span class="kind">enum</span></h3>
+<div class="desc"><p><code>EXPIRED</code> is a link that was still open, offered or answered when it expired.</p>
+</div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Value</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>OPEN</code></td><td></td></tr>
+<tr><td><code>OFFERED</code></td><td></td></tr>
+<tr><td><code>ANSWERED</code></td><td></td></tr>
+<tr><td><code>CONSUMED</code></td><td></td></tr>
+<tr><td><code>CANCELLED</code></td><td></td></tr>
+<tr><td><code>EXPIRED</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="objects.html#DeviceLink">DeviceLink</a></p>
+</section>
+<section class="entry" id="DigestFrequency" data-name="DigestFrequency">
+<h3><code>DigestFrequency</code><span class="kind">enum</span></h3>
+<div class="desc"><p>How often unread notifications are emailed.</p>
+</div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Value</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>OFF</code></td><td></td></tr>
+<tr><td><code>HOURLY</code></td><td></td></tr>
+<tr><td><code>DAILY</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="objects.html#NotificationSettings">NotificationSettings</a>, <a href="inputs.html#UpdateNotificationSettingsInput">UpdateNotificationSettingsInput</a></p>
+</section>
+<section class="entry" id="DmRequestStatus" data-name="DmRequestStatus">
+<h3><code>DmRequestStatus</code><span class="kind">enum</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Value</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>PENDING</code></td><td></td></tr>
+<tr><td><code>ACCEPTED</code></td><td></td></tr>
+<tr><td><code>IGNORED</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="objects.html#DmRequest">DmRequest</a>, <a href="query.html#dmRequests">Query.dmRequests</a></p>
+</section>
+<section class="entry" id="FilterField" data-name="FilterField">
+<h3><code>FilterField</code><span class="kind">enum</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Value</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>HAS_LINKS</code></td><td></td></tr>
+<tr><td><code>AUTHOR_ID</code></td><td></td></tr>
+<tr><td><code>HAS_ATTACHMENTS</code></td><td></td></tr>
+<tr><td><code>TEXT_CONTAINS</code></td><td></td></tr>
+<tr><td><code>IS_PINNED</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="objects.html#FilterConditionGql">FilterConditionGql</a>, <a href="inputs.html#FilterConditionInput">FilterConditionInput</a></p>
+</section>
+<section class="entry" id="FilterLogic" data-name="FilterLogic">
+<h3><code>FilterLogic</code><span class="kind">enum</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Value</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>AND</code></td><td></td></tr>
+<tr><td><code>OR</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="objects.html#FilterSpecGql">FilterSpecGql</a>, <a href="inputs.html#FilterSpecInput">FilterSpecInput</a></p>
+</section>
+<section class="entry" id="FilterOp" data-name="FilterOp">
+<h3><code>FilterOp</code><span class="kind">enum</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Value</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>EQ</code></td><td></td></tr>
+<tr><td><code>IN</code></td><td></td></tr>
+<tr><td><code>CONTAINS</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="objects.html#FilterConditionGql">FilterConditionGql</a>, <a href="inputs.html#FilterConditionInput">FilterConditionInput</a></p>
+</section>
+<section class="entry" id="InviteTokenTypeGql" data-name="InviteTokenTypeGql">
+<h3><code>InviteTokenTypeGql</code><span class="kind">enum</span></h3>
+<div class="desc"><p>The type of an invite token, used by <code>InviteTokenPreview</code>.</p>
+</div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Value</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>INSTANCE</code></td><td><p>Instance invite: routes to <code>instanceInviteToken</code> input on <a href="mutation.html#signupWithInvite"><code>signupWithInvite</code></a>.</p>
+</td></tr>
+<tr><td><code>WORKSPACE</code></td><td><p>Workspace invite: join-a-workspace flow.</p>
+</td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="objects.html#InviteTokenPreviewGql">InviteTokenPreviewGql</a></p>
+</section>
+<section class="entry" id="KeyLogEntryKind" data-name="KeyLogEntryKind">
+<h3><code>KeyLogEntryKind</code><span class="kind">enum</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Value</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>INCEPTION</code></td><td></td></tr>
+<tr><td><code>ROTATE</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="objects.html#KeyLogEntry">KeyLogEntry</a></p>
+</section>
+<section class="entry" id="KeybindContext" data-name="KeybindContext">
+<h3><code>KeybindContext</code><span class="kind">enum</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Value</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>GLOBAL</code></td><td></td></tr>
+<tr><td><code>COMPOSER</code></td><td></td></tr>
+<tr><td><code>MESSAGE_LIST</code></td><td></td></tr>
+<tr><td><code>THREAD_VIEW</code></td><td></td></tr>
+<tr><td><code>CONVERSATION_VIEW</code></td><td></td></tr>
+<tr><td><code>PANEL</code></td><td></td></tr>
+<tr><td><code>COMMAND_PALETTE</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="inputs.html#CreateKeybindInput">CreateKeybindInput</a>, <a href="objects.html#Keybind">Keybind</a>, <a href="inputs.html#UpdateKeybindInput">UpdateKeybindInput</a></p>
+</section>
+<section class="entry" id="KeybindScope" data-name="KeybindScope">
+<h3><code>KeybindScope</code><span class="kind">enum</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Value</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>USER</code></td><td></td></tr>
+<tr><td><code>WORKSPACE</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="inputs.html#CreateKeybindInput">CreateKeybindInput</a>, <a href="objects.html#Keybind">Keybind</a></p>
+</section>
+<section class="entry" id="KeybindSource" data-name="KeybindSource">
+<h3><code>KeybindSource</code><span class="kind">enum</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Value</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>DEFAULT</code></td><td></td></tr>
+<tr><td><code>USER</code></td><td></td></tr>
+<tr><td><code>WORKSPACE</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="objects.html#Keybind">Keybind</a></p>
+</section>
+<section class="entry" id="MessageChangeKind" data-name="MessageChangeKind">
+<h3><code>MessageChangeKind</code><span class="kind">enum</span></h3>
+<div class="desc"><p>What happened to a message, judged from its state at its newest change. <code>DELETED</code> wins over
+<code>EDITED</code>; a message whose text never changed is <code>CREATED</code>.</p>
+</div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Value</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>CREATED</code></td><td></td></tr>
+<tr><td><code>EDITED</code></td><td></td></tr>
+<tr><td><code>DELETED</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="objects.html#MessageChange">MessageChange</a></p>
+</section>
+<section class="entry" id="MessageReportStatus" data-name="MessageReportStatus">
+<h3><code>MessageReportStatus</code><span class="kind">enum</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Value</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>OPEN</code></td><td></td></tr>
+<tr><td><code>RESOLVED</code></td><td></td></tr>
+<tr><td><code>DISMISSED</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="objects.html#MessageReport">MessageReport</a>, <a href="query.html#messageReports">Query.messageReports</a></p>
+</section>
+<section class="entry" id="NotificationLevel" data-name="NotificationLevel">
+<h3><code>NotificationLevel</code><span class="kind">enum</span></h3>
+<div class="desc"><p>Which messages of a conversation notify the viewer.</p>
+</div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Value</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>ALL</code></td><td><p>Every message.</p>
+</td></tr>
+<tr><td><code>MENTIONS</code></td><td><p>Direct messages, mentions (<code>&lt;@user&gt;</code>, <code>@channel</code>, <code>@here</code>), keyword hits and replies in
+the viewer&#39;s threads.</p>
+</td></tr>
+<tr><td><code>NONE</code></td><td><p>Nothing, mentions included.</p>
+</td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="objects.html#Conversation">Conversation</a>, <a href="objects.html#ConversationNotificationLevel">ConversationNotificationLevel</a>, <a href="mutation.html#setConversationNotificationLevel">Mutation.setConversationNotificationLevel</a>, <a href="objects.html#NotificationSettings">NotificationSettings</a>, <a href="inputs.html#UpdateNotificationSettingsInput">UpdateNotificationSettingsInput</a></p>
+</section>
+<section class="entry" id="NotificationReason" data-name="NotificationReason">
+<h3><code>NotificationReason</code><span class="kind">enum</span></h3>
+<div class="desc"><p>Why the viewer was notified (the strongest reason that applied).</p>
+</div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Value</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>DIRECT</code></td><td></td></tr>
+<tr><td><code>MENTION</code></td><td></td></tr>
+<tr><td><code>KEYWORD</code></td><td></td></tr>
+<tr><td><code>THREAD_REPLY</code></td><td></td></tr>
+<tr><td><code>ALL</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="objects.html#Notification">Notification</a></p>
+</section>
+<section class="entry" id="PageDir" data-name="PageDir">
+<h3><code>PageDir</code><span class="kind">enum</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Value</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>BEFORE</code></td><td></td></tr>
+<tr><td><code>AFTER</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="query.html#inboxConversations">Query.inboxConversations</a>, <a href="query.html#channels">Query.channels</a>, <a href="query.html#messages">Query.messages</a>, <a href="query.html#threadMessages">Query.threadMessages</a>, <a href="query.html#messageReports">Query.messageReports</a>, <a href="query.html#myNotifications">Query.myNotifications</a>, <a href="inputs.html#SearchMessagesInput">SearchMessagesInput</a></p>
+</section>
+<section class="entry" id="PipelineTriggerKindGql" data-name="PipelineTriggerKindGql">
+<h3><code>PipelineTriggerKindGql</code><span class="kind">enum</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Value</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>NEW_MESSAGE</code></td><td></td></tr>
+<tr><td><code>MESSAGE_UPDATED</code></td><td></td></tr>
+<tr><td><code>MESSAGE_DELETED</code></td><td></td></tr>
+<tr><td><code>REACTIONS_UPDATED</code></td><td></td></tr>
+<tr><td><code>MEMBER_JOINED</code></td><td></td></tr>
+<tr><td><code>WORKSPACE_STATE_CHANGED</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="objects.html#PipelineTriggerGql">PipelineTriggerGql</a>, <a href="inputs.html#PipelineTriggerInput">PipelineTriggerInput</a></p>
+</section>
+<section class="entry" id="PluginRuntimeKind" data-name="PluginRuntimeKind">
+<h3><code>PluginRuntimeKind</code><span class="kind">enum</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Value</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>DESKTOP_LOCAL_PROCESS</code></td><td></td></tr>
+<tr><td><code>WEB_SANDBOXED</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="objects.html#WorkspacePlugin">WorkspacePlugin</a></p>
+</section>
+<section class="entry" id="PluginSignatureStatus" data-name="PluginSignatureStatus">
+<h3><code>PluginSignatureStatus</code><span class="kind">enum</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Value</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>VALID</code></td><td></td></tr>
+<tr><td><code>PUBLISHER_RECOVERED</code></td><td><p>The publisher recovered their key after the statement&#39;s <code>keySeq</code>: clients refuse new
+installs and updates of the entry.</p>
+</td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="objects.html#WorkspacePlugin">WorkspacePlugin</a></p>
+</section>
+<section class="entry" id="PluginSourceKind" data-name="PluginSourceKind">
+<h3><code>PluginSourceKind</code><span class="kind">enum</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Value</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>BUNDLE</code></td><td></td></tr>
+<tr><td><code>GIT</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="objects.html#PluginSource">PluginSource</a></p>
+</section>
+<section class="entry" id="PresenceStatus" data-name="PresenceStatus">
+<h3><code>PresenceStatus</code><span class="kind">enum</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Value</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>ONLINE</code></td><td></td></tr>
+<tr><td><code>AWAY</code></td><td></td></tr>
+<tr><td><code>OFFLINE</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="inputs.html#HeartbeatInput">HeartbeatInput</a>, <a href="objects.html#UserPresenceGql">UserPresenceGql</a></p>
+</section>
+<section class="entry" id="RegistrationModeGql" data-name="RegistrationModeGql">
+<h3><code>RegistrationModeGql</code><span class="kind">enum</span></h3>
+<div class="desc"><p>How new accounts may sign up on this instance.</p>
+</div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Value</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>INVITE_ONLY</code></td><td><p>Default: signup requires a valid token (instance or workspace invite).</p>
+</td></tr>
+<tr><td><code>OPEN</code></td><td><p><code>RIM_OPEN_REGISTRATION=true</code>: signup accepts no token; rate-limited.</p>
+</td></tr>
+<tr><td><code>POW</code></td><td><p><code>RIM_REGISTRATION_POW_BITS</code>: <a href="mutation.html#signupWithKey"><code>signupWithKey</code></a> takes a token or a proof-of-work whose
+difficulty the discovery document&#39;s <code>registration.powBits</code> gives; a password signup
+takes a token.</p>
+</td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="query.html#registrationMode">Query.registrationMode</a></p>
+</section>
+<section class="entry" id="ReportOutcome" data-name="ReportOutcome">
+<h3><code>ReportOutcome</code><span class="kind">enum</span></h3>
+<div class="desc"><p>How a moderator closes a report.</p>
+</div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Value</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>RESOLVED</code></td><td></td></tr>
+<tr><td><code>DISMISSED</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="mutation.html#resolveReport">Mutation.resolveReport</a></p>
+</section>
+<section class="entry" id="RevocationFanoutStatus" data-name="RevocationFanoutStatus">
+<h3><code>RevocationFanoutStatus</code><span class="kind">enum</span></h3>
+<div class="desc"><p>Where a revocation&#39;s delivery to one host stands.</p>
+</div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Value</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>PENDING</code></td><td></td></tr>
+<tr><td><code>ACKED</code></td><td></td></tr>
+<tr><td><code>GAVE_UP</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="objects.html#RevocationFanout">RevocationFanout</a></p>
+</section>
+<section class="entry" id="ServerFeatureState" data-name="ServerFeatureState">
+<h3><code>ServerFeatureState</code><span class="kind">enum</span></h3>
+<div class="desc"><p>Whether an optional feature works on this instance.</p>
+</div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Value</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>ENABLED</code></td><td><p>The feature works.</p>
+</td></tr>
+<tr><td><code>DISABLED</code></td><td><p>The operator switched it off.</p>
+</td></tr>
+<tr><td><code>UNAVAILABLE</code></td><td><p>The configuration lacks something the feature needs; <code>reason</code> says what.</p>
+</td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="objects.html#ServerFeatureInfo">ServerFeatureInfo</a></p>
+</section>
+<section class="entry" id="ServerMemberRoleGql" data-name="ServerMemberRoleGql">
+<h3><code>ServerMemberRoleGql</code><span class="kind">enum</span></h3>
+<div class="desc"><p>A member&#39;s role in a workspace, from most to least privileged. Used by <code>Server.viewerRole</code>,
+<code>ServerMember.memberRole</code>, <code>CreateInviteInput.role</code> and <a href="mutation.html#setMemberRole"><code>setMemberRole</code></a>.</p>
+</div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Value</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>OWNER</code></td><td></td></tr>
+<tr><td><code>MODERATOR</code></td><td></td></tr>
+<tr><td><code>MEMBER</code></td><td></td></tr>
+<tr><td><code>GUEST</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="inputs.html#CreateInviteInput">CreateInviteInput</a>, <a href="mutation.html#setMemberRole">Mutation.setMemberRole</a>, <a href="objects.html#Server">Server</a>, <a href="objects.html#ServerMember">ServerMember</a></p>
+</section>
+<section class="entry" id="TypedVerbGql" data-name="TypedVerbGql">
+<h3><code>TypedVerbGql</code><span class="kind">enum</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Value</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>READ</code></td><td></td></tr>
+<tr><td><code>WRITE</code></td><td></td></tr>
+<tr><td><code>DELETE</code></td><td></td></tr>
+<tr><td><code>SEND</code></td><td></td></tr>
+<tr><td><code>OPEN</code></td><td></td></tr>
+<tr><td><code>CLOSE</code></td><td></td></tr>
+<tr><td><code>TOGGLE</code></td><td></td></tr>
+<tr><td><code>NAVIGATE</code></td><td></td></tr>
+<tr><td><code>EXECUTE</code></td><td></td></tr>
+<tr><td><code>CONFIGURE</code></td><td></td></tr>
+<tr><td><code>OTHER</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="objects.html#AuditLogEntry">AuditLogEntry</a>, <a href="inputs.html#AuditLogFilterInput">AuditLogFilterInput</a></p>
+</section>
+<section class="entry" id="WorkspacePluginStatus" data-name="WorkspacePluginStatus">
+<h3><code>WorkspacePluginStatus</code><span class="kind">enum</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Value</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>RECOMMENDED</code></td><td></td></tr>
+<tr><td><code>REQUIRED</code></td><td><p>Offered to every member when the workspace opens; never installed without consent.</p>
+</td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="inputs.html#AddWorkspacePluginInput">AddWorkspacePluginInput</a>, <a href="inputs.html#UpdateWorkspacePluginInput">UpdateWorkspacePluginInput</a>, <a href="objects.html#WorkspacePlugin">WorkspacePlugin</a></p>
+</section>
+<section class="entry" id="WorkspaceStateScopeGql" data-name="WorkspaceStateScopeGql">
+<h3><code>WorkspaceStateScopeGql</code><span class="kind">enum</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Value</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>SERVER</code></td><td></td></tr>
+<tr><td><code>USER</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="inputs.html#DeleteWorkspaceStateInput">DeleteWorkspaceStateInput</a>, <a href="query.html#workspaceState">Query.workspaceState</a>, <a href="query.html#workspaceStateList">Query.workspaceStateList</a>, <a href="inputs.html#SetWorkspaceStateInput">SetWorkspaceStateInput</a>, <a href="objects.html#WorkspaceStateEntryGql">WorkspaceStateEntryGql</a></p>
+</section>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Generated from <a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>58e3ec0</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+<script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
+<script>
+(() => {
+  const q = document.getElementById("filter");
+  if (!q) return;
+  const items = [...document.querySelectorAll("[data-name]")];
+  const groups = [...document.querySelectorAll("[data-group]")];
+  const none = document.getElementById("filter-none");
+  const run = () => {
+    const v = q.value.trim().toLowerCase();
+    let shown = 0;
+    for (const el of items) {
+      const hit = v ? el.dataset.name.toLowerCase().includes(v) : !el.closest("[data-search-only]");
+      el.hidden = !hit;
+      if (hit) shown += 1;
+    }
+    for (const g of groups) g.hidden = !g.querySelector("[data-name]:not([hidden])");
+    if (none) none.hidden = shown > 0 || !v;
+  };
+  q.addEventListener("input", run);
+  run();
+})();
+</script>
+</body>
+</html>

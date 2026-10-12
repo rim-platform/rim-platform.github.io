@@ -1,0 +1,1866 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Outside cryptographic review: brief for Stages 3 and 4 · RIM</title>
+<meta name="description" content="Written 2026-10-09 for the outside review that ROADMAP.md (&quot;Risks&quot;, &quot;Crypto correctness&quot;) and the Stage 4 plan's rules for every PR require before a public release. It covers key identity, device linking, recovery, the …">
+<link rel="icon" href="../../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../../index.html" aria-label="RIM home">
+      <picture><source srcset="../../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../../index.html#what">What RIM is</a>
+      <a href="../../index.html#how">How it works</a>
+      <a href="../self-hosting.html">Self-host</a>
+      <a href="../../configure/index.html">Configure</a>
+      <a href="../index.html" aria-current="page">Docs</a>
+      <a href="../../api/index.html">API</a>
+      <a href="../../specs/index.html">Specs</a>
+      <a href="../contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="../index.html">Docs</a><span aria-hidden="true">/</span><a href="../project.html">Project</a><span aria-hidden="true">/</span><span>Outside cryptographic review: brief for Stages 3 and 4</span></div>
+  <div class="page with-toc">
+    <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
+<ol>
+<li><a href="#1-scope-and-goals">1. Scope and goals</a><ol><li><a href="#11-what-was-reviewed-at-which-commit">1.1 What was reviewed, at which commit</a></li><li><a href="#12-in-scope">1.2 In scope</a></li><li><a href="#13-out-of-scope">1.3 Out of scope</a></li><li><a href="#14-what-we-want-answered">1.4 What we want answered</a></li><li><a href="#15-security-goals-as-the-specs-state-them">1.5 Security goals as the specs state them</a></li></ol></li>
+<li><a href="#2-system-overview-for-a-reviewer">2. System overview for a reviewer</a><ol><li><a href="#21-parties">2.1 Parties</a></li><li><a href="#22-every-key">2.2 Every key</a></li><li><a href="#23-trust-boundaries">2.3 Trust boundaries</a></li><li><a href="#24-statement-formats">2.4 Statement formats</a></li><li><a href="#25-key-log-and-certificate-chain">2.5 Key log and certificate chain</a></li><li><a href="#26-how-the-server-is-kept-honest">2.6 How the server is kept honest</a></li></ol></li>
+<li><a href="#3-review-guide-per-area">3. Review guide per area</a><ol><li><a href="#a-signed-statements-and-key-logs">(a) Signed statements and key logs</a></li><li><a href="#b-login-proofs-and-audiences">(b) Login proofs and audiences</a></li><li><a href="#c-device-linking">(c) Device linking</a></li><li><a href="#d-recovery-phrase-and-identity-key-backup-on-the-drive">(d) Recovery phrase and identity-key backup on the drive</a></li><li><a href="#e-desktop-secret-vault-and-the-os-credential-store">(e) Desktop secret vault and the OS credential store</a></li><li><a href="#f-the-browser-device-key-and-the-weaker-storage-model">(f) The browser device key and the weaker-storage model</a></li><li><a href="#g-mls">(g) MLS</a></li><li><a href="#h-authenticated-data-and-cross-checks">(h) Authenticated data and cross-checks</a></li><li><a href="#i-franking">(i) Franking</a></li><li><a href="#j-attachments">(j) Attachments</a></li><li><a href="#k-the-wasm-build-and-the-browser-store">(k) The wasm build and the browser store</a></li><li><a href="#l-plugins-access-to-decrypted-content">(l) Plugins' access to decrypted content</a></li><li><a href="#m-the-post-quantum-plan-and-what-is-agile-today">(m) The post-quantum plan and what is agile today</a></li></ol></li>
+<li><a href="#4-threat-model-summary">4. Threat model summary</a></li>
+<li><a href="#5-how-to-run-everything">5. How to run everything</a><ol><li><a href="#51-server-rim-server">5.1 Server (rim-server)</a></li><li><a href="#52-clients-rim-ui">5.2 Clients (rim-ui)</a></li><li><a href="#53-a-server-and-two-desktops-by-hand">5.3 A server and two desktops by hand</a></li><li><a href="#54-contact">5.4 Contact</a></li></ol></li>
+<li><a href="#6-known-gaps-and-open-questions">6. Known gaps and open questions</a><ol><li><a href="#server-substitution-and-client-trust-in-server-provided-data">Server substitution and client trust in server-provided data</a></li><li><a href="#franking">Franking</a></li><li><a href="#rollback-and-reuse">Rollback and reuse</a></li><li><a href="#clock-skew">Clock skew</a></li><li><a href="#the-desktops-webview-and-local-plugins">The desktop's webview and local plugins</a></li><li><a href="#login-and-errors">Login and errors</a></li><li><a href="#key-separation-and-lifetimes">Key separation and lifetimes</a></li><li><a href="#mls-details">MLS details</a></li><li><a href="#spec-against-code-and-dependencies">Spec against code, and dependencies</a></li></ol></li>
+<li><a href="#appendix-a-known-answer-vectors-and-the-tests-that-check-them">Appendix A: known-answer vectors and the tests that check them</a></li>
+<li><a href="#appendix-b-cryptographic-dependencies-as-locked">Appendix B: cryptographic dependencies as locked</a></li>
+</ol>
+</details></aside>
+    <main id="content" class="prose">
+<h1 id="outside-cryptographic-review-brief-for-stages-3-and-4">Outside cryptographic review: brief for Stages 3 and 4</h1>
+<p><em>Written 2026-10-09 for the outside review that <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/ROADMAP.md"><code>ROADMAP.md</code></a> (&quot;Risks&quot;, &quot;Crypto correctness&quot;)
+and the Stage 4 plan&#39;s rules for every PR require before a public release.
+It covers key identity, device linking, recovery, the desktop secret vault and the browser
+device key (Stage 3), and end-to-end encryption of DMs and groups with MLS (Stage 4). It points
+into the specs instead of restating them; where the code and a spec differ, this brief says so
+and names the line.</em></p>
+<h2 id="1-scope-and-goals">1. Scope and goals <a class="anchor" href="#1-scope-and-goals" aria-label="Link to this section">#</a></h2>
+<h3 id="11-what-was-reviewed-at-which-commit">1.1 What was reviewed, at which commit <a class="anchor" href="#11-what-was-reviewed-at-which-commit" aria-label="Link to this section">#</a></h3>
+<p>Every line number in this brief refers to these commits. Both are the <code>master</code> of their
+repository on the day this brief was written.</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Repository</th>
+<th>Commit</th>
+<th>Contents</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>github.com/rim-platform/rim-server</code></td>
+<td><code>efdd71d3ce0ac22d1118d8f0a1d09109f2809b9c</code></td>
+<td>Server, the shared verifier crate <code>rim_identity</code>, the specs and decisions</td>
+</tr>
+<tr>
+<td><code>github.com/rim-platform/rim-ui</code></td>
+<td><code>c4aadbf9933c2c1a94ccaffa25601ae8985f2d16</code></td>
+<td>Desktop app (Tauri, Rust), the <code>rim_mls</code> crate and its wasm build, the web app (TypeScript)</td>
+</tr>
+</tbody></table></div>
+<p>Paths below are relative to the repository named in the row or section. &quot;server&quot; means
+rim-server, &quot;ui&quot; means rim-ui, and &quot;ui/tauri&quot; means <code>rim-ui/src-tauri</code>.</p>
+<h3 id="12-in-scope">1.2 In scope <a class="anchor" href="#12-in-scope" aria-label="Link to this section">#</a></h3>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Area</th>
+<th>Specs and decisions (server <a href="https://github.com/rim-platform/rim-server/tree/c86029b35a7ef7770b05e7bda62909f988343f7f/docs"><code>docs/</code></a>)</th>
+<th>Code</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Signed statements, key log, certificates, profile cards, login proofs</td>
+<td><code>specs/key-identity-v1.md</code></td>
+<td>server <code>rim_identity/src/{statement,encoding,key_log,device,login,profile_card}.rs</code>, <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/rim_infra_services/src/key_auth.rs"><code>rim_infra_services/src/key_auth.rs</code></a>; ui/tauri <code>src/key_identity/{statement,mod,store,commands}.rs</code>; ui <code>src/features/key-identity/browser/statements.ts</code></td>
+</tr>
+<tr>
+<td>Plugin manifest signatures</td>
+<td><code>specs/workspace-plugins-v1.md</code>, <code>specs/web-plugins-v1.md</code></td>
+<td>server <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/rim_identity/src/plugin_manifest.rs"><code>rim_identity/src/plugin_manifest.rs</code></a>; ui/tauri <code>src/key_identity/plugin_manifest.rs</code>; ui <code>src/features/key-identity/browser/pluginManifest.ts</code></td>
+</tr>
+<tr>
+<td>Device linking</td>
+<td><code>specs/device-linking-v1.md</code></td>
+<td>server <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/rim_identity/src/device_link.rs"><code>rim_identity/src/device_link.rs</code></a> (reference implementation), <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/rim_infra_services/src/device_link.rs"><code>rim_infra_services/src/device_link.rs</code></a> (courier); ui/tauri <code>src/key_identity/device_link.rs</code>; ui <code>src/features/key-identity/browser/{channel,browserKeyBackend,keyStore}.ts</code></td>
+</tr>
+<tr>
+<td>Recovery phrase, identity-key backup, archive key wraps</td>
+<td><code>specs/key-identity-v1.md</code> (&quot;Recovery kit&quot;, &quot;Identity key backup&quot;); ui <code>docs/specs/history-archive-v1.md</code> (&quot;Keys&quot;, &quot;Sealed files&quot;, &quot;Identity key backup&quot;)</td>
+<td>ui/tauri <code>src/key_identity/{recovery_kit,backup}.rs</code>, <code>src/identity_backup/</code>, <code>src/history_archive/{crypto,identity}.rs</code></td>
+</tr>
+<tr>
+<td>Desktop secret vault</td>
+<td>ui <code>docs/secret-vault.md</code></td>
+<td>ui/tauri <code>src/secret_store.rs</code>, <code>src/message_cache/key.rs</code></td>
+</tr>
+<tr>
+<td>Browser device key</td>
+<td>ui <code>docs/web-linked-device.md</code></td>
+<td>ui <code>src/features/key-identity/browser/</code>, <code>src/core/runtime/ed25519.ts</code></td>
+</tr>
+<tr>
+<td>MLS end to end encryption</td>
+<td><code>specs/e2ee-mls-v1.md</code>, <code>decisions/mls-library-2026-10-09.md</code>, <code>decisions/post-quantum-hybrid-2026-10-09.md</code></td>
+<td>server <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/rim_identity/src/mls.rs"><code>rim_identity/src/mls.rs</code></a>, <code>rim_infra_services/src/e2ee/{mod,aad,franking,openmls_wire}.rs</code>, <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/rim_infra_services/src/message.rs"><code>rim_infra_services/src/message.rs</code></a> (encrypted send and edit), <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/rim_api/src/mutation/e2ee.rs"><code>rim_api/src/mutation/e2ee.rs</code></a>, <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/rim_services/src/e2ee.rs"><code>rim_services/src/e2ee.rs</code></a>; ui/tauri <code>crates/rim_mls/</code>, <code>crates/rim_mls_wasm/</code>, <code>src/e2ee/</code>; ui <code>src/features/e2ee/{runtime,web,hooks}/</code></td>
+</tr>
+<tr>
+<td>Plugins&#39; access to decrypted content</td>
+<td><code>specs/e2ee-mls-v1.md</code> (&quot;Plugins and the client message service&quot;)</td>
+<td>ui/tauri <code>src/message_cache/plugin_view.rs</code>, <code>src/plugin_host/broker.rs</code>; ui <code>src/features/plugins/chat/</code>, <code>src/features/e2ee/web/pluginView.ts</code></td>
+</tr>
+<tr>
+<td>Supporting primitives on the server</td>
+<td>—</td>
+<td>server <code>rim_auth/src/{session_token,csrf,password}.rs</code></td>
+</tr>
+</tbody></table></div>
+<p>Shipped work, by PR (from the plans&#39; &quot;Shipped&quot; tables):</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Repository</th>
+<th>PRs</th>
+<th>What</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>rim-server</td>
+<td>#30, #33, #34</td>
+<td><code>rim_identity</code>, key tables, enrollment, rotation, recovery, cards, challenge login; statement version 2; public <code>keyLog</code>; 256-entry cap</td>
+</tr>
+<tr>
+<td>rim-server</td>
+<td>#36, #39</td>
+<td>Device linking spec and server</td>
+</tr>
+<tr>
+<td>rim-server</td>
+<td>#37, #41</td>
+<td>Key-only signup; <code>logoutOtherSessions</code></td>
+</tr>
+<tr>
+<td>rim-server</td>
+<td>#45, #46, #48</td>
+<td>Web and workspace plugin specs; plugin registry with signed manifests</td>
+</tr>
+<tr>
+<td>rim-server</td>
+<td>#50 to #53, #56, #57, #63</td>
+<td>Stage 4 plan, E2EE spec and library decision, the server side, client spec notes</td>
+</tr>
+<tr>
+<td>rim-ui</td>
+<td>#24, #26, #28, #29, #30, #31, #32, #33, #35</td>
+<td>Keyring, desktop key client, recovery phrase, device linking, key-only signup, web linked device, identity-key backup</td>
+</tr>
+<tr>
+<td>rim-ui</td>
+<td>#36, #37</td>
+<td>Web plugins; registry client</td>
+</tr>
+<tr>
+<td>rim-ui</td>
+<td>#40, #42, #44, #45</td>
+<td><code>rim_mls</code>; desktop E2EE; plugins and the agent in encrypted conversations; E2EE in the web app</td>
+</tr>
+</tbody></table></div>
+<p><strong>Not on <code>master</code> at these commits:</strong> the client side of franked reports and the moderator&#39;s
+view (<code>e2ee-mls-v1.md</code> &quot;Franking&quot; step 5, Stage 4 plan row S4-5). The server verifies reports
+(<code>reportEncryptedMessage</code>), but no query exposes <code>message_report.franked_content</code>, there is no
+report-scoped attachment route, and the rim-ui report UI lives on an unmerged branch. Review
+step 5 against the spec only.</p>
+<h3 id="13-out-of-scope">1.3 Out of scope <a class="anchor" href="#13-out-of-scope" aria-label="Link to this section">#</a></h3>
+<ul>
+<li>TLS, HTTP framing, cookies and CORS (the review may assume a correct TLS channel to the
+server, and should say where a design depends on more than that).</li>
+<li>PostgreSQL itself, the database&#39;s access control, backups and disk encryption.</li>
+<li>The plaintext product: channels, search, pipelines, the agent&#39;s server side, email, alerts.</li>
+<li>OpenMLS, libcrux and RustCrypto internals as libraries. Their use is in scope: configuration,
+suite choice, storage, which checks we skip, and what we assume they enforce.</li>
+<li>Stage 5 (relays and server-to-server, <code>specs/server-to-server-v1.md</code>), except where Stage 4
+defers a risk to it.</li>
+</ul>
+<h3 id="14-what-we-want-answered">1.4 What we want answered <a class="anchor" href="#14-what-we-want-answered" aria-label="Link to this section">#</a></h3>
+<ol>
+<li>Can a malicious server (full database and code) read, inject into or silently downgrade an
+encrypted DM or group, or make clients trust a device it controls? Section 6 lists the paths
+we found; we want the ones we missed.</li>
+<li>Are the signed statement formats unambiguous and non-malleable: contexts, exact-text
+payloads, version 1 and 2 spellings, duplicate and unknown fields, key and signature
+canonicality, the 256-entry log?</li>
+<li>Is the device-linking channel sound as specified (a 256-bit symmetric secret, HKDF per
+direction, AES-256-GCM, AAD, one message per key, a 40-bit fingerprint the person compares)?</li>
+<li>Are the key derivations separated (HKDF salts and infos, one secret per purpose), and is any
+seed used in two roles in a way that matters?</li>
+<li>Is our use of OpenMLS correct: suite 0x004F, pure-ciphertext policy, the credential chain,
+the authenticated-data cross-checks, the decrypt-once transaction, Welcome handling with
+<code>skip_lifetime_validation</code> and <code>replace_old_group</code>, last-resort key packages, re-adds and
+incarnations?</li>
+<li>Is franking binding enough for a moderator to rely on, and who can forge a &quot;verified&quot; report?</li>
+<li>What does local state rollback (backups, a second tab, a restored browser profile) do to MLS,
+the vault and the archive?</li>
+<li>What is agile for the planned hybrid post-quantum signatures, and what would have to change?</li>
+</ol>
+<h3 id="15-security-goals-as-the-specs-state-them">1.5 Security goals as the specs state them <a class="anchor" href="#15-security-goals-as-the-specs-state-them" aria-label="Link to this section">#</a></h3>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Goal</th>
+<th>Claimed in</th>
+<th>Enforced in</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>A principal id is fixed by the inception and commits to both its identity and recovery keys</td>
+<td><code>key-identity-v1.md</code> &quot;Key log and principal id&quot;</td>
+<td>server <code>rim_identity/src/encoding.rs:257</code> <code>principal_id_for_inception</code>; <code>key_log.rs:78</code> <code>KeyState::from_inception</code>; ui/tauri <code>src/key_identity/statement.rs:525</code> <code>replay</code></td>
+</tr>
+<tr>
+<td>A signature made for one purpose never verifies as another</td>
+<td><code>key-identity-v1.md</code> &quot;Signed statements&quot;</td>
+<td>server <code>rim_identity/src/statement.rs:68-93</code> <code>Purpose::context</code>, <code>:125</code> <code>verify</code>; ui/tauri <code>statement.rs:187</code>; ui <code>browser/statements.ts:137</code></td>
+</tr>
+<tr>
+<td>Only the head identity key certifies a new device; a server cannot add a key to the card</td>
+<td><code>key-identity-v1.md</code> &quot;Device certificate&quot;, &quot;Profile card&quot;</td>
+<td>server <code>rim_identity/src/device.rs:46</code> <code>verify_device_cert</code> (head only); client <code>statement.rs:645</code> <code>certified_device</code> (any <code>keySeq</code>, see section 6)</td>
+</tr>
+<tr>
+<td>A login proof is single use, short-lived and cannot be relayed to another server</td>
+<td><code>key-identity-v1.md</code> &quot;Login proof&quot;, &quot;Challenge login&quot;</td>
+<td>server <code>key_auth.rs:410</code> <code>verify_login</code>, <code>:287</code> <code>audience_accepted</code>, <code>rim_infra_db/src/sea_orm_impl/key_identity.rs:287</code> <code>consume</code></td>
+</tr>
+<tr>
+<td>Enrolling or signing up needs proof of possession of the device key</td>
+<td><code>key-identity-v1.md</code> &quot;Enrollment&quot; rule 2, &quot;Key-only signup&quot;</td>
+<td>server <code>key_auth.rs:317</code> <code>verify_presented</code>, <code>:374</code> <code>consume_proof_challenge</code></td>
+</tr>
+<tr>
+<td>The recovery key replaces a lost identity key; recovery revokes every device and session</td>
+<td><code>key-identity-v1.md</code> &quot;Rotation and recovery&quot;</td>
+<td>server <code>key_log.rs:106</code> <code>KeyState::apply</code>; <code>key_auth.rs:807</code> <code>rotate</code></td>
+</tr>
+<tr>
+<td>The server never sees the link secret and cannot read, forge, move or substitute a sealed message</td>
+<td><code>device-linking-v1.md</code> &quot;What the channel protects&quot;</td>
+<td>server <code>rim_identity/src/device_link.rs:304</code> <code>derive_key</code>, <code>:313</code> <code>aad</code>, <code>:599</code> <code>seal</code>, <code>:627</code> <code>open</code>; ui/tauri <code>src/key_identity/device_link.rs:227-329</code>; ui <code>browser/channel.ts:103-199</code></td>
+</tr>
+<tr>
+<td>The recovery key and the backup key both come from the phrase and neither yields the other</td>
+<td>ui <code>docs/specs/history-archive-v1.md</code> &quot;Backup key&quot;</td>
+<td>ui/tauri <code>src/key_identity/recovery_kit.rs:71</code> <code>backup_key</code>, <code>:99</code> <code>phrase_key</code></td>
+</tr>
+<tr>
+<td>Desktop secrets at rest open only with the key in the OS credential store; a record moved under another name does not open</td>
+<td>ui <code>docs/secret-vault.md</code></td>
+<td>ui/tauri <code>src/secret_store.rs:455</code> <code>aad</code>, <code>:459</code> <code>seal_record</code>, <code>:479</code> <code>open_record</code></td>
+</tr>
+<tr>
+<td>The browser device key cannot be exported</td>
+<td>ui <code>docs/web-linked-device.md</code></td>
+<td>ui <code>browser/browserKeyBackend.ts:241</code> (<code>generateKey(…, false, …)</code>)</td>
+</tr>
+<tr>
+<td>A server operator with full database access cannot read a DM or a private group</td>
+<td><code>stage-4-2026-10-09.md</code> &quot;What Stage 4 must deliver&quot;; <code>e2ee-mls-v1.md</code> &quot;Threat model&quot;</td>
+<td>Server decodes framing only: server <code>e2ee/openmls_wire.rs:37-89</code>; content encrypted in ui/tauri <code>crates/rim_mls/src/group.rs:716-792</code></td>
+</tr>
+<tr>
+<td>The server cannot add a device of its own to a group</td>
+<td><code>e2ee-mls-v1.md</code> &quot;Threat model&quot;</td>
+<td>Upload check server <code>e2ee/mod.rs:1061</code> <code>upload_key_packages</code>; leaf checks ui/tauri <code>crates/rim_mls/src/identity.rs:266</code> <code>verify_leaf</code>, <code>src/e2ee/directory.rs:64</code> <code>Directory::new</code></td>
+</tr>
+<tr>
+<td>One Commit per epoch; racing committers cannot fork a group</td>
+<td><code>e2ee-mls-v1.md</code> &quot;One Commit per epoch&quot;</td>
+<td>server <code>e2ee/mod.rs:608</code> <code>accept_commit</code> (row lock), unique index <code>uq_mls_commit_epoch</code></td>
+</tr>
+<tr>
+<td>A revoked device reads nothing after its removal; senders commit removals first</td>
+<td><code>e2ee-mls-v1.md</code> &quot;Threat model&quot;, &quot;What the server checks&quot;</td>
+<td>server <code>message.rs:569</code> <code>check_envelope_against_group</code> (<code>MLS_COMMIT_REQUIRED</code>)</td>
+</tr>
+<tr>
+<td>A message is decrypted once, in one transaction with storing its plaintext</td>
+<td><code>e2ee-mls-v1.md</code> &quot;Clients: decrypt once&quot;</td>
+<td>ui/tauri <code>crates/rim_mls/src/storage/sqlite.rs:32</code>, <code>src/e2ee/feed.rs</code>; ui <code>src/features/e2ee/web/store.ts:178</code></td>
+</tr>
+<tr>
+<td>A ciphertext cannot move to another row or conversation</td>
+<td><code>e2ee-mls-v1.md</code> &quot;Replay and gaps&quot;</td>
+<td>server <code>message.rs:542</code> <code>decode_envelope</code>; ui/tauri <code>crates/rim_mls/src/group.rs:236</code> <code>parse_private</code>, <code>:849-853</code></td>
+</tr>
+<tr>
+<td>Every message a member sees is reportable; a report proves one message&#39;s content</td>
+<td><code>e2ee-mls-v1.md</code> &quot;Franking&quot;</td>
+<td>ui/tauri <code>crates/rim_mls/src/group.rs:865-868</code>; server <code>e2ee/franking.rs:35-77</code>, <code>e2ee/mod.rs:1795</code></td>
+</tr>
+<tr>
+<td>One blob decrypts to one file for every member and a moderator</td>
+<td><code>e2ee-mls-v1.md</code> &quot;Attachments&quot;</td>
+<td>ui/tauri <code>crates/rim_mls/src/attachment.rs:83</code>; server <code>rim_server/src/file_handlers.rs:442</code></td>
+</tr>
+<tr>
+<td>Plugins see decrypted text only through the message service, never keys or secrets</td>
+<td><code>e2ee-mls-v1.md</code> &quot;Plugins and the client message service&quot;</td>
+<td>ui/tauri <code>src/message_cache/plugin_view.rs:153</code>, <code>src/plugin_host/broker.rs:737</code></td>
+</tr>
+<tr>
+<td>Key agreement is hybrid post-quantum</td>
+<td><code>post-quantum-hybrid-2026-10-09.md</code>; <code>mls-library-2026-10-09.md</code> §3</td>
+<td>ui/tauri <code>crates/rim_mls/src/lib.rs:74</code> <code>CIPHER_SUITE</code>; server <code>rim_services/src/e2ee.rs:11</code> <code>ACCEPTED_CIPHER_SUITES</code></td>
+</tr>
+</tbody></table></div>
+<h2 id="2-system-overview-for-a-reviewer">2. System overview for a reviewer <a class="anchor" href="#2-system-overview-for-a-reviewer" aria-label="Link to this section">#</a></h2>
+<h3 id="21-parties">2.1 Parties <a class="anchor" href="#21-parties" aria-label="Link to this section">#</a></h3>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Party</th>
+<th>Holds</th>
+<th>Trusted for</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>A person</td>
+<td>A recovery phrase on paper</td>
+<td>Choosing to confirm a link, a recovery, a plugin grant</td>
+</tr>
+<tr>
+<td>Desktop app (Tauri)</td>
+<td>Identity key (on devices that enrolled, recovered or took it over), device key, MLS state, plaintext cache, vault</td>
+<td>Everything this brief calls &quot;the client&quot;. Rust holds every secret; the webview drives it</td>
+</tr>
+<tr>
+<td>Desktop webview</td>
+<td>The session cookie, the CSRF token, server answers; it never holds a private key</td>
+<td>Making every server call and handing answers to the Rust side. It sees the recovery kit text and the link code (see section 6)</td>
+</tr>
+<tr>
+<td>Browser (web app)</td>
+<td>A non-extractable Ed25519 device key, MLS state and plaintext in IndexedDB</td>
+<td>The same as the desktop, with weaker storage; never holds an identity key</td>
+</tr>
+<tr>
+<td>rim-server</td>
+<td>Key logs, certificates, revocations, cards, session tokens (hashed), link mailboxes (sealed), key packages, Commits, Welcomes, ciphertext, franking receipts and its franking key</td>
+<td>Sequencing, membership and roles, routing. Not trusted for confidentiality of encrypted conversations or for the authenticity of anything signed</td>
+</tr>
+<tr>
+<td>Drive provider (local folder, Google Drive, Dropbox)</td>
+<td>The history archive, identity-key backups, archive key wraps</td>
+<td>Availability only</td>
+</tr>
+<tr>
+<td>Plugins</td>
+<td>What their grants give: sandboxed web plugins in an opaque-origin iframe; local-process plugins run as the user</td>
+<td>Nothing (see area l)</td>
+</tr>
+</tbody></table></div>
+<h3 id="22-every-key">2.2 Every key <a class="anchor" href="#22-every-key" aria-label="Link to this section">#</a></h3>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Holder and storage</th>
+<th>Derivation</th>
+<th>Lifetime and rotation</th>
+<th>Signs or protects</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Identity key (Ed25519)</td>
+<td>Desktop that enrolled, recovered or took over; vault record <code>key-identity-v1:&lt;account&gt;</code></td>
+<td>OS random seed</td>
+<td>Until an identity rotation (<code>signer: identity</code>) or a recovery</td>
+<td>Key log rotations, device certificates, identity revocations, profile cards, plugin manifests (<code>rim.plugin-manifest.v1\0</code>)</td>
+</tr>
+<tr>
+<td>Recovery key (Ed25519)</td>
+<td>Never stored; re-derived from the phrase when needed</td>
+<td><code>HKDF-SHA256(ikm = 16 phrase bytes, salt &quot;rim.recovery-phrase.v1&quot;, info &quot;recovery key&quot;)</code>, 32-byte seed; version 1 kits carry the seed (<code>RK1-…</code>)</td>
+<td>Changes only in a recovery rotation (clients keep it)</td>
+<td>Recovery rotations; committed in the principal id</td>
+</tr>
+<tr>
+<td>Phrase entropy</td>
+<td>Paper only; in memory while shown or typed (it crosses the webview)</td>
+<td>16 OS random bytes, BIP39 English</td>
+<td>Never rotates</td>
+<td>Root of the recovery key and the backup key</td>
+</tr>
+<tr>
+<td>Device key, desktop (Ed25519)</td>
+<td>Vault record of the account</td>
+<td>OS random seed</td>
+<td>Per device; replaced only by linking a new device</td>
+<td>Login proofs, self-revocations, <code>mls-key</code> statements, re-add requests</td>
+</tr>
+<tr>
+<td>Device key, browser (Ed25519)</td>
+<td>IndexedDB <code>rim-key-identity</code>, a non-extractable <code>CryptoKey</code></td>
+<td>WebCrypto <code>generateKey</code></td>
+<td>Per browser profile</td>
+<td>As the desktop device key</td>
+</tr>
+<tr>
+<td>MLS signature key (Ed25519)</td>
+<td><code>mls_storage</code> row <code>rim.device</code> (desktop SQLCipher cache); IndexedDB <code>mls</code> store as raw bytes (web)</td>
+<td>Generated by <code>rim_mls</code></td>
+<td>One per device; replaced only after lost state</td>
+<td>Every MLS message; certified by the device key in an <code>mls-key</code> statement</td>
+</tr>
+<tr>
+<td>HPKE init keys (X-Wing: X25519 + ML-KEM-768)</td>
+<td>MLS storage, per key package</td>
+<td>OpenMLS</td>
+<td>One-time packages: deleted after use; last-resort: until replaced (expiry within 7 days or more than 5 claims), private keys pruned 7 days after expiry or replacement</td>
+<td>Welcome secrets</td>
+</tr>
+<tr>
+<td>MLS epoch and secret-tree keys</td>
+<td>MLS storage</td>
+<td>RFC 9420 key schedule</td>
+<td>Per epoch; <code>max_past_epochs(2)</code>; deleted after use</td>
+<td>AES-128-GCM content and Commits</td>
+</tr>
+<tr>
+<td>Franking key <code>fk</code></td>
+<td>Inside the application data; kept with the plaintext and in the archive</td>
+<td>32 OS random bytes per message and edit</td>
+<td>Per message revision</td>
+<td><code>c = HMAC-SHA256(fk, &quot;rim.e2ee.franking.v1\0&quot; ‖ content)</code></td>
+</tr>
+<tr>
+<td>Server franking key <code>K</code></td>
+<td><code>franking_key</code> table, row id 1, plaintext</td>
+<td>32 OS random bytes, created on first use</td>
+<td>Never rotated by code</td>
+<td>Receipt <code>r = HMAC-SHA256(K, &quot;rim.e2ee.franking-receipt.v1\0&quot; ‖ ids ‖ sent_at_us ‖ c)</code></td>
+</tr>
+<tr>
+<td>Attachment secret</td>
+<td>Inside the message content</td>
+<td>32 OS random bytes per file</td>
+<td>One file</td>
+<td><code>key, nonce = HKDF-SHA256(secret, no salt, info &quot;rim.e2ee.attachment.v1 key&quot;/&quot;… nonce&quot;)</code>, AES-256-GCM, AAD <code>rim.e2ee.attachment.v1</code></td>
+</tr>
+<tr>
+<td>Link secret</td>
+<td>Old device memory (and its pending-link vault record); the code text; the new device&#39;s memory</td>
+<td>32 OS random bytes</td>
+<td>One link, at most 20 minutes</td>
+<td><code>K_offer</code>, <code>K_answer = HKDF-SHA256(secret, salt = link id, info &quot;rim.device-link.v1 offer&quot;/&quot;… answer&quot;)</code></td>
+</tr>
+<tr>
+<td>Link id</td>
+<td>Server stores SHA-256 only</td>
+<td>16 OS random bytes</td>
+<td>One link</td>
+<td>Bearer capability for the anonymous mailbox calls; HKDF salt; AAD</td>
+</tr>
+<tr>
+<td>Vault key</td>
+<td>OS credential store, <code>com.rim.rim-ui</code> / <code>vault-key-v1</code></td>
+<td>32 OS random bytes</td>
+<td>Never rotated; regenerated only when lost (the vault is then set aside)</td>
+<td>XChaCha20-Poly1305 of each vault record, AAD <code>rim-secret-vault v1\0&lt;name&gt;</code></td>
+</tr>
+<tr>
+<td>Message cache key</td>
+<td>Vault record <code>message-cache-key-v1</code></td>
+<td>32 OS random bytes per installation</td>
+<td>Never rotated</td>
+<td>SQLCipher database of every account&#39;s cache, including MLS state</td>
+</tr>
+<tr>
+<td>Archive key (+ file key, name key)</td>
+<td>Vault <code>history-archive-key-v1:&lt;archive id&gt;</code>; wrapped in the manifest and per-device <code>key-wraps.json</code></td>
+<td>32 OS random bytes; file and name keys by HKDF (<code>rim-history-archive v1 file key</code> / <code>name key</code>)</td>
+<td>Never rotated</td>
+<td>Archive segments, heads (XChaCha20-Poly1305)</td>
+</tr>
+<tr>
+<td>Passphrase key</td>
+<td>Not stored</td>
+<td>Argon2id (64 MiB, 3 passes, 1 lane, 16-byte salt)</td>
+<td>Per wrap</td>
+<td>Archive key wrap in the manifest</td>
+</tr>
+<tr>
+<td>Backup key</td>
+<td>Vault record of a device holding the identity key</td>
+<td><code>HKDF-SHA256(phrase entropy or v1 seed, salt &quot;rim.recovery-phrase.v1&quot;, info &quot;identity backup key&quot;)</code></td>
+<td>As the phrase</td>
+<td><code>identity-backup.rimx</code></td>
+</tr>
+<tr>
+<td>Identity wrap key</td>
+<td>Derived when needed</td>
+<td><code>HKDF-SHA256(identity seed, salt &quot;rim.history-archive.v1&quot;, info &quot;archive key wrap&quot;)</code></td>
+<td>Changes with the identity key</td>
+<td><code>identity-v1</code> archive key wraps</td>
+</tr>
+<tr>
+<td>Session token, CSRF token, challenge nonce</td>
+<td>Server stores SHA-256 of the session token; the nonce is stored as is</td>
+<td>32 OS random bytes each</td>
+<td>Sessions per TTL; challenges 120 s, single use</td>
+<td>Authentication; <code>CSRF = HMAC-SHA256(session token, nonce)</code></td>
+</tr>
+</tbody></table></div>
+<h3 id="23-trust-boundaries">2.3 Trust boundaries <a class="anchor" href="#23-trust-boundaries" aria-label="Link to this section">#</a></h3>
+<ol>
+<li><strong>Client and server.</strong> Everything the server returns is data. Signed statements are verified
+by the client against key logs it replays itself. Membership, revocation status, the
+conversation&#39;s <code>encryptedAt</code>, the author of a row, pending adds and removes, Welcomes and
+Commits are server assertions; section 6 lists where clients act on them unchecked.</li>
+<li><strong>Rust and the webview (desktop).</strong> Private keys never cross into the webview, which asks the
+Tauri side for signed statements (<code>key_identity/commands.rs</code>, <code>e2ee/commands.rs</code>). The webview
+chooses what to ask for and supplies the endpoint, logs and device lists the Rust side checks.</li>
+<li><strong>The page and IndexedDB (web).</strong> Any script in the page can use the device key handle and
+read the MLS keys and plaintext.</li>
+<li><strong>Devices and the drive.</strong> The archive is encrypted under keys the drive provider never sees;
+it can delete, withhold or roll back files.</li>
+<li><strong>The app and plugins.</strong> Sandboxed web plugins see only host messages; local-process plugins
+run as the user.</li>
+</ol>
+<h3 id="24-statement-formats">2.4 Statement formats <a class="anchor" href="#24-statement-formats" aria-label="Link to this section">#</a></h3>
+<p>Every statement travels as <code>{ payload, signature }</code>; the payload is the exact signed text and is
+never re-serialized; the signature covers <code>context ‖ payload</code>; unknown and duplicate fields are
+refused (<code>key-identity-v1.md</code> &quot;Signed statements&quot;). Version 2 spells keys and signatures
+<code>&lt;algorithm&gt;:&lt;base64url&gt;</code>; version 1 spells bare Ed25519. A key log never goes from version 2
+back to 1; other statements may be either version (<code>mls-key</code>, <code>mls-readd</code> and <code>plugin-manifest</code>
+exist only in version 2).</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Context or domain string</th>
+<th>Used for</th>
+<th>Defined in</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>rim.keylog.v1\0</code></td>
+<td>Inception and rotations</td>
+<td>server <code>rim_identity/src/statement.rs:70-80</code></td>
+</tr>
+<tr>
+<td><code>rim.device.v1\0</code>, <code>rim.device-revoke.v1\0</code></td>
+<td>Certificates, revocations</td>
+<td>same</td>
+</tr>
+<tr>
+<td><code>rim.profile-card.v1\0</code>, <code>rim.login.v1\0</code></td>
+<td>Cards, login and enrollment proofs</td>
+<td>same</td>
+</tr>
+<tr>
+<td><code>rim.plugin-manifest.v1\0</code></td>
+<td>Publisher signatures</td>
+<td>same</td>
+</tr>
+<tr>
+<td><code>rim.mls-key.v1\0</code>, <code>rim.mls-readd.v1\0</code></td>
+<td>MLS credential certification, re-add requests</td>
+<td>same; ui/tauri <code>crates/rim_mls/src/identity.rs:17</code>, <code>readd.rs:12</code></td>
+</tr>
+<tr>
+<td><code>rim.principal.v1\0</code></td>
+<td>Principal id hash</td>
+<td>server <code>encoding.rs:15</code></td>
+</tr>
+<tr>
+<td><code>rim.recovery-kit.v1\0</code></td>
+<td><code>RK1-</code> check bytes</td>
+<td>ui/tauri <code>recovery_kit.rs:42</code></td>
+</tr>
+<tr>
+<td><code>rim.device-link.v1 offer</code>, <code>… answer</code>, <code>rim.device-link.v1\0&lt;dir&gt;\0&lt;link id&gt;</code>, <code>rim.device-link.v1 fingerprint\0</code></td>
+<td>HKDF infos, AAD, fingerprint</td>
+<td><code>device-linking-v1.md</code> &quot;Channel cryptography&quot;</td>
+</tr>
+<tr>
+<td><code>rim.e2ee.franking.v1\0</code>, <code>rim.e2ee.franking-receipt.v1\0</code></td>
+<td>Commitment, receipt</td>
+<td>server <code>e2ee/franking.rs:15-16</code></td>
+</tr>
+<tr>
+<td><code>rim.e2ee.attachment.v1 key</code>, <code>… nonce</code>, <code>rim.e2ee.attachment.v1</code></td>
+<td>HKDF infos, AAD</td>
+<td>ui/tauri <code>crates/rim_mls/src/attachment.rs:12-14</code></td>
+</tr>
+<tr>
+<td><code>rim-secret-vault v1\0&lt;name&gt;</code></td>
+<td>Vault AAD</td>
+<td>ui/tauri <code>secret_store.rs:50</code></td>
+</tr>
+<tr>
+<td><code>rim-history-archive v1 …</code>, <code>rim.history-archive.v1</code></td>
+<td>Archive HKDF infos, wrap AAD, wrap salt</td>
+<td>ui <code>docs/specs/history-archive-v1.md</code> &quot;Keys&quot;</td>
+</tr>
+</tbody></table></div>
+<p>Payload caps: 16 KiB, profile cards 128 KiB, plugin manifests 96 KiB (<code>statement.rs:89</code>).
+Every payload has <code>&quot;v&quot;</code> and <code>&quot;type&quot;</code>; timestamps are informational and never checked.</p>
+<h3 id="25-key-log-and-certificate-chain">2.5 Key log and certificate chain <a class="anchor" href="#25-key-log-and-certificate-chain" aria-label="Link to this section">#</a></h3>
+<pre><code>principalId = &quot;rimp1_&quot; + b64url(SHA-256(&quot;rim.principal.v1\0&quot; ‖ inception payload))
+inception (seq 0, signed by identityKey_0, names identityKey_0 and recoveryKey_0)
+  └ rotate (seq n, prev = b64url(SHA-256(payload n-1)), signed by identityKey_{n-1} [signer identity]
+                                                  or recoveryKey_{n-1} [signer recovery])
+device certificate (principalId, deviceId, deviceKey, keySeq) signed by identityKey_keySeq
+  └ mls-key (principalId, deviceId, mlsKey) signed by deviceKey
+       └ MLS leaf: basic credential identity = {&quot;payload&quot;,&quot;signature&quot;} of mls-key; signature_key = mlsKey
+login proof (challengeId, nonce, audience, principalId, deviceId) signed by deviceKey</code></pre>
+<p>The server verifies a certificate only against the head (<code>device.rs:46</code>), once, when a device is
+added; clients verify certificates later against the identity key at the certificate&#39;s own
+<code>keySeq</code> (ui/tauri <code>statement.rs:645</code>), because certificates outlive identity rotations.</p>
+<h3 id="26-how-the-server-is-kept-honest">2.6 How the server is kept honest <a class="anchor" href="#26-how-the-server-is-kept-honest" aria-label="Link to this section">#</a></h3>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>The server sequences or decides</th>
+<th>The server never sees or holds</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Account, membership and role state; which devices are revoked</td>
+<td>Any private key; the link secret; the recovery phrase</td>
+</tr>
+<tr>
+<td>One Commit per <code>(conversation, incarnation, epoch)</code></td>
+<td>MLS secrets, message content, attachment plaintext, franking keys</td>
+</tr>
+<tr>
+<td>Which key package each claim gets (oldest one-time, else last resort)</td>
+<td>What a sealed link message says</td>
+</tr>
+<tr>
+<td>Welcome delivery and Commit retention (90 days)</td>
+<td>The archive</td>
+</tr>
+<tr>
+<td>Which cipher suite is accepted (<code>[0x004F]</code>)</td>
+<td></td>
+</tr>
+<tr>
+<td>Franking receipts under its own key</td>
+<td></td>
+</tr>
+</tbody></table></div>
+<p>What the server reads from MLS: the outer <code>MLSMessage</code> framing, <code>group_id</code>, <code>epoch</code>,
+<code>content_type</code> and the cleartext <code>authenticated_data</code>; key packages (validated with
+<code>openmls_rust_crypto</code>); Welcome <code>new_member</code> refs (<code>e2ee/openmls_wire.rs</code>). It cross-checks the
+authenticated data against its own state (<code>e2ee/aad.rs</code>, <code>e2ee/mod.rs:608</code>) and clients
+cross-check it against the decrypted content and staged Commits.</p>
+<h2 id="3-review-guide-per-area">3. Review guide per area <a class="anchor" href="#3-review-guide-per-area" aria-label="Link to this section">#</a></h2>
+<p>Each area gives the claim, the design in brief, the code, the vectors and tests that pin it,
+our questions, and what we suspect or deferred. Section 6 collects the findings across areas.</p>
+<h3 id="a-signed-statements-and-key-logs">(a) Signed statements and key logs <a class="anchor" href="#a-signed-statements-and-key-logs" aria-label="Link to this section">#</a></h3>
+<p><strong>Claim.</strong> One meaning per statement; a principal id commits to its inception; only the current
+identity key extends a log, except a recovery key replacing a lost one; nothing is
+re-serialized.</p>
+<p><strong>Design.</strong> Exact-text payloads; per-purpose context bytes; strict unpadded base64url
+(canonical trailing bits); Ed25519 <code>verify_strict</code>; weak and non-canonical public keys refused
+on the server; <code>deny_unknown_fields</code> plus serde&#39;s duplicate-field refusal; version 2 tags with an
+algorithm name, a signature&#39;s algorithm must be its key&#39;s; logs up to 256 entries at enrollment;
+<code>prev</code> chaining by SHA-256 of the previous payload; plugin manifest statements stay valid across
+identity rotations and fail after a later recovery rotation.</p>
+<p><strong>Code.</strong></p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Location</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Purpose::context</code>, <code>max_payload_len</code>, <code>sign</code>, <code>verify</code>, <code>parse</code>, <code>check_header</code></td>
+<td>server <code>rim_identity/src/statement.rs:68</code>, <code>:89</code>, <code>:109</code>, <code>:125</code>, <code>:137</code>, <code>:146</code></td>
+</tr>
+<tr>
+<td><code>PublicKey::parse_ed25519</code> (weak and non-canonical refused), <code>Signature::decode_for</code></td>
+<td>server <code>rim_identity/src/encoding.rs:141</code>, <code>:222</code></td>
+</tr>
+<tr>
+<td><code>KeyState::from_inception</code>, <code>apply</code>, <code>replay</code></td>
+<td>server <code>rim_identity/src/key_log.rs:78</code>, <code>:106</code>, <code>:165</code></td>
+</tr>
+<tr>
+<td><code>verify_device_cert</code>, <code>UnverifiedRevocation::verify</code></td>
+<td>server <code>rim_identity/src/device.rs:46</code>, <code>:135</code></td>
+</tr>
+<tr>
+<td><code>verify_profile_card</code></td>
+<td>server <code>rim_identity/src/profile_card.rs:83</code></td>
+</tr>
+<tr>
+<td><code>KeyHistory::recovery_after</code>, <code>verify_plugin_manifest</code></td>
+<td>server <code>rim_identity/src/plugin_manifest.rs:86</code>, <code>:349</code></td>
+</tr>
+<tr>
+<td>Server use: <code>enroll</code>, <code>signup_with_key</code>, <code>add_device</code>, <code>revoke_device</code>, <code>rotate</code>, <code>publish_profile_card</code>, <code>get_key_log</code></td>
+<td>server <code>rim_infra_services/src/key_auth.rs:578</code>, <code>:632</code>, <code>:743</code>, <code>:761</code>, <code>:807</code>, <code>:907</code>, <code>:945</code></td>
+</tr>
+<tr>
+<td>Desktop: <code>verify</code>, <code>canonical_key</code>, <code>usable_device_key</code>, <code>replay</code>, <code>certified_device</code></td>
+<td>ui/tauri <code>src/key_identity/statement.rs:187</code>, <code>:179</code>, <code>:218</code>, <code>:525</code>, <code>:645</code></td>
+</tr>
+<tr>
+<td>Browser: <code>verify</code> (small-order, non-canonical, scalar checks before WebCrypto), <code>replay</code>, <code>certifiedDevice</code></td>
+<td>ui <code>src/features/key-identity/browser/statements.ts:137</code>, <code>:328</code>, <code>:462</code></td>
+</tr>
+</tbody></table></div>
+<p><strong>Vectors.</strong> <code>key-identity-v1.md</code> appendices A and B; <code>workspace-plugins-v1.md</code> appendix A.
+Tests in appendix A of this brief.</p>
+<p><strong>Questions.</strong></p>
+<ol>
+<li>Is there any way two different payloads verify as the same statement, or one payload as two
+types, given exact-text signing and per-purpose contexts?</li>
+<li>The server parses a payload before verifying it to learn the signer. Is any parser behaviour
+reachable before the signature check a risk (serde errors are returned as text)?</li>
+<li>Clients replay logs with less strict parsing than the server: no <code>deny_unknown_fields</code> in
+<code>LogEntry</code> (ui/tauri <code>statement.rs:504-515</code>), no <code>identityKey != recoveryKey</code> check, no
+non-canonical point check. Is a log that the server would refuse but a client accepts ever
+useful to an attacker?</li>
+<li>A rotation must change the identity key from the head&#39;s, but may return to an older one
+(A → B → A). Does anything depend on identity keys being unique across the log?</li>
+<li>Device certificates are checked against the identity key at their <code>keySeq</code> with no regard for
+a later recovery rotation (section 6, item 3). Should they follow the plugin manifest rule?</li>
+</ol>
+<p><strong>Suspected or deferred.</strong> Key-log freshness (a server can withhold later entries) and head
+pinning are deferred (<code>post-quantum-hybrid-2026-10-09.md</code> &quot;Consequences&quot;;
+<code>workspace-plugins-v1.md</code> &quot;Deferred&quot;). A stolen old identity key can claim the principal on a
+server that has not seen the real log; the recovery key takes it back.</p>
+<h3 id="b-login-proofs-and-audiences">(b) Login proofs and audiences <a class="anchor" href="#b-login-proofs-and-audiences" aria-label="Link to this section">#</a></h3>
+<p><strong>Claim.</strong> A proof is bound to one fresh 120-second challenge and to the server&#39;s <code>host[:port]</code>,
+so it cannot be replayed or relayed.</p>
+<p><strong>Design.</strong> <code>keyLoginChallenge</code> returns 32 random bytes, stored as is and consumed with one
+conditional <code>UPDATE</code> (unused, unexpired, same nonce). The audience is compared ASCII
+case-insensitively against <code>RIM_KEY_LOGIN_AUDIENCES</code>, else the host of <code>RIM_PUBLIC_BASE_URL</code>,
+else <code>localhost:PORT</code> and <code>127.0.0.1:PORT</code>. The user row is locked and the device re-read before
+the session is created. Enrollment and key-only signup use the same proof over a fresh
+challenge, consumed inside the transaction.</p>
+<p><strong>Code.</strong> server <code>rim_infra_services/src/key_auth.rs:287</code> <code>audience_accepted</code>, <code>:294</code>
+<code>reserve_failure</code>, <code>:410</code> <code>verify_login</code>, <code>:472</code> <code>issue_challenge</code>, <code>:502</code> <code>login_with_key</code>;
+<code>rim_auth/src/session_token.rs:42</code> <code>generate_challenge_nonce</code>;
+<code>rim_infra_db/src/sea_orm_impl/key_identity.rs:287</code> <code>consume</code>; <code>rim_server/src/config.rs:370</code>
+<code>key_login_audiences</code>; CSRF exemptions <code>rim_server/src/graphql_support.rs:52-78</code>. Desktop
+signing ui/tauri <code>src/key_identity/mod.rs:662</code> <code>sign_login</code>; browser
+<code>browser/browserKeyBackend.ts:77</code> <code>audience</code>.</p>
+<p><strong>Vectors.</strong> Login proofs in <code>key-identity-v1.md</code> appendices A and B.</p>
+<p><strong>Questions.</strong></p>
+<ol>
+<li>A valid signature from a revoked device answers <code>FORBIDDEN</code> before the audience and the
+challenge are checked (<code>key_auth.rs:441-453</code>). Any old proof of that device, from any
+server, therefore tells whether the device is revoked here. Acceptable?</li>
+<li>The desktop computes the audience from an endpoint the webview passes in
+(<code>key_identity_sign_login</code>, ui/tauri <code>src/key_identity/commands.rs:137</code>). A compromised
+webview can obtain proofs for any audience. Should the Rust side pin the endpoint per
+account?</li>
+<li>The default audience when neither variable is set is <code>localhost:PORT</code>. Two misconfigured
+servers on the same port accept each other&#39;s proofs. Should production refuse to start
+without an explicit audience?</li>
+<li>Challenges are not bound to the principal or the requesting IP; is that fine given single
+use and 32 random bytes?</li>
+</ol>
+<h3 id="c-device-linking">(c) Device linking <a class="anchor" href="#c-device-linking" aria-label="Link to this section">#</a></h3>
+<p><strong>Claim.</strong> The server is a courier: it cannot read, forge, move or substitute an offer or an
+answer. Someone who only saw the code gets nothing unless the person confirms their offer.</p>
+<p><strong>Design.</strong> <code>rim-link:1:&lt;link id&gt;:&lt;secret&gt;:&lt;endpoint&gt;</code>; <code>K_dir = HKDF-SHA256(secret, salt = link id, info = &quot;rim.device-link.v1 &lt;dir&gt;&quot;)</code>; AES-256-GCM, random 96-bit nonce, AAD names
+version, direction and link id; each side seals exactly one plaintext per link and resends the
+same bytes; the offer carries the new device&#39;s key unsigned; the answer carries the certificate;
+the new device verifies the certificate against <code>keyLog</code> before storing any key; both screens
+show <code>base32(SHA-256(&quot;rim.device-link.v1 fingerprint\0&quot; ‖ offer bytes)[0..5])</code>, 40 bits; the
+link id is stored hashed and its anonymous calls answer uniformly.</p>
+<p><strong>Code.</strong> Reference: server <code>rim_identity/src/device_link.rs:304</code> <code>derive_key</code>, <code>:313</code> <code>aad</code>,
+<code>:361</code> <code>Fingerprint::of_offer</code>, <code>:464</code> <code>Offer::parse</code>, <code>:538</code> <code>Answer::verify</code>, <code>:599</code> <code>seal</code>,
+<code>:627</code> <code>open</code>. Courier: server <code>rim_infra_services/src/device_link.rs:88</code> <code>link_hash</code>, <code>:302</code>
+<code>start</code>, <code>:367</code> <code>send_offer</code>, <code>:408</code> <code>send_answer</code>, <code>:440</code> <code>get_answer</code>. Desktop: ui/tauri
+<code>src/key_identity/device_link.rs:227</code> <code>channel_key</code>, <code>:236</code> <code>aad</code>, <code>:288</code> <code>seal</code>, <code>:296</code>
+<code>open</code>, <code>:329</code> <code>fingerprint</code>. Browser: ui <code>browser/channel.ts:69</code> <code>parseLinkCode</code>, <code>:103</code>
+<code>hkdfParams</code>, <code>:136</code> <code>sealWithNonce</code>, <code>:164</code> <code>open</code>, <code>:199</code> <code>fingerprint</code>; key generation
+<code>browser/browserKeyBackend.ts:241</code>.</p>
+<p><strong>Vectors.</strong> <code>device-linking-v1.md</code> appendix A (keys, AADs, both ciphertexts and tags, the
+fingerprint), checked in Rust on both sides and in Vitest through Node&#39;s WebCrypto.</p>
+<p><strong>Questions.</strong></p>
+<ol>
+<li>Is a 40-bit fingerprint enough when the attacker who saw the code races the real device?
+The real device&#39;s offer is then refused and it says so; the old device shows the attacker&#39;s
+fingerprint. What should the UI force?</li>
+<li>The answer is readable by anyone who saw the code. Today it carries only the (public)
+certificate. The deferred archive key in the answer needs a hybrid ephemeral key in the
+offer; is the planned shape (<code>device-linking-v1.md</code> &quot;Deferred&quot;) sound?</li>
+<li>The desktop shows the full code, secret included, in the webview (QR and copy). Should the
+QR be rendered on the Rust side?</li>
+<li>A browser&#39;s <code>JSON.parse</code> keeps the last duplicate field (<code>web-linked-device.md</code>, &quot;Known
+gaps&quot;). The answer is authenticated, and its certificate verifies; anything left?</li>
+</ol>
+<p><strong>Deferred.</strong> PAKE short codes, QR scanning, moving the identity key, the archive key in the
+answer, linking across servers (<code>device-linking-v1.md</code> &quot;Deferred&quot;).</p>
+<h3 id="d-recovery-phrase-and-identity-key-backup-on-the-drive">(d) Recovery phrase and identity-key backup on the drive <a class="anchor" href="#d-recovery-phrase-and-identity-key-backup-on-the-drive" aria-label="Link to this section">#</a></h3>
+<p><strong>Claim.</strong> 128 bits of phrase entropy give both the recovery key and the backup key, neither
+derivable from the other; the identity key in the archive opens only with the phrase; a takeover
+must match the head of the server&#39;s log.</p>
+<p><strong>Design.</strong> BIP39 English encoding of 16 random bytes (the <code>bip39</code> crate), not BIP39&#39;s PBKDF2
+seed; HKDF-SHA256 with salt <code>rim.recovery-phrase.v1</code> and infos <code>recovery key</code> and <code>identity backup key</code>. The device keeps the backup key, not the entropy. Backups are <code>.rimx</code> files of kind
+3 (XChaCha20-Poly1305, AAD = header ‖ archive id ‖ account tag ‖ device id ‖ file name). The
+archive key is also wrapped under <code>HKDF(identity seed, salt &quot;rim.history-archive.v1&quot;, info &quot;archive key wrap&quot;)</code>. Version 1 kits (<code>RK1-</code>) remain readable.</p>
+<p><strong>Code.</strong> ui/tauri <code>src/key_identity/recovery_kit.rs:71</code> <code>backup_key</code>, <code>:80</code>
+<code>phrase_backup_key</code>, <code>:99</code> <code>phrase_key</code>, <code>:110</code> <code>phrase_words</code>, <code>:147</code>
+<code>parse_recovery_phrase</code>; <code>src/key_identity/backup.rs:48</code> <code>archive_wrap_key</code>, <code>:165</code>
+<code>begin_takeover</code>, <code>:186</code> <code>finish_takeover</code>; <code>src/history_archive/identity.rs:40</code>
+<code>identity_wrap_aad</code>, <code>:154</code> <code>write_identity</code>, <code>:225</code> <code>unlock_with_identity</code>, <code>:284</code>
+<code>write_wrap</code>, <code>:327</code> <code>write_backup</code>; <code>src/history_archive/crypto.rs:89</code> <code>seal</code>, <code>:117</code> <code>open</code>,
+<code>:177</code> <code>passphrase_key</code>; <code>src/identity_backup/mod.rs:155</code> <code>take_over</code>.</p>
+<p><strong>Vectors.</strong> <code>key-identity-v1.md</code> &quot;Recovery kit&quot; (entropy, phrase, recovery key); ui
+<code>docs/specs/history-archive-v1.md</code> &quot;Known-answer vectors&quot; (backup keys, wrap key, a sealed
+backup, a wrap).</p>
+<p><strong>Questions.</strong></p>
+<ol>
+<li>The identity seed is an Ed25519 signing seed and also HKDF input key material for the
+archive wrap key (<code>backup.rs:48</code>). Is this cross-use acceptable?</li>
+<li>The archive key never rotates, and an identity rotation only replaces this device&#39;s wrap
+entry. A drive provider that kept an old <code>key-wraps.json</code>, plus a leaked retired identity
+key, opens the whole archive. Should a rotation re-key the archive?</li>
+<li>The phrase is shown in, and typed into, the webview (enrollment, recovery, takeover). What
+is the minimum we should do about that?</li>
+<li>Nothing tells the previous holder that the identity key was taken over. Is a signal needed?</li>
+</ol>
+<h3 id="e-desktop-secret-vault-and-the-os-credential-store">(e) Desktop secret vault and the OS credential store <a class="anchor" href="#e-desktop-secret-vault-and-the-os-credential-store" aria-label="Link to this section">#</a></h3>
+<p><strong>Claim.</strong> Secrets at rest open only with the key in the OS credential store; a record moved
+under another name does not open.</p>
+<p><strong>Design.</strong> One 32-byte key in Keychain, Credential Manager or Secret Service. One JSON file,
+each record XChaCha20-Poly1305 with a new 24-byte random nonce on every write, AAD
+<code>rim-secret-vault v1\0&lt;name&gt;</code>, whole-file atomic replace, <code>0600</code>. A file whose any record fails
+to open is moved aside and every secret in it is lost. The message cache (and MLS state) is a
+SQLCipher database keyed from the vault.</p>
+<p><strong>Code.</strong> ui/tauri <code>src/secret_store.rs:217</code> <code>read</code>, <code>:253</code> <code>write</code>, <code>:290</code> <code>load</code>, <code>:448</code>
+<code>verify</code>, <code>:455</code> <code>aad</code>, <code>:459</code> <code>seal_record</code>, <code>:479</code> <code>open_record</code>, <code>:509</code> <code>write_new</code>;
+<code>src/message_cache/key.rs</code> (cache key), <code>src/message_cache/store.rs:446</code> (<code>PRAGMA key</code>).</p>
+<p><strong>Tests.</strong> <code>secret_store.rs</code> unit tests (<code>secrets_round_trip</code> and others), Secret Service error
+tests.</p>
+<p><strong>Questions.</strong></p>
+<ol>
+<li>No anti-rollback: an attacker with write access to the file can restore an older vault (older
+device or identity keys, a pending rotation, an older cache key). With the cache database it
+also rolls back MLS state (section 6, item 8). Worth a counter in the credential store?</li>
+<li>One altered record moves the whole vault aside (<code>secret_store.rs:448</code>), losing device and
+identity keys; a <code>v</code> above 1 locks every call. Should a bad record fail alone?</li>
+<li>Any process of the user can read an unlocked Secret Service item and the file. Is this model
+stated well enough to users, given local-process plugins (area l)?</li>
+<li><code>message_cache/key.rs:4</code> says the cache key is re-wrapped under the device key in Stage 3. It
+is not; it stays a vault record.</li>
+</ol>
+<h3 id="f-the-browser-device-key-and-the-weaker-storage-model">(f) The browser device key and the weaker-storage model <a class="anchor" href="#f-the-browser-device-key-and-the-weaker-storage-model" aria-label="Link to this section">#</a></h3>
+<p><strong>Claim.</strong> The device key cannot be exported; the person is told that browser keys are weaker.</p>
+<p><strong>Design.</strong> WebCrypto Ed25519 <code>extractable: false</code>, stored by structured clone in IndexedDB.
+Statements are verified in front of WebCrypto against small-order points, non-canonical
+encodings and <code>S ≥ L</code>. The MLS signature key and HPKE private keys are raw bytes in IndexedDB,
+because OpenMLS signs and decapsulates synchronously. The web app never holds an identity key.</p>
+<p><strong>Code.</strong> ui <code>src/features/key-identity/browser/browserKeyBackend.ts:241</code>; <code>statements.ts:72</code>
+<code>smallOrder</code>, <code>:79</code> <code>nonCanonicalPoint</code>, <code>:85</code> <code>canonicalScalar</code>, <code>:137</code> <code>verify</code>; <code>keyStore.ts</code>;
+<code>src/core/runtime/ed25519.ts</code>; web E2EE storage <code>src/features/e2ee/web/db.ts</code>.</p>
+<p><strong>Questions.</strong></p>
+<ol>
+<li>Any script in the page can sign with the handle and read every MLS key and plaintext. Is
+&quot;only as safe as this browser profile&quot; an honest summary, and is the CSP
+(<code>'wasm-unsafe-eval'</code>) acceptable?</li>
+<li>Should the IndexedDB MLS state be wrapped under a non-extractable AES key, to stop at least
+disk-level copies of the profile?</li>
+</ol>
+<h3 id="g-mls">(g) MLS <a class="anchor" href="#g-mls" aria-label="Link to this section">#</a></h3>
+<p><strong>Claim.</strong> A server with full access cannot read content, add a device, forge a message or force
+a last-resort re-add; one Commit per epoch; post-compromise security from update paths at least
+weekly; key agreement is hybrid.</p>
+<p><strong>Design summary.</strong> Suite 0x004F (X-Wing KEM 0x647a, AES-128-GCM, SHA-256, Ed25519), OpenMLS
+0.9.1 with <code>openmls_libcrux_crypto</code> 0.4.0 on clients and <code>openmls_rust_crypto</code> 0.6.0 on the
+server. Group id <code>rim1 ‖ conversation UUID ‖ u32 incarnation</code>. Pure-ciphertext wire format
+(Commits are PrivateMessages), ratchet tree in the Welcome, padding 256, out-of-order tolerance
+32, forward distance 10,000, <code>max_past_epochs(2)</code>, Welcome leaf lifetimes not validated. Members
+are devices. Leaves carry an <code>mls-key</code> statement; clients verify each leaf against the key log,
+the certificate, revocation and membership. The server validates every key package against the
+uploading session&#39;s own device key. Twenty one-time packages plus one last-resort package per
+device, 90-day lifetime, never handed out within 14 days of expiry. The server sequences one
+Commit per epoch under a row lock and a unique index (<code>STALE_EPOCH</code> otherwise) and refuses
+application messages while removals are pending (<code>MLS_COMMIT_REQUIRED</code>). Re-add requests are
+signed by the device and served only from one-time packages uploaded after the request.
+Incarnations restart the group for suite migration, recovery, or when no device is left.</p>
+<p><strong>Code.</strong></p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>What</th>
+<th>Location</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>mls-key</code> and <code>mls-readd</code> statements, credential identity</td>
+<td>server <code>rim_identity/src/mls.rs:88</code>, <code>:124</code>, <code>:140</code>, <code>:151</code>, <code>:208</code>, <code>:247</code>; ui/tauri <code>crates/rim_mls/src/identity.rs:74</code>, <code>:97</code>, <code>readd.rs:78</code></td>
+</tr>
+<tr>
+<td>Server framing decode and key package validation</td>
+<td>server <code>rim_infra_services/src/e2ee/openmls_wire.rs:37</code> <code>read_key_package</code>, <code>:61</code> <code>read_private_message</code>, <code>:77</code> <code>read_welcome</code></td>
+</tr>
+<tr>
+<td>Upload, claim, commit, re-add, devices</td>
+<td>server <code>e2ee/mod.rs:1061</code> <code>upload_key_packages</code>, <code>:1215</code> <code>claim_key_packages</code>, <code>:1400</code> <code>submit_commit</code>, <code>:608</code> <code>accept_commit</code>, <code>:562</code> <code>check_key_package</code>, <code>:494</code> <code>incarnation_ground</code>, <code>:535</code> <code>may_create_group</code>, <code>:1597</code> <code>request_readd</code>, <code>:1733</code> <code>principal_devices</code></td>
+</tr>
+<tr>
+<td>Group state on the server</td>
+<td>server <code>e2ee/mod.rs:228</code> <code>GroupState</code>, <code>:279</code> <code>pending_removes</code>, <code>:286</code> <code>readd_targets</code></td>
+</tr>
+<tr>
+<td>Application messages</td>
+<td>server <code>message.rs:542</code> <code>decode_envelope</code>, <code>:569</code> <code>check_envelope_against_group</code>, <code>:1771</code> <code>send_encrypted_message</code>, <code>:1963</code> <code>edit_encrypted_message</code></td>
+</tr>
+<tr>
+<td>Client engine</td>
+<td>ui/tauri <code>crates/rim_mls/src/group.rs:181</code> <code>join_config</code>, <code>:400</code> <code>create</code>, <code>:448</code> <code>commit</code>, <code>:519</code> <code>process_commit</code>, <code>:617</code> <code>check_summary</code>, <code>:677</code> <code>join</code>, <code>:716</code> <code>encrypt</code>, <code>:794</code> <code>decrypt</code>; <code>device.rs:224</code> <code>key_package_lifetime</code>, <code>:233</code> <code>generate_key_packages</code>, <code>:330</code> <code>prune_key_packages</code></td>
+</tr>
+<tr>
+<td>Leaf verification</td>
+<td>ui/tauri <code>crates/rim_mls/src/identity.rs:266</code> <code>verify_leaf</code>; <code>src/e2ee/directory.rs:64</code> <code>Directory::new</code>; ui <code>src/features/e2ee/web/directory.ts:35</code> <code>answers</code></td>
+</tr>
+<tr>
+<td>Client loop and decrypt-once</td>
+<td>ui/tauri <code>src/e2ee/feed.rs:336-360</code>; <code>crates/rim_mls/src/storage/sqlite.rs:32</code>; ui <code>src/features/e2ee/web/store.ts:172</code> <code>run</code>, <code>:178</code> <code>runNow</code></td>
+</tr>
+<tr>
+<td>Joins, re-adds, membership</td>
+<td>ui/tauri <code>src/e2ee/group.rs:457</code> <code>join</code>, <code>:683</code> <code>may_honor_readd</code>; ui <code>src/features/e2ee/runtime/{groups,membership}.ts</code></td>
+</tr>
+<tr>
+<td>Signing for MLS on the desktop</td>
+<td>ui/tauri <code>src/key_identity/mod.rs:701</code> <code>sign_mls</code> (only <code>mls-key</code> and <code>mls-readd</code>, only for this principal and device)</td>
+</tr>
+</tbody></table></div>
+<p><strong>Vectors and tests.</strong> The library decision&#39;s vector table (RFC 8032, RFC 7748, RFC 9180 A.1,
+RFC 5869, RFC 4231, Wycheproof AES-GCM, NIST ACVP ML-KEM-768, X-Wing draft vectors) in
+<code>crates/rim_mls/src/tests/vectors.rs</code>; <code>e2ee-mls-v1.md</code> appendix A in <code>tests/formats.rs</code>;
+cross-provider tests <code>tests/providers.rs</code>; multi-device simulations against an in-process
+sequencer <code>tests/simulation.rs</code>, <code>tests/sequencer.rs</code>; tampering <code>tests/tampering.rs</code>; server
+races in <code>rim_infra_db</code> <code>db-tests</code> and the e2e <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/rim_api/tests/e2ee_e2e.rs"><code>rim_api/tests/e2ee_e2e.rs</code></a>. The IETF
+<code>mls-implementations</code> vectors named in the decision for suite 0x0001 are not re-run in RIM&#39;s
+tree (<code>tests/vectors.rs</code> covers primitives only).</p>
+<p><strong>Questions.</strong></p>
+<ol>
+<li><strong>Credential chain.</strong> Is <code>mls-key</code> (device key certifies an Ed25519 MLS key) a sound binding,
+given that the MLS key never rotates and <code>issuedAt</code> is not checked?</li>
+<li><strong>Leaf verification inputs.</strong> Revocation status and membership are what the server says
+(section 6, items 2 and 4). What must a client verify itself?</li>
+<li><strong>Commit summary.</strong> A Commit whose authenticated summary does not match its proposals is
+still merged (to avoid a fork) and only flagged (<code>group.rs:617</code>). Proposals other than Add and
+Remove (for example GroupContextExtensions) only make the check fail. Is merging first
+acceptable, and which proposal types should a client refuse outright?</li>
+<li><strong>Welcomes.</strong> <code>join</code> uses <code>skip_lifetime_validation()</code> and <code>replace_old_group()</code>
+(<code>group.rs:691-692</code>); the app refuses only an older incarnation (<code>src/e2ee/group.rs:466</code>).
+What can a replayed Welcome of the same incarnation do (section 6, item 6)?</li>
+<li><strong>Last resort.</strong> One last-resort package can be claimed many times until the device replaces
+it (more than 5 claims, or expiry within 7 days). What is the forward secrecy cost, and
+should the server stop handing it out sooner?</li>
+<li><strong>Re-adds and incarnations.</strong> What can a server force with replayed re-add requests and the
+10-minute recovery rule (section 6, item 9)?</li>
+<li><strong>Decrypt-once.</strong> The desktop runs decrypt and store in one SQLCipher transaction. The web
+journals OpenMLS writes in memory and commits them with the plaintext in one IndexedDB
+transaction, rolling back on failure. Are there OpenMLS writes outside the storage trait
+(caches, in-memory group fields) that a rollback would miss?</li>
+<li><strong>Epoch window.</strong> A message more than two epochs behind becomes a placeholder; the server
+accepts application messages only in the current epoch. Any interaction between
+<code>max_past_epochs</code> and Commit retention we missed?</li>
+<li><strong>0x004F.</strong> A code point OpenMLS chose for draft TBD1. Are we right that only our clients need
+to agree, and is the incarnation path a sound migration once IANA assigns one?</li>
+</ol>
+<p><strong>Deferred.</strong> Hybrid MLS credentials, safety numbers and key transparency, sender keys beyond
+512 devices, encrypted private channels, deniability, encrypted reactions and pins
+(<code>e2ee-mls-v1.md</code> &quot;Deferred&quot;).</p>
+<h3 id="h-authenticated-data-and-cross-checks">(h) Authenticated data and cross-checks <a class="anchor" href="#h-authenticated-data-and-cross-checks" aria-label="Link to this section">#</a></h3>
+<p><strong>Claim.</strong> The only cleartext the server reads is the authenticated data; receivers refuse a
+message whose authenticated data and content disagree.</p>
+<p><strong>Design.</strong> Application AAD <code>{v, type, messageId, franking, mentions, mentionAll}</code> (8 KiB);
+Commit AAD <code>{v, type, adds[{principalId, deviceId, keyPackageRef}], removes[…]}</code> (256 KiB).
+Server checks the message id against the request, mentions syntax and distinctness, and the
+Commit summary against pending adds and removes, claims and the Welcome&#39;s refs. Receivers check
+message id, thread, author, mentions, <code>mentionAll</code> and the franking commitment after decrypting,
+and the staged Commit&#39;s Add refs and removed devices against the summary.</p>
+<p><strong>Code.</strong> server <code>e2ee/aad.rs:73</code> <code>parse_application</code>, <code>:146</code> <code>parse_commit</code>; ui/tauri
+<code>crates/rim_mls/src/aad.rs:155</code> <code>AuthenticatedData::parse</code>, <code>group.rs:794-877</code> (decrypt checks),
+<code>:617</code> <code>check_summary</code>; <code>content.rs:219</code> <code>MessageContent::parse</code>, <code>:285</code> <code>check</code>.</p>
+<p><strong>Vectors.</strong> <code>e2ee-mls-v1.md</code> A.4 (content, application AAD, a Commit AAD, a recorded
+PrivateMessage).</p>
+<p><strong>Questions.</strong></p>
+<ol>
+<li>The author check runs only when the server supplies the author&#39;s principal id
+(<code>group.rs:854-861</code>; section 6, item 5). Should a missing id make the message invalid?</li>
+<li>Mentions leak who was mentioned (accepted in the spec). Anything else in the AAD a server
+could exploit, such as <code>mentionAll</code> for notification floods?</li>
+<li>The server&#39;s <code>senderDeviceId</code> on a row is never compared with the MLS sender&#39;s device id.
+Does anything rely on it (the moderator view will)?</li>
+</ol>
+<h3 id="i-franking">(i) Franking <a class="anchor" href="#i-franking" aria-label="Link to this section">#</a></h3>
+<p><strong>Claim.</strong> A report proves one message&#39;s exact content to moderators without the server having
+read it; every visible message is reportable.</p>
+<p><strong>Design.</strong> <code>c = HMAC-SHA256(fk, &quot;rim.e2ee.franking.v1\0&quot; ‖ content)</code> in the AAD, <code>fk</code> (exactly 32
+bytes) in the application data. Server receipt <code>r = HMAC-SHA256(K, context ‖ message id ‖ conversation id ‖ sender user id ‖ sender device id ‖ sent_at_us ‖ c)</code>. A report sends content,
+<code>fk</code>, <code>r</code>, the key id, sender ids and <code>sentAtUs</code>; the server recomputes <code>c</code> and <code>r</code> and compares
+in constant time (<code>verify_slice</code>). The content is then stored in <code>message_report</code> for 90 days
+after resolution.</p>
+<p><strong>Code.</strong> server <code>e2ee/franking.rs:35</code> <code>commitment</code>, <code>:44</code> <code>receipt_input</code>, <code>:57</code> <code>receipt</code>,
+<code>:68</code> <code>verify_receipt</code>; <code>message.rs:626</code> <code>frank</code>; <code>e2ee/mod.rs:1795</code>
+<code>report_encrypted_message</code>; <code>rim_infra_db/src/sea_orm_impl/e2ee.rs:1297</code>
+<code>current_franking_key</code>; ui/tauri <code>crates/rim_mls/src/franking.rs</code>, <code>group.rs:865-868</code>.</p>
+<p><strong>Vectors.</strong> <code>e2ee-mls-v1.md</code> A.4 (commitment) and A.5 (receipt input and receipt), checked by
+<code>franking.rs::tests::known_answer_commitment_and_receipt</code> (server) and
+<code>tests/formats.rs::content_franking_and_authenticated_data_vectors</code>,
+<code>franking_receipt_vector</code> (client).</p>
+<p><strong>Questions.</strong></p>
+<ol>
+<li><code>K</code> is one database row, created on first use, never rotated, in plaintext next to the
+messages. A database reader can mint receipts and therefore &quot;verified&quot; reports of any content
+attributed to any member (section 6, item 7). Should <code>K</code> live outside the database, rotate,
+and should a report also be checked against the row&#39;s stored commitment?</li>
+<li>An edit is franked with the original <code>sent_at</code> (<code>message.rs:2025</code>), so every revision a
+member decrypted stays reportable under the same message id. The moderator view should show
+<code>rev</code>; is anything else needed?</li>
+<li>The spec says a report &quot;needs no message row&quot;; the code requires one (<code>e2ee/mod.rs:1814-1820</code>).
+Soft-deleted rows remain, so deletion by the sender does not stop a report, but a deleted
+conversation does.</li>
+<li>Is HMAC-SHA256 with a fixed 32-byte key a sufficient commitment here (we rely on the fixed key
+length to avoid HMAC key-padding collisions)?</li>
+</ol>
+<h3 id="j-attachments">(j) Attachments <a class="anchor" href="#j-attachments" aria-label="Link to this section">#</a></h3>
+<p><strong>Claim.</strong> One blob decrypts to one file for every member and a moderator.</p>
+<p><strong>Design.</strong> Per-file 32-byte secret; key and nonce by HKDF with distinct infos; AES-256-GCM with
+a constant AAD; one encryption per secret; the content entry commits to the blob&#39;s SHA-256, the
+secret, name, type and size; the server refuses uploads whose SHA-256 or size differ; the
+client checks the hash, decrypts, checks the size.</p>
+<p><strong>Code.</strong> ui/tauri <code>crates/rim_mls/src/attachment.rs:17</code> <code>attachment_key_and_nonce</code>, <code>:36</code>
+<code>encrypt_attachment</code>, <code>:47</code> <code>encrypt_attachment_with</code>, <code>:83</code> <code>decrypt_attachment</code>;
+<code>src/e2ee/attachment.rs</code>; ui <code>src/features/e2ee/web/attachments.ts:49</code>, <code>:67</code>, <code>:97</code>; server
+<code>rim_server/src/file_handlers.rs:442</code>.</p>
+<p><strong>Vectors.</strong> <code>e2ee-mls-v1.md</code> A.3, in <code>tests/formats.rs::attachment_vector</code>,
+<code>src/e2ee/tests.rs::appendix_a3_attachment_round_trip</code>, <code>web/attachments.test.ts</code>, and the
+server e2e <code>encrypted_attachments_are_checked_by_hash</code>.</p>
+<p><strong>Questions.</strong></p>
+<ol>
+<li>The nonce is a function of the secret, so the design is safe only while a secret encrypts one
+plaintext. <code>encrypt_attachment_with</code> is public and takes a caller&#39;s secret. Should it be
+private to the crate&#39;s tests?</li>
+<li>Is binding the blob hash in the franked content enough to make the non-committing AES-GCM
+irrelevant here?</li>
+</ol>
+<h3 id="k-the-wasm-build-and-the-browser-store">(k) The wasm build and the browser store <a class="anchor" href="#k-the-wasm-build-and-the-browser-store" aria-label="Link to this section">#</a></h3>
+<p><strong>Claim.</strong> The web app runs the same <code>rim_mls</code>; no ciphertext is sent and no plaintext shown
+before the state that produced it is stored; one tab per account runs encryption.</p>
+<p><strong>Design.</strong> <code>rim_mls</code> built for <code>wasm32-unknown-unknown</code> with libcrux&#39;s portable code; a
+journaled <code>MemoryStore</code> written through to IndexedDB in one transaction per unit of work; a
+trap stops the store for the page; the Web Lock <code>rim-e2ee:&lt;endpoint&gt;:&lt;principalId&gt;</code> keeps a
+second tab out. The compiled module is committed, and a test fails if its sources changed
+(<code>src/features/e2ee/web/wasmArtifact.test.ts</code>).</p>
+<p><strong>Code.</strong> ui/tauri <code>crates/rim_mls_wasm/src/lib.rs</code>, <code>crates/rim_mls/src/storage/memory.rs:45</code>
+<code>commit</code>, <code>:53</code> <code>pending</code>, <code>:67</code> <code>rollback</code>; ui <code>src/features/e2ee/web/store.ts:172-197</code>,
+<code>webSession.ts:21</code> <code>holdTabLock</code>, <code>mlsModule.ts</code>, <code>scripts/build-wasm.mjs</code>.</p>
+<p><strong>Tests.</strong> <code>npm run test:wasm</code> (the whole <code>rim_mls</code> suite in headless Chromium); Vitest
+<code>src/features/e2ee</code> (simulated server, <code>fake-indexeddb</code>, failed writes rolled back, reloads).</p>
+<p><strong>Questions.</strong></p>
+<ol>
+<li>Without the Web Locks API the page &quot;assumes it is alone&quot; (<code>webSession.ts:24-25</code>). Web Locks
+and <code>crypto.subtle</code> both need a secure context, so this path should be unreachable in
+practice; should it refuse instead?</li>
+<li>Is a committed binary (<code>rim_mls_wasm_bg.wasm</code>, checked only by a source hash) acceptable
+supply-chain hygiene, or should the build be reproducible and verified in CI?</li>
+<li>getrandom on wasm uses WebCrypto (<code>wasm_js</code>, <code>js</code>). Any concern with OpenMLS&#39;s clock through
+<code>web-time</code> for lifetimes?</li>
+</ol>
+<h3 id="l-plugins-access-to-decrypted-content">(l) Plugins&#39; access to decrypted content <a class="anchor" href="#l-plugins-access-to-decrypted-content" aria-label="Link to this section">#</a></h3>
+<p><strong>Claim.</strong> Plugins see decrypted text only through the client message service under
+<code>chat.read.encrypted</code> (on top of <code>chat.read</code>), never franking keys, attachment secrets, blob
+hashes, MLS state, ciphertext or keys.</p>
+<p><strong>Design.</strong> The service reads the local cache; placeholders, invalid rows, tombstones and unsent
+rows are left out; writes go through the normal encrypted send path; grants and daily counts
+are audited locally. Sandboxed web plugins run in an <code>allow-scripts</code> iframe with an opaque
+origin and a per-plugin CSP. Local-process plugins are not sandboxed.</p>
+<p><strong>Code.</strong> ui/tauri <code>src/message_cache/plugin_view.rs:115</code> <code>conversation_encrypted</code>, <code>:136</code>
+<code>check_readable</code>, <code>:153</code> <code>plugin_messages</code>, <code>:315</code> <code>project</code>; <code>src/plugin_host/broker.rs:737</code>;
+ui <code>src/features/plugins/chat/appMessageService.ts:127</code>, <code>src/features/e2ee/web/pluginView.ts</code>.</p>
+<p><strong>Tests.</strong> <code>plugin_view.rs::tests::nothing_secret_or_unverified_reaches_a_plugin</code>,
+<code>an_encrypted_conversation_needs_the_encrypted_grant</code>; <code>protocol/plugin-chat-vectors.json</code>.</p>
+<p><strong>Questions.</strong></p>
+<ol>
+<li>A local-process plugin runs as the user and can read the credential store entry and the vault
+file directly. The consent prompt says it is not sandboxed; is the encrypted grant then
+meaningful only for web plugins and honest local ones, and should the UI say so?</li>
+<li>The web app&#39;s message service decides &quot;encrypted&quot; from the server&#39;s <code>encryptedAt</code>
+(<code>appMessageService.ts:127</code>), the desktop also from local knowledge (<code>plugin_view.rs:618</code>
+test). Should both use local state only?</li>
+</ol>
+<h3 id="m-the-post-quantum-plan-and-what-is-agile-today">(m) The post-quantum plan and what is agile today <a class="anchor" href="#m-the-post-quantum-plan-and-what-is-agile-today" aria-label="Link to this section">#</a></h3>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Mechanism</th>
+<th>Today</th>
+<th>Agile how</th>
+<th>What changes for hybrid</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>MLS key agreement</td>
+<td>X25519 + ML-KEM-768 (X-Wing) in 0x004F</td>
+<td>New suite by a new incarnation; the server lists accepted and preferred suites</td>
+<td>Already hybrid; migration when IANA assigns TBD1</td>
+</tr>
+<tr>
+<td>MLS signatures</td>
+<td>Ed25519</td>
+<td>Suite-bound</td>
+<td>Needs a composite suite; none is drafted</td>
+</tr>
+<tr>
+<td>Identity, recovery, device keys and every statement</td>
+<td>Ed25519, version 2 tags</td>
+<td><code>&lt;algorithm&gt;:</code> tags; caps sized for ML-DSA-87; <code>key_hash</code> index; <code>#[non_exhaustive] Algorithm</code></td>
+<td>Add <code>ed25519-mldsa44</code> in <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/rim_identity/src/encoding.rs"><code>rim_identity/src/encoding.rs</code></a> and each client&#39;s verifier; rotate each log with an Ed25519-signed rotation</td>
+</tr>
+<tr>
+<td>Principal id, <code>prev</code>, key hashes</td>
+<td>SHA-256</td>
+<td>Not tagged</td>
+<td>None planned</td>
+</tr>
+<tr>
+<td>Device-link channel</td>
+<td>Symmetric only</td>
+<td>Code version in the code</td>
+<td>Ephemeral hybrid KEM when the answer carries a secret</td>
+</tr>
+<tr>
+<td>Franking, attachments, vault, archive</td>
+<td>HMAC-SHA256, AES-256-GCM, XChaCha20-Poly1305, Argon2id</td>
+<td>Version strings in contexts and file formats</td>
+<td>None needed for quantum</td>
+</tr>
+</tbody></table></div>
+<p><strong>Questions.</strong> Is the planned transition (an existing Ed25519 log rotates to a hybrid key with a
+rotation signed by the old Ed25519 key, then a cutoff refuses Ed25519-only rotations) safe
+without head pinning, which is not implemented (section 6, item 11)? Is a version 1 statement
+still a downgrade path after hybrid keys exist (we believe not: version 1 can only spell and
+verify Ed25519, <code>encoding.rs:97-106</code>, <code>:228</code>)?</p>
+<h2 id="4-threat-model-summary">4. Threat model summary <a class="anchor" href="#4-threat-model-summary" aria-label="Link to this section">#</a></h2>
+<p>The specs carry their own tables: <code>key-identity-v1.md</code> (implicit in &quot;Server rules&quot;),
+<code>device-linking-v1.md</code> &quot;What the channel protects&quot; and &quot;Failure and retry&quot;,
+<code>e2ee-mls-v1.md</code> &quot;Threat model&quot;, <code>web-plugins-v1.md</code> &quot;Security&quot;,
+<code>relay-proxied-workspaces-2026-10-09.md</code>, ui <code>docs/specs/history-archive-v1.md</code> &quot;What a drive
+provider learns&quot;. This table joins them and points to the items in section 6 that probe each
+row.</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Adversary</th>
+<th>Can (by design)</th>
+<th>Cannot (claimed)</th>
+<th>Probed by section 6 items</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Malicious server (database and code)</td>
+<td>See metadata, mentions, sizes, timing; withhold, delay, reorder; refuse Commits; control membership; serve old logs</td>
+<td>Read content; add its own device; forge messages; move ciphertext; force last-resort re-adds</td>
+<td>1, 2, 3, 4, 5, 6, 9, 11, 14, 19</td>
+</tr>
+<tr>
+<td>Database reader only (a leaked backup)</td>
+<td>Read hashed tokens, sealed link bytes, ciphertext, franking key <code>K</code>, franked content</td>
+<td>Read content or sealed messages</td>
+<td>7</td>
+</tr>
+<tr>
+<td>Someone who saw a link code</td>
+<td>Post an offer first; read the answer</td>
+<td>Get a certificate unless the person confirms</td>
+<td>24</td>
+</tr>
+<tr>
+<td>Thief of an old identity key</td>
+<td>Sign statements at its own <code>keySeq</code></td>
+<td>Survive a recovery (servers revoke every device)</td>
+<td>3, 11, 17</td>
+</tr>
+<tr>
+<td>Compromised desktop (code execution as the user)</td>
+<td>Read the vault, cache, MLS state until removed</td>
+<td>Read after removal</td>
+<td>8, 12, 13, 18</td>
+</tr>
+<tr>
+<td>Compromised webview (XSS in the desktop app)</td>
+<td>Ask Rust for signatures and decryptions</td>
+<td>Read private keys</td>
+<td>12</td>
+</tr>
+<tr>
+<td>Compromised browser page or profile</td>
+<td>Sign with the device key; read MLS keys and plaintext</td>
+<td>Export the device key</td>
+<td>8, 12, 22</td>
+</tr>
+<tr>
+<td>Malicious group member device</td>
+<td>Send as itself; commit; lie in its AAD and summaries</td>
+<td>Make others accept a lying message; read after removal</td>
+<td>5, 20, 25</td>
+</tr>
+<tr>
+<td>Malicious plugin</td>
+<td>What its grants allow; anything as the user if local-process</td>
+<td>Read keys through the service</td>
+<td>13</td>
+</tr>
+<tr>
+<td>Drive provider</td>
+<td>Delete, withhold, roll back archive files</td>
+<td>Read them or forge backups</td>
+<td>17</td>
+</tr>
+<tr>
+<td>Former member</td>
+<td>Keep what it decrypted</td>
+<td>Read after removal</td>
+<td>2, 6</td>
+</tr>
+<tr>
+<td>Quantum adversary recording traffic</td>
+<td>Break Ed25519 later</td>
+<td>Decrypt recorded MLS traffic (hybrid KEM)</td>
+<td>11, 26</td>
+</tr>
+<tr>
+<td>Local attacker with file access</td>
+<td>Roll back or corrupt the vault and cache</td>
+<td>Read without the OS store key</td>
+<td>8, 18</td>
+</tr>
+</tbody></table></div>
+<h2 id="5-how-to-run-everything">5. How to run everything <a class="anchor" href="#5-how-to-run-everything" aria-label="Link to this section">#</a></h2>
+<p>CI on GitHub Actions is over its quota since 2026-10-09; every result in the PRs comes from local
+runs of the commands below. Rust 2024 toolchain as pinned in <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/rust-toolchain.toml"><code>rust-toolchain.toml</code></a> (server);
+rim-ui&#39;s <code>src-tauri</code> workspace builds with its own <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/Cargo.lock"><code>Cargo.lock</code></a>.</p>
+<h3 id="51-server-rim-server">5.1 Server (rim-server) <a class="anchor" href="#51-server-rim-server" aria-label="Link to this section">#</a></h3>
+<pre><code class="language-sh">cargo fmt --all --check
+cargo clippy --workspace --all-targets -- -D warnings
+
+cargo test -p rim_identity            # statements, logs, linking, mls-key, readd, manifests, all vectors
+cargo test -p rim_services group_id   # group id vector A.1
+cargo test -p rim_infra_services key_auth device_link e2ee franking encrypted_message
+
+# Need PostgreSQL 17 and DATABASE_URL; these panic without it, by design.
+export DATABASE_URL=postgres://postgres:postgres@localhost:5432/rim_test
+sea migrate up
+cargo test -p rim_infra_db --features db-tests -- --test-threads=1
+cargo test -p rim_api --features e2e-tests -- --test-threads=1
+#   key_identity_e2e, device_link_e2e, e2ee_e2e, sessions_e2e, workspace_plugin_e2e
+cargo test -p rim_infra_services --features infra-db-tests -- --test-threads=1</code></pre>
+<h3 id="52-clients-rim-ui">5.2 Clients (rim-ui) <a class="anchor" href="#52-clients-rim-ui" aria-label="Link to this section">#</a></h3>
+<pre><code class="language-sh">cd src-tauri
+cargo test -p rim_mls                    # vectors, formats, providers, simulation, tampering, sizes
+cargo test -p rim_mls vectors -- --nocapture
+cargo test -p rim_mls_wasm
+cargo test key_identity                  # statements, recovery kit, device linking, manifests
+cargo test identity_backup history_archive secret_store
+cargo test e2ee plugin_view              # app side against rim_mls and real cache databases
+cd ..
+rustup target add wasm32-unknown-unknown
+cargo install wasm-bindgen-cli --version 0.2.114 --locked
+npm ci
+npm run test:wasm                        # rim_mls and rim_mls_wasm in headless Chromium (chromedriver on PATH)
+npx vitest run src/features/key-identity src/features/e2ee src/features/plugins/chat
+npm run build:wasm                       # rebuilds the committed module; wasmArtifact.test.ts checks its sources</code></pre>
+<h3 id="53-a-server-and-two-desktops-by-hand">5.3 A server and two desktops by hand <a class="anchor" href="#53-a-server-and-two-desktops-by-hand" aria-label="Link to this section">#</a></h3>
+<p><a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/docs/testing/manual-test-plan-2026-10-10.md"><code>docs/testing/manual-test-plan-2026-10-10.md</code></a> in rim-server, section 0, sets up the server
+(<code>RIM_KEY_LOGIN_AUDIENCES=localhost:8080,127.0.0.1:8080</code>), two desktop instances as two OS users
+(each needs its own vault and credential store entry) and the web app. Sections 1 and 3 walk
+key-only signup, linking, recovery, the identity-key backup, encrypted DMs and groups,
+attachments, revocation, lost state and re-adds, and the web client. Nothing in it has run on two
+real devices yet.</p>
+<h3 id="54-contact">5.4 Contact <a class="anchor" href="#54-contact" aria-label="Link to this section">#</a></h3>
+<p>The project is run by the maintainers of the <code>rim-platform</code> organisation on GitHub
+(repositories above). The reporting channel and contact details are in the engagement letter.
+Please report anything you would rate high or critical before the final write-up.</p>
+<h2 id="6-known-gaps-and-open-questions">6. Known gaps and open questions <a class="anchor" href="#6-known-gaps-and-open-questions" aria-label="Link to this section">#</a></h2>
+<p>Numbered for reference from sections 3 and 4. Each names where it lives at the commits in 1.1.
+&quot;Ask&quot; is what we want the reviewer&#39;s view on. The first eleven are what we would fix first.</p>
+<h3 id="server-substitution-and-client-trust-in-server-provided-data">Server substitution and client trust in server-provided data <a class="anchor" href="#server-substitution-and-client-trust-in-server-provided-data" aria-label="Link to this section">#</a></h3>
+<ol>
+<li><strong>The client takes &quot;encrypted&quot; from the server on every render.</strong> <code>encrypted: Boolean(encryptedAt)</code> from the server&#39;s <code>Conversation.encryptedAt</code> (ui
+<code>src/features/e2ee/hooks/useE2eeConversation.ts:183</code>) decides whether the composer uses the
+encrypted path (ui <code>src/features/messages/components/MessageTimeline.tsx:295</code>,
+<code>Composer.tsx:233</code>). A server that answers <code>null</code> for a conversation this device holds group
+state for gets the next messages through <code>sendMessage</code> in plaintext. The spec&#39;s &quot;never
+cleared&quot; is a server promise only. Ask: confirm, and whether a local pin (any conversation
+with local group state or an <code>e2ee_conversation</code> row is encrypted for good) is enough.</li>
+<li><strong>Revocation status is the server&#39;s word.</strong> Leaf verification treats a device as revoked only
+if <code>principalDevices</code> lists <code>revokedAt</code> or a <code>revocation</code> (ui/tauri
+<code>src/e2ee/directory.rs:94</code>; ui <code>src/features/e2ee/web/directory.ts:61</code>). A server that omits
+them keeps a revoked (stolen) device a verified leaf; it also stops listing it as a pending
+remove, so no client commits its removal. The signed revocation is never verified either
+(presence alone counts). Ask: is a client-side revocation list or a signed device-set
+statement (the profile card already lists active devices) the right fix?</li>
+<li><strong>Certificates from before a recovery stay valid on clients.</strong> <code>certified_device</code> (ui/tauri
+<code>src/key_identity/statement.rs:645</code>; ui <code>browser/statements.ts:462</code>) accepts a certificate
+signed by the identity key at its <code>keySeq</code>, with no check that a recovery rotation followed
+that entry, unlike plugin manifests (server <code>rim_identity/src/plugin_manifest.rs:86</code>
+<code>recovery_after</code>). A thief of the pre-recovery identity key, with a server that lists the new
+device, gets a device every member&#39;s client verifies and adds. A retired key after an
+ordinary identity rotation has the same power. The server&#39;s own <code>addDeviceKey</code> refuses such
+certificates (<code>device.rs:52</code>), so this needs a malicious or compromised server. Ask: should
+clients refuse certificates whose <code>keySeq</code> precedes a recovery, and should certificates carry
+something that stops a retired key from minting new ones?</li>
+<li><strong>Membership is server-owned; clients add whatever the server lists.</strong> Pending adds come from
+<code>Conversation.mlsGroup</code> and are committed after the rank delay (ui
+<code>src/features/e2ee/runtime/groups.ts:287</code>, <code>membership.ts:67</code>); <code>is_member</code> comes from the
+server&#39;s member list (ui/tauri <code>src/e2ee/directory.rs:147</code>). A malicious server can add a
+member it controls (an account with its own key identity) to a DM or group and every client
+commits its devices. Nothing pins a DM to two principals or asks the person. Ask: what is the
+minimum (DM pinning, a visible &quot;X was added by Y&quot; that a member signs, refusing adds not
+initiated by a member device)?</li>
+<li><strong>Sender binding depends on a server field.</strong> The author check in <code>decrypt</code> runs only when
+<code>DecryptExpectations.author_principal_id</code> is <code>Some</code> (ui/tauri <code>crates/rim_mls/src/group.rs:144</code>,
+<code>:854-861</code>), and the app fills it from the server&#39;s <code>author.principalId</code> (ui/tauri
+<code>src/e2ee/feed.rs:339</code>; ui <code>src/features/e2ee/web/feed.ts:529</code>). A server that returns no
+principal id for the author can show member A&#39;s message as member B&#39;s: the row&#39;s <code>author_id</code>
+is what the timeline shows. The server&#39;s <code>senderDeviceId</code> is never compared with the
+decrypted sender device. Ask: make a missing principal id invalid, and show the MLS sender
+rather than the row&#39;s author?</li>
+<li><strong>A replayed Welcome can roll a device&#39;s group state back.</strong> <code>join</code> builds with
+<code>replace_old_group()</code> and <code>skip_lifetime_validation()</code> (ui/tauri
+<code>crates/rim_mls/src/group.rs:691-692</code>); the app refuses only an older incarnation, not an
+older epoch of the same incarnation (ui/tauri <code>src/e2ee/group.rs:466</code>). The server keeps
+Welcomes for 30 days; a Welcome to a last-resort key package whose private key the device
+still holds can be delivered again through <code>myMlsWelcomes</code>, replacing the current state with
+the old epoch. Effects we see: messages of that epoch decrypt again (breaking decrypt-once),
+the device falls out of step and asks for a re-add. Ask: refuse a Welcome whose epoch is not
+above the held state&#39;s, and are there worse effects?</li>
+</ol>
+<h3 id="franking">Franking <a class="anchor" href="#franking" aria-label="Link to this section">#</a></h3>
+<ol start="7">
+<li><strong>Whoever reads the database can forge &quot;verified&quot; reports.</strong> The receipt key <code>K</code> is one
+<code>franking_key</code> row created on first use, stored in plaintext, never rotated (server
+<code>rim_infra_db/src/sea_orm_impl/e2ee.rs:1297</code>). Verification checks only the receipt over a
+reporter-supplied commitment; it does not compare with the row&#39;s stored
+<code>franking_commitment</code> (server <code>rim_infra_services/src/e2ee/mod.rs:1832-1851</code>). With <code>K</code> from a
+backup, a member can report any text against any real message id of any sender and the server
+marks it verified. The moderator trusts the server&#39;s verdict by design. Ask: move <code>K</code> out of
+the database (configuration or KMS), rotate it with key ids, and require the reported
+commitment to equal the row&#39;s?</li>
+</ol>
+<h3 id="rollback-and-reuse">Rollback and reuse <a class="anchor" href="#rollback-and-reuse" aria-label="Link to this section">#</a></h3>
+<ol start="8">
+<li><strong>State rollback replays MLS secrets.</strong> Restoring the desktop&#39;s SQLCipher cache (Time Machine,
+a disk image) together with the vault, restoring a browser profile, or two tabs running
+without the Web Lock (ui <code>src/features/e2ee/web/webSession.ts:24-25</code>) restart the sender
+ratchet at generations already used. Only OpenMLS&#39;s random 4-byte reuse guard then separates
+two encryptions under one AES-128-GCM key from nonce reuse. Neither the vault (ui/tauri
+<code>src/secret_store.rs</code>) nor the cache has rollback detection. Ask: how bad is this in practice,
+and should a device self-update (or request a re-add) when it detects it restarted from an
+older state (for example a monotonic counter in the OS credential store)?</li>
+<li><strong>Re-add requests have no freshness.</strong> The server checks only the signature, the
+incarnation and <code>lastEpoch ≤ epoch</code> (server <code>e2ee/mod.rs:1597-1690</code>); committers check only the
+signature and their own 24-hour limit (ui/tauri <code>crates/rim_mls/src/readd.rs:78</code>, <code>:119</code>). The
+nonce is never checked for reuse and <code>issuedAt</code> is ignored. A server can store a genuine
+request and replay it later in the same incarnation, forcing a Remove and Add of that device
+once a day and, after 10 minutes without a Commit, opening the recovery path to a new
+incarnation (server <code>e2ee/mod.rs:494</code> <code>incarnation_ground</code>). Ask: bind requests to the epoch they were made in
+(<code>lastEpoch</code> must equal the device&#39;s last known epoch) and record nonces?</li>
+</ol>
+<h3 id="clock-skew">Clock skew <a class="anchor" href="#clock-skew" aria-label="Link to this section">#</a></h3>
+<ol start="10">
+<li><strong>Any client clock ahead of the server stops key package uploads.</strong> The client sets
+<code>not_after = client_now + 90 days</code> exactly (ui/tauri <code>crates/rim_mls/src/device.rs:224</code>); the
+server refuses <code>not_after &gt; server_now + 90 days</code> (server <code>e2ee/mod.rs:1113</code>). A device whose
+clock runs ahead by more than the upload latency never becomes MLS-active. Receivers also
+validate an added key package&#39;s lifetime with their own clock against a one-hour
+<code>not_before</code> slack; a receiver more than an hour behind cannot process the Commit and asks
+for a re-add. Server-side windows (challenge expiry, claim validity of one hour, 14-day claim
+margin, 60-day activity) use the application node&#39;s clock while the database stores the
+times; nodes with skewed clocks disagree. Ask: margins, and which checks should use database
+time.</li>
+<li><strong>No pinning of key-log heads.</strong> Clients replay whatever log the server serves. A server can
+serve an older prefix (hiding a rotation or a recovery), or, with a stolen old identity key,
+a fork for a principal it has never seen. The post-quantum decision names head pinning as the
+planned mitigation; nothing implements it (no store of seen heads in ui/tauri
+<code>src/e2ee/directory.rs</code> or <code>src/key_identity/</code>). Ask: is pinning per contact on first use
+enough until Stage 5&#39;s multi-relay cards?</li>
+</ol>
+<h3 id="the-desktops-webview-and-local-plugins">The desktop&#39;s webview and local plugins <a class="anchor" href="#the-desktops-webview-and-local-plugins" aria-label="Link to this section">#</a></h3>
+<ol start="12">
+<li><strong>The webview drives signing and sees two secrets.</strong> The desktop webview sees the recovery
+kit text at enrollment and signup, the phrase typed at recovery and takeover, and the full
+link code with its secret. It chooses the endpoint the Rust side derives a login audience
+from (ui/tauri <code>src/key_identity/mod.rs:662</code> <code>sign_login</code>, called from <code>commands.rs:137</code>) and
+supplies the inputs to revocations, profile cards and plugin manifests signed with the
+identity key (<code>mod.rs:778</code>, <code>:840</code>, <code>:876</code>). An XSS in the desktop app (DOMPurify is the
+backstop) gets login proofs for any audience and identity-key signatures on attacker-chosen
+manifests. Ask: which commands should require a Rust-side confirmation or pin their inputs?</li>
+<li><strong>Local-process plugins can read every secret.</strong> They run as the user; the credential store
+hands an unlocked item to any process of the session and the vault file is readable by the
+user. <code>chat.read.encrypted</code> constrains sandboxed web plugins and honest local ones only (ui
+<code>docs/plugin-chat-methods.md</code>, <code>web-plugins-v1.md</code> &quot;Security&quot;). Ask: is the consent wording
+enough, or should encrypted grants be refused to local-process plugins?</li>
+</ol>
+<h3 id="login-and-errors">Login and errors <a class="anchor" href="#login-and-errors" aria-label="Link to this section">#</a></h3>
+<ol start="14">
+<li><strong>Revocation is disclosed before the challenge is checked.</strong> <code>verify_login</code> answers
+<code>FORBIDDEN</code> for a valid signature from a revoked device before the audience and challenge
+checks (server <code>rim_infra_services/src/key_auth.rs:441-453</code>). The spec says &quot;a valid proof&quot;.
+Any proof from that device, however old or for whatever server, reveals revocation here.</li>
+<li><strong>The audience defaults to localhost.</strong> With neither <code>RIM_KEY_LOGIN_AUDIENCES</code> nor
+<code>RIM_PUBLIC_BASE_URL</code> set, a server accepts <code>localhost:PORT</code> and <code>127.0.0.1:PORT</code> (server
+<code>rim_server/src/config.rs:370</code>) and logs the list. A deployment behind a proxy that forgets
+both accepts proofs meant for any other misconfigured server on the same port.</li>
+</ol>
+<h3 id="key-separation-and-lifetimes">Key separation and lifetimes <a class="anchor" href="#key-separation-and-lifetimes" aria-label="Link to this section">#</a></h3>
+<ol start="16">
+<li><strong>The identity seed doubles as HKDF input.</strong> The Ed25519 identity seed derives the archive
+wrap key (ui/tauri <code>src/key_identity/backup.rs:48</code>, salt <code>rim.history-archive.v1</code>, info
+<code>archive key wrap</code>). The HKDF salt and info separate the outputs, but the seed now has two
+roles. Ask: acceptable, or derive both the signing seed and the wrap key from a root?</li>
+<li><strong>The archive key never rotates.</strong> An identity rotation replaces this device&#39;s
+<code>identity-v1</code> wrap entry, but a drive provider can keep the old <code>key-wraps.json</code>; with a
+retired identity key the archive key opens. Likewise a passphrase change cannot revoke old
+manifest copies. Ask: should a rotation or recovery re-key the archive?</li>
+<li><strong>One bad vault record discards the vault.</strong> <code>load</code> verifies every record and moves the file
+aside if any fails (ui/tauri <code>src/secret_store.rs:290-331</code>, <code>:448</code>), losing device and
+identity keys on that computer; <code>&quot;v&quot;: 2</code> makes every call fail. Ask: fail per record?</li>
+<li><strong>The MLS signature key never rotates.</strong> One per device; <code>issuedAt</code> in <code>mls-key</code> is not
+checked anywhere. A leaked MLS key signs as that device until a lost-state re-add. Ask:
+rotate with self-updates?</li>
+</ol>
+<h3 id="mls-details">MLS details <a class="anchor" href="#mls-details" aria-label="Link to this section">#</a></h3>
+<ol start="20">
+<li><strong>Lying Commits are merged before they are flagged.</strong> <code>check_summary</code> (ui/tauri
+<code>crates/rim_mls/src/group.rs:617</code>) marks a mismatch, then <code>process_commit</code> merges anyway
+(<code>:573</code>). Proposals other than Add and Remove (GroupContextExtensions, PSK, ReInit) inside a
+Commit only make the summary fail. Ask: which should cause a refusal and a re-add instead?</li>
+<li><strong>Last-resort key packages are shared across claims.</strong> A last-resort package is handed out
+whenever a device has no one-time package left (server <code>e2ee/mod.rs:1215</code>), up to more than
+5 claims or 7 days before expiry before the device replaces it, and its private key stays up
+to 7 days after. Ask: the forward-secrecy cost, given that item 6 also relies on it.</li>
+<li><strong>Verifiers disagree on what a valid Ed25519 key is.</strong> The server refuses non-canonical point
+encodings (server <code>rim_identity/src/encoding.rs:144</code>); the desktop&#39;s <code>verify</code> and
+<code>usable_device_key</code> (ui/tauri <code>src/key_identity/statement.rs:187</code>, <code>:218</code>) and <code>rim_mls</code>&#39;s
+<code>parse_tagged_key</code> (<code>crates/rim_mls/src/identity.rs:114</code>) check only <code>is_weak</code>; the browser
+checks canonicality itself (<code>statements.ts:79</code>). The desktop&#39;s log replay also skips the
+<code>identityKey != recoveryKey</code> rule and accepts unknown fields. Ask: does any split matter?</li>
+<li><strong>Zeroization gaps.</strong> <code>rim_identity</code> has no <code>zeroize</code>: <code>LinkSecret</code>, derived link keys and
+test signing keys stay in memory (server <code>rim_identity/src/device_link.rs:140-170</code>, <code>:304</code>);
+the server&#39;s franking key is a plain <code>Vec</code> (<code>message.rs:631</code>). The webview&#39;s strings (phrase,
+code) cannot be wiped. The web keeps MLS keys and plaintext unencrypted in IndexedDB
+(<code>e2ee-web.md</code> &quot;Limits&quot;). <code>DecryptedMessage.content_bytes</code> is a plain <code>Vec</code> (ui/tauri
+<code>crates/rim_mls/src/group.rs:168</code>). The desktop&#39;s Rust side otherwise wraps secrets in
+<code>Zeroizing</code>. Ask: which of these matter given the threat model?</li>
+<li><strong>The link fingerprint is 40 bits and the race is UX-dependent.</strong> See area (c), question 1.</li>
+<li><strong>Edits share one receipt time.</strong> See area (i), question 2.</li>
+</ol>
+<h3 id="spec-against-code-and-dependencies">Spec against code, and dependencies <a class="anchor" href="#spec-against-code-and-dependencies" aria-label="Link to this section">#</a></h3>
+<ol start="26">
+<li><strong>What the specs promise and the code does not do yet.</strong><ul>
+<li>The franking moderator view and the report-scoped attachment download
+(<code>e2ee-mls-v1.md</code> &quot;Franking&quot; step 5) are not on <code>master</code> in either repository; no GraphQL
+field exposes <code>franked_content</code>.</li>
+<li>A report &quot;needs no message row&quot; (<code>e2ee-mls-v1.md</code> &quot;Franking&quot; step 4); the code requires the
+row (server <code>e2ee/mod.rs:1814-1820</code>).</li>
+<li>&quot;A valid proof from a revoked device&quot; answers <code>FORBIDDEN</code> (<code>key-identity-v1.md</code> &quot;Challenge
+login&quot; rule 5); the code does not check the challenge or audience first (item 14).</li>
+<li><code>encrypted_at</code> is &quot;never cleared&quot; (<code>e2ee-mls-v1.md</code> &quot;Scope&quot;); clients do not hold the
+server to it (item 1).</li>
+<li>The cache key &quot;is re-wrapped under the device key in Stage 3&quot; (ui/tauri
+<code>src/message_cache/key.rs:4</code>); it is not.</li>
+<li>The library decision lists the IETF <code>mls-implementations</code> vectors for suite 0x0001 as
+re-run in RIM&#39;s CI; <code>crates/rim_mls/src/tests/vectors.rs</code> runs primitive vectors only.</li>
+<li>The decision names <code>libcrux-ml-kem</code> 0.0.11 (2026-10-07) among the sources; the lock files
+link 0.0.10, which the ACVP test pins (<code>=0.0.10</code> in <code>crates/rim_mls/Cargo.toml</code>).</li>
+</ul>
+</li>
+<li><strong>Errors that disclose.</strong> Anonymous <code>rotateIdentityKey</code> refusals other than &quot;unknown
+principal&quot; carry the validation reason (documented: they show a principal is enrolled);
+serde parser messages reach clients as <code>VALIDATION</code> text; <code>principalDevices</code> answers empty
+for principals outside the caller&#39;s workspaces. Ask: anything here worth closing?</li>
+</ol>
+<h2 id="appendix-a-known-answer-vectors-and-the-tests-that-check-them">Appendix A: known-answer vectors and the tests that check them <a class="anchor" href="#appendix-a-known-answer-vectors-and-the-tests-that-check-them" aria-label="Link to this section">#</a></h2>
+<p>Server paths are under rim-server, client paths under rim-ui.</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Vector</th>
+<th>Spec</th>
+<th>Checked by</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Version 1 keys, inception, principal id, <code>prev</code>, certificate, login proof</td>
+<td><code>key-identity-v1.md</code> appendix A</td>
+<td>server <code>rim_identity/src/vectors.rs::known_answer_vectors</code>; ui/tauri <code>src/key_identity/statement.rs::tests::known_answer_vectors_match_the_spec</code>; ui <code>browser/statements.test.ts</code> &quot;appendix A: a version 1 log, certificate and login proof verify&quot;</td>
+</tr>
+<tr>
+<td>Version 2 inception, certificate, login proof</td>
+<td><code>key-identity-v1.md</code> appendix B</td>
+<td>server <code>rim_identity/src/vectors.rs::known_answer_vectors_v2</code>; ui/tauri <code>statement.rs::tests::known_answer_vectors_match_the_spec</code>; ui <code>statements.test.ts</code> &quot;appendix B: the inception replays…&quot;, &quot;appendix B: this module signs the login proof byte for byte&quot;</td>
+</tr>
+<tr>
+<td>Mixed log (version 2 rotation of a version 1 log)</td>
+<td><code>key-identity-v1.md</code> appendix B</td>
+<td>server <code>rim_identity/src/vectors.rs::known_answer_mixed_log</code>; ui <code>statements.test.ts</code> &quot;appendix B: the mixed log replays and keeps appendix A&#39;s principal id&quot;</td>
+</tr>
+<tr>
+<td>Recovery phrase (entropy, phrase, recovery key)</td>
+<td><code>key-identity-v1.md</code> &quot;Recovery kit&quot;</td>
+<td>ui/tauri <code>src/key_identity/recovery_kit.rs::tests::the_phrase_matches_its_known_answer_vector</code></td>
+</tr>
+<tr>
+<td>Link code, <code>K_offer</code>, <code>K_answer</code>, AADs, offer and answer ciphertexts, fingerprint</td>
+<td><code>device-linking-v1.md</code> appendix A</td>
+<td>server <code>rim_identity/src/device_link.rs::tests::known_answer_code_keys_and_aad</code>, <code>known_answer_offer</code>, <code>known_answer_answer</code>; ui/tauri <code>src/key_identity/device_link.rs::tests::appendix_a_code_keys_and_aad</code>, <code>appendix_a_offer_seals_opens_and_fingerprints</code>, <code>appendix_a_answer_seals_and_opens</code>; ui <code>browser/channel.test.ts</code> &quot;the code, the channel keys and the AADs&quot;, &quot;the offer seals, opens and fingerprints byte for byte&quot;, &quot;the answer seals and opens byte for byte&quot;</td>
+</tr>
+<tr>
+<td>Plugin manifest statement</td>
+<td><code>workspace-plugins-v1.md</code> appendix A</td>
+<td>server <code>rim_identity/src/plugin_manifest.rs::tests::known_answer_statement_verifies_against_the_known_inception</code>, <code>known_answer_bundle_matches_the_statement</code>; ui/tauri <code>src/key_identity/plugin_manifest.rs::tests::known_answer_statement_verifies</code>, <code>signing_writes_the_known_payload_byte_for_byte</code>; ui <code>browser/pluginManifest.test.ts</code> &quot;appendix A verifies against appendix B&#39;s inception&quot;</td>
+</tr>
+<tr>
+<td>Backup keys (phrase and v1 seed), identity wrap key</td>
+<td>ui <code>docs/specs/history-archive-v1.md</code> &quot;Known-answer vectors&quot;</td>
+<td>ui/tauri <code>src/key_identity/backup.rs::tests::the_backup_and_wrap_keys_match_their_known_answer_vectors</code></td>
+</tr>
+<tr>
+<td>Sealed identity backup, <code>identity-v1</code> wrap</td>
+<td>same</td>
+<td>ui/tauri <code>src/history_archive/identity.rs::tests::a_sealed_backup_matches_its_known_answer_vector</code>, <code>an_identity_wrap_matches_its_known_answer_vector</code></td>
+</tr>
+<tr>
+<td>A.1 group id</td>
+<td><code>e2ee-mls-v1.md</code></td>
+<td>server <code>rim_services/src/e2ee.rs::tests::group_id_known_answer</code>; ui/tauri <code>crates/rim_mls/src/tests/formats.rs::group_id_vector</code></td>
+</tr>
+<tr>
+<td>A.2 <code>mls-key</code> statement, credential identity hash</td>
+<td><code>e2ee-mls-v1.md</code></td>
+<td>server <code>rim_identity/src/mls.rs::tests::known_answer_mls_key_statement_and_credential</code>; ui/tauri <code>formats.rs::mls_key_statement_and_credential_identity_vectors</code></td>
+</tr>
+<tr>
+<td>A.2 recorded key package and <code>KeyPackageRef</code> (fixture)</td>
+<td><code>e2ee-mls-v1.md</code></td>
+<td>ui/tauri <code>formats.rs::the_recorded_key_package_is_the_vector_device_s</code> (fixture <code>crates/rim_mls/src/tests/fixtures/recorded.json</code>)</td>
+</tr>
+<tr>
+<td>A.3 attachment key, nonce, blob, hash</td>
+<td><code>e2ee-mls-v1.md</code></td>
+<td>ui/tauri <code>formats.rs::attachment_vector</code>, <code>src/e2ee/tests.rs::appendix_a3_attachment_round_trip</code>; ui <code>src/features/e2ee/web/attachments.test.ts</code> &quot;match appendix A.3 byte for byte&quot;; server <code>rim_api/tests/e2ee_e2e.rs::encrypted_attachments_are_checked_by_hash</code> (hash only)</td>
+</tr>
+<tr>
+<td>A.4 content, commitment, application data, application and Commit AAD</td>
+<td><code>e2ee-mls-v1.md</code></td>
+<td>ui/tauri <code>formats.rs::content_franking_and_authenticated_data_vectors</code>; server <code>e2ee/franking.rs::tests::known_answer_commitment_and_receipt</code> (commitment), <code>e2ee/aad.rs</code> tests (AAD parsing)</td>
+</tr>
+<tr>
+<td>A.4 recorded PrivateMessage (fixture, decrypts once)</td>
+<td><code>e2ee-mls-v1.md</code></td>
+<td>ui/tauri <code>formats.rs::the_recorded_private_message_decrypts_to_the_vector_application_data</code></td>
+</tr>
+<tr>
+<td>A.5 franking receipt input and receipt</td>
+<td><code>e2ee-mls-v1.md</code></td>
+<td>server <code>e2ee/franking.rs::tests::known_answer_commitment_and_receipt</code>; ui/tauri <code>formats.rs::franking_receipt_vector</code></td>
+</tr>
+<tr>
+<td>A.6 re-add request</td>
+<td><code>e2ee-mls-v1.md</code></td>
+<td>server <code>rim_identity/src/mls.rs::tests::known_answer_readd_request</code>; ui/tauri <code>formats.rs::readd_request_vector</code></td>
+</tr>
+<tr>
+<td>Ed25519 RFC 8032 §7.1 tests 1 to 3</td>
+<td><code>mls-library-2026-10-09.md</code> §5</td>
+<td>ui/tauri <code>crates/rim_mls/src/tests/vectors.rs::ed25519_rfc8032_tests_1_to_3</code> (both providers)</td>
+</tr>
+<tr>
+<td>X25519 RFC 7748 §5.2, §6.1</td>
+<td>same</td>
+<td><code>vectors.rs::x25519_rfc7748_sections_5_2_and_6_1</code></td>
+</tr>
+<tr>
+<td>HPKE RFC 9180 A.1 base mode</td>
+<td>same</td>
+<td><code>vectors.rs::hpke_rfc9180_a1_base_mode</code></td>
+</tr>
+<tr>
+<td>HKDF-SHA256 RFC 5869 A.1 to A.3</td>
+<td>same</td>
+<td><code>vectors.rs::hkdf_sha256_rfc5869_a1_to_a3</code></td>
+</tr>
+<tr>
+<td>HMAC-SHA256 RFC 4231</td>
+<td>same</td>
+<td><code>vectors.rs::hmac_sha256_rfc4231</code></td>
+</tr>
+<tr>
+<td>AES-GCM Wycheproof (96-bit nonces)</td>
+<td>same</td>
+<td><code>vectors.rs::aes_gcm_wycheproof_96_bit_nonces</code> (file <code>tests/vectors/aes_gcm_wycheproof.json</code>)</td>
+</tr>
+<tr>
+<td>X-Wing draft vectors</td>
+<td>same</td>
+<td><code>vectors.rs::xwing_draft_vectors_through_both_hpke_backends</code> (file <code>tests/vectors/xwing.json</code>; encapsulation checked as a cross-provider property)</td>
+</tr>
+<tr>
+<td>ML-KEM-768 NIST ACVP keyGen, encapDecap</td>
+<td>same</td>
+<td><code>vectors.rs::ml_kem_768_acvp_through_libcrux</code>, <code>ml_kem_768_acvp_through_rust_crypto</code> (file <code>tests/vectors/ml_kem_768_acvp.json</code>)</td>
+</tr>
+<tr>
+<td>0x004F key packages validate on the server</td>
+<td>—</td>
+<td>server <code>rim_infra_services/src/e2ee/openmls_wire.rs::tests::suite_0x004f_key_packages_validate_and_decode</code>, <code>commits_welcomes_and_messages_expose_their_framing</code></td>
+</tr>
+</tbody></table></div>
+<p>Negative tests worth reading first: server <code>rim_identity/src/device_link.rs::tests::a_flipped_aad_nonce_tag_or_ciphertext_byte_fails</code>,
+<code>an_offer_never_opens_as_an_answer_or_under_another_link</code>; server
+<code>e2ee/franking.rs::tests::any_changed_input_fails_the_receipt</code>; ui/tauri
+<code>crates/rim_mls/src/tests/tampering.rs::every_leaf_verification_failure_is_reported</code>,
+<code>application_messages_whose_authenticated_data_lies_are_invalid</code>,
+<code>commits_whose_summary_lies_are_flagged</code>, <code>the_server_refuses_a_summary_it_cannot_match</code>.</p>
+<h2 id="appendix-b-cryptographic-dependencies-as-locked">Appendix B: cryptographic dependencies as locked <a class="anchor" href="#appendix-b-cryptographic-dependencies-as-locked" aria-label="Link to this section">#</a></h2>
+<p>From <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/Cargo.lock"><code>Cargo.lock</code></a> at the commits in 1.1 (rim-server root; rim-ui <code>src-tauri/Cargo.lock</code>). Where
+two versions of a crate are locked, both appear; the second is pulled transitively. The web app
+uses the browser&#39;s WebCrypto for Ed25519, HKDF, AES-GCM and SHA-256 and has no JavaScript crypto
+library.</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Crate</th>
+<th>rim-server</th>
+<th>rim-ui</th>
+<th>Used for</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>openmls</code></td>
+<td>0.9.1</td>
+<td>0.9.1 (<code>=0.9.1</code>)</td>
+<td>MLS</td>
+</tr>
+<tr>
+<td><code>openmls_traits</code></td>
+<td>0.6.0</td>
+<td>0.6.0, feature <code>draft-ietf-mls-pq-ciphersuites</code></td>
+<td>Provider and storage traits</td>
+</tr>
+<tr>
+<td><code>openmls_rust_crypto</code></td>
+<td>0.6.0 (server provider)</td>
+<td>0.6.0 (dev: fallback and cross-provider tests)</td>
+<td>Server key package validation</td>
+</tr>
+<tr>
+<td><code>openmls_libcrux_crypto</code></td>
+<td>—</td>
+<td>0.4.0, feature <code>draft-ietf-mls-pq-ciphersuites</code></td>
+<td>Client provider</td>
+</tr>
+<tr>
+<td><code>openmls_memory_storage</code></td>
+<td>0.6.0</td>
+<td>0.6.0</td>
+<td>Pulled by OpenMLS</td>
+</tr>
+<tr>
+<td><code>hpke-rs</code>, <code>hpke-rs-crypto</code>, <code>hpke-rs-libcrux</code>, <code>hpke-rs-rust-crypto</code></td>
+<td>0.7.0</td>
+<td>0.7.0</td>
+<td>HPKE in both providers</td>
+</tr>
+<tr>
+<td><code>libcrux-ml-kem</code></td>
+<td>0.0.10</td>
+<td>0.0.10</td>
+<td>ML-KEM-768 (libcrux path)</td>
+</tr>
+<tr>
+<td><code>libcrux-kem</code>, <code>libcrux-aead</code>, <code>libcrux-aes</code>, <code>libcrux-chacha20poly1305</code></td>
+<td>0.0.9</td>
+<td>0.0.9</td>
+<td>libcrux primitives</td>
+</tr>
+<tr>
+<td><code>libcrux-curve25519</code>, <code>libcrux-ecdh</code>, <code>libcrux-hkdf</code>, <code>libcrux-hmac</code>, <code>libcrux-sha2</code>, <code>libcrux-p256</code>, <code>libcrux-traits</code></td>
+<td>0.0.8</td>
+<td>0.0.8</td>
+<td>libcrux primitives</td>
+</tr>
+<tr>
+<td><code>libcrux-ed25519</code></td>
+<td>—</td>
+<td>0.0.9</td>
+<td>libcrux signatures</td>
+</tr>
+<tr>
+<td><code>libcrux-sha3</code></td>
+<td>0.0.10</td>
+<td>0.0.10</td>
+<td>ML-KEM hashing</td>
+</tr>
+<tr>
+<td><code>libcrux-hacl-rs</code>, <code>libcrux-poly1305</code>, <code>libcrux-secrets</code>, <code>libcrux-hmac-drbg</code></td>
+<td>0.0.5, 0.0.6, 0.0.6, —</td>
+<td>0.0.5, 0.0.6, 0.0.6, 0.0.1</td>
+<td>libcrux support</td>
+</tr>
+<tr>
+<td><code>x-wing</code></td>
+<td>0.1.1</td>
+<td>0.1.1</td>
+<td>X-Wing (RustCrypto path)</td>
+</tr>
+<tr>
+<td><code>ml-kem</code></td>
+<td>0.3.2</td>
+<td>0.3.2</td>
+<td>ML-KEM-768 (RustCrypto path)</td>
+</tr>
+<tr>
+<td><code>ed25519-dalek</code></td>
+<td>2.2.0</td>
+<td>2.2.0</td>
+<td>Statements, <code>verify_strict</code>, MLS key on the desktop side</td>
+</tr>
+<tr>
+<td><code>curve25519-dalek</code></td>
+<td>4.1.3, 5.0.0</td>
+<td>4.1.3, 5.0.0</td>
+<td>Ed25519, X25519</td>
+</tr>
+<tr>
+<td><code>x25519-dalek</code></td>
+<td>2.0.1, 3.0.0</td>
+<td>2.0.1, 3.0.0</td>
+<td>X25519 (RustCrypto path)</td>
+</tr>
+<tr>
+<td><code>aes-gcm</code>, <code>aes</code></td>
+<td>0.10.3, 0.8.4</td>
+<td>0.10.3, 0.8.4</td>
+<td>Device link, attachments</td>
+</tr>
+<tr>
+<td><code>chacha20poly1305</code></td>
+<td>0.10.1</td>
+<td>0.10.1</td>
+<td>Vault, archive</td>
+</tr>
+<tr>
+<td><code>hkdf</code></td>
+<td>0.12.4, 0.13.0</td>
+<td>0.12.4, 0.13.0</td>
+<td>Link keys, recovery derivations, attachments, archive</td>
+</tr>
+<tr>
+<td><code>hmac</code></td>
+<td>0.12.1, 0.13.0</td>
+<td>0.12.1, 0.13.0</td>
+<td>Franking, CSRF</td>
+</tr>
+<tr>
+<td><code>sha2</code></td>
+<td>0.10.9, 0.11.0</td>
+<td>0.10.9, 0.11.0</td>
+<td>Hashes</td>
+</tr>
+<tr>
+<td><code>argon2</code></td>
+<td>0.5.3</td>
+<td>0.5.3</td>
+<td>Passwords (server), archive passphrase (client)</td>
+</tr>
+<tr>
+<td><code>bip39</code></td>
+<td>—</td>
+<td>2.2.2, feature <code>zeroize</code></td>
+<td>Recovery phrase</td>
+</tr>
+<tr>
+<td><code>subtle</code></td>
+<td>2.6.1</td>
+<td>2.6.1</td>
+<td>Constant-time comparisons (through <code>hmac</code> and others)</td>
+</tr>
+<tr>
+<td><code>zeroize</code></td>
+<td>1.9.0</td>
+<td>1.9.1</td>
+<td>Secret wiping (client)</td>
+</tr>
+<tr>
+<td><code>getrandom</code></td>
+<td>0.2.17, 0.3.4, 0.4.3</td>
+<td>0.1.16, 0.2.17, 0.3.4, 0.4.3</td>
+<td>OS randomness; WebCrypto on wasm</td>
+</tr>
+<tr>
+<td><code>rand_core</code></td>
+<td>0.6.4, 0.9.5, 0.10.1</td>
+<td>0.5.1, 0.6.4, 0.9.5, 0.10.1</td>
+<td>RNG traits</td>
+</tr>
+<tr>
+<td><code>tls_codec</code></td>
+<td>0.5.0</td>
+<td>0.5.0</td>
+<td>MLS encoding</td>
+</tr>
+<tr>
+<td><code>keyring</code></td>
+<td>—</td>
+<td>3.6.3 (<code>apple-native</code>, <code>windows-native</code>, <code>sync-secret-service</code>, <code>crypto-rust</code>)</td>
+<td>OS credential store</td>
+</tr>
+<tr>
+<td><code>rusqlite</code>, <code>libsqlite3-sys</code></td>
+<td>—, 0.30.1 (server tooling)</td>
+<td>0.40.2, 0.38.2 (<code>bundled-sqlcipher</code>)</td>
+<td>SQLCipher message cache and MLS state</td>
+</tr>
+<tr>
+<td><code>wasm-bindgen</code></td>
+<td>0.2.126 (transitive)</td>
+<td>0.2.114 (<code>=0.2.114</code> in <code>rim_mls_wasm</code>)</td>
+<td>wasm facade</td>
+</tr>
+</tbody></table></div>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/docs/security/crypto-review-brief-2026-10.md">rim-server/docs/security/crypto-review-brief-2026-10.md</a> at <code>c86029b</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+<script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
+</body>
+</html>

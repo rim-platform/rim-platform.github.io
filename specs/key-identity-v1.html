@@ -1,0 +1,737 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Key identity v1 · RIM</title>
+<meta name="description" content="Status: implemented, normative. Follows docs/decisions/decentralization-2026-10-08.md: a user is a key pair, the user id is stable with a signed key log, the web app is a linked device, and servers are interchangeable …">
+<link rel="icon" href="../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../index.html" aria-label="RIM home">
+      <picture><source srcset="../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../index.html#what">What RIM is</a>
+      <a href="../index.html#how">How it works</a>
+      <a href="../docs/self-hosting.html">Self-host</a>
+      <a href="../configure/index.html">Configure</a>
+      <a href="../docs/index.html">Docs</a>
+      <a href="../api/index.html">API</a>
+      <a href="index.html" aria-current="page">Specs</a>
+      <a href="../docs/contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="index.html">Specs</a><span aria-hidden="true">/</span><span>Key identity v1</span></div>
+  <div class="page with-toc">
+    <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
+<ol>
+<li><a href="#scope">Scope</a></li>
+<li><a href="#keys-and-encodings">Keys and encodings</a></li>
+<li><a href="#algorithms-and-statement-versions">Algorithms and statement versions</a></li>
+<li><a href="#signed-statements">Signed statements</a><ol><li><a href="#key-log-and-principal-id">Key log and principal id</a></li><li><a href="#device-certificate">Device certificate</a></li><li><a href="#device-revocation">Device revocation</a></li><li><a href="#profile-card">Profile card</a></li><li><a href="#login-proof">Login proof</a></li></ol></li>
+<li><a href="#server-rules">Server rules</a><ol><li><a href="#enrollment">Enrollment</a></li><li><a href="#key-only-signup">Key-only signup</a></li><li><a href="#challenge-login">Challenge login</a></li><li><a href="#devices">Devices</a></li><li><a href="#rotation-and-recovery">Rotation and recovery</a></li></ol></li>
+<li><a href="#storage">Storage</a></li>
+<li><a href="#graphql">GraphQL</a></li>
+<li><a href="#plugin-principal-ids-rimp0_-to-rimp1_">Plugin principal ids: rimp0_ to rimp1_</a></li>
+<li><a href="#desktop-client-rim-ui">Desktop client (rim-ui)</a><ol><li><a href="#recovery-kit">Recovery kit</a></li></ol></li>
+<li><a href="#deferred">Deferred</a></li>
+<li><a href="#appendix-a-known-answer-vectors-version-1">Appendix A: known-answer vectors (version 1)</a></li>
+<li><a href="#appendix-b-known-answer-vectors-version-2">Appendix B: known-answer vectors (version 2)</a></li>
+</ol>
+</details></aside>
+    <main id="content" class="prose">
+<h1 id="key-identity-v1">Key identity v1</h1>
+<p class="status"><span><b>Key identity v1</b></span><span>version 1</span><span>status: implemented, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/docs/specs/key-identity-v1.md">rim-server/docs/specs/key-identity-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/c86029b35a7ef7770b05e7bda62909f988343f7f">c86029b</a></span></p>
+<p><em>Status: implemented, normative. Follows <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/docs/decisions/decentralization-2026-10-08.md"><code>docs/decisions/decentralization-2026-10-08.md</code></a>:
+a user is a key pair, the user id is stable with a signed key log, the web app is a linked
+device, and servers are interchangeable relays. This document is the contract between the
+server (<code>rim_identity</code>, <code>KeyAuthService</code>) and every client that signs statements.</em></p>
+<p><em>Algorithm agility (<a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/docs/decisions/post-quantum-hybrid-2026-10-09.md"><code>docs/decisions/post-quantum-hybrid-2026-10-09.md</code></a>): statement format
+version 2 tags every key and signature with its algorithm, payload caps fit
+hybrid post-quantum keys, and the server indexes device keys by a hash. Version 1 statements
+stay valid. See &quot;Algorithms and statement versions&quot;.</em></p>
+<p><em>Key-only signup: <code>signupWithKey</code> creates an account from a key
+identity alone, with no password and no email, so <code>user.password_hash</code> and <code>user.email</code> are
+nullable. See &quot;Key-only signup&quot;.</em></p>
+<h2 id="scope">Scope <a class="anchor" href="#scope" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong><code>rim_identity</code></strong>, a dependency-light crate that verifies every signed statement below. It
+has no database, HTTP or GraphQL code, so the Tauri client and later the relay can reuse it.</li>
+<li><strong>Storage</strong>: key columns on the existing <code>user</code> row, plus <code>key_log_entry</code>, <code>device_key</code>,
+<code>profile_card</code> and <code>key_challenge</code> tables, and <code>session.device_key_id</code>.</li>
+<li><strong><code>KeyAuthService</code></strong> with GraphQL mutations to enroll a key on an existing account, add and
+revoke devices, rotate or recover the identity key, publish a profile card, and sign in with a
+device key through a single-use challenge. Key login issues the same session cookie as
+password login.</li>
+<li><strong>Password sign-in and password reset are refused</strong> for an account once it has enrolled a
+key.</li>
+</ul>
+<p>Defined elsewhere: device linking (<a href="device-linking-v1.html"><code>device-linking-v1.md</code></a>), plugin manifest signing
+(<a href="workspace-plugins-v1.html"><code>workspace-plugins-v1.md</code></a>) and remote users (<a href="server-to-server-v1.html"><code>server-to-server-v1.md</code></a>). The recovery phrase and
+the key UI are client features of rim-ui.</p>
+<h2 id="keys-and-encodings">Keys and encodings <a class="anchor" href="#keys-and-encodings" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>All keys today are <strong>Ed25519</strong>. Key and signature bytes are <strong>unpadded base64url</strong> (RFC 4648
+§5, no <code>=</code>), written with an algorithm tag in front in version 2 statements (next section).
+Decoders are strict: padding, non-canonical trailing bits, wrong lengths, small-order
+(&quot;weak&quot;) keys and non-canonical point encodings are rejected. Signatures are checked with
+<code>verify_strict</code>, so malleable signatures fail.</li>
+<li>A person holds three kinds of key:<ul>
+<li>the <strong>identity key</strong>, which signs the key log, device certificates, revocations and the
+profile card. It stays off day-to-day devices where possible;</li>
+<li>the <strong>recovery key</strong>, kept offline (derived from the 12-word recovery phrase, see &quot;Recovery
+kit&quot;). It can replace a lost identity key;</li>
+<li>one <strong>device key</strong> per device, certified by the identity key. Only device keys sign in.</li>
+</ul>
+</li>
+<li>The identity key must differ from the recovery key, and a device key must differ from both.</li>
+</ul>
+<h2 id="algorithms-and-statement-versions">Algorithms and statement versions <a class="anchor" href="#algorithms-and-statement-versions" aria-label="Link to this section">#</a></h2>
+<p>Every payload names its format version in <code>&quot;v&quot;</code>. A server accepts versions <strong>1 and 2</strong>; any
+other value is refused with <code>unsupported statement version N</code>. <strong>Clients write version 2.</strong>
+Version 1 stays accepted so that statements signed before version 2 existed keep verifying,
+and nothing a server stores is ever re-signed.</p>
+<p>The two versions differ <strong>only in how keys and signatures are spelled</strong>; field names, context
+bytes, caps and every rule below are the same.</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th></th>
+<th>Version 1</th>
+<th>Version 2</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Key (<code>identityKey</code>, <code>recoveryKey</code>, <code>deviceKey</code>)</td>
+<td><code>&lt;base64url&gt;</code>, Ed25519 implied</td>
+<td><code>&lt;algorithm&gt;:&lt;base64url&gt;</code></td>
+</tr>
+<tr>
+<td><code>signature</code></td>
+<td><code>&lt;base64url&gt;</code>, Ed25519 implied</td>
+<td><code>&lt;algorithm&gt;:&lt;base64url&gt;</code></td>
+</tr>
+<tr>
+<td>Algorithms</td>
+<td>Ed25519 only</td>
+<td>any the server implements</td>
+</tr>
+</tbody></table></div>
+<ul>
+<li><strong>Tagged form.</strong> <code>&lt;algorithm&gt;</code> is 1 to 32 characters of <code>a-z</code>, <code>0-9</code> and <code>-</code>, followed by
+one <code>:</code> (not in the base64url alphabet, so the first colon splits). Today the only algorithm
+is <code>ed25519</code> (32-byte key, 64-byte signature), for example
+<code>ed25519:iojj3XQJ8ZX9UtstPLpdcspnCb8dlBIb83SIAbQPb1w</code>. A version 2 key or signature without a
+tag, and a version 1 key or signature with one, is a <code>VALIDATION</code> error
+(<code>identityKey is not in its canonical encoding</code>). A well-formed name the server does not
+implement is refused with a message naming it (for example
+<code>deviceKey names an unsupported algorithm</code> followed by the name), so a client can tell
+&quot;newer than this server&quot; from a malformed value.</li>
+<li><strong>A signature&#39;s algorithm must be its key&#39;s.</strong> A signature tagged with one algorithm never
+verifies under a key of another (<code>signature algorithm does not match the signing key</code>).</li>
+<li><strong>One key, two spellings.</strong> A key is the same key in either version: <code>KeyState</code>, device
+uniqueness and the <code>deviceKey must differ…</code> checks compare algorithm and key bytes, not text.
+So a version 1 inception&#39;s recovery key and the same key tagged in a version 2 rotation match.</li>
+<li><strong>Mixed logs.</strong> A key log may start in version 1 and continue in version 2 (an existing
+identity moves to the new format, and later to a new algorithm, with an ordinary rotation
+signed by its current key). It never goes back: once an entry is version 2, a later
+version 1 entry is refused (<code>a version 1 statement cannot follow a version 2 key log entry</code>).
+Device certificates, revocations, profile cards and login proofs may be either version
+whatever the log&#39;s version; a version 1 statement can only carry and be checked with
+Ed25519 keys.</li>
+<li><strong>The principal id is derived the same way in both versions and for every algorithm</strong>: it
+is a hash of the inception payload bytes, so rotating to a new version or algorithm keeps
+it. The same keys incepted once as version 1 and once as version 2 give two different ids
+(the payloads differ); a client incepts once and keeps that log.</li>
+<li><strong>Canonical text.</strong> Servers store and return keys in the tagged form, whichever version
+carried them (<code>DeviceKey.publicKey</code>, <code>user.identity_key</code>).</li>
+<li><strong>Hashes stay SHA-256.</strong> <code>principalId</code>, <code>prev</code> and the device key hash are SHA-256, which
+keeps 128-bit security against quantum search; they are not tagged.</li>
+</ul>
+<p><strong>Planned algorithm (not implemented).</strong> Per the hybrid post-quantum decision, identity,
+recovery and device keys later move to <strong>Ed25519 + ML-DSA-44</strong> (FIPS 204), expected under the
+name <code>ed25519-mldsa44</code>: the key and signature carry both parts (32 + 1,312 bytes of key,
+64 + 2,420 bytes of signature) and a signature is valid only when both parts verify. Until a
+server implements it, that name is refused like any unknown algorithm. The payload caps below
+already fit it, including a profile card listing 32 such device keys.</p>
+<h2 id="signed-statements">Signed statements <a class="anchor" href="#signed-statements" aria-label="Link to this section">#</a></h2>
+<p>Every statement travels as <code>{ payload, signature }</code>:</p>
+<ul>
+<li><code>payload</code> is the <strong>exact UTF-8 JSON text that was signed</strong>. Servers verify the signature over
+these bytes (they parse the payload first only to learn which key signed it), and store and
+return the text unchanged. Nothing is ever
+re-serialized, so there is no canonical JSON form: a client may order keys and space the JSON
+however it likes, and must keep the text it signed.</li>
+<li><code>signature</code> is the signature over <code>context || payload</code>, spelled as the payload&#39;s version
+requires, where <code>context</code> names the statement&#39;s purpose, so a signature made for one purpose
+never verifies as another:</li>
+</ul>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Purpose</th>
+<th>Context bytes</th>
+<th>Signed by</th>
+<th>Max payload</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Key log entry</td>
+<td><code>rim.keylog.v1\0</code></td>
+<td>identity key (inception, identity rotation) or recovery key (recovery rotation)</td>
+<td>16 KiB</td>
+</tr>
+<tr>
+<td>Device certificate</td>
+<td><code>rim.device.v1\0</code></td>
+<td>current identity key</td>
+<td>16 KiB</td>
+</tr>
+<tr>
+<td>Device revocation</td>
+<td><code>rim.device-revoke.v1\0</code></td>
+<td>current identity key, or the revoked device itself</td>
+<td>16 KiB</td>
+</tr>
+<tr>
+<td>Profile card</td>
+<td><code>rim.profile-card.v1\0</code></td>
+<td>current identity key</td>
+<td>128 KiB</td>
+</tr>
+<tr>
+<td>Login proof</td>
+<td><code>rim.login.v1\0</code></td>
+<td>a device key</td>
+<td>16 KiB</td>
+</tr>
+</tbody></table></div>
+<p><code>\0</code> is one zero byte. The contexts end in <code>v1</code> in both statement versions: they name the
+purpose, and the version is inside the signed payload. The caps hold for both versions and are
+sized for hybrid keys: a tagged Ed25519 + ML-DSA-44 key is about 1.8 KB of text (ML-DSA-87
+about 3.5 KB), a rotation names two keys, and a card lists up to 32 devices (about 60 KB with
+ML-DSA-44, 115 KB with ML-DSA-87). Every payload has <code>&quot;v&quot;</code> (1 or 2) and a <code>&quot;type&quot;</code>. Unknown fields, duplicate
+fields and a wrong <code>type</code> are rejected. The examples below are version 2; a version 1 payload
+is the same with <code>&quot;v&quot;:1</code> and bare keys. Timestamps are RFC 3339 and informational only: servers
+do not trust client clocks, so nothing depends on them.</p>
+<h3 id="key-log-and-principal-id">Key log and principal id <a class="anchor" href="#key-log-and-principal-id" aria-label="Link to this section">#</a></h3>
+<p>The key log is the person&#39;s history of identity keys. Entry 0 is the <strong>inception</strong>:</p>
+<pre><code class="language-json">{&quot;v&quot;:2,&quot;type&quot;:&quot;inception&quot;,&quot;seq&quot;:0,&quot;identityKey&quot;:&quot;ed25519:…&quot;,&quot;recoveryKey&quot;:&quot;ed25519:…&quot;,&quot;createdAt&quot;:&quot;2026-10-09T00:00:00Z&quot;}</code></pre>
+<p>signed by its own <code>identityKey</code>. The <strong>principal id</strong> is fixed by it forever:</p>
+<pre><code>principalId = &quot;rimp1_&quot; + base64url(SHA-256(&quot;rim.principal.v1\0&quot; || inception payload bytes))</code></pre>
+<p>So the id commits to both the first identity key and the recovery key, survives every rotation,
+and cannot be derived for keys other than those in that exact inception. The log and
+certificates are public, so a server additionally requires proof that the enrolling device holds
+its key (see Enrollment) before it lets an account carry a principal id.</p>
+<p>Every later entry is a <strong>rotation</strong>:</p>
+<pre><code class="language-json">{&quot;v&quot;:2,&quot;type&quot;:&quot;rotate&quot;,&quot;principalId&quot;:&quot;rimp1_…&quot;,&quot;seq&quot;:1,&quot;prev&quot;:&quot;…&quot;,&quot;identityKey&quot;:&quot;ed25519:…&quot;,&quot;recoveryKey&quot;:&quot;ed25519:…&quot;,&quot;signer&quot;:&quot;identity&quot;,&quot;createdAt&quot;:&quot;…&quot;}</code></pre>
+<ul>
+<li><code>seq</code> is the previous entry&#39;s <code>seq + 1</code>; <code>prev</code> is base64url(SHA-256(previous entry&#39;s payload
+bytes)); <code>principalId</code> is the log&#39;s principal id; <code>identityKey</code> must change. <code>v</code> is at least
+the previous entry&#39;s.</li>
+<li><code>&quot;signer&quot;: &quot;identity&quot;</code>: signed by the current identity key. The recovery key must stay the
+same. Existing devices stay enrolled (their certificates name an older <code>keySeq</code>, which is
+fine: a certificate is checked once, when the device is added).</li>
+<li><code>&quot;signer&quot;: &quot;recovery&quot;</code>: signed by the current recovery key. The recovery key may change.
+This is how a person who lost their identity key gets back in.</li>
+<li>In every entry the identity key differs from the recovery key, and an entry with a field this
+section does not name is refused, by servers and clients alike.</li>
+</ul>
+<p><strong>Key log head pinning (clients).</strong> A client keeps, per principal, the <code>seq</code> and payload hash of
+the head of the longest log it verified. The first log it verifies for a principal pins its head;
+a log served later must contain the pinned entry at its <code>seq</code> (the same payload hash), and the
+pin then moves to the new head. A log that is shorter, or that holds another entry at the pinned
+<code>seq</code>, is refused: the client says the person&#39;s identity changed in a way RIM cannot verify, and
+treats that principal&#39;s devices as unverified.</p>
+<h3 id="device-certificate">Device certificate <a class="anchor" href="#device-certificate" aria-label="Link to this section">#</a></h3>
+<pre><code class="language-json">{&quot;v&quot;:2,&quot;type&quot;:&quot;device&quot;,&quot;principalId&quot;:&quot;rimp1_…&quot;,&quot;deviceId&quot;:&quot;&lt;uuid&gt;&quot;,&quot;deviceKey&quot;:&quot;ed25519:…&quot;,&quot;name&quot;:&quot;Laptop&quot;,&quot;keySeq&quot;:0,&quot;issuedAt&quot;:&quot;…&quot;}</code></pre>
+<p>Signed by the identity key at <code>keySeq</code>, which must be the head of the log when the server
+receives it. Clients accept a certificate at an older <code>keySeq</code> (devices stay enrolled across
+identity rotations) unless a recovery rotation follows that <code>keySeq</code>: a recovery voids what the
+lost key signed, as for plugin manifests. <code>deviceId</code> is chosen by the client (UUID v7 recommended). <code>name</code> is trimmed, 1 to
+64 characters, no control characters. Per account, a <code>deviceId</code> and a <code>deviceKey</code> are each used
+once, <strong>revoked devices included</strong>: a revoked device comes back only with a new id and key. A
+key counts as used whichever version spelled it.</p>
+<h3 id="device-revocation">Device revocation <a class="anchor" href="#device-revocation" aria-label="Link to this section">#</a></h3>
+<pre><code class="language-json">{&quot;v&quot;:2,&quot;type&quot;:&quot;device-revoke&quot;,&quot;principalId&quot;:&quot;rimp1_…&quot;,&quot;deviceId&quot;:&quot;&lt;uuid&gt;&quot;,&quot;signer&quot;:&quot;identity&quot;,&quot;issuedAt&quot;:&quot;…&quot;}</code></pre>
+<p><code>&quot;signer&quot;: &quot;identity&quot;</code> (current identity key, any device) or <code>&quot;signer&quot;: &quot;device&quot;</code> (the device
+being revoked signs its own retirement, so a device can sign itself out for good without the
+identity key). Revoking is idempotent: the first signed revocation is kept. Clients verify a
+revocation the server lists (by an identity key of the log, the one current when it was signed,
+or by the revoked device&#39;s own key) and remember a device seen revoked, so a server that later
+omits the revocation changes nothing on that client.</p>
+<h3 id="profile-card">Profile card <a class="anchor" href="#profile-card" aria-label="Link to this section">#</a></h3>
+<pre><code class="language-json">{&quot;v&quot;:2,&quot;type&quot;:&quot;profile-card&quot;,&quot;principalId&quot;:&quot;rimp1_…&quot;,&quot;version&quot;:3,&quot;keySeq&quot;:0,&quot;displayName&quot;:&quot;Ada&quot;,
+ &quot;relays&quot;:[&quot;https://relay.rim.chat&quot;],&quot;devices&quot;:[{&quot;deviceId&quot;:&quot;&lt;uuid&gt;&quot;,&quot;deviceKey&quot;:&quot;ed25519:…&quot;}],&quot;issuedAt&quot;:&quot;…&quot;}</code></pre>
+<p>What a person publishes about themselves, portable between servers. Signed by the current
+identity key at the current <code>keySeq</code>. <code>version</code> is 1 to 2³¹−1 and a server stores a card only if
+its version is greater than the stored one. <code>displayName</code> 1 to 80 characters; at most 8 unique
+<code>http(s)</code> relay URLs of at most 256 bytes; at most 32 devices with unique ids. The server does
+not check the listed devices against its device table: readers verify each device through its
+certificate.</p>
+<h3 id="login-proof">Login proof <a class="anchor" href="#login-proof" aria-label="Link to this section">#</a></h3>
+<pre><code class="language-json">{&quot;v&quot;:2,&quot;type&quot;:&quot;login&quot;,&quot;challengeId&quot;:&quot;&lt;uuid&gt;&quot;,&quot;nonce&quot;:&quot;…&quot;,&quot;audience&quot;:&quot;rim.example.com&quot;,&quot;principalId&quot;:&quot;rimp1_…&quot;,&quot;deviceId&quot;:&quot;&lt;uuid&gt;&quot;}</code></pre>
+<p>Signed by the device key. <code>challengeId</code> and <code>nonce</code> come from <code>keyLoginChallenge</code>. <code>audience</code> is
+the <code>host[:port]</code> the client connects to (lowercase is safest; servers compare it
+case-insensitively), so a server that receives a proof cannot relay it to another server.</p>
+<h2 id="server-rules">Server rules <a class="anchor" href="#server-rules" aria-label="Link to this section">#</a></h2>
+<h3 id="enrollment">Enrollment <a class="anchor" href="#enrollment" aria-label="Link to this section">#</a></h3>
+<p><code>enrollIdentityKey(input: { keyLog, device, proof })</code>, signed in with a password session:</p>
+<ol>
+<li>The whole log (at most 256 entries) is replayed and verified from the inception; the device
+certificate must be signed by the head identity key.</li>
+<li><code>proof</code> is a <code>login</code> statement (same format and context as for challenge login) signed by
+the enrolling device&#39;s key over a fresh <code>keyLoginChallenge</code>, naming this log&#39;s principal id,
+the certificate&#39;s device id and this server&#39;s audience. The challenge is consumed. Without
+it, anyone who had seen a person&#39;s log and a device certificate (every server they use
+holds them) could enroll that principal on another account elsewhere.</li>
+<li>The account must not have a principal id yet, and no other account on this server may have
+this one (both <code>CONFLICT</code>).</li>
+<li>The server stores the log and the device, sets <code>user.principal_id</code> and <code>user.identity_key</code>,
+and binds <strong>the enrolling session to the new device</strong>, so revoking that device later ends it.
+Other existing password sessions stay valid until they expire or are signed out.</li>
+<li>From then on the password no longer signs in (<code>login</code> answers <code>UNAUTHENTICATED</code>, with the
+same timing as a wrong password), <code>requestPasswordReset</code> sends nothing, and an outstanding
+reset link is refused with <code>FORBIDDEN</code>.</li>
+</ol>
+<p>After enrolling, the client offers to sign out other sessions: <code>logoutOtherSessions</code> ends every
+session of the account but the caller&#39;s and answers how many.</p>
+<h3 id="key-only-signup">Key-only signup <a class="anchor" href="#key-only-signup" aria-label="Link to this section">#</a></h3>
+<p><code>signupWithKey(input: { username, displayName, keyLog, device, proof, instanceInviteToken, workspaceInviteToken })</code>, no session needed, creates an account from a key
+identity alone: no password, no email.</p>
+<ol>
+<li>The registration mode applies as for <code>signupWithInvite</code>. In invite-only mode exactly one
+token is required, checked and consumed as by the password signup of its kind: an instance
+invite creates an account with no workspace (<code>serverId</code> null), a workspace invite also joins
+its server. An instance invite bound to an email address admits only a password signup with
+that address, so it refuses a key-only signup with <code>VALIDATION</code>. In open mode no token may be given, and the signup
+counts against the same per-IP limit as an open password signup. A wrong number of tokens is
+<code>VALIDATION</code>.</li>
+<li>The identity is verified as at enrollment (rules 1 and 2): the whole log, at most 256
+entries, replays from the inception; the certificate is signed by the head identity key; the
+proof is a <code>login</code> statement by that device over a fresh <code>keyLoginChallenge</code>, naming this
+log&#39;s principal id, the certificate&#39;s device id and this server&#39;s audience. The challenge is
+consumed. No other account here may hold the principal id (<code>CONFLICT</code>). The username follows
+the password signup&#39;s rules and must be free (<code>CONFLICT</code>); <code>displayName</code> is trimmed, at most
+80 characters, and defaults to the username.</li>
+<li>In one transaction the server creates the user with <code>password_hash</code> and <code>email</code> null and
+<code>principal_id</code> and <code>identity_key</code> set, stores the log and the device, consumes the token (or
+joins the server), and creates a session <strong>bound to the device</strong>, recording the device&#39;s
+<code>lastUsedAt</code>. It answers <code>{ userId, serverId }</code> and sets the same session and CSRF cookies as
+<code>signupWithInvite</code>. Of two signups racing for one principal, the unique index refuses the
+second (<code>CONFLICT</code>).</li>
+<li>A key-only account has no password. <code>login</code> answers <code>UNAUTHENTICATED</code> with the same timing as
+a wrong password, <code>requestPasswordReset</code> sends nothing, and <code>resetPassword</code> is <code>FORBIDDEN</code>, as
+for an enrolled account.</li>
+<li>Nothing emails an account without an email address: notification digests skip it.</li>
+</ol>
+<h3 id="challenge-login">Challenge login <a class="anchor" href="#challenge-login" aria-label="Link to this section">#</a></h3>
+<ol>
+<li><code>keyLoginChallenge</code> (no session) returns <code>{ challengeId, nonce, expiresAt }</code>: 32 random bytes,
+valid for <strong>120 seconds</strong>, single use. At most 60 challenges per IP per 5 minutes.</li>
+<li>The client signs a login proof with its device key and calls <code>loginWithKey(proof)</code>.</li>
+<li>The server finds the account by <code>principalId</code> and the device by <code>deviceId</code>, verifies the
+signature with that device&#39;s key, checks the audience against its accepted audiences, and
+claims the challenge atomically (unused, unexpired, same nonce).</li>
+<li>On success it locks the user row, reads the device again (a revocation that committed in the
+meantime refuses the login), creates a session bound to the device, records the device&#39;s
+<code>lastUsedAt</code>, and sets the same session and CSRF cookies as <code>login</code>.</li>
+<li>Every refusal is <code>UNAUTHENTICATED</code> with no detail, except a valid proof from a <strong>revoked</strong>
+device, which is <code>FORBIDDEN</code> so the client can tell the person to link the device again. A
+proof is valid here only when it passes every check of step 3: revocation is looked at after
+the audience and the challenge (which the attempt uses up), so an old proof, a replayed one or
+one made for another server never shows whether the device was revoked.
+Failed attempts are limited to 20 per IP per 15 minutes; successful logins do not count.</li>
+</ol>
+<p><strong>Accepted audiences</strong> come from <code>RIM_KEY_LOGIN_AUDIENCES</code> (comma-separated <code>host[:port]</code>).
+When it is unset, the host of <code>RIM_PUBLIC_BASE_URL</code> is used; when that is unset too,
+<code>localhost:PORT</code> and <code>127.0.0.1:PORT</code>, but only when <code>RIM_SERVER_HOST</code> is <code>localhost</code> or a
+loopback address: a server bound to any other address (<code>0.0.0.0</code> included) with neither variable
+set refuses to start, with a message naming both. The server logs the list at start-up.</p>
+<p><code>keyLoginChallenge</code>, <code>loginWithKey</code> and <code>signupWithKey</code> are exempt from the CSRF header check,
+because they are used without a session; <code>loginWithKey</code> and <code>signupWithKey</code> only act on a fresh
+signature, which a forged cross-site request cannot produce. <code>rotateIdentityKey</code> is exempt only when the request carries <strong>no session
+cookie</strong> (recovery, signed out). With a session cookie it needs the CSRF header like any other
+mutation, because an identity rotation is accepted on the strength of that session.</p>
+<h3 id="devices">Devices <a class="anchor" href="#devices" aria-label="Link to this section">#</a></h3>
+<ul>
+<li><code>addDeviceKey(certificate)</code>: signed in; the certificate must be signed by the current identity
+key at the current <code>keySeq</code>.</li>
+<li><code>revokeDeviceKey(revocation)</code>: signed in; marks the device revoked, keeps the signed
+revocation, and <strong>ends every session of that device</strong>.</li>
+<li><code>myKeyIdentity</code> lists the log, every device (revoked ones included) and the card.</li>
+</ul>
+<h3 id="rotation-and-recovery">Rotation and recovery <a class="anchor" href="#rotation-and-recovery" aria-label="Link to this section">#</a></h3>
+<p><code>rotateIdentityKey(input: { entry, device })</code>:</p>
+<ul>
+<li>An <strong>identity rotation</strong> needs a session of that account. Devices stay enrolled. It is
+refused (<code>VALIDATION</code>, <code>a key log may have at most 256 entries</code>) when the log already has 256
+entries, the same cap as at enrollment, so a log grown by identity rotations can always be
+enrolled on another server.</li>
+<li>A <strong>recovery rotation</strong> works <strong>without a session</strong> (the person lost every device). It must
+come with a certificate for a new device under the new identity key. The server appends the
+entry, <strong>revokes every device and ends every session</strong> of the account, then enrolls the new
+device, which can sign in right away. The 256-entry cap does not stop a recovery: being
+locked out of the account is worse than a log too long to carry elsewhere. A log that
+recoveries took past 256 entries is refused by enrollment on other servers. Anonymous attempts
+count against the same per-IP failure limit as logins, whether they succeed or not. An anonymous rotation for a principal
+this server does not know is <code>UNAUTHENTICATED</code>; other refusals carry the validation reason,
+so they show whether a principal is enrolled here. That is not secret: <code>User.principalId</code> is
+visible to signed-in users.</li>
+<li>A rotation that does not extend the current head (wrong <code>seq</code> or <code>prev</code>) is a <code>VALIDATION</code>
+error. Two rotations racing for the same <code>seq</code> are serialized by the row lock below, so the
+second one sees the new head and fails the same way; fetch <code>myKeyIdentity</code> and sign again.</li>
+</ul>
+<p>Every write that depends on the log (enroll, add, revoke, rotate, publish) runs in one
+transaction with the user row locked (<code>SELECT … FOR UPDATE</code>), so two of them for one account
+never interleave.</p>
+<h2 id="storage">Storage <a class="anchor" href="#storage" aria-label="Link to this section">#</a></h2>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Where</th>
+<th>What</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>user.kind</code></td>
+<td><code>local</code> (default) or <code>remote</code>; <code>remote</code> is a person whose relay is another server (<a href="server-to-server-v1.html"><code>server-to-server-v1.md</code></a>)</td>
+</tr>
+<tr>
+<td><code>user.principal_id</code>, <code>user.identity_key</code></td>
+<td>Null until enrollment, set together; <code>principal_id</code> unique; <code>identity_key</code> is the current identity key in tagged form</td>
+</tr>
+<tr>
+<td><code>user.password_hash</code>, <code>user.email</code></td>
+<td>Null for a key-only account. <code>CHECK (password_hash IS NOT NULL OR principal_id IS NOT NULL)</code>: a key-only account always has a principal. Migration <code>key_only_signup</code>&#39;s <code>down</code> refuses to run while a row has either null</td>
+</tr>
+<tr>
+<td><code>user.home_relay</code></td>
+<td>The relay of a <code>remote</code> user (<a href="server-to-server-v1.html"><code>server-to-server-v1.md</code></a>); null for local users</td>
+</tr>
+<tr>
+<td><code>key_log_entry</code></td>
+<td><code>(user_id, seq)</code> primary key, <code>entry_type</code> inception or rotate, payload, signature</td>
+</tr>
+<tr>
+<td><code>device_key</code></td>
+<td><code>public_key</code> in tagged form, <code>key_hash</code> = SHA-256 of that text (32 bytes), certificate as signed, <code>key_seq</code>, <code>added_at</code>, <code>last_used_at</code>, <code>revoked_at</code> and the signed revocation; unique <code>(user_id, device_id)</code> and <code>(user_id, key_hash)</code></td>
+</tr>
+<tr>
+<td><code>profile_card</code></td>
+<td>One row per user, the newest card as signed</td>
+</tr>
+<tr>
+<td><code>key_challenge</code></td>
+<td>Nonce, expiry, <code>used_at</code>; expired rows are deleted when new challenges are issued</td>
+</tr>
+<tr>
+<td><code>session.device_key_id</code></td>
+<td>The device a session belongs to; null for password sessions not bound to a device</td>
+</tr>
+</tbody></table></div>
+<p>The plan called the log table <code>key_rotation</code>; it is <code>key_log_entry</code> because it also holds the
+inception. The device key index is on <code>key_hash</code> rather than on the key text, so it stays 32
+bytes per row whatever the algorithm (a hybrid key&#39;s text is close to the btree row limit).
+Migration <code>key_identity_algorithm_agility</code> prefixed every stored key with <code>ed25519:</code> and
+computed <code>key_hash</code> for existing rows; its <code>down</code> strips the prefix again and refuses to run
+while a key of another algorithm is stored. Signed payloads are never rewritten. Keys live on the existing <code>user</code> row, so none of the tables that reference the user
+id move.</p>
+<h2 id="graphql">GraphQL <a class="anchor" href="#graphql" aria-label="Link to this section">#</a></h2>
+<pre><code class="language-graphql">type User { principalId: String … }            # null until the account enrolls a key; set at key-only signup
+type DeviceKey { publicKey: String … }         # tagged: &quot;ed25519:…&quot;
+
+input SignedStatementInput { payload: String!  signature: String! }
+type SignedStatement { payload: String!  signature: String! }
+
+input SignupWithKeyInput {
+  username: String!
+  displayName: String
+  keyLog: [SignedStatementInput!]!
+  device: SignedStatementInput!
+  proof: SignedStatementInput!
+  instanceInviteToken: String
+  workspaceInviteToken: String
+}
+
+type Query {
+  myKeyIdentity: KeyIdentity!
+  keyLog(principalId: String!): [KeyLogEntry!]!   # public, no session; [] when not enrolled here
+}
+type Mutation {
+  keyLoginChallenge: KeyLoginChallenge!
+  loginWithKey(proof: SignedStatementInput!): LoginPayload!
+  enrollIdentityKey(input: EnrollIdentityKeyInput!): KeyIdentity!
+  signupWithKey(input: SignupWithKeyInput!): SignupWithInvitePayloadGql!   # { userId, serverId }
+  addDeviceKey(certificate: SignedStatementInput!): DeviceKey!
+  revokeDeviceKey(revocation: SignedStatementInput!): DeviceKey!
+  rotateIdentityKey(input: RotateIdentityKeyInput!): KeyIdentity!
+  publishProfileCard(card: SignedStatementInput!): ProfileCard!
+  logoutOtherSessions: Int!                       # sessions ended; the caller's stays
+}</code></pre>
+<p>Malformed or unverifiable statements fail with code <code>VALIDATION</code> and a short reason such as
+<code>signature does not verify</code> or <code>key log entry has seq 2, expected 1</code>. A payload that is not JSON
+of the statement&#39;s shape (unknown, duplicate or missing fields, wrong types) is refused with the
+fixed reason <code>statement payload is not valid</code>; the JSON parser&#39;s own message goes to the server
+log only.</p>
+<p><code>keyLog</code> needs no session. The log is public (every server a person uses holds it), and a person
+who lost every device needs its head (<code>seq</code> and the hash of the last payload) to sign a recovery
+rotation. It answers <code>[]</code> for a principal no account here has (and for anything longer than 64
+characters, which is not a principal id). It is not rate-limited: unlike the anonymous rotation,
+it checks no secret, and principal ids are 256-bit hashes that cannot be guessed, so answering
+whether one is enrolled here tells nothing a holder of the id does not already know.</p>
+<h2 id="plugin-principal-ids-rimp0_-to-rimp1_">Plugin principal ids: <code>rimp0_</code> to <code>rimp1_</code> <a class="anchor" href="#plugin-principal-ids-rimp0_-to-rimp1_" aria-label="Link to this section">#</a></h2>
+<p>Plugins see <code>{ principalId, displayName }</code> (<a href="plugin-protocol-v1.html"><code>docs/specs/plugin-protocol-v1.md</code></a>). Until now the
+client computed a <strong>provisional</strong> id, <code>rimp0_</code> + base64url(SHA-256(
+<code>&quot;rim.principal.provisional.v1\0&quot;</code> + the lowercased account UUID)), in
+<code>rim-ui/src-tauri/src/plugin_host/protocol.rs</code>.</p>
+<p>This PR adds <code>User.principalId</code>. The mapping happens <strong>once, in the client</strong>:</p>
+<ol>
+<li>When the signed-in user&#39;s <code>principalId</code> turns non-null (after enrollment on this device, or
+on the first fetch on another device), the plugin host computes the account&#39;s old <code>rimp0_</code>
+id the same way as before and records <code>rimp0_… → rimp1_…</code> in its local store.</li>
+<li>It sends running plugins <code>rim.principal.changed</code> with the new principal, plus the old-to-new
+mapping in <code>rim.principals.remapped</code> (plugin-protocol-v1, section 11), so a plugin can
+rewrite stored ids. It sends the mapping again after every handshake, so a plugin that was
+not running at the switch still gets it.</li>
+<li>Other people&#39;s ids map the same way when their <code>User.principalId</code> is first seen non-null. An
+account that never enrolls keeps its <code>rimp0_</code> id.</li>
+</ol>
+<p>The desktop client does this; the server only exposes <code>principalId</code>.</p>
+<h2 id="desktop-client-rim-ui">Desktop client (rim-ui) <a class="anchor" href="#desktop-client-rim-ui" aria-label="Link to this section">#</a></h2>
+<p>What the desktop app does with these statements. Other clients (the web app as a linked device,
+the CLI) may choose differently, except for the recovery kit format, which every client that
+offers recovery must read.</p>
+<ul>
+<li><strong>Where keys live.</strong> Every secret goes through the app&#39;s one OS keyring helper
+(<code>src-tauri/src/secret_store.rs</code>), one entry per principal: the device key, and on the device
+that enrolled the identity, the identity key. The identity key stays on that device until device
+linking can move it off; the device key alone signs in. Keys never reach the webview: it asks the
+Tauri side for a signed statement and sends that.</li>
+<li><strong>Enrollment</strong> (Settings &gt; Security, signed in with a password): the app creates the identity,
+recovery and device keys, shows the recovery kit once, and only enrolls after the person
+confirms they saved it. The device and identity keys are written to the keyring <strong>before</strong>
+<code>enrollIdentityKey</code> is sent, so a crash in between never leaves an enrolled account without its
+keys; keys whose principal the server never accepted are removed. The recovery key is never
+stored. The app then publishes a profile card (display name, this server&#39;s URL, the active
+devices).</li>
+<li><strong>Key-only signup</strong> (the join pages, next to the password form, with the page&#39;s token if it
+has one): the person picks a username, an optional display name and this device&#39;s name; the
+app creates the keys as for enrollment, shows the recovery kit once, and only sends
+<code>signupWithKey</code> after the person confirms they saved it. The keys are written to the keyring
+<strong>before</strong> it is sent. When it fails, the app reads <code>keyLog</code> for the new principal: an empty log
+means the server refused, so the keys are removed and the draft stays in memory, letting the
+person retry with the same keys (and the kit they saved) or discard them; a log that holds the
+principal means an attempt whose answer was lost created the account, so the app writes the
+draft&#39;s keys back if a failed attempt removed them and signs in with the device key (also when
+the person discards the draft); with no answer the keys stay for a later sign-in. On success the
+keys are confirmed and linked to the returned user id, the profile card is published, and the
+app opens the account as after a password signup (a workspace invite whose answer was lost
+opens the workspace its preview named). Unconfirmed keys whose principal has no key log on the
+server (a signup or enrollment that never reached it) are removed when signing in with them
+fails. The web app keeps password signup only.</li>
+<li><strong>Other sessions.</strong> Right after an enrollment, Settings &gt; Security offers &quot;Sign out other
+sessions&quot; (<code>logoutOtherSessions</code>); Account settings offers it for every account, on the
+desktop and the web.</li>
+<li><strong>Audience.</strong> The <code>host[:port]</code> of the GraphQL endpoint URL as written, lowercased, the same
+rule the server applies to <code>RIM_PUBLIC_BASE_URL</code>.</li>
+<li><strong>Sign-in.</strong> On a cold start whose session cookie is gone or refused, the app signs in with the
+device key of the account it was last signed in to. After an explicit sign-out it waits on the
+sign-in screen, which offers &quot;Sign in with this device&quot; for every account this device holds a
+key for on this server. A <code>FORBIDDEN</code> answer says the device was revoked; the
+sign-in screen then offers to remove that device&#39;s keys from this computer.</li>
+<li><strong>Statement version.</strong> The app writes version 2 (tagged keys and signatures) and reads both.
+Keys and signatures are opaque text outside the one module that signs and verifies, so a hybrid
+algorithm is added there alone. A version 1 log (an identity enrolled by an older client) is
+extended in version 2 by its next rotation.</li>
+<li><strong>Identity rotation</strong> keeps the recovery key and every device. The new identity key is stored as
+pending, with the <code>seq</code> its rotation creates, before <code>rotateIdentityKey</code> is sent. A verified log
+whose head names it promotes it; a log that already holds that <code>seq</code> with another key drops it;
+a log that ends before it (a stale copy, or the rotation still in flight) leaves it pending, and
+a retry signs the same pending key again, so a rotation whose answer was lost never loses the
+key it put on the server.</li>
+<li><strong>Identity key backup.</strong> With the history archive set up, a device that holds the identity
+key keeps a copy of it in the archive, sealed under a backup key that only the recovery kit
+gives (<code>HKDF-SHA256(ikm = the phrase's 16 bytes, salt = &quot;rim.recovery-phrase.v1&quot;, info = &quot;identity backup key&quot;)</code>, or the same over a version 1 kit&#39;s 32-byte seed); the device
+keeps that backup key in its keyring record, never the phrase. It also wraps the archive key
+under the identity key. A linked device takes the identity key over in Settings &gt; Security
+with the recovery phrase: the phrase must match the log&#39;s <code>recoveryKey</code> and the backed-up key
+the head&#39;s <code>identityKey</code>; nothing is signed or revoked. Format: rim-ui
+<code>docs/specs/history-archive-v1.md</code>, &quot;Identity key backup&quot;.</li>
+<li><strong>Profile card.</strong> Lists this server&#39;s URL as the one relay and the account&#39;s active devices. A
+device is listed only if its certificate verifies against the replayed log at its <code>keySeq</code>, so
+a server cannot add a key of its own to the card the identity key signs.</li>
+<li><strong>Enrollment in flight.</strong> While <code>enrollIdentityKey</code> has not answered, the server saying &quot;not
+enrolled&quot; proves nothing, so nothing removes keys on that basis (closing Settings mid-way keeps
+them; a later check removes them if the enrollment never landed).</li>
+</ul>
+<h3 id="recovery-kit">Recovery kit <a class="anchor" href="#recovery-kit" aria-label="Link to this section">#</a></h3>
+<p>Shown once at enrollment, as text the person saves. Clients write version 2; readers accept
+both versions, as a whole kit or as the bare secret alone (a 12-word phrase or a <code>RK1-</code> key),
+and tell them apart by content, not by the header line. Either way the secret is a 32-byte seed
+used as the Ed25519 recovery key (<code>SigningKey::from_bytes</code>); the key log&#39;s <code>recoveryKey</code> is its
+public key. Nothing is migrated: an account enrolled with a version 1 kit recovers with its
+<code>RK1-</code> key.</p>
+<p><strong>Version 2, the recovery phrase.</strong></p>
+<pre><code>RIM recovery kit (v2)
+Account id: rimp1_nz1POml8JmCMcFDECrtu60ibohPKnywhcExmOPMvTUo
+Recovery phrase: word1 word2 … word12</code></pre>
+<ul>
+<li><strong>Entropy</strong>: 16 random bytes from the OS.</li>
+<li><strong>Phrase</strong>: the BIP39 encoding of those bytes with the English word list: 128 bits plus a 4-bit
+checksum (the first 4 bits of SHA-256 of the entropy), 12 words of 11 bits each.</li>
+<li><strong>Seed</strong>: <code>HKDF-SHA256(ikm = the 16 entropy bytes, salt = &quot;rim.recovery-phrase.v1&quot;, info = &quot;recovery key&quot;)</code>, expanded to 32 bytes. It is <strong>not</strong> BIP39&#39;s PBKDF2 seed: a passphrase
+and 2,048 rounds add nothing to 128 random bits.</li>
+<li><strong>Reading</strong>: case, extra spaces and line breaks are ignored, and so is numbering in front of a
+word (<code>1.</code>, <code>1)</code>, or a number on its own, as copied from a numbered list). The kit&#39;s header
+and account id lines and the <code>Recovery phrase:</code> label are skipped. A phrase that is not 12
+words is refused; so is a word outside the list, with a message naming its position and the
+word as typed; so is a phrase whose checksum fails (most typos and swapped words).</li>
+</ul>
+<p>Known-answer vector (never use it for a real account):</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Entropy</td>
+<td><code>000102030405060708090a0b0c0d0e0f</code></td>
+</tr>
+<tr>
+<td>Phrase</td>
+<td><code>abandon amount liar amount expire adjust cage candy arch gather drum buyer</code></td>
+</tr>
+<tr>
+<td>Recovery key</td>
+<td><code>ed25519:K2c3c55QDKnCUKWO8yTdZm25JIT20PKr5vaNC91F4cw</code></td>
+</tr>
+</tbody></table></div>
+<p><strong>Version 1, the recovery key.</strong></p>
+<pre><code>RIM recovery kit (v1)
+Account id: rimp1_nz1POml8JmCMcFDECrtu60ibohPKnywhcExmOPMvTUo
+Recovery key: RK1-…   (14 groups of 4 characters)</code></pre>
+<p>The recovery key is <code>RK1-</code> and the RFC 4648 base32 (uppercase, no padding) of the 32-byte
+recovery seed followed by the first 3 bytes of <code>SHA-256(&quot;rim.recovery-kit.v1\0&quot; || seed)</code>, in
+groups of 4 joined by <code>-</code>. Readers ignore case, spaces and <code>-</code>, read <code>0</code> as <code>O</code> and <code>1</code> as <code>I</code>,
+and refuse a key whose check bytes do not match. Version 2 replaced this format for new
+enrollments; readers keep accepting it. A text holds a version 1 key when a line other than the
+account id&#39;s has a word starting with <code>RK1</code>; a phrase never does.</p>
+<p><strong>Recovering</strong> (signed out, every device lost): the app reads the kit, fetches <code>keyLog</code> for the
+account id, replays it, checks that the head&#39;s <code>recoveryKey</code> is the kit&#39;s, and signs a rotation
+with <code>&quot;signer&quot;: &quot;recovery&quot;</code> that keeps the same recovery key and names a new identity key, plus a
+certificate for a new device at the new <code>seq</code>. It stores the new keys, sends <code>rotateIdentityKey</code>
+without a session, and signs in with the new device key. Every other device and session of the
+account is signed out by the server.</p>
+<p>Whether a recovery landed is read from the key log, not from the error: when <code>rotateIdentityKey</code>
+fails, the app fetches <code>keyLog</code> again. If the log ends at its rotation it signs in; if the log
+answers without it, the attempt&#39;s keys are removed and any keys this device held for the account
+before the attempt are put back; with no answer the keys stay for the next try.</p>
+<h2 id="deferred">Deferred <a class="anchor" href="#deferred" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>QR device linking (a new device gets its certificate from the old one through the server as a
+courier) is specified in <a href="device-linking-v1.html"><code>device-linking-v1.md</code></a>.</li>
+<li>Usernames stay unique across the whole table; rows of kind <code>remote</code> get an <code>r_</code> username
+(<a href="server-to-server-v1.html"><code>server-to-server-v1.md</code></a>).</li>
+</ul>
+<h2 id="appendix-a-known-answer-vectors-version-1">Appendix A: known-answer vectors (version 1) <a class="anchor" href="#appendix-a-known-answer-vectors-version-1" aria-label="Link to this section">#</a></h2>
+<p>Checked by <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/rim_identity/src/vectors.rs"><code>rim_identity/src/vectors.rs</code></a>. Keys are <code>SigningKey::from_bytes([seed; 32])</code>; never
+use these seeds for real keys.</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Identity key (seed 1)</td>
+<td><code>iojj3XQJ8ZX9UtstPLpdcspnCb8dlBIb83SIAbQPb1w</code></td>
+</tr>
+<tr>
+<td>Recovery key (seed 101)</td>
+<td><code>1i8Bah79Hk_feT60LNhEceG6nwzwTRKHtcxx9hYofLg</code></td>
+</tr>
+<tr>
+<td>Device key (seed 20)</td>
+<td><code>IIKL9cW9ystoSGMzbCAvtVmdpIvlWWYVdCFwcFvsqfc</code></td>
+</tr>
+<tr>
+<td>Principal id</td>
+<td><code>rimp1_nz1POml8JmCMcFDECrtu60ibohPKnywhcExmOPMvTUo</code></td>
+</tr>
+<tr>
+<td><code>prev</code> for the first rotation</td>
+<td><code>o1oFYkMXfjtQJnG6as5GURR0cnzeYNYv5Br-LaeI78I</code></td>
+</tr>
+</tbody></table></div>
+<p>Inception payload and signature:</p>
+<pre><code>{&quot;v&quot;:1,&quot;type&quot;:&quot;inception&quot;,&quot;seq&quot;:0,&quot;identityKey&quot;:&quot;iojj3XQJ8ZX9UtstPLpdcspnCb8dlBIb83SIAbQPb1w&quot;,&quot;recoveryKey&quot;:&quot;1i8Bah79Hk_feT60LNhEceG6nwzwTRKHtcxx9hYofLg&quot;,&quot;createdAt&quot;:&quot;2026-10-09T00:00:00Z&quot;}
+vf3zjxbHUJ8l9Oe6ayFGZZszVH1c_FVgO04F_4PqkfsYu9h8jAgbPKhAIAYHlQxg-7yAO5w1OEMmcAGcXptVDQ</code></pre>
+<p>Device certificate (device id <code>00000000-0000-0000-0000-000000000001</code>, name <code>Laptop</code>):</p>
+<pre><code>{&quot;v&quot;:1,&quot;type&quot;:&quot;device&quot;,&quot;principalId&quot;:&quot;rimp1_nz1POml8JmCMcFDECrtu60ibohPKnywhcExmOPMvTUo&quot;,&quot;deviceId&quot;:&quot;00000000-0000-0000-0000-000000000001&quot;,&quot;deviceKey&quot;:&quot;IIKL9cW9ystoSGMzbCAvtVmdpIvlWWYVdCFwcFvsqfc&quot;,&quot;name&quot;:&quot;Laptop&quot;,&quot;keySeq&quot;:0,&quot;issuedAt&quot;:&quot;2026-10-09T00:00:00Z&quot;}
+tt6UNl3tRCwupWIYEfnWzqW9qVqDsJju2dA7d2CdNqdIZ0piVeP_Q6Y1lLfA4YN-26tsdaFea-rM_I8Qy9H6Cg</code></pre>
+<p>Login proof (challenge <code>00000000-0000-0000-0000-000000000009</code>, nonce <code>bm9uY2U</code>, audience
+<code>localhost:8080</code>):</p>
+<pre><code>{&quot;v&quot;:1,&quot;type&quot;:&quot;login&quot;,&quot;challengeId&quot;:&quot;00000000-0000-0000-0000-000000000009&quot;,&quot;nonce&quot;:&quot;bm9uY2U&quot;,&quot;audience&quot;:&quot;localhost:8080&quot;,&quot;principalId&quot;:&quot;rimp1_nz1POml8JmCMcFDECrtu60ibohPKnywhcExmOPMvTUo&quot;,&quot;deviceId&quot;:&quot;00000000-0000-0000-0000-000000000001&quot;}
+jB_BFFAn7e-FMh8wCSWhnCcPzMjoe1fTKwlCoGfE0p1OYkhZWjV4J1c_AgeIhKpWOnLYyB0PqstAEYmaCITXBw</code></pre>
+<h2 id="appendix-b-known-answer-vectors-version-2">Appendix B: known-answer vectors (version 2) <a class="anchor" href="#appendix-b-known-answer-vectors-version-2" aria-label="Link to this section">#</a></h2>
+<p>Checked by <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/rim_identity/src/vectors.rs"><code>rim_identity/src/vectors.rs</code></a>. Same keys and fields as appendix A, written as
+version 2 statements. The principal id differs from appendix A because the inception payload
+differs.</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Identity key (seed 1)</td>
+<td><code>ed25519:iojj3XQJ8ZX9UtstPLpdcspnCb8dlBIb83SIAbQPb1w</code></td>
+</tr>
+<tr>
+<td>Device key (seed 20)</td>
+<td><code>ed25519:IIKL9cW9ystoSGMzbCAvtVmdpIvlWWYVdCFwcFvsqfc</code></td>
+</tr>
+<tr>
+<td>Principal id</td>
+<td><code>rimp1_txDLbnipi5i3kCJtJwBOUixzv_MY8OnU0mcy--Tyje0</code></td>
+</tr>
+</tbody></table></div>
+<p>Inception payload and signature:</p>
+<pre><code>{&quot;v&quot;:2,&quot;type&quot;:&quot;inception&quot;,&quot;seq&quot;:0,&quot;identityKey&quot;:&quot;ed25519:iojj3XQJ8ZX9UtstPLpdcspnCb8dlBIb83SIAbQPb1w&quot;,&quot;recoveryKey&quot;:&quot;ed25519:1i8Bah79Hk_feT60LNhEceG6nwzwTRKHtcxx9hYofLg&quot;,&quot;createdAt&quot;:&quot;2026-10-09T00:00:00Z&quot;}
+ed25519:kGvSf1hR28cdKP2Smwmy2BHEdP7wmKwy0At-DtrUs8mYhfzF0jjHTjpeX4DAzXv5HuCVwFEYWM1DjN-6wkU2Ag</code></pre>
+<p>Device certificate (device id <code>00000000-0000-0000-0000-000000000001</code>, name <code>Laptop</code>):</p>
+<pre><code>{&quot;v&quot;:2,&quot;type&quot;:&quot;device&quot;,&quot;principalId&quot;:&quot;rimp1_txDLbnipi5i3kCJtJwBOUixzv_MY8OnU0mcy--Tyje0&quot;,&quot;deviceId&quot;:&quot;00000000-0000-0000-0000-000000000001&quot;,&quot;deviceKey&quot;:&quot;ed25519:IIKL9cW9ystoSGMzbCAvtVmdpIvlWWYVdCFwcFvsqfc&quot;,&quot;name&quot;:&quot;Laptop&quot;,&quot;keySeq&quot;:0,&quot;issuedAt&quot;:&quot;2026-10-09T00:00:00Z&quot;}
+ed25519:0HjRzn6gQ2q-vCHSkdOPK2ykGGBUpW2fYdDuEdTzf6OxsWzjXeNNpRSVgzPxOEfbYzZ9o9DWqp4NxcTEDhOaDA</code></pre>
+<p>Login proof (challenge <code>00000000-0000-0000-0000-000000000009</code>, nonce <code>bm9uY2U</code>, audience
+<code>localhost:8080</code>):</p>
+<pre><code>{&quot;v&quot;:2,&quot;type&quot;:&quot;login&quot;,&quot;challengeId&quot;:&quot;00000000-0000-0000-0000-000000000009&quot;,&quot;nonce&quot;:&quot;bm9uY2U&quot;,&quot;audience&quot;:&quot;localhost:8080&quot;,&quot;principalId&quot;:&quot;rimp1_txDLbnipi5i3kCJtJwBOUixzv_MY8OnU0mcy--Tyje0&quot;,&quot;deviceId&quot;:&quot;00000000-0000-0000-0000-000000000001&quot;}
+ed25519:3FSH7M9uz0sP42GA0gKPso6JmGSx32Y1WZ-oKBW0VcVWANGEEjkDjaEtDpHNIjdEgC5fFA2jbfzSmuzhW7k1Dg</code></pre>
+<p>Mixed log: the appendix A log (version 1 inception) extended by a version 2 identity rotation
+to the key from seed 2. Its <code>prev</code> is appendix A&#39;s; the principal id stays appendix A&#39;s.</p>
+<pre><code>{&quot;v&quot;:2,&quot;type&quot;:&quot;rotate&quot;,&quot;principalId&quot;:&quot;rimp1_nz1POml8JmCMcFDECrtu60ibohPKnywhcExmOPMvTUo&quot;,&quot;seq&quot;:1,&quot;prev&quot;:&quot;o1oFYkMXfjtQJnG6as5GURR0cnzeYNYv5Br-LaeI78I&quot;,&quot;identityKey&quot;:&quot;ed25519:gTl3Dqh9F19Wo1Rmw0x-zMuNipG07jeiXfYPW4_Js5Q&quot;,&quot;recoveryKey&quot;:&quot;ed25519:1i8Bah79Hk_feT60LNhEceG6nwzwTRKHtcxx9hYofLg&quot;,&quot;signer&quot;:&quot;identity&quot;,&quot;createdAt&quot;:&quot;2026-10-09T00:00:00Z&quot;}
+ed25519:D2moo9U9OjVL9zed4lM0A5cHoGQOVEtUfgKfAmOn0P18x74NEbh4FL4f3PbulQzoVuGAGOEJUZq3R2ZNpeUdCg</code></pre>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/docs/specs/key-identity-v1.md">rim-server/docs/specs/key-identity-v1.md</a> at <code>c86029b</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+<script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
+</body>
+</html>

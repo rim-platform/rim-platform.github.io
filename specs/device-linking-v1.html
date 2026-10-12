@@ -1,0 +1,737 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Device linking v1 · RIM</title>
+<meta name="description" content="Status: implemented, normative. Extends docs/specs/key-identity-v1.md (read it first: keys, tagged encodings, device certificates and challenge login are defined there). This document is the contract between the server …">
+<link rel="icon" href="../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../index.html" aria-label="RIM home">
+      <picture><source srcset="../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../index.html#what">What RIM is</a>
+      <a href="../index.html#how">How it works</a>
+      <a href="../docs/self-hosting.html">Self-host</a>
+      <a href="../configure/index.html">Configure</a>
+      <a href="../docs/index.html">Docs</a>
+      <a href="../api/index.html">API</a>
+      <a href="index.html" aria-current="page">Specs</a>
+      <a href="../docs/contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="index.html">Specs</a><span aria-hidden="true">/</span><span>Device linking v1</span></div>
+  <div class="page with-toc">
+    <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
+<ol>
+<li><a href="#summary">Summary</a></li>
+<li><a href="#what-the-channel-protects">What the channel protects</a></li>
+<li><a href="#flow">Flow</a></li>
+<li><a href="#link-code">Link code</a></li>
+<li><a href="#channel-cryptography">Channel cryptography</a><ol><li><a href="#keys">Keys</a></li><li><a href="#sealing">Sealing</a></li><li><a href="#sealed-message">Sealed message</a></li><li><a href="#plaintext-rules">Plaintext rules</a></li><li><a href="#fingerprint">Fingerprint</a></li></ol></li>
+<li><a href="#server-rules">Server rules</a><ol><li><a href="#calls">Calls</a></li><li><a href="#errors">Errors</a></li><li><a href="#link-ids">Link ids</a></li><li><a href="#sealed-bytes">Sealed bytes</a></li><li><a href="#limits">Limits</a></li><li><a href="#expiry-and-cleanup">Expiry and cleanup</a></li></ol></li>
+<li><a href="#storage">Storage</a></li>
+<li><a href="#graphql">GraphQL</a></li>
+<li><a href="#client-rules">Client rules</a><ol><li><a href="#old-device-desktop">Old device (desktop)</a></li><li><a href="#new-device-desktop">New device (desktop)</a></li><li><a href="#web-client">Web client</a></li></ol></li>
+<li><a href="#failure-and-retry">Failure and retry</a></li>
+<li><a href="#deferred">Deferred</a></li>
+<li><a href="#test-plan">Test plan</a></li>
+<li><a href="#appendix-a-known-answer-vectors">Appendix A: known-answer vectors</a></li>
+</ol>
+</details></aside>
+    <main id="content" class="prose">
+<h1 id="device-linking-v1">Device linking v1</h1>
+<p class="status"><span><b>Device linking v1</b></span><span>version 1</span><span>status: implemented, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/docs/specs/device-linking-v1.md">rim-server/docs/specs/device-linking-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/c86029b35a7ef7770b05e7bda62909f988343f7f">c86029b</a></span></p>
+<p><em>Status: implemented, normative. Extends <a href="key-identity-v1.html"><code>docs/specs/key-identity-v1.md</code></a>
+(read it first: keys, tagged encodings, device certificates and challenge login are defined
+there). This document is the contract between the server (<code>DeviceLinkService</code>), the desktop
+client and the web client for giving a new device its own certified device key.</em></p>
+<h2 id="summary">Summary <a class="anchor" href="#summary" aria-label="Link to this section">#</a></h2>
+<ol>
+<li>The old device (signed in, holds the identity key) calls <code>startDeviceLink</code> and shows the code
+<code>rim-link:1:&lt;linkId&gt;:&lt;secret&gt;:&lt;endpoint&gt;</code> as a QR code and as text. The link lives 10 minutes.</li>
+<li>The 32-byte secret never reaches the server. The server makes the 16-byte link id and stores
+only its SHA-256.</li>
+<li>Channel: HKDF-SHA256(secret, salt = link id) with one <code>info</code> per direction, then AES-256-GCM
+with a random 96-bit nonce and AAD naming version, direction and link id.</li>
+<li>The new device (no session) seals an <strong>offer</strong> (device id, tagged device key, name, platform,
+statement version) and sends it with <code>sendDeviceLinkOffer</code>. One offer per link.</li>
+<li>The old device reads it through <code>deviceLink</code>, shows the name and an 8-character fingerprint the
+new device also shows, signs a certificate, calls <code>addDeviceKey</code>, sends a sealed <strong>answer</strong>
+(the certificate, nothing else) with <code>sendDeviceLinkAnswer</code>, then republishes its profile card.</li>
+<li>The new device polls <code>deviceLinkAnswer</code>, verifies the certificate against <code>keyLog</code>, stores its
+keys, signs in with <code>keyLoginChallenge</code> + <code>loginWithKey</code>, and calls <code>completeDeviceLink</code>.</li>
+<li>States: <code>open</code> → <code>offered</code> → <code>answered</code> → <code>consumed</code>; <code>cancelled</code> and expiry end any live state.</li>
+<li>Anonymous calls answer <code>UNAUTHENTICATED</code> alike for every link they cannot act on, and are
+rate-limited per IP. The server stores sealed bytes and never interprets them.</li>
+<li>Storage is a <code>device_link</code> table behind a repository trait, like <code>key_challenge</code>.</li>
+<li>The answer carries nothing secret in v1, because anyone who saw the code can open it. The
+archive key and moving the identity key are deferred.</li>
+</ol>
+<h2 id="what-the-channel-protects">What the channel protects <a class="anchor" href="#what-the-channel-protects" aria-label="Link to this section">#</a></h2>
+<p>The server is a courier. It sees the link id, the sealed bytes and their sizes, and which
+account started the link. It never sees the secret.</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Adversary</th>
+<th>Can</th>
+<th>Cannot</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>The server, or anyone who learns only the link id</td>
+<td>Drop, delay or cancel a link; post a bogus offer (fails to open, link cancelled)</td>
+<td>Read the offer or answer; substitute its own device key; turn an offer into an answer</td>
+</tr>
+<tr>
+<td>Anyone who saw the code (QR photographed, text pasted somewhere)</td>
+<td>Everything above; post an offer first; open the answer</td>
+<td>Get a certificate unless the person confirms <em>their</em> offer on the old device</td>
+</tr>
+</tbody></table></div>
+<p>The confirmation step on the old device is the defense against the second row. The channel is
+symmetric only (AES-256 under a 256-bit secret), so there is no key agreement to record now and
+break later; the hybrid post-quantum decision asks nothing of it.</p>
+<h2 id="flow">Flow <a class="anchor" href="#flow" aria-label="Link to this section">#</a></h2>
+<pre><code>old device (session)                    server                    new device (no session)
+startDeviceLink ───────────────────────► open
+show code (QR + text)  · · · · · · · · · · · · · · · · · · · · · ► paste code
+                                                    ◄─────────── sendDeviceLinkOffer(sealed offer)
+deviceLink (poll) ◄──────────────────── offered                  show fingerprint, poll
+open offer, person confirms name + fingerprint
+addDeviceKey(certificate) ─────────────► device added
+sendDeviceLinkAnswer(sealed answer) ───► answered
+publishProfileCard (best effort)                   ────────────► deviceLinkAnswer (poll)
+                                                                 open, verify against keyLog
+                                                    ◄─────────── keyLoginChallenge, loginWithKey
+deviceLink (poll) ◄──────────────────── consumed ◄────────────── completeDeviceLink (session)</code></pre>
+<p>Either side may call <code>cancelDeviceLink</code> at any point before <code>consumed</code>.</p>
+<h2 id="link-code">Link code <a class="anchor" href="#link-code" aria-label="Link to this section">#</a></h2>
+<pre><code>rim-link:1:AAECAwQFBgcICQoLDA0ODw:ICEiIyQlJicoKSorLC0uLzAxMjM0NTY3ODk6Ozw9Pj8:http://localhost:8080/api</code></pre>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Part</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Scheme</td>
+<td><code>rim-link:</code> (readers compare it ASCII case-insensitively; writers write lowercase)</td>
+</tr>
+<tr>
+<td>Version</td>
+<td><code>1</code>, decimal. The version of everything in this document: offer, answer, <code>info</code>, AAD</td>
+</tr>
+<tr>
+<td>Link id</td>
+<td>16 bytes, unpadded base64url, exactly 22 characters</td>
+</tr>
+<tr>
+<td>Secret</td>
+<td>32 bytes from the OS random generator, unpadded base64url, exactly 43 characters</td>
+</tr>
+<tr>
+<td>Endpoint</td>
+<td>The old device&#39;s GraphQL endpoint as configured, trailing <code>/</code> removed</td>
+</tr>
+</tbody></table></div>
+<p>Readers:</p>
+<ol>
+<li>Remove every ASCII whitespace character (chat apps and mail wrap long lines): exactly TAB,
+LF, FF, CR and SPACE (<code>0x09</code>, <code>0x0A</code>, <code>0x0C</code>, <code>0x0D</code>, <code>0x20</code>), not VT (<code>0x0B</code>) and nothing
+outside ASCII. A JavaScript reader must not use <code>/\s/</code>, which matches more.</li>
+<li>Refuse anything longer than <strong>334 characters</strong> (78 fixed + a 256-byte endpoint).</li>
+<li>Strip the scheme and split the rest at the <strong>first three</strong> <code>:</code> into version, link id, secret
+and endpoint (the endpoint keeps its own colons).</li>
+<li>The version is a decimal number above 0 without leading zeros; anything else (<code>0</code>, <code>01</code>, <code>x</code>)
+is not a link code. Refuse a higher version than they implement with &quot;this code was made by a
+newer app; update this device&quot;. Decode link id and secret strictly (no padding, canonical trailing bits, exact length).</li>
+<li>The endpoint must start with <code>http://</code> or <code>https://</code>, be 1 to 256 bytes of printable ASCII
+(<code>0x21</code> to <code>0x7E</code>) and contain no <code>?</code>, <code>#</code> or <code>@</code>.</li>
+</ol>
+<p>A QR code encodes exactly this string in byte mode, error correction level M. The example above
+is 103 characters.</p>
+<h2 id="channel-cryptography">Channel cryptography <a class="anchor" href="#channel-cryptography" aria-label="Link to this section">#</a></h2>
+<h3 id="keys">Keys <a class="anchor" href="#keys" aria-label="Link to this section">#</a></h3>
+<pre><code>K_offer  = HKDF-SHA256(ikm = secret, salt = link id (16 raw bytes), info = &quot;rim.device-link.v1 offer&quot;,  L = 32)
+K_answer = HKDF-SHA256(ikm = secret, salt = link id (16 raw bytes), info = &quot;rim.device-link.v1 answer&quot;, L = 32)</code></pre>
+<h3 id="sealing">Sealing <a class="anchor" href="#sealing" aria-label="Link to this section">#</a></h3>
+<ul>
+<li><strong>AES-256-GCM</strong>, 96-bit nonce from the OS random generator, 128-bit tag. AES-GCM rather than
+XChaCha20-Poly1305 (which the desktop uses for the history archive) because WebCrypto has
+AES-GCM and no ChaCha20, and the web client must seal and open with non-extractable keys.</li>
+<li><strong>AAD</strong> is ASCII <code>rim.device-link.v1\0&lt;direction&gt;\0&lt;link id text&gt;</code>, where <code>&lt;direction&gt;</code> is
+<code>offer</code> or <code>answer</code> and <code>&lt;link id text&gt;</code> is the 22-character base64url form. Distinct keys and
+distinct AAD mean an offer never opens as an answer and a message never moves to another link.</li>
+<li><strong>Each side seals exactly one plaintext per link.</strong> A retry resends the same sealed bytes.
+With at most one message per key, a random nonce cannot repeat under a key.</li>
+</ul>
+<h3 id="sealed-message">Sealed message <a class="anchor" href="#sealed-message" aria-label="Link to this section">#</a></h3>
+<p>On the wire, like <code>SignedStatementInput</code>:</p>
+<pre><code class="language-json">{ &quot;nonce&quot;: &quot;QEFCQ0RFRkdISUpL&quot;, &quot;ciphertext&quot;: &quot;J8-HezTgXKj9…&quot; }</code></pre>
+<p><code>nonce</code> is the 12-byte nonce, <code>ciphertext</code> is the AES-GCM output <strong>with the 16-byte tag
+appended</strong> (what WebCrypto <code>encrypt</code> returns), both unpadded base64url.</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th></th>
+<th>Max plaintext</th>
+<th>Max <code>ciphertext</code> bytes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Offer</td>
+<td>16 KiB</td>
+<td>16,400</td>
+</tr>
+<tr>
+<td>Answer</td>
+<td>64 KiB</td>
+<td>65,552</td>
+</tr>
+</tbody></table></div>
+<p>Sized for hybrid keys, as in key-identity: the offer holds a tagged ML-DSA-87 hybrid key (about
+3.5 KB) several times over; the answer holds a 16 KiB certificate payload escaped in JSON (at
+most twice its size) plus a hybrid signature (about 6.3 KB for ML-DSA-87).</p>
+<h3 id="plaintext-rules">Plaintext rules <a class="anchor" href="#plaintext-rules" aria-label="Link to this section">#</a></h3>
+<p>The plaintext is UTF-8 JSON with <code>&quot;v&quot;</code> (the code version, <code>1</code>) and <code>&quot;type&quot;</code>. The rules of
+key-identity statements apply: unknown fields, duplicate fields and a wrong <code>type</code> are refused
+(a browser&#39;s <code>JSON.parse</code> cannot see duplicates; that is acceptable there, since the AEAD already
+proves the writer knew the secret). A plaintext that fails these rules after it opened is treated
+exactly like one that failed to open.</p>
+<p><strong>Offer</strong> (<code>type</code> <code>link-offer</code>), sealed by the new device:</p>
+<pre><code class="language-json">{&quot;v&quot;:1,&quot;type&quot;:&quot;link-offer&quot;,&quot;deviceId&quot;:&quot;&lt;uuid&gt;&quot;,&quot;deviceKey&quot;:&quot;ed25519:…&quot;,&quot;name&quot;:&quot;Laptop&quot;,&quot;platform&quot;:&quot;desktop&quot;,&quot;statementVersion&quot;:2}</code></pre>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Rule</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>deviceId</code></td>
+<td>A UUID, lowercase with hyphens, chosen by the new device (v7 recommended)</td>
+</tr>
+<tr>
+<td><code>deviceKey</code></td>
+<td>The new device key in tagged (version 2) form</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td>The certificate name rules: trimmed, 1 to 64 characters, no control characters</td>
+</tr>
+<tr>
+<td><code>platform</code></td>
+<td><code>desktop</code> or <code>web</code>. Self-reported, so a display hint only</td>
+</tr>
+<tr>
+<td><code>statementVersion</code></td>
+<td>The highest key-identity statement version the new device reads; at least 2</td>
+</tr>
+</tbody></table></div>
+<p>There is no signature by the device key in the offer. The first <code>loginWithKey</code> proves the new
+device holds it, and a certificate for a key nobody holds signs nothing in.</p>
+<p><strong>Answer</strong> (<code>type</code> <code>link-answer</code>), sealed by the old device:</p>
+<pre><code class="language-json">{&quot;v&quot;:1,&quot;type&quot;:&quot;link-answer&quot;,&quot;certificate&quot;:{&quot;payload&quot;:&quot;{\&quot;v\&quot;:2,\&quot;type\&quot;:\&quot;device\&quot;,…}&quot;,&quot;signature&quot;:&quot;ed25519:…&quot;}}</code></pre>
+<p><code>certificate</code> is the device certificate exactly as sent to <code>addDeviceKey</code>. The old device writes
+it in statement version min(its own write version, the offer&#39;s <code>statementVersion</code>): 2 today.</p>
+<h3 id="fingerprint">Fingerprint <a class="anchor" href="#fingerprint" aria-label="Link to this section">#</a></h3>
+<pre><code>fingerprint = base32(first 5 bytes of SHA-256(&quot;rim.device-link.v1 fingerprint\0&quot; || offer plaintext bytes))</code></pre>
+<p>RFC 4648 base32, uppercase, no padding: 8 characters, shown as <code>XXXX-XXXX</code>. The new device
+computes it over the bytes it sealed and the old device over the bytes it opened, so it binds the
+whole offer (id, key, name, platform). Both screens show it; the person compares them.</p>
+<h2 id="server-rules">Server rules <a class="anchor" href="#server-rules" aria-label="Link to this section">#</a></h2>
+<h3 id="calls">Calls <a class="anchor" href="#calls" aria-label="Link to this section">#</a></h3>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Call</th>
+<th>Caller</th>
+<th>Transition</th>
+<th>Repeats</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>startDeviceLink</code></td>
+<td>Session; account has a key identity</td>
+<td>→ <code>open</code></td>
+<td>Each call is a new link; the user&#39;s previous live link is cancelled</td>
+</tr>
+<tr>
+<td><code>sendDeviceLinkOffer</code></td>
+<td>Anyone with the link id</td>
+<td><code>open</code> → <code>offered</code></td>
+<td>Same bytes while <code>offered</code>: success. Other bytes: refused</td>
+</tr>
+<tr>
+<td><code>deviceLink</code></td>
+<td>Session of the link&#39;s user</td>
+<td>none</td>
+<td>Returns state, expiry, and the offer while <code>offered</code> or <code>answered</code></td>
+</tr>
+<tr>
+<td><code>sendDeviceLinkAnswer</code></td>
+<td>Session of the link&#39;s user</td>
+<td><code>offered</code> → <code>answered</code>; expiry set to now + 10 min</td>
+<td>Same bytes while <code>answered</code>: success, expiry not moved again</td>
+</tr>
+<tr>
+<td><code>deviceLinkAnswer</code></td>
+<td>Anyone with the link id</td>
+<td>none</td>
+<td><code>null</code> while <code>open</code> or <code>offered</code>; the answer while <code>answered</code></td>
+</tr>
+<tr>
+<td><code>completeDeviceLink</code></td>
+<td>Session of the link&#39;s user</td>
+<td><code>answered</code> → <code>consumed</code></td>
+<td><code>true</code> again while <code>consumed</code></td>
+</tr>
+<tr>
+<td><code>cancelDeviceLink</code></td>
+<td>Anyone with the link id</td>
+<td><code>open</code>, <code>offered</code>, <code>answered</code> → <code>cancelled</code></td>
+<td>See errors</td>
+</tr>
+</tbody></table></div>
+<p>&quot;Live&quot; means <code>open</code>, <code>offered</code> or <code>answered</code> and not expired. Any session of the account may start
+a link; only a device holding the identity key can finish one, which the server cannot check and
+does not need to. <code>completeDeviceLink</code> is called by the new device right after <code>loginWithKey</code>, so
+&quot;the link&#39;s user&quot; is the same account. <code>consumed</code> and <code>cancelled</code> set <code>ended_at</code> and clear the
+sealed columns.</p>
+<p>Every transition is one conditional <code>UPDATE … WHERE link_hash = $1 AND state = &lt;from&gt; AND expires_at &gt; now() RETURNING …</code> (plus <code>AND user_id = $2</code> for session calls), so two racing calls
+cannot both succeed and a call that arrives after expiry loses. A zero-row update is then
+classified (same bytes repeated, wrong state, expired, unknown) by one read.</p>
+<h3 id="errors">Errors <a class="anchor" href="#errors" aria-label="Link to this section">#</a></h3>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Call</th>
+<th>Situation</th>
+<th>Code</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Any</td>
+<td>Over a rate limit</td>
+<td><code>RATE_LIMITED</code></td>
+</tr>
+<tr>
+<td><code>sendDeviceLinkOffer</code>, <code>sendDeviceLinkAnswer</code></td>
+<td><code>nonce</code> not 12 bytes, <code>ciphertext</code> under 17 bytes or over its cap, not strict base64url (checked before the link is looked up)</td>
+<td><code>VALIDATION</code></td>
+</tr>
+<tr>
+<td>Anonymous calls</td>
+<td>Link id malformed or unknown; link expired, cancelled or consumed; offer slot holds other bytes</td>
+<td><code>UNAUTHENTICATED</code>, no detail</td>
+</tr>
+<tr>
+<td>Session calls</td>
+<td>No session</td>
+<td><code>UNAUTHENTICATED</code></td>
+</tr>
+<tr>
+<td>Session calls</td>
+<td>Link id malformed or unknown, or the link belongs to another user</td>
+<td><code>NOT_FOUND</code></td>
+</tr>
+<tr>
+<td><code>startDeviceLink</code></td>
+<td>Account has no key identity</td>
+<td><code>VALIDATION</code> (<code>this account has no key identity yet</code>)</td>
+</tr>
+<tr>
+<td><code>sendDeviceLinkAnswer</code>, <code>completeDeviceLink</code></td>
+<td>Wrong state, expired, or other bytes already stored</td>
+<td><code>CONFLICT</code></td>
+</tr>
+<tr>
+<td><code>cancelDeviceLink</code> by the link&#39;s user</td>
+<td>Already <code>consumed</code></td>
+<td><code>CONFLICT</code></td>
+</tr>
+</tbody></table></div>
+<p><code>cancelDeviceLink</code> with a session of the link&#39;s user follows the session rules, and answers
+<code>true</code> for a link already cancelled or expired (an expired link keeps its state and still reads
+<code>EXPIRED</code>); any other caller, including a session of another account, follows the anonymous
+rules.
+<code>deviceLink</code> reports an expired live link as <code>EXPIRED</code> until the row is cleaned up, then
+<code>NOT_FOUND</code>.</p>
+<h3 id="link-ids">Link ids <a class="anchor" href="#link-ids" aria-label="Link to this section">#</a></h3>
+<p>The server generates 16 bytes from the OS random generator (128 bits, unguessable, so the uniform
+<code>UNAUTHENTICATED</code> is about not leaking state, not about stopping guessing). It stores
+<code>link_hash = SHA-256(the 16 bytes)</code>, like session tokens and unlike the challenge nonce, because
+the link id alone is a bearer capability (read the answer, post an offer, cancel) and a database
+read must not hand those out. Rows have their own UUID v7 <code>id</code>; audit logs carry that and the user
+id, never the link id or sealed bytes (events <code>device_link_started</code>, <code>_offered</code>, <code>_answered</code>,
+<code>_completed</code>, <code>_cancelled</code>).</p>
+<h3 id="sealed-bytes">Sealed bytes <a class="anchor" href="#sealed-bytes" aria-label="Link to this section">#</a></h3>
+<p>The server checks only the encoding and the sizes above, stores the decoded bytes, and returns
+them re-encoded (byte-identical, since decoding was strict). It never decrypts, parses or
+inspects them, and has no key that could.</p>
+<h3 id="limits">Limits <a class="anchor" href="#limits" aria-label="Link to this section">#</a></h3>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>What</th>
+<th>Limit</th>
+<th>Key</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>startDeviceLink</code></td>
+<td>10 per hour</td>
+<td>user</td>
+</tr>
+<tr>
+<td>Live links</td>
+<td>1; starting a new one cancels the previous</td>
+<td>user</td>
+</tr>
+<tr>
+<td><code>sendDeviceLinkOffer</code> + anonymous <code>cancelDeviceLink</code></td>
+<td>30 per 15 minutes</td>
+<td>IP</td>
+</tr>
+<tr>
+<td><code>deviceLinkAnswer</code></td>
+<td>300 per 5 minutes (a poll every 2 s is 150)</td>
+<td>IP</td>
+</tr>
+<tr>
+<td>Anonymous refusals (<code>UNAUTHENTICATED</code>)</td>
+<td>20 per 15 minutes, a slot reserved up front and refunded unless the call ends in <code>UNAUTHENTICATED</code> (so successes, <code>VALIDATION</code> and internal errors do not count), as for key login</td>
+<td>IP</td>
+</tr>
+</tbody></table></div>
+<p>The refusal limiter is separate from key login&#39;s, so a botched link does not lock the same
+network out of <code>loginWithKey</code>. Limiters are the in-memory <code>RegistrationRateLimiter</code>, per node;
+correctness never depends on them.</p>
+<h3 id="expiry-and-cleanup">Expiry and cleanup <a class="anchor" href="#expiry-and-cleanup" aria-label="Link to this section">#</a></h3>
+<ul>
+<li>A link expires 10 minutes after <code>startDeviceLink</code>. <code>sendDeviceLinkAnswer</code> resets expiry to
+10 minutes after the answer, so a slow new device still has time to fetch it.</li>
+<li>Expired rows are never returned with sealed bytes. Every <code>startDeviceLink</code> deletes, best
+effort, rows whose <code>expires_at</code> is more than one hour past; the hour lets the old device read
+<code>CONSUMED</code>, <code>CANCELLED</code> or <code>EXPIRED</code> after the fact.</li>
+</ul>
+<h2 id="storage">Storage <a class="anchor" href="#storage" aria-label="Link to this section">#</a></h2>
+<p>A table, behind <code>DeviceLinkRepository</code> (rim_core), not an in-memory store. The two devices&#39;
+requests may reach different nodes, and the roadmap guardrail forbids features that depend on
+single-node semantics; <code>key_challenge</code> is a table for the same reason. The trait is the seam if a
+deployment ever wants another store. Migration <code>add_device_link</code> (generated with
+<code>sea migrate generate add_device_link</code>):</p>
+<pre><code class="language-sql">CREATE TABLE device_link (
+    id uuid PRIMARY KEY,
+    link_hash bytea NOT NULL,
+    user_id uuid NOT NULL,
+    state text NOT NULL DEFAULT 'open',
+    offer_nonce bytea NULL,
+    offer_ciphertext bytea NULL,
+    answer_nonce bytea NULL,
+    answer_ciphertext bytea NULL,
+    created_at timestamptz NOT NULL DEFAULT now(),
+    expires_at timestamptz NOT NULL,
+    offered_at timestamptz NULL,
+    answered_at timestamptz NULL,
+    ended_at timestamptz NULL,
+    CONSTRAINT uq_device_link_link_hash UNIQUE (link_hash),
+    CONSTRAINT chk_device_link_link_hash CHECK (octet_length(link_hash) = 32),
+    CONSTRAINT chk_device_link_state
+        CHECK (state IN ('open', 'offered', 'answered', 'consumed', 'cancelled')),
+    CONSTRAINT chk_device_link_offer CHECK ((offer_nonce IS NULL) = (offer_ciphertext IS NULL)),
+    CONSTRAINT chk_device_link_answer CHECK ((answer_nonce IS NULL) = (answer_ciphertext IS NULL)),
+    CONSTRAINT fk_device_link_user FOREIGN KEY (user_id)
+        REFERENCES &quot;user&quot; (id) ON DELETE CASCADE ON UPDATE CASCADE
+);
+CREATE INDEX idx_device_link_expires_at ON device_link (expires_at);
+CREATE UNIQUE INDEX uq_device_link_live_user ON device_link (user_id)
+    WHERE state IN ('open', 'offered', 'answered');</code></pre>
+<p><code>startDeviceLink</code> locks the user row, sets every live-state row of the user to <code>cancelled</code> (expired
+ones included, so the partial index never blocks), and inserts the new row in one transaction.</p>
+<p><strong>Rollback.</strong> <code>down</code> runs <code>DROP INDEX uq_device_link_live_user</code>, <code>DROP INDEX idx_device_link_expires_at</code>, <code>DROP TABLE device_link</code>. Nothing references the table, and what it
+loses is links at most 20 minutes old: a person mid-link starts again. Devices already added stay
+in <code>device_key</code>.</p>
+<p>Code: a <code>device_link</code> module in <code>rim_core</code>, <code>rim_services</code>, <code>rim_infra_services</code> and
+<code>rim_infra_db</code>. <code>DeviceLinkService</code> does not depend on <code>KeyAuthService</code>; it reads only
+<code>user.principal_id</code>.</p>
+<h2 id="graphql">GraphQL <a class="anchor" href="#graphql" aria-label="Link to this section">#</a></h2>
+<pre><code class="language-graphql">input SealedMessageInput { nonce: String!  ciphertext: String! }
+type SealedMessage { nonce: String!  ciphertext: String! }
+
+enum DeviceLinkState { OPEN OFFERED ANSWERED CONSUMED CANCELLED EXPIRED }
+type StartedDeviceLink { linkId: String!  expiresAt: DateTime! }
+type DeviceLink { state: DeviceLinkState!  expiresAt: DateTime!  offer: SealedMessage }
+
+type Query {
+  deviceLink(linkId: String!): DeviceLink!               # session; the link's user
+  deviceLinkAnswer(linkId: String!): SealedMessage       # no session; null until answered
+}
+type Mutation {
+  startDeviceLink: StartedDeviceLink!                                              # session
+  sendDeviceLinkOffer(linkId: String!, offer: SealedMessageInput!): Boolean!       # no session
+  sendDeviceLinkAnswer(linkId: String!, answer: SealedMessageInput!): DeviceLink!  # session
+  completeDeviceLink(linkId: String!): Boolean!                                    # session
+  cancelDeviceLink(linkId: String!): Boolean!                                      # either side
+}</code></pre>
+<ul>
+<li><strong>CSRF.</strong> <code>sendDeviceLinkOffer</code> joins <code>CSRF_EXEMPT_MUTATIONS</code>: it is used without a session
+and acts only on a capability a cross-site page does not have. <code>cancelDeviceLink</code> joins
+<code>CSRF_EXEMPT_WITHOUT_SESSION</code>: with a session cookie it may act as the link&#39;s user, so it needs
+the header. The other mutations need it as usual.</li>
+<li><strong>SDL order.</strong> The resolvers are new <code>DeviceLinkQueries</code> / <code>DeviceLinkMutations</code> objects
+appended to the last query and mutation groups.</li>
+<li><strong>Polling.</strong> Clients poll every 2 seconds for the first minute, then every 5 seconds. A later
+<code>deviceLinkChanged(linkId)</code> subscription over the existing graphql-ws socket can replace both
+polls; the anonymous side needs per-connection limits on that socket first.</li>
+</ul>
+<h2 id="client-rules">Client rules <a class="anchor" href="#client-rules" aria-label="Link to this section">#</a></h2>
+<h3 id="old-device-desktop">Old device (desktop) <a class="anchor" href="#old-device-desktop" aria-label="Link to this section">#</a></h3>
+<ol>
+<li>Linking is offered only when this device holds the head&#39;s identity key
+(<code>LogStatus.holdsIdentityKey</code>). It generates the secret, calls <code>startDeviceLink</code>, and shows the
+QR code, the text code with a copy button, and the time left. The secret stays in memory.</li>
+<li>When <code>deviceLink</code> says <code>OFFERED</code>, it opens the offer. A failure to open or parse means someone
+other than the intended device used the code: it calls <code>cancelDeviceLink</code> and says so.</li>
+<li>Before asking the person, it fetches <code>myKeyIdentity</code>, replays the log, and refuses (and
+cancels) an offer whose <code>deviceKey</code> is malformed, weak, of an algorithm it cannot verify, equal
+to the identity or recovery key, or used by any device of the account (revoked included); whose
+<code>deviceId</code> is not a UUID or is used by any device of the account; or whose <code>name</code> breaks the
+certificate rules.</li>
+<li>It shows the name (editable before signing), the platform, and the fingerprint, and asks the
+person to compare the fingerprint with the new device&#39;s screen. For <code>web</code> it says that keys in
+a browser are weaker than on a desktop. Declining cancels the link.</li>
+<li>On confirmation it writes a <strong>pending link</strong> record to the keyring (link id, secret, device
+id, certificate), signs the certificate at the head <code>keySeq</code>, and calls <code>addDeviceKey</code>. A
+<code>CONFLICT</code> whose device list shows this device id with this key (a retry after a lost answer)
+continues with the stored certificate; any other refusal cancels the link.</li>
+<li>It seals the answer, calls <code>sendDeviceLinkAnswer</code>, and only then republishes the profile card
+(best effort, as after enrollment), so a card failure never holds up the new device.</li>
+<li>It polls until <code>CONSUMED</code>, says the device is linked, and deletes the pending record. If the
+link ends <code>CANCELLED</code> or <code>EXPIRED</code> after the device was added and the device&#39;s <code>lastUsedAt</code> is
+null, it revokes the device with the identity key, so no certified key is left that nobody
+used.</li>
+<li>On start-up with a pending record: <code>OFFERED</code> sends the answer again (adding the device first
+if the device list lacks it), <code>ANSWERED</code> keeps polling, anything else applies rule 7.</li>
+</ol>
+<h3 id="new-device-desktop">New device (desktop) <a class="anchor" href="#new-device-desktop" aria-label="Link to this section">#</a></h3>
+<ol>
+<li>Reads the pasted code (desktops do not scan QR codes in v1) and refuses an endpoint that is
+not the app&#39;s configured one (compared as the key store does: trimmed, trailing <code>/</code> ignored).</li>
+<li>Creates the device key and a UUID v7 device id <strong>in memory</strong> and seals the offer. It writes
+nothing to the keyring until the answer verifies, so an abandoned link leaves no keys behind.</li>
+<li>Sends the offer and shows the fingerprint with &quot;Confirm this code on your other device&quot;.
+<code>UNAUTHENTICATED</code> means the code expired, was cancelled, or another device used it first; the
+app says so and suggests cancelling on the other device and starting again.</li>
+<li>Polls <code>deviceLinkAnswer</code>. <code>UNAUTHENTICATED</code> means the link ended: the keys are dropped.</li>
+<li>Opens the answer and checks that the certificate is a <code>device</code> statement naming exactly the
+offer&#39;s <code>deviceId</code> and <code>deviceKey</code>. It fetches <code>keyLog(principalId)</code> from the endpoint, replays
+it, and verifies the certificate against the identity key at its <code>keySeq</code>
+(<code>certified_device</code>). Any failure cancels the link and drops the keys.</li>
+<li>Stores the device key, id and the certificate&#39;s name for the principal (no identity key,
+account link with user id unknown, as after a recovery), signs in with
+<code>keyLoginChallenge</code> + <code>loginWithKey</code> (audience from the endpoint), settles the keys, and calls
+<code>completeDeviceLink</code>. A failed <code>completeDeviceLink</code> is not retried beyond once: the device
+works, and the old device keeps it because <code>lastUsedAt</code> is set.</li>
+<li>A <code>loginWithKey</code> refusal of <code>FORBIDDEN</code> (the old device revoked it meanwhile) removes the keys;
+other failures keep them for the next sign-in.</li>
+</ol>
+<h3 id="web-client">Web client <a class="anchor" href="#web-client" aria-label="Link to this section">#</a></h3>
+<p>Same as the new desktop device, except:</p>
+<ul>
+<li>It only takes a pasted code, and only for its own GraphQL endpoint (cookies and CORS would fail
+for another).</li>
+<li>The device key is a WebCrypto Ed25519 key generated with <code>extractable: false</code> and kept as a
+<code>CryptoKey</code> in IndexedDB; the public key is exported raw and tagged <code>ed25519:</code>. A browser
+without Ed25519 in WebCrypto cannot be linked; there is no fallback to extractable keys.</li>
+<li>HKDF and AES-GCM run in SubtleCrypto: <code>importKey(&quot;raw&quot;, secret, &quot;HKDF&quot;)</code>,
+<code>deriveKey({ name: &quot;HKDF&quot;, hash: &quot;SHA-256&quot;, salt, info }, …, { name: &quot;AES-GCM&quot;, length: 256 }, false, [&quot;encrypt&quot;, &quot;decrypt&quot;])</code>, then <code>encrypt({ name: &quot;AES-GCM&quot;, iv, additionalData, tagLength: 128 })</code>, whose output is already ciphertext followed by tag.</li>
+<li><code>platform</code> is <code>web</code>. The secret lives only in the page; a reload abandons the attempt.</li>
+<li>The web client is never the old device in v1: it holds no identity key.</li>
+</ul>
+<h2 id="failure-and-retry">Failure and retry <a class="anchor" href="#failure-and-retry" aria-label="Link to this section">#</a></h2>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Situation</th>
+<th>What happens</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Answer to <code>sendDeviceLinkOffer</code> lost</td>
+<td>The new device resends the same bytes: success</td>
+</tr>
+<tr>
+<td>Answer to <code>deviceLinkAnswer</code> lost</td>
+<td>It polls again; the answer stays for 10 minutes after it was sent</td>
+</tr>
+<tr>
+<td>Old device crashes after <code>addDeviceKey</code>, before the answer</td>
+<td>On restart, its pending record resumes the link (old device rule 8). If the link expired first, the new device sees <code>UNAUTHENTICATED</code>, drops its keys, and the person starts a new link, for which the new device makes <strong>a new device id and key</strong>: the old pair is used on the account for good. The old device revokes the unused one (rule 7)</td>
+</tr>
+<tr>
+<td>New device crashes or the page reloads</td>
+<td>Its keys were only in memory. The person starts again; the old device revokes the unused device</td>
+</tr>
+<tr>
+<td>Wrong secret (corrupted code)</td>
+<td>The offer fails to open; the old device cancels; the new device&#39;s poll gets <code>UNAUTHENTICATED</code>; the person starts again</td>
+</tr>
+<tr>
+<td>Bogus offer from someone without the secret (the server, a log reader)</td>
+<td>Fails to open; the link is cancelled; nothing is signed</td>
+</tr>
+<tr>
+<td>Someone who saw the code posts first</td>
+<td>The real device&#39;s offer is refused and it says so; the old device shows a name and fingerprint that match nothing on the person&#39;s new device, and the person declines. If they confirm anyway, that party gets a device of the account, as with any confirmed link</td>
+</tr>
+<tr>
+<td>Someone who saw the code opens the answer</td>
+<td>They get the certificate, which is public anyway (<code>myKeyIdentity</code>, the profile card). Without the device key it signs nothing in</td>
+</tr>
+<tr>
+<td>Malicious server</td>
+<td>Can drop, delay, replay or cancel. Cannot open or forge sealed messages, move them between links or directions, or forge a key log, so a substituted certificate fails the <code>keyLog</code> check</td>
+</tr>
+<tr>
+<td>Person declines on the old device</td>
+<td><code>cancelDeviceLink</code>; the new device&#39;s poll ends with <code>UNAUTHENTICATED</code></td>
+</tr>
+</tbody></table></div>
+<h2 id="deferred">Deferred <a class="anchor" href="#deferred" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>The archive key in the answer.</strong> It would let the new device read the drive archive without
+the passphrase, but the answer key is known to anyone who saw the code, so a secret in the
+answer must be encrypted to a key only the new device holds: an ephemeral key-agreement key in
+the offer, which the post-quantum decision makes hybrid (X25519 + ML-KEM-768). The archive
+format already reserves the mechanism (a new <code>keyWraps</code> kind, <code>history-archive-v1.md</code>). A later
+code version adds both; until then the new device unlocks the archive with the passphrase, and
+it needs the folder or drive sign-in in any case.</li>
+<li><strong>Moving the identity key</strong> off the enrolling device, or holding it offline.</li>
+<li><strong>Short typed codes</strong> with a PAKE (CPace, SPAKE2), so a code can be read aloud.</li>
+<li><strong>QR scanning</strong>, with the mobile PWA; the code format is fixed now so the QR works then.</li>
+<li><strong>A subscription</strong> in place of polling (see GraphQL).</li>
+<li><strong>Linking across servers</strong> (a code whose endpoint is not the new device&#39;s server).</li>
+<li>Rate limits shared across nodes.</li>
+</ul>
+<h2 id="test-plan">Test plan <a class="anchor" href="#test-plan" aria-label="Link to this section">#</a></h2>
+<p>Server (this PR):</p>
+<ul>
+<li><code>rim_identity::device_link</code>, the reference implementation of this document (code parse and
+format, key derivation, seal, open, fingerprint, offer and answer types), built only with
+the crate&#39;s <code>testing</code> feature. The service never calls it; tests do. Its tests check appendix A byte for byte, that an offer does
+not open as an answer or under another link id, that a flipped AAD, nonce or tag byte fails,
+and the code parser&#39;s edge cases (whitespace, uppercase scheme, version 2, 335 characters,
+padded or 21-character link id, <code>?</code>, <code>#</code> or <code>@</code> in the endpoint, colons in the endpoint).</li>
+<li>Unit tests of <code>DefaultDeviceLinkService</code> with a mock repository: every row of the calls and
+errors tables, idempotent repeats, expiry at the boundary, answer resetting expiry, a second
+<code>startDeviceLink</code> cancelling the first, the per-user and per-IP limiters (injected small, like
+<code>with_rate_limiters</code>), refunds on success.</li>
+<li><code>rim_infra_db</code> (<code>db-tests</code>): two concurrent offers on one link, exactly one wins; transitions
+refuse expired rows; cleanup deletes only rows past one hour; terminal states clear sealed
+columns; the partial unique index; cascade on user delete; migration up and down.</li>
+<li><a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/rim_api/tests/device_link_e2e.rs"><code>rim_api/tests/device_link_e2e.rs</code></a> (<code>e2e-tests</code>), with real sealed messages from
+<code>rim_identity::device_link</code>: the whole flow from <code>startDeviceLink</code> to <code>loginWithKey</code> with the
+linked device and <code>CONSUMED</code> on the old side; anonymous calls on unknown, malformed, expired,
+cancelled and consumed links all <code>UNAUTHENTICATED</code> with identical bodies; another user&#39;s link
+<code>NOT_FOUND</code>; answer before offer <code>CONFLICT</code>; random ciphertext stored and returned byte-exact;
+size and encoding <code>VALIDATION</code>; <code>startDeviceLink</code> without a key identity.</li>
+<li><code>graphql_support</code>: <code>sendDeviceLinkOffer</code> exempt from CSRF; <code>cancelDeviceLink</code> exempt only
+without a session cookie; the other mutations need the header.</li>
+</ul>
+<p>Clients (rim-ui):</p>
+<ul>
+<li>Appendix A in the Tauri module and, for the web client, in Vitest through Node&#39;s WebCrypto.</li>
+<li>Old device: each refusal in rule 3; confirmation declined cancels; a lost <code>addDeviceKey</code> answer
+continues with the stored certificate; restart with a pending record in each state; an
+unused device revoked after <code>EXPIRED</code>.</li>
+<li>New device: a certificate for another key, another device id, or one that does not verify
+against the served log is refused and the link cancelled; nothing is in the keyring before the
+answer verifies; <code>FORBIDDEN</code> at sign-in removes the keys.</li>
+</ul>
+<h2 id="appendix-a-known-answer-vectors">Appendix A: known-answer vectors <a class="anchor" href="#appendix-a-known-answer-vectors" aria-label="Link to this section">#</a></h2>
+<p>Computed with Node&#39;s <code>crypto</code> and cross-checked in Python (HKDF and SHA-256 with <code>hmac</code> and
+<code>hashlib</code>, AES-GCM with <code>cryptography</code>).
+The new device is appendix B&#39;s device of <a href="key-identity-v1.html"><code>key-identity-v1.md</code></a> (seed 20, device id
+<code>…0001</code>, name <code>Laptop</code>), and the answer carries appendix B&#39;s certificate unchanged. Never use
+these values for real links.</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Link id (bytes <code>00</code>..<code>0f</code>)</td>
+<td><code>AAECAwQFBgcICQoLDA0ODw</code></td>
+</tr>
+<tr>
+<td>Secret (bytes <code>20</code>..<code>3f</code>)</td>
+<td><code>ICEiIyQlJicoKSorLC0uLzAxMjM0NTY3ODk6Ozw9Pj8</code></td>
+</tr>
+<tr>
+<td>Code (endpoint <code>http://localhost:8080/api</code>)</td>
+<td><code>rim-link:1:AAECAwQFBgcICQoLDA0ODw:ICEiIyQlJicoKSorLC0uLzAxMjM0NTY3ODk6Ozw9Pj8:http://localhost:8080/api</code></td>
+</tr>
+<tr>
+<td><code>K_offer</code> (hex)</td>
+<td><code>6dff67bf777c3cf073ebc0f8810dae7535d3bdb59c9178183441db3768212fba</code></td>
+</tr>
+<tr>
+<td><code>K_answer</code> (hex)</td>
+<td><code>d6ec24d3f4380cb2ca50865f95a37f3e6b0ab9c2d74ee31d605768abe6bf56e1</code></td>
+</tr>
+<tr>
+<td>Offer AAD (hex)</td>
+<td><code>72696d2e6465766963652d6c696e6b2e7631006f666665720041414543417751464267634943516f4c4441304f4477</code></td>
+</tr>
+<tr>
+<td>Answer AAD (hex)</td>
+<td><code>72696d2e6465766963652d6c696e6b2e763100616e737765720041414543417751464267634943516f4c4441304f4477</code></td>
+</tr>
+<tr>
+<td>Offer nonce (bytes <code>40</code>..<code>4b</code>)</td>
+<td><code>QEFCQ0RFRkdISUpL</code></td>
+</tr>
+<tr>
+<td>Answer nonce (bytes <code>50</code>..<code>5b</code>)</td>
+<td><code>UFFSU1RVVldYWVpb</code></td>
+</tr>
+<tr>
+<td>Fingerprint</td>
+<td><code>QSFX-VHMA</code> (SHA-256 <code>848b7a9d80a01b87adceab1630b57a452359598c53e4326382d7a236e3ca8629</code>)</td>
+</tr>
+</tbody></table></div>
+<p>Offer plaintext (201 bytes) and its <code>ciphertext</code> (217 bytes, tag <code>4e654172510e4140794b15c8b0ed70b1</code>):</p>
+<pre><code>{&quot;v&quot;:1,&quot;type&quot;:&quot;link-offer&quot;,&quot;deviceId&quot;:&quot;00000000-0000-0000-0000-000000000001&quot;,&quot;deviceKey&quot;:&quot;ed25519:IIKL9cW9ystoSGMzbCAvtVmdpIvlWWYVdCFwcFvsqfc&quot;,&quot;name&quot;:&quot;Laptop&quot;,&quot;platform&quot;:&quot;desktop&quot;,&quot;statementVersion&quot;:2}
+J8-HezTgXKj9OyT7HMBA1zjjB4ZTJEJkqjh4skQfSya0Sxe6uk9qWLSzUqUAQ7QrC4ZIEYlO_dsskNkfhQ_iEVXyyUkGmH2j1gqSNpQTetjmsgmQEXUbEsSs8ciJPmD_o_T8zR_R7k-rjthHmMQYHVfwslbojzQhR7wXQiUJfZtIDm5bfx9wYmPPjvmcA9RYQnV6_3GRGoFbsLE9fGt4mRlidnXDiOweblWqdi0dARTNJHJL7DDAMwmqGHiEIcAVTVu7B4SiHFPrTmVBclEOQUB5SxXIsO1wsQ</code></pre>
+<p>Answer plaintext (460 bytes) and its <code>ciphertext</code> (476 bytes, tag <code>54f5a552761c925f6e4ac7ac5d45abb7</code>):</p>
+<pre><code>{&quot;v&quot;:1,&quot;type&quot;:&quot;link-answer&quot;,&quot;certificate&quot;:{&quot;payload&quot;:&quot;{\&quot;v\&quot;:2,\&quot;type\&quot;:\&quot;device\&quot;,\&quot;principalId\&quot;:\&quot;rimp1_txDLbnipi5i3kCJtJwBOUixzv_MY8OnU0mcy--Tyje0\&quot;,\&quot;deviceId\&quot;:\&quot;00000000-0000-0000-0000-000000000001\&quot;,\&quot;deviceKey\&quot;:\&quot;ed25519:IIKL9cW9ystoSGMzbCAvtVmdpIvlWWYVdCFwcFvsqfc\&quot;,\&quot;name\&quot;:\&quot;Laptop\&quot;,\&quot;keySeq\&quot;:0,\&quot;issuedAt\&quot;:\&quot;2026-10-09T00:00:00Z\&quot;}&quot;,&quot;signature&quot;:&quot;ed25519:0HjRzn6gQ2q-vCHSkdOPK2ykGGBUpW2fYdDuEdTzf6OxsWzjXeNNpRSVgzPxOEfbYzZ9o9DWqp4NxcTEDhOaDA&quot;}}
+vkDrDIh3nkBRDHroeH_tmxnHXtoMzfo4grqtAiBG46z7xMsAlJDtvvExm51M7w7G7oglt9YXamu3_qjKYYDPA7b_xGvbPvWGkw98Hc91oL2qQvVYz0MSwIWu5R_FyFwN0SIVdph0xJxLBdXq3E3-iKFd4fdfLRdZvRi7qMMTY7wW8DMw2ItevB1tV2xfMF2_WpZNSUvPuJUF9l8VIdtiIHO1V94Sx-ombzLAvfndFHJfxKhsDwxPB9YSaKoaIvKPZrI_6Z0Mzwdn7RAyepsgjrOz4wDnoEWv5eFOO1zU4RpZvRwOmlhJ2NKwLsG87fEtw16kB3g2qMqvwGLWrQ4VuqygY3JucPE0Gu2H-dkxLEYrEuPMbGxMzD2ROIAlZFKljdgj8zGLrYbkLml1Jh-rJijDswN0ktaw-dCCqd0-Pbt4nXvBKGTV5ZuDJ1W-nIMYs9Py81klr5gBOypP8A3In4OFi7ePsu2FOnZE-LRYfaLeYv2PCPKCFaZnCjJS0asVa-UFXHhmz2sWxVwEi1OnENi11C4bweM6a_9ydUHi4w4QMBkZpfHCyondEdgCtxyq8xZXPsEP6_JX007Y9jm9gGQ8JExrsviYRMpeWFT1pVJ2HJJfbkrHrF1Fq7c</code></pre>
+<p>The plaintexts are written with the fields in the order shown and no spaces, which is what makes
+these bytes reproducible; readers do not depend on field order.</p>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/docs/specs/device-linking-v1.md">rim-server/docs/specs/device-linking-v1.md</a> at <code>c86029b</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+<script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
+</body>
+</html>

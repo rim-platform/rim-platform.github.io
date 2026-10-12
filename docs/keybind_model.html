@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Keybind Model · RIM</title>
+<meta name="description" content="This document defines the keybind model for RIM.">
+<link rel="icon" href="../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../index.html" aria-label="RIM home">
+      <picture><source srcset="../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../index.html#what">What RIM is</a>
+      <a href="../index.html#how">How it works</a>
+      <a href="self-hosting.html">Self-host</a>
+      <a href="../configure/index.html">Configure</a>
+      <a href="index.html" aria-current="page">Docs</a>
+      <a href="../api/index.html">API</a>
+      <a href="../specs/index.html">Specs</a>
+      <a href="contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="index.html">Docs</a><span aria-hidden="true">/</span><a href="project.html">Project</a><span aria-hidden="true">/</span><span>Keybind Model</span></div>
+  <div class="page with-toc">
+    <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
+<ol>
+<li><a href="#purpose">Purpose</a></li>
+<li><a href="#core-rule">Core Rule</a></li>
+<li><a href="#what-a-keybind-can-target">What A Keybind Can Target</a></li>
+<li><a href="#keybind-capable-commands">Keybind-Capable Commands</a></li>
+<li><a href="#scopes">Scopes</a></li>
+<li><a href="#scope-precedence">Scope Precedence</a></li>
+<li><a href="#contexts">Contexts</a></li>
+<li><a href="#context-resolution-rule">Context Resolution Rule</a></li>
+<li><a href="#conflict-resolution">Conflict Resolution</a></li>
+<li><a href="#user-created-keybinds">User-Created Keybinds</a></li>
+<li><a href="#stateful--repeated-keybind-behavior">Stateful / Repeated Keybind Behavior</a></li>
+<li><a href="#dangerous-commands">Dangerous Commands</a></li>
+<li><a href="#plugin-interaction">Plugin Interaction</a></li>
+<li><a href="#workspace-keybinds">Workspace Keybinds</a></li>
+<li><a href="#multiple-bindings">Multiple Bindings</a></li>
+<li><a href="#persistence-model">Persistence Model</a></li>
+<li><a href="#minimal-keybind-record">Minimal Keybind Record</a></li>
+<li><a href="#non-goals">Non-Goals</a></li>
+<li><a href="#summary-of-decisions">Summary Of Decisions</a></li>
+</ol>
+</details></aside>
+    <main id="content" class="prose">
+<h1 id="keybind-model">Keybind Model</h1>
+<p>This document defines the keybind model for RIM.</p>
+<p>The keybind system is one of the core differentiators of the product. Keybinds should make both
+built-in and extended workflows fast to trigger without becoming a separate scripting system.</p>
+<h2 id="purpose">Purpose <a class="anchor" href="#purpose" aria-label="Link to this section">#</a></h2>
+<p>A keybind is a user-configurable mapping from a key combination to a command invocation.</p>
+<p>Keybinds should:</p>
+<ul>
+<li>make important actions fast to access</li>
+<li>support built-in commands, plugin commands, and user-defined commands</li>
+<li>work consistently across communication, workflow, and navigation surfaces</li>
+<li>stay simple, predictable, and safe</li>
+</ul>
+<h2 id="core-rule">Core Rule <a class="anchor" href="#core-rule" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><code>keybind -&gt; command</code></li>
+<li>not <code>keybind -&gt; arbitrary custom code</code></li>
+</ul>
+<p>Commands own behavior. Keybinds only trigger commands.</p>
+<p>This keeps:</p>
+<ul>
+<li>command logic centralized</li>
+<li>plugin behavior compatible with built-ins</li>
+<li>macros bindable</li>
+<li>complex behavior reusable from other invocation surfaces</li>
+</ul>
+<h2 id="what-a-keybind-can-target">What A Keybind Can Target <a class="anchor" href="#what-a-keybind-can-target" aria-label="Link to this section">#</a></h2>
+<p>A keybind may target any command marked <code>keybind-capable</code>.</p>
+<p>That includes:</p>
+<ul>
+<li>built-in commands</li>
+<li>plugin commands</li>
+<li>integration commands</li>
+<li>user-defined commands</li>
+<li>composed commands/macros</li>
+</ul>
+<p>Not every command has to be keybind-capable.</p>
+<h2 id="keybind-capable-commands">Keybind-Capable Commands <a class="anchor" href="#keybind-capable-commands" aria-label="Link to this section">#</a></h2>
+<p>Commands should explicitly declare whether they support keybind invocation.</p>
+<p>Why this matters:</p>
+<ul>
+<li>some commands are too interactive</li>
+<li>some only make sense in the command palette</li>
+<li>some are dangerous</li>
+<li>some require context that direct key invocation may not always provide</li>
+</ul>
+<h2 id="scopes">Scopes <a class="anchor" href="#scopes" aria-label="Link to this section">#</a></h2>
+<p>Recommended scopes:</p>
+<ul>
+<li><code>default</code><ul>
+<li>shipped by RIM or suggested by a plugin</li>
+</ul>
+</li>
+<li><code>user</code><ul>
+<li>user-wide preference</li>
+</ul>
+</li>
+<li><code>workspace</code><ul>
+<li>shared or team-managed override</li>
+</ul>
+</li>
+<li><code>device_local</code><ul>
+<li>machine-specific override</li>
+</ul>
+</li>
+</ul>
+<h2 id="scope-precedence">Scope Precedence <a class="anchor" href="#scope-precedence" aria-label="Link to this section">#</a></h2>
+<p>Recommended precedence:</p>
+<ul>
+<li><code>device_local</code> &gt; <code>workspace</code> &gt; <code>user</code> &gt; <code>default</code></li>
+</ul>
+<p>This allows:</p>
+<ul>
+<li>machine-specific shortcuts</li>
+<li>shared workspace conventions</li>
+<li>personal customization</li>
+<li>fallback defaults</li>
+</ul>
+<h2 id="contexts">Contexts <a class="anchor" href="#contexts" aria-label="Link to this section">#</a></h2>
+<p>Recommended initial contexts:</p>
+<ul>
+<li><code>global</code></li>
+<li><code>composer</code></li>
+<li><code>message_list</code></li>
+<li><code>thread_view</code></li>
+<li><code>conversation_view</code></li>
+<li><code>panel</code></li>
+<li><code>command_palette</code></li>
+</ul>
+<p>Likely later contexts:</p>
+<ul>
+<li><code>call</code></li>
+<li><code>voice_channel</code></li>
+<li><code>screen_share</code></li>
+</ul>
+<h2 id="context-resolution-rule">Context Resolution Rule <a class="anchor" href="#context-resolution-rule" aria-label="Link to this section">#</a></h2>
+<p>More specific context wins over less specific context.</p>
+<p>Examples:</p>
+<ul>
+<li><code>Enter</code> in <code>composer</code> -&gt; send message</li>
+<li><code>Enter</code> in <code>message_list</code> -&gt; open selected item</li>
+<li><code>Enter</code> in <code>command_palette</code> -&gt; run highlighted command</li>
+</ul>
+<h2 id="conflict-resolution">Conflict Resolution <a class="anchor" href="#conflict-resolution" aria-label="Link to this section">#</a></h2>
+<p>At runtime, only one binding should win.</p>
+<p>Recommended resolution order:</p>
+<ol>
+<li>more specific context wins</li>
+<li>higher-precedence scope wins</li>
+<li>explicit user/workspace override wins over defaults</li>
+<li>unresolved same-priority conflicts should be shown as configuration errors</li>
+</ol>
+<h2 id="user-created-keybinds">User-Created Keybinds <a class="anchor" href="#user-created-keybinds" aria-label="Link to this section">#</a></h2>
+<p>Users should be able to create their own keybinds for:</p>
+<ul>
+<li>built-in commands</li>
+<li>plugin commands</li>
+<li>integration commands</li>
+<li>user-defined commands/macros</li>
+</ul>
+<p>Examples:</p>
+<ul>
+<li><code>Ctrl+Shift+G</code> -&gt; <code>chat.create_group</code></li>
+<li><code>Ctrl+Y</code> -&gt; <code>integration.youtrack.create_issue</code></li>
+<li><code>Ctrl+Alt+K</code> -&gt; <code>plugin.k8s-tools.open_cluster_panel</code></li>
+<li><code>Ctrl+Shift+R</code> -&gt; <code>user.clone_repo_and_open</code></li>
+</ul>
+<h2 id="stateful--repeated-keybind-behavior">Stateful / Repeated Keybind Behavior <a class="anchor" href="#stateful--repeated-keybind-behavior" aria-label="Link to this section">#</a></h2>
+<p>Repeated behavior belongs to the command, not the keybind itself.</p>
+<p>Example:</p>
+<ul>
+<li>keybind: <code>Ctrl+R</code></li>
+<li>command: <code>workspace.cycle_recent_activity</code></li>
+</ul>
+<p>Behavior:</p>
+<ul>
+<li>first press -&gt; latest recent activity/chat</li>
+<li>second press -&gt; second latest</li>
+<li>third press -&gt; continue cycling</li>
+</ul>
+<p>This keeps:</p>
+<ul>
+<li>keybinds simple</li>
+<li>command runtime free to keep temporary UI/session state</li>
+</ul>
+<h2 id="dangerous-commands">Dangerous Commands <a class="anchor" href="#dangerous-commands" aria-label="Link to this section">#</a></h2>
+<p>Dangerous commands may still be bindable.</p>
+<p>Examples:</p>
+<ul>
+<li>local process execution</li>
+<li>destructive actions</li>
+<li>commands with external side effects</li>
+</ul>
+<p>Rule:</p>
+<ul>
+<li>dangerous local commands should still show confirmation by default, even when invoked by keybind</li>
+<li>users may disable the confirmation explicitly later</li>
+</ul>
+<h2 id="plugin-interaction">Plugin Interaction <a class="anchor" href="#plugin-interaction" aria-label="Link to this section">#</a></h2>
+<p>Plugins should be able to:</p>
+<ul>
+<li>register commands</li>
+<li>mark commands as keybind-capable</li>
+<li>suggest default keybinds</li>
+<li>suggest recommended contexts</li>
+</ul>
+<p>But:</p>
+<ul>
+<li>plugins should not silently override existing user choices</li>
+<li>plugin-suggested keybinds should be shown as suggestions for approval, not auto-applied</li>
+<li>user/workspace/device overrides always win</li>
+</ul>
+<h2 id="workspace-keybinds">Workspace Keybinds <a class="anchor" href="#workspace-keybinds" aria-label="Link to this section">#</a></h2>
+<p>Decision:</p>
+<ul>
+<li><code>workspace</code> keybinds should be optional shared or team-managed bindings</li>
+</ul>
+<p>This allows teams to establish shared shortcuts without making workspace-level bindings mandatory.</p>
+<h2 id="multiple-bindings">Multiple Bindings <a class="anchor" href="#multiple-bindings" aria-label="Link to this section">#</a></h2>
+<p>Decision:</p>
+<ul>
+<li>one command may have multiple keybindings in the same context</li>
+</ul>
+<p>This supports:</p>
+<ul>
+<li>user preference</li>
+<li>migration from defaults</li>
+<li>alternative access patterns</li>
+</ul>
+<h2 id="persistence-model">Persistence Model <a class="anchor" href="#persistence-model" aria-label="Link to this section">#</a></h2>
+<p>Recommended persistence strategy:</p>
+<ul>
+<li>default keybinds -&gt; code or plugin manifest</li>
+<li>user keybinds -&gt; persisted</li>
+<li>workspace keybinds -&gt; persisted</li>
+<li>device-local keybinds -&gt; local storage only</li>
+</ul>
+<p>In the current backend shape:</p>
+<ul>
+<li>the backend stores <code>user</code> and <code>workspace</code> keybinds</li>
+<li>the backend exposes <code>default</code> keybind suggestions as a separate layer, not as persisted keybind
+records</li>
+<li>the client/runtime is expected to own <code>device_local</code> keybinds and final runtime keypress handling</li>
+</ul>
+<p>The backend exposes the resolved persisted keybinds (<code>resolvedKeybinds</code>): the defaults, then the
+user&#39;s, then the workspace&#39;s, each later layer replacing an earlier binding of the same
+<code>(context, keystroke)</code>.</p>
+<p>The client/runtime should then own the final effective merge:</p>
+<ul>
+<li><code>device_local &gt; workspace &gt; user &gt; default</code></li>
+</ul>
+<p>That final runtime overlay is intentionally a client concern, not a persisted backend concern.</p>
+<p>This matches the wider customization model:</p>
+<ul>
+<li>runtime-composed registry</li>
+<li>persistence for user/team/local customization only</li>
+</ul>
+<h2 id="minimal-keybind-record">Minimal Keybind Record <a class="anchor" href="#minimal-keybind-record" aria-label="Link to this section">#</a></h2>
+<p>A keybind definition should likely contain:</p>
+<ul>
+<li><code>id</code></li>
+<li><code>keystroke</code></li>
+<li><code>command_id</code></li>
+<li><code>scope</code></li>
+<li><code>context</code></li>
+<li>optional <code>preset_args</code></li>
+<li><code>enabled</code></li>
+<li><code>source</code></li>
+</ul>
+<p>Possible later addition:</p>
+<ul>
+<li><code>when_clause</code></li>
+</ul>
+<p>That should only be added if explicit contexts prove insufficient.</p>
+<h2 id="non-goals">Non-Goals <a class="anchor" href="#non-goals" aria-label="Link to this section">#</a></h2>
+<p>The keybind system should not become:</p>
+<ul>
+<li>a scripting language</li>
+<li>a second automation engine</li>
+<li>a privilege bypass</li>
+<li>a place for complex workflow logic</li>
+</ul>
+<p>If behavior is complex:</p>
+<ul>
+<li>make it a command</li>
+<li>then bind the command</li>
+</ul>
+<h2 id="summary-of-decisions">Summary Of Decisions <a class="anchor" href="#summary-of-decisions" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>keybinds invoke commands only</li>
+<li>only <code>keybind-capable</code> commands can be bound</li>
+<li>scopes:<ul>
+<li>default</li>
+<li>user</li>
+<li>workspace</li>
+<li>device_local</li>
+</ul>
+</li>
+<li>precedence:<ul>
+<li>device_local &gt; workspace &gt; user &gt; default</li>
+</ul>
+</li>
+<li>contexts are explicit and more specific wins</li>
+<li>repeated/cycling behavior belongs to commands, not keybind definitions</li>
+<li>users can create their own keybinds for built-in/plugin/user-defined commands</li>
+<li>dangerous commands still require confirmation by default</li>
+<li>plugins can suggest defaults, but suggestions require approval</li>
+<li>workspace keybinds are optional shared/team-managed bindings</li>
+<li>one command may have multiple keybindings in the same context</li>
+<li>resolved persisted precedence is currently <code>workspace &gt; user</code>, while <code>device_local</code> remains a
+future client-side layer on top of backend-resolved data</li>
+</ul>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/docs/keybind_model.md">rim-server/docs/keybind_model.md</a> at <code>c86029b</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+<script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
+</body>
+</html>

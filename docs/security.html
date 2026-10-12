@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Security policy · RIM</title>
+<meta name="description" content="RIM is pre-release. Until the first tagged release, only master is supported: a fix lands there and nowhere else. Once releases are tagged, this section names the ones that get fixes.">
+<link rel="icon" href="../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../index.html" aria-label="RIM home">
+      <picture><source srcset="../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../index.html#what">What RIM is</a>
+      <a href="../index.html#how">How it works</a>
+      <a href="self-hosting.html">Self-host</a>
+      <a href="../configure/index.html">Configure</a>
+      <a href="index.html" aria-current="page">Docs</a>
+      <a href="../api/index.html">API</a>
+      <a href="../specs/index.html">Specs</a>
+      <a href="contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="index.html">Docs</a><span aria-hidden="true">/</span><a href="project.html">Project</a><span aria-hidden="true">/</span><span>Security policy</span></div>
+  <div class="page with-toc">
+    <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
+<ol>
+<li><a href="#supported-versions">Supported versions</a></li>
+<li><a href="#reporting-a-vulnerability">Reporting a vulnerability</a></li>
+<li><a href="#what-happens-next">What happens next</a></li>
+<li><a href="#scope">Scope</a></li>
+<li><a href="#under-outside-review">Under outside review</a></li>
+</ol>
+</details></aside>
+    <main id="content" class="prose">
+<h1 id="security-policy">Security policy</h1>
+<h2 id="supported-versions">Supported versions <a class="anchor" href="#supported-versions" aria-label="Link to this section">#</a></h2>
+<p>RIM is pre-release. Until the first tagged release, only <code>master</code> is supported: a fix lands
+there and nowhere else. Once releases are tagged, this section names the ones that get fixes.</p>
+<h2 id="reporting-a-vulnerability">Reporting a vulnerability <a class="anchor" href="#reporting-a-vulnerability" aria-label="Link to this section">#</a></h2>
+<p>Report it privately through GitHub&#39;s private vulnerability reporting on this repository: open
+the Security tab and choose &quot;Report a vulnerability&quot;. Never open a public issue, discussion or
+pull request for a vulnerability, and do not post it in a chat room.</p>
+<p>Include what you can of:</p>
+<ul>
+<li><strong>The version</strong>: the output of <code>rim_server --version</code>, or the commit you built.</li>
+<li><strong>The setup</strong>: the server role (relay, host or both), whether it runs behind a reverse proxy,
+and any setting the problem depends on.</li>
+<li><strong>The steps</strong>: what to send, in what order, to reproduce it. A script or a failing test is
+welcome.</li>
+<li><strong>The impact</strong>: what an attacker gains and what they need first (an account, a session, a
+peer server, a position on the network).</li>
+<li><strong>Disclosure</strong>: whether anyone else knows, and any date you plan to publish on.</li>
+</ul>
+<p>Remove secrets, session cookies and personal data from logs before you attach them.</p>
+<h2 id="what-happens-next">What happens next <a class="anchor" href="#what-happens-next" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>An acknowledgement within seven days of the report.</li>
+<li>A fix, or a decision with its reasons, within ninety days.</li>
+<li>Credit in <a href="changelog.html"><code>CHANGELOG.md</code></a> under <code>Security</code> when the fix ships, under the name you give, if you
+want it.</li>
+</ul>
+<h2 id="scope">Scope <a class="anchor" href="#scope" aria-label="Link to this section">#</a></h2>
+<p>This policy covers this repository: the server, its GraphQL and HTTP API, the
+server-to-server transport and the crates in this workspace. The desktop and web clients in
+<code>rim-ui</code> and the command line client in <code>rim-cli</code> have their own <a href="security.html"><code>SECURITY.md</code></a>; report a client
+problem there. When you cannot tell which side a problem is on, report it here.</p>
+<h2 id="under-outside-review">Under outside review <a class="anchor" href="#under-outside-review" aria-label="Link to this section">#</a></h2>
+<p><a href="security/crypto-review-brief-2026-10.html"><code>docs/security/crypto-review-brief-2026-10.md</code></a> is the brief for the outside cryptographic
+review of key identity, device linking, recovery and end-to-end encryption. Its section 6 lists
+the known gaps and open questions; a report that matches one is still welcome, especially with
+an attack the brief does not describe.</p>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/SECURITY.md">rim-server/SECURITY.md</a> at <code>c86029b</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+<script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
+</body>
+</html>

@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Release checklist · RIM</title>
+<meta name="description" content="The steps that cut a rim-server release v&lt;version&gt;, in order. Copy the list into the release pull request and tick it there. Steps marked FILL wait for decisions not taken yet, such as the desktop release workflow and …">
+<link rel="icon" href="../../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../../index.html" aria-label="RIM home">
+      <picture><source srcset="../../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../../index.html#what">What RIM is</a>
+      <a href="../../index.html#how">How it works</a>
+      <a href="../self-hosting.html">Self-host</a>
+      <a href="../../configure/index.html">Configure</a>
+      <a href="../index.html" aria-current="page">Docs</a>
+      <a href="../../api/index.html">API</a>
+      <a href="../../specs/index.html">Specs</a>
+      <a href="../contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="../index.html">Docs</a><span aria-hidden="true">/</span><a href="../operators.html">Operators</a><span aria-hidden="true">/</span><span>Release checklist</span></div>
+  <div class="page with-toc">
+    <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
+<ol>
+<li><a href="#1-choose-the-version">1. Choose the version</a></li>
+<li><a href="#2-check-the-migrations">2. Check the migrations</a></li>
+<li><a href="#3-run-the-gates-on-the-release-commit">3. Run the gates on the release commit</a></li>
+<li><a href="#4-test-the-upgrade-and-the-rollback">4. Test the upgrade and the rollback</a></li>
+<li><a href="#5-check-the-clients-against-the-server">5. Check the clients against the server</a></li>
+<li><a href="#6-version-changelog-pull-request">6. Version, changelog, pull request</a></li>
+<li><a href="#7-tag">7. Tag</a></li>
+<li><a href="#8-publish">8. Publish</a></li>
+<li><a href="#9-after">9. After</a></li>
+</ol>
+</details></aside>
+    <main id="content" class="prose">
+<h1 id="release-checklist">Release checklist</h1>
+<p>The steps that cut a rim-server release <code>v&lt;version&gt;</code>, in order. Copy the list into the release
+pull request and tick it there. Steps marked <strong>FILL</strong> wait for decisions not taken yet, such as
+the desktop release workflow and the updater key; until then they are done by hand or skipped,
+and the pull request says which. Only the maintainer tags and publishes;
+<a href="../contributing.html"><code>CONTRIBUTING.md</code></a>, &quot;Who can merge and publish&quot;, lists the repository settings that enforce it.</p>
+<p>The gates run locally on the release commit. CI counts only when it ran on that same commit.</p>
+<h2 id="1-choose-the-version">1. Choose the version <a class="anchor" href="#1-choose-the-version" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><input disabled="" type="checkbox"> Read <code>Unreleased</code> in <a href="../changelog.html"><code>CHANGELOG.md</code></a>. Every user-visible change since the last tag has a
+line; <code>git log --oneline v&lt;previous&gt;..master</code> shows what may be missing.</li>
+<li><input disabled="" type="checkbox"> Pick the version by Semantic Versioning. While the major version is 0, a breaking change to
+the GraphQL schema, the server-to-server protocol or a spec in <a href="https://github.com/rim-platform/rim-server/tree/c86029b35a7ef7770b05e7bda62909f988343f7f/docs/specs"><code>docs/specs/</code></a> raises the
+minor version; anything else raises the patch.</li>
+<li><input disabled="" type="checkbox"> If a GraphQL field or argument was removed or changed meaning, <code>API_VERSION</code> in
+<a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/rim_api/src/types/server_info.rs"><code>rim_api/src/types/server_info.rs</code></a> goes up by one.</li>
+</ul>
+<h2 id="2-check-the-migrations">2. Check the migrations <a class="anchor" href="#2-check-the-migrations" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><input disabled="" type="checkbox"> List them: <code>git diff --stat v&lt;previous&gt;..master -- migration/src</code>.</li>
+<li><input disabled="" type="checkbox"> Each one only expands the schema, or drops what the previous release already stopped
+using. A drop (a contract) has an <strong>Upgrade:</strong> line in the changelog.
+<a href="upgrade.html"><code>docs/operations/upgrade.md</code></a>, &quot;Why migrations only go forward&quot;, is the rule.</li>
+<li><input disabled="" type="checkbox"> A migration that rewrites a large table says so in the changelog with the time it took on
+a copy of a real database.</li>
+</ul>
+<h2 id="3-run-the-gates-on-the-release-commit">3. Run the gates on the release commit <a class="anchor" href="#3-run-the-gates-on-the-release-commit" aria-label="Link to this section">#</a></h2>
+<pre><code class="language-sh">export DATABASE_URL=postgres://postgres:postgres@localhost:5432/rim_test
+cargo fmt --all -- --check
+cargo clippy --workspace --all-targets -- -D warnings
+cargo clippy --workspace --all-targets \
+  --features &quot;rim_infra_db/db-tests,rim_infra_services/infra-db-tests,rim_api/e2e-tests&quot; -- -D warnings
+cargo test --workspace -- --test-threads=1
+cargo test -p rim_infra_db --features db-tests -- --test-threads=1
+cargo test -p rim_api --features e2e-tests -- --test-threads=1
+cargo test -p rim_infra_services --features infra-db-tests -- --test-threads=1
+cargo audit
+docker build -t rim-server:release-check .</code></pre>
+<ul>
+<li><input disabled="" type="checkbox"> Every command above passes. <code>cargo audit</code> findings are fixed or listed in the release pull
+request with the reason they do not apply.</li>
+<li><input disabled="" type="checkbox"> rim-ui&#39;s gates pass on its release commit (FILL: rim-ui&#39;s own checklist, once it has one).</li>
+</ul>
+<h2 id="4-test-the-upgrade-and-the-rollback">4. Test the upgrade and the rollback <a class="anchor" href="#4-test-the-upgrade-and-the-rollback" aria-label="Link to this section">#</a></h2>
+<p>On a scratch host or compose project, never the production one. The release is not published
+yet, so the new images are built from the release commits with <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/deploy/compose.dev.yml"><code>deploy/compose.dev.yml</code></a>:</p>
+<ul>
+<li><input disabled="" type="checkbox"> Start the previous release (<a href="../self-hosting.html"><code>docs/self-hosting.md</code></a>), sign up, write messages in a channel
+and an encrypted conversation, upload a file, and take a backup with <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/deploy/backup.sh"><code>deploy/backup.sh</code></a>.</li>
+<li><input disabled="" type="checkbox"> Upgrade to the release commit as <a href="upgrade.html"><code>docs/operations/upgrade.md</code></a> says. <code>/readyz</code> answers 200
+and the data is there.</li>
+<li><input disabled="" type="checkbox"> Roll the binary back to the previous release with <code>dc up -d --no-deps rim web</code>.
+<code>/readyz</code> answers 200 and the previous client still works.</li>
+<li><input disabled="" type="checkbox"> Upgrade again: <code>migrate</code> has nothing to run and the server starts.</li>
+<li><input disabled="" type="checkbox"> <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/deploy/restore-drill.sh"><code>deploy/restore-drill.sh</code></a> on a production backup (FILL: which server&#39;s backups), built from
+the release commit: the new image applies its migrations to real data and reaches
+<code>/readyz</code>.</li>
+</ul>
+<h2 id="5-check-the-clients-against-the-server">5. Check the clients against the server <a class="anchor" href="#5-check-the-clients-against-the-server" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><input disabled="" type="checkbox"> With the release commit running, <code>curl -s http://localhost:8080/api/sdl</code> matches the
+<code>schema.graphql</code> committed in rim-ui&#39;s release commit.</li>
+<li><input disabled="" type="checkbox"> In rim-ui, <code>npm run skew:check -- &lt;previous rim-ui release&gt;</code> lists what the new client sends
+that a server on the previous release refuses. Anything it lists goes into the changelog as
+an <strong>Upgrade:</strong> line (servers before the client).</li>
+</ul>
+<h2 id="6-version-changelog-pull-request">6. Version, changelog, pull request <a class="anchor" href="#6-version-changelog-pull-request" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><input disabled="" type="checkbox"> Set <code>version</code> under <code>[workspace.package]</code> in the root <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/Cargo.toml"><code>Cargo.toml</code></a> and run
+<code>cargo build --workspace</code> so <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/Cargo.lock"><code>Cargo.lock</code></a> follows.</li>
+<li><input disabled="" type="checkbox"> Set rim-ui&#39;s version to the same <code>&lt;version&gt;</code> (<code>package.json</code>, <code>src-tauri/tauri.conf.json</code>,
+<code>src-tauri/Cargo.toml</code>): the compose files run both images at one <code>RIM_VERSION</code>, and
+rim-ui&#39;s release workflow refuses a tag that differs from <code>package.json</code>. Its
+<a href="../changelog.html"><code>CHANGELOG.md</code></a> gets the same section rename as below.</li>
+<li><input disabled="" type="checkbox"> In <a href="../changelog.html"><code>CHANGELOG.md</code></a>, rename <code>Unreleased</code> to <code>[&lt;version&gt;] - &lt;YYYY-MM-DD&gt;</code>, start a new empty
+<code>Unreleased</code> above it, and set the links at the bottom:
+
+<code>text [Unreleased]: https://github.com/rim-platform/rim-server/compare/v&lt;version&gt;...HEAD [&lt;version&gt;]: https://github.com/rim-platform/rim-server/compare/v&lt;previous&gt;...v&lt;version&gt; </code>
+
+The first release links <code>[&lt;version&gt;]</code> to <code>…/releases/tag/v&lt;version&gt;</code> instead.</li>
+<li><input disabled="" type="checkbox"> Open the pull request &quot;Release &lt;version&gt;&quot; with this list ticked and the gate tails, and
+merge it.</li>
+</ul>
+<h2 id="7-tag">7. Tag <a class="anchor" href="#7-tag" aria-label="Link to this section">#</a></h2>
+<pre><code class="language-sh">git checkout master &amp;&amp; git pull
+git tag -s v&lt;version&gt; -m &quot;rim-server &lt;version&gt;&quot;       # FILL: the key that signs release tags
+git push origin v&lt;version&gt;</code></pre>
+<ul>
+<li><input disabled="" type="checkbox"> The tag points at the merged release commit, and <code>rim-server --version</code> built from it
+prints <code>&lt;version&gt;</code>. Only the maintainer can push a <code>v*</code> tag.</li>
+<li><input disabled="" type="checkbox"> rim-ui is tagged <code>v&lt;version&gt;</code> at its release commit the same way.</li>
+</ul>
+<h2 id="8-publish">8. Publish <a class="anchor" href="#8-publish" aria-label="Link to this section">#</a></h2>
+<p>Pushing the tag starts <code>.github/workflows/release.yaml</code> in each repository. Its
+<code>build-and-publish</code> job waits in the <code>release</code> environment until the maintainer approves it. The
+job checks the tag against the version in <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/Cargo.toml"><code>Cargo.toml</code></a> (rim-ui: <code>package.json</code>) and the
+changelog&#39;s section for it, builds the image for <code>linux/amd64</code>, pushes the tags <code>&lt;version&gt;</code>,
+<code>&lt;major&gt;.&lt;minor&gt;</code>, <code>sha-&lt;short sha&gt;</code> and <code>latest</code> (a pre-release such as <code>0.2.0-rc.1</code> gets only
+<code>&lt;version&gt;</code> and <code>sha-…</code>), signs the digest with cosign keyless and attests an SPDX SBOM to it.
+The next job creates the GitHub release with the changelog section and the SBOM.</p>
+<ul>
+<li><input disabled="" type="checkbox"> Approve the run of both repositories on its page (&quot;Review deployments&quot;, environment
+<code>release</code>), after checking that it ran for the tag just pushed.</li>
+<li><input disabled="" type="checkbox"> Both runs pass. One that fails before &quot;Build and push&quot; published nothing: fix the cause,
+delete the tag and push it again. Once an image is pushed the version is spent, and a fix
+goes out as the next patch.</li>
+<li><input disabled="" type="checkbox"> Verify the signatures. The certificate must name each repository&#39;s release workflow at
+the tag; any other identity fails:
+
+<code>sh v=&lt;version&gt; cosign verify ghcr.io/rim-platform/rim-server:$v \   --certificate-identity https://github.com/rim-platform/rim-server/.github/workflows/release.yaml@refs/tags/v$v \   --certificate-oidc-issuer https://token.actions.githubusercontent.com cosign verify ghcr.io/rim-platform/rim-web:$v \   --certificate-identity https://github.com/rim-platform/rim-ui/.github/workflows/release.yaml@refs/tags/v$v \   --certificate-oidc-issuer https://token.actions.githubusercontent.com </code>
+
+The digest cosign prints matches the one in the GitHub release notes, and
+<code>cosign verify-attestation --type spdxjson</code> with the same flags passes.</li>
+<li><input disabled="" type="checkbox"> The first release only: set both packages public (package settings on GitHub), as
+<a href="../contributing.html"><code>CONTRIBUTING.md</code></a>, &quot;Who can merge and publish&quot;, lists.</li>
+<li><input disabled="" type="checkbox"> Desktop builds: FILL the rim-ui release workflow. The updater stays off until
+<code>src-tauri/updater.json</code> in rim-ui has the endpoint and the public key: FILL the updater
+endpoint, and where the signing key lives and who holds it.</li>
+</ul>
+<h2 id="9-after">9. After <a class="anchor" href="#9-after" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><input disabled="" type="checkbox"> Upgrade the servers the project runs (FILL: which servers and relays) as
+<a href="upgrade.html"><code>docs/operations/upgrade.md</code></a> says, a backup first.</li>
+<li><input disabled="" type="checkbox"> Watch <code>/readyz</code>, the logs and the metrics (<a href="metrics.html"><code>docs/operations/metrics.md</code></a>) for a day.</li>
+<li><input disabled="" type="checkbox"> Announce the release. FILL: where.</li>
+</ul>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/docs/operations/release-checklist.md">rim-server/docs/operations/release-checklist.md</a> at <code>c86029b</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+<script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
+</body>
+</html>

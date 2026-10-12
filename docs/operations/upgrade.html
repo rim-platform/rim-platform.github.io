@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Upgrading a server · RIM</title>
+<meta name="description" content="How a running server moves to a new release, and back. docs/self-hosting.md, &quot;Updates&quot;, is the short form for deploy/compose.yml; this page adds what to read first, the rollback and why it works. The commands use the dc …">
+<link rel="icon" href="../../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../../index.html" aria-label="RIM home">
+      <picture><source srcset="../../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../../index.html#what">What RIM is</a>
+      <a href="../../index.html#how">How it works</a>
+      <a href="../self-hosting.html">Self-host</a>
+      <a href="../../configure/index.html">Configure</a>
+      <a href="../index.html" aria-current="page">Docs</a>
+      <a href="../../api/index.html">API</a>
+      <a href="../../specs/index.html">Specs</a>
+      <a href="../contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="../index.html">Docs</a><span aria-hidden="true">/</span><a href="../operators.html">Operators</a><span aria-hidden="true">/</span><span>Upgrading a server</span></div>
+  <div class="page with-toc">
+    <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
+<ol>
+<li><a href="#before">Before</a></li>
+<li><a href="#upgrade">Upgrade</a></li>
+<li><a href="#rolling-back">Rolling back</a></li>
+<li><a href="#why-migrations-only-go-forward">Why migrations only go forward</a></li>
+</ol>
+</details></aside>
+    <main id="content" class="prose">
+<h1 id="upgrading-a-server">Upgrading a server</h1>
+<p>How a running server moves to a new release, and back. <a href="../self-hosting.html"><code>docs/self-hosting.md</code></a>, &quot;Updates&quot;, is the
+short form for <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/deploy/compose.yml"><code>deploy/compose.yml</code></a>; this page adds what to read first, the rollback and why it
+works. The commands use the <code>dc</code> alias from <a href="../self-hosting.html"><code>docs/self-hosting.md</code></a> (a relay: the alias in
+<a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/deploy/README.md"><code>deploy/README.md</code></a>), from the repository root.</p>
+<p>A release is the git tag <code>v&lt;version&gt;</code> and the images <code>ghcr.io/rim-platform/rim-server:&lt;version&gt;</code>
+and <code>ghcr.io/rim-platform/rim-web:&lt;version&gt;</code> its release workflows publish. rim-server and
+rim-ui release under the same version, so <code>RIM_VERSION</code> in <code>deploy/.env</code> names both images.
+<a href="../changelog.html"><code>CHANGELOG.md</code></a> lists what each release changes, and a
+line starting with <strong>Upgrade:</strong> is something the operator does before or after the upgrade.</p>
+<h2 id="before">Before <a class="anchor" href="#before" aria-label="Link to this section">#</a></h2>
+<ol>
+<li>Note the version running now: <code>dc exec rim /app/rim-server --version</code>. It is also in
+<code>/healthz</code> and in the first log line.</li>
+<li>Read every <a href="../changelog.html"><code>CHANGELOG.md</code></a> section between that version and the new one, and do what its
+<strong>Upgrade:</strong> lines say.</li>
+<li>Go one release at a time when you can. Skipping releases brings the schema to the newest
+one just the same, but the binary rollback below is only safe to the release right before
+the new one, and after a skip that is not the release you ran.</li>
+<li>Take a backup (<a href="../self-hosting.html"><code>docs/self-hosting.md</code></a>, &quot;Backups&quot;). It is the only way back further than the
+release before.</li>
+</ol>
+<h2 id="upgrade">Upgrade <a class="anchor" href="#upgrade" aria-label="Link to this section">#</a></h2>
+<pre><code class="language-sh">deploy/backup.sh
+git fetch --tags &amp;&amp; git checkout v&lt;version&gt;
+$EDITOR deploy/.env                           # RIM_VERSION=&lt;version&gt;
+dc pull                                       # pulls the new images; verify them next
+dc run --rm migrate                           # applies the new migrations, then exits
+dc up -d
+dc logs -f rim</code></pre>
+<p>Between <code>dc pull</code> and the migrations, verify the new images&#39; signatures as
+<a href="../self-hosting.html"><code>docs/self-hosting.md</code></a>, &quot;Verify the images&quot;, says. With <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/deploy/compose.dev.yml"><code>deploy/compose.dev.yml</code></a>, which builds
+the images from checkouts, check out rim-ui&#39;s <code>v&lt;version&gt;</code> next to this repository and run
+<code>dc build</code> in place of <code>dc pull</code>.</p>
+<p><code>dc run --rm migrate</code> runs <code>/app/migration up</code> from the new image against the database while the
+old server is still serving; that is safe because a release&#39;s migrations only add (below). <code>dc up -d</code> alone also runs it before it starts the new server; running it first shows the migrations
+succeed before anything restarts.</p>
+<p>Check the new server:</p>
+<pre><code class="language-sh">dc ps                                                     # rim: healthy
+dc exec rim /app/rim-server --version
+dc exec rim curl -fsS http://localhost:8080/readyz; echo</code></pre>
+<p>When <code>/readyz</code> fails, <code>curl -s</code> without <code>-f</code> shows the body; a <code>migrations</code> check with the
+reason <code>N pending</code> means the migrations did not run.</p>
+<p>Without compose the order is the same: run the new build&#39;s migrations while the old server
+keeps serving, <code>DATABASE_URL=… /app/migration up</code> (or <code>cargo run --release -p migration -- up</code>
+from a checkout), then restart <code>rim-server</code> on the new binary.</p>
+<h2 id="rolling-back">Rolling back <a class="anchor" href="#rolling-back" aria-label="Link to this section">#</a></h2>
+<p><strong>The binary, to the release before.</strong> Migrations stay applied; the previous release&#39;s server
+runs on the newer schema. The previous image&#39;s <code>migrate</code> service does not: it refuses a database
+holding migrations it does not know,</p>
+<pre><code class="language-text">Custom Error: Migration file of version '…' is missing, this migration has been applied but its file is missing</code></pre>
+<p>and <code>rim</code> waits for <code>migrate</code> to succeed. So start the old server without its dependencies:</p>
+<pre><code class="language-sh">git checkout v&lt;previous version&gt;
+$EDITOR deploy/.env                           # RIM_VERSION=&lt;previous version&gt;
+dc pull rim web
+dc up -d --no-deps rim web</code></pre>
+<p>A relay has no web client: <code>dc pull rim</code> and <code>dc up -d --no-deps rim</code>. The old server&#39;s
+<code>/readyz</code> passes: it counts only the migrations it knows as pending. Until the next upgrade, a
+plain <code>dc up -d</code> stops at the failing <code>migrate</code>; use <code>--no-deps</code> as above. When you upgrade again
+there is no migration left to run.</p>
+<p><strong>Further back.</strong> Restore the backup taken before the upgrade (<a href="../self-hosting.html"><code>docs/self-hosting.md</code></a>,
+&quot;Restore&quot;). Everything written since that backup is lost.</p>
+<p><strong>Never <code>migrate down</code> a server with data.</strong> Each migration has a <code>down</code>, for development and
+tests: on a real database it drops tables and columns with their rows, and some refuse to run
+once there are rows to lose.</p>
+<h2 id="why-migrations-only-go-forward">Why migrations only go forward <a class="anchor" href="#why-migrations-only-go-forward" aria-label="Link to this section">#</a></h2>
+<p>A release&#39;s migrations expand the schema: new tables, new columns that are nullable or have a
+default, new indexes. The previous release&#39;s server ignores what it does not know, so it keeps
+working on the expanded schema, which is what makes the binary rollback and the upgrade with the
+old server still running safe. Removing something takes two releases: the first stops using the
+table or column, the next one&#39;s migration drops it (the contract). A rename is an expand (the new
+name, filled from the old), then a contract one release later.</p>
+<p>So the release right before always runs on the current schema. One further back may not: it
+may still use what a contract dropped. A release with a contract migration says so in
+<a href="../changelog.html"><code>CHANGELOG.md</code></a> with an <strong>Upgrade:</strong> line, which tells an operator who skipped the release before
+it that the backup is their only way back.</p>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/docs/operations/upgrade.md">rim-server/docs/operations/upgrade.md</a> at <code>c86029b</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+<script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
+</body>
+</html>

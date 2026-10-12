@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Keyboard · RIM</title>
+<meta name="description" content="Everything in the shell is reachable without a mouse. This page describes how keys are resolved, the keybind profile file, and the opt-in Vim layer.">
+<link rel="icon" href="../../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../../index.html" aria-label="RIM home">
+      <picture><source srcset="../../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../../index.html#what">What RIM is</a>
+      <a href="../../index.html#how">How it works</a>
+      <a href="../self-hosting.html">Self-host</a>
+      <a href="../../configure/index.html">Configure</a>
+      <a href="../index.html" aria-current="page">Docs</a>
+      <a href="../../api/index.html">API</a>
+      <a href="../../specs/index.html">Specs</a>
+      <a href="../contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="../index.html">Docs</a><span aria-hidden="true">/</span><a href="../using-rim.html">Using RIM</a><span aria-hidden="true">/</span><span>Keyboard</span></div>
+  <div class="page">
+
+    <main id="content" class="prose">
+<h1 id="keyboard">Keyboard</h1>
+<p>Everything in the shell is reachable without a mouse. This page describes how keys are
+resolved, the keybind profile file, and the opt-in Vim layer.</p>
+<h2 id="where-a-key-goes">Where a key goes <a class="anchor" href="#where-a-key-goes" aria-label="Link to this section">#</a></h2>
+<p>A keydown passes through, in order:</p>
+<ol>
+<li><p><strong>The Vim layer</strong> (only while Vim mode is on). It takes unmodified keys outside text fields
+and <code>Ctrl+[</code>. Keys in a text field, a select or a plugin frame pass through untouched.</p>
+</li>
+<li><p><strong>The keybinds</strong> (<code>KeybindProvider</code>). One binding per keystroke and context, highest layer
+first:</p>
+<ul>
+<li>bindings kept on this device: plugin commands and the app&#39;s own commands, which the
+server does not know;</li>
+<li>the user&#39;s and the workspace&#39;s bindings from the server;</li>
+<li>the active keybind profile;</li>
+<li>the server&#39;s default bindings.</li>
+</ul>
+<p>A keystroke a higher layer holds, even turned off, is gone from the layers below. Inside a
+text field, keys that type a character and the editing chords (word jumps, select all,
+clipboard, undo, redo) stay with the field.</p>
+</li>
+<li><p><strong>The focused surface</strong>: lists answer arrow keys, Home and End; dialogs close on Escape;
+menus move with the arrows.</p>
+</li>
+</ol>
+<p>The keyboard shortcuts panel (<code>?</code> or <code>Ctrl+/</code>, or Settings, Keyboard) lists the bindings this
+resolution produces, so it always matches what the keys do.</p>
+<h2 id="keybind-profiles">Keybind profiles <a class="anchor" href="#keybind-profiles" aria-label="Link to this section">#</a></h2>
+<p>A profile is the default binding set of a device plus the Vim switch. Three are built in:</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Profile</th>
+<th>Vim mode</th>
+<th>Bindings</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Minimal</td>
+<td>off</td>
+<td>The plain default set. A new device starts here.</td>
+</tr>
+<tr>
+<td>Vim</td>
+<td>on</td>
+<td>The plain default set.</td>
+</tr>
+<tr>
+<td>Mouse-friendly</td>
+<td>off</td>
+<td>The default set without reload, bookmark, bold, redo, word jumps</td>
+</tr>
+</tbody></table></div>
+<p>Settings, Keyboard exports the active profile and imports one. The file:</p>
+<pre><code class="language-json">{
+  &quot;format&quot;: &quot;rim.keybind-profile&quot;,
+  &quot;version&quot;: 1,
+  &quot;name&quot;: &quot;Team keys&quot;,
+  &quot;description&quot;: &quot;Optional text&quot;,
+  &quot;vimMode&quot;: false,
+  &quot;bindings&quot;: [
+    { &quot;keystroke&quot;: &quot;Ctrl+K&quot;, &quot;commandId&quot;: &quot;workspace.open_command_palette&quot; },
+    { &quot;keystroke&quot;: &quot;Ctrl+J&quot;, &quot;commandId&quot;: &quot;workspace.open_search&quot;, &quot;context&quot;: &quot;GLOBAL&quot; },
+    { &quot;keystroke&quot;: &quot;Ctrl+R&quot;, &quot;commandId&quot;: null }
+  ]
+}</code></pre>
+<ul>
+<li><code>keystroke</code>: modifiers <code>Ctrl</code>, <code>Shift</code>, <code>Alt</code> (or <code>Meta</code>, read as <code>Ctrl</code>) joined by <code>+</code>, then
+a key name as the browser reports it (<code>K</code>, <code>ArrowDown</code>, <code>Escape</code>, <code>?</code>). Import puts it in
+canonical form.</li>
+<li><code>commandId</code>: any command id, or <code>null</code> to free the keystroke so no lower layer binds it.</li>
+<li><code>context</code>: <code>GLOBAL</code> (the default), <code>COMPOSER</code>, <code>MESSAGE_LIST</code>, <code>THREAD_VIEW</code>,
+<code>CONVERSATION_VIEW</code>, <code>PANEL</code> or <code>COMMAND_PALETTE</code>.</li>
+</ul>
+<p>Import checks every field and lists every problem with its position. A profile of a newer
+version is refused with a message saying so.</p>
+<h2 id="vim-mode">Vim mode <a class="anchor" href="#vim-mode" aria-label="Link to this section">#</a></h2>
+<p>Off by default. Normal mode is any focus outside a text field; insert mode is a focused text
+field or plugin frame. The status bar shows the mode.</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Keys</th>
+<th>Normal mode</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>h</code> <code>l</code></td>
+<td>Focus the pane to the left or right</td>
+</tr>
+<tr>
+<td><code>j</code> <code>k</code></td>
+<td>Next or previous item of the focused list, else of the pane</td>
+</tr>
+<tr>
+<td><code>gg</code> <code>G</code></td>
+<td>First or last item</td>
+</tr>
+<tr>
+<td><code>n</code> <code>p</code></td>
+<td>Next or previous unread conversation (not in the timeline)</td>
+</tr>
+<tr>
+<td><code>/</code></td>
+<td>Search this conversation</td>
+</tr>
+<tr>
+<td><code>:</code></td>
+<td>Open the command palette</td>
+</tr>
+<tr>
+<td><code>i</code>, <code>Enter</code></td>
+<td>Focus the composer (Enter only when no button is focused)</td>
+</tr>
+<tr>
+<td><code>3j</code></td>
+<td>A count repeats a motion</td>
+</tr>
+<tr>
+<td><code>Esc</code>, <code>Ctrl+[</code></td>
+<td>Leave the text field for its pane</td>
+</tr>
+</tbody></table></div>
+<p>The timeline keeps its own message keys (<code>r</code>, <code>e</code>, <code>p</code> to pin, <code>d</code>, <code>c</code>, <code>f</code>) in both modes.</p>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/docs/keyboard.md">rim-ui/docs/keyboard.md</a> at <code>58e3ec0</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+
+</body>
+</html>

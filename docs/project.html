@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Project · RIM</title>
+<meta name="description" content="Where RIM is heading and how it is built: the vision, the server architecture and the design models, how to contribute, and security.">
+<link rel="icon" href="../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../index.html" aria-label="RIM home">
+      <picture><source srcset="../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../index.html#what">What RIM is</a>
+      <a href="../index.html#how">How it works</a>
+      <a href="self-hosting.html">Self-host</a>
+      <a href="../configure/index.html">Configure</a>
+      <a href="index.html" aria-current="page">Docs</a>
+      <a href="../api/index.html">API</a>
+      <a href="../specs/index.html">Specs</a>
+      <a href="contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="index.html">Docs</a><span aria-hidden="true">/</span><span>Project</span></div>
+  <div class="page">
+
+    <main id="content" class="prose">
+<h1>Project</h1>
+<p class="lede">Where RIM is heading and how it is built: the vision, the server architecture and the design models, how to contribute, and security.</p>
+<h2 id="direction-and-design">Direction and design</h2>
+<ul class="cards">
+<li><a href="vision.html"><b>RIM — Product Vision</b><span>The roadmap (ROADMAP.md) owns sequencing; this document owns the product principles.</span><span class="src">rim-server/docs/vision.md</span></a></li>
+<li><a href="architecture.html"><b>Architecture</b><span>This document describes the architecture of the RIM server.</span><span class="src">rim-server/docs/architecture.md</span></a></li>
+<li><a href="command_model.html"><b>Command Model</b><span>This document defines the command model for RIM.</span><span class="src">rim-server/docs/command_model.md</span></a></li>
+<li><a href="keybind_model.html"><b>Keybind Model</b><span>This document defines the keybind model for RIM.</span><span class="src">rim-server/docs/keybind_model.md</span></a></li>
+<li><a href="context_model.html"><b>Context Model</b><span>This document defines the context model for RIM.</span><span class="src">rim-server/docs/context_model.md</span></a></li>
+</ul>
+<h2 id="contributing">Contributing</h2>
+<ul class="cards">
+<li><a href="contributing.html"><b>Contributing</b><span>Anyone can contribute. This repository is licensed under the Apache License 2.0 (see LICENSE), and contributions are accepted under the same license.</span><span class="src">rim-server/CONTRIBUTING.md</span></a></li>
+<li><a href="code-of-conduct.html"><b>Contributor Covenant Code of Conduct</b><span>We as members, contributors, and leaders pledge to make participation in our community a harassment-free experience for everyone, regardless of age, body size, visible or invisible disability, ethnicity, sex …</span><span class="src">rim-server/CODE_OF_CONDUCT.md</span></a></li>
+<li><a href="changelog.html"><b>Changelog</b><span>What changes between rim-server releases, for the people who run a server and the people who write a client. The format is Keep a Changelog and the versions follow Semantic Versioning; a release is the tag v&lt;version&gt;, …</span><span class="src">rim-server/CHANGELOG.md</span></a></li>
+</ul>
+<h2 id="security">Security</h2>
+<ul class="cards">
+<li><a href="security.html"><b>Security policy</b><span>RIM is pre-release. Until the first tagged release, only master is supported: a fix lands there and nowhere else. Once releases are tagged, this section names the ones that get fixes.</span><span class="src">rim-server/SECURITY.md</span></a></li>
+<li><a href="security/crypto-review-brief-2026-10.html"><b>Outside cryptographic review: brief for Stages 3 and 4</b><span>Written 2026-10-09 for the outside review that ROADMAP.md (&quot;Risks&quot;, &quot;Crypto correctness&quot;) and the Stage 4 plan's rules for every PR require before a public release. It covers key identity, device linking, recovery, the …</span><span class="src">rim-server/docs/security/crypto-review-brief-2026-10.md</span></a></li>
+<li><a href="security/audit-access-matrix.html"><b>Audit Log Access Matrix</b><span>This document is the reference for which actor can read which rows of the command audit log (command_audit_log, GraphQL listAuditLog) under which conditions. Anyone changing list_entries in …</span><span class="src">rim-server/docs/security/audit-access-matrix.md</span></a></li>
+</ul>
+<h2 id="client-internals">Client internals</h2>
+<ul class="cards">
+<li><a href="client/ui-shell.html"><b>RIM Desktop UI Shell</b><span>This document defines the intended desktop shell for the RIM UI client.</span><span class="src">rim-ui/docs/ui-shell.md</span></a></li>
+<li><a href="client/error-boundaries.html"><b>Error boundaries</b><span>RIM's shell has three tiers of React error boundary. Pick the right one when adding a new surface, and always wire resetKeys correctly — a boundary without the right resetKeys can leave a pane permanently stuck in its …</span><span class="src">rim-ui/docs/error-boundaries.md</span></a></li>
+<li><a href="client/eslint-prettier.html"><b>ESLint + Prettier</b><span>The frontend has a lint/format gate: npm run lint, npm run lint:fix, npm run format, npm run format:check. npm run build (TypeScript check + Vite build) and npm test remain the other two gates. All four should pass …</span><span class="src">rim-ui/docs/eslint-prettier.md</span></a></li>
+<li><a href="client/rim-mls.html"><b>rim_mls</b><span>src-tauri/crates/rim_mls is the end-to-end encryption engine of encrypted DMs and groups: MLS (RFC 9420) through OpenMLS, behind RIM's own types. It is the only code that names OpenMLS types; the app passes conversation …</span><span class="src">rim-ui/docs/rim-mls.md</span></a></li>
+</ul>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/tree/c86029b35a7ef7770b05e7bda62909f988343f7f">rim-server</a> <code>c86029b</code> and <a href="https://github.com/rim-platform/rim-ui/tree/58e3ec03c43064632a6a6f610d92413040229dfd">rim-ui</a> <code>58e3ec0</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+
+</body>
+</html>

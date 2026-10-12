@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Relays: the client · RIM</title>
+<meta name="description" content="The app talks only to its own server, its relay. A DM or group homed on another relay (its creator's), and a workspace hosted elsewhere, is reached through the relay: requests are signed by this device and forwarded …">
+<link rel="icon" href="../../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../../index.html" aria-label="RIM home">
+      <picture><source srcset="../../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../../index.html#what">What RIM is</a>
+      <a href="../../index.html#how">How it works</a>
+      <a href="../self-hosting.html">Self-host</a>
+      <a href="../../configure/index.html">Configure</a>
+      <a href="../index.html" aria-current="page">Docs</a>
+      <a href="../../api/index.html">API</a>
+      <a href="../../specs/index.html">Specs</a>
+      <a href="../contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="../index.html">Docs</a><span aria-hidden="true">/</span><a href="../using-rim.html">Using RIM</a><span aria-hidden="true">/</span><span>Relays: the client</span></div>
+  <div class="page with-toc">
+    <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
+<ol>
+<li><a href="#what-lives-where">What lives where</a></li>
+<li><a href="#server-pins">Server pins</a></li>
+<li><a href="#requests-to-a-space-elsewhere">Requests to a space elsewhere</a></li>
+<li><a href="#the-relay-stream">The relay stream</a></li>
+<li><a href="#profile-card-and-contacts">Profile card and contacts</a></li>
+<li><a href="#the-direct-space-and-dms-across-relays">The direct space and DMs across relays</a></li>
+<li><a href="#message-requests">Message requests</a></li>
+<li><a href="#workspaces-on-other-servers">Workspaces on other servers</a></li>
+<li><a href="#delegations">Delegations</a></li>
+<li><a href="#revocation">Revocation</a></li>
+<li><a href="#direct-connection">Direct connection</a></li>
+<li><a href="#switching-relays">Switching relays</a></li>
+<li><a href="#signing-up-on-a-public-relay">Signing up on a public relay</a></li>
+<li><a href="#what-needs-two-servers">What needs two servers</a></li>
+</ol>
+</details></aside>
+    <main id="content" class="prose">
+<h1 id="relays-the-client">Relays: the client</h1>
+<p>The app talks only to its own server, its <strong>relay</strong>. A DM or group homed on another relay (its
+creator&#39;s), and a workspace hosted elsewhere, is reached through the relay: requests are
+signed by this device and forwarded unchanged, answers and pushed events are signed by the host
+and checked here against the host&#39;s key, pinned on first use. The contract is rim-server
+<code>docs/specs/server-to-server-v1.md</code>; this document says how the desktop and the web app
+implement their side of it.</p>
+<p>Everything here switches on when the server answers <code>relayInfo</code>. A server without it, or an
+account without a principal id (no key sign-in yet), runs exactly as before.</p>
+<h2 id="what-lives-where">What lives where <a class="anchor" href="#what-lives-where" aria-label="Link to this section">#</a></h2>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Where</th>
+<th>What</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/src/features/relay/api/documents.ts"><code>src/features/relay/api/documents.ts</code></a></td>
+<td>Every GraphQL document of the relay (<code>relayInfo</code>, <code>remoteServer</code>, <code>remoteIdentity</code>, contacts, <code>dmRequests</code> and its mutations, <code>relayItems</code>, <code>ackRelayItems</code>, <code>streamHeads</code>, the <code>relayStream</code> subscription, a conversation&#39;s predecessor)</td>
+</tr>
+<tr>
+<td><a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/src/features/relay/crypto/serverStatements.ts"><code>src/features/relay/crypto/serverStatements.ts</code></a></td>
+<td>The statements in the browser: server key log replay, descriptor, discovery document, device request, host response, host event</td>
+</tr>
+<tr>
+<td><a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/src/features/relay/crypto/relayCrypto.ts"><code>src/features/relay/crypto/relayCrypto.ts</code></a></td>
+<td>The same work per platform: the Tauri <code>relay_*</code> commands and <code>key_identity_sign_device_request</code> on the desktop, WebCrypto and the browser&#39;s device key in the web app</td>
+</tr>
+<tr>
+<td><a href="https://github.com/rim-platform/rim-ui/tree/58e3ec03c43064632a6a6f610d92413040229dfd/src-tauri/src/relay"><code>src-tauri/src/relay/</code></a></td>
+<td>The desktop&#39;s checks of server statements (<code>server.rs</code>) and their commands</td>
+</tr>
+<tr>
+<td><a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/src-tauri/src/key_identity/statement.rs"><code>src-tauri/src/key_identity/statement.rs</code></a></td>
+<td><code>device_request</code>: the payload in the spec&#39;s field order, signed by the device key; <code>verified_card</code></td>
+</tr>
+<tr>
+<td><a href="https://github.com/rim-platform/rim-ui/tree/58e3ec03c43064632a6a6f610d92413040229dfd/src/features/relay/state"><code>src/features/relay/state/</code></a></td>
+<td><code>relayDb.ts</code> (IndexedDB <code>rim-relay</code>), <code>serverPins.ts</code>, <code>spaces.ts</code> (which space lives on which host), <code>useRelayStore.ts</code></td>
+</tr>
+<tr>
+<td><a href="https://github.com/rim-platform/rim-ui/tree/58e3ec03c43064632a6a6f610d92413040229dfd/src/features/relay/transport"><code>src/features/relay/transport/</code></a></td>
+<td><code>remoteFetch.ts</code> (signed requests, verified answers), <code>requestSeq.ts</code>, <code>relayHealth.ts</code></td>
+</tr>
+<tr>
+<td><a href="https://github.com/rim-platform/rim-ui/tree/58e3ec03c43064632a6a6f610d92413040229dfd/src/features/relay/stream"><code>src/features/relay/stream/</code></a></td>
+<td><code>relayStream.ts</code> (the queue on the WebSocket), <code>sequencer.ts</code>, <code>streamRules.ts</code></td>
+</tr>
+<tr>
+<td><a href="https://github.com/rim-platform/rim-ui/tree/58e3ec03c43064632a6a6f610d92413040229dfd/src/features/relay/contacts"><code>src/features/relay/contacts/</code></a></td>
+<td>Contact links, fingerprints, verified identities, aliases, relays seen in invites</td>
+</tr>
+<tr>
+<td><a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/src/features/relay/inbox/autoAccept.ts"><code>src/features/relay/inbox/autoAccept.ts</code></a>, <code>components/DmRequestInbox.tsx</code></td>
+<td>Message requests</td>
+</tr>
+<tr>
+<td><a href="https://github.com/rim-platform/rim-ui/tree/58e3ec03c43064632a6a6f610d92413040229dfd/src/features/relay/conversations"><code>src/features/relay/conversations/</code></a></td>
+<td>New DMs and groups in the direct space, successors</td>
+</tr>
+<tr>
+<td><a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/src/features/relay/runtime/relayRuntime.ts"><code>src/features/relay/runtime/relayRuntime.ts</code></a></td>
+<td>Start-up and wiring (<code>useRelayRuntime</code>, mounted in <code>AppShell</code>)</td>
+</tr>
+<tr>
+<td><a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/src/features/relay/runtime/useDirectSpaceRuntime.ts"><code>src/features/relay/runtime/useDirectSpaceRuntime.ts</code></a></td>
+<td>This relay&#39;s direct space from sign-in (<code>useDirectSpaceRuntime</code>, mounted in <code>AppShell</code>)</td>
+</tr>
+<tr>
+<td><a href="https://github.com/rim-platform/rim-ui/tree/58e3ec03c43064632a6a6f610d92413040229dfd/src/features/relay/remote"><code>src/features/relay/remote/</code></a></td>
+<td>Workspaces on other servers: invite links, joining, delegations and their renewal, the relay&#39;s own key, a revocation&#39;s fan-out, switching relays</td>
+</tr>
+<tr>
+<td><a href="https://github.com/rim-platform/rim-ui/tree/58e3ec03c43064632a6a6f610d92413040229dfd/src/features/relay/direct"><code>src/features/relay/direct/</code></a></td>
+<td>Talking to a server directly: the transport (<code>directTransport.ts</code>), GraphQL over it, the socket shim for <code>graphql-ws</code>, the direct connection and its runtime, one-off calls</td>
+</tr>
+<tr>
+<td><a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/src-tauri/src/relay/direct.rs"><code>src-tauri/src/relay/direct.rs</code></a></td>
+<td>The desktop&#39;s direct sessions: discovery fetches, GraphQL with each server&#39;s own cookie jar, WebSockets with that cookie</td>
+</tr>
+<tr>
+<td><a href="https://github.com/rim-platform/rim-ui/tree/58e3ec03c43064632a6a6f610d92413040229dfd/src/features/relay/pow"><code>src/features/relay/pow/</code></a>, <a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/src-tauri/src/relay/pow.rs"><code>src-tauri/src/relay/pow.rs</code></a></td>
+<td>The signup proof-of-work: reading a relay&#39;s registration mode, the search in a web worker and on the desktop&#39;s cores</td>
+</tr>
+<tr>
+<td><a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/src/core/graphql/client.ts"><code>src/core/graphql/client.ts</code></a></td>
+<td><code>setSpaceRouter</code>: the GraphQL client&#39;s <code>fetch</code> sends a request about a space elsewhere to its host</td>
+</tr>
+<tr>
+<td><a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/src/core/graphql/config.ts"><code>src/core/graphql/config.ts</code></a></td>
+<td><code>setRelayEndpoint</code>: the relay the desktop moved to after a switch</td>
+</tr>
+<tr>
+<td><a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/protocol/relay-vectors.json"><code>protocol/relay-vectors.json</code></a></td>
+<td>Known answers both platforms reproduce, including the delegation and the revocation acknowledgement and their conformance cases</td>
+</tr>
+<tr>
+<td><a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/protocol/pow-vectors.json"><code>protocol/pow-vectors.json</code></a></td>
+<td>Proof-of-work known answers both platforms find, and a relay descriptor in <code>pow</code> mode</td>
+</tr>
+</tbody></table></div>
+<h2 id="server-pins">Server pins <a class="anchor" href="#server-pins" aria-label="Link to this section">#</a></h2>
+<p>A server is pinned the first time the app needs it: the home of a DM someone else started (from
+the relays of the inviter&#39;s card), a contact&#39;s relay. <code>remoteServer(origin)</code> fetches the
+discovery document through the relay; the app replays the log, checks that its inception hashes
+to the expected server id, verifies the descriptor under the head key and that its server-to-server
+endpoint is at that origin, and stores the log (<code>servers</code>).</p>
+<p>A later fetch must extend the pin. An equal log refreshes the descriptor version; a prefix keeps
+the pin; an extension is taken, and after a <code>signer: server</code> rotation the key before the head
+still verifies for 24 hours from when this app took it (never after a <code>signer: recovery</code> one,
+nor on a first pin). Anything else is a fork: the pin is marked, the app stops using the server
+and says &quot;This server&#39;s identity changed in a way RIM cannot verify&quot;. A statement signed at a
+<code>keySeq</code> above the pin refetches the server once (at most once a minute) and accepts only an
+extension.</p>
+<h2 id="requests-to-a-space-elsewhere">Requests to a space elsewhere <a class="anchor" href="#requests-to-a-space-elsewhere" aria-label="Link to this section">#</a></h2>
+<p><code>spaces</code> binds each space id this account uses elsewhere to one host, for good: an id this relay
+uses for a space of its own or another host already holds is refused, so every cache entry keyed
+by space id stays unambiguous.</p>
+<p>The GraphQL client reads a request&#39;s <code>serverId</code> or <code>workspaceId</code> (or that field of <code>input</code>). For
+a space bound to a host it sends the exact body to <code>/api/remote/&lt;host server id&gt;/api</code> with:</p>
+<ul>
+<li><code>Rim-Device-Request</code>: the base64url of a <code>device-request</code> payload (method, host-relative path,
+<code>seq</code>, the body&#39;s SHA-256), and <code>Rim-Device-Signature</code>: its signature by this device&#39;s key;</li>
+<li>the session cookie and <code>X-CSRF-Token</code>, as for any request to the relay.</li>
+</ul>
+<p><code>seq</code> is <code>max(previous + 1, Unix time in µs)</code>, written to IndexedDB per (device, host) before the
+request is signed, one at a time per host. The answer must carry <code>Rim-Host-Response</code> and
+<code>Rim-Host-Signature</code>: a <code>host-response</code> signed by the host&#39;s key at its <code>keySeq</code>, naming the host,
+the SHA-256 of this request&#39;s payload, the status received and the SHA-256 of the body
+received. An answer without them, or one that does not verify, is a relay failure, never an
+answer. A verified <code>409 {&quot;error&quot;:&quot;replay&quot;,&quot;highestSeq&quot;:…}</code> moves the counter above <code>highestSeq</code>
+and signs once more.</p>
+<p>Calls that name no space but belong to a host (<code>myMlsWelcomes</code>, <code>ackMlsWelcomes</code>) go through
+<code>hostClient(host)</code>; encrypted attachments of such a space are uploaded (as the exact multipart
+bytes) and downloaded the same way. Each host&#39;s failures are recorded (<code>relayHealth.ts</code>, kept
+across restarts) for &quot;the home is gone&quot;.</p>
+<h2 id="the-relay-stream">The relay stream <a class="anchor" href="#the-relay-stream" aria-label="Link to this section">#</a></h2>
+<p><code>relayStream(after)</code> runs on the existing WebSocket beside <code>workspaceEvents</code>, from the last item
+acknowledged. For each <code>RelayItem</code> the app:</p>
+<ol>
+<li>reads the envelope and checks that it names the item&#39;s host and space;</li>
+<li>accepts it only for a space bound to that host, or for a <code>DmInvite</code> on this person&#39;s own
+stream (<code>u:&lt;principal id&gt;</code>), which binds its space (pinning the host from the inviter&#39;s
+card&#39;s relays first);</li>
+<li>checks the signature under the pinned key at <code>keySeq</code> and that the stream fits the event
+(<code>c:&lt;conversation id&gt;</code> its conversation&#39;s events, <code>u:</code> this person&#39;s, <code>w</code> space-wide events,
+<code>e</code> typing and presence without a <code>seq</code>);</li>
+<li>orders it per <code>(host, space, stream)</code>: at or below the last applied it is a duplicate, the
+next one is applied, a later one is held. The first event seen, or a stored <code>last</code>, is the
+baseline. After 30 seconds or 256 held events the app reconciles: <code>streamHeads</code> through the
+host, a refetch of the space&#39;s lists and change feed (all host-signed answers), <code>last</code> moved
+to the head and what is held above it applied. If that fails the app shows &quot;Messages may be
+missing from &lt;space&gt;&quot; with a retry and &quot;Connect directly&quot; (see &quot;Direct connection&quot;);</li>
+<li>applies it through the same handler as <code>workspaceEvents</code> (<code>applyWorkspaceEvent</code>);</li>
+<li>acknowledges (<code>ackRelayItems</code>) every item up to the first still held, and stores that cursor.</li>
+</ol>
+<p><code>DmRequestReceived</code> refreshes the request inbox; <code>QueueOverflow</code> reconciles the spaces it names;
+<code>RevocationAcked</code> refreshes the revocation fan-out (the app reads its acknowledgements from
+<code>deviceRevocationStatus</code>, whatever the notice carries). <code>workspaceEvents</code> is not opened for a
+space elsewhere.</p>
+<h2 id="profile-card-and-contacts">Profile card and contacts <a class="anchor" href="#profile-card-and-contacts" aria-label="Link to this section">#</a></h2>
+<p>Settings &gt; Security edits the card&#39;s relays, preferred first; this server stays on the list, and
+the card is signed and published again on change. A card that no longer lists this server is
+stale.</p>
+<p>A contact link is <code>rim-contact:1:&lt;principal id&gt;:&lt;relay URL&gt;</code>, shown as text and as a QR code
+(level M; the link has lower-case letters, so the encoder uses byte mode). Settings &gt; Contacts
+reads a pasted link, or a scanned one where the browser has <code>BarcodeDetector</code> and a camera, and
+shows the name from the person&#39;s verified card and their fingerprint before <code>addContact</code>. A
+member of a shared workspace has &quot;Add as contact&quot; in the member list. Everything shown about a
+person comes from <code>remoteIdentity</code>: the key log replayed against the principal id and the card
+verified against its head (<code>relay_verify_card</code> on the desktop). Names given to contacts are kept
+on this device (<code>aliases</code>) and win over card names everywhere members are named.</p>
+<p>The fingerprint of a principal is
+<code>base32(first 10 bytes of SHA-256(&quot;rim.principal-fingerprint.v1\0&quot; || principal id))</code>, shown as
+four groups of four characters.</p>
+<h2 id="the-direct-space-and-dms-across-relays">The direct space and DMs across relays <a class="anchor" href="#the-direct-space-and-dms-across-relays" aria-label="Link to this section">#</a></h2>
+<p>&quot;Direct messages&quot; at the top of the workspace rail opens this relay&#39;s direct space. Its list
+merges the DMs and groups of every direct space this account uses (this relay&#39;s, and those of
+relays where someone started a conversation with this person); opening one switches to its space.</p>
+<p>This relay&#39;s direct space is live from sign-in, whichever space is open: once <code>relayInfo</code>
+answers, the app loads its unread counts and unread notification count, subscribes to its
+<code>workspaceEvents</code> and shows the notifications the server sends there, so the Direct messages
+entry carries its unread badge before it is opened. A reconnect restores that subscription as it
+does the open space&#39;s, and the open space&#39;s own subscription leaves the direct space alone, so
+each of its events applies once. The app sends no workspace-only query about a direct space: no
+custom emoji, workspace plugins, pipelines, workspace state or channels, and keybinds are asked
+for without a workspace. Settings hides Pipelines, State and Emoji there.</p>
+<p>New DMs and groups start in this relay&#39;s direct space whenever every member has a principal id:
+from the contact picker there, or from a workspace&#39;s member picker when everyone picked has one.
+<code>createConversation</code> names them in <code>remoteMembers</code> with the relays of their verified card. With
+anyone on another relay the conversation is created end-to-end encrypted, which needs every
+member and this device to be set up for encryption; otherwise nothing is created and the picker
+says who is not ready. With members of this relay alone, today&#39;s rule holds. MLS runs unchanged:
+the home claims key packages, and the device directory fetches any principal its relay cannot
+answer for (<code>principalDevices</code>, <code>keyLog</code>) with <code>remoteIdentity</code>, from their contact entry or the
+relays their invite named, with the card checked against the log and the same head pin and
+revocation memory as any other principal (<code>e2ee_peer</code>, <code>peers</code>).</p>
+<p>When a DM&#39;s home has failed for 7 days, the conversation offers &quot;Continue here&quot;: a successor in
+this relay&#39;s direct space with the same members and <code>predecessor</code>. The list shows a conversation
+continued elsewhere once, as its successor; of two successors of one conversation the one with
+the smaller id (UUID v7, so the earlier) is kept and the app leaves the other. Each part links
+to the other at the top of its timeline.</p>
+<h2 id="message-requests">Message requests <a class="anchor" href="#message-requests" aria-label="Link to this section">#</a></h2>
+<p>Pending <code>dmRequests</code> sit above the notifications, counted on the bell. Each shows the name from
+the request&#39;s card, verified against the sender&#39;s key log, and the fingerprint. &quot;Read first&quot;
+verifies the held <code>DmInvite</code>, binds the space, processes the Welcome and opens the conversation;
+Accept, Ignore, Block (which also leaves the conversation through its home) and Report act on the
+relay. A request from someone who is a member of a workspace this person is in (by the member
+lists the workspaces&#39; hosts answer) is accepted without asking.</p>
+<h2 id="workspaces-on-other-servers">Workspaces on other servers <a class="anchor" href="#workspaces-on-other-servers" aria-label="Link to this section">#</a></h2>
+<p>An invite to a workspace elsewhere is a link:
+<code>rim-invite:1:&lt;host server id&gt;:&lt;host key hash&gt;:&lt;invite token&gt;:&lt;host origin&gt;</code>. It is read like a
+device-link code (ASCII whitespace removed, at most 400 characters, scheme case ignored, split at
+the first four <code>:</code> after the scheme, so the origin keeps its colons). The join dialog takes it
+where it takes an invite code; plain codes still join workspaces on this server.</p>
+<p>Joining (<code>remote/joinRemote.ts</code>):</p>
+<ol>
+<li><code>remoteServer(origin)</code> pins the host through the relay; the log must hash to the invite&#39;s
+server id, and the key hash must name a key of the log followed only by <code>signer: server</code>
+rotations. Anything else is refused before the host is asked anything.</li>
+<li><code>remoteJoinChallenge(hostServerId, hostOrigin, inviteToken)</code> gets the host&#39;s login challenge
+and the workspace the token names.</li>
+<li>The device signs a <code>login</code> statement whose <code>audience</code> is the host&#39;s server id
+(<code>key_identity_sign_login_for_server</code>, or the browser&#39;s device key) and a delegation for the
+relay (below).</li>
+<li><code>joinRemoteWorkspace</code> joins. The space is bound to the host, the delegation kept, and the
+host&#39;s <code>streamHeads</code> of <code>w</code> and <code>u:&lt;principal id&gt;</code> (asked through the forward path) become
+the baseline of its events; without them the first event seen is the baseline.</li>
+</ol>
+<p>The workspace then shows in the rail after this server&#39;s own, under the name its host answers,
+and everything it shows is loaded through the forward path. A person with no workspace here
+opens their first one elsewhere.</p>
+<h2 id="delegations">Delegations <a class="anchor" href="#delegations" aria-label="Link to this section">#</a></h2>
+<p>A delegation lets the relay carry one workspace&#39;s traffic between this device and the
+workspace&#39;s host until it expires:</p>
+<pre><code class="language-json">{&quot;v&quot;:2,&quot;type&quot;:&quot;delegation&quot;,&quot;principalId&quot;:&quot;rimp1_…&quot;,&quot;deviceId&quot;:&quot;&lt;uuid&gt;&quot;,&quot;relay&quot;:&quot;rims1_…&quot;,&quot;relayKeyHash&quot;:&quot;…&quot;,
+ &quot;host&quot;:&quot;rims1_…&quot;,&quot;workspaceId&quot;:&quot;&lt;uuid&gt;&quot;,&quot;scope&quot;:&quot;workspace&quot;,&quot;nonce&quot;:&quot;&lt;16 bytes&gt;&quot;,&quot;issuedAt&quot;:&quot;…&quot;,&quot;expiresAt&quot;:&quot;…&quot;}</code></pre>
+<p>It is signed by the device key over <code>rim.delegation.v1\0 || payload</code>, runs exactly 24 hours from
+a whole second, and names the relay by its server id and the hash of its current key, which the
+app reads from the relay&#39;s own discovery document (fetched directly and pinned like any server,
+<code>remote/relaySelf.ts</code>). Both platforms refuse fields a host would refuse (another scope, a nonce
+that is not 16 bytes, more than 24 hours, times that are not whole-second UTC).</p>
+<p>While the app runs it checks every 10 minutes, at start and whenever its WebSocket comes back:
+a workspace whose delegation (kept in IndexedDB <code>delegations</code>) has under 6 hours left, names
+another relay or is missing gets a new one, sent with <code>renewDelegations</code> (64 per call). A
+delegation the host refused is not kept. One that had already expired means every device was
+away long enough for the subscription to lapse: the space catches up through its change feed,
+its lists and its stream heads. Settings &gt; Security &gt; &quot;Spaces through this relay&quot; lists
+<code>remoteSubscriptions</code> with their status, the subscription&#39;s expiry and this device&#39;s delegation&#39;s,
+and renews them all on request.</p>
+<h2 id="revocation">Revocation <a class="anchor" href="#revocation" aria-label="Link to this section">#</a></h2>
+<p>Removing a device in Settings &gt; Security keeps the signed revocation and follows it to every
+host holding the account (IndexedDB <code>meta</code>, so a restart does not lose it):</p>
+<ul>
+<li><code>deviceRevocationStatus(deviceId)</code> every 5 seconds, and at once on <code>RevocationAcked</code>. Each
+host&#39;s acknowledgement is checked against the host&#39;s pinned key at its <code>keySeq</code>: it must name
+the host, the principal and device of the revocation, and the SHA-256 of the revocation&#39;s
+payload. An acknowledgement that does not verify counts as none.</li>
+<li>Two minutes in, the app sends the revocation itself to every host without a verified
+acknowledgement: it fetches the host&#39;s discovery document directly, checks it against the pin
+and calls <code>applyRemoteRevocation</code> on the host&#39;s own <code>/api</code> (no session, no CSRF header), then
+checks that acknowledgement the same way.</li>
+<li>A host still without one is named: &quot;&lt;host&gt; has not confirmed; the device keeps access to
+&lt;workspace&gt; until &lt;time&gt;&quot;, where the time is the subscription&#39;s expiry and never more than 24
+hours after the revocation, since every delegation the removed device signed runs out by then.</li>
+</ul>
+<h2 id="direct-connection">Direct connection <a class="anchor" href="#direct-connection" aria-label="Link to this section">#</a></h2>
+<p>The desktop app talks to a host itself when the relay fails it (<code>direct/directConnection.ts</code>):</p>
+<ul>
+<li><strong>When.</strong> Every 15 seconds the app looks at each host it uses: forwarded requests failing for
+60 seconds (network errors, 5xx, answers that do not verify), the relay&#39;s WebSocket down for 60
+seconds, or &quot;Messages may be missing&quot; still shown after reconciling. The first time for a host
+it asks: &quot;Connect directly to &lt;host&gt;? It will see your IP address&quot;, and remembers the answer
+(IndexedDB <code>meta</code>, per account). &quot;Connect directly&quot; on the notice asks again.</li>
+<li><strong>How.</strong> It fetches the host&#39;s discovery document directly, checks it against the pin (a fork
+stops it), opens a session on the Tauri side at the host&#39;s own endpoints, and signs in with
+<code>keyLoginChallenge</code> and <code>loginWithKey</code>, the proof&#39;s <code>audience</code> the host&#39;s server id. GraphQL for
+the host&#39;s spaces goes there instead of <code>/api/remote/…</code>, and <code>workspaceEvents</code> for each of its
+spaces runs over a <code>graphql-ws</code> client whose socket the Tauri side opens with the host&#39;s
+session cookie (<code>direct/directSocket.ts</code>). A banner says &quot;Connected directly to &lt;host&gt;&quot;.
+Meanwhile the relay stream holds that host&#39;s items, unapplied and unacknowledged.</li>
+<li><strong>Back.</strong> Every 60 seconds the app probes <code>relayInfo</code>. After two successes in a row it renews
+the delegations through the relay, asks the host directly for the stream heads of every stream
+it knows there, takes them as the baseline, runs the held relay items (those at or below a
+head are dropped, so nothing applied directly is applied again), and closes the session and
+its sockets.</li>
+</ul>
+<p>The Tauri side (<a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/src-tauri/src/relay/direct.rs"><code>src-tauri/src/relay/direct.rs</code></a>) keeps one cookie jar per server, adds the
+<code>X-CSRF-Token</code> header from that server&#39;s <code>rim_csrf</code> cookie, and lets a session point only at
+<code>/api</code> and <code>/api/ws</code> of an origin whose discovery document it fetched. The webview never sees
+those cookies, and its own session stays with its relay.</p>
+<p>The web app cannot hold a session with another origin, so it fetches discovery documents and
+sends <code>applyRemoteRevocation</code> with plain <code>fetch</code> and nothing else; its &quot;Connect directly&quot; button
+is disabled with the reason beside it.</p>
+<h2 id="switching-relays">Switching relays <a class="anchor" href="#switching-relays" aria-label="Link to this section">#</a></h2>
+<p>Settings &gt; Security &gt; &quot;Switch relays&quot; (desktop: it signs cards with the identity key) moves the
+account to another relay in six steps, saved after each (<code>remote/relaySwitch.ts</code>):</p>
+<ol>
+<li>Pin the new relay from its discovery document, open a direct session and sign in there with
+this device&#39;s key, or, the first time, <code>signupWithKey</code> with the account&#39;s key log, this
+device&#39;s certificate and a proof for the new relay&#39;s server id (and a proof-of-work when the
+new relay is in <code>pow</code> registration mode, below).</li>
+<li>Publish a card listing both relays, the new one first, on both.</li>
+<li>Sign a delegation for the new relay for every workspace this account uses, those the old
+relay hosts included, and present them with <code>renewDelegations</code> there.</li>
+<li>Drain the old relay&#39;s queue through <code>relayItems</code> into the stream processor; from step 3 on
+every host delivers to both relays.</li>
+<li>If the old relay is going away, note the conversations in its direct space.</li>
+<li>Publish a card with the new relay only, call <code>leaveRelay</code> on the old one, copy this device&#39;s
+records (spaces, stream positions, contact names) to the new account, link the device key to
+the account there, and point the app at the new relay (<code>setRelayEndpoint</code>).</li>
+</ol>
+<p>The app then restarts on the new relay; its first key sign-in there uses the linked key. The
+carried stream positions make the new relay&#39;s copies of events already read duplicates, so
+nothing is applied twice and nothing is lost. The noted conversations get successors in the new
+relay&#39;s direct space, with the old relay&#39;s direct space bound as a space elsewhere. A step that
+fails shows why and stays where it stopped; &quot;Continue&quot; picks it up, also after a restart, signing
+in to the new relay again first.</p>
+<h2 id="signing-up-on-a-public-relay">Signing up on a public relay <a class="anchor" href="#signing-up-on-a-public-relay" aria-label="Link to this section">#</a></h2>
+<p>A public relay runs in <code>pow</code> registration mode: <code>registrationMode</code> answers <code>POW</code>, and its
+descriptor says <code>registration: { mode: &quot;pow&quot;, powBits }</code>. It takes a key-only signup with an
+invite token, as any server does, or without one when <code>signupWithKey</code> carries <code>proofOfWork</code>: an
+8-byte nonce, unpadded base64url, such that</p>
+<pre><code>SHA-256(&quot;rim.pow.v1\0&quot; || relay server id || &quot;\0&quot; || inception payload || nonce)</code></pre>
+<p>starts with <code>powBits</code> zero bits (rim-server <code>docs/specs/server-to-server-v1.md</code>, &quot;Public relay&quot;).
+The work is bound to that relay and to the new account&#39;s inception, so it cannot be reused for
+another account or another relay.</p>
+<ul>
+<li><strong>Where the person signs up.</strong> In <code>pow</code> mode the login page links to <code>/join</code> in the desktop app,
+and that page offers only &quot;Create account with a key&quot; (a password signup takes a token there).
+The web app cannot sign up with a key: it says to use the desktop app or an invite. An invite
+link&#39;s page is unchanged, and its token skips the proof.</li>
+<li><strong>When.</strong> <code>signupWithKey</code> (<code>key-identity/api/keyIdentity.ts</code>) reads this server&#39;s discovery
+document first (fetched directly and verified, <code>pow/proofOfWork.ts</code> <code>readRegistration</code>), and in
+<code>pow</code> mode searches over the draft&#39;s inception payload (the draft carries it, the same bytes the
+signed key log starts with) before it asks for the login challenge, which expires in two
+minutes. A document that cannot be read means no proof; the server then says what it wants.
+The nonce is kept per draft, so a retry after another refusal sends it again; a refusal of the
+proof itself (<code>VALIDATION</code> or <code>FORBIDDEN</code> naming it) drops it and the next try searches again.
+A relay switch to a relay in <code>pow</code> mode does the same with the account&#39;s inception.</li>
+<li><strong>The search.</strong> Both platforms find the smallest counter that meets the difficulty, as an 8-byte
+big-endian nonce, so they send the same nonce; <a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/protocol/pow-vectors.json"><code>protocol/pow-vectors.json</code></a> holds known answers
+both reproduce (the server&#39;s own vector among them). The desktop runs it on every core
+(<code>relay_solve_pow</code>, cancelled with <code>relay_cancel_pow</code>); the web app in a dedicated worker
+(<code>pow/pow.worker.ts</code>) with a SHA-256 that hashes everything before the nonce once, terminated to
+cancel. 24 bits is about 16.8 million hashes on average: well under a second in a release build
+of the desktop app, a few seconds in a browser on a fast machine.</li>
+<li><strong>On screen.</strong> The signup form shows &quot;Proving this is a real device…&quot; with the time so far and
+a Cancel button; past ten seconds it says how much work the relay asks for and how long that
+takes. A refused proof shows the server&#39;s words with &quot;Try again&quot;.</li>
+</ul>
+<h2 id="what-needs-two-servers">What needs two servers <a class="anchor" href="#what-needs-two-servers" aria-label="Link to this section">#</a></h2>
+<p>The vector, statement and flow tests run against mocks. These need two rim-servers with S5-2
+(one relay each) and two desktops: a DM across relays from contact link to Welcome, messages,
+edits and read state; a group with members on both; the request inbox (accept, ignore, block,
+read first, auto-accept); a gap and its reconciliation (stop the home&#39;s outbox briefly); a host
+key rotation and a forged fork; the successor after the home is stopped for 7 days (or with the
+clock moved).</p>
+<p>With S5-4 on both servers (one the relay, one the host of a workspace):</p>
+<ul>
+<li>joining from a <code>rim-invite:</code> link, channel traffic both ways, and the space loading through
+the forward path; an invite whose key hash the host no longer uses;</li>
+<li>delegation renewal (move the clock past 18 hours) and a lapse (keep every device away 24
+hours), then the catch-up;</li>
+<li>revoking a device with the host reachable (acknowledged through the relay), and with the
+relay&#39;s fan-out blocked (sent directly at two minutes), and with the host down (named with the
+expiry);</li>
+<li>the direct connection: stop the relay for a minute, accept the notice, read and send in the
+workspace, start the relay again and check nothing shows twice;</li>
+<li>a relay switch between two relays with a workspace on a third server, sending messages
+throughout, then restarting on the new relay.</li>
+</ul>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/docs/relay-client.md">rim-ui/docs/relay-client.md</a> at <code>58e3ec0</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+<script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
+</body>
+</html>

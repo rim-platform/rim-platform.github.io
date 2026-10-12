@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Workspace plugins · RIM</title>
+<meta name="description" content="Each workspace keeps a registry of plugins it recommends or requires. An entry pins one exact version through a statement its publisher signed with their identity key: the exact rim-plugin.json, and either a bundle's …">
+<link rel="icon" href="../../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../../index.html" aria-label="RIM home">
+      <picture><source srcset="../../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../../index.html#what">What RIM is</a>
+      <a href="../../index.html#how">How it works</a>
+      <a href="../self-hosting.html">Self-host</a>
+      <a href="../../configure/index.html">Configure</a>
+      <a href="../index.html" aria-current="page">Docs</a>
+      <a href="../../api/index.html">API</a>
+      <a href="../../specs/index.html">Specs</a>
+      <a href="../contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="../index.html">Docs</a><span aria-hidden="true">/</span><a href="../plugin-authors.html">Plugin authors</a><span aria-hidden="true">/</span><span>Workspace plugins</span></div>
+  <div class="page with-toc">
+    <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
+<ol>
+<li><a href="#what-lives-where">What lives where</a></li>
+<li><a href="#verification">Verification</a></li>
+<li><a href="#signing-and-publishing">Signing and publishing</a></li>
+<li><a href="#installing-and-following-the-registry">Installing and following the registry</a></li>
+<li><a href="#trying-it-with-two-accounts">Trying it with two accounts</a></li>
+</ol>
+</details></aside>
+    <main id="content" class="prose">
+<h1 id="workspace-plugins">Workspace plugins</h1>
+<p>Each workspace keeps a registry of plugins it recommends or requires. An entry pins one
+exact version through a statement its publisher signed with their identity key: the exact
+<code>rim-plugin.json</code>, and either a bundle&#39;s SHA-256 and size or a git commit and the SHA-256 of
+its tree. Every client verifies the statement against the publisher&#39;s key log before it
+offers the plugin; the server is never trusted for the signature. The contract is
+<code>../rim-server/docs/specs/workspace-plugins-v1.md</code>; bundles are those of
+<a href="web-plugins.html">web plugins</a>.</p>
+<h2 id="what-lives-where">What lives where <a class="anchor" href="#what-lives-where" aria-label="Link to this section">#</a></h2>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Concern</th>
+<th>Where</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Statement rules and verification</td>
+<td>desktop: <a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/src-tauri/src/key_identity/plugin_manifest.rs"><code>src-tauri/src/key_identity/plugin_manifest.rs</code></a> (<code>key_identity_verify_plugin_manifest</code>); web: <a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/src/features/key-identity/browser/pluginManifest.ts"><code>src/features/key-identity/browser/pluginManifest.ts</code></a>; both behind <code>verifyPluginManifest</code> in <code>key-identity/api/keyBackend.ts</code></td>
+</tr>
+<tr>
+<td>Signing (desktop only, the key never reaches the webview)</td>
+<td><code>KeyIdentityState::sign_plugin_manifest</code>, command <code>key_identity_sign_plugin_manifest</code></td>
+</tr>
+<tr>
+<td>What a publisher signs: a git checkout&#39;s origin, <code>HEAD</code> and tree hash, or a bundle of the installed folder, or a picked <code>.rimbundle</code>; writing a <code>.rimsig.json</code></td>
+<td><a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/src-tauri/src/plugin_host/registry.rs"><code>src-tauri/src/plugin_host/registry.rs</code></a> (<code>plugin_signing_source</code>, <code>plugin_pick_signing_bundle</code>, <code>plugin_export_signature</code>)</td>
+</tr>
+<tr>
+<td>Installing a git source at its commit, after checking the tree hash and the manifest</td>
+<td><code>plugin_install_registry_git</code> in <code>registry.rs</code></td>
+</tr>
+<tr>
+<td>Installing a bundle source (with the signed manifest checked and, for an update, the approvals kept)</td>
+<td><code>plugin_install_bundle</code> on the desktop, <code>browserPluginStore.installBundle</code> on the web</td>
+</tr>
+<tr>
+<td>The registry API: <code>workspacePlugins</code>, the three mutations, bundle uploads</td>
+<td><a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/src/features/plugins/registry/api.ts"><code>src/features/plugins/registry/api.ts</code></a></td>
+</tr>
+<tr>
+<td>Verifying an entry (steps 1 to 5)</td>
+<td><code>registry/verify.ts</code></td>
+</tr>
+<tr>
+<td>Badge, palette line, install state, update rules</td>
+<td><code>registry/model.ts</code></td>
+</tr>
+<tr>
+<td>Install, stop, remove, keep as local</td>
+<td><code>registry/installer.ts</code></td>
+</tr>
+<tr>
+<td>Following the registry: updates and removals</td>
+<td><code>registry/sync.ts</code>, run by <code>components/RegistryHost.tsx</code> (mounted in <code>AppShell</code>)</td>
+</tr>
+<tr>
+<td>The palette&#39;s &quot;Workspace plugins&quot; source</td>
+<td><code>registry/palette.ts</code>, merged in <code>CommandPalette.tsx</code></td>
+</tr>
+<tr>
+<td>Dialogs</td>
+<td><code>components/RegistryInstallDialog.tsx</code>, <code>RequiredPluginsDialog.tsx</code>, <code>UpdatePromptDialog.tsx</code>, <code>RemovedPluginDialog.tsx</code>, <code>SignAndPublishDialog.tsx</code>, <code>AddFromFilesDialog.tsx</code></td>
+</tr>
+<tr>
+<td>Settings</td>
+<td>Settings &gt; Plugins: &quot;Sign and publish…&quot; on each plugin, and the workspace&#39;s required plugins not installed (<code>RegistryNotes.tsx</code>); Workspace settings &gt; Plugins for Owners and Moderators (<code>WorkspacePluginSettings.tsx</code>)</td>
+</tr>
+<tr>
+<td>Refetching</td>
+<td><code>WorkspacePluginChanged</code> in <a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/src/core/events/useWorkspaceEvents.ts"><code>src/core/events/useWorkspaceEvents.ts</code></a></td>
+</tr>
+</tbody></table></div>
+<h2 id="verification">Verification <a class="anchor" href="#verification" aria-label="Link to this section">#</a></h2>
+<p>Before anything is offered, installed or updated:</p>
+<ol>
+<li>The statement&#39;s fields: type, version 2, size, no unknown or duplicate fields (the
+browser scans for duplicates itself, since <code>JSON.parse</code> keeps the last).</li>
+<li>The publisher&#39;s key log: <code>keyLog(principalId)</code> from the workspace&#39;s server, or the log
+the entry keeps when the publisher is not enrolled there. It replays from the inception
+to the statement&#39;s <code>principalId</code>.</li>
+<li><code>keySeq</code> is an entry of that log and its identity key signed the statement. A later
+recovery rotation leaves the signature valid but withdraws the statement: an installed
+copy keeps running and says &quot;The publisher recovered their key: ask for a re-signed
+version&quot;; nothing new is installed from it.</li>
+<li>The manifest passes this host&#39;s rules, and the entry&#39;s columns say what the statement
+says.</li>
+<li>The bundle, fetched before any consent, has the signed size and SHA-256 and a
+byte-identical <code>rim-plugin.json</code>. The workspace server&#39;s copy is fetched with the
+session; a bundle on another host only over <code>https://</code>, without credentials. A git
+source is checked by the desktop right after its checkout, before any post-install step.</li>
+</ol>
+<h2 id="signing-and-publishing">Signing and publishing <a class="anchor" href="#signing-and-publishing" aria-label="Link to this section">#</a></h2>
+<p>On a desktop that holds the account&#39;s identity key (Settings &gt; Security shows it), Settings</p>
+<blockquote>
+<p>Plugins offers &quot;Sign and publish…&quot; on each installed plugin:</p>
+</blockquote>
+<ul>
+<li>A local-process plugin installed from git is signed as a git source: the checkout&#39;s
+<code>origin</code> URL (<code>https://</code> or <code>ssh://</code>), <code>HEAD</code> and its tree hash. Anything else is bundled
+from its installed folder with the SDK bundler&#39;s rules; a folder past 256 files or 8 MiB
+is refused, and &quot;Sign another .rimbundle…&quot; signs a bundle built with
+<code>npm run plugin:bundle -- &lt;dir&gt;</code> instead. The dialog shows the plugin id, version, kind,
+SHA-256 and size, to compare with what <code>rim-plugin-bundle</code> printed.</li>
+<li>The publisher name defaults to the profile card&#39;s display name. It is self-asserted: other
+members see the workspace&#39;s name for the publisher only when a member of the workspace has the
+publisher&#39;s principal id (<code>ServerMember.principalId</code>).</li>
+<li>An Owner or Moderator of the current workspace picks a status and publishes: the bundle is
+uploaded to <code>POST /api/plugin-bundles/&lt;serverId&gt;</code>, then the entry is added, or updated after
+&quot;Replaces 0.1.0 signed by Ada&quot;. Anyone can export
+<code>&lt;plugin_id&gt;-&lt;version&gt;.rimsig.json</code> (<code>{&quot;format&quot;:&quot;rim-plugin-signature&quot;,&quot;v&quot;:1,&quot;statement&quot;:…, &quot;publisherKeyLog&quot;:[…]}</code>), saved with the built bundle into a folder they choose.</li>
+</ul>
+<p>Workspace settings &gt; Plugins &gt; &quot;Add from files&quot; (desktop and web) takes a <code>.rimsig.json</code> and,
+for a bundle source, its <code>.rimbundle</code>, verifies both and adds the entry. The same page sets
+each entry&#39;s status, replaces its statement from files, and removes it.</p>
+<h2 id="installing-and-following-the-registry">Installing and following the registry <a class="anchor" href="#installing-and-following-the-registry" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>The palette&#39;s &quot;Workspace plugins&quot; lists the entries not installed, or installed at another
+statement, as <code>Install Hello Web — Recommended by Acme · signed by Ada (rimp1_txDLbnip)</code>.
+The web app lists local-process entries as &quot;Needs the desktop app&quot;; an entry that fails
+verification is listed with the reason. Neither can be chosen.</li>
+<li>Choosing an entry opens the install dialog: the badge (the whole principal id on hover and
+copy), the status, the source, the kind of plugin, and whether a copy is installed from
+another workspace (switching verifies it again), by another publisher, or unsigned
+(&quot;Replace with Acme&#39;s signed version&quot;). The permission prompt follows the install; a git
+source&#39;s post-install steps ask for consent as for any git install. The install record
+keeps <code>{ kind: &quot;registry&quot;, endpoint, serverId, pluginId, statementSha256, publisherPrincipalId }</code>.</li>
+<li>When a workspace opens, its required plugins this device can install and has not are
+offered in one dialog. &quot;Not now&quot; is remembered per server, plugin id and statement hash, so
+the dialog comes back only for a new statement.</li>
+<li>On workspace open and on <code>WorkspacePluginChanged</code>, each registry install is compared with
+its entry. A verified new statement installs at once when it keeps the runtime kind and the
+publisher, asks for no capability the installed copy did not ask for or the person did not
+approve, and adds no AI-callable command beyond those already there or consented; the
+person sees &quot;Updated Hello Web to 0.2.0&quot; and keeps their approvals. Anything else, or a git
+update that needs post-install steps, waits behind a prompt that shows what is new. A
+failed update keeps the old copy.</li>
+<li>When an entry disappears, its plugin is stopped and turned off first, then the person
+chooses &quot;Remove&quot; (uninstall and delete its storage) or &quot;Keep&quot; (a local install with no
+registry source and no updates).</li>
+</ul>
+<h2 id="trying-it-with-two-accounts">Trying it with two accounts <a class="anchor" href="#trying-it-with-two-accounts" aria-label="Link to this section">#</a></h2>
+<ol>
+<li>Run the server from <code>rim-server</code> <code>master</code> and the app (<code>npm run tauri dev</code>). Account A
+owns a workspace and has a key identity on this desktop (Settings &gt; Security); account
+B is a member, in the web app (<code>npm run dev</code>) or a second desktop profile.</li>
+<li>As A, build a web plugin: <code>npm run plugin:bundle -- plugins/github-prs</code>, and install it
+(Settings &gt; Plugins &gt; Install from link, or from the folder).</li>
+<li>As A, &quot;Sign and publish…&quot; it, status Required, Publish.</li>
+<li>As B, open the workspace: the required plugins dialog lists it with &quot;Signed by A ·
+rimp1_…&quot;. Review and install, approve its permissions, run a command from the palette.</li>
+<li>As A, publish a new version with no new permissions: B&#39;s copy updates on its own with a
+toast. Publish one asking for a new permission: B gets the update prompt instead.</li>
+<li>As A, remove it in Workspace settings &gt; Plugins: B&#39;s copy stops and B is asked to remove
+or keep it.</li>
+<li>For the export path, sign as B (if B holds a key identity on a desktop): B is not a
+moderator, so the dialog exports a <code>.rimsig.json</code>, which A adds with &quot;Add from files&quot;.</li>
+</ol>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/docs/workspace-plugins.md">rim-ui/docs/workspace-plugins.md</a> at <code>58e3ec0</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+<script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
+</body>
+</html>

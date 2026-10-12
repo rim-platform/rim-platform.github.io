@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>rim_mls · RIM</title>
+<meta name="description" content="src-tauri/crates/rim_mls is the end-to-end encryption engine of encrypted DMs and groups: MLS (RFC 9420) through OpenMLS, behind RIM's own types. It is the only code that names OpenMLS types; the app passes conversation …">
+<link rel="icon" href="../../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../../index.html" aria-label="RIM home">
+      <picture><source srcset="../../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../../index.html#what">What RIM is</a>
+      <a href="../../index.html#how">How it works</a>
+      <a href="../self-hosting.html">Self-host</a>
+      <a href="../../configure/index.html">Configure</a>
+      <a href="../index.html" aria-current="page">Docs</a>
+      <a href="../../api/index.html">API</a>
+      <a href="../../specs/index.html">Specs</a>
+      <a href="../contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="../index.html">Docs</a><span aria-hidden="true">/</span><a href="../project.html">Project</a><span aria-hidden="true">/</span><span>rim_mls</span></div>
+  <div class="page with-toc">
+    <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
+<ol>
+<li><a href="#versions">Versions</a></li>
+<li><a href="#api">API</a><ol><li><a href="#leaf-verification">Leaf verification</a></li></ol></li>
+<li><a href="#storage">Storage</a></li>
+<li><a href="#in-the-browser">In the browser</a></li>
+<li><a href="#tests">Tests</a></li>
+<li><a href="#sizes">Sizes</a></li>
+<li><a href="#native-code">Native code</a></li>
+</ol>
+</details></aside>
+    <main id="content" class="prose">
+<h1 id="rim_mls">rim_mls</h1>
+<p><a href="https://github.com/rim-platform/rim-ui/tree/58e3ec03c43064632a6a6f610d92413040229dfd/src-tauri/crates/rim_mls"><code>src-tauri/crates/rim_mls</code></a> is the end-to-end encryption engine of encrypted DMs and groups: MLS
+(RFC 9420) through OpenMLS, behind RIM&#39;s own types. It is the only code that names OpenMLS types;
+the app passes conversation ids, device ids, message content and <code>MLSMessage</code> bytes in and out.
+The contract it implements is rim-server <code>docs/specs/e2ee-mls-v1.md</code>; the library choice is
+<code>docs/decisions/mls-library-2026-10-09.md</code> there.</p>
+<h2 id="versions">Versions <a class="anchor" href="#versions" aria-label="Link to this section">#</a></h2>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Crate</th>
+<th>Version</th>
+<th>Use</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>openmls</code></td>
+<td><code>=0.9.1</code></td>
+<td>MLS</td>
+</tr>
+<tr>
+<td><code>openmls_traits</code></td>
+<td><code>=0.6.0</code>, feature <code>draft-ietf-mls-pq-ciphersuites</code></td>
+<td>the provider and storage traits</td>
+</tr>
+<tr>
+<td><code>openmls_libcrux_crypto</code></td>
+<td><code>=0.4.0</code>, feature <code>draft-ietf-mls-pq-ciphersuites</code></td>
+<td>the crypto provider clients use</td>
+</tr>
+<tr>
+<td><code>openmls_rust_crypto</code></td>
+<td><code>=0.6.0</code> (dev)</td>
+<td>the named fallback; the second implementation the cross-provider tests compare</td>
+</tr>
+</tbody></table></div>
+<p>The post-quantum feature is enabled on <code>openmls_traits</code> and the provider rather than on <code>openmls</code>:
+<code>openmls</code>&#39;s feature also names <code>openmls_sqlite_storage?/…</code>, and cargo then counts that crate&#39;s
+<code>rusqlite</code> 0.37 in the <code>links = &quot;sqlite3&quot;</code> check against the app&#39;s <code>rusqlite</code> 0.40, which fails
+to resolve. In <code>openmls</code> itself the feature only changes the default capabilities, which RIM sets
+explicitly. Every group uses <code>MLS_128_MLKEM768X25519_AES128GCM_SHA256_Ed25519</code> (0x004F): X-Wing
+(X25519 + ML-KEM-768) key agreement, AES-128-GCM, SHA-256, Ed25519.</p>
+<h2 id="api">API <a class="anchor" href="#api" aria-label="Link to this section">#</a></h2>
+<p><code>Mls::new()</code> builds the libcrux engine. Every operation takes the store it runs on:</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Operation</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>mls_key_payload</code>, <code>install_mls_key_statement</code>, <code>ensure_identity</code>, <code>mls_key_statement</code>, <code>forget_identity</code></td>
+<td>This device&#39;s MLS signature key (Ed25519, generated here) and the <code>mls-key</code> statement the device key signs for it. The device key never enters the crate: <code>ensure_identity</code> takes a closure that signs <code>context</code>, <code>payload</code></td>
+</tr>
+<tr>
+<td><code>generate_key_packages</code>, <code>prune_key_packages</code>, <code>plan_key_package_upload</code></td>
+<td>Key packages (<code>MLSMessage</code> bytes and <code>KeyPackageRef</code>, last-resort or one-time, valid from an hour before</td>
+</tr>
+<tr>
+<td>now to an hour short of 90 days after), deleting private keys of expired or replaced ones, and what to upload given the server&#39;s status</td>
+<td></td>
+</tr>
+<tr>
+<td><code>create_group</code></td>
+<td>Group at epoch 0 for a <code>ConversationGroup</code> (conversation id + incarnation, group id <code>rim1</code> ‖ UUID ‖ u32), first Commit adding the claimed devices</td>
+</tr>
+<tr>
+<td><code>commit</code>, <code>self_update</code></td>
+<td>One Commit with every pending add and remove (a re-add is both for one device), with an update path and the membership summary as authenticated data</td>
+</tr>
+<tr>
+<td><code>commit_accepted</code>, <code>commit_rejected</code></td>
+<td>The server&#39;s answer: merge (returning the new epoch and the principals the Commit brought in or took out), or drop (<code>STALE_EPOCH</code>; a refused group creation deletes the group)</td>
+</tr>
+<tr>
+<td><code>process_commit</code></td>
+<td>Another device&#39;s Commit: merged only when its proposals are exactly the adds and removes its authenticated summary names, with the added and removed devices, the principals it brought in or took out, and the leaves to verify. This device&#39;s own Commit is recognized by its bytes (the answer to a submit that got no reply). A Commit the library refuses, or one whose summary lies or that carries a proposal other than Add and Remove, gives <code>CannotProcess</code> (naming the committer for a lie) and the group waits for a re-add</td>
+</tr>
+<tr>
+<td><code>join</code></td>
+<td>A Welcome for the expected conversation and incarnation; returns every leaf to verify. A Welcome to an epoch the held state of the group already reached is refused (<code>StaleWelcome</code>) unless the group waits for a re-add</td>
+</tr>
+<tr>
+<td><code>encrypt</code>, <code>reencrypt</code></td>
+<td>Application data <code>0x01</code> ‖ franking key ‖ content, authenticated data <code>{messageId, franking, mentions, mentionAll}</code>; <code>reencrypt</code> resends the same content and franking key in the new epoch after <code>STALE_EPOCH</code></td>
+</tr>
+<tr>
+<td><code>decrypt</code></td>
+<td>Once per message, against its row&#39;s message id, thread root, author principal and sender device (all required): <code>Message</code> (content, sender device, franking key and commitment), <code>Invalid</code> (decrypted but breaks a rule, or the sender is not the row&#39;s author principal and device: never show its content), or <code>Own</code> (this device&#39;s own message)</td>
+</tr>
+<tr>
+<td><code>group_status</code>, <code>leaves</code>, <code>delete_group</code>, <code>prepare_readd</code></td>
+<td>Epoch, pending Commit and re-add state; the members; deleting state; the signed-request payload for a re-add (the group state goes)</td>
+</tr>
+</tbody></table></div>
+<p>Pure helpers: <code>verify_leaf</code> / <code>verify_leaves</code> with the app&#39;s <code>DeviceDirectory</code>, <code>MessageContent</code>
+(build, strict parse, the content rules), <code>AuthenticatedData</code>, <code>franking_commitment</code>,
+<code>franking_receipt</code> (the server&#39;s receipt, for its tests), <code>encrypt_attachment</code> /
+<code>decrypt_attachment</code>, <code>ReaddRequest</code> (payload and verification), <code>commit_rank</code> / <code>commit_delay</code>.</p>
+<h3 id="leaf-verification">Leaf verification <a class="anchor" href="#leaf-verification" aria-label="Link to this section">#</a></h3>
+<p>The crate checks what it can alone (the credential is an <code>mls-key</code> statement, its signature
+under the device key, the leaf&#39;s signature key is the stated MLS key, no two leaves are the same
+device) and asks the app the rest through <code>DeviceDirectory</code>: the device&#39;s certificate status
+(certified with its key, revoked, unknown, or a key log that does not replay) and whether the
+principal is a member. The app implements it over <code>key_identity::statement::{replay, certified_device}</code> and the server&#39;s <code>principalDevices</code>. Commits and Welcomes are processed before
+verification (refusing them would fork the group); verification runs after, outside the
+transaction, so the app can refetch key logs.</p>
+<h2 id="storage">Storage <a class="anchor" href="#storage" aria-label="Link to this section">#</a></h2>
+<p>Group state lives in the account&#39;s SQLCipher cache database (<code>message_cache</code>, schema v5), one
+table:</p>
+<pre><code class="language-sql">CREATE TABLE mls_storage (label TEXT NOT NULL, key BLOB NOT NULL, value BLOB NOT NULL,
+                          PRIMARY KEY (label, key)) WITHOUT ROWID;</code></pre>
+<ul>
+<li><code>openmls.v1.&lt;kind&gt;</code> rows are OpenMLS&#39;s state (tree, group context, epoch and message secrets,
+key package and HPKE private keys, …): the key is the JSON of OpenMLS&#39;s key value, the value
+its JSON, as OpenMLS&#39;s own memory storage writes them.</li>
+<li><code>rim.device</code> holds this device&#39;s MLS signature key and statement; <code>rim.group</code> per group the
+pending Commit (its bytes, to recognize it when it comes back) and the re-add state;
+<code>rim.key_package</code> per key package its lifetime and whether it was replaced.</li>
+</ul>
+<p><code>SqliteStore::new(&amp;rusqlite::Transaction)</code> is the store: the crate takes the caller&#39;s
+transaction and never commits. That is the decrypt-once guarantee: the app opens one
+transaction, decrypts the entry (advancing the ratchet), writes its plaintext row, and commits;
+if anything fails before the commit, both are undone and the entry decrypts again next time.
+The same holds for sending: the outgoing envelope and the state it advanced commit together.
+A transaction (rather than a connection) is the type so that a store can only exist inside one.</p>
+<p><code>MemoryStore</code> is the same in memory, for tests and for the web build: writes are journaled,
+<code>pending()</code> lists the changed entries without committing them (to write through to IndexedDB),
+<code>commit()</code> keeps them (and returns them), <code>rollback()</code> undoes them, <code>export()</code> / <code>import()</code> copy
+a whole store.</p>
+<h2 id="in-the-browser">In the browser <a class="anchor" href="#in-the-browser" aria-label="Link to this section">#</a></h2>
+<p><code>crates/rim_mls_wasm</code> is the web app&#39;s facade over this crate, built with the <code>sqlite</code> feature
+off; on wasm32 the crate enables <code>openmls</code>&#39;s <code>js</code> feature and getrandom&#39;s WebCrypto backends.
+The test suite runs in headless Chromium with <code>wasm-bindgen-test</code> (<code>npm run test:wasm</code>). See
+<a href="e2ee-web.html"><code>e2ee-web.md</code></a>.</p>
+<h2 id="tests">Tests <a class="anchor" href="#tests" aria-label="Link to this section">#</a></h2>
+<pre><code class="language-sh">cd src-tauri
+cargo test -p rim_mls                       # everything
+cargo test -p rim_mls --no-default-features --target wasm32-unknown-unknown  # in a browser
+cargo test -p rim_mls simulation            # the multi-device simulations
+cargo test -p rim_mls sizes -- --nocapture  # message sizes
+cargo test -p rim_mls write_appendix_a_fixtures -- --ignored  # re-record the fixtures</code></pre>
+<ul>
+<li><code>providers</code>: both providers create, join and decrypt a 0x004F group; a group of one provider
+is joined and read with the other; the authenticated data is framed into Commits as well as
+application messages, and editing it breaks the Commit.</li>
+<li><code>vectors</code>: Ed25519 (RFC 8032 tests 1 to 3) and HKDF (RFC 5869 A.1 to A.3), HMAC (RFC 4231),
+HPKE base mode (RFC 9180 A.1: DeriveKeyPair, open, export) and the Wycheproof AES-GCM vectors
+with 96-bit nonces through both providers&#39; <code>OpenMlsCrypto</code>; X25519 (RFC 7748 5.2 and 6.1) and
+the X-Wing draft vectors (key pair from seed, decapsulation) through both providers&#39; HPKE
+backends; ML-KEM-768 NIST ACVP keyGen, encapsulation and decapsulation through
+<code>libcrux-ml-kem</code> and RustCrypto <code>ml-kem</code> as linked. The HPKE API cannot take a vector&#39;s
+encapsulation randomness, so X-Wing encapsulation is checked as a property (each provider opens
+what the other sealed). The vector files are in <code>src/tests/vectors/</code>.</li>
+<li><code>formats</code>: the spec&#39;s appendix A byte for byte, and the recorded fixtures
+(<code>src/tests/fixtures/appendix_a.json</code>): one key package of the A.2 device with its
+<code>KeyPackageRef</code>, and one PrivateMessage of the A.4 application data with the receiving device&#39;s
+group state, which also shows that state written by this OpenMLS release still loads.</li>
+<li><code>simulation</code> (against <code>sequencer</code>, an in-process server with the spec&#39;s rules, including its
+claims: never a package within 14 days of expiry, and for a re-add the newest one-time package
+uploaded after the request, so the device uploads after asking): 3 users × 3
+devices; devices linked and revoked; members leaving and joining; racing committers in rank
+order; a submit without an answer; a message refused as stale and resent; a device offline past
+Commit retention re-added; lost state re-added with a new key; a Commit that cannot be
+processed; an added key package that expired before a device processed the Commit; an
+incarnation; decrypt once; a crash between decrypt and store.</li>
+<li><code>tampering</code>: every leaf-verification failure; application messages whose authenticated data or
+content lies (invalid); Commits whose summary lies or that carry other proposals (refused by
+receivers, which wait for a re-add, and by the server).</li>
+<li><code>hardening</code>: a replayed Welcome never rolls a group back; a row must name the MLS sender and its
+device; key package lifetimes; non-canonical keys.</li>
+</ul>
+<h2 id="sizes">Sizes <a class="anchor" href="#sizes" aria-label="Link to this section">#</a></h2>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>What</th>
+<th>Bytes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Key package (<code>MLSMessage</code>)</td>
+<td>3,027</td>
+</tr>
+<tr>
+<td>Welcome, 10 devices</td>
+<td>33,784</td>
+</tr>
+<tr>
+<td>Welcome, 100 devices</td>
+<td>305,565</td>
+</tr>
+<tr>
+<td>First Commit, 10 / 100 devices (key packages inline, update path)</td>
+<td>35,786 / 327,956</td>
+</tr>
+<tr>
+<td>Self-update Commit, 10 / 100 devices</td>
+<td>17,526 / 126,582</td>
+</tr>
+<tr>
+<td>A two-character message</td>
+<td>752</td>
+</tr>
+</tbody></table></div>
+<h2 id="native-code">Native code <a class="anchor" href="#native-code" aria-label="Link to this section">#</a></h2>
+<p><code>cargo tree -p rim_mls -e normal,build -i cc</code> reaches <code>cc</code> only through <code>libsqlite3-sys</code>
+(SQLCipher), which the app already builds. The libcrux crates&#39; build scripts only set SIMD cfgs;
+no other dependency compiles C.</p>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/docs/rim-mls.md">rim-ui/docs/rim-mls.md</a> at <code>58e3ec0</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+<script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
+</body>
+</html>

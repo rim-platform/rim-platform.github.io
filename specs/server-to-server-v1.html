@@ -1,0 +1,1675 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Server-to-server v1 · RIM</title>
+<meta name="description" content="Status: implemented, normative. Follows docs/decisions/decentralization-2026-10-08.md and docs/decisions/relay-proxied-workspaces-2026-10-09.md. Read key-identity-v1.md, device-linking-v1.md and e2ee-mls-v1.md first. …">
+<link rel="icon" href="../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../index.html" aria-label="RIM home">
+      <picture><source srcset="../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../index.html#what">What RIM is</a>
+      <a href="../index.html#how">How it works</a>
+      <a href="../docs/self-hosting.html">Self-host</a>
+      <a href="../configure/index.html">Configure</a>
+      <a href="../docs/index.html">Docs</a>
+      <a href="../api/index.html">API</a>
+      <a href="index.html" aria-current="page">Specs</a>
+      <a href="../docs/contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="index.html">Specs</a><span aria-hidden="true">/</span><span>Server-to-server v1</span></div>
+  <div class="page with-toc">
+    <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
+<ol>
+<li><a href="#summary">Summary</a></li>
+<li><a href="#parties-and-terms">Parties and terms</a></li>
+<li><a href="#server-identity">Server identity</a><ol><li><a href="#server-key-log">Server key log</a></li><li><a href="#discovery-document">Discovery document</a></li><li><a href="#pinning-a-peer">Pinning a peer</a></li><li><a href="#host-keys-in-clients">Host keys in clients</a></li></ol></li>
+<li><a href="#the-s2s-transport">The S2S transport</a><ol><li><a href="#signature-profile">Signature profile</a></li><li><a href="#verifying-a-request">Verifying a request</a></li><li><a href="#responses">Responses</a></li><li><a href="#errors">Errors</a></li><li><a href="#ping">Ping</a></li><li><a href="#implementation">Implementation</a></li></ol></li>
+<li><a href="#roles-and-configuration">Roles and configuration</a><ol><li><a href="#remote-users-on-a-host">Remote users on a host</a></li></ol></li>
+<li><a href="#statements-added-by-this-document">Statements added by this document</a></li>
+<li><a href="#spaces-hosted-elsewhere-the-clients-path">Spaces hosted elsewhere: the client's path</a><ol><li><a href="#device-signed-requests">Device-signed requests</a></li><li><a href="#forwarding">Forwarding</a></li></ol></li>
+<li><a href="#host-events-and-relay-queues">Host events and relay queues</a><ol><li><a href="#host-events">Host events</a></li><li><a href="#outbox-and-deliver">Outbox and deliver</a></li><li><a href="#relay-queues">Relay queues</a></li><li><a href="#what-the-client-checks">What the client checks</a></li></ol></li>
+<li><a href="#profile-cards-and-contacts-74a">Profile cards and contacts (7.4a)</a></li>
+<li><a href="#the-direct-space">The direct space</a></li>
+<li><a href="#dms-across-relays-74a">DMs across relays (7.4a)</a><ol><li><a href="#the-request-inbox">The request inbox</a></li></ol></li>
+<li><a href="#remote-workspace-members-74b">Remote workspace members (7.4b)</a><ol><li><a href="#joining">Joining</a></li><li><a href="#delegation">Delegation</a></li></ol></li>
+<li><a href="#revocation-propagation">Revocation propagation</a></li>
+<li><a href="#direct-connection">Direct connection</a></li>
+<li><a href="#switching-relays">Switching relays</a></li>
+<li><a href="#public-relay-74c">Public relay (7.4c)</a></li>
+<li><a href="#migration-of-single-server-deployments">Migration of single-server deployments</a></li>
+<li><a href="#storage">Storage</a></li>
+<li><a href="#graphql">GraphQL</a></li>
+<li><a href="#limits-and-audit">Limits and audit</a></li>
+<li><a href="#threat-model">Threat model</a></li>
+<li><a href="#where-the-existing-code-forces-a-compromise">Where the existing code forces a compromise</a></li>
+<li><a href="#test-plan">Test plan</a></li>
+<li><a href="#deferred">Deferred</a></li>
+<li><a href="#appendix-a-known-answer-vectors">Appendix A: known-answer vectors</a><ol><li><a href="#a1-server-inceptions">A.1 Server inceptions</a></li><li><a href="#a2-host-descriptor">A.2 Host descriptor</a></li><li><a href="#a3-delegation">A.3 Delegation</a></li><li><a href="#a4-signed-s2s-request-and-response">A.4 Signed S2S request and response</a></li><li><a href="#a5-host-event">A.5 Host event</a></li><li><a href="#a6-device-signed-write-and-host-signed-response">A.6 Device-signed write and host-signed response</a></li><li><a href="#a7-revocation-and-acknowledgement">A.7 Revocation and acknowledgement</a></li><li><a href="#a8-proof-of-work">A.8 Proof-of-work</a></li><li><a href="#filled-by-s5-1">Filled by S5-1</a></li></ol></li>
+</ol>
+</details></aside>
+    <main id="content" class="prose">
+<h1 id="server-to-server-v1">Server-to-server v1</h1>
+<p class="status"><span><b>Server-to-server v1</b></span><span>version 1</span><span>status: implemented, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/docs/specs/server-to-server-v1.md">rim-server/docs/specs/server-to-server-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/c86029b35a7ef7770b05e7bda62909f988343f7f">c86029b</a></span></p>
+<p><em>Status: implemented, normative. Follows <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/docs/decisions/decentralization-2026-10-08.md"><code>docs/decisions/decentralization-2026-10-08.md</code></a> and
+<a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/docs/decisions/relay-proxied-workspaces-2026-10-09.md"><code>docs/decisions/relay-proxied-workspaces-2026-10-09.md</code></a>. Read <a href="key-identity-v1.html"><code>key-identity-v1.md</code></a>,
+<a href="device-linking-v1.html"><code>device-linking-v1.md</code></a> and <a href="e2ee-mls-v1.html"><code>e2ee-mls-v1.md</code></a> first. This document is the contract between servers
+and between a server and its clients: server identity, the signed HTTP API between servers,
+relays, hosts, and what the client verifies. Labels of the form S5-n below name the change that
+introduced an item.</em></p>
+<h2 id="summary">Summary <a class="anchor" href="#summary" aria-label="Link to this section">#</a></h2>
+<ol>
+<li>Every rim-server has an Ed25519 <strong>server key</strong> in a signed key log whose inception fixes a
+<code>rims1_</code> <strong>server id</strong>, published with a signed descriptor at <code>GET /.well-known/rim-server</code>.</li>
+<li>Servers talk over HTTPS with <strong>HTTP Message Signatures</strong> (RFC 9421) over a fixed component list
+with <code>Content-Digest</code> (RFC 9530), a 5-minute window and a nonce store. Responses are signed too.
+A minimal, vector-tested profile lives in a new <code>rim_s2s</code> crate; no published crate fits.</li>
+<li><code>RIM_ROLE=relay|host|both</code>, default <code>both</code>: with no new configuration a server behaves as today,
+and server-to-server traffic stays off until <code>RIM_PUBLIC_BASE_URL</code> is an <code>https</code> URL.</li>
+<li>Each relay has one <strong>direct space</strong>, a <code>server</code> row of kind <code>direct</code> holding the DMs and groups
+its users start with anyone. The relay <strong>hosts</strong> them: sequencer, MLS delivery service, change
+feed. A DM&#39;s home is its creator&#39;s relay.</li>
+<li>Hosts know people from elsewhere as <code>user</code> rows of kind <code>remote</code>, keyed by principal id, with
+key log, devices and card copied from the person&#39;s relays and kept current.</li>
+<li>A client talks only to its relay. Requests for a space hosted elsewhere go to
+<code>/api/remote/&lt;host server id&gt;/…</code> with a <strong>device-signed request</strong> statement; the relay forwards
+them unchanged; the host answers with a <strong>host-signed response</strong> the client checks.</li>
+<li>Hosts sign every event they send to relays (<code>host-event</code>, per-stream sequence numbers). Relays
+queue events per user with per-device cursors (30 days at most) and push them over the client&#39;s
+existing WebSocket; the client verifies them against the host key pinned from the invite.</li>
+<li>Workspace traffic reaches a relay only under a <strong>delegation</strong> a device signed (relay, host,
+workspace, at most 24 hours); direct-space traffic goes to the relays the person&#39;s card lists.</li>
+<li>A device revocation fans out from the relay to every host with a signed acknowledgement; the app
+sends it directly to a host that has not acknowledged within 2 minutes.</li>
+<li>When the relay is down the desktop app logs in to a host directly with its device key. A public
+relay gates registration with proof-of-work or an invite.</li>
+</ol>
+<h2 id="parties-and-terms">Parties and terms <a class="anchor" href="#parties-and-terms" aria-label="Link to this section">#</a></h2>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Server</td>
+<td>One rim-server deployment: one server key, one database, one or more nodes</td>
+</tr>
+<tr>
+<td>Relay</td>
+<td>The server a person&#39;s app talks to; their <code>user</code> row there is <code>kind = local</code></td>
+</tr>
+<tr>
+<td>Host</td>
+<td>The authority for a space: a workspace, or a relay&#39;s direct space</td>
+</tr>
+<tr>
+<td>Space</td>
+<td>A <code>server</code> row: <code>kind = workspace</code> or <code>kind = direct</code></td>
+</tr>
+<tr>
+<td>Peer</td>
+<td>Another server this one has talked to</td>
+</tr>
+<tr>
+<td>Remote user</td>
+<td>A <code>user</code> row of <code>kind = remote</code> on a host: a person whose relay is elsewhere</td>
+</tr>
+</tbody></table></div>
+<p>A server running <code>both</code> hosts its own workspaces and direct space and is the relay of its local
+users. Today&#39;s single server is exactly that and stays that with nothing configured.</p>
+<h2 id="server-identity">Server identity <a class="anchor" href="#server-identity" aria-label="Link to this section">#</a></h2>
+<h3 id="server-key-log">Server key log <a class="anchor" href="#server-key-log" aria-label="Link to this section">#</a></h3>
+<p>The rules of a person&#39;s key log apply (<a href="key-identity-v1.html"><code>key-identity-v1.md</code></a>, &quot;Signed statements&quot;: exact signed
+text, unknown and duplicate fields refused, at most 256 entries), in <strong>version 2 only</strong>. Context
+bytes <code>rim.server-key.v1\0</code>, payload at most 16 KiB.</p>
+<pre><code class="language-json">{&quot;v&quot;:2,&quot;type&quot;:&quot;server-inception&quot;,&quot;seq&quot;:0,&quot;serverKey&quot;:&quot;ed25519:…&quot;,&quot;recoveryKey&quot;:&quot;ed25519:…&quot;,&quot;createdAt&quot;:&quot;2026-10-09T00:00:00Z&quot;}
+{&quot;v&quot;:2,&quot;type&quot;:&quot;server-rotate&quot;,&quot;serverId&quot;:&quot;rims1_…&quot;,&quot;seq&quot;:1,&quot;prev&quot;:&quot;…&quot;,&quot;serverKey&quot;:&quot;ed25519:…&quot;,&quot;recoveryKey&quot;:&quot;ed25519:…&quot;,&quot;signer&quot;:&quot;server&quot;,&quot;createdAt&quot;:&quot;…&quot;}</code></pre>
+<pre><code>serverId = &quot;rims1_&quot; + base64url(SHA-256(&quot;rim.server.v1\0&quot; || inception payload bytes))
+keyHash  = base64url(SHA-256(tagged key text))          (as device_key.key_hash)</code></pre>
+<ul>
+<li>The inception is signed by its <code>serverKey</code>. <code>&quot;signer&quot;: &quot;server&quot;</code>: signed by the current server
+key, recovery key unchanged. <code>&quot;signer&quot;: &quot;recovery&quot;</code>: signed by the current recovery key, which may
+change. <code>seq</code>, <code>prev</code> and &quot;the key must change&quot; are as for a person&#39;s log.</li>
+<li><strong>Private keys</strong> never touch the database: the server key&#39;s 32-byte seed is in
+<code>RIM_SERVER_KEY_FILE</code> (default <code>&lt;RIM_DATA_DIR&gt;/server-key.json</code>, <code>{&quot;v&quot;:1,&quot;seed&quot;:&quot;&lt;base64url&gt;&quot;}</code>);
+the server refuses to start if the file is readable by group or others, or if file and log head
+disagree. The log is in <code>server_key_log_entry</code>.</li>
+<li><strong>First boot</strong> (S5-1) with neither file nor log: the server creates both keys, the inception and
+the file, and writes the recovery seed to <code>&lt;RIM_DATA_DIR&gt;/server-recovery-key.txt</code> (0600) as
+<code>rim-server-recovery:1:&lt;base64url&gt;</code>, logging a warning at every start while it exists (&quot;move the
+server recovery key offline&quot;).</li>
+<li><strong>CLI</strong> (S5-1, beside <code>invite_cmd.rs</code>): <code>rim_server server-key show</code>, <code>server-key rotate</code> (a
+<code>signer: server</code> rotation; the old seed is overwritten after the entry commits),
+<code>server-key recover --recovery-key-file F [--new-recovery-key]</code>. The new seed is written to
+<code>&lt;key file&gt;.next</code> (0600) before its entry commits and moved over the key file after; a start
+that finds the log head naming the <code>.next</code> seed moves it into place. A running server checks the
+log every minute and switches to the new key, re-signing its descriptor. <code>recover</code> works without
+the key file; with <code>--new-recovery-key</code> it writes the new recovery key where first boot does,
+refusing to overwrite a file there.</li>
+</ul>
+<h3 id="discovery-document">Discovery document <a class="anchor" href="#discovery-document" aria-label="Link to this section">#</a></h3>
+<p><code>GET /.well-known/rim-server</code>, unauthenticated, <code>Cache-Control: max-age=300</code>,
+<code>Access-Control-Allow-Origin: *</code>:</p>
+<pre><code class="language-json">{&quot;rim&quot;:&quot;server-discovery&quot;,&quot;keyLog&quot;:[{&quot;payload&quot;:&quot;…&quot;,&quot;signature&quot;:&quot;…&quot;}],&quot;descriptor&quot;:{&quot;payload&quot;:&quot;…&quot;,&quot;signature&quot;:&quot;…&quot;},
+ &quot;features&quot;:{&quot;attachments&quot;:{&quot;state&quot;:&quot;enabled&quot;},&quot;email&quot;:{&quot;state&quot;:&quot;unavailable&quot;,&quot;reason&quot;:&quot;…&quot;},&quot;custom_emoji&quot;:{&quot;state&quot;:&quot;disabled&quot;},…}}</code></pre>
+<p><code>features</code> is optional and unsigned: each optional feature of the instance (the names of
+<code>RIM_FEATURES_DISABLED</code>, <a href="../docs/operations/features.html"><code>docs/operations/features.md</code></a>) with its <code>state</code>, <code>enabled</code>,
+<code>disabled</code> or <code>unavailable</code>, and a <code>reason</code> for an unavailable one. It is advisory, for clients
+deciding what to offer; the server enforces the switches itself, so a changed copy only changes
+what a client shows. Readers ignore a missing <code>features</code> and names they do not know. It sits
+beside the descriptor rather than in it because the descriptor refuses unknown fields: an
+earlier server would refuse a descriptor that carried it.</p>
+<p>The descriptor is signed by the head server key over <code>rim.server-descriptor.v1\0 || payload</code>
+(at most 16 KiB):</p>
+<pre><code class="language-json">{&quot;v&quot;:2,&quot;type&quot;:&quot;server-descriptor&quot;,&quot;serverId&quot;:&quot;rims1_…&quot;,&quot;keySeq&quot;:0,&quot;version&quot;:1,&quot;roles&quot;:[&quot;host&quot;,&quot;relay&quot;],
+ &quot;endpoints&quot;:{&quot;graphql&quot;:&quot;https://host.example/api&quot;,&quot;websocket&quot;:&quot;wss://host.example/api/ws&quot;,&quot;s2s&quot;:&quot;https://host.example/s2s/v1&quot;},
+ &quot;s2sVersions&quot;:[1],&quot;mlsCipherSuites&quot;:[79],&quot;limits&quot;:{&quot;maxBodyBytes&quot;:8388608,&quot;clockSkewSeconds&quot;:300,&quot;maxDeliverItems&quot;:256},
+ &quot;registration&quot;:{&quot;mode&quot;:&quot;invite&quot;,&quot;powBits&quot;:null},&quot;issuedAt&quot;:&quot;…&quot;}</code></pre>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Rule</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>keySeq</code></td>
+<td>The log head; a descriptor signed by another key is refused</td>
+</tr>
+<tr>
+<td><code>version</code></td>
+<td>1 to 2³¹−1; readers keep only a higher one. Re-signed with <code>version + 1</code> on any change and after every rotation</td>
+</tr>
+<tr>
+<td><code>roles</code></td>
+<td>Non-empty subset of <code>host</code>, <code>relay</code>, in that order</td>
+</tr>
+<tr>
+<td><code>endpoints</code></td>
+<td>One origin in v1; <code>s2s</code> null while server-to-server traffic is off</td>
+</tr>
+<tr>
+<td><code>s2sVersions</code></td>
+<td><code>[1]</code>; a later version keeps serving the previous one (<a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/ROADMAP.md"><code>ROADMAP.md</code></a>, &quot;Releases and updates&quot;)</td>
+</tr>
+<tr>
+<td><code>mlsCipherSuites</code></td>
+<td>What <code>uploadMlsKeyPackages</code> accepts</td>
+</tr>
+<tr>
+<td><code>registration</code></td>
+<td><code>mode</code> <code>invite</code>, <code>open</code> or <code>pow</code>; <code>powBits</code> only in <code>pow</code> mode</td>
+</tr>
+</tbody></table></div>
+<p>The decision record wrote <code>/.well-known/rim/server</code> as an illustration; one well-known name is
+simpler. Rejected: an unsigned descriptor (anyone proxying the fetch, a relay included, could change
+endpoints), and signing the whole document (the log is self-certifying; one verifier per statement).</p>
+<h3 id="pinning-a-peer">Pinning a peer <a class="anchor" href="#pinning-a-peer" aria-label="Link to this section">#</a></h3>
+<p>A server learns a peer&#39;s id from a request&#39;s <code>keyid</code>, a delegation, a card&#39;s relay URL or an
+invite. To pin it: fetch <code>&lt;origin&gt;/.well-known/rim-server</code> over HTTPS (5 s, 64 KiB, no redirects;
+origins resolving to loopback, link-local, private or unique-local addresses are refused unless
+<code>RIM_S2S_ALLOW_PRIVATE_ADDRESSES=true</code>), replay the log, check the inception against the expected
+id, verify the descriptor (its <code>endpoints.s2s</code> must start with the origin), and store everything in
+<code>peer_server</code>. Refresh every 6 hours on use, on a <code>keyid</code> above the pinned head, and on a <code>401</code> from
+the peer; at most one fetch per peer per minute and 60 in total.</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Fetched log</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Equal to the pin</td>
+<td>Keep; take the descriptor if its version is higher</td>
+</tr>
+<tr>
+<td>Extends the pin with valid rotations</td>
+<td>Accept. After a <code>signer: server</code> rotation the previous key stays valid 24 hours from when this server accepted the extension; after a <code>signer: recovery</code> rotation it is refused at once</td>
+</tr>
+<tr>
+<td>Does not extend it (a fork)</td>
+<td>Status <code>forked</code>: requests either way fail <code>403 peer_forked</code>, ERROR log, audit <code>s2s.peer_forked</code>, until <code>rim_server peer reset &lt;id&gt;</code> after an out-of-band check</td>
+</tr>
+<tr>
+<td>A prefix of the pin</td>
+<td>Keep the pin (the peer serves an older view, say a lagging node)</td>
+</tr>
+</tbody></table></div>
+<p><code>blocked</code> is an operator&#39;s decision (<code>rim_server peer block &lt;id&gt;</code>, S5-6): requests either way
+fail <code>403 peer_not_allowed</code> from the next one, until <code>rim_server peer unblock &lt;id&gt;</code> makes the peer
+<code>active</code> again. Only an <code>active</code> peer is blocked and only a <code>blocked</code> one unblocked, so a forked
+peer stays forked; a server never pinned is refused with <code>RIM_S2S_DENIED_PEERS</code> instead. Audit
+<code>s2s.peer_blocked</code>, <code>s2s.peer_unblocked</code>.</p>
+<p>A first pin keeps the key before the head but gives it no grace: the grace counts from an
+extension this server saw. A refetch whose inception hashes to another id (the origin now serves
+another server) fails and keeps the pin; only a log from the same inception can fork it.</p>
+<h3 id="host-keys-in-clients">Host keys in clients <a class="anchor" href="#host-keys-in-clients" aria-label="Link to this section">#</a></h3>
+<ul>
+<li><strong>From an invite</strong> (<code>rim-invite:1:&lt;hostServerId&gt;:&lt;hostKeyHash&gt;:&lt;inviteToken&gt;:&lt;hostOrigin&gt;</code>): the
+app fetches the discovery document through its relay (<code>remoteServer(origin)</code>), replays the log,
+checks the inception hashes to <code>hostServerId</code> and that <code>hostKeyHash</code> names a key of the log
+followed only by <code>signer: server</code> rotations, then pins id and log.</li>
+<li><strong>Trust on first use</strong> for a contact&#39;s relay (the home of a DM someone else started). DM content
+is MLS-protected either way; the pin protects metadata events.</li>
+<li>A signature at a <code>keySeq</code> above the pin makes the app refetch (at most once a minute) and accept
+only an extension. The key before the head keeps verifying 24 hours after the app accepted a
+<code>signer: server</code> rotation, never after a <code>signer: recovery</code> one, and a first pin gives it no
+grace, as for servers (&quot;Pinning a peer&quot;). A fork stops the app using that server: &quot;This
+server&#39;s identity changed in a way RIM cannot verify&quot;.</li>
+</ul>
+<p>The invite carries the host&#39;s existing invite token, not one the host signed: the server id is a
+hash of the host&#39;s inception, so id plus key hash already expose a substituted host, and a
+signature over the token would add nothing.</p>
+<h2 id="the-s2s-transport">The S2S transport <a class="anchor" href="#the-s2s-transport" aria-label="Link to this section">#</a></h2>
+<h3 id="signature-profile">Signature profile <a class="anchor" href="#signature-profile" aria-label="Link to this section">#</a></h3>
+<p>Requests go over HTTPS (<code>http</code> only with <code>RIM_S2S_ALLOW_HTTP=true</code>) to paths under the peer&#39;s
+<code>endpoints.s2s</code>, signed per RFC 9421 under the label <code>sig1</code>:</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Request</th>
+<th>Covered components, in order</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>With a body (<code>POST</code>)</td>
+<td><code>&quot;@method&quot; &quot;@target-uri&quot; &quot;content-digest&quot; &quot;content-type&quot; &quot;rim-origin&quot;</code></td>
+</tr>
+<tr>
+<td>Without (<code>GET</code>)</td>
+<td><code>&quot;@method&quot; &quot;@target-uri&quot; &quot;rim-origin&quot;</code></td>
+</tr>
+</tbody></table></div>
+<p>Parameters, in order: <code>created</code>; <code>expires</code> (at most <code>created + 300</code>); <code>nonce</code> (16 random bytes,
+unpadded base64url); <code>keyid</code> (<code>&quot;&lt;serverId&gt;#&lt;seq&gt;&quot;</code>, the signing key&#39;s log entry); <code>alg</code> (the key&#39;s
+algorithm name, <code>&quot;ed25519&quot;</code>); <code>tag</code> (<code>&quot;rim-s2s-v1&quot;</code>).</p>
+<ul>
+<li><code>Content-Digest: sha-256=:&lt;base64 SHA-256 of the body&gt;:</code> (RFC 9530, padded base64); <code>sha-256</code>
+must be present and match, other algorithms are ignored. <code>Content-Type: application/json</code>, except
+forwarded requests, which keep the client&#39;s.</li>
+<li><code>Rim-Origin</code>: the sender&#39;s origin, where its discovery document lives.</li>
+<li><code>@target-uri</code> is the absolute URI the sender used. The receiver rebuilds it from the origin of its
+<code>RIM_PUBLIC_BASE_URL</code> plus path and query, never from <code>Host</code> or forwarded headers, so a
+TLS-terminating proxy does not change it.</li>
+<li>The base is RFC 9421 §2.5: <code>&quot;&lt;component&gt;&quot;: &lt;value&gt;</code> lines, then <code>&quot;@signature-params&quot;</code>, joined by
+<code>\n</code>, no trailing newline (A.4). <code>Signature-Input</code> and <code>Signature</code> are RFC 8941 dictionaries;
+other labels are ignored.</li>
+</ul>
+<p>The <code>nonce</code> parameter is RFC 9421&#39;s own replay field and is covered by <code>@signature-params</code>.
+Rejected: a separate <code>rim-nonce</code> header (a second field for one purpose) and <code>Date</code> (second
+resolution; <code>created</code> is covered already).</p>
+<h3 id="verifying-a-request">Verifying a request <a class="anchor" href="#verifying-a-request" aria-label="Link to this section">#</a></h3>
+<p>In order, stopping at the first failure:</p>
+<ol>
+<li>Body at most <code>RIM_S2S_MAX_BODY_BYTES</code> (8 MiB; 32 MiB on <code>/forward/</code>) → <code>413 too_large</code>.</li>
+<li>Exactly the profile&#39;s components and parameters; <code>created ≤ now + 300</code>, <code>expires &gt; now</code>,
+<code>expires − created ≤ 300</code> → <code>401 bad_signature</code>.</li>
+<li>Peer: denied, <code>blocked</code> or <code>forked</code> → <code>403</code>; an unknown id is pinned from <code>Rim-Origin</code> first
+(<code>403 unknown_peer</code> on failure). The host allow-list applies here (&quot;Configuration&quot;).</li>
+<li><code>keyid</code>&#39;s seq is the pinned head, or the previous key in its grace period; a higher seq
+refreshes the pin once. Digest matches; signature verifies (<code>verify_strict</code>) → else <code>401</code>.</li>
+<li>Insert <code>(peer, nonce, expires_at = created + 600 s)</code> into <code>s2s_nonce</code>; a conflict is
+<code>409 replay</code>. Expired rows are deleted every minute.</li>
+<li>Rate limits per peer → <code>429</code> with <code>Retry-After</code>.</li>
+</ol>
+<h3 id="responses">Responses <a class="anchor" href="#responses" aria-label="Link to this section">#</a></h3>
+<p>Every response from the RIM layer, errors included, is signed by the responder, covering
+<code>&quot;@status&quot; &quot;content-digest&quot; &quot;content-type&quot; &quot;rim-request-nonce&quot; &quot;@method&quot;;req &quot;@target-uri&quot;;req</code>
+plus <code>&quot;content-digest&quot;;req</code> when the request had a body, with <code>created</code>, <code>keyid</code>, <code>alg</code>, <code>tag</code>.
+<code>Rim-Request-Nonce</code> echoes the request&#39;s nonce and binds the answer to it. RFC 9421 §2.4 advises
+against covering the request&#39;s <code>Signature</code> field, hence the echo. A caller treats an unsigned or
+badly signed response as a transport failure (retry), never as an answer, and refuses a response
+whose <code>created</code> is more than 300 s from its clock. A refusal of a request whose nonce cannot be
+read echoes an empty <code>Rim-Request-Nonce</code>; no caller can match it. While server-to-server traffic
+is off, <code>/s2s/v1/…</code> answers an unsigned <code>404</code>.</p>
+<h3 id="errors">Errors <a class="anchor" href="#errors" aria-label="Link to this section">#</a></h3>
+<p>Bodies are <code>{&quot;error&quot;:&quot;&lt;code&gt;&quot;,&quot;message&quot;:&quot;…&quot;}</code>.</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Status</th>
+<th><code>error</code></th>
+<th>When</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>400</td>
+<td><code>bad_request</code></td>
+<td>Malformed JSON or statement</td>
+</tr>
+<tr>
+<td>401</td>
+<td><code>bad_signature</code></td>
+<td>Profile, clock, key, digest or signature</td>
+</tr>
+<tr>
+<td>403</td>
+<td><code>unknown_peer</code>, <code>peer_not_allowed</code>, <code>peer_forked</code>, <code>not_delegated</code>, <code>forbidden</code></td>
+<td>Peer not pinnable; denied or off the allow-list; forked; no delegation or card names the relay; action refused</td>
+</tr>
+<tr>
+<td>404</td>
+<td><code>not_found</code></td>
+<td>Unknown principal, space or conversation</td>
+</tr>
+<tr>
+<td>409</td>
+<td><code>replay</code>, <code>conflict</code></td>
+<td>Nonce seen; device request <code>seq</code> refused (<code>highestSeq</code> in the body); the action conflicts with stored state</td>
+</tr>
+<tr>
+<td>413, 429</td>
+<td><code>too_large</code>, <code>rate_limited</code></td>
+<td>Caps; <code>Retry-After</code></td>
+</tr>
+<tr>
+<td>500</td>
+<td><code>internal</code></td>
+<td>The responder failed (its database, say); retry</td>
+</tr>
+<tr>
+<td>503</td>
+<td><code>role_disabled</code></td>
+<td>The endpoint belongs to a role this server does not run</td>
+</tr>
+</tbody></table></div>
+<p>A request in a method other than <code>GET</code> or <code>POST</code> fails the profile (<code>401</code>). A peer with status
+<code>blocked</code> gets <code>403 peer_not_allowed</code>.</p>
+<h3 id="ping">Ping <a class="anchor" href="#ping" aria-label="Link to this section">#</a></h3>
+<p><code>GET /s2s/v1/ping</code> → <code>200 {&quot;serverId&quot;:&quot;rims1_…&quot;,&quot;roles&quot;:[&quot;host&quot;,&quot;relay&quot;]}</code>, served by every role.
+It runs the whole request check and signs its answer, so it tests a pin and the transport both
+ways.</p>
+<h3 id="implementation">Implementation <a class="anchor" href="#implementation" aria-label="Link to this section">#</a></h3>
+<p>New crate <strong><code>rim_s2s</code></strong> (no database, no Actix): signature bases, signing and verifying this
+profile, <code>Content-Digest</code>, and the server-signed statements. Structured fields through <strong><code>sfv</code>
+0.15.0</strong> (2026-06-16; RFC 8941/9651); Ed25519 through <code>rim_identity</code>&#39;s key encodings. Its tests
+check RFC 9421 appendix B.2.6 (&quot;Signing a Request Using ed25519&quot;) and appendix A here byte for
+byte. Outgoing requests use <code>reqwest</code> with rustls behind a signing client in <code>rim_infra_services</code>.</p>
+<p>Considered on crates.io, 2026-10-09: <strong><code>httpsig</code></strong> 0.0.26 (2026-07-22, MIT; Ed25519,
+<code>Content-Digest</code>, response binding, but its README says work in progress and hyper-only
+integration); <strong><code>web-bot-auth</code></strong> 0.7.0 (2026-04-22, Apache-2.0, Cloudflare; built for the Web Bot
+Auth profile, generic use undocumented); <code>actpub-httpsig</code> (ActivityPub-shaped). A fixed profile
+with one algorithm is about 400 lines against vectors, a smaller surface than any of them, and fits
+Actix&#39;s request types.</p>
+<h2 id="roles-and-configuration">Roles and configuration <a class="anchor" href="#roles-and-configuration" aria-label="Link to this section">#</a></h2>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th><code>RIM_ROLE</code></th>
+<th>Client API</th>
+<th>S2S endpoints</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>both</code> (default)</td>
+<td>Everything</td>
+<td>All</td>
+</tr>
+<tr>
+<td><code>relay</code></td>
+<td>All but <code>createServer</code> (<code>FORBIDDEN</code>); existing workspaces keep working for local users</td>
+<td>Discovery, <code>ping</code>, <code>principals</code>, <code>identity</code>, <code>key-packages/claim</code>, <code>deliver</code>, <code>presence</code>, and host endpoints (<code>identity</code>, <code>outbox</code>, <code>forward</code>) for its direct space only</td>
+</tr>
+<tr>
+<td><code>host</code></td>
+<td>All but <code>/api/remote/…</code>, contacts, DM requests and remote spaces; local users DM inside workspaces</td>
+<td>Discovery, <code>ping</code> and host endpoints; <code>deliver</code> answers <code>503</code></td>
+</tr>
+</tbody></table></div>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>RIM_PUBLIC_BASE_URL</code></td>
+<td>unset</td>
+<td>S2S is on only when it is <code>https</code> (or <code>http</code> with <code>RIM_S2S_ALLOW_HTTP</code>); its origin is <code>Rim-Origin</code> and the base of <code>@target-uri</code></td>
+</tr>
+<tr>
+<td><code>RIM_SERVER_KEY_FILE</code></td>
+<td><code>&lt;RIM_DATA_DIR&gt;/server-key.json</code></td>
+<td>The server key seed</td>
+</tr>
+<tr>
+<td><code>RIM_HOST_ALLOWED_RELAYS</code></td>
+<td>empty = any</td>
+<td>Server ids allowed on host endpoints (<code>join</code>, <code>subscriptions</code>, <code>forward</code>, <code>revocations</code>, <code>presence</code>)</td>
+</tr>
+<tr>
+<td><code>RIM_S2S_DENIED_PEERS</code></td>
+<td>empty</td>
+<td>Server ids refused everywhere</td>
+</tr>
+<tr>
+<td><code>RIM_S2S_PEER_RATE_PER_MIN</code></td>
+<td>600</td>
+<td>Requests per peer (in memory, per node)</td>
+</tr>
+<tr>
+<td><code>RIM_S2S_SUBSCRIPTIONS_PER_PEER</code></td>
+<td>10000</td>
+<td>Active delegations per relay on a host</td>
+</tr>
+<tr>
+<td><code>RIM_S2S_DEVICE_RATE_PER_MIN</code></td>
+<td>120</td>
+<td>Forwarded requests per device</td>
+</tr>
+<tr>
+<td><code>RIM_S2S_MAX_BODY_BYTES</code></td>
+<td>8388608</td>
+<td>Body cap (forward path: 32 MiB)</td>
+</tr>
+<tr>
+<td><code>RIM_RELAY_QUEUE_BYTES_PER_USER</code></td>
+<td>268435456</td>
+<td>Queued bytes per local user</td>
+</tr>
+<tr>
+<td><code>RIM_RELAY_RETENTION_DAYS</code></td>
+<td>30</td>
+<td>Queue and DM request retention</td>
+</tr>
+<tr>
+<td><code>RIM_REGISTRATION_POW_BITS</code></td>
+<td>unset</td>
+<td>Turns on <code>pow</code> registration (1 to 40); wins over <code>RIM_OPEN_REGISTRATION</code></td>
+</tr>
+<tr>
+<td><code>RIM_RELAY_CARD_MAX_BYTES</code></td>
+<td>131072</td>
+<td>Largest card a local user publishes (at most 128 KiB)</td>
+</tr>
+<tr>
+<td><code>RIM_RELAY_KEY_PACKAGES_PER_DEVICE</code></td>
+<td>100</td>
+<td>Unclaimed one-time key packages per device and suite</td>
+</tr>
+<tr>
+<td><code>RIM_RELAY_DEVICES_PER_USER</code></td>
+<td>32</td>
+<td>Devices per local user, revoked ones not counted</td>
+</tr>
+<tr>
+<td><code>RIM_RELAY_FORWARDS_PER_USER_PER_DAY</code></td>
+<td>50000</td>
+<td>Forwarded requests per local user per day; per device per minute is <code>RIM_S2S_DEVICE_RATE_PER_MIN</code>, on the relay as on the host</td>
+</tr>
+<tr>
+<td><code>RIM_RELAY_DM_REQUESTS_PER_DAY</code></td>
+<td>20</td>
+<td>DM requests per sender principal per day on this relay, and invites per local user per day to people on other servers who are not their contacts</td>
+</tr>
+</tbody></table></div>
+<p>The existing <code>config</code> loader (<code>Environment::with_prefix(&quot;RIM&quot;)</code>) maps <code>RIM_ROLE</code> to the field
+<code>role</code>. From S5-1 on a login proof&#39;s audience may also be this server&#39;s id, compared exactly
+(base64url is case-sensitive), beside <code>RIM_KEY_LOGIN_AUDIENCES</code>.</p>
+<h3 id="remote-users-on-a-host">Remote users on a host <a class="anchor" href="#remote-users-on-a-host" aria-label="Link to this section">#</a></h3>
+<p>Created the first time a host accepts a person from elsewhere (a join, a DM a local user starts, a
+delegation):</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>kind</code>, <code>principal_id</code>, <code>identity_key</code></td>
+<td><code>remote</code>; from the verified key log</td>
+</tr>
+<tr>
+<td><code>username</code></td>
+<td><code>r_</code> + the first 30 characters after <code>rimp1_</code>. From S5-1 on local signups refuse the <code>r_</code> prefix, so nobody squats a principal&#39;s name; existing local names are left alone</td>
+</tr>
+<tr>
+<td><code>display_name</code></td>
+<td>The card&#39;s <code>displayName</code>, updated with each newer card</td>
+</tr>
+<tr>
+<td><code>password_hash</code>, <code>email</code></td>
+<td>Null (allowed: <code>principal_id</code> is set)</td>
+</tr>
+<tr>
+<td><code>home_relay</code></td>
+<td>Server id of the relay that most recently presented a valid delegation for the user, else the first relay of their newest card that pins, else the relay that served their identity; null for local users</td>
+</tr>
+</tbody></table></div>
+<p>Key log, devices (with certificates and revocations) and card live in the existing
+<code>key_log_entry</code>, <code>device_key</code> and <code>profile_card</code> tables, as for an enrolled local user. A key-only
+signup for a principal held here as <code>remote</code> turns the row <code>local</code> and keeps its memberships.
+Usernames stay unique across the table; rejected: a partial unique index on local users only,
+since login and member lookups assume one row per name.</p>
+<p>Remote users may not run mutations that change the account rather than a space (<code>FORBIDDEN</code>, <code>not available to remote members</code>): <code>login</code>, <code>logout</code>, <code>signup*</code>, <code>enrollIdentityKey</code>, <code>addDeviceKey</code>,
+<code>revokeDeviceKey</code>, <code>rotateIdentityKey</code>, <code>publishProfileCard</code>, <code>logoutOtherSessions</code>, password and
+email mutations, <code>createServer</code> and bot mutations. Identity changes arrive by <code>POST /identity</code> and <code>POST /revocations</code>.</p>
+<p><code>updateMyProfile</code> sets what the host stores per member and the card does not carry: the avatar
+(uploaded with <code>POST /api/files/avatar</code> on the forward path, then named by <code>avatarUrl</code>), status
+text and bio. A <code>displayName</code> in it is <code>FORBIDDEN</code> (<code>a remote member's display name comes from their profile card</code>); the name changes with the next card the host receives.</p>
+<h2 id="statements-added-by-this-document">Statements added by this document <a class="anchor" href="#statements-added-by-this-document" aria-label="Link to this section">#</a></h2>
+<p>All follow key-identity&#39;s statement rules, version 2 only. Timestamps are informational, except a
+delegation&#39;s <code>expiresAt</code>, which the host enforces against its own clock.</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Statement</th>
+<th>Context bytes</th>
+<th>Signed by</th>
+<th>Max payload</th>
+<th>PR</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Server key log entry</td>
+<td><code>rim.server-key.v1\0</code></td>
+<td>server key or server recovery key</td>
+<td>16 KiB</td>
+<td>S5-1</td>
+</tr>
+<tr>
+<td>Server descriptor</td>
+<td><code>rim.server-descriptor.v1\0</code></td>
+<td>head server key</td>
+<td>16 KiB</td>
+<td>S5-1</td>
+</tr>
+<tr>
+<td>Device request</td>
+<td><code>rim.device-request.v1\0</code></td>
+<td>device key</td>
+<td>16 KiB</td>
+<td>S5-2</td>
+</tr>
+<tr>
+<td>Host response</td>
+<td><code>rim.host-response.v1\0</code></td>
+<td>host server key</td>
+<td>16 KiB</td>
+<td>S5-2</td>
+</tr>
+<tr>
+<td>Host event</td>
+<td><code>rim.host-event.v1\0</code></td>
+<td>host server key</td>
+<td>512 KiB</td>
+<td>S5-2</td>
+</tr>
+<tr>
+<td>Delegation</td>
+<td><code>rim.delegation.v1\0</code></td>
+<td>device key</td>
+<td>16 KiB</td>
+<td>S5-4</td>
+</tr>
+<tr>
+<td>Revocation acknowledgement</td>
+<td><code>rim.revocation-ack.v1\0</code></td>
+<td>host server key</td>
+<td>16 KiB</td>
+<td>S5-4</td>
+</tr>
+</tbody></table></div>
+<p>Device-signed statements are verified in <code>rim_identity</code> against a key log, server-signed ones in
+<code>rim_s2s</code>. Both take the algorithm from the tagged key, so a hybrid key is added in one place.</p>
+<h2 id="spaces-hosted-elsewhere-the-clients-path">Spaces hosted elsewhere: the client&#39;s path <a class="anchor" href="#spaces-hosted-elsewhere-the-clients-path" aria-label="Link to this section">#</a></h2>
+<h3 id="device-signed-requests">Device-signed requests <a class="anchor" href="#device-signed-requests" aria-label="Link to this section">#</a></h3>
+<p>A request to a space hosted elsewhere carries <code>Rim-Device-Request</code> (unpadded base64url of the exact
+payload text) and <code>Rim-Device-Signature</code> (the tagged signature over
+<code>rim.device-request.v1\0 || payload</code>):</p>
+<pre><code class="language-json">{&quot;v&quot;:2,&quot;type&quot;:&quot;device-request&quot;,&quot;principalId&quot;:&quot;rimp1_…&quot;,&quot;deviceId&quot;:&quot;&lt;uuid&gt;&quot;,&quot;host&quot;:&quot;rims1_…&quot;,
+ &quot;method&quot;:&quot;POST&quot;,&quot;path&quot;:&quot;/api&quot;,&quot;seq&quot;:1791504000000000,&quot;bodySha256&quot;:&quot;&lt;base64url&gt;&quot;,&quot;issuedAt&quot;:&quot;…&quot;}</code></pre>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Rule</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>host</code></td>
+<td>The host&#39;s server id</td>
+</tr>
+<tr>
+<td><code>method</code>, <code>path</code></td>
+<td>The host-relative request (<code>POST /api</code>, <code>GET /api/attachments/&lt;id&gt;/download</code>, <code>POST /api/files/upload</code>, <code>POST /api/files/avatar</code>, <code>GET /api/files/&lt;path&gt;</code>, <code>GET /api/plugin-bundles/&lt;server&gt;/&lt;sha256&gt;</code>); must equal the forwarded one</td>
+</tr>
+<tr>
+<td><code>seq</code></td>
+<td>Below 2⁵³, greater than every <code>seq</code> this device used with this host; clients use <code>max(previous + 1, Unix time in µs)</code> and persist it</td>
+</tr>
+<tr>
+<td><code>bodySha256</code></td>
+<td>base64url(SHA-256(exact body bytes)); the empty body&#39;s hash for <code>GET</code></td>
+</tr>
+</tbody></table></div>
+<p>The host accepts a <code>seq</code> it has not accepted from this device in the last 10 minutes and that is
+above <code>highestSeq − 300,000,000</code> (5 minutes in µs), then raises <code>highestSeq</code>. An accepted <code>seq</code> is
+remembered for 10 minutes and, after that, until it falls below the window: forgetting it at 10
+minutes would let a relay replay a device&#39;s latest request once the device went quiet. Otherwise
+<code>409 {&quot;error&quot;:&quot;replay&quot;,&quot;highestSeq&quot;:&quot;&lt;decimal&gt;&quot;}</code>; the client moves its counter above it and signs
+once more. The window tolerates the relay reordering concurrent requests and needs no server clock.
+Rejected: a strict <code>+1</code> counter (a crash between signing and persisting locks the device out;
+concurrent requests fail).</p>
+<h3 id="forwarding">Forwarding <a class="anchor" href="#forwarding" aria-label="Link to this section">#</a></h3>
+<p>The relay serves <code>GET|POST /api/remote/&lt;hostServerId&gt;/&lt;host-relative path&gt;</code> (a non-GraphQL
+transport in <code>rim_server</code>, in the <code>file_handlers.rs</code> pattern); GraphQL is
+<code>POST /api/remote/rims1_…/api</code>. It authenticates the session cookie (and CSRF for <code>POST</code>) as today,
+refuses a device request naming another principal or device than the session&#39;s or a revoked
+device (<code>FORBIDDEN</code>), and sends <code>&lt;host s2s&gt;/forward&lt;path&gt;</code> with the body byte for byte, the client&#39;s
+<code>Content-Type</code>, both device headers and its own signature. It returns the host&#39;s status, body,
+<code>Content-Type</code>, <code>Rim-Host-Response</code>, <code>Rim-Host-Signature</code> and <code>Retry-After</code> unchanged.</p>
+<p>The host&#39;s <code>/s2s/v1/forward/…</code> checks the S2S signature, then the device request (a non-revoked
+device of a user here; <code>host</code> is its own id; method, path, body hash; <code>seq</code>), then that the relay
+may carry this user&#39;s traffic: it holds an active delegation of this device for a workspace here,
+or the user is a member of this host&#39;s direct space and the relay&#39;s origin is in their newest card
+(<code>403 not_delegated</code> otherwise). It runs the normal handler (GraphQL, attachment upload and download,
+avatar upload, stored-file download, plugin bundle download) as that user and device, with no session; CSRF does not apply without cookies. Per-IP limiters key on
+<code>relay:&lt;serverId&gt;:&lt;principalId&gt;</code> for forwarded requests.</p>
+<p>Every forwarded response carries <code>Rim-Host-Response</code> (base64url payload) and <code>Rim-Host-Signature</code>:</p>
+<pre><code class="language-json">{&quot;v&quot;:2,&quot;type&quot;:&quot;host-response&quot;,&quot;host&quot;:&quot;rims1_…&quot;,&quot;keySeq&quot;:0,&quot;requestSha256&quot;:&quot;&lt;base64url&gt;&quot;,&quot;status&quot;:200,&quot;bodySha256&quot;:&quot;&lt;base64url&gt;&quot;}</code></pre>
+<p><code>requestSha256</code> hashes the device-request payload text, so a relay cannot answer a new request with
+an old response. The app checks signature, pin, request hash, status and body hash; a failure counts
+as a relay failure (&quot;Direct connection&quot;). The host buffers bodies to hash them (downloads ≤ 25 MB).</p>
+<p><strong>Coexistence.</strong> Spaces this server hosts are used exactly as today (<code>/api</code> with cookie and
+<code>X-CSRF-Token</code>, <code>workspaceEvents</code> on <code>/api/ws</code>); only spaces hosted elsewhere use <code>/api/remote/…</code>.
+The request authenticator gains a second path (device request via a pinned peer) yielding the same
+<code>RequestAuthResultDto</code> with no session id; <code>AuthActorCtx</code> already carries the device. Rejected: one
+S2S endpoint per client operation (hundreds of endpoints drifting from the schema, while the
+decision requires writes to reach the host unchanged).</p>
+<h2 id="host-events-and-relay-queues">Host events and relay queues <a class="anchor" href="#host-events-and-relay-queues" aria-label="Link to this section">#</a></h2>
+<h3 id="host-events">Host events <a class="anchor" href="#host-events" aria-label="Link to this section">#</a></h3>
+<pre><code class="language-json">{&quot;v&quot;:2,&quot;type&quot;:&quot;host-event&quot;,&quot;host&quot;:&quot;rims1_…&quot;,&quot;keySeq&quot;:0,&quot;workspaceId&quot;:&quot;&lt;uuid&gt;&quot;,&quot;stream&quot;:&quot;c:&lt;uuid&gt;&quot;,&quot;seq&quot;:42,
+ &quot;event&quot;:{&quot;type&quot;:&quot;MessageDeleted&quot;,&quot;workspace_id&quot;:&quot;…&quot;,&quot;conversation_id&quot;:&quot;…&quot;,…},&quot;issuedAt&quot;:&quot;…&quot;}</code></pre>
+<p><code>event</code> is the <code>WorkspaceEvent</code> JSON clients parse today. Its ids are the host&#39;s; clients key every
+entity of a remote space by (host server id, id).</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th><code>stream</code></th>
+<th>Events</th>
+<th><code>seq</code></th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>c:&lt;conversationId&gt;</code></td>
+<td>Every event with a <code>conversation_id</code> (messages, reactions, pins, threads, conversation membership, link previews, <code>MlsCommitAccepted</code>, <code>MlsMembershipChanged</code>)</td>
+<td>1, 2, …</td>
+</tr>
+<tr>
+<td><code>u:&lt;principalId&gt;</code></td>
+<td>Events for one user (<code>NotificationDue</code>, <code>UserMentioned</code>, <code>ReadStateUpdated</code>, <code>MlsWelcomeAvailable</code>, <code>DmInvite</code>); for a guest, the directory events about them</td>
+<td>1, 2, …</td>
+</tr>
+<tr>
+<td><code>w</code></td>
+<td>Other space-wide events (<code>MemberJoined</code>, <code>MemberLeft</code>, <code>MemberRoleChanged</code>, <code>WorkspacePluginChanged</code>, pipeline and workspace-state events), to non-guests</td>
+<td>1, 2, …</td>
+</tr>
+<tr>
+<td><code>e</code></td>
+<td><code>TypingStarted</code>, <code>PresenceChanged</code></td>
+<td><code>null</code></td>
+</tr>
+</tbody></table></div>
+<p><code>seq</code> is assigned per <code>(workspace, stream)</code> in <code>host_event_stream</code>, in the transaction that writes
+the outbox rows. Recipients follow today&#39;s <code>user_can_see_event_as</code>, which S5-2 moves from <code>rim_api</code>
+to <code>rim_services</code> for the outbox writer. <code>streamHeads(serverId, streams)</code> (host GraphQL, through
+the forward path) answers the current <code>seq</code> of each stream the caller can see.</p>
+<h3 id="outbox-and-deliver">Outbox and <code>deliver</code> <a class="anchor" href="#outbox-and-deliver" aria-label="Link to this section">#</a></h3>
+<p>For each event the host appends one <code>s2s_outbox</code> row per receiving relay: relays holding an active
+delegation of a recipient, or for a direct space the relays in each remote recipient&#39;s newest card.
+A task per peer sends them in id order:</p>
+<pre><code>POST /s2s/v1/deliver
+{&quot;items&quot;:[{&quot;id&quot;:&quot;1234&quot;,&quot;envelope&quot;:{&quot;payload&quot;:&quot;…&quot;,&quot;signature&quot;:&quot;…&quot;},&quot;recipients&quot;:[&quot;rimp1_…&quot;],&quot;deviceId&quot;:null}]}
+→ 200 {&quot;ackedThrough&quot;:&quot;1234&quot;,&quot;refused&quot;:[{&quot;id&quot;:&quot;1230&quot;,&quot;reason&quot;:&quot;unknown_principal&quot;}]}</code></pre>
+<ul>
+<li>At most 256 items and 8 MiB per request; <code>recipients</code> are the relay&#39;s users who may see the event;
+<code>deviceId</code> targets one device (<code>MlsWelcomeAvailable</code>).</li>
+<li>The relay stores items before answering and ignores ids at or below its <code>received_through</code> for
+the peer, so redelivery is idempotent. It refuses items for non-local principals
+(<code>unknown_principal</code>), items of a conversation it holds no invite or request for and workspace
+items without an active subscription (<code>not_subscribed</code>), invites from a principal the recipient
+blocked (<code>blocked</code>) or past the request limits (<code>limited</code>), a device-targeted item for an unknown
+device (<code>unknown_device</code>), and envelopes that do not verify under the delivering host&#39;s key or
+name another host (<code>invalid_envelope</code>). A refusal for one recipient carries <code>principalId</code>. The
+host skips a (relay, principal) for 24 hours after <code>unknown_principal</code> only; the other refusals
+are about one conversation or item.</li>
+<li>Failures back off from 1 s doubling to 5 minutes. Outbox rows live 7 days; a relay down longer
+gets nothing and its clients catch up from the change feed. A relay may pull what it missed:
+<code>GET /s2s/v1/outbox?after=&lt;id&gt;&amp;limit=256</code> → <code>{&quot;items&quot;:[…],&quot;hasMore&quot;:false}</code>.</li>
+</ul>
+<h3 id="relay-queues">Relay queues <a class="anchor" href="#relay-queues" aria-label="Link to this section">#</a></h3>
+<p>The relay stores each envelope once (<code>relay_envelope</code>), one <code>relay_item</code> per recipient user, and a
+cursor per device (<code>relay_device_cursor</code>): each device&#39;s queue is its user&#39;s items above its cursor.</p>
+<ul>
+<li><strong>Push</strong>: a subscription <code>relayStream(after: ID)</code> on the existing <code>/api/ws</code> yields items above
+<code>after</code>, then live ones: <code>{&quot;type&quot;:&quot;RelayItem&quot;,&quot;id&quot;:&quot;981&quot;,&quot;hostServerId&quot;:&quot;rims1_…&quot;,&quot;workspaceId&quot;:&quot;…&quot;,&quot;envelope&quot;:{…}}</code>,
+plus notices: <code>{&quot;type&quot;:&quot;DmRequestReceived&quot;,&quot;requestId&quot;:&quot;&lt;uuid&gt;&quot;}</code>,
+<code>{&quot;type&quot;:&quot;RevocationAcked&quot;,&quot;deviceId&quot;:&quot;&lt;uuid&gt;&quot;,&quot;hostServerId&quot;:&quot;rims1_…&quot;,&quot;ack&quot;:{&quot;payload&quot;,&quot;signature&quot;}}</code>
+(the app checks the acknowledgement and refreshes <code>deviceRevocationStatus</code>) and
+<code>{&quot;type&quot;:&quot;QueueOverflow&quot;,&quot;spaces&quot;:[{&quot;hostServerId&quot;:&quot;rims1_…&quot;,&quot;workspaceId&quot;:&quot;&lt;uuid&gt;&quot;}]}</code>.</li>
+<li><strong>Pull</strong> <code>relayItems(after, limit)</code>; <strong>ack</strong> <code>ackRelayItems(upTo)</code> moves the session device&#39;s
+cursor. A newly linked device starts at the newest item and reads history from the host&#39;s feed
+and the archive.</li>
+<li><strong>Retention</strong>: an item goes once every non-revoked device of its user acked it, and after
+<code>RIM_RELAY_RETENTION_DAYS</code> (30) regardless. Over the per-user byte cap the oldest go first and a
+<code>QueueOverflow</code> notice names the affected spaces. The notice is pushed to the devices online and
+not queued (a queued item is a host-signed envelope); a device offline then sees the gap in the
+streams&#39; <code>seq</code>. Plaintext channel events are readable by the relay
+while queued, as the relay decision accepts.</li>
+</ul>
+<h3 id="what-the-client-checks">What the client checks <a class="anchor" href="#what-the-client-checks" aria-label="Link to this section">#</a></h3>
+<p>For every <code>RelayItem</code>: the signature under the pinned key at <code>keySeq</code> (refetching on a newer seq);
+<code>host</code> is the item&#39;s; <code>workspaceId</code> is a space the app has from that host; the stream matches the
+event (<code>c:</code> its conversation, <code>u:</code> the app&#39;s principal). Then per stream:</p>
+<ul>
+<li><code>seq ≤ last</code>: duplicate, dropped. <code>seq = last + 1</code>: applied.</li>
+<li><code>seq &gt; last + 1</code>: held up to 30 seconds or 256 events for the missing ones, then the app
+reconciles through host-signed responses (change feed, pins and reactions of the open
+conversation, members, <code>streamHeads</code>) and sets <code>last</code> to the head. Only if that fails does it show
+&quot;Messages may be missing from &lt;space&gt;&quot; with &quot;Connect directly&quot;.</li>
+<li>A stream&#39;s baseline is its <code>streamHeads</code> value when the space opens, or the first event seen.
+Events arriving by relay and by direct connection are deduplicated the same way.</li>
+</ul>
+<h2 id="profile-cards-and-contacts-74a">Profile cards and contacts (7.4a) <a class="anchor" href="#profile-cards-and-contacts-74a" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>Publishing.</strong> <code>relays[]</code> is the person&#39;s own list, preferred first. The app signs a card
+(version + 1) and calls <code>publishProfileCard</code> on each listed relay it has an account on; each relay
+pushes it to every host that holds the person as remote (<code>POST /s2s/v1/identity</code>): the hosts it
+queued items or filed requests from for the person, and in S5-4 those holding their
+subscriptions. Device additions and revocations are pushed the same way. The answer is
+<code>{&quot;applied&quot;:true|false}</code>.</li>
+<li><strong>Identity endpoint</strong> (relays, for local users): <code>GET /s2s/v1/principals/&lt;principalId&gt;</code> →
+<code>{&quot;principalId&quot;,&quot;keyLog&quot;:[…],&quot;devices&quot;:[{&quot;deviceId&quot;,&quot;certificate&quot;,&quot;revocation&quot;,&quot;mlsActive&quot;}],&quot;card&quot;}</code>,
+<code>404</code> for others. <code>POST /s2s/v1/identity</code> takes the same JSON; the receiver applies it only for
+principals it holds as remote: a log extending its copy, new devices with valid certificates,
+revocations, a card of higher version.</li>
+<li><strong>Fetching.</strong> <code>remoteIdentity(principalId, relayUrl)</code> answers local principals directly and
+otherwise fetches from <code>relayUrl</code> (pinning it), cached 24 hours. The app verifies the log against
+the principal id, each certificate against the log and the card against the head, as
+<a href="e2ee-mls-v1.html"><code>e2ee-mls-v1.md</code></a> requires for leaves. <code>principalDevices</code> answers remote users from the stored
+copy, refreshed from their relay when older than an hour.</li>
+<li><strong>Contacts.</strong> A contact link is <code>rim-contact:1:&lt;principalId&gt;:&lt;relayUrl&gt;</code> (relay URL rules as a
+device-link endpoint: 1 to 256 bytes of printable ASCII, no <code>?</code>, <code>#</code>, <code>@</code>), shown as a byte-mode
+QR code. The principal id authenticates everything fetched with it. Rejected: the card in the link
+(up to 128 KiB, too large for a QR code, stale after a relay switch). The app reads a shared
+workspace member&#39;s card with <code>remoteIdentity(principalId)</code> (the relay answers its own principals
+directly) to offer &quot;Add as contact&quot;. The contact list answers open decision 9 (readable names):
+the app shows the card&#39;s name or the person&#39;s alias for it; aliases stay on the device. The relay
+keeps the list (<code>relay_contact</code>) because it filters DM requests by it.</li>
+</ul>
+<h2 id="the-direct-space">The direct space <a class="anchor" href="#the-direct-space" aria-label="Link to this section">#</a></h2>
+<p>Each relay has one <code>server</code> row with <code>kind = 'direct'</code>, created at start if missing, named &quot;Direct
+messages&quot;, not listed by <code>servers</code>, with no owner, channels, invites or plugin registry;
+<code>relayInfo { serverId roles directSpaceId }</code> gives its id. Every member is a <code>guest</code>, so today&#39;s
+guest rules already hide the member list and directory events; the conversation service lets
+guests create groups in a direct space and refuses channels there. Local users join on first use,
+remote users when a local user adds them to a conversation.</p>
+<p>A DM or group there has <code>conversation.server_id</code> = the direct space, so &quot;a DM in no workspace&quot;
+belongs to its home relay&#39;s direct space and every table, event and query keyed by <code>server_id</code>
+works unchanged. Rejected: a nullable <code>conversation.server_id</code> (every conversation query, every
+event&#39;s <code>workspace_id</code> and the per-space subscription would change). DMs inside workspaces stay
+possible; the app starts new DMs in the direct space when every member has a principal id.</p>
+<h2 id="dms-across-relays-74a">DMs across relays (7.4a) <a class="anchor" href="#dms-across-relays-74a" aria-label="Link to this section">#</a></h2>
+<p>Alice&#39;s relay R_A is the home; Bob&#39;s relay is R_B. Groups work the same way.</p>
+<ol>
+<li><strong>Create.</strong> Alice calls <code>createConversation(serverId: &lt;directSpaceId&gt;, encrypted: true, remoteMembers: [{ principalId, relayUrls }])</code> on R_A. R_A fetches Bob&#39;s identity from the first
+relay that answers, creates or refreshes his remote user row and direct-space membership, and
+checks readiness from <code>mlsActive</code>. A pair with a DM there gets it back, as today. One entry in
+<code>remoteMembers</code> and no <code>memberIds</code> makes a DM, more make a group; the app names every member
+this way, those on R_A included. The app creates a conversation with anyone on another relay
+only encrypted: when a member or Alice&#39;s device is not ready it creates nothing and says who.
+The server enforces this too: R_A refuses such a conversation unencrypted (<code>VALIDATION</code>,
+&quot;conversations with people on other servers are encrypted&quot;), so relays only ever carry its
+ciphertext, and refuses an encrypted one when a member has no MLS-active device. A person from another relay may create one too, through the forward
+path, naming R_A&#39;s members the same way.</li>
+<li><strong>Key packages.</strong> Claims for Bob&#39;s devices go to R_B: <code>POST /s2s/v1/key-packages/claim</code>
+<code>{&quot;principalId&quot;,&quot;devices&quot;:[&quot;&lt;uuid&gt;&quot;],&quot;conversation&quot;:{&quot;host&quot;,&quot;conversationId&quot;,&quot;incarnation&quot;},&quot;claimer&quot;:{&quot;principalId&quot;,&quot;deviceId&quot;},&quot;cipherSuite&quot;:79}</code>
+(<code>cipherSuite</code> optional, the preferred suite when absent; <code>conversation.host</code> must be the
+calling peer)
+→ <code>{&quot;keyPackages&quot;:[{&quot;deviceId&quot;,&quot;keyPackage&quot;,&quot;keyPackageRef&quot;,&quot;lastResort&quot;}]}</code>, by today&#39;s claim
+rules. A claimer who is not Bob&#39;s contact, was never accepted by him, and shares no workspace R_B
+holds a subscription for, is a <strong>stranger</strong>: last-resort packages only, 20 claims per claimer
+principal per day. R_A stores the packages as claimed <code>mls_key_package</code> rows of Bob&#39;s device rows,
+so <code>submitMlsCommit</code>&#39;s claim check runs unchanged.</li>
+<li><strong>Invite.</strong> When a remote member is added to a conversation of the direct space (at creation or
+by <code>addConversationMembers</code>), R_A emits <code>DmInvite</code> on the member&#39;s <code>u:</code> stream,
+<code>{&quot;type&quot;:&quot;DmInvite&quot;,&quot;workspace_id&quot;,&quot;conversation_id&quot;,&quot;from_principal_id&quot;,&quot;from_card&quot;,&quot;member_principal_ids&quot;}</code>,
+before the conversation&#39;s own events. <code>from_*</code> name the conversation&#39;s creator; <code>from_card</code> is
+their published card as <code>{&quot;payload&quot;,&quot;signature&quot;}</code> (a conversation with remote members needs one),
+and its relays tell Bob&#39;s app where to pin R_A from. The Commit that adds the member&#39;s devices
+then emits <code>MlsWelcomeAvailable</code> per added device. That is how R_B and Bob&#39;s devices learn of it;
+a plaintext conversation has an invite and no Commit.</li>
+<li><strong>Traffic.</strong> Bob&#39;s devices fetch Welcomes and Commits, read the change feed, send, edit, react
+and mark read through <code>/api/remote/&lt;R_A&gt;/api</code>; R_A runs them as Bob&#39;s device, and its events reach
+Bob&#39;s devices through R_B&#39;s queue. The envelopes are exactly the <code>message.encryption</code> R_A stores.</li>
+<li><strong>Sequencer.</strong> R_A alone: one Commit per epoch, the change feed&#39;s <code>version</code>, read states. R_B
+holds no conversation row. R_A keeps the conversation like any server today (Commits 90 days,
+Welcomes 30 days); R_B&#39;s items follow &quot;Relay queues&quot;.</li>
+</ol>
+<p>Rejected: a sequencer that moves between relays or a vote between them (the state resolution the
+2026-10-08 decision rejected), and storing the conversation on both relays (two truths for epochs).</p>
+<p><strong>When the home is gone</strong>: unreachable directly and through the member&#39;s relay for 7 days, or
+absent from the creator&#39;s newest card and not answering. Any member&#39;s app may then create a
+<strong>successor</strong> in its own relay&#39;s direct space with the same members and
+<code>predecessor: { hostServerId, conversationId }</code>; apps show both as one timeline from the cache and
+archive. Of two successors the one with the smaller id is canonical (ids are UUID v7, so this is
+the earlier) and members leave the other. Members learn a conversation is a successor from
+<code>Conversation.predecessor</code>. The creator&#39;s app also makes successors when its person leaves the relay.</p>
+<h3 id="the-request-inbox">The request inbox <a class="anchor" href="#the-request-inbox" aria-label="Link to this section">#</a></h3>
+<p>R_B files a <code>DmInvite</code> from a principal outside Bob&#39;s contacts, never accepted and sharing no
+workspace R_B hosts with him as a <strong>DM request</strong> (<code>relay_dm_request</code>): the sender&#39;s card, the conversation, and up to 3 held items of it,
+the <code>DmInvite</code> first (later ones dropped until accepted; the app reads them from the host). The
+app verifies the held <code>DmInvite</code> like any relay item to bind the conversation&#39;s space to its home
+before it reads or leaves it; ignoring or blocking keeps it with the request until the row
+expires. Only <code>DmRequestReceived</code> is pushed. An invite from a contact or a principal accepted
+before is recorded as a row accepted at once (<code>decided_at = created_at</code>), not listed by
+<code>dmRequests</code> and not counted by the limits, so every conversation R_B delivers for has a row and
+items of any other conversation are refused.</p>
+<p>When the home and the recipient&#39;s relay are one server (Bob&#39;s relay hosts the conversation, and
+its creator is someone else, from another relay or not), the home files its own <code>DmInvite</code> for
+Bob through the same rule instead of delivering it. The invite and the conversation&#39;s events are
+held as above, and until Bob accepts, the conversation is left out of his <code>inboxConversations</code>,
+its events out of his <code>workspaceEvents</code>, and its notifications, mentions and unread messages out
+of his <code>myNotifications</code>, <code>myUnreadNotificationCount</code>, <code>unreadCounts</code> and email
+digest; ignoring keeps it out, and so does blocking its creator.
+Once accepted it is an ordinary conversation of the space he uses directly.</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Action</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>acceptDmRequest(id)</code></td>
+<td>Held items released; later items flow; the sender becomes a contact</td>
+</tr>
+<tr>
+<td><code>ignoreDmRequest(id)</code></td>
+<td>Held items deleted but the <code>DmInvite</code>; later items of that conversation dropped; row expires in 30 days</td>
+</tr>
+<tr>
+<td><code>blockPrincipal(principalId)</code></td>
+<td>Pending requests from it ignored; its <code>DmInvite</code>s refused (<code>blocked</code>) and its claims refused; the app leaves the conversation through the home</td>
+</tr>
+<tr>
+<td>Nothing</td>
+<td>Expires after 30 days</td>
+</tr>
+</tbody></table></div>
+<p>The app shows the card&#39;s name (verified against the sender&#39;s key log) and a fingerprint of the
+principal id, <code>base32(first 10 bytes of SHA-256(&quot;rim.principal-fingerprint.v1\0&quot; || principal id))</code>
+in four groups of four, the same on every device, and may process the Welcome to read the held
+messages before deciding. It accepts on its own when the sender shares a workspace
+with the person (checked on host-signed member lists): workspace members are never strangers.
+Limits: 100 pending per recipient, 20 per sender principal per day per relay
+(<code>RIM_RELAY_DM_REQUESTS_PER_DAY</code>); <code>reportDmRequest(id, reason)</code> reports abuse: it files a
+<code>relay_abuse_report</code> row naming the reporter, the sender, the host and the request (audit
+<code>relay.dm_request_reported</code>), and a pending request is ignored.</p>
+<h2 id="remote-workspace-members-74b">Remote workspace members (7.4b) <a class="anchor" href="#remote-workspace-members-74b" aria-label="Link to this section">#</a></h2>
+<h3 id="joining">Joining <a class="anchor" href="#joining" aria-label="Link to this section">#</a></h3>
+<pre><code>app ─────────────────────► relay R ─────────────────────────► host H
+remoteServer(origin)              GET /.well-known/rim-server               (pin H from the invite)
+remoteJoinChallenge(H, origin, t) POST /s2s/v1/join/challenge → {challengeId, nonce, expiresAt, workspaceId}
+sign a login proof (audience = H's server id) and a delegation
+joinRemoteWorkspace(input)        POST /s2s/v1/join           → {workspaceId, userId, role, streamHeads}
+relayStream                  ◄─── POST /s2s/v1/deliver         (events)</code></pre>
+<ol>
+<li>The invite link is read like a device-link code: whitespace removed, at most 400 characters,
+split at the first four <code>:</code> after the scheme (the origin keeps its colons). The app pins H.</li>
+<li>The challenge is today&#39;s <code>keyLoginChallenge</code> (120 s, single use) over S2S:
+<code>POST /s2s/v1/join/challenge {&quot;inviteToken&quot;}</code> → <code>{&quot;challengeId&quot;,&quot;nonce&quot;,&quot;expiresAt&quot;,&quot;workspaceId&quot;}</code>.
+The invite link carries no workspace id, and the delegation must name one, so H answers the
+workspace the invite names, checked as <code>previewInviteToken</code> checks it and not used
+(<code>404 not_found</code> for an unknown invite, <code>403 forbidden</code> for one revoked, used up or expired);
+<code>workspaceId</code> is null without an invite. The device signs a <code>login</code> statement with
+<code>audience</code> = H&#39;s server id, so the proof is good only at H and the relay never vouches for the
+person.</li>
+<li>The device signs a delegation. R sends H <code>{&quot;inviteToken&quot;,&quot;keyLog&quot;:[…],&quot;devices&quot;:[{&quot;certificate&quot;,&quot;revocation&quot;}],&quot;card&quot;,&quot;proof&quot;,&quot;delegation&quot;}</code>.</li>
+<li>H verifies log, certificates, proof (claiming the challenge) and invite token (the rules of
+<code>joinServerByInvite</code>, bans included), creates or updates the remote user, adds the membership
+with the invite&#39;s role, stores devices and card, accepts the delegation, and answers
+<code>{&quot;workspaceId&quot;,&quot;userId&quot;,&quot;role&quot;,&quot;streamHeads&quot;:{&quot;w&quot;:17,&quot;u:rimp1_…&quot;:0}}</code>. R records the
+subscription; the app loads the space through the forward path. The join carries no
+<code>mlsActive</code>, so H marks devices it did not know inactive for encryption; R pushes the full
+identity (<code>POST /identity</code>) right after the join, as it does for any host holding the person.</li>
+</ol>
+<p>A current member (an earlier join, or an existing local account on H) sends <code>inviteToken: null</code>.</p>
+<h3 id="delegation">Delegation <a class="anchor" href="#delegation" aria-label="Link to this section">#</a></h3>
+<pre><code class="language-json">{&quot;v&quot;:2,&quot;type&quot;:&quot;delegation&quot;,&quot;principalId&quot;:&quot;rimp1_…&quot;,&quot;deviceId&quot;:&quot;&lt;uuid&gt;&quot;,&quot;relay&quot;:&quot;rims1_…&quot;,&quot;relayKeyHash&quot;:&quot;…&quot;,
+ &quot;host&quot;:&quot;rims1_…&quot;,&quot;workspaceId&quot;:&quot;&lt;uuid&gt;&quot;,&quot;scope&quot;:&quot;workspace&quot;,&quot;nonce&quot;:&quot;&lt;16 bytes&gt;&quot;,&quot;issuedAt&quot;:&quot;…&quot;,&quot;expiresAt&quot;:&quot;…&quot;}</code></pre>
+<p>Signed by the device key over <code>rim.delegation.v1\0 || payload</code>: &quot;relay <code>relay</code> may receive this
+workspace&#39;s events for me and forward my device-signed requests to <code>host</code> until <code>expiresAt</code>&quot;. It
+never lets the relay act as the person; writes still need device signatures. <code>nonce</code> is 16 random
+bytes, unpadded base64url; the app issues delegations for exactly 24 hours from a whole second.</p>
+<p>A host accepts it (on <code>join</code> or <code>POST /s2s/v1/subscriptions</code>) when the signature verifies under a
+non-revoked device of the principal (an unknown device is fetched once from the presenting relay&#39;s
+<code>principals</code>); <code>host</code> is its own id and <code>relay</code> the presenting peer; <code>relayKeyHash</code> names a key of
+that relay&#39;s log with no <code>signer: recovery</code> rotation after it (an ordinary rotation keeps
+delegations, a recovery kills them); the principal is a current, unbanned member of <code>workspaceId</code>;
+<code>scope</code> is <code>workspace</code>; <code>expiresAt − issuedAt ≤ 24 h</code> and <code>expiresAt</code> is ahead. It keeps it until
+<code>min(expiresAt, accepted_at + 24 h)</code> by its own clock, so a device clock cannot extend it. One row
+per (workspace, device, relay); a newer one replaces it unless the active row runs longer, so a
+relay replaying an older delegation cannot shorten or reset the one it holds.</p>
+<p><strong>Subscriptions.</strong> <code>POST /s2s/v1/subscriptions {&quot;delegations&quot;:[…]}</code> (at most 64) →
+<code>{&quot;subscriptions&quot;:[{&quot;workspaceId&quot;,&quot;status&quot;,&quot;expiresAt&quot;}]}</code>, one entry per delegation in order,
+<code>status</code> <code>active</code> or <code>refused</code> with a <code>reason</code> (<code>invalid_delegation</code>, <code>bad_signature</code>,
+<code>wrong_host</code>, <code>wrong_relay</code>, <code>relay_key</code>, <code>expired</code>, <code>unknown_device</code>, <code>revoked_device</code>,
+<code>not_member</code>, <code>banned</code>, <code>limited</code>); <code>workspaceId</code> is null for a delegation that cannot be read.
+<code>renewDelegations</code> answers these reasons and two of the relay&#39;s own, and logs the detail behind
+them. <code>host_unreachable</code>: the host could not be reached, failed, rate-limited the relay or gave an
+unreadable answer, and the relay keeps the subscription as it was. <code>host_refused</code>: the host refused
+the presentation as a whole, or refused a delegation for a reason outside this list.
+A relay&#39;s subscription for (user, workspace) lives while one of the user&#39;s devices has an active
+delegation there.
+<code>POST /s2s/v1/subscriptions/cancel {&quot;subscriptions&quot;:[{&quot;workspaceId&quot;,&quot;principalId&quot;}]}</code> (at most 64)
+ends the presenting relay&#39;s delegations for them → <code>{&quot;cancelled&quot;:&lt;n&gt;}</code>.
+Leaving, a kick or a ban ends the user&#39;s delegations for the workspace after <code>MemberLeft</code> is sent;
+the departed member gets that <code>MemberLeft</code> on their <code>u:</code> stream, being no member of <code>w</code> any more.
+<code>join</code>, <code>join/challenge</code>, <code>subscriptions</code> and <code>subscriptions/cancel</code> are workspace host endpoints: a
+server running only <code>relay</code> answers <code>503 role_disabled</code>. <code>presence</code> and <code>revocations</code> are served by
+every role (a relay is the home of DMs). A relay delivers items of a workspace a user holds an
+active subscription to straight to the queue; the request inbox is for everything else.</p>
+<p><strong>Renewal.</strong> An online device signs fresh delegations when the current ones have less than 6 hours
+left and sends them with <code>renewDelegations</code>; the relay presents them. When every device has been
+offline 24 hours the subscription lapses, the host stops queuing for it, and on return the app
+renews and catches up from the change feed and <code>streamHeads</code>. Short delegations bound a hidden
+revocation, as the relay decision requires. Rejected: a delegation for the whole host (a stolen
+relay key would reach every workspace there), and long-lived delegations with explicit revocation
+only (a hidden revocation would never end).</p>
+<p><strong>Presence.</strong> The relay reports <code>POST /s2s/v1/presence {&quot;updates&quot;:[{&quot;principalId&quot;,&quot;online&quot;}]}</code>
+(at most 64) → <code>{&quot;applied&quot;:&lt;n&gt;}</code> to the hosts of the person&#39;s subscriptions when their first
+<code>relayStream</code> opens, and once the last has been closed for 30 s with none reopened. The host
+applies it in every workspace where the relay holds an active delegation of the person; a remote
+member&#39;s presence does not time out between reports.</p>
+<p>Members, roles, bans, timeouts, private channels, archive state, the plugin registry and bundles,
+search, notifications, the change feed and MLS sequencing stay the host&#39;s, checked by the same
+services for remote members. Bundles and attachments come through the forward path, so the web app
+reads them same-origin from its relay.</p>
+<h2 id="revocation-propagation">Revocation propagation <a class="anchor" href="#revocation-propagation" aria-label="Link to this section">#</a></h2>
+<pre><code>t = 0     app → relay: revokeDeviceKey(revocation)            the relay commits it locally
+t = 0     relay → every host and DM home holding the person: POST /s2s/v1/revocations
+          retries at 10 s, 30 s, 1 m, 2 m, 5 m, then every 15 m until 24 h
+t ≤ 2 m   app polls deviceRevocationStatus(deviceId), or gets RevocationAcked on relayStream
+t = 2 m   app → each host without a verified ack, directly: applyRemoteRevocation(revocation)
+t = 24 h  every delegation the revoked device signed has expired regardless</code></pre>
+<p><code>POST /s2s/v1/revocations {&quot;principalId&quot;,&quot;revocation&quot;:{&quot;payload&quot;,&quot;signature&quot;}}</code> → <code>{&quot;ack&quot;:{…}}</code>:</p>
+<pre><code class="language-json">{&quot;v&quot;:2,&quot;type&quot;:&quot;revocation-ack&quot;,&quot;host&quot;:&quot;rims1_…&quot;,&quot;keySeq&quot;:0,&quot;principalId&quot;:&quot;rimp1_…&quot;,&quot;deviceId&quot;:&quot;&lt;uuid&gt;&quot;,&quot;revocationSha256&quot;:&quot;&lt;base64url&gt;&quot;,&quot;appliedAt&quot;:&quot;…&quot;}</code></pre>
+<p>The host verifies the revocation against its copy of the log (identity key, or the device itself),
+marks the device revoked, ends its delegations and direct sessions, raises <code>MlsMembershipChanged</code>
+where it is a group device, and acknowledges; a repeat gets the same acknowledgement (<code>appliedAt</code>
+is when the device was first revoked there). A device it does not know is fetched once from the
+presenting relay; one it still does not know is <code>404 not_found</code>, and the relay stops sending to
+that host (<code>GAVE_UP</code>). The relay verifies each acknowledgement under the host&#39;s pinned key before
+recording it, and pushes
+<code>{&quot;type&quot;:&quot;RevocationAcked&quot;,&quot;deviceId&quot;,&quot;hostServerId&quot;,&quot;ack&quot;:{&quot;payload&quot;,&quot;signature&quot;}}</code> on
+<code>relayStream</code> to the person&#39;s devices online.
+<code>applyRemoteRevocation</code> is the same on the host&#39;s GraphQL, without a session and exempt from CSRF
+(it acts only on a fresh identity or device signature, like <code>loginWithKey</code>), at most 20 attempts
+per IP per 15 minutes (<code>RATE_LIMITED</code> past them). The app verifies each
+acknowledgement against the pinned key and its revocation&#39;s hash, and names any host it could not
+reach: &quot;&lt;host&gt; has not confirmed; the device keeps access to &lt;workspace&gt; until &lt;time&gt;&quot;, the
+delegation&#39;s expiry at most. The relay stops forwarding anything the revoked device signs as soon as
+it commits.</p>
+<h2 id="direct-connection">Direct connection <a class="anchor" href="#direct-connection" aria-label="Link to this section">#</a></h2>
+<p>The fallback when the relay is unreachable; desktop only in v1 (a browser cannot hold cookies for
+another origin).</p>
+<ul>
+<li><strong>When.</strong> After 60 seconds of failed relay requests (network errors, 5xx, bad host signatures on
+forwarded responses), or when &quot;messages may be missing&quot; persists after reconciling. The app asks
+once per host (&quot;Connect directly to &lt;host&gt;? It will see your IP address&quot;) and remembers it.</li>
+<li><strong>How.</strong> It fetches the host&#39;s discovery document directly and checks it against the pin, then
+calls <code>keyLoginChallenge</code> and <code>loginWithKey</code> on the host with <code>audience</code> = the host&#39;s server id.
+The host finds the remote user and device (refreshing its copy from the person&#39;s relays first,
+carrying on if they are down) and issues a device-bound session valid <strong>24 hours</strong> for a remote
+user (the host waits up to 10 seconds for the relays). The app then uses the host&#39;s <code>/api</code> and
+<code>/api/ws</code> as a local client would, under a banner &quot;Connected directly to &lt;host&gt;&quot;. The account
+mutations a remote user may not run are refused on that session too (<code>FORBIDDEN</code>).</li>
+<li><strong>Meanwhile.</strong> Events from the host&#39;s <code>workspaceEvents</code> carry no <code>seq</code>, so the app holds the
+host&#39;s <code>RelayItem</code>s unapplied and unacknowledged while connected directly.</li>
+<li><strong>Back.</strong> It probes <code>relayInfo</code> every 60 seconds; after two successes it renews delegations,
+asks the host directly for the <code>streamHeads</code> of the streams it knows there and takes them as
+their baseline, runs the held items and reads <code>relayStream</code> on from its last item,
+deduplicating by <code>(host, stream, seq)</code>, and closes the direct connections.</li>
+</ul>
+<h2 id="switching-relays">Switching relays <a class="anchor" href="#switching-relays" aria-label="Link to this section">#</a></h2>
+<ol>
+<li><code>signupWithKey</code> on the new relay R2 with the same identity: the key log, this device&#39;s
+certificate and a proof whose <code>audience</code> is R2&#39;s server id, sent directly (desktop) with a
+session kept outside the webview; <code>loginWithKey</code> instead when an earlier attempt created it.</li>
+<li>Publish a card (version + 1) with <code>relays: [R2, R1]</code> to both; direct-space hosts deliver to both.</li>
+<li>Sign a delegation for R2 for every subscribed workspace, including those R1 hosts (a delegation
+may name a local member too), and <code>renewDelegations</code> on R2.</li>
+<li>Drain R1&#39;s <code>relayStream</code>; nothing new reaches R1 that does not also reach R2.</li>
+<li>If R1 will go away, list the conversations homed in R1&#39;s direct space; once the app runs on R2
+it creates their successors there (a successor is created by the app&#39;s session on its own
+relay), with R1&#39;s direct space as a space elsewhere.</li>
+<li>Publish <code>relays: [R2]</code> and call <code>leaveRelay</code> on R1, which cancels its subscriptions at every host
+and deletes the person&#39;s queue, contacts and requests there (the <code>user</code> row stays: it may still
+be a member of spaces R1 hosts).</li>
+</ol>
+<p>History is on the devices and the drive, keys on the devices, spaces on their hosts: nothing is lost.</p>
+<h2 id="public-relay-74c">Public relay (7.4c) <a class="anchor" href="#public-relay-74c" aria-label="Link to this section">#</a></h2>
+<p>The public relay (<code>relay.rim.chat</code> is its working name; the domain is not registered yet, and
+every mention of it here and in the runbook is a placeholder) runs the stock image with
+<code>RIM_ROLE=relay</code>. In <code>pow</code> mode <code>signupWithKey</code> takes a registration token (instance invite or
+workspace invite, as in invite-only mode) or <code>proofOfWork</code>, not both: an 8-byte nonce
+(unpadded base64url) such that</p>
+<pre><code>SHA-256(&quot;rim.pow.v1\0&quot; || relay server id (ASCII) || &quot;\0&quot; || inception payload bytes || nonce)</code></pre>
+<p>starts with <code>powBits</code> zero bits (the descriptor&#39;s, from <code>RIM_REGISTRATION_POW_BITS</code>; 24 to start,
+about 16.7 million hashes on average). It binds the work to this relay and this principal; the
+server checks one hash before any signature; the open-signup per-IP limit applies too, and each
+such signup is audited as <code>relay.registration_pow</code>. Password signups take a token, as in
+invite-only mode; <code>registrationMode</code> answers <code>POW</code>. The check is <code>rim_s2s::pow</code>. Rejected: a
+server-issued puzzle (a round trip and stored state for no gain) and memory-hard functions (no
+WebCrypto support).</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Quota per local user</th>
+<th>Public relay</th>
+<th>Setting</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Queued bytes</td>
+<td>64 MiB</td>
+<td><code>RIM_RELAY_QUEUE_BYTES_PER_USER</code></td>
+</tr>
+<tr>
+<td>Card / key packages / devices</td>
+<td>1 card of 128 KiB / 100 unclaimed per device / 32</td>
+<td><code>RIM_RELAY_CARD_MAX_BYTES</code>, <code>RIM_RELAY_KEY_PACKAGES_PER_DEVICE</code>, <code>RIM_RELAY_DEVICES_PER_USER</code></td>
+</tr>
+<tr>
+<td>Forwarded requests</td>
+<td>120 per device per minute, 50,000 per user per day</td>
+<td><code>RIM_S2S_DEVICE_RATE_PER_MIN</code>, <code>RIM_RELAY_FORWARDS_PER_USER_PER_DAY</code></td>
+</tr>
+<tr>
+<td>DM requests sent</td>
+<td>20 per sender principal per day</td>
+<td><code>RIM_RELAY_DM_REQUESTS_PER_DAY</code></td>
+</tr>
+</tbody></table></div>
+<p>Each is enforced where it applies: the card at <code>publishProfileCard</code>, key packages at
+<code>uploadMlsKeyPackages</code>, devices at <code>addDeviceKey</code> (all <code>VALIDATION</code>), forwarded requests at
+<code>/api/remote/…</code> (<code>429</code>). The DM request limit counts on both sides: the relay of the recipients
+refuses a sender principal&#39;s invites past it (<code>limited</code>), and the sender&#39;s relay refuses a local
+user&#39;s invites past it to people on other servers who are not their contacts (<code>RATE_LIMITED</code>).
+Counters are in memory, per node.</p>
+<p><strong>Abuse hooks</strong> (S5-6), each audited: <code>rim_server principal block &lt;principalId&gt; --reason …</code>,
+<code>principal unblock</code>, <code>principal list</code> (<code>relay_principal_block</code>): the account&#39;s sessions are ended
+and its pending DM requests ignored for every recipient; its logins, signups and enrollments are
+refused (<code>FORBIDDEN</code>), deliveries to it (<code>unknown_principal</code>) and its invites (<code>blocked</code>), key
+package claims for and by it, its identity (<code>404</code>) and forwarded requests it signs (<code>403</code>).
+<code>rim_server peer block|unblock &lt;serverId&gt;</code> (&quot;Pinning a peer&quot;; like <code>RIM_S2S_DENIED_PEERS</code> without
+a restart). <code>reportDmRequest</code> and the abuse address (<code>rim_server abuse-reports add</code>) feed
+<code>relay_abuse_report</code>, listed by <code>rim_server abuse-reports list [--open]</code> and closed by
+<code>abuse-reports resolve &lt;id&gt;</code>.</p>
+<p><strong>Runbook</strong> (<a href="../docs/operations/relay-public.html"><code>docs/operations/relay-public.md</code></a>, S5-6): who holds the server recovery key and where,
+yearly <code>server-key rotate</code> and <code>recover</code> on compromise, database and key file backups with a restore
+drill, quotas and how to change them, monitoring (queue bytes, outbox depth per peer, deliver
+failures, <code>401</code>/<code>409</code>/<code>429</code> rates, PoW signups), incident response for spam waves, a hostile peer, a
+stolen server key and a database leak, and the abuse policy text.</p>
+<p><strong>Compose</strong> (<a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/deploy/compose.yml"><code>deploy/compose.yml</code></a> with the <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a> override, and
+<a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/deploy/README.md"><code>deploy/README.md</code></a>): rim-server with <code>RIM_ROLE=relay</code>, <code>RIM_PUBLIC_BASE_URL=https://&lt;RIM_DOMAIN&gt;</code>,
+<code>RIM_REGISTRATION_POW_BITS=24</code>, <code>RIM_RELAY_QUEUE_BYTES_PER_USER=67108864</code> and the other quotas
+above, <code>RIM_TRUST_FORWARDED_HEADERS=true</code>, <code>RIM_FORCE_SECURE_COOKIES=true</code>, <code>RIM_DATA_DIR=/data</code> on a
+volume (the audit log too); a migration step before it; Postgres 17 on its own volume, on a
+network with no way out; Caddy as the TLS proxy passing <code>/api</code>, <code>/api/ws</code>, <code>/s2s/v1</code> and
+<code>/.well-known/rim-server</code> unchanged with bodies up to 32 MiB and setting <code>X-Forwarded-For</code>
+itself.</p>
+<h2 id="migration-of-single-server-deployments">Migration of single-server deployments <a class="anchor" href="#migration-of-single-server-deployments" aria-label="Link to this section">#</a></h2>
+<p>The migrations are additive and the key is created at first boot. With <code>RIM_PUBLIC_BASE_URL</code> unset
+the discovery document has <code>endpoints.s2s</code> null and nothing else changes. Existing accounts are
+<code>local</code>, existing workspaces hosted here; the desktop app&#39;s card already lists this server as its
+relay. Old invite links keep working; <code>createInvite</code> also answers the <code>rim-invite:1:</code> form when S2S
+is on. <code>down</code> migrations refuse to run while remote users, delegations or queued items exist.</p>
+<h2 id="storage">Storage <a class="anchor" href="#storage" aria-label="Link to this section">#</a></h2>
+<p>One additive migration per PR (<code>sea migrate generate …</code>).</p>
+<pre><code class="language-sql">-- S5-1 add_server_identity
+CREATE TABLE server_key_log_entry (seq integer PRIMARY KEY CHECK (seq &gt;= 0),
+    entry_type text NOT NULL CHECK (entry_type IN ('inception', 'rotate')),
+    payload text NOT NULL, signature text NOT NULL, created_at timestamptz NOT NULL DEFAULT now());
+CREATE TABLE server_descriptor (id smallint PRIMARY KEY CHECK (id = 1), version integer NOT NULL,
+    payload text NOT NULL, signature text NOT NULL, updated_at timestamptz NOT NULL DEFAULT now());
+CREATE TABLE peer_server (server_id text PRIMARY KEY, origin text NOT NULL,
+    head_seq integer NOT NULL, head_key text NOT NULL, previous_key text NULL,
+    rotated_at timestamptz NULL, rotation_signer text NULL CHECK (rotation_signer IN ('server', 'recovery')),
+    descriptor_version integer NOT NULL, descriptor_payload text NOT NULL, descriptor_signature text NOT NULL,
+    status text NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'forked', 'blocked')),
+    first_seen_at timestamptz NOT NULL DEFAULT now(), fetched_at timestamptz NOT NULL,
+    last_request_at timestamptz NULL);
+CREATE INDEX idx_peer_server_origin ON peer_server (origin);
+CREATE TABLE peer_key_log_entry (server_id text NOT NULL REFERENCES peer_server ON DELETE CASCADE,
+    seq integer NOT NULL, payload text NOT NULL, signature text NOT NULL, PRIMARY KEY (server_id, seq));
+CREATE TABLE s2s_nonce (peer_server_id text NOT NULL, nonce text NOT NULL,
+    expires_at timestamptz NOT NULL, PRIMARY KEY (peer_server_id, nonce));
+CREATE INDEX idx_s2s_nonce_expires ON s2s_nonce (expires_at);
+
+-- S5-2 add_relay_delivery
+ALTER TABLE server ADD COLUMN kind text NOT NULL DEFAULT 'workspace',
+    ADD CONSTRAINT chk_server_kind CHECK (kind IN ('workspace', 'direct'));
+CREATE UNIQUE INDEX uq_server_direct ON server (kind) WHERE kind = 'direct';
+ALTER TABLE conversation ADD COLUMN predecessor_host text NULL,
+    ADD COLUMN predecessor_conversation_id uuid NULL;
+ALTER TABLE device_key ADD COLUMN request_highest_seq bigint NULL;
+CREATE TABLE device_request_seen (device_key_id uuid NOT NULL REFERENCES device_key ON DELETE CASCADE,
+    seq bigint NOT NULL, expires_at timestamptz NOT NULL, PRIMARY KEY (device_key_id, seq));
+CREATE TABLE host_event_stream (workspace_id uuid NOT NULL REFERENCES server ON DELETE CASCADE,
+    stream text NOT NULL, seq bigint NOT NULL, PRIMARY KEY (workspace_id, stream));
+CREATE TABLE s2s_outbox (id bigserial PRIMARY KEY, peer_server_id text NOT NULL, item text NOT NULL,
+    size_bytes integer NOT NULL, created_at timestamptz NOT NULL DEFAULT now());
+CREATE INDEX idx_s2s_outbox_peer ON s2s_outbox (peer_server_id, id);
+CREATE TABLE s2s_peer_delivery (peer_server_id text PRIMARY KEY, delivered_through bigint NOT NULL DEFAULT 0,
+    failures integer NOT NULL DEFAULT 0, next_attempt_at timestamptz NOT NULL DEFAULT now(),
+    last_success_at timestamptz NULL);
+CREATE TABLE s2s_peer_inbound (peer_server_id text PRIMARY KEY, received_through bigint NOT NULL DEFAULT 0);
+CREATE TABLE relay_envelope (id bigserial PRIMARY KEY, host_server_id text NOT NULL,
+    workspace_id uuid NOT NULL, stream text NOT NULL, seq bigint NULL, payload text NOT NULL,
+    signature text NOT NULL, received_at timestamptz NOT NULL DEFAULT now());
+CREATE UNIQUE INDEX uq_relay_envelope_seq ON relay_envelope (host_server_id, workspace_id, stream, seq)
+    WHERE seq IS NOT NULL;
+CREATE TABLE relay_dm_request (id uuid PRIMARY KEY,
+    user_id uuid NOT NULL REFERENCES &quot;user&quot; ON DELETE CASCADE, from_principal_id text NOT NULL,
+    card_payload text NOT NULL, card_signature text NOT NULL, host_server_id text NOT NULL,
+    conversation_id uuid NOT NULL,
+    status text NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'ignored')),
+    created_at timestamptz NOT NULL DEFAULT now(), decided_at timestamptz NULL,
+    expires_at timestamptz NOT NULL, UNIQUE (user_id, host_server_id, conversation_id));
+CREATE TABLE relay_item (id bigserial PRIMARY KEY, user_id uuid NOT NULL REFERENCES &quot;user&quot; ON DELETE CASCADE,
+    envelope_id bigint NOT NULL REFERENCES relay_envelope ON DELETE CASCADE,
+    device_key_id uuid NULL REFERENCES device_key ON DELETE CASCADE,          -- one device only
+    request_id uuid NULL REFERENCES relay_dm_request ON DELETE CASCADE,       -- held by a request
+    size_bytes integer NOT NULL, created_at timestamptz NOT NULL DEFAULT now(),
+    expires_at timestamptz NOT NULL);
+CREATE INDEX idx_relay_item_user ON relay_item (user_id, id);
+CREATE INDEX idx_relay_item_expires ON relay_item (expires_at);
+CREATE TABLE relay_device_cursor (device_key_id uuid PRIMARY KEY REFERENCES device_key ON DELETE CASCADE,
+    acked_item_id bigint NOT NULL, updated_at timestamptz NOT NULL DEFAULT now());
+CREATE TABLE relay_contact (user_id uuid NOT NULL REFERENCES &quot;user&quot; ON DELETE CASCADE,
+    principal_id text NOT NULL, relay_urls text[] NOT NULL,
+    added_at timestamptz NOT NULL DEFAULT now(), PRIMARY KEY (user_id, principal_id));
+CREATE TABLE relay_block (user_id uuid NOT NULL REFERENCES &quot;user&quot; ON DELETE CASCADE,
+    principal_id text NOT NULL, created_at timestamptz NOT NULL DEFAULT now(),
+    PRIMARY KEY (user_id, principal_id));
+CREATE TABLE remote_identity_cache (principal_id text PRIMARY KEY, served_by text NOT NULL,
+    identity text NOT NULL, fetched_at timestamptz NOT NULL);           -- the principals JSON
+
+-- S5-4 add_remote_workspaces
+CREATE TABLE host_delegation (id uuid PRIMARY KEY,
+    workspace_id uuid NOT NULL REFERENCES server ON DELETE CASCADE,
+    user_id uuid NOT NULL REFERENCES &quot;user&quot; ON DELETE CASCADE,
+    device_key_id uuid NOT NULL REFERENCES device_key ON DELETE CASCADE,
+    relay_server_id text NOT NULL, payload text NOT NULL, signature text NOT NULL,
+    accepted_at timestamptz NOT NULL DEFAULT now(), expires_at timestamptz NOT NULL,
+    ended_at timestamptz NULL, UNIQUE (workspace_id, device_key_id, relay_server_id));
+CREATE INDEX idx_host_delegation_active ON host_delegation (workspace_id, relay_server_id, user_id)
+    WHERE ended_at IS NULL;
+CREATE TABLE relay_subscription (id uuid PRIMARY KEY,
+    user_id uuid NOT NULL REFERENCES &quot;user&quot; ON DELETE CASCADE,
+    host_server_id text NOT NULL, workspace_id uuid NOT NULL,
+    status text NOT NULL CHECK (status IN ('active', 'lapsed', 'ended')), expires_at timestamptz NULL,
+    updated_at timestamptz NOT NULL DEFAULT now(), UNIQUE (user_id, host_server_id, workspace_id));
+CREATE TABLE relay_revocation_fanout (device_key_id uuid NOT NULL REFERENCES device_key ON DELETE CASCADE,
+    host_server_id text NOT NULL, status text NOT NULL CHECK (status IN ('pending', 'acked', 'gave_up')),
+    attempts integer NOT NULL DEFAULT 0, next_attempt_at timestamptz NOT NULL,
+    ack_payload text NULL, ack_signature text NULL, PRIMARY KEY (device_key_id, host_server_id));
+
+-- S5-6 add_relay_abuse; down refuses while either table has rows
+CREATE TABLE relay_principal_block (principal_id text PRIMARY KEY, reason text NOT NULL,
+    created_at timestamptz NOT NULL DEFAULT now());
+CREATE TABLE relay_abuse_report (id uuid PRIMARY KEY,
+    reporter_user_id uuid NULL REFERENCES &quot;user&quot; ON DELETE SET NULL,
+    subject_principal_id text NULL, subject_server_id text NULL,
+    request_id uuid NULL REFERENCES relay_dm_request ON DELETE SET NULL, reason text NOT NULL,
+    created_at timestamptz NOT NULL DEFAULT now(), resolved_at timestamptz NULL);</code></pre>
+<p>A per-minute cleanup (like the key challenge cleanup) deletes expired nonces, <code>device_request_seen</code>
+rows, relay items and orphaned envelopes, expired requests and outbox rows older than 7 days, and
+ends expired delegations. Code follows the layers: repository traits in <code>rim_core</code> (<code>s2s</code>, <code>relay</code>),
+<code>S2sService</code>, <code>RelayService</code> and <code>HostService</code> traits in <code>rim_services</code>, implementations in
+<code>rim_infra_services</code>, handlers in <code>rim_server</code> (the <code>s2s</code> module and <code>remote_handlers.rs</code>), wired in
+<code>app.rs</code>.</p>
+<h2 id="graphql">GraphQL <a class="anchor" href="#graphql" aria-label="Link to this section">#</a></h2>
+<p>Additive, on the client&#39;s relay unless marked &quot;host&quot;; new objects append to the last groups.</p>
+<pre><code class="language-graphql">type RelayInfo { serverId: String!  roles: [String!]!  directSpaceId: ID! }
+type RemoteServer { serverId: String!  origin: String!  discovery: String! }           # the raw document
+type RemotePrincipalDevice { deviceId: ID!  certificate: SignedStatement!  revocation: SignedStatement
+                             mlsActive: Boolean! }
+type RemoteIdentity { principalId: String!  keyLog: [SignedStatement!]!  devices: [RemotePrincipalDevice!]!
+                      card: SignedStatement  servedBy: String! }
+type Contact { principalId: String!  relayUrls: [String!]!  addedAt: DateTime! }
+enum DmRequestStatus { PENDING  ACCEPTED  IGNORED }
+type RelayItem { id: ID!  hostServerId: String!  workspaceId: ID!  envelope: SignedStatement! }
+type RelayItemPage { items: [RelayItem!]!  hasMore: Boolean! }
+type DmRequest { id: ID!  fromPrincipalId: String!  card: SignedStatement!  hostServerId: String!
+                 conversationId: ID!  heldItems: [RelayItem!]!  status: DmRequestStatus!
+                 createdAt: DateTime!  expiresAt: DateTime! }
+type RemoteSubscription { hostServerId: String!  workspaceId: ID!  status: String!  expiresAt: DateTime
+                          reason: String }                # status refused, from renewDelegations
+enum RevocationFanoutStatus { PENDING  ACKED  GAVE_UP }
+type RevocationFanout { hostServerId: String!  status: RevocationFanoutStatus!  ack: SignedStatement
+                        attempts: Int! }
+type RemoteJoinChallenge { challengeId: ID!  nonce: String!  expiresAt: DateTime!  workspaceId: ID }
+type RemoteJoinResult { hostServerId: String!  workspaceId: ID!  userId: ID!  role: String! }
+type StreamHead { stream: String!  seq: String! }                                    # host; decimal
+type ConversationPredecessor { hostServerId: String!  conversationId: ID! }
+type Conversation { predecessor: ConversationPredecessor }                            # additive field
+
+input RemoteMemberInput { principalId: String!  relayUrls: [String!]! }
+input PredecessorInput { hostServerId: String!  conversationId: ID! }
+input CreateConversationInput { remoteMembers: [RemoteMemberInput!]  predecessor: PredecessorInput }   # additive fields
+input SignupWithKeyInput { proofOfWork: String }   # additive field (S5-6)
+enum RegistrationModeGql { POW }                    # additive value (S5-6)
+input JoinRemoteWorkspaceInput { hostServerId: String!  hostOrigin: String!  inviteToken: String
+                                 proof: SignedStatementInput!  delegation: SignedStatementInput! }
+
+type Query {
+  relayInfo: RelayInfo!
+  remoteServer(origin: String!): RemoteServer!
+  remoteIdentity(principalId: String!, relayUrl: String): RemoteIdentity!
+  contacts: [Contact!]!
+  dmRequests(status: DmRequestStatus): [DmRequest!]!
+  relayItems(after: ID, limit: Int): RelayItemPage!                      # limit 1..500, default 200
+  remoteSubscriptions: [RemoteSubscription!]!
+  deviceRevocationStatus(deviceId: ID!): [RevocationFanout!]!
+  streamHeads(serverId: ID!, streams: [String!]!): [StreamHead!]!        # host
+}
+type Mutation {
+  addContact(principalId: String!, relayUrls: [String!]!): Contact!
+  removeContact(principalId: String!): Boolean!
+  acceptDmRequest(id: ID!): DmRequest!
+  ignoreDmRequest(id: ID!): DmRequest!
+  blockPrincipal(principalId: String!): Boolean!
+  unblockPrincipal(principalId: String!): Boolean!
+  reportDmRequest(id: ID!, reason: String!): Boolean!
+  ackRelayItems(upTo: ID!): Boolean!
+  remoteJoinChallenge(hostServerId: String!, hostOrigin: String!, inviteToken: String): RemoteJoinChallenge!
+  joinRemoteWorkspace(input: JoinRemoteWorkspaceInput!): RemoteJoinResult!
+  renewDelegations(delegations: [SignedStatementInput!]!): [RemoteSubscription!]!
+  leaveRelay: Boolean!
+  applyRemoteRevocation(revocation: SignedStatementInput!): SignedStatement!  # host; no session, CSRF-exempt
+}
+type Subscription { relayStream(after: ID): String! }                     # JSON strings, as workspaceEvents</code></pre>
+<p>Every new mutation but <code>applyRemoteRevocation</code> needs the CSRF header. A peer that cannot be reached
+is the new code <code>UPSTREAM_UNAVAILABLE</code> with <code>hostServerId</code>, the peer&#39;s server id. When only its
+origin is known (a relay URL from a card or contact that could not be pinned), <code>hostServerId</code> is
+null and <code>origin</code> carries that origin. A peer&#39;s S2S error keeps its meaning (<code>FORBIDDEN</code>,
+<code>NOT_FOUND</code>, <code>CONFLICT</code>, <code>RATE_LIMITED</code>); <code>RATE_LIMITED</code>&#39;s <code>retryAfterSeconds</code> is the peer&#39;s
+<code>Retry-After</code> (at most a day), or 60 when the peer sent none.</p>
+<h2 id="limits-and-audit">Limits and audit <a class="anchor" href="#limits-and-audit" aria-label="Link to this section">#</a></h2>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>What</th>
+<th>Limit</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>S2S body / forward body / discovery fetch</td>
+<td>8 MiB / 32 MiB / 64 KiB</td>
+</tr>
+<tr>
+<td>Clock window; nonce retention</td>
+<td><code>created</code> ≤ 300 s ahead, <code>expires − created ≤ 300</code>; 600 s</td>
+</tr>
+<tr>
+<td>Deliver; outbox</td>
+<td>256 items and 8 MiB per request; 7 days</td>
+</tr>
+<tr>
+<td>Relay queue</td>
+<td>30 days; 256 MiB per user (64 MiB on the public relay)</td>
+</tr>
+<tr>
+<td>Delegations</td>
+<td>≤ 24 h; 64 per request; 10,000 active per relay per host (a renewal replacing an active one does not count)</td>
+</tr>
+<tr>
+<td>Device requests</td>
+<td><code>seq</code> window 5 minutes; 120 per device per minute</td>
+</tr>
+<tr>
+<td>DM requests</td>
+<td>100 pending per recipient; 20 per sender per day; 3 held items; 30 days</td>
+</tr>
+<tr>
+<td>Stranger claims</td>
+<td>Last-resort packages only; 20 per claimer per day</td>
+</tr>
+<tr>
+<td>Remote identity</td>
+<td>Log ≤ 256 entries; card 128 KiB; cache 24 h</td>
+</tr>
+<tr>
+<td>Remote user&#39;s direct session</td>
+<td>24 h</td>
+</tr>
+</tbody></table></div>
+<p>Rate limits are the in-memory per-node limiters; nonces, <code>seq</code> windows and cursors are in the
+database, so correctness never depends on one node. Audit (ids only):
+<code>s2s.peer_pinned</code>, <code>s2s.peer_rotated</code>, <code>s2s.peer_forked</code>, <code>s2s.peer_blocked</code>,
+<code>s2s.peer_unblocked</code>, <code>host.remote_join</code>, <code>host.delegation_accepted</code>, <code>host.revocation_applied</code>,
+<code>relay.principal_blocked</code> (<code>scope</code> <code>user</code> for <code>blockPrincipal</code>, <code>server</code> for the operator&#39;s),
+<code>relay.principal_unblocked</code>, <code>relay.blocked_principal_refused</code>, <code>relay.dm_request_reported</code>,
+<code>relay.abuse_report_filed</code>, <code>relay.abuse_report_resolved</code>, <code>relay.registration_pow</code>,
+<code>server_key.created</code>, <code>server_key.rotated</code>, <code>server_key.recovered</code>, <code>s2s.peer_reset</code>. Events with an acting user and workspace go to <code>command_audit_log</code>; the server
+key and peer events have neither (its columns are <code>NOT NULL</code>), so they go to the audit log stream
+(<code>target = &quot;audit&quot;</code>, as key logins do). Logs carry server, principal and row ids, never payloads. Metrics: outbox depth and oldest age per peer, deliver failures, relay
+queue bytes, S2S responses by status, signature failures by reason.</p>
+<h2 id="threat-model">Threat model <a class="anchor" href="#threat-model" aria-label="Link to this section">#</a></h2>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Adversary</th>
+<th>Can</th>
+<th>Cannot</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Hostile relay</td>
+<td>Read plaintext channel events and DM metadata it queues; drop, delay, reorder; refuse to forward; see which spaces its users use and when</td>
+<td>Forge a write (no device key); forge or alter host events or responses (pinned host key); replay (<code>seq</code>, nonces); use a delegation for another workspace, host or relay; hide a revocation past 24 hours once the app reaches the host directly; read DMs (MLS)</td>
+</tr>
+<tr>
+<td>Hostile host</td>
+<td>What a server can for its own spaces today, plus remote members&#39; principals, devices and activity there</td>
+<td>Sign as a device; use a delegation at another host; read DMs homed elsewhere; see a remote member&#39;s IP outside a direct connection</td>
+</tr>
+<tr>
+<td>Hostile peer</td>
+<td>Send signed junk up to its limits; claim last-resort packages and send DM requests as a stranger</td>
+<td>Impersonate another server (self-certifying id); replay; push events for spaces it does not host (envelopes name their host; relays accept only subscribed spaces); pass an allow-list</td>
+</tr>
+<tr>
+<td>Stolen server key</td>
+<td>Sign as that server until recovery: receive delegated events as a relay, sign false events to its own members as a host</td>
+<td>Sign as users; extend delegations; outlive a <code>signer: recovery</code> rotation (peers drop the old key at once, delegations naming it die)</td>
+</tr>
+<tr>
+<td>Stolen device</td>
+<td>Whatever that device can do, through any relay or directly</td>
+<td>Act after a host applies the revocation</td>
+</tr>
+<tr>
+<td>Network attacker</td>
+<td>See TLS metadata between servers</td>
+<td>Alter bodies (digest, signature), replay, substitute a server at a pinned id</td>
+</tr>
+<tr>
+<td>DNS or TLS compromise of a relay URL</td>
+<td>Answer as that URL for card-based delivery and first-use pins</td>
+<td>Present a pinned server id; take delegations (they name the id)</td>
+</tr>
+</tbody></table></div>
+<p><strong>Metadata.</strong> A relay learns its users&#39; spaces, contacts, DM partners, activity and the size and
+timing of all it queues; a host learns its remote members&#39; principals, devices, activity and relays.
+This is the exposure the relay decision accepts. Signatures are classical Ed25519 until server and
+device keys move to hybrid.</p>
+<h2 id="where-the-existing-code-forces-a-compromise">Where the existing code forces a compromise <a class="anchor" href="#where-the-existing-code-forces-a-compromise" aria-label="Link to this section">#</a></h2>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Today</th>
+<th>Compromise</th>
+<th>PR</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>conversation.server_id</code> is non-null; DMs live in a workspace</td>
+<td>The direct space: one <code>server</code> row of kind <code>direct</code> per relay, guests only</td>
+<td>S5-2</td>
+</tr>
+<tr>
+<td>GraphQL authenticates by session cookie and CSRF</td>
+<td>A second, device-signed path on <code>/s2s/v1/forward/…</code>; the cookie path unchanged</td>
+<td>S5-2, S5-4</td>
+</tr>
+<tr>
+<td>One WebSocket, <code>workspaceEvents(workspaceId)</code> per space</td>
+<td><code>relayStream</code> on the same socket for everything hosted elsewhere</td>
+<td>S5-2</td>
+</tr>
+<tr>
+<td>Events go through a lossy broadcast (capacity 1024; lagging receivers skip)</td>
+<td>A separate, non-lossy observer feeds the outbox; events still fire after commit, so a crash in between leaves a gap the client reconciles</td>
+<td>S5-2</td>
+</tr>
+<tr>
+<td>Visibility rules live in <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/rim_api/src/subscription.rs"><code>rim_api/src/subscription.rs</code></a></td>
+<td>Moved to <code>rim_services</code> for the outbox writer</td>
+<td>S5-2</td>
+</tr>
+<tr>
+<td>Audiences are lowercased <code>host[:port]</code></td>
+<td>The server id is accepted too, compared exactly</td>
+<td>S5-1</td>
+</tr>
+<tr>
+<td>Usernames are unique across <code>user</code></td>
+<td>Remote rows get <code>r_…</code>; local signup refuses the prefix</td>
+<td>S5-1</td>
+</tr>
+<tr>
+<td><code>principalDevices</code> answers only principals sharing a workspace</td>
+<td>Also remote users, and <code>remoteIdentity</code></td>
+<td>S5-2</td>
+</tr>
+<tr>
+<td>Per-IP rate limits</td>
+<td>Keyed by relay and principal for forwarded requests</td>
+<td>S5-2</td>
+</tr>
+<tr>
+<td>Sessions last 30 days</td>
+<td>24 hours for a remote user&#39;s direct session</td>
+<td>S5-4</td>
+</tr>
+</tbody></table></div>
+<h2 id="test-plan">Test plan <a class="anchor" href="#test-plan" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>Unit.</strong> <code>rim_s2s</code>: RFC 9421 B.2.6 and appendix A byte for byte; each refusal of &quot;Verifying a
+request&quot; (missing or reordered component, <code>expires</code> too far, <code>created</code> ahead, wrong <code>alg</code> or
+<code>tag</code>, digest mismatch, only another label); a response for another nonce fails. <code>rim_identity</code>:
+the new statements&#39; vectors and refusals (v1 form, unknown fields, delegation over 24 h, wrong
+<code>host</code>, another body hash). Services with mock repositories: pinning (equal, extension, fork,
+recovery, grace), the <code>seq</code> window, delegation rules, stranger rules, request transitions, queue
+retention and overflow, the revocation schedule, the role table.</li>
+<li><strong>db-tests.</strong> One nonce inserted twice concurrently, one wins; per-stream <code>seq</code> under concurrency
+without gaps or repeats; outbox order per peer; <code>received_through</code> idempotency; items deleted only
+once every device acked; cascades; each migration up and down, and the refusing <code>down</code>s.</li>
+<li><strong>e2e with two servers</strong> (<a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/rim_api/tests/s2s_e2e.rs"><code>rim_api/tests/s2s_e2e.rs</code></a>, <code>e2e-tests</code>): two Actix servers in one
+process with two databases, <code>RIM_S2S_ALLOW_HTTP</code> and <code>RIM_S2S_ALLOW_PRIVATE_ADDRESSES</code>. Flows:
+pinning and rotation; an encrypted DM across relays from creation to edit and read state
+(<code>rim_mls</code> fixtures); a DM request accepted, ignored, blocked; a remote join; channel traffic both
+ways with host events verified by a test client; a gap and its reconciliation; revocation with
+acknowledgement; the direct login; a relay switch; the allow-list; <code>relay</code> and <code>host</code> refusals;
+replayed and tampered requests. A two-server compose test in CI when CI is back (<a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/ROADMAP.md"><code>ROADMAP.md</code></a>).</li>
+<li><strong>Clients (S5-3, S5-5).</strong> Appendix A in the Tauri module and Vitest; pinning from an invite
+(current key, rotated key, fork); event verification and gaps; contacts by link and QR; a DM
+across relays on two desktops; the request inbox; a remote join; the direct fallback and its
+notice; a relay switch without losing a message.</li>
+</ul>
+<h2 id="deferred">Deferred <a class="anchor" href="#deferred" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>Hybrid Ed25519 + ML-DSA-44 server keys and S2S signatures (tagged keys, <code>alg</code> from the key and
+caps are ready).</li>
+<li>Matrix interoperability; encrypted private channels; relay discovery by DNS; multi-relay fan-out
+for reads; moving a workspace to another host.</li>
+<li>Proof-of-work on first contact (a <code>pow</code> field reserved for <code>DmInvite</code>); mobile push through
+relays; server ids in profile cards; <code>https://</code> invite and contact links.</li>
+<li>Deleting queued messages once the drive has them (open decision).</li>
+</ul>
+<h2 id="appendix-a-known-answer-vectors">Appendix A: known-answer vectors <a class="anchor" href="#appendix-a-known-answer-vectors" aria-label="Link to this section">#</a></h2>
+<p>Computed with Python <code>cryptography</code> 50.0.2; server id and request signature cross-checked with
+Node 26 <code>crypto</code>. Keys are <code>SigningKey::from_bytes([seed; 32])</code>. The device is
+<a href="key-identity-v1.html"><code>key-identity-v1.md</code></a> appendix B&#39;s (seed 20, <code>rimp1_txDLbnipi5i3kCJtJwBOUixzv_MY8OnU0mcy--Tyje0</code>,
+device <code>00000000-0000-0000-0000-000000000001</code>). Workspace <code>0199d1a0-0000-7000-8000-000000000002</code>,
+conversation <code>…000000000003</code>, message <code>…000000000004</code>. JSON has fields in the order shown and no
+spaces. Never use these values for real keys.</p>
+<h3 id="a1-server-inceptions">A.1 Server inceptions <a class="anchor" href="#a1-server-inceptions" aria-label="Link to this section">#</a></h3>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Relay (seed 30, recovery 130)</th>
+<th>Host (seed 40, recovery 140)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Server key</td>
+<td><code>ed25519:rNsOKXQ_DMuGhtChBMuW4Fq-_sFTh2XnWVhp99yMSao</code></td>
+<td><code>ed25519:6S62BU_pvGgqG887dZ9lqzikz72BxNHzNC5Myc3tiws</code></td>
+</tr>
+<tr>
+<td>Recovery key</td>
+<td><code>ed25519:-gE0epkeBK4PGm2B2yml6k7rWWX1d6ye-0TnsfL7sCg</code></td>
+<td><code>ed25519:_L44YyQXu1uHXUmjwCJwYzkXxgk_0B67Wf9kFuN6_gw</code></td>
+</tr>
+<tr>
+<td>Server id</td>
+<td><code>rims1_T5LLFxkrobgyvlf3WVxuvLlfqYSZAssRFgmvCfI2R-c</code></td>
+<td><code>rims1_OFPDNXTV1splCcKcgz1vWYj6Mg-lbUollHQwXTkYEBw</code></td>
+</tr>
+<tr>
+<td>Key hash</td>
+<td><code>8UGftl4tBoxZjUo1UP_-zwUlobQJPwj5kZ0NC1oaAaM</code></td>
+<td><code>qkSWxxJEL_11l8_dTCGhHc_1Q1pAc2pMirMBGnz7388</code></td>
+</tr>
+<tr>
+<td><code>prev</code> for seq 1</td>
+<td><code>dMszB0YhzGkVSf4B-3elynzitpFsvVYojOEW8hXiNKg</code></td>
+<td><code>oUvCbfqOS1bUTL5gAtene_faqghv8PaPgrRDIJpXLOM</code></td>
+</tr>
+<tr>
+<td>Inception signature</td>
+<td><code>ed25519:_oQe2QcbA37vNosXrUVHFf8iIbnaesyNMmPtj827Wx5Q6vt77tyaOYR6JA9e3Z2FjHDRs0uR0XQEj9TMwoIODA</code></td>
+<td><code>ed25519:Dll_XFAqcMn9Pejfpge4oAGiEH16dAEu8KLjLjSEDPd8UFk3-tmRgzINC2G89uyREl1aDYI5bA-O8XOF7oftAg</code></td>
+</tr>
+</tbody></table></div>
+<p>Host inception (the relay&#39;s has its own keys in the same fields):</p>
+<pre><code>{&quot;v&quot;:2,&quot;type&quot;:&quot;server-inception&quot;,&quot;seq&quot;:0,&quot;serverKey&quot;:&quot;ed25519:6S62BU_pvGgqG887dZ9lqzikz72BxNHzNC5Myc3tiws&quot;,&quot;recoveryKey&quot;:&quot;ed25519:_L44YyQXu1uHXUmjwCJwYzkXxgk_0B67Wf9kFuN6_gw&quot;,&quot;createdAt&quot;:&quot;2026-10-09T00:00:00Z&quot;}</code></pre>
+<h3 id="a2-host-descriptor">A.2 Host descriptor <a class="anchor" href="#a2-host-descriptor" aria-label="Link to this section">#</a></h3>
+<pre><code>{&quot;v&quot;:2,&quot;type&quot;:&quot;server-descriptor&quot;,&quot;serverId&quot;:&quot;rims1_OFPDNXTV1splCcKcgz1vWYj6Mg-lbUollHQwXTkYEBw&quot;,&quot;keySeq&quot;:0,&quot;version&quot;:1,&quot;roles&quot;:[&quot;host&quot;,&quot;relay&quot;],&quot;endpoints&quot;:{&quot;graphql&quot;:&quot;https://host.example/api&quot;,&quot;websocket&quot;:&quot;wss://host.example/api/ws&quot;,&quot;s2s&quot;:&quot;https://host.example/s2s/v1&quot;},&quot;s2sVersions&quot;:[1],&quot;mlsCipherSuites&quot;:[79],&quot;limits&quot;:{&quot;maxBodyBytes&quot;:8388608,&quot;clockSkewSeconds&quot;:300,&quot;maxDeliverItems&quot;:256},&quot;registration&quot;:{&quot;mode&quot;:&quot;invite&quot;,&quot;powBits&quot;:null},&quot;issuedAt&quot;:&quot;2026-10-09T00:00:00Z&quot;}
+ed25519:ZdBDMoUEFhLQMnX7dK_r8xUPa0dNoSHOZqfAHelFegW0PUpluRUX84gzBzp2TtMKku19aCrf4wMXjbemA8b_Bw</code></pre>
+<h3 id="a3-delegation">A.3 Delegation <a class="anchor" href="#a3-delegation" aria-label="Link to this section">#</a></h3>
+<p>Device seed 20, to the relay of A.1, for the host of A.1; nonce bytes <code>70</code>..<code>7f</code>.</p>
+<pre><code>{&quot;v&quot;:2,&quot;type&quot;:&quot;delegation&quot;,&quot;principalId&quot;:&quot;rimp1_txDLbnipi5i3kCJtJwBOUixzv_MY8OnU0mcy--Tyje0&quot;,&quot;deviceId&quot;:&quot;00000000-0000-0000-0000-000000000001&quot;,&quot;relay&quot;:&quot;rims1_T5LLFxkrobgyvlf3WVxuvLlfqYSZAssRFgmvCfI2R-c&quot;,&quot;relayKeyHash&quot;:&quot;8UGftl4tBoxZjUo1UP_-zwUlobQJPwj5kZ0NC1oaAaM&quot;,&quot;host&quot;:&quot;rims1_OFPDNXTV1splCcKcgz1vWYj6Mg-lbUollHQwXTkYEBw&quot;,&quot;workspaceId&quot;:&quot;0199d1a0-0000-7000-8000-000000000002&quot;,&quot;scope&quot;:&quot;workspace&quot;,&quot;nonce&quot;:&quot;cHFyc3R1dnd4eXp7fH1-fw&quot;,&quot;issuedAt&quot;:&quot;2026-10-09T00:00:00Z&quot;,&quot;expiresAt&quot;:&quot;2026-10-10T00:00:00Z&quot;}
+ed25519:aT8j0zeSdSqWySreIIeRokrjVoYuO-3z1k4IcsFN898M2x_in0B9UlaL5hCUAdw-gCisynSQi3b51QQiZdHlCQ</code></pre>
+<h3 id="a4-signed-s2s-request-and-response">A.4 Signed S2S request and response <a class="anchor" href="#a4-signed-s2s-request-and-response" aria-label="Link to this section">#</a></h3>
+<p>The relay presents A.3: <code>POST https://host.example/s2s/v1/subscriptions</code>,
+<code>Rim-Origin: https://relay.example</code>, <code>created</code> 1791504000 (2026-10-09T00:00:00Z), nonce bytes
+<code>60</code>..<code>6f</code>, body (685 bytes) <code>{&quot;delegations&quot;:[{&quot;payload&quot;:&lt;A.3 payload as a JSON string&gt;,&quot;signature&quot;:&lt;A.3 signature&gt;}]}</code>.</p>
+<pre><code>&quot;@method&quot;: POST
+&quot;@target-uri&quot;: https://host.example/s2s/v1/subscriptions
+&quot;content-digest&quot;: sha-256=:NLGvVDM7TsvDtemcqNyHnp4tVM9bTzAjg1MbseDLrOc=:
+&quot;content-type&quot;: application/json
+&quot;rim-origin&quot;: https://relay.example
+&quot;@signature-params&quot;: (&quot;@method&quot; &quot;@target-uri&quot; &quot;content-digest&quot; &quot;content-type&quot; &quot;rim-origin&quot;);created=1791504000;expires=1791504300;nonce=&quot;YGFiY2RlZmdoaWprbG1ubw&quot;;keyid=&quot;rims1_T5LLFxkrobgyvlf3WVxuvLlfqYSZAssRFgmvCfI2R-c#0&quot;;alg=&quot;ed25519&quot;;tag=&quot;rim-s2s-v1&quot;</code></pre>
+<p>That is the signature base (lines joined by <code>\n</code>, no trailing newline). <code>Signature-Input</code> is <code>sig1=</code>
+followed by the <code>@signature-params</code> value, and:</p>
+<pre><code>Signature: sig1=:N1zyrK5mP9qxsSJOKAriCI38lQHL2H8FiKprKMqOay1+XFgIaldQw7J5zILaG6/hWcw6ESUC4HGY/bJ1O+QMDg==:</code></pre>
+<p>The host&#39;s response: status 200, <code>created</code> 1791504001, <code>Rim-Request-Nonce: YGFiY2RlZmdoaWprbG1ubw</code>,
+body <code>{&quot;subscriptions&quot;:[{&quot;workspaceId&quot;:&quot;0199d1a0-0000-7000-8000-000000000002&quot;,&quot;status&quot;:&quot;active&quot;,&quot;expiresAt&quot;:&quot;2026-10-10T00:00:00Z&quot;}]}</code>;
+its signature base, then its <code>Signature</code> field:</p>
+<pre><code>&quot;@status&quot;: 200
+&quot;content-digest&quot;: sha-256=:BBeCXY4Vnpnqik7XJ8TNUUC/Y392lt0Zhhcz9uwijB8=:
+&quot;content-type&quot;: application/json
+&quot;rim-request-nonce&quot;: YGFiY2RlZmdoaWprbG1ubw
+&quot;@method&quot;;req: POST
+&quot;@target-uri&quot;;req: https://host.example/s2s/v1/subscriptions
+&quot;content-digest&quot;;req: sha-256=:NLGvVDM7TsvDtemcqNyHnp4tVM9bTzAjg1MbseDLrOc=:
+&quot;@signature-params&quot;: (&quot;@status&quot; &quot;content-digest&quot; &quot;content-type&quot; &quot;rim-request-nonce&quot; &quot;@method&quot;;req &quot;@target-uri&quot;;req &quot;content-digest&quot;;req);created=1791504001;keyid=&quot;rims1_OFPDNXTV1splCcKcgz1vWYj6Mg-lbUollHQwXTkYEBw#0&quot;;alg=&quot;ed25519&quot;;tag=&quot;rim-s2s-v1&quot;
+
+Signature: sig1=:rGIqqwBn079G9OciB/u4fSIro9i6S0P97QNxFSo8UxPvXJwywOS4z5NrmPIYNnr2MKxK2dSzsBl0eU97wQFGAw==:</code></pre>
+<h3 id="a5-host-event">A.5 Host event <a class="anchor" href="#a5-host-event" aria-label="Link to this section">#</a></h3>
+<pre><code>{&quot;v&quot;:2,&quot;type&quot;:&quot;host-event&quot;,&quot;host&quot;:&quot;rims1_OFPDNXTV1splCcKcgz1vWYj6Mg-lbUollHQwXTkYEBw&quot;,&quot;keySeq&quot;:0,&quot;workspaceId&quot;:&quot;0199d1a0-0000-7000-8000-000000000002&quot;,&quot;stream&quot;:&quot;c:0199d1a0-0000-7000-8000-000000000003&quot;,&quot;seq&quot;:42,&quot;event&quot;:{&quot;type&quot;:&quot;MessageDeleted&quot;,&quot;workspace_id&quot;:&quot;0199d1a0-0000-7000-8000-000000000002&quot;,&quot;conversation_id&quot;:&quot;0199d1a0-0000-7000-8000-000000000003&quot;,&quot;conversation_type&quot;:&quot;Channel&quot;,&quot;message_id&quot;:&quot;0199d1a0-0000-7000-8000-000000000004&quot;,&quot;thread_id&quot;:null},&quot;issuedAt&quot;:&quot;2026-10-09T00:00:00Z&quot;}
+ed25519:CPSwWGrkjbauuToACdrAuJL4L6mv1XpGTPy_XKjkymGwzqx6pyW-j6V52HkhpPlXx82tXRbQTI-GsH9N4N-zBg</code></pre>
+<h3 id="a6-device-signed-write-and-host-signed-response">A.6 Device-signed write and host-signed response <a class="anchor" href="#a6-device-signed-write-and-host-signed-response" aria-label="Link to this section">#</a></h3>
+<p>GraphQL body (117 bytes):
+<code>{&quot;query&quot;:&quot;mutation($id:ID!){deleteMessage(messageId:$id)}&quot;,&quot;variables&quot;:{&quot;id&quot;:&quot;0199d1a0-0000-7000-8000-000000000004&quot;}}</code></p>
+<pre><code>{&quot;v&quot;:2,&quot;type&quot;:&quot;device-request&quot;,&quot;principalId&quot;:&quot;rimp1_txDLbnipi5i3kCJtJwBOUixzv_MY8OnU0mcy--Tyje0&quot;,&quot;deviceId&quot;:&quot;00000000-0000-0000-0000-000000000001&quot;,&quot;host&quot;:&quot;rims1_OFPDNXTV1splCcKcgz1vWYj6Mg-lbUollHQwXTkYEBw&quot;,&quot;method&quot;:&quot;POST&quot;,&quot;path&quot;:&quot;/api&quot;,&quot;seq&quot;:1791504000000000,&quot;bodySha256&quot;:&quot;a2PtmXdQU8dMqDduw8cQymbwEmFEilShfZfDDArTcwU&quot;,&quot;issuedAt&quot;:&quot;2026-10-09T00:00:00Z&quot;}
+ed25519:IoWInJdss89VdGgCEnWvLRCAHZ--5mrIzRiDV0thfCwLOVOgyEZzaGG7CGBfgKqnnJiJvzHMxaCZYFiEMiSbCg</code></pre>
+<p><code>Rim-Device-Request</code> (base64url of that payload):
+<code>eyJ2IjoyLCJ0eXBlIjoiZGV2aWNlLXJlcXVlc3QiLCJwcmluY2lwYWxJZCI6InJpbXAxX3R4RExibmlwaTVpM2tDSnRKd0JPVWl4enZfTVk4T25VMG1jeS0tVHlqZTAiLCJkZXZpY2VJZCI6IjAwMDAwMDAwLTAwMDAtMDAwMC0wMDAwLTAwMDAwMDAwMDAwMSIsImhvc3QiOiJyaW1zMV9PRlBETlhUVjFzcGxDY0tjZ3oxdldZajZNZy1sYlVvbGxIUXdYVGtZRUJ3IiwibWV0aG9kIjoiUE9TVCIsInBhdGgiOiIvYXBpIiwic2VxIjoxNzkxNTA0MDAwMDAwMDAwLCJib2R5U2hhMjU2IjoiYTJQdG1YZFFVOGRNcURkdXc4Y1F5bWJ3RW1GRWlsU2hmWmZEREFyVGN3VSIsImlzc3VlZEF0IjoiMjAyNi0xMC0wOVQwMDowMDowMFoifQ</code></p>
+<p>The host&#39;s answer to body <code>{&quot;data&quot;:{&quot;deleteMessage&quot;:true}}</code>:</p>
+<pre><code>{&quot;v&quot;:2,&quot;type&quot;:&quot;host-response&quot;,&quot;host&quot;:&quot;rims1_OFPDNXTV1splCcKcgz1vWYj6Mg-lbUollHQwXTkYEBw&quot;,&quot;keySeq&quot;:0,&quot;requestSha256&quot;:&quot;USMHYKhT_TDTgBiA_mrWvOz3-RZLlohDKUQREkVxMCY&quot;,&quot;status&quot;:200,&quot;bodySha256&quot;:&quot;6lPwX_33fnLq0QTkKknG-F-tK81icmIjQKnN0eS8JA0&quot;}
+ed25519:f-vulCqj3GgD3dI4zNAeCMs1JGyDwkzbkcLhk0uXXMz4NCJ-az1ZVKWxgpbqNMWTzMhSKtnFPhwMHmATk69zDg</code></pre>
+<h3 id="a7-revocation-and-acknowledgement">A.7 Revocation and acknowledgement <a class="anchor" href="#a7-revocation-and-acknowledgement" aria-label="Link to this section">#</a></h3>
+<p>The device revokes itself (<code>&quot;signer&quot;:&quot;device&quot;</code>); the host acknowledges.</p>
+<pre><code>{&quot;v&quot;:2,&quot;type&quot;:&quot;device-revoke&quot;,&quot;principalId&quot;:&quot;rimp1_txDLbnipi5i3kCJtJwBOUixzv_MY8OnU0mcy--Tyje0&quot;,&quot;deviceId&quot;:&quot;00000000-0000-0000-0000-000000000001&quot;,&quot;signer&quot;:&quot;device&quot;,&quot;issuedAt&quot;:&quot;2026-10-09T00:00:00Z&quot;}
+ed25519:kCcxKVwjdFvYSC3xx3yHWgO5gWwwq9wpC8bzQs1NPn9bKhAUJSBdLawiI1bWkNDDOdeW_x7AEm0fafPf38D3Bw
+{&quot;v&quot;:2,&quot;type&quot;:&quot;revocation-ack&quot;,&quot;host&quot;:&quot;rims1_OFPDNXTV1splCcKcgz1vWYj6Mg-lbUollHQwXTkYEBw&quot;,&quot;keySeq&quot;:0,&quot;principalId&quot;:&quot;rimp1_txDLbnipi5i3kCJtJwBOUixzv_MY8OnU0mcy--Tyje0&quot;,&quot;deviceId&quot;:&quot;00000000-0000-0000-0000-000000000001&quot;,&quot;revocationSha256&quot;:&quot;VYCvacXofNMIe3q3-owfpopw8oLdXAOc6KvNKsEtis4&quot;,&quot;appliedAt&quot;:&quot;2026-10-09T00:00:00Z&quot;}
+ed25519:waKbDNMuQ460M8gX_H1NKzAMDXF3x4P8hbHoJFPr-pSduvfvQSbXvOcRmK5VcF5F9-sICQmF-pBnACBu9Z-mDg</code></pre>
+<h3 id="a8-proof-of-work">A.8 Proof-of-work <a class="anchor" href="#a8-proof-of-work" aria-label="Link to this section">#</a></h3>
+<p>At the relay of A.1, for <a href="key-identity-v1.html"><code>key-identity-v1.md</code></a> appendix B&#39;s inception payload, with test difficulty
+<code>powBits</code> 16: the smallest working counter is 37283, nonce <code>AAAAAAAAkaM</code> (8 bytes big-endian), hash
+<code>00002f63d137749fda27201ccf9d282a4ed846287d49c55fea89a47617e78ed6</code>.</p>
+<h3 id="filled-by-s5-1">Filled by S5-1 <a class="anchor" href="#filled-by-s5-1" aria-label="Link to this section">#</a></h3>
+<p><strong>RFC 9421 appendix B.2.6</strong> through <code>rim_s2s</code> (<a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/rim_s2s/src/vectors.rs"><code>rim_s2s/src/vectors.rs</code></a>): the RFC&#39;s
+<code>test-key-ed25519</code> (seed: the last 32 bytes of its PKCS#8 key), the components <code>&quot;date&quot; &quot;@method&quot; &quot;@path&quot; &quot;@authority&quot; &quot;content-type&quot; &quot;content-length&quot;</code> with <code>created=1618884473</code> and
+<code>keyid=&quot;test-key-ed25519&quot;</code> serialize to the RFC&#39;s <code>Signature-Input</code>, the crate builds the RFC&#39;s
+signature base, and signing it gives the RFC&#39;s
+<code>sig-b26=:wqcAqbmYJ2ji2glfAMaRy4gruYYnx2nEFN2HN6jrnDnQCK1u02Gb04v9EDgwUPiu4A0w6vuQv5lIp5WPpBKRCw==:</code>.</p>
+<p><strong>Rotation.</strong> The host of A.1 rotates from seed 40 to seed 41 (<code>signer: server</code>, recovery key
+unchanged, <code>createdAt</code> 2026-10-10T00:00:00Z), signed by the seed 40 key:</p>
+<pre><code>{&quot;v&quot;:2,&quot;type&quot;:&quot;server-rotate&quot;,&quot;serverId&quot;:&quot;rims1_OFPDNXTV1splCcKcgz1vWYj6Mg-lbUollHQwXTkYEBw&quot;,&quot;seq&quot;:1,&quot;prev&quot;:&quot;oUvCbfqOS1bUTL5gAtene_faqghv8PaPgrRDIJpXLOM&quot;,&quot;serverKey&quot;:&quot;ed25519:-kg0FH9uaQw2k-_2EzYEZAPNiuKhTzGzxAc1hWkjlWU&quot;,&quot;recoveryKey&quot;:&quot;ed25519:_L44YyQXu1uHXUmjwCJwYzkXxgk_0B67Wf9kFuN6_gw&quot;,&quot;signer&quot;:&quot;server&quot;,&quot;createdAt&quot;:&quot;2026-10-10T00:00:00Z&quot;}
+ed25519:cysmxfZAsbKJKvFGkftqHCqAzySvf4MMD9PTimeNavN_Oi91Zt-lfcvCswkb08SnVDrS-iMWK1WT1n7iY_fZAA</code></pre>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Key hash of the seed 41 key</td>
+<td><code>fvKh1r_va0lqRvlpGojY2V1JzJMQeSESlNpO4OXw6Ak</code></td>
+</tr>
+<tr>
+<td><code>prev</code> for seq 2</td>
+<td><code>sU02HLfXJNvkpkHn28DO3JdBxQpmTr3Dl4y94zIY9hU</code></td>
+</tr>
+</tbody></table></div>
+<p>The descriptor of A.2 re-signed by the seed 41 key at <code>keySeq</code> 1, <code>version</code> 2, <code>issuedAt</code>
+2026-10-10T00:00:00Z (the A.2 descriptor no longer verifies against this log):</p>
+<pre><code>{&quot;v&quot;:2,&quot;type&quot;:&quot;server-descriptor&quot;,&quot;serverId&quot;:&quot;rims1_OFPDNXTV1splCcKcgz1vWYj6Mg-lbUollHQwXTkYEBw&quot;,&quot;keySeq&quot;:1,&quot;version&quot;:2,&quot;roles&quot;:[&quot;host&quot;,&quot;relay&quot;],&quot;endpoints&quot;:{&quot;graphql&quot;:&quot;https://host.example/api&quot;,&quot;websocket&quot;:&quot;wss://host.example/api/ws&quot;,&quot;s2s&quot;:&quot;https://host.example/s2s/v1&quot;},&quot;s2sVersions&quot;:[1],&quot;mlsCipherSuites&quot;:[79],&quot;limits&quot;:{&quot;maxBodyBytes&quot;:8388608,&quot;clockSkewSeconds&quot;:300,&quot;maxDeliverItems&quot;:256},&quot;registration&quot;:{&quot;mode&quot;:&quot;invite&quot;,&quot;powBits&quot;:null},&quot;issuedAt&quot;:&quot;2026-10-10T00:00:00Z&quot;}
+ed25519:Yuy9VdOS78e8fL4sMDT9PHmBkZcuzeJEvLlfdD8dRhDjJeJiivU4FcatDrlwEKaB3l9Beado7Qi6_33D7UN0AA</code></pre>
+<p>Both computed by <code>rim_s2s</code> and cross-checked with Python <code>cryptography</code> 50.0.2. Every value of
+A.1 to A.8 reproduces byte for byte in <code>rim_s2s</code>&#39;s tests; A.8&#39;s nonce also signs up through
+<code>signupWithKey</code> at the A.1 relay in <code>rim_infra_services</code>&#39;s tests.</p>
+<p><strong>Without <code>RIM_PUBLIC_BASE_URL</code></strong> the descriptor&#39;s <code>graphql</code> and <code>websocket</code> endpoints use
+<code>http://localhost:&lt;RIM_SERVER_PORT&gt;</code>; <code>s2s</code> is null.</p>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/docs/specs/server-to-server-v1.md">rim-server/docs/specs/server-to-server-v1.md</a> at <code>c86029b</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+<script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
+</body>
+</html>

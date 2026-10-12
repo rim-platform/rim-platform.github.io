@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Changelog · RIM</title>
+<meta name="description" content="What changes between rim-server releases, for the people who run a server and the people who write a client. The format is Keep a Changelog and the versions follow Semantic Versioning; a release is the tag v&lt;version&gt;, …">
+<link rel="icon" href="../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../index.html" aria-label="RIM home">
+      <picture><source srcset="../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../index.html#what">What RIM is</a>
+      <a href="../index.html#how">How it works</a>
+      <a href="self-hosting.html">Self-host</a>
+      <a href="../configure/index.html">Configure</a>
+      <a href="index.html" aria-current="page">Docs</a>
+      <a href="../api/index.html">API</a>
+      <a href="../specs/index.html">Specs</a>
+      <a href="contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="index.html">Docs</a><span aria-hidden="true">/</span><a href="project.html">Project</a><span aria-hidden="true">/</span><span>Changelog</span></div>
+  <div class="page with-toc">
+    <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
+<ol>
+<li><a href="#how-entries-are-written">How entries are written</a></li>
+<li><a href="#unreleased">Unreleased</a><ol><li><a href="#added">Added</a></li><li><a href="#changed">Changed</a></li><li><a href="#fixed">Fixed</a></li></ol></li>
+</ol>
+</details></aside>
+    <main id="content" class="prose">
+<h1 id="changelog">Changelog</h1>
+<p>What changes between rim-server releases, for the people who run a server and the people who
+write a client. The format is <a href="https://keepachangelog.com/en/1.1.0/">Keep a Changelog</a> and the
+versions follow <a href="https://semver.org/spec/v2.0.0.html">Semantic Versioning</a>; a release is the
+tag <code>v&lt;version&gt;</code>, the version every crate in the workspace carries.</p>
+<h2 id="how-entries-are-written">How entries are written <a class="anchor" href="#how-entries-are-written" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>A pull request that changes what an operator, a user or a client author sees adds its line
+under <code>Unreleased</code> in the same pull request. Refactors, tests and internal documentation do
+not.</li>
+<li>Each line goes under one heading: <code>Added</code>, <code>Changed</code>, <code>Deprecated</code>, <code>Removed</code>, <code>Fixed</code> or
+<code>Security</code>. It says what changed for the reader, not how it was built.</li>
+<li>A change the operator has to act on (a new required setting, a migration that rewrites a
+large table, a contract migration, a changed default) starts with <strong>Upgrade:</strong> and says what
+to do. <a href="operations/upgrade.html"><code>docs/operations/upgrade.md</code></a> is how an upgrade runs.</li>
+<li>A change to the GraphQL schema or a spec in <a href="https://github.com/rim-platform/rim-server/tree/c86029b35a7ef7770b05e7bda62909f988343f7f/docs/specs"><code>docs/specs/</code></a> names the type, field or spec.</li>
+<li>At release time <code>Unreleased</code> becomes <code>## [&lt;version&gt;] - &lt;YYYY-MM-DD&gt;</code> and a new empty
+<code>Unreleased</code> starts above it (<a href="operations/release-checklist.html"><code>docs/operations/release-checklist.md</code></a>).</li>
+</ul>
+<h2 id="unreleased"><a href="https://github.com/rim-platform/rim-server/commits/master">Unreleased</a> <a class="anchor" href="#unreleased" aria-label="Link to this section">#</a></h2>
+<h3 id="added">Added <a class="anchor" href="#added" aria-label="Link to this section">#</a></h3>
+<ul>
+<li><a href="operations/upgrade.html"><code>docs/operations/upgrade.md</code></a>: how to move a server to a new release and back.</li>
+<li>Release images: every release tag publishes <code>ghcr.io/rim-platform/rim-server:&lt;version&gt;</code>
+(also <code>&lt;major&gt;.&lt;minor&gt;</code>, <code>sha-&lt;short sha&gt;</code> and <code>latest</code>), signed with cosign keyless by the
+release workflow and with an SPDX SBOM attested to it and attached to the GitHub release.
+<a href="self-hosting.html"><code>docs/self-hosting.md</code></a>, &quot;Verify the images&quot;, checks the signature.</li>
+<li>GraphQL <code>ServerInfo.auditRetentionDays</code>: the days command audit rows are kept before they are
+exported and deleted, null when they are kept forever. Readable without a session, like the
+rest of <code>serverInfo</code>.</li>
+<li>Request limits, each off unless set: <code>RIM_RATE_REQUESTS_PER_MIN_PER_IP</code> (requests to <code>/api</code>
+routes per client address, answered 429 with <code>Retry-After</code>),
+<code>RIM_RATE_MUTATIONS_PER_MIN_PER_SESSION</code>, <code>RIM_RATE_MESSAGES_PER_MIN_PER_USER</code> with
+<code>RIM_RATE_MESSAGES_BURST</code> (both answered <code>RATE_LIMITED</code>), <code>RIM_RATE_WS_CONNECTIONS_PER_USER</code>
+and <code>RIM_RATE_SUBSCRIPTIONS_PER_CONNECTION</code> (the new GraphQL error code
+<code>TOO_MANY_SUBSCRIPTIONS</code>). Refusals are counted in <code>rim_rate_limit_rejections_total</code>, and
+browsers may read <code>Retry-After</code>. <a href="api.html"><code>docs/api.md</code></a> (&quot;Limits&quot;) describes them.</li>
+<li>An IP deny list: <code>rim_server ip block &lt;cidr&gt; --reason &lt;text&gt; [--expires-in-days &lt;1-365&gt;]</code>,
+<code>ip unblock &lt;cidr&gt;</code> and <code>ip list</code>. A blocked address or range, IPv4 or IPv6, is answered 403
+with <code>{&quot;error&quot;:&quot;blocked&quot;}</code> on every route but <code>/healthz</code>, server-to-server routes included.
+A running server picks up changes within 30 seconds; blocks are audited as <code>ip.block</code> and
+<code>ip.unblock</code> and refusals counted in <code>rim_ip_blocked_requests_total</code>. Adds the <code>ip_block</code>
+table.</li>
+<li><code>RIM_INSTANCE_NOTICE</code> and <code>RIM_TERMS_URL</code>: a short operator notice and the terms of service
+URL, served as GraphQL <code>ServerInfo.instanceNotice</code> and <code>ServerInfo.termsUrl</code>. With terms set,
+<code>signupWithInvite</code> and <code>signupWithKey</code> require <code>acceptedTermsUrl</code> (a new optional field of
+<code>SignupWithInviteInput</code> and <code>SignupWithKeyInput</code>) equal to the terms URL and answer
+<code>VALIDATION</code> otherwise; the acceptance is stored on the account.</li>
+</ul>
+<h3 id="changed">Changed <a class="anchor" href="#changed" aria-label="Link to this section">#</a></h3>
+<ul>
+<li><p><strong>Upgrade:</strong> <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/deploy/compose.yml"><code>deploy/compose.yml</code></a> runs the published images <code>ghcr.io/rim-platform/rim-server</code>
+and <code>ghcr.io/rim-platform/rim-web</code> at <code>RIM_VERSION</code> (default <code>latest</code>) instead of building
+them. Set <code>RIM_VERSION</code> in <code>deploy/.env</code> to the release you run, and run <code>pull</code> then <code>up -d</code>
+where you ran <code>up -d --build</code>. Operators who build locally add <code>-f deploy/compose.dev.yml</code> to
+every compose command; <code>RIM_SERVER_IMAGE</code> and <code>RIM_WEB_IMAGE</code> still name other images.</p>
+</li>
+<li><p><strong>Upgrade:</strong> a GraphQL batch holds at most 20 requests; a larger one is answered 400 with
+<code>{&quot;error&quot;:&quot;batch_too_large&quot;}</code> and none of it runs. <code>RIM_API_MAX_BATCH</code> changes the cap.</p>
+</li>
+<li><p>With <code>link_previews</code> in <code>RIM_FEATURES_DISABLED</code>, sending or replying to a message no longer
+starts a link preview fetch at all, so the server makes no outbound request for the links
+people post.</p>
+</li>
+<li><p>The packaged desktop app&#39;s origins (<code>tauri://localhost</code>, <code>http://tauri.localhost</code> and
+<code>https://tauri.localhost</code>) are accepted by every server without <code>RIM_CORS_ALLOWED_ORIGIN</code>.</p>
+</li>
+<li><p>GraphQL <code>commands</code> and <code>commandDiscover</code> list only the commands the caller may run. A command
+the server runs needs a context workspace the caller is a member of, a role there that may run
+it and its capabilities: a non-member, or a call without a workspace, sees only the commands
+the client runs itself, and the moderation and owner commands are listed only to the roles
+that run them. Naming the direct space makes the caller a guest of it.</p>
+</li>
+<li><p>Workspace-only features answer <code>VALIDATION</code> (&quot;not available in the direct space&quot;) in the
+direct space instead of an empty result, for reads and writes alike: custom emojis, workspace
+plugins and plugin bundles (<code>POST /api/plugin-bundles/{server_id}</code> answers 400), keybinds
+scoped to a workspace, pipelines, workspace state and channels. The caller&#39;s own keybinds,
+asked without a workspace id, still answer.</p>
+</li>
+</ul>
+<h3 id="fixed">Fixed <a class="anchor" href="#fixed" aria-label="Link to this section">#</a></h3>
+<ul>
+<li>A local account&#39;s first use of the direct space, any operation that needs membership there,
+joins it as a guest instead of being refused.</li>
+</ul>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/CHANGELOG.md">rim-server/CHANGELOG.md</a> at <code>c86029b</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+<script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
+</body>
+</html>

@@ -1,0 +1,628 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Talking to a server over HTTP · RIM</title>
+<meta name="description" content="The HTTP contract a client sees: the routes, how a session and its CSRF token work, which origins a browser may call from, the error codes, pagination and how a client tells which server version it talks to. The GraphQL …">
+<link rel="icon" href="../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../index.html" aria-label="RIM home">
+      <picture><source srcset="../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../index.html#what">What RIM is</a>
+      <a href="../index.html#how">How it works</a>
+      <a href="self-hosting.html">Self-host</a>
+      <a href="../configure/index.html">Configure</a>
+      <a href="index.html" aria-current="page">Docs</a>
+      <a href="../api/index.html">API</a>
+      <a href="../specs/index.html">Specs</a>
+      <a href="contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="index.html">Docs</a><span aria-hidden="true">/</span><a href="client-authors.html">Client authors</a><span aria-hidden="true">/</span><span>Talking to a server over HTTP</span></div>
+  <div class="page with-toc">
+    <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
+<ol>
+<li><a href="#endpoints">Endpoints</a><ol><li><a href="#graphql-post-api">GraphQL: POST /api</a></li><li><a href="#subscriptions-get-apiws">Subscriptions: GET /api/ws</a></li><li><a href="#the-schema-get-apisdl">The schema: GET /api/sdl</a></li><li><a href="#discovery-get-well-knownrim-server">Discovery: GET /.well-known/rim-server</a></li><li><a href="#probes-healthz-and-readyz">Probes: /healthz and /readyz</a></li><li><a href="#metrics-metrics">Metrics: /metrics</a></li><li><a href="#files">Files</a></li><li><a href="#spaces-on-another-server-apiremotehost_server_idtail">Spaces on another server: /api/remote/{host_server_id}/{tail}</a></li><li><a href="#server-to-server-s2sv1">Server to server: /s2s/v1/...</a></li></ol></li>
+<li><a href="#sessions-and-csrf">Sessions and CSRF</a><ol><li><a href="#the-session-cookie">The session cookie</a></li><li><a href="#the-csrf-token">The CSRF token</a></li></ol></li>
+<li><a href="#origins">Origins</a></li>
+<li><a href="#limits">Limits</a></li>
+<li><a href="#errors">Errors</a><ol><li><a href="#graphql-error-codes">GraphQL error codes</a></li><li><a href="#refusals-before-a-route-runs">Refusals before a route runs</a></li><li><a href="#errors-from-the-file-routes">Errors from the file routes</a></li></ol></li>
+<li><a href="#pagination">Pagination</a></li>
+<li><a href="#telling-which-server-you-talk-to">Telling which server you talk to</a></li>
+<li><a href="#the-full-graphql-reference">The full GraphQL reference</a></li>
+</ol>
+</details></aside>
+    <main id="content" class="prose">
+<h1 id="talking-to-a-server-over-http">Talking to a server over HTTP</h1>
+<p>The HTTP contract a client sees: the routes, how a session and its CSRF token work, which
+origins a browser may call from, the error codes, pagination and how a client tells which
+server version it talks to. The GraphQL types and fields themselves are in the schema
+(<code>GET /api/sdl</code>, see &quot;The full GraphQL reference&quot;); the server-to-server transport is in
+<a href="../specs/server-to-server-v1.html"><code>specs/server-to-server-v1.md</code></a>.</p>
+<h2 id="endpoints">Endpoints <a class="anchor" href="#endpoints" aria-label="Link to this section">#</a></h2>
+<p>Everything except <code>/metrics</code> is served on <code>RIM_SERVER_HOST:RIM_SERVER_PORT</code>. &quot;Session&quot; means
+the route needs the session cookie; &quot;CSRF&quot; means it also needs the <code>X-CSRF-Token</code> header (see
+&quot;Sessions and CSRF&quot;).</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+<th>Needs</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>POST</code></td>
+<td><code>/api</code></td>
+<td>Session for most fields; CSRF on mutations</td>
+<td>GraphQL. The body is one GraphQL request or a JSON array of them (a batch).</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api</code></td>
+<td>Nothing</td>
+<td>The GraphiQL explorer, only when <code>RIM_ENABLE_GRAPHIQL=true</code>.</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/ws</code></td>
+<td>Session</td>
+<td>GraphQL subscriptions over a WebSocket.</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/sdl</code></td>
+<td>Nothing</td>
+<td>The schema in SDL, as <code>text/plain</code>.</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/.well-known/rim-server</code></td>
+<td>Nothing</td>
+<td>The signed discovery document.</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/healthz</code></td>
+<td>Nothing</td>
+<td>Liveness.</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/readyz</code></td>
+<td>Nothing</td>
+<td>Readiness.</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/metrics</code></td>
+<td>Nothing</td>
+<td>Prometheus metrics, on a separate listener.</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/api/files/upload</code></td>
+<td>Session, CSRF</td>
+<td>Upload the bytes of an attachment.</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/api/files/avatar</code></td>
+<td>Session, CSRF</td>
+<td>Upload the caller&#39;s avatar.</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/files/{path}</code></td>
+<td>Session</td>
+<td>Download a stored avatar.</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/attachments/{id}/download</code></td>
+<td>Session</td>
+<td>Download an attachment.</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/api/plugin-bundles/{server_id}</code></td>
+<td>Session, CSRF</td>
+<td>Upload a web plugin bundle to a workspace.</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/plugin-bundles/{server_id}/{sha256}</code></td>
+<td>Session</td>
+<td>Download a web plugin bundle.</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/reports/{report_id}/attachments/{blob_sha256}</code></td>
+<td>Session</td>
+<td>A reported encrypted attachment, for moderators.</td>
+</tr>
+<tr>
+<td><code>GET</code>, <code>POST</code></td>
+<td><code>/api/remote/{host_server_id}/{tail}</code></td>
+<td>Session; CSRF on <code>POST</code></td>
+<td>A request to a space hosted on another server, through this relay.</td>
+</tr>
+<tr>
+<td>any</td>
+<td><code>/s2s/v1/...</code></td>
+<td>A server signature</td>
+<td>The server-to-server API; not for clients.</td>
+</tr>
+</tbody></table></div>
+<h3 id="graphql-post-api">GraphQL: <code>POST /api</code> <a class="anchor" href="#graphql-post-api" aria-label="Link to this section">#</a></h3>
+<p>The request body is the usual GraphQL JSON (<code>query</code>, <code>variables</code>, <code>operationName</code>), or an array
+of such objects, which the server runs as one batch and answers with an array. A batch holds
+at most <code>RIM_API_MAX_BATCH</code> requests (default 20); a larger one is answered 400 with
+<code>{&quot;error&quot;:&quot;batch_too_large&quot;}</code> and none of it runs. Apart from that and the refusals under
+&quot;Limits&quot;, the answer is HTTP 200; errors are in the <code>errors</code> array of each response (see
+&quot;Errors&quot;). The server
+reads an <code>X-Request-Id</code> header, or makes one, and adds it to every error as
+<code>extensions.request_id</code>, so a report can be matched to the server log.</p>
+<p>A person whose relay is another server, signed in here directly, cannot run mutations that
+change their account rather than a space; those answer <code>FORBIDDEN</code> and run at their relay.</p>
+<h3 id="subscriptions-get-apiws">Subscriptions: <code>GET /api/ws</code> <a class="anchor" href="#subscriptions-get-apiws" aria-label="Link to this section">#</a></h3>
+<p>A WebSocket upgrade carrying the session cookie. The subprotocol is chosen with
+<code>Sec-WebSocket-Protocol</code>: <code>graphql-transport-ws</code> (the protocol of the <code>graphql-ws</code> library) or
+<code>graphql-ws</code> (the older <code>subscriptions-transport-ws</code> protocol). An upgrade without one of them
+is refused with 400, and an upgrade without a valid session with 401: there are no anonymous
+subscriptions. A user holding as many connections as <code>RIM_RATE_WS_CONNECTIONS_PER_USER</code> allows
+is refused with 429 and <code>{&quot;error&quot;:&quot;too_many_connections&quot;}</code>. A subscription started past
+<code>RIM_RATE_SUBSCRIPTIONS_PER_CONNECTION</code> on one connection answers one error with the code
+<code>TOO_MANY_SUBSCRIPTIONS</code> and ends; ending another subscription frees its place. The
+subscription roots are <code>workspaceEvents</code> and <code>relayStream</code>; the schema
+describes both.</p>
+<h3 id="the-schema-get-apisdl">The schema: <code>GET /api/sdl</code> <a class="anchor" href="#the-schema-get-apisdl" aria-label="Link to this section">#</a></h3>
+<p>The whole GraphQL schema of the running build, in SDL, without a session.</p>
+<h3 id="discovery-get-well-knownrim-server">Discovery: <code>GET /.well-known/rim-server</code> <a class="anchor" href="#discovery-get-well-knownrim-server" aria-label="Link to this section">#</a></h3>
+<p>A JSON document, readable from any origin (<code>Access-Control-Allow-Origin: *</code>) and cacheable for
+five minutes:</p>
+<pre><code class="language-json">{
+  &quot;rim&quot;: &quot;server-discovery&quot;,
+  &quot;keyLog&quot;: [{ &quot;payload&quot;: &quot;...&quot;, &quot;signature&quot;: &quot;...&quot; }],
+  &quot;descriptor&quot;: { &quot;payload&quot;: &quot;...&quot;, &quot;signature&quot;: &quot;...&quot; },
+  &quot;features&quot;: { &quot;attachments&quot;: { &quot;state&quot;: &quot;enabled&quot; } }
+}</code></pre>
+<p><code>keyLog</code> and <code>descriptor</code> are signed by the server key; <code>features</code> is unsigned and advisory.
+<a href="../specs/server-to-server-v1.html"><code>specs/server-to-server-v1.md</code></a> (&quot;Discovery document&quot;, &quot;Pinning a peer&quot;) says how to verify and
+pin them.</p>
+<h3 id="probes-healthz-and-readyz">Probes: <code>/healthz</code> and <code>/readyz</code> <a class="anchor" href="#probes-healthz-and-readyz" aria-label="Link to this section">#</a></h3>
+<p>Both are unauthenticated, outside the origin check, and sent with <code>Cache-Control: no-store</code>.</p>
+<ul>
+<li><code>/healthz</code> answers 200 <code>{&quot;status&quot;:&quot;ok&quot;,&quot;version&quot;:&quot;&lt;version&gt;&quot;}</code> whenever the process serves
+requests.</li>
+<li><code>/readyz</code> answers 200 when every check passes and 503 otherwise, with <code>status</code>, <code>version</code> and
+<code>checks</code>: <code>database</code>, <code>migrations</code>, <code>serverKey</code> and <code>frankingKey</code>, each
+<code>{&quot;status&quot;:&quot;ok&quot;}</code> or <code>{&quot;status&quot;:&quot;fail&quot;,&quot;reason&quot;:&quot;...&quot;}</code>. A result is reused for one second.</li>
+</ul>
+<h3 id="metrics-metrics">Metrics: <code>/metrics</code> <a class="anchor" href="#metrics-metrics" aria-label="Link to this section">#</a></h3>
+<p>Served only on the listener <code>RIM_METRICS_ADDR</code> names, never on the API port, and off when it is
+unset. It has no authentication and is meant for the operator&#39;s Prometheus, not for clients
+(<a href="operations/metrics.html"><code>operations/metrics.md</code></a>).</p>
+<h3 id="files">Files <a class="anchor" href="#files" aria-label="Link to this section">#</a></h3>
+<p>The file routes are plain HTTP, not GraphQL. They answer JSON errors of the form
+<code>{&quot;error&quot;:&quot;&lt;message&gt;&quot;}</code> with a status (see &quot;Errors from the file routes&quot;).</p>
+<ul>
+<li><strong><code>POST /api/files/upload</code></strong> completes an attachment. The client first calls the
+<code>createAttachment</code> mutation, which returns an <code>attachmentId</code> and an <code>uploadToken</code>, then sends a
+multipart body with the text fields <code>upload_token</code> and <code>attachment_id</code> and exactly one file.
+The file is at most 25 MiB and its type is <code>image/*</code>, <code>text/*</code>, <code>application/pdf</code>,
+<code>application/json</code>, <code>application/zip</code>, <code>application/gzip</code>, or <code>application/octet-stream</code> for
+the blob of an encrypted conversation. The answer is <code>{&quot;size_bytes&quot;:&lt;n&gt;}</code>. Off when the
+<code>attachments</code> feature is not enabled.</li>
+<li><strong><code>POST /api/files/avatar</code></strong> stores the caller&#39;s avatar: a multipart body with one file of
+type <code>image/png</code>, <code>image/jpeg</code>, <code>image/gif</code> or <code>image/webp</code>, at most 2 MiB. The answer is
+<code>{&quot;path&quot;,&quot;size_bytes&quot;,&quot;url&quot;}</code>, where <code>url</code> is the <code>/api/files/...</code> path to read it back.</li>
+<li><strong><code>GET /api/files/{path}</code></strong> serves a stored avatar to any signed-in user. Any path outside
+<code>avatars/</code> is refused with 403.</li>
+<li><strong><code>GET /api/attachments/{id}/download</code></strong> serves an attachment to a member of its conversation.
+The blob of an encrypted conversation is served as <code>application/octet-stream</code> named
+<code>encrypted.bin</code>; the client checks its hash and decrypts it. Off when the <code>attachments</code> feature
+is not enabled.</li>
+<li><strong><code>POST /api/plugin-bundles/{server_id}</code></strong> stores a web plugin bundle for a workspace. The body
+is the bundle itself, not multipart, sent as <code>application/vnd.rim.plugin-bundle+json</code>, at most
+8 MiB. The answer is <code>{&quot;sha256&quot;,&quot;size&quot;,&quot;url&quot;}</code>, with 201 for a new bundle and 200 for one the
+workspace already had; a bundle the service refuses is 422. Off when the <code>workspace_plugins</code>
+feature is not enabled.</li>
+<li><strong><code>GET /api/plugin-bundles/{server_id}/{sha256}</code></strong> serves a bundle to a member of the
+workspace, with <code>Cache-Control: private, max-age=31536000, immutable</code>, since a bundle is
+named by its hash.</li>
+<li><strong><code>GET /api/reports/{report_id}/attachments/{blob_sha256}</code></strong> serves the encrypted blob of an
+attachment of a reported encrypted message to an Owner or Moderator of the report&#39;s
+workspace. <code>blob_sha256</code> is unpadded base64url. Every refusal of a signed-in caller is a bare<ol start="404">
+<li></li>
+</ol>
+</li>
+</ul>
+<p><a href="../specs/web-plugins-v1.html"><code>specs/web-plugins-v1.md</code></a> and <a href="../specs/workspace-plugins-v1.html"><code>specs/workspace-plugins-v1.md</code></a> describe the plugin bundle
+contract; <a href="../specs/e2ee-mls-v1.html"><code>specs/e2ee-mls-v1.md</code></a> describes encrypted attachments and reports.</p>
+<h3 id="spaces-on-another-server-apiremotehost_server_idtail">Spaces on another server: <code>/api/remote/{host_server_id}/{tail}</code> <a class="anchor" href="#spaces-on-another-server-apiremotehost_server_idtail" aria-label="Link to this section">#</a></h3>
+<p>A client talks only to its relay. A request for a space hosted on another server goes to
+<code>/api/remote/&lt;host server id&gt;/&lt;host-relative path&gt;</code>, for example
+<code>POST /api/remote/rims1_.../api</code> for GraphQL, with the <code>Rim-Device-Request</code> and
+<code>Rim-Device-Signature</code> headers. The relay checks the session (and CSRF for <code>POST</code>), forwards
+the body unchanged and returns the host&#39;s status, body, <code>Content-Type</code>, <code>Rim-Host-Response</code>,
+<code>Rim-Host-Signature</code> and <code>Retry-After</code> unchanged; the client verifies the host&#39;s signature.
+The relay&#39;s own refusals are <code>{&quot;error&quot;:&quot;&lt;code&gt;&quot;,&quot;message&quot;:&quot;...&quot;}</code>, and a host that gave no
+verified answer is 502 with <code>&quot;error&quot;:&quot;upstream_unavailable&quot;</code> and <code>hostServerId</code>. Bodies are
+limited to 32 MiB. <a href="../specs/server-to-server-v1.html"><code>specs/server-to-server-v1.md</code></a> (&quot;Spaces hosted elsewhere: the client&#39;s
+path&quot;) is the contract.</p>
+<h3 id="server-to-server-s2sv1">Server to server: <code>/s2s/v1/...</code> <a class="anchor" href="#server-to-server-s2sv1" aria-label="Link to this section">#</a></h3>
+<p>Requests between servers, signed with the RFC 9421 profile of <a href="../specs/server-to-server-v1.html"><code>specs/server-to-server-v1.md</code></a>
+(&quot;The S2S transport&quot;). They carry no cookies and sit outside the origin check. A client never
+calls them.</p>
+<h2 id="sessions-and-csrf">Sessions and CSRF <a class="anchor" href="#sessions-and-csrf" aria-label="Link to this section">#</a></h2>
+<h3 id="the-session-cookie">The session cookie <a class="anchor" href="#the-session-cookie" aria-label="Link to this section">#</a></h3>
+<p>A session is the <code>rim_session</code> cookie: <code>HttpOnly</code>, <code>SameSite=Lax</code>, <code>Path=/</code>, and <code>Secure</code> when
+<code>RIM_FORCE_SECURE_COOKIES=true</code> or when a trusted proxy (<code>RIM_TRUST_FORWARDED_HEADERS=true</code>)
+reports <code>https</code>. These mutations set it, and need no session or CSRF header:</p>
+<ul>
+<li><strong>Key login.</strong> <code>keyLoginChallenge</code> returns <code>{ challengeId, nonce, expiresAt }</code>. The client
+signs a <code>login</code> statement over the nonce with its device key and calls <code>loginWithKey(proof)</code>.
+The session is bound to that device. <a href="../specs/key-identity-v1.html"><code>specs/key-identity-v1.md</code></a> (&quot;Challenge login&quot;) has the
+statement, the audiences and the limits.</li>
+<li><strong>Key-only signup.</strong> <code>signupWithKey</code> creates the account and signs it in.</li>
+<li><strong>Password login.</strong> <code>login(input: { username, password })</code>. An account without a password,
+such as a key-only account or one that enrolled an identity key, cannot sign in this way.</li>
+<li><strong>Invite signup.</strong> <code>signupWithInvite</code> creates a password account and signs it in.</li>
+</ul>
+<p>When the server has terms of service (<code>serverInfo.termsUrl</code> is set), both signups must accept
+them: <code>acceptedTermsUrl</code> in the input carries that URL unchanged. A signup without it, or with
+another URL, answers <code>VALIDATION</code>. The server records the acceptance and its time on the
+account. Without terms on the server the field is ignored.</p>
+<p><code>logout</code> ends the session and clears both cookies; <code>logoutOtherSessions</code> ends every other
+session of the account.</p>
+<p>A session lasts <code>RIM_SESSION_TTL_DAYS</code> days (default 30) from sign-in: the cookie&#39;s <code>Max-Age</code>
+and the server-side expiry are both set from it, and using the session does not extend it. A
+missing, unknown, revoked or expired session cookie makes the request anonymous; a field that
+needs a session then answers <code>UNAUTHENTICATED</code>.</p>
+<h3 id="the-csrf-token">The CSRF token <a class="anchor" href="#the-csrf-token" aria-label="Link to this section">#</a></h3>
+<p>The mutations that set a session also set the <code>rim_csrf</code> cookie, with the same attributes except
+that it is readable by scripts (not <code>HttpOnly</code>). Its value is an HMAC over the session token. The
+client copies it into the <code>X-CSRF-Token</code> header. The server accepts a request when the header
+equals the cookie and the token is bound to the request&#39;s session cookie.</p>
+<p>The header is required on:</p>
+<ul>
+<li>every GraphQL request that contains a mutation, with the exceptions below. The check runs
+once for the whole batch, before anything executes, and a query that cannot be parsed counts
+as needing it;</li>
+<li><code>POST /api/files/upload</code>, <code>POST /api/files/avatar</code> and <code>POST /api/plugin-bundles/{server_id}</code>;</li>
+<li><code>POST /api/remote/...</code>.</li>
+</ul>
+<p>Queries and subscriptions never need it. The mutations used before a session exists are exempt:
+<code>login</code>, <code>logout</code>, <code>signupWithInvite</code>, <code>requestPasswordReset</code>, <code>resetPassword</code>,
+<code>keyLoginChallenge</code>, <code>loginWithKey</code>, <code>signupWithKey</code>, <code>sendDeviceLinkOffer</code> and
+<code>applyRemoteRevocation</code>. <code>rotateIdentityKey</code> and <code>cancelDeviceLink</code> are exempt only when the
+request carries no session cookie. A request is exempt only when every mutation field in it is.</p>
+<p>A GraphQL request refused by the check gets an error with a message such as
+<code>csrf validation failed</code> and no <code>extensions.code</code>; a file route answers 403.</p>
+<h2 id="origins">Origins <a class="anchor" href="#origins" aria-label="Link to this section">#</a></h2>
+<p>A request without an <code>Origin</code> header passes. A request whose <code>Origin</code> is not allowed is refused
+with 400 on every route under <code>/api</code>. The allowed origins are:</p>
+<ul>
+<li><strong>The server&#39;s own origin.</strong> The origin of <code>RIM_PUBLIC_BASE_URL</code> when it is set. Otherwise the
+origin the request addressed: its scheme and <code>Host</code>, or <code>X-Forwarded-Proto</code> and
+<code>X-Forwarded-Host</code> when <code>RIM_TRUST_FORWARDED_HEADERS=true</code>.</li>
+<li><strong>One configured extra origin</strong>, <code>RIM_CORS_ALLOWED_ORIGIN</code>, such as a development server of
+the web client on another port.</li>
+<li><strong>The packaged desktop app</strong>, from any server without configuration: <code>tauri://localhost</code>,
+<code>http://tauri.localhost</code> and <code>https://tauri.localhost</code>.</li>
+</ul>
+<p>Origins compare without case and without a default port. The browser may send <code>Content-Type</code>,
+<code>Authorization</code>, <code>X-CSRF-Token</code> and <code>X-Request-Id</code>, with credentials, on <code>GET</code>, <code>POST</code> and
+<code>OPTIONS</code>; a preflight is cached for an hour, and the browser may read the <code>Retry-After</code> header
+of an answer. The discovery document, the probes and <code>/s2s/v1/...</code> are outside this check.</p>
+<h2 id="limits">Limits <a class="anchor" href="#limits" aria-label="Link to this section">#</a></h2>
+<p>An operator can limit what one client sends. Every limit is off unless its variable is set to
+a number above 0, so a private server limits nothing but the batch size.</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Limits</th>
+<th>Over the limit</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>RIM_RATE_REQUESTS_PER_MIN_PER_IP</code></td>
+<td>Requests to routes under <code>/api</code> per client address per minute, with a burst of the same size. IPv6 addresses count per /64.</td>
+<td>HTTP 429, <code>Retry-After</code> and <code>{&quot;error&quot;:&quot;rate_limited&quot;,&quot;retryAfterSeconds&quot;:n}</code></td>
+</tr>
+<tr>
+<td><code>RIM_RATE_MUTATIONS_PER_MIN_PER_SESSION</code></td>
+<td>Mutation fields per session per minute, each field and alias counted; a request without a session counts against its address.</td>
+<td><code>RATE_LIMITED</code> with <code>retryAfterSeconds</code>; nothing in the request runs</td>
+</tr>
+<tr>
+<td><code>RIM_RATE_MESSAGES_PER_MIN_PER_USER</code>, <code>RIM_RATE_MESSAGES_BURST</code></td>
+<td>Messages per user per minute, sent, replied, forwarded or encrypted, with a burst defaulting to the per-minute number.</td>
+<td><code>RATE_LIMITED</code> with <code>retryAfterSeconds</code> on the mutation</td>
+</tr>
+<tr>
+<td><code>RIM_RATE_WS_CONNECTIONS_PER_USER</code></td>
+<td>Open WebSocket connections per user.</td>
+<td>HTTP 429 on the upgrade</td>
+</tr>
+<tr>
+<td><code>RIM_RATE_SUBSCRIPTIONS_PER_CONNECTION</code></td>
+<td>Active subscriptions per WebSocket connection.</td>
+<td><code>TOO_MANY_SUBSCRIPTIONS</code> on the subscription</td>
+</tr>
+<tr>
+<td><code>RIM_API_MAX_BATCH</code></td>
+<td>GraphQL requests in one batch, default 20.</td>
+<td>HTTP 400 and <code>{&quot;error&quot;:&quot;batch_too_large&quot;}</code></td>
+</tr>
+</tbody></table></div>
+<p>The client address is the TCP peer, or with <code>RIM_TRUST_FORWARDED_HEADERS=true</code> the client a
+<code>Forwarded</code> or <code>X-Forwarded-For</code> header names. The limits are kept in memory by each server
+process, so a restart forgets them and two processes behind one proxy each allow the full
+amount. <code>/healthz</code>, <code>/readyz</code>, discovery and <code>/s2s/v1/...</code> are outside the per-address limit;
+server-to-server traffic has its own, <code>RIM_S2S_PEER_RATE_PER_MIN</code>.</p>
+<p>An operator can also block an address or range (<code>rim_server ip block</code>). A blocked address is
+answered 403 with <code>{&quot;error&quot;:&quot;blocked&quot;}</code> and nothing else on every route but <code>/healthz</code>: the API,
+the readiness probe, discovery and <code>/s2s/v1/...</code>. The address is found the same way as for the
+limits.</p>
+<h2 id="errors">Errors <a class="anchor" href="#errors" aria-label="Link to this section">#</a></h2>
+<h3 id="graphql-error-codes">GraphQL error codes <a class="anchor" href="#graphql-error-codes" aria-label="Link to this section">#</a></h3>
+<p>Every error a resolver returns carries <code>extensions.code</code>. A client branches on the code, never
+on the message.</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Meaning</th>
+<th>Extra extensions</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>UNAUTHENTICATED</code></td>
+<td>No valid session, or a sign-in attempt that failed.</td>
+<td></td>
+</tr>
+<tr>
+<td><code>FORBIDDEN</code></td>
+<td>The caller may not do this. Also: a session not bound to a device asking for device-only data, a relay-only field on a server that is not a relay, a remote member&#39;s account mutation.</td>
+<td></td>
+</tr>
+<tr>
+<td><code>NOT_FOUND</code></td>
+<td>The object does not exist, or is hidden from the caller (<a href="messaging.html"><code>messaging.md</code></a> says where).</td>
+<td></td>
+</tr>
+<tr>
+<td><code>VALIDATION</code></td>
+<td>The input is malformed or out of range, or the feature does not exist in the direct space; the message says what.</td>
+<td></td>
+</tr>
+<tr>
+<td><code>CONFLICT</code></td>
+<td>The change conflicts with the current state; the message says how.</td>
+<td></td>
+</tr>
+<tr>
+<td><code>EMAIL_TAKEN</code></td>
+<td>The signup email address is already in use.</td>
+<td></td>
+</tr>
+<tr>
+<td><code>INVALID_TOKEN</code></td>
+<td>An invite token is unknown, used up or revoked.</td>
+<td></td>
+</tr>
+<tr>
+<td><code>EXPIRED_TOKEN</code></td>
+<td>An invite token has expired.</td>
+<td></td>
+</tr>
+<tr>
+<td><code>RATE_LIMITED</code></td>
+<td>Too many attempts, mutations or messages; wait before retrying (see &quot;Limits&quot;).</td>
+<td><code>retryAfterSeconds</code></td>
+</tr>
+<tr>
+<td><code>TOO_MANY_SUBSCRIPTIONS</code></td>
+<td>The WebSocket connection holds as many subscriptions as it may.</td>
+<td><code>limit</code></td>
+</tr>
+<tr>
+<td><code>CONFIRMATION_STALE</code></td>
+<td>A command confirmation expired or was already used; ask again.</td>
+<td></td>
+</tr>
+<tr>
+<td><code>CONFIRMATION_FAILED</code></td>
+<td>A command confirmation failed verification: it was made for another command, context or caller.</td>
+<td></td>
+</tr>
+<tr>
+<td><code>CONVERSATION_ARCHIVED</code></td>
+<td>The conversation is archived and read-only.</td>
+<td></td>
+</tr>
+<tr>
+<td><code>TIMED_OUT</code></td>
+<td>The caller is timed out in this workspace.</td>
+<td><code>until</code> (RFC 3339)</td>
+</tr>
+<tr>
+<td><code>STALE_EPOCH</code></td>
+<td>An MLS message or Commit for an epoch that is not current; fetch the Commits and retry.</td>
+<td><code>incarnation</code>, <code>epoch</code></td>
+</tr>
+<tr>
+<td><code>MLS_COMMIT_REQUIRED</code></td>
+<td>An encrypted message needs a Commit first.</td>
+<td><code>reason</code>: <code>pendingRemovals</code> or <code>noGroup</code></td>
+</tr>
+<tr>
+<td><code>FEATURE_DISABLED</code></td>
+<td>The feature is off or unavailable on this instance; <code>serverInfo.features</code> says why.</td>
+<td><code>feature</code></td>
+</tr>
+<tr>
+<td><code>UPSTREAM_UNAVAILABLE</code></td>
+<td>Another server this request needed could not be reached or gave no verified answer.</td>
+<td><code>hostServerId</code> (or null), <code>origin</code> when known</td>
+</tr>
+<tr>
+<td><code>UNAVAILABLE</code></td>
+<td>A dependency of the server is unavailable.</td>
+<td></td>
+</tr>
+<tr>
+<td><code>TIMEOUT</code></td>
+<td>A dependency of the server timed out.</td>
+<td></td>
+</tr>
+<tr>
+<td><code>INTERNAL</code></td>
+<td>A server fault; the log has the detail under the error&#39;s <code>request_id</code>.</td>
+<td></td>
+</tr>
+</tbody></table></div>
+<p>Errors raised by GraphQL itself, before a resolver runs (a query that does not parse or does not
+match the schema), carry no <code>code</code>, and neither does the CSRF refusal.</p>
+<h3 id="refusals-before-a-route-runs">Refusals before a route runs <a class="anchor" href="#refusals-before-a-route-runs" aria-label="Link to this section">#</a></h3>
+<p>The limits and the IP deny list under &quot;Limits&quot; refuse a request before its route runs, with a
+JSON body naming the refusal:</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Body</th>
+<th>When</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>400</td>
+<td><code>{&quot;error&quot;:&quot;batch_too_large&quot;}</code></td>
+<td>A GraphQL batch over <code>RIM_API_MAX_BATCH</code>.</td>
+</tr>
+<tr>
+<td>429</td>
+<td><code>{&quot;error&quot;:&quot;rate_limited&quot;,&quot;retryAfterSeconds&quot;:n}</code>, with <code>Retry-After: n</code></td>
+<td>The client address is over <code>RIM_RATE_REQUESTS_PER_MIN_PER_IP</code>.</td>
+</tr>
+<tr>
+<td>429</td>
+<td><code>{&quot;error&quot;:&quot;too_many_connections&quot;}</code></td>
+<td>A WebSocket upgrade over <code>RIM_RATE_WS_CONNECTIONS_PER_USER</code>.</td>
+</tr>
+<tr>
+<td>403</td>
+<td><code>{&quot;error&quot;:&quot;blocked&quot;}</code></td>
+<td>The client address is on the operator&#39;s IP deny list.</td>
+</tr>
+</tbody></table></div>
+<h3 id="errors-from-the-file-routes">Errors from the file routes <a class="anchor" href="#errors-from-the-file-routes" aria-label="Link to this section">#</a></h3>
+<p>The file and plugin bundle routes answer <code>{&quot;error&quot;:&quot;&lt;message&gt;&quot;}</code> with:</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Status</th>
+<th>When</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>400</td>
+<td>A malformed request or a validation failure.</td>
+</tr>
+<tr>
+<td>401</td>
+<td>No valid session.</td>
+</tr>
+<tr>
+<td>403</td>
+<td>No permission, a failed CSRF check, a timeout (with <code>until</code>), or a feature that is not enabled (with <code>&quot;code&quot;:&quot;FEATURE_DISABLED&quot;</code> and <code>feature</code>).</td>
+</tr>
+<tr>
+<td>404</td>
+<td>Not found.</td>
+</tr>
+<tr>
+<td>409</td>
+<td>A conflict, or an archived conversation.</td>
+</tr>
+<tr>
+<td>413</td>
+<td>The body is over the route&#39;s limit.</td>
+</tr>
+<tr>
+<td>415</td>
+<td>A file type the route does not take.</td>
+</tr>
+<tr>
+<td>422</td>
+<td>A plugin bundle the service refused.</td>
+</tr>
+<tr>
+<td>429</td>
+<td>Rate limited, with a <code>Retry-After</code> header and <code>retryAfterSeconds</code>.</td>
+</tr>
+<tr>
+<td>500</td>
+<td>A server fault.</td>
+</tr>
+</tbody></table></div>
+<h2 id="pagination">Pagination <a class="anchor" href="#pagination" aria-label="Link to this section">#</a></h2>
+<p>Lists that can grow without bound use cursor pagination over a <code>(timestamp, id)</code> pair: each list
+has a fixed sort order, a request names a cursor and a direction (<code>Before</code> or <code>After</code> the cursor
+in that order), and a page returns its items with a <code>next</code> cursor to continue in the same
+direction and a <code>prev</code> cursor to go back. <a href="pagination.html"><code>pagination.md</code></a> is the contract and lists the order of
+each list.</p>
+<h2 id="telling-which-server-you-talk-to">Telling which server you talk to <a class="anchor" href="#telling-which-server-you-talk-to" aria-label="Link to this section">#</a></h2>
+<p><code>serverInfo</code>, readable without a session, returns:</p>
+<ul>
+<li><strong><code>version</code></strong>: the server&#39;s release version, such as <code>0.1.0</code>.</li>
+<li><strong><code>apiVersion</code></strong>: the major version of the GraphQL API, an integer. It goes up when a field
+or argument is removed or changes meaning, so a client built for a lower or higher number
+knows it may misread the server. Additions do not change it.</li>
+<li><strong><code>features</code></strong>: every optional feature with <code>key</code>, <code>state</code> (<code>ENABLED</code>, <code>DISABLED</code> or
+<code>UNAVAILABLE</code>) and, for an unavailable one, <code>reason</code>. A client hides the surfaces of a feature
+that is not enabled and ignores a <code>key</code> it does not know (<a href="operations/features.html"><code>operations/features.md</code></a>).</li>
+<li><strong><code>auditRetentionDays</code></strong>: how many days a command audit row is kept, or null when rows are
+kept forever (<a href="operations/audit-retention.html"><code>operations/audit-retention.md</code></a>).</li>
+<li><strong><code>instanceNotice</code></strong>: a short text from the operator, at most 500 characters, such as who
+runs the server; null when there is none. A client shows it where people sign up or sign in.</li>
+<li><strong><code>termsUrl</code></strong>: the terms of service a signup accepts, an absolute http(s) URL; null when the
+server has none. A client links it at signup and sends it back as <code>acceptedTermsUrl</code>.</li>
+</ul>
+<p>The discovery document carries the same <code>features</code> for a client that has not connected yet.</p>
+<h2 id="the-full-graphql-reference">The full GraphQL reference <a class="anchor" href="#the-full-graphql-reference" aria-label="Link to this section">#</a></h2>
+<p>The schema the server runs is the reference: <code>GET /api/sdl</code> returns it in SDL, with every
+type, field and argument and their descriptions. The <code>rim-ui</code> clients generate their TypeScript
+types from it:</p>
+<pre><code class="language-sh">curl -s http://localhost:8080/api/sdl &gt; ../rim-ui/schema.graphql
+cd ../rim-ui &amp;&amp; npm run codegen</code></pre>
+<p>Enum values appear in <code>SCREAMING_SNAKE</code> and fields in <code>camelCase</code>. The models in <a href="messaging.html"><code>messaging.md</code></a>,
+<a href="search.html"><code>search.md</code></a>, <a href="message-change-feed.html"><code>message-change-feed.md</code></a>, <a href="command_model.html"><code>command_model.md</code></a> and the specs in <a href="https://github.com/rim-platform/rim-server/tree/c86029b35a7ef7770b05e7bda62909f988343f7f/docs/specs"><code>specs/</code></a> explain what
+the fields mean.</p>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/docs/api.md">rim-server/docs/api.md</a> at <code>c86029b</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+<script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
+</body>
+</html>

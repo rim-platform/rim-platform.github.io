@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Transactional Email · RIM</title>
+<meta name="description" content="RIM sends transactional email for password resets, invites, and notification digests. This document covers the RIM_SMTP_* config matrix, TLS modes, the three wired flows, retry policy, and the &quot;unconfigured → log-only&quot; …">
+<link rel="icon" href="../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../index.html" aria-label="RIM home">
+      <picture><source srcset="../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../index.html#what">What RIM is</a>
+      <a href="../index.html#how">How it works</a>
+      <a href="self-hosting.html">Self-host</a>
+      <a href="../configure/index.html">Configure</a>
+      <a href="index.html" aria-current="page">Docs</a>
+      <a href="../api/index.html">API</a>
+      <a href="../specs/index.html">Specs</a>
+      <a href="contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="index.html">Docs</a><span aria-hidden="true">/</span><a href="operators.html">Operators</a><span aria-hidden="true">/</span><span>Transactional Email</span></div>
+  <div class="page with-toc">
+    <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
+<ol>
+<li><a href="#config-matrix">Config matrix</a><ol><li><a href="#tls-modes">TLS modes</a></li><li><a href="#rim_public_base_url-and-link-building">RIM_PUBLIC_BASE_URL and link building</a></li></ol></li>
+<li><a href="#wired-flows">Wired flows</a><ol><li><a href="#password-reset">Password reset</a></li><li><a href="#invites">Invites</a></li><li><a href="#notification-digest">Notification digest</a></li></ol></li>
+<li><a href="#retry-policy">Retry policy</a></li>
+<li><a href="#dependency">Dependency</a></li>
+<li><a href="#not-handled">Not handled</a></li>
+</ol>
+</details></aside>
+    <main id="content" class="prose">
+<h1 id="transactional-email">Transactional Email</h1>
+<p>RIM sends transactional email for password resets, invites, and notification digests. This
+document covers the <code>RIM_SMTP_*</code> config matrix, TLS modes, the three wired flows, retry policy,
+and the &quot;unconfigured → log-only&quot; fallback behavior.</p>
+<h2 id="config-matrix">Config matrix <a class="anchor" href="#config-matrix" aria-label="Link to this section">#</a></h2>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th><code>RIM_SMTP_HOST</code></th>
+<th><code>RIM_SMTP_FROM</code></th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>unset</td>
+<td>—</td>
+<td><code>LogEmailSender</code> — every send is logged (<code>to</code>/<code>subject</code> only, never the body), nothing is delivered.</td>
+</tr>
+<tr>
+<td>set</td>
+<td>unset</td>
+<td>Same as above — <code>RIM_SMTP_FROM</code> is also required.</td>
+</tr>
+<tr>
+<td>set</td>
+<td>set</td>
+<td><code>SmtpEmailSender</code> — real SMTP delivery via <code>lettre</code>.</td>
+</tr>
+</tbody></table></div>
+<p><code>RIM_FEATURES_DISABLED=email</code> overrides the matrix: every message is dropped, the digest job does
+not run and <code>requestPasswordReset</code> answers <code>FEATURE_DISABLED</code>. Without SMTP, <code>serverInfo.features</code>
+reports email as <code>UNAVAILABLE</code> (<a href="operations/features.html"><code>docs/operations/features.md</code></a>).</p>
+<p>Both <code>RIM_SMTP_HOST</code> and <code>RIM_SMTP_FROM</code> must be present to enable real delivery
+(<code>SmtpConfig::from_parts</code>); this is the minimum needed to construct a <code>From:</code> mailbox and a
+transport. Everything else is optional:</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>RIM_SMTP_HOST</code></td>
+<td>—</td>
+<td>Required for real delivery.</td>
+</tr>
+<tr>
+<td><code>RIM_SMTP_PORT</code></td>
+<td><code>587</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>RIM_SMTP_USERNAME</code></td>
+<td>unset</td>
+<td>Omit for an unauthenticated relay (e.g. localhost dev SMTP).</td>
+</tr>
+<tr>
+<td><code>RIM_SMTP_PASSWORD</code></td>
+<td>unset</td>
+<td>Redacted in <code>RIMConfig</code>&#39;s <code>Debug</code> output. Only used if <code>RIM_SMTP_USERNAME</code> is also set.</td>
+</tr>
+<tr>
+<td><code>RIM_SMTP_FROM</code></td>
+<td>—</td>
+<td>Required. e.g. <code>&quot;RIM &lt;noreply@example.com&gt;&quot;</code>.</td>
+</tr>
+<tr>
+<td><code>RIM_SMTP_TLS</code></td>
+<td><code>starttls</code></td>
+<td><code>starttls</code> | <code>implicit</code> | <code>none</code>. Unrecognized values fall back to <code>starttls</code>.</td>
+</tr>
+<tr>
+<td><code>RIM_PUBLIC_BASE_URL</code></td>
+<td>unset</td>
+<td>e.g. <code>https://rim.example.com</code>. Required to build clickable links (see below).</td>
+</tr>
+</tbody></table></div>
+<h3 id="tls-modes">TLS modes <a class="anchor" href="#tls-modes" aria-label="Link to this section">#</a></h3>
+<ul>
+<li><strong><code>starttls</code></strong> (default) — connect in plaintext, then upgrade via <code>STARTTLS</code>. Standard for
+port 587.</li>
+<li><strong><code>implicit</code></strong> — connection is wrapped in TLS from the first byte. Standard for port 465.</li>
+<li><strong><code>none</code></strong> — no TLS at all. Only appropriate for a trusted local relay (dev, mailpit, a
+localhost container) — never use against a real mail server.</li>
+</ul>
+<h3 id="rim_public_base_url-and-link-building"><code>RIM_PUBLIC_BASE_URL</code> and link building <a class="anchor" href="#rim_public_base_url-and-link-building" aria-label="Link to this section">#</a></h3>
+<p>Every email that includes a link (<code>reset-password</code>, <code>join</code>, digest permalinks) needs a base
+URL to build it from. If <code>RIM_PUBLIC_BASE_URL</code> is unset:</p>
+<ul>
+<li>Password reset / invite emails fall back to including the <strong>bare token</strong> instead of a link
+(a warning is logged). The user has to construct the URL themselves — acceptable for local
+dev, not for production.</li>
+<li>Notification digests are sent without links.</li>
+</ul>
+<p>Links are always a <strong>path segment</strong>, never a <code>?token=</code> query string:</p>
+<ul>
+<li>Password reset: <code>{RIM_PUBLIC_BASE_URL}/reset-password/{raw_token}</code></li>
+<li>Invite (server or instance): <code>{RIM_PUBLIC_BASE_URL}/join/{raw_token}</code></li>
+</ul>
+<p>This matters for two reasons: query strings would fail to route against the frontend&#39;s
+<code>/reset-password/:token</code> and <code>/join/:token</code> routes, and the reset-password page ships a
+<code>&lt;meta name=&quot;referrer&quot; content=&quot;no-referrer&quot;&gt;</code> specifically so a path-segment token isn&#39;t
+leaked via the <code>Referer</code> header on outbound links — a query-string token would defeat that.
+The token is percent-encoded defensively before being placed in the path, even though the
+<code>rim_rst_</code>/<code>rim_inv_</code>/<code>rim_iinv_</code>-prefixed base64url tokens are already path-safe.</p>
+<h2 id="wired-flows">Wired flows <a class="anchor" href="#wired-flows" aria-label="Link to this section">#</a></h2>
+<h3 id="password-reset">Password reset <a class="anchor" href="#password-reset" aria-label="Link to this section">#</a></h3>
+<p><code>request_reset</code> looks up the user by username, creates the reset token as before, then builds
+the reset link and sends <code>templates::password_reset(to, link)</code>. <strong>Send failure is non-fatal</strong> —
+the request still returns <code>Ok(())</code> either way, so reset requests never leak whether a username
+exists and never fail because of an SMTP hiccup.</p>
+<h3 id="invites">Invites <a class="anchor" href="#invites" aria-label="Link to this section">#</a></h3>
+<p><code>createInvite</code> accepts an optional <code>recipientEmail</code>. If provided:</p>
+<ol>
+<li>The address is validated server-side (same format check used for signup emails) <strong>before</strong>
+the invite is persisted — a malformed address returns a validation error immediately, rather
+than silently dropping the invite email after the invite is already created.</li>
+<li>After the invite is created, the invite link is built and
+<code>templates::invite(to, link)</code> is sent. <strong>Send failure is non-fatal</strong> — the invite is still
+created and the raw token is still returned in the response either way (the copy-paste flow
+keeps working even if email delivery fails).</li>
+</ol>
+<p>If <code>recipientEmail</code> is omitted, no email is sent and the raw token is the only way to share the
+invite.</p>
+<h3 id="notification-digest">Notification digest <a class="anchor" href="#notification-digest" aria-label="Link to this section">#</a></h3>
+<p>A user can ask for unread notifications by email: <code>digest</code> in their workspace notification
+settings is <code>OFF</code> (default), <code>HOURLY</code> or <code>DAILY</code> (<a href="messaging.html"><code>docs/messaging.md</code></a>, Notification rules). A
+periodic job (<code>rim_infra_services::notification::DefaultNotificationJobs</code>, driven from
+<a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/rim_server/src/app.rs"><code>rim_server/src/app.rs</code></a>, every <code>RIM_NOTIFICATION_DIGEST_INTERVAL_SECS</code> seconds, default 900, minimum 60) sends one email per user per workspace when all of these hold:</p>
+<ul>
+<li>the oldest unread, un-emailed notification is at least one interval old (hourly: 60 minutes,
+daily: 24 hours);</li>
+<li>the previous digest in that workspace (the newest <code>emailed_at</code>), if any, is at least one
+interval old;</li>
+<li>the user has had no presence heartbeat (or disconnect) in the workspace for 15 minutes.</li>
+</ul>
+<p>The email (template <code>notification_digest</code>) lists the count and the notifications grouped by
+conversation, oldest first, at most 50 per email (the rest go out with the next digest): each
+item is the first 80 characters of the message text, whitespace flattened, HTML-escaped in the
+HTML part, linked to the message permalink
+(<code>{RIM_PUBLIC_BASE_URL}/workspaces/{server}/conversations/{conversation}/messages/{message}</code>, with
+<code>/threads/{thread}</code> for a reply; no links when the base URL is unset). The subject is only
+&quot;<code>N unread notification(s) in &lt;workspace&gt;</code>&quot;, so <code>LogEmailSender</code>, which logs recipient and subject,
+never logs message text. After a successful send the listed notifications get <code>emailed_at</code>; a
+failed send leaves them pending for the next run. Deleted messages are skipped. The job assumes it
+runs on one node.</p>
+<p>Notifications older than 90 days are deleted by an hourly retention task in the same loop.</p>
+<h2 id="retry-policy">Retry policy <a class="anchor" href="#retry-policy" aria-label="Link to this section">#</a></h2>
+<p><code>SmtpEmailSender</code> retries <strong>transient</strong> failures internally — the caller only ever sees a final
+<code>Ok</code>/<code>Err</code>:</p>
+<ul>
+<li>Up to 3 attempts total (1 initial + 2 retries), exponential backoff starting at 500ms,
+doubling each retry, capped at 5s.</li>
+<li><strong>Retried:</strong> 4xx SMTP replies, connection/network/TLS errors — anything that isn&#39;t classified
+as permanent.</li>
+<li><strong>Not retried:</strong> 5xx SMTP replies (invalid recipient, authentication failure) — these fail
+immediately, since retrying won&#39;t fix them.</li>
+<li>Each retry is logged at <code>warn</code> with the attempt number and error; the final failure (if any)
+is logged at <code>error</code>.</li>
+</ul>
+<h2 id="dependency">Dependency <a class="anchor" href="#dependency" aria-label="Link to this section">#</a></h2>
+<p><code>lettre = &quot;0.11&quot;</code> (rustls-only feature set: <code>tokio1-rustls-tls</code>, <code>smtp-transport</code>, <code>builder</code>,
+<code>pool</code> — no <code>native-tls</code>/OpenSSL, matching the rest of this workspace&#39;s pure-rustls stack).
+Dual MIT/Apache-2.0 licensed, actively maintained (<code>lettre v0.11.22</code> as of this writing).</p>
+<h2 id="not-handled">Not handled <a class="anchor" href="#not-handled" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>Bounce handling, DKIM/SPF setup</strong> — operator/infrastructure concerns, not application code.</li>
+<li><strong>Richer HTML email theming</strong> — current HTML bodies are a basic inline-styled paragraph, not a
+branded template.</li>
+<li><strong>Live SMTP integration test</strong> — none exists; a <code>lettre</code> stub transport or a mailpit container
+would be the path if one is wanted.</li>
+</ul>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/docs/email.md">rim-server/docs/email.md</a> at <code>c86029b</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+<script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
+</body>
+</html>
