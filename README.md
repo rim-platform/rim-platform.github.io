@@ -14,9 +14,35 @@ The rest is rendered from the code repositories so the site never drifts from th
 | API reference | the GraphQL schema the server publishes at `/api/sdl` (`rim-ui/schema.graphql` is the committed copy) |
 | Plugin and user guides | `rim-ui/docs` |
 
-`build/` (ignored) is where a build script will render those pages; the rendered output is
-committed under `docs/`, `api/` and `specs/` once the script exists, so Pages serves static
-files and nothing runs at publish time.
+The rendered pages are committed under `docs/`, `specs/`, `configure/`, `api/` and `404.html`,
+so Pages serves static files and nothing runs at publish time.
+
+## Building
+
+Node 22 or later. The build reads both code repositories through git (`git show` at a ref), so
+it never checks them out or builds them; by default they are the siblings `../rim-server` and
+`../rim-ui` at `origin/master`.
+
+```sh
+npm ci
+npm run build                     # render every page, then run the checks
+npm run check                     # the checks alone
+
+# other locations or refs
+RIM_SERVER_DIR=~/src/rim-server RIM_UI_DIR=~/src/rim-ui \
+RIM_SERVER_REF=origin/master RIM_UI_REF=origin/master npm run build
+```
+
+`scripts/build.mjs` renders the pages with one layout (`templates/layout.html`,
+`templates/site.css`, copied to `assets/site.css`). `scripts/lib/docs.mjs` lists the Markdown
+files and the docs groups, `scripts/lib/configure.mjs` reads `rim_server/src/config.rs` and the
+`Dockerfile`, and `scripts/lib/graphql.mjs` reads `rim-ui/schema.graphql`. The checks fail the
+build on a broken internal link or fragment, a page over 1 MB, a page without a title or the
+viewport meta, a duplicate id or an unbalanced tag. A build of the same commits produces the
+same files, so a rebuild without upstream changes leaves no diff. Commit the output together
+with the commits it names in each page's footer.
+
+`index.html` is written by hand and is not touched by the build; the checks cover its links.
 
 The repository stays private until the code repositories go public; the four flip together, and
 Pages is switched on then (source: branch `master`, folder `/`).
