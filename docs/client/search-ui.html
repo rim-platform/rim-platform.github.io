@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Search UI · RIM</title>
+<meta name="description" content="Covers the frontend of full-text message search: the paginated useSearchMessages hook, the SearchOverlay flat-list UI, SearchSnippet's sanitization, and the operator-discovery affordance. Backend contract and operator …">
+<link rel="icon" href="../../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../../index.html" aria-label="RIM home">
+      <picture><source srcset="../../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../../index.html#what">What RIM is</a>
+      <a href="../../index.html#how">How it works</a>
+      <a href="../self-hosting.html">Self-host</a>
+      <a href="../../configure/index.html">Configure</a>
+      <a href="../index.html" aria-current="page">Docs</a>
+      <a href="../../api/index.html">API</a>
+      <a href="../../specs/index.html">Specs</a>
+      <a href="../contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="../index.html">Docs</a><span aria-hidden="true">/</span><a href="../using-rim.html">Using RIM</a><span aria-hidden="true">/</span><span>Search UI</span></div>
+  <div class="page with-toc">
+    <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
+<ol>
+<li><a href="#recency-ordering-not-relevance">Recency ordering, not relevance</a></li>
+<li><a href="#flat-list-not-grouped-by-conversation">Flat list, not grouped by conversation</a></li>
+<li><a href="#pagination-ux">Pagination UX</a></li>
+<li><a href="#snippet-rendering--dompurify-mark-only-sanitization-security-critical">Snippet rendering — DOMPurify mark-only sanitization (security-critical)</a></li>
+<li><a href="#local-search-desktop-app">Local search (desktop app)</a></li>
+<li><a href="#operator-discovery">Operator discovery</a></li>
+</ol>
+</details></aside>
+    <main id="content" class="prose">
+<h1 id="search-ui">Search UI</h1>
+<p>Covers the frontend of full-text message search: the paginated
+<code>useSearchMessages</code> hook, the <code>SearchOverlay</code> flat-list UI, <code>SearchSnippet</code>&#39;s
+sanitization, and the operator-discovery affordance. Backend contract and operator
+semantics: <code>../rim-server/docs/search.md</code>.</p>
+<h2 id="recency-ordering-not-relevance">Recency ordering, not relevance <a class="anchor" href="#recency-ordering-not-relevance" aria-label="Link to this section">#</a></h2>
+<p><code>searchMessages</code> results are paginated by <strong>recency</strong> (<code>sentAt DESC, id DESC</code>), the
+same cursor contract as every other message list — <strong>not</strong> by <code>rank</code>. Each result
+still carries a <code>rank</code> (<code>ts_rank</code>) field, but it&#39;s display-only. This is a deliberate
+backend tradeoff: cursor pagination needs a stable, unique total order, and <code>ts_rank</code>
+is neither unique nor stable across concurrent inserts, so paginating by it would
+produce skips and duplicate rows across pages. See
+<code>../rim-server/docs/search.md</code>&#39;s &quot;Ranking vs. pagination&quot; section for the full
+rationale.</p>
+<p><strong>UI implication:</strong> don&#39;t present results as &quot;best match first&quot; — they&#39;re
+&quot;most recent first&quot;. <code>rank</code> is available on <code>SearchMessageItem</code> if a future UI wants
+a secondary sort <em>within</em> an already-loaded page, but nothing does that today.</p>
+<h2 id="flat-list-not-grouped-by-conversation">Flat list, not grouped by conversation <a class="anchor" href="#flat-list-not-grouped-by-conversation" aria-label="Link to this section">#</a></h2>
+<p>The previous UI grouped results by conversation (<code>ResultGroup</code>, with a <code>Tab</code>-to-next-
+group keyboard shortcut). That assumed the whole result set was present at once.
+With recency-ordered cursor pagination, a single conversation&#39;s hits can span
+multiple pages — grouping across an incrementally-loading list fragments and
+reorders as more pages load. <code>SearchOverlay</code> now renders a flat, recency-ordered
+list; each row shows its conversation label (<code># general</code> / <code>@ dm</code>) inline instead of
+under a group header. The <code>Tab</code>-next-group shortcut was removed along with grouping;
+<code>↑</code>/<code>↓</code>/<code>Enter</code>/<code>Esc</code> remain.</p>
+<h2 id="pagination-ux">Pagination UX <a class="anchor" href="#pagination-ux" aria-label="Link to this section">#</a></h2>
+<p><code>useSearchMessages</code> is a <code>useInfiniteQuery</code> over <code>SearchResultPage</code>. <code>SearchOverlay</code>:</p>
+<ul>
+<li>Auto-prefetches the next page (<code>fetchNextPage()</code>) once the keyboard-selected row is
+within 5 of the last loaded item, so scrolling/navigating through results feels
+continuous.</li>
+<li>Always renders an explicit <strong>&quot;Load more&quot;</strong> row at the list end while
+<code>hasNextPage</code> is true — a click/keyboard fallback for when the auto-prefetch
+hasn&#39;t fired (e.g. pure mouse hovering, which never moves the keyboard selection
+index). It&#39;s a normal keyboard-navigable row: <code>↓</code> can select it, <code>Enter</code> fetches
+the next page instead of jumping to a message.</li>
+<li>Selection resets when the user starts a <strong>new search</strong> (the raw query changes),
+not when a page is appended — resetting on every page load would fight in-progress
+keyboard navigation.</li>
+</ul>
+<h2 id="snippet-rendering--dompurify-mark-only-sanitization-security-critical">Snippet rendering — DOMPurify <code>mark</code>-only sanitization (security-critical) <a class="anchor" href="#snippet-rendering--dompurify-mark-only-sanitization-security-critical" aria-label="Link to this section">#</a></h2>
+<p><code>SearchResultMessage.headline</code> is a server-generated <code>ts_headline</code> snippet
+containing literal <code>&lt;mark&gt;…&lt;/mark&gt;</code> tags around matched terms — but the <em>surrounding
+text</em> is raw, unsanitized user message content, which may itself contain arbitrary
+markup an attacker embedded in a message (<code>&lt;img onerror=...&gt;</code>, <code>&lt;script&gt;</code>, etc.).
+<code>SearchSnippet</code> (<a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/src/features/messages/components/SearchSnippet.tsx"><code>src/features/messages/components/SearchSnippet.tsx</code></a>) sanitizes with:</p>
+<pre><code class="language-ts">DOMPurify.sanitize(headline, { ALLOWED_TAGS: [&quot;mark&quot;], ALLOWED_ATTR: [] });</code></pre>
+<p>This strips every tag except a bare <code>&lt;mark&gt;</code> and strips all attributes (including on
+<code>&lt;mark&gt;</code> itself, so an attacker can&#39;t smuggle <code>onclick</code> or similar through it),
+neutralizing injection while preserving the highlight markers. This is the one
+sanctioned DOMPurify-for-HTML pattern applied to search snippets — see
+<a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/CLAUDE.md"><code>CLAUDE.md</code></a>&#39;s &quot;DOMPurify on all user-generated HTML&quot; rule and
+<a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/src/shared/ui/MarkdownRenderer.tsx"><code>src/shared/ui/MarkdownRenderer.tsx</code></a> for the sibling pattern used for message bodies.</p>
+<p>There is <strong>no client-side substring highlighting</strong> — the server headline is the
+single source of truth for match highlighting. When <code>headline</code> is <code>null</code> (a purely
+operator-based query with no free-text component, e.g. <code>from:@alice</code>), <code>SearchSnippet</code>
+falls back to the plain <code>text</code>, rendered as ordinary React children (auto-escaped, no
+highlight — there&#39;s nothing server-side to highlight).</p>
+<h2 id="local-search-desktop-app">Local search (desktop app) <a class="anchor" href="#local-search-desktop-app" aria-label="Link to this section">#</a></h2>
+<p>The desktop app also searches its encrypted local message cache (<a href="local-message-cache.html"><code>docs/local-message-cache.md</code></a>,
+&quot;Local search&quot;). The behaviour, kept deliberately simple:</p>
+<ul>
+<li><strong>Server unreachable</strong> (a network failure or a 5xx, the same rule the timeline uses): each
+results page comes from the local index, with the same recency order and cursor, so paging
+works the same. The overlay says it is showing matches saved on this device. An answer the
+server gave (a GraphQL error, a 401) is never replaced with local results.</li>
+<li><strong>Online</strong>: the server&#39;s results as before, plus local matches the server did not return
+(<code>mergeSearchResults</code> in <code>api/localSearch.ts</code>). A local match is added only if no loaded page
+has the same message id, its conversation is in the channel or DM lists the server returned
+now, and, while more server pages remain, it is no older than the oldest loaded result, so the
+list stays in recency order as pages load. Up to the 100 newest local matches are considered.
+In practice this adds prefix matches (<code>depl</code> finds <code>deploy</code>) the server&#39;s stemmed search misses.</li>
+<li>A local match from a conversation the lists no longer show is left out and that conversation is
+synced again, which drops it from the cache if access was lost. The lists are the first pages
+the sidebar loads (100 channels, 50 DMs), so online, a match in a DM older than the 50 most
+recent is left out too (offline pages are not filtered by the lists).</li>
+<li>Local snippets are escaped by the cache before the <code>&lt;mark&gt;</code> tags are added, then go through
+the same <code>SearchSnippet</code> sanitization.</li>
+<li>The operators are parsed in the client for local search only (<code>parseLocalSearchQuery</code>), with
+the server&#39;s grammar; <code>in:#name</code> resolves against the channel lists, and an unknown channel
+matches nothing, as on the server. Server queries still pass the text through unchanged.</li>
+<li>The web app has no cache and behaves as before.</li>
+</ul>
+<h2 id="operator-discovery">Operator discovery <a class="anchor" href="#operator-discovery" aria-label="Link to this section">#</a></h2>
+<p>The <code>from:</code>/<code>in:</code>/<code>has:link</code>/<code>has:attachment</code>/<code>before:</code>/<code>after:</code> operators are parsed
+<strong>server-side</strong> for server search; the frontend passes <code>query</code> through unchanged (the
+only client parser is the local-search one above, deliberately conservative — see <code>../rim-server/docs/search.md</code> for the exact
+grammar). Discoverability is handled two ways:</p>
+<ul>
+<li>The search input&#39;s placeholder hints at the syntax directly:
+<code>Search — try from:@user, in:#channel, has:link, before:2026-01-01</code>.</li>
+<li>An info (<code>?</code>-style) icon button in the input row toggles a static &quot;Search
+operators&quot; legend popover listing each operator with a one-line example. It has no
+state beyond open/closed, and <code>Esc</code> closes it before falling through to clearing
+the query or closing the overlay (tips → query → overlay).</li>
+</ul>
+<p>The existing scope chip (All / current channel) is unchanged and sets an explicit
+<code>conversationId</code> on the query input; it <strong>coexists</strong> with an in-query <code>in:#x</code>
+operator rather than being unified with it — the backend intersects both. See the
+comment above <code>conversationId</code> in <code>SearchOverlay.tsx</code>.</p>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/docs/search-ui.md">rim-ui/docs/search-ui.md</a> at <code>58e3ec0</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+<script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
+</body>
+</html>

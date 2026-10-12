@@ -1,0 +1,417 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RIM Desktop UI Shell · RIM</title>
+<meta name="description" content="This document defines the intended desktop shell for the RIM UI client.">
+<link rel="icon" href="../../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../../index.html" aria-label="RIM home">
+      <picture><source srcset="../../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../../index.html#what">What RIM is</a>
+      <a href="../../index.html#how">How it works</a>
+      <a href="../self-hosting.html">Self-host</a>
+      <a href="../../configure/index.html">Configure</a>
+      <a href="../index.html" aria-current="page">Docs</a>
+      <a href="../../api/index.html">API</a>
+      <a href="../../specs/index.html">Specs</a>
+      <a href="../contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="../index.html">Docs</a><span aria-hidden="true">/</span><a href="../project.html">Project</a><span aria-hidden="true">/</span><span>RIM Desktop UI Shell</span></div>
+  <div class="page with-toc">
+    <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
+<ol>
+<li><a href="#goal">Goal</a></li>
+<li><a href="#ux-principles">UX Principles</a></li>
+<li><a href="#main-regions">Main Regions</a><ol><li><a href="#region-responsibilities">Region Responsibilities</a></li></ol></li>
+<li><a href="#recommended-default-layout">Recommended Default Layout</a></li>
+<li><a href="#layout-rules">Layout Rules</a></li>
+<li><a href="#side-rail">Side Rail</a></li>
+<li><a href="#tool-panel">Tool Panel</a></li>
+<li><a href="#main-workspace">Main Workspace</a></li>
+<li><a href="#thread-pane">Thread Pane</a></li>
+<li><a href="#overlay-surfaces">Overlay Surfaces</a></li>
+<li><a href="#navigation-model">Navigation Model</a><ol><li><a href="#global-navigation">Global Navigation</a></li><li><a href="#workspace-navigation">Workspace Navigation</a></li><li><a href="#ephemeral-ui-state">Ephemeral UI State</a></li></ol></li>
+<li><a href="#command-palette">Command Palette</a></li>
+<li><a href="#context-model-in-the-ui">Context Model In The UI</a></li>
+<li><a href="#keybind-ux">Keybind UX</a></li>
+<li><a href="#plugin-host-ux">Plugin Host UX</a></li>
+<li><a href="#trust-and-capability-ux">Trust And Capability UX</a></li>
+<li><a href="#messaging-rules-for-the-ui">Messaging Rules For The UI</a></li>
+<li><a href="#narrow-window-behavior">Narrow Window Behavior</a></li>
+<li><a href="#visual-direction">Visual Direction</a></li>
+<li><a href="#implementation-priorities">Implementation Priorities</a></li>
+<li><a href="#open-questions">Open Questions</a></li>
+<li><a href="#working-rule">Working Rule</a></li>
+</ol>
+</details></aside>
+    <main id="content" class="prose">
+<h1 id="rim-desktop-ui-shell">RIM Desktop UI Shell</h1>
+<p>This document defines the intended desktop shell for the RIM UI client.</p>
+<p>It is a design and implementation target for the Tauri app in this repository. It should help keep
+layout, interaction, and runtime decisions aligned with the product direction in <code>../rim-server</code>.</p>
+<h2 id="goal">Goal <a class="anchor" href="#goal" aria-label="Link to this section">#</a></h2>
+<p>RIM is a desktop-first chat workspace, but the product is not just messaging.</p>
+<p>The desktop client should combine:</p>
+<ul>
+<li>communication</li>
+<li>commands</li>
+<li>keybinds</li>
+<li>plugins</li>
+<li>context-aware workflows</li>
+</ul>
+<p>The app should feel closer to a focused workspace tool than a generic social or web chat client.</p>
+<h2 id="ux-principles">UX Principles <a class="anchor" href="#ux-principles" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>Keyboard-first: the command palette, keybinds, and focus movement are core UX, not hidden extras.</li>
+<li>Desktop-first: optimize for larger windows, denser information, and fast navigation.</li>
+<li>Communication-first: chat remains the main surface, even as workflows grow.</li>
+<li>Workflow-native: commands, context actions, and plugin panels should feel built in.</li>
+<li>Trust-visible: built-in, plugin, integration, and user-defined behavior should be distinguishable.</li>
+<li>Low-friction: common actions should require minimal pointer travel and minimal mode switching.</li>
+<li>Performance-aware: long lists and heavy surfaces should be built for virtualization and lazy loading.</li>
+</ul>
+<h2 id="main-regions">Main Regions <a class="anchor" href="#main-regions" aria-label="Link to this section">#</a></h2>
+<p>The shell is composed of five primary regions.</p>
+<ol>
+<li>Side Rail</li>
+<li>Tool Panel</li>
+<li>Main Workspace</li>
+<li>Thread Pane</li>
+<li>Overlay Surfaces</li>
+</ol>
+<h3 id="region-responsibilities">Region Responsibilities <a class="anchor" href="#region-responsibilities" aria-label="Link to this section">#</a></h3>
+<ul>
+<li>Side Rail: global navigation, workspace switching, built-in destinations, plugin entry points.</li>
+<li>Tool Panel: one active supporting panel at a time, such as inbox, channels, DMs, search, or plugin panels.</li>
+<li>Main Workspace: conversation header, message timeline, composer, and conversation-local actions.</li>
+<li>Thread Pane: threaded discussion tied to a selected root timeline message.</li>
+<li>Overlay Surfaces: command palette, quick switcher, context menus, dialogs, capability prompts.</li>
+</ul>
+<h2 id="recommended-default-layout">Recommended Default Layout <a class="anchor" href="#recommended-default-layout" aria-label="Link to this section">#</a></h2>
+<p>This is the recommended default desktop shell.</p>
+<pre><code class="language-text">+--------------------------------------------------------------------------------------------------+
+| Side Rail | Tool Panel                            | Main Workspace                    | Thread     |
+|-----------|----------------------------------------|-----------------------------------|------------|
+| Workspace | Inbox / Channels / DMs                 | Conversation Header               | Thread     |
+| Home      | Search / Filters                       |-----------------------------------| Header     |
+| Commands  | Pinned / Recent / Plugin Panel Slot    | Message Timeline                  |------------|
+| Plugins   |                                        |                                   | Replies    |
+| Activity  |                                        |                                   |            |
+| Settings  |                                        |                                   |            |
+|-----------|----------------------------------------|-----------------------------------|------------|
+| Profile   | Context / status / quick actions       | Composer                          | Reply Box  |
++--------------------------------------------------------------------------------------------------+</code></pre>
+<h2 id="layout-rules">Layout Rules <a class="anchor" href="#layout-rules" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>The side rail is always visible in the standard desktop layout.</li>
+<li>The tool panel shows one active panel at a time.</li>
+<li>The main workspace is always the visual center of the app.</li>
+<li>The thread pane is secondary and can be hidden when not in use.</li>
+<li>Overlays should never permanently replace the app shell; they sit on top of it.</li>
+</ul>
+<h2 id="side-rail">Side Rail <a class="anchor" href="#side-rail" aria-label="Link to this section">#</a></h2>
+<p>The side rail is the app&#39;s top-level navigation spine.</p>
+<p>Expected entries:</p>
+<ul>
+<li>workspace switcher</li>
+<li>home or inbox</li>
+<li>commands or quick actions entry</li>
+<li>plugin panels entry area</li>
+<li>activity or notifications</li>
+<li>settings</li>
+<li>current user/profile area</li>
+</ul>
+<p>Behavior:</p>
+<ul>
+<li>The side rail should be icon-first and compact.</li>
+<li>It should support unread and activity indicators.</li>
+<li>Plugin panels should appear alongside built-in destinations, but still be visually distinguishable.</li>
+<li>Switching side-rail destinations should update the active tool panel or global workspace mode.</li>
+</ul>
+<h2 id="tool-panel">Tool Panel <a class="anchor" href="#tool-panel" aria-label="Link to this section">#</a></h2>
+<p>The tool panel supports the main workspace instead of replacing it.</p>
+<p>Typical uses:</p>
+<ul>
+<li>workspace or conversation browsing</li>
+<li>inbox and recents</li>
+<li>channels and DMs</li>
+<li>search and filters</li>
+<li>pinned items</li>
+<li>plugin panels</li>
+</ul>
+<p>Rules:</p>
+<ul>
+<li>Only one tool panel is active at a time in v1.</li>
+<li>The panel should be collapsible.</li>
+<li>The panel may host plugin surfaces, but plugin UI should not own the whole app shell.</li>
+<li>Heavy panel content should be lazy-loaded.</li>
+</ul>
+<h2 id="main-workspace">Main Workspace <a class="anchor" href="#main-workspace" aria-label="Link to this section">#</a></h2>
+<p>The main workspace is where the active conversation lives.</p>
+<p>It should contain:</p>
+<ul>
+<li>conversation header</li>
+<li>timeline messages</li>
+<li>message actions</li>
+<li>composer</li>
+<li>local conversation context</li>
+</ul>
+<p>The main workspace should prioritize:</p>
+<ul>
+<li>message readability</li>
+<li>fast keyboard interaction</li>
+<li>minimal visual clutter</li>
+<li>clear hierarchy between header, timeline, and composer</li>
+</ul>
+<h2 id="thread-pane">Thread Pane <a class="anchor" href="#thread-pane" aria-label="Link to this section">#</a></h2>
+<p>Threads are a first-class messaging surface.</p>
+<p>Rules:</p>
+<ul>
+<li>A thread is anchored to a root timeline message.</li>
+<li>The root message remains in the main timeline.</li>
+<li>Thread replies live in the thread pane, not duplicated into the main timeline.</li>
+<li>The thread pane should open quickly from message actions or keyboard commands.</li>
+<li>The thread pane should preserve orientation: users should easily understand which root message they are reading.</li>
+</ul>
+<h2 id="overlay-surfaces">Overlay Surfaces <a class="anchor" href="#overlay-surfaces" aria-label="Link to this section">#</a></h2>
+<p>The shell should support several overlay surfaces.</p>
+<p>Primary overlays:</p>
+<ul>
+<li>command palette</li>
+<li>quick switcher</li>
+<li>message context menus</li>
+<li>confirmation dialogs</li>
+<li>capability prompts</li>
+<li>plugin trust and install dialogs</li>
+</ul>
+<p>Guidance:</p>
+<ul>
+<li>Overlays should be visually distinct from docked panels.</li>
+<li>Overlay opening and closing should preserve user context and focus.</li>
+<li>The command palette should feel global and central, not like a secondary utility.</li>
+</ul>
+<h2 id="navigation-model">Navigation Model <a class="anchor" href="#navigation-model" aria-label="Link to this section">#</a></h2>
+<p>The app should distinguish between three kinds of navigation.</p>
+<h3 id="global-navigation">Global Navigation <a class="anchor" href="#global-navigation" aria-label="Link to this section">#</a></h3>
+<ul>
+<li>workspace switching</li>
+<li>top-level destination changes</li>
+<li>plugin panel activation</li>
+</ul>
+<h3 id="workspace-navigation">Workspace Navigation <a class="anchor" href="#workspace-navigation" aria-label="Link to this section">#</a></h3>
+<ul>
+<li>switching conversations</li>
+<li>opening threads</li>
+<li>moving between inbox, channels, and search states</li>
+</ul>
+<h3 id="ephemeral-ui-state">Ephemeral UI State <a class="anchor" href="#ephemeral-ui-state" aria-label="Link to this section">#</a></h3>
+<ul>
+<li>command palette open or closed</li>
+<li>current selection</li>
+<li>focused message</li>
+<li>active composer state</li>
+<li>temporary search input</li>
+</ul>
+<p>Guidance:</p>
+<ul>
+<li>Persist shared product state through the backend when appropriate.</li>
+<li>Keep focus, selection, and other runtime-local state in the client.</li>
+<li>Do not over-promote temporary UI state into persisted backend state.</li>
+</ul>
+<h2 id="command-palette">Command Palette <a class="anchor" href="#command-palette" aria-label="Link to this section">#</a></h2>
+<p>The command palette is a primary surface, not an optional addon.</p>
+<p>It should:</p>
+<ul>
+<li>open from a global shortcut</li>
+<li>search commands quickly</li>
+<li>filter by current typed context</li>
+<li>allow missing-context commands if they can prompt for input</li>
+<li>show command metadata clearly</li>
+<li>show source and trust information</li>
+</ul>
+<p>Suggested command metadata in the palette:</p>
+<ul>
+<li>title</li>
+<li>short description</li>
+<li>source kind</li>
+<li>keybind, if any</li>
+<li>context requirements</li>
+<li>dangerous or capability-sensitive status</li>
+</ul>
+<p>Trust labels should make clear whether a command is:</p>
+<ul>
+<li>built in</li>
+<li>plugin-provided</li>
+<li>integration-provided</li>
+<li>user-defined</li>
+</ul>
+<h2 id="context-model-in-the-ui">Context Model In The UI <a class="anchor" href="#context-model-in-the-ui" aria-label="Link to this section">#</a></h2>
+<p>The UI should treat context as structured runtime state.</p>
+<p>Initial core context for the client:</p>
+<ul>
+<li>current workspace</li>
+<li>current conversation</li>
+<li>current thread</li>
+<li>selected text</li>
+<li>selected message</li>
+<li>selected messages</li>
+<li>focused surface</li>
+<li>active panel</li>
+</ul>
+<p>Important rule:</p>
+<ul>
+<li>context is not just a loose bag of temporary values</li>
+<li>commands, context actions, and keybinds should consume the same typed context model</li>
+</ul>
+<h2 id="keybind-ux">Keybind UX <a class="anchor" href="#keybind-ux" aria-label="Link to this section">#</a></h2>
+<p>Keybinds should map to commands, not to one-off handlers.</p>
+<p>Initial keybind contexts should include:</p>
+<ul>
+<li>global</li>
+<li>composer</li>
+<li>message list</li>
+<li>thread view</li>
+<li>conversation view</li>
+<li>panel</li>
+<li>command palette</li>
+</ul>
+<p>Client/runtime expectations:</p>
+<ul>
+<li>the client owns actual keyboard handling</li>
+<li>the client owns device-local keybinds</li>
+<li>the final precedence should be <code>device_local &gt; workspace &gt; user &gt; default</code></li>
+<li>repeated behavior belongs to the command runtime, not the keybind definition itself</li>
+</ul>
+<h2 id="plugin-host-ux">Plugin Host UX <a class="anchor" href="#plugin-host-ux" aria-label="Link to this section">#</a></h2>
+<p>Plugins should extend shared systems rather than invent parallel UI models.</p>
+<p>The desktop client should support:</p>
+<ul>
+<li>plugin panels</li>
+<li>plugin commands</li>
+<li>plugin context actions</li>
+<li>plugin keybind suggestions</li>
+<li>capability prompts</li>
+<li>install/enable/disable flows</li>
+</ul>
+<p>Rules:</p>
+<ul>
+<li>plugin-origin UI should remain visible as plugin-origin UI when trust matters</li>
+<li>plugin panels should fit into the same shell structure as built-in panels</li>
+<li>plugin capabilities should be explicit, understandable, and revocable</li>
+<li>dangerous plugin actions should never look identical to harmless built-in actions</li>
+</ul>
+<h2 id="trust-and-capability-ux">Trust And Capability UX <a class="anchor" href="#trust-and-capability-ux" aria-label="Link to this section">#</a></h2>
+<p>Trust visibility is part of the product.</p>
+<p>The UI should make it clear:</p>
+<ul>
+<li>what action is being run</li>
+<li>where it came from</li>
+<li>whether it is local or remote</li>
+<li>which dangerous capabilities are involved</li>
+</ul>
+<p>Capability-sensitive cases include:</p>
+<ul>
+<li>local process execution</li>
+<li>filesystem access</li>
+<li>broad outbound network access</li>
+<li>external state modification</li>
+</ul>
+<p>Recommended behavior:</p>
+<ul>
+<li>capability grants are explicit</li>
+<li>dangerous actions default to confirmation</li>
+<li>revoked or missing capabilities fail clearly in the UI</li>
+</ul>
+<h2 id="messaging-rules-for-the-ui">Messaging Rules For The UI <a class="anchor" href="#messaging-rules-for-the-ui" aria-label="Link to this section">#</a></h2>
+<p>The messaging views should follow backend contracts.</p>
+<ul>
+<li>Use <code>workspace</code> as the product term in the UI.</li>
+<li>Treat channels, DMs, and groups as conversation variants.</li>
+<li>Keep thread semantics aligned with backend rules.</li>
+<li>Preserve attachment, message reference, and permalink expectations.</li>
+</ul>
+<p>Pagination implications:</p>
+<ul>
+<li>Use cursor-based pagination for messages, threads, and large conversation lists.</li>
+<li>Do not design around offset/page-number assumptions.</li>
+<li>Order and cursor semantics from the backend should shape infinite scroll behavior.</li>
+</ul>
+<h2 id="narrow-window-behavior">Narrow Window Behavior <a class="anchor" href="#narrow-window-behavior" aria-label="Link to this section">#</a></h2>
+<p>The app is desktop-first, but it must remain usable in smaller windows.</p>
+<p>Recommended behavior:</p>
+<ul>
+<li>side rail stays visible as a compact icon strip</li>
+<li>tool panel may collapse</li>
+<li>thread pane collapses into an overlay or slide-over panel</li>
+<li>command palette remains centered and usable</li>
+<li>composer and message reading remain the top priority</li>
+</ul>
+<h2 id="visual-direction">Visual Direction <a class="anchor" href="#visual-direction" aria-label="Link to this section">#</a></h2>
+<p>Recommended tone:</p>
+<ul>
+<li>serious</li>
+<li>modern</li>
+<li>workspace-oriented</li>
+<li>efficient rather than playful</li>
+</ul>
+<p>Recommended density:</p>
+<ul>
+<li>medium-dense</li>
+<li>comfortable for desktop use</li>
+<li>more structured than a social messenger</li>
+</ul>
+<p>Visual guidance:</p>
+<ul>
+<li>avoid generic starter-template styling</li>
+<li>use strong visual hierarchy between app regions</li>
+<li>use restrained accent color rather than loud multicolor UI</li>
+<li>motion should support panel transitions, palette opening, and thread reveal without becoming decorative</li>
+</ul>
+<h2 id="implementation-priorities">Implementation Priorities <a class="anchor" href="#implementation-priorities" aria-label="Link to this section">#</a></h2>
+<p>Recommended build order:</p>
+<ol>
+<li>app shell and region layout</li>
+<li>conversation list and message workspace</li>
+<li>thread pane behavior</li>
+<li>command palette and focus model</li>
+<li>runtime context model in the client</li>
+<li>keybind runtime behavior</li>
+<li>plugin panel slots and trust/capability UI</li>
+</ol>
+<h2 id="open-questions">Open Questions <a class="anchor" href="#open-questions" aria-label="Link to this section">#</a></h2>
+<p>These should be resolved before deeper UI buildout.</p>
+<ul>
+<li>Should the thread pane be docked by default or hidden until opened?</li>
+<li>Should the tool panel be open by default at all times or collapsible by default?</li>
+<li>Which built-in side-rail destinations ship first?</li>
+<li>What is the initial visual theme: IDE-like, chat-first, or premium minimal?</li>
+<li>Which command palette behaviors are required in the very first usable shell?</li>
+</ul>
+<h2 id="working-rule">Working Rule <a class="anchor" href="#working-rule" aria-label="Link to this section">#</a></h2>
+<p>When implementation details are unclear, prefer decisions that make RIM feel like a desktop host for
+communication plus workflows, not a dressed-up Tauri starter and not a plain chat clone.</p>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/docs/ui-shell.md">rim-ui/docs/ui-shell.md</a> at <code>58e3ec0</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+<script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
+</body>
+</html>

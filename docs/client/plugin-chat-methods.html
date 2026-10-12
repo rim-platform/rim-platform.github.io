@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Plugin chat methods (rim.chat.*) · RIM</title>
+<meta name="description" content="The client message service lets a plugin read and post the person's messages. It is the same for a web plugin and a local process: the web host calls it in the page, and the Rust broker relays a local process's calls to …">
+<link rel="icon" href="../../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../../index.html" aria-label="RIM home">
+      <picture><source srcset="../../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../../index.html#what">What RIM is</a>
+      <a href="../../index.html#how">How it works</a>
+      <a href="../self-hosting.html">Self-host</a>
+      <a href="../../configure/index.html">Configure</a>
+      <a href="../index.html" aria-current="page">Docs</a>
+      <a href="../../api/index.html">API</a>
+      <a href="../../specs/index.html">Specs</a>
+      <a href="../contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="../index.html">Docs</a><span aria-hidden="true">/</span><a href="../plugin-authors.html">Plugin authors</a><span aria-hidden="true">/</span><span>Plugin chat methods (rim.chat.*)</span></div>
+  <div class="page with-toc">
+    <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
+<ol>
+<li><a href="#capabilities">Capabilities</a></li>
+<li><a href="#methods">Methods</a><ol><li><a href="#rimchatlist_messages">rim.chat.list_messages</a></li><li><a href="#rimchatget_message">rim.chat.get_message</a></li><li><a href="#rimchatsearch_messages">rim.chat.search_messages</a></li><li><a href="#rimchatpost_message">rim.chat.post_message</a></li><li><a href="#the-message">The message</a></li></ol></li>
+<li><a href="#what-a-plugin-never-gets">What a plugin never gets</a></li>
+<li><a href="#errors">Errors</a></li>
+<li><a href="#audit">Audit</a></li>
+<li><a href="#where-it-lives">Where it lives</a></li>
+</ol>
+</details></aside>
+    <main id="content" class="prose">
+<h1 id="plugin-chat-methods-rimchat">Plugin chat methods (<code>rim.chat.*</code>)</h1>
+<p>The client message service lets a plugin read and post the person&#39;s messages. It is the
+same for a web plugin and a local process: the web host calls it in the page, and the
+Rust broker relays a local process&#39;s calls to it. Reads come from the device&#39;s local
+messages only: the desktop&#39;s message cache, or in the web app the browser&#39;s encrypted store
+once the browser is set up as a linked device (<a href="e2ee-web.html"><code>e2ee-web.md</code></a>); posts go through the person&#39;s own send path and are encrypted where
+the conversation is. The contract is the &quot;Plugins and the client message service&quot; section
+of <code>../rim-server/docs/specs/e2ee-mls-v1.md</code>.</p>
+<p>These methods are <strong>routed, not frozen</strong>: both hosts serve them, the shapes below are
+listed under <code>x-notFrozen.definitions</code> in <a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/protocol/plugin-protocol-v1.schema.json"><code>protocol/plugin-protocol-v1.schema.json</code></a>, and
+they may still change before they are frozen into protocol v1.</p>
+<h2 id="capabilities">Capabilities <a class="anchor" href="#capabilities" aria-label="Link to this section">#</a></h2>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Capability</th>
+<th>Lets the plugin</th>
+<th>Consent line</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>chat.read</code></td>
+<td>Call the three read methods in plaintext conversations</td>
+<td>&quot;Read your conversations: this plugin sees the messages stored on this device, except those of encrypted DMs and groups.&quot;</td>
+</tr>
+<tr>
+<td><code>chat.write</code></td>
+<td>Call <code>rim.chat.post_message</code> in plaintext conversations</td>
+<td>&quot;Post as you: this plugin sends messages in your name, except in encrypted DMs and groups.&quot;</td>
+</tr>
+<tr>
+<td><code>chat.read.encrypted</code></td>
+<td>Read encrypted DMs and groups too</td>
+<td>&quot;Read your encrypted DMs and groups: this plugin sees their decrypted text and can send it anywhere its other permissions allow.&quot;</td>
+</tr>
+<tr>
+<td><code>chat.write.encrypted</code></td>
+<td>Post in encrypted DMs and groups too</td>
+<td>&quot;Post as you in your encrypted DMs and groups: this plugin sends messages in your name there, encrypted like your own.&quot;</td>
+</tr>
+</tbody></table></div>
+<ul>
+<li>A manifest that asks for an encrypted capability without its plain one fails to install
+(<code>validation.rs</code>, <code>manifestRules.ts</code>, vectors in <a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/protocol/manifest-vectors.json"><code>protocol/manifest-vectors.json</code></a>). In
+the permission prompt, checking an encrypted capability checks its plain one and
+unchecking the plain one unchecks the encrypted one.</li>
+<li>The broker checks the plain capability for each method (<code>capability.rs</code>); a call
+without it is <code>CAPABILITY_DENIED</code> and never reaches the service. The service then
+refuses an encrypted conversation without the encrypted capability, also with
+<code>CAPABILITY_DENIED</code> (<code>capability denied: chat.read.encrypted</code>), even when the plugin
+holds <code>chat.read</code>.</li>
+<li>A conversation is encrypted when the server says so (<code>Conversation.encryptedAt</code>), when
+this device holds group state for it, or when any of its cached rows is encrypted. Its
+plaintext from before the upgrade is behind the encrypted capability as well.</li>
+<li>Each capability counts against the usual limit of 120 calls a minute per capability
+(<code>chat.read</code> for the three reads, <code>chat.write</code> for posting).</li>
+<li>The capabilities a plugin started with are the ones checked; revoking any capability
+stops the plugin.</li>
+</ul>
+<h2 id="methods">Methods <a class="anchor" href="#methods" aria-label="Link to this section">#</a></h2>
+<p>Every call works in the workspace open in the app. Ids of messages, conversations and
+threads are the server&#39;s, and opaque to plugins.</p>
+<h3 id="rimchatlist_messages"><code>rim.chat.list_messages</code> <a class="anchor" href="#rimchatlist_messages" aria-label="Link to this section">#</a></h3>
+<p>Params <code>{ conversationId, before?, limit? }</code>: the newest <code>limit</code> (1 to 100, default 50)
+messages of the conversation, thread replies included, older than the message <code>before</code>
+when given. Answers <code>{ messages, hasOlder }</code>, oldest first.</p>
+<h3 id="rimchatget_message"><code>rim.chat.get_message</code> <a class="anchor" href="#rimchatget_message" aria-label="Link to this section">#</a></h3>
+<p>Params <code>{ messageId }</code>. Answers <code>{ message }</code>, or <code>{ message: null }</code> when this device does
+not have it or a plugin may not see it (below).</p>
+<h3 id="rimchatsearch_messages"><code>rim.chat.search_messages</code> <a class="anchor" href="#rimchatsearch_messages" aria-label="Link to this section">#</a></h3>
+<p>Params <code>{ query, conversationId?, limit? }</code>: search of the messages on this device, newest
+first; the server is not asked. On the desktop it is the local full-text index (every word
+matches as a prefix); in the web app a case-insensitive substring match over the text of the
+browser&#39;s stored messages. Answers <code>{ messages }</code>. Without <code>conversationId</code> and without <code>chat.read.encrypted</code>, hits
+in encrypted conversations are left out; naming an encrypted conversation without it is
+refused.</p>
+<h3 id="rimchatpost_message"><code>rim.chat.post_message</code> <a class="anchor" href="#rimchatpost_message" aria-label="Link to this section">#</a></h3>
+<p>Params <code>{ conversationId, body, threadId? }</code>: posts <code>body</code> (1 to 10,000 characters) as the
+person, as a reply in the thread <code>threadId</code> when given. In an encrypted conversation the
+message goes through the encrypted send path, on the desktop or in a browser set up as a
+linked device. Mentions are written as <code>&lt;@principalId&gt;</code> tokens. Answers <code>{ id }</code>, the new
+message&#39;s id.</p>
+<h3 id="the-message">The message <a class="anchor" href="#the-message" aria-label="Link to this section">#</a></h3>
+<pre><code class="language-json">{
+  &quot;id&quot;: &quot;…&quot;, &quot;conversationId&quot;: &quot;…&quot;, &quot;threadId&quot;: null,
+  &quot;author&quot;: { &quot;principalId&quot;: &quot;rimp1_…&quot;, &quot;displayName&quot;: &quot;Ada&quot; },
+  &quot;text&quot;: &quot;plan attached &lt;@rimp1_…&gt;&quot;,
+  &quot;sentAt&quot;: &quot;2026-10-01T09:05:00.000002Z&quot;, &quot;editedAt&quot;: null,
+  &quot;encrypted&quot;: true,
+  &quot;attachments&quot;: [{ &quot;name&quot;: &quot;plan.pdf&quot;, &quot;mime&quot;: &quot;application/pdf&quot;, &quot;size&quot;: 48213 }]
+}</code></pre>
+<p><code>author</code> is a protocol <code>Principal</code>: the key-based id when the person has one, else the
+provisional <code>rimp0_</code> id. <code>&lt;@user&gt;</code> mentions of plaintext messages are rewritten to
+principal ids. <code>encrypted</code> says whether the message itself was end-to-end encrypted.</p>
+<h2 id="what-a-plugin-never-gets">What a plugin never gets <a class="anchor" href="#what-a-plugin-never-gets" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>Franking keys, franking receipts, attachment secrets or blob hashes, the decrypted
+content bytes, MLS group state, epochs, ciphertext, or keys of any kind.</li>
+<li>Attachment bytes: only name, type and size.</li>
+<li>Raw user ids.</li>
+<li>Rows this device could not decrypt (placeholders), messages that could not be
+verified, tombstones, and this device&#39;s sends the server has not acknowledged yet.</li>
+</ul>
+<p>The projection is in Rust on the desktop (<a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/src-tauri/src/message_cache/plugin_view.rs"><code>src-tauri/src/message_cache/plugin_view.rs</code></a>)
+and in TypeScript in the web app (<a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/src/features/e2ee/web/pluginView.ts"><code>src/features/e2ee/web/pluginView.ts</code></a>); both are tested
+against the shared vector <a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/protocol/plugin-chat-vectors.json"><code>protocol/plugin-chat-vectors.json</code></a>.</p>
+<h2 id="errors">Errors <a class="anchor" href="#errors" aria-label="Link to this section">#</a></h2>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Code</th>
+<th>When</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>CAPABILITY_DENIED</code> (-32000)</td>
+<td>The plain capability is missing, or the conversation is encrypted and the encrypted one is</td>
+</tr>
+<tr>
+<td><code>RATE_LIMITED</code> (-32001)</td>
+<td>More than 120 calls a minute on the capability</td>
+</tr>
+<tr>
+<td><code>INVALID_PARAMS</code> (-32602)</td>
+<td>A param is missing or out of range, the conversation or thread is unknown, <code>before</code> names no message of the conversation, no workspace is open</td>
+</tr>
+<tr>
+<td><code>INTERNAL_ERROR</code> (-32603)</td>
+<td><code>data.reason</code> <code>notCached</code>: the conversation is not fully stored on this device yet (the app starts caching it; try again shortly). <code>noCache</code>: the app keeps no messages here (a browser not set up as a linked device). <code>noEncryption</code>: an encrypted conversation cannot be written from here (a browser not set up as a linked device). Otherwise the app failed</td>
+</tr>
+</tbody></table></div>
+<h2 id="audit">Audit <a class="anchor" href="#audit" aria-label="Link to this section">#</a></h2>
+<p>The host records, per plugin, when each capability was given and revoked and how many
+encrypted messages the service handed it per day (<code>encrypted: true</code> messages in any
+answer). Settings &gt; Plugins &gt; Activity shows both, with a Revoke button per capability.
+On the desktop the record is in the Rust <code>PluginStateStore</code> (<code>audit</code>, kept through
+updates, dropped on uninstall); on the web in the plugin&#39;s install record in IndexedDB.
+Grant events are capped at 200 and daily counts at 90 days.</p>
+<h2 id="where-it-lives">Where it lives <a class="anchor" href="#where-it-lives" aria-label="Link to this section">#</a></h2>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Concern</th>
+<th>Where</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Service, param checks, encrypted gate, audit counting</td>
+<td><a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/src/features/plugins/chat/messageService.ts"><code>src/features/plugins/chat/messageService.ts</code></a></td>
+</tr>
+<tr>
+<td>Wiring to the cache, the send paths and the stores</td>
+<td><a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/src/features/plugins/chat/appMessageService.ts"><code>src/features/plugins/chat/appMessageService.ts</code></a></td>
+</tr>
+<tr>
+<td>The cache&#39;s plugin projection and its commands</td>
+<td><a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/src-tauri/src/message_cache/plugin_view.rs"><code>src-tauri/src/message_cache/plugin_view.rs</code></a>, <code>commands.rs</code> (<code>message_cache_plugin_*</code>)</td>
+</tr>
+<tr>
+<td>Local-process relay</td>
+<td><a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/src-tauri/src/plugin_host/chat_relay.rs"><code>src-tauri/src/plugin_host/chat_relay.rs</code></a>, <code>broker.rs</code> (<code>Routed::Chat</code>), <code>commands.rs</code> (<code>plugin_chat_respond</code>); the page side <a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/src/features/plugins/chat/usePluginChatRelay.ts"><code>src/features/plugins/chat/usePluginChatRelay.ts</code></a></td>
+</tr>
+<tr>
+<td>Web host</td>
+<td><a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/src/features/plugins/web/pluginSession.ts"><code>src/features/plugins/web/pluginSession.ts</code></a> (the <code>chat</code> hook), <code>webPluginHost.ts</code></td>
+</tr>
+<tr>
+<td>SDK</td>
+<td><code>host.chat</code> in <a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/sdk/plugin-sdk/src/plugin.ts"><code>sdk/plugin-sdk/src/plugin.ts</code></a></td>
+</tr>
+</tbody></table></div>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/docs/plugin-chat-methods.md">rim-ui/docs/plugin-chat-methods.md</a> at <code>58e3ec0</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+<script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
+</body>
+</html>

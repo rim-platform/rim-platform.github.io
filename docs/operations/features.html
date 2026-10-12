@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Instance features · RIM</title>
+<meta name="description" content="An operator can switch off optional modules of rim-server with RIM_FEATURES_DISABLED. Unset, nothing changes: every feature works as before, except that email reports unavailable when SMTP is not configured, which is …">
+<link rel="icon" href="../../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../../index.html" aria-label="RIM home">
+      <picture><source srcset="../../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../../index.html#what">What RIM is</a>
+      <a href="../../index.html#how">How it works</a>
+      <a href="../self-hosting.html">Self-host</a>
+      <a href="../../configure/index.html">Configure</a>
+      <a href="../index.html" aria-current="page">Docs</a>
+      <a href="../../api/index.html">API</a>
+      <a href="../../specs/index.html">Specs</a>
+      <a href="../contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="../index.html">Docs</a><span aria-hidden="true">/</span><a href="../operators.html">Operators</a><span aria-hidden="true">/</span><span>Instance features</span></div>
+  <div class="page with-toc">
+    <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
+<ol>
+<li><a href="#catalogue">Catalogue</a></li>
+<li><a href="#states">States</a></li>
+<li><a href="#setting-it">Setting it</a></li>
+<li><a href="#what-clients-see">What clients see</a></li>
+</ol>
+</details></aside>
+    <main id="content" class="prose">
+<h1 id="instance-features">Instance features</h1>
+<p>An operator can switch off optional modules of rim-server with <code>RIM_FEATURES_DISABLED</code>. Unset,
+nothing changes: every feature works as before, except that email reports <code>unavailable</code> when
+SMTP is not configured, which is how it already behaved.</p>
+<h2 id="catalogue">Catalogue <a class="anchor" href="#catalogue" aria-label="Link to this section">#</a></h2>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Name</th>
+<th>What it covers</th>
+<th>Why it can be switched off</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>attachments</code></td>
+<td><code>POST /api/files/upload</code>, <code>GET /api/attachments/{id}/download</code> (and both when another relay forwards them) and the <code>createAttachment</code>, <code>finalizeAttachment</code> and <code>deleteAttachment</code> mutations</td>
+<td>Stored files cost disk and backups, and some instances must not hold files at all. Messages work without them.</td>
+</tr>
+<tr>
+<td><code>link_previews</code></td>
+<td>Fetching previews for links in new messages (no fetch is started while off, so the server makes no outbound request for them), and <code>Message.linkPreviews</code> (empty while off)</td>
+<td>The server fetches URLs users post, which leaks the server&#39;s address to those sites and costs outbound traffic.</td>
+</tr>
+<tr>
+<td><code>email</code></td>
+<td>Password reset mail, invite mail and notification digests</td>
+<td>Some instances must not send mail at all.</td>
+</tr>
+<tr>
+<td><code>custom_emoji</code></td>
+<td>The <code>customEmojis</code> query and the <code>createCustomEmoji</code> and <code>deleteCustomEmoji</code> mutations</td>
+<td>Uploaded images are content the operator moderates and stores.</td>
+</tr>
+<tr>
+<td><code>workspace_plugins</code></td>
+<td>The <code>workspacePlugins</code> query, the <code>addWorkspacePlugin</code>, <code>updateWorkspacePlugin</code> and <code>removeWorkspacePlugin</code> mutations, and <code>POST</code>/<code>GET /api/plugin-bundles/…</code> (and the forwarded download)</td>
+<td>Hosting plugin bundles distributes code to members&#39; clients. Plugins a user installs locally on their client are not affected.</td>
+</tr>
+<tr>
+<td><code>ai_commands</code></td>
+<td><code>commandDiscover</code>, <code>commands(surface: AI)</code>, <code>executeCommand</code> and <code>executeMacro</code> with the <code>AGENT</code> initiator, and the agent-facing fields of <code>Command</code> (<code>nlDescription</code> is null, <code>intentSamples</code> empty and <code>aiCallable</code> false while off)</td>
+<td>An instance may not want an AI agent driving its workspaces.</td>
+</tr>
+</tbody></table></div>
+<p>These are platform core and have no switch: end-to-end encrypted conversations, key identity,
+the relay and host roles (<code>RIM_ROLE</code>), registration (its own modes: <code>RIM_OPEN_REGISTRATION</code>,
+<code>RIM_REGISTRATION_POW_BITS</code>), moderation, the audit log, commands, keybinds, macros and
+pipelines.</p>
+<h2 id="states">States <a class="anchor" href="#states" aria-label="Link to this section">#</a></h2>
+<p>Each feature is in one of three states:</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>State</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>enabled</code></td>
+<td>The feature works.</td>
+</tr>
+<tr>
+<td><code>disabled</code></td>
+<td>The operator listed it in <code>RIM_FEATURES_DISABLED</code>.</td>
+</tr>
+<tr>
+<td><code>unavailable</code></td>
+<td>The configuration lacks something it needs; a reason says what.</td>
+</tr>
+</tbody></table></div>
+<p>Unavailable today:</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>When</th>
+<th>What happens</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>email</code></td>
+<td><code>RIM_SMTP_HOST</code> or <code>RIM_SMTP_FROM</code> is not set</td>
+<td>Mail is logged (recipient and subject) instead of sent, as before. Password reset still answers, so the token can be read from a development log.</td>
+</tr>
+</tbody></table></div>
+<p>A feature both disabled and unavailable is reported as <code>disabled</code>. Storage is always the local
+data directory, so <code>attachments</code>, <code>custom_emoji</code> and <code>workspace_plugins</code> are never unavailable.</p>
+<h2 id="setting-it">Setting it <a class="anchor" href="#setting-it" aria-label="Link to this section">#</a></h2>
+<p>A comma-separated list of names; spaces around names are ignored:</p>
+<pre><code class="language-sh">RIM_FEATURES_DISABLED=attachments,custom_emoji</code></pre>
+<p>An unknown name stops the server at boot, naming it, so a typo never leaves a feature on:</p>
+<pre><code class="language-text">RIM_FEATURES_DISABLED: unknown feature: atachments (known: attachments, link_previews, email, custom_emoji, workspace_plugins, ai_commands)</code></pre>
+<p>The switches are read at boot; change the variable and restart. At boot the server logs the
+disabled and unavailable features:</p>
+<pre><code class="language-json">{&quot;level&quot;:&quot;INFO&quot;,&quot;fields&quot;:{&quot;message&quot;:&quot;instance features (RIM_FEATURES_DISABLED)&quot;,&quot;disabled&quot;:&quot;[\&quot;attachments\&quot;, \&quot;custom_emoji\&quot;]&quot;,&quot;unavailable&quot;:&quot;[\&quot;email: SMTP is not configured: set RIM_SMTP_HOST and RIM_SMTP_FROM\&quot;]&quot;},&quot;target&quot;:&quot;rim_server::app&quot;}</code></pre>
+<p>Switching a feature off deletes nothing. Stored attachments, emoji, plugin entries, bundles and
+link previews stay in the database and on disk, and come back when the feature is enabled
+again. While <code>attachments</code> is off, messages still list their attachments, but downloads are
+refused.</p>
+<p>With <code>email</code> disabled, <code>requestPasswordReset</code> answers <code>FEATURE_DISABLED</code>, invite mail is not
+sent (the invite link is still returned to whoever created it), and the notification digest job
+does not run.</p>
+<h2 id="what-clients-see">What clients see <a class="anchor" href="#what-clients-see" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong><code>serverInfo.features</code></strong>, readable without a session: one entry per feature, in a fixed
+order, <code>{ key state reason }</code>, where <code>state</code> is <code>ENABLED</code>, <code>DISABLED</code> or <code>UNAVAILABLE</code> and
+<code>reason</code> is set only for an unavailable feature. A client ignores a <code>key</code> it does not know.</li>
+<li><strong>The discovery document</strong> <code>GET /.well-known/rim-server</code> has a <code>features</code> object beside the
+signed descriptor: <code>{&quot;attachments&quot;:{&quot;state&quot;:&quot;disabled&quot;},&quot;email&quot;:{&quot;state&quot;:&quot;unavailable&quot;,&quot;reason&quot;:&quot;…&quot;},…}</code>.
+It is unsigned and advisory; see the server-to-server spec.</li>
+<li><strong>Errors.</strong> A GraphQL resolver of a feature that is not enabled answers with the error code
+<code>FEATURE_DISABLED</code> and a <code>feature</code> extension naming it. The file and plugin bundle routes
+answer <code>403</code> with <code>{&quot;error&quot;:&quot;…&quot;,&quot;code&quot;:&quot;FEATURE_DISABLED&quot;,&quot;feature&quot;:&quot;attachments&quot;}</code>.</li>
+</ul>
+<p>A client reads <code>serverInfo.features</code> after connecting and hides the surfaces of disabled and
+unavailable features: the attach button, emoji management, the workspace plugin settings, the
+AI agent, &quot;forgot password&quot;. The server enforces the switches either way.</p>
+<p><code>ai_commands</code> refuses agent runs by the initiator the client declares. It switches the
+AI surface off for well-behaved clients; the capability checks, confirmation and audit that
+apply to every command are the security boundary, not this switch.</p>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/docs/operations/features.md">rim-server/docs/operations/features.md</a> at <code>c86029b</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+<script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
+</body>
+</html>

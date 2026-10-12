@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ESLint + Prettier · RIM</title>
+<meta name="description" content="The frontend has a lint/format gate: npm run lint, npm run lint:fix, npm run format, npm run format:check. npm run build (TypeScript check + Vite build) and npm test remain the other two gates. All four should pass …">
+<link rel="icon" href="../../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../../index.html" aria-label="RIM home">
+      <picture><source srcset="../../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../../index.html#what">What RIM is</a>
+      <a href="../../index.html#how">How it works</a>
+      <a href="../self-hosting.html">Self-host</a>
+      <a href="../../configure/index.html">Configure</a>
+      <a href="../index.html" aria-current="page">Docs</a>
+      <a href="../../api/index.html">API</a>
+      <a href="../../specs/index.html">Specs</a>
+      <a href="../contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="../index.html">Docs</a><span aria-hidden="true">/</span><a href="../project.html">Project</a><span aria-hidden="true">/</span><span>ESLint + Prettier</span></div>
+  <div class="page with-toc">
+    <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
+<ol>
+<li><a href="#running-it">Running it</a></li>
+<li><a href="#flat-config-rationale">Flat-config rationale</a></li>
+<li><a href="#the-warn-vs-error-split-and-why">The warn-vs-error split, and why</a></li>
+<li><a href="#no-type-aware-linting-yet">No type-aware linting yet</a></li>
+<li><a href="#ci">CI</a></li>
+</ol>
+</details></aside>
+    <main id="content" class="prose">
+<h1 id="eslint--prettier">ESLint + Prettier</h1>
+<p>The frontend has a lint/format gate: <code>npm run lint</code>, <code>npm run lint:fix</code>, <code>npm run format</code>,
+<code>npm run format:check</code>. <code>npm run build</code> (TypeScript check + Vite build) and <code>npm test</code>
+remain the other two gates. All four should pass before shipping a frontend change.</p>
+<h2 id="running-it">Running it <a class="anchor" href="#running-it" aria-label="Link to this section">#</a></h2>
+<pre><code class="language-bash">npm run lint          # eslint . — 0 errors required, warnings are OK for now
+npm run lint:fix       # eslint . --fix — apply auto-fixes
+npm run format         # prettier --write . — reformat everything
+npm run format:check   # prettier --check . — CI-safe, no writes</code></pre>
+<h2 id="flat-config-rationale">Flat-config rationale <a class="anchor" href="#flat-config-rationale" aria-label="Link to this section">#</a></h2>
+<p><a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/eslint.config.js"><code>eslint.config.js</code></a> is ESM (the package is <code>&quot;type&quot;: &quot;module&quot;</code>), composed in this order:</p>
+<ol>
+<li><code>js.configs.recommended</code> — core ESLint correctness rules.</li>
+<li><code>tseslint.configs.recommended</code> (typescript-eslint v8) — <strong>not</strong>
+<code>recommendedTypeChecked</code>. Type-aware linting needs <code>parserOptions.project</code>
+wiring, and <a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/tsconfig.json"><code>tsconfig.json</code></a> excludes test files (<a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/tsconfig.json"><code>tsconfig.json</code></a> → <code>exclude</code>),
+which would break typed linting on the test suite. This config is fast and needs
+no project wiring — pragmatic for standing up the gate today. See &quot;Future
+upgrade&quot; below.</li>
+<li><code>eslint-plugin-react-hooks</code>&#39;s flat <code>recommended</code> config.</li>
+<li><code>eslint-plugin-react-refresh</code>&#39;s <code>vite</code> preset (Vite HMR hygiene, warn-level).</li>
+<li><code>eslint-config-prettier</code> — <strong>last</strong>, disables every stylistic rule that would
+fight Prettier.</li>
+<li>Global <code>ignores</code>: <code>dist/</code>, <code>coverage/</code>, <code>node_modules/</code>, <a href="https://github.com/rim-platform/rim-ui/tree/58e3ec03c43064632a6a6f610d92413040229dfd/src-tauri"><code>src-tauri/</code></a>,
+<a href="https://github.com/rim-platform/rim-ui/tree/58e3ec03c43064632a6a6f610d92413040229dfd/src/core/graphql/generated"><code>src/core/graphql/generated/</code></a>, <a href="https://github.com/rim-platform/rim-ui/tree/58e3ec03c43064632a6a6f610d92413040229dfd/sdk/plugin-sdk/src/generated"><code>sdk/plugin-sdk/src/generated/</code></a> and <code>*.config.js</code>.</li>
+</ol>
+<p><code>.prettierrc.json</code> matches the codebase&#39;s existing conventions (verified against the
+code, not assumed): double quotes, semicolons, trailing commas, 100-column width.</p>
+<h2 id="the-warn-vs-error-split-and-why">The warn-vs-error split, and why <a class="anchor" href="#the-warn-vs-error-split-and-why" aria-label="Link to this section">#</a></h2>
+<p>Goal: a green gate today, with room to tighten later — not <code>eslint-disable</code> sprinkled
+everywhere to force a pass.</p>
+<p><strong>Kept at <code>error</code></strong> (correctness, low false-positive rate):</p>
+<ul>
+<li><code>react-hooks/rules-of-hooks</code> — a real violation is always a bug.</li>
+<li>The rest of <code>js.configs.recommended</code> / <code>tseslint.configs.recommended</code> that weren&#39;t
+explicitly downgraded below (e.g. <code>no-control-regex</code>, <code>no-useless-assignment</code>,
+<code>preserve-caught-error</code>, <code>no-constant-binary-expression</code>, <code>no-useless-escape</code>) — the
+9 violations these produced on first run were all real, easy fixes (hand-fixed rather
+than downgraded, since there were only a handful).</li>
+</ul>
+<p><strong>Downgraded to <code>warn</code></strong> (noisy, or would need broad manual edits to reach zero):</p>
+<ul>
+<li><code>@typescript-eslint/no-unused-vars</code> — <code>{ argsIgnorePattern: &quot;^_&quot;, varsIgnorePattern: &quot;^_&quot; }</code>,
+matching the existing <code>_pluginId</code>-style convention.</li>
+<li><code>@typescript-eslint/no-explicit-any</code>.</li>
+<li><code>react-hooks/exhaustive-deps</code>.</li>
+<li><code>react-refresh/only-export-components</code>.</li>
+<li><strong>The <code>react-hooks</code> v7 &quot;React Compiler readiness&quot; rule set</strong> — <code>static-components</code>,
+<code>use-memo</code>, <code>void-use-memo</code>, <code>preserve-manual-memoization</code>, <code>incompatible-library</code>,
+<code>immutability</code>, <code>globals</code>, <code>refs</code>, <code>set-state-in-effect</code>, <code>error-boundaries</code>,
+<code>purity</code>, <code>set-state-in-render</code>, <code>unsupported-syntax</code>, <code>config</code>, <code>gating</code>. <strong>This is
+a deviation from the original spec</strong>, which anticipated <code>eslint-plugin-react-hooks</code>
+shipping just the two legacy rules (<code>rules-of-hooks</code>, <code>exhaustive-deps</code>). The
+installed version (7.1.1) bundles the full React Compiler static-analysis rule set
+under <code>recommended</code>, most of it at <code>error</code>. The codebase predates these rules and
+fixing every violation (dozens, across effect/ref/memoization patterns) is out of
+scope for standing up the lint gate — downgraded to <code>warn</code> so the gate is green
+today. Flagged to Vision as a deviation; worth a dedicated pass later if the team
+wants React Compiler compatibility.</li>
+</ul>
+<p>Two intentional control-character regexes (<code>turnBudget.ts</code>, <code>generator.ts</code> — used to
+strip control chars from user-facing strings) keep <code>no-control-regex</code> at <code>error</code> and
+carry a scoped <code>eslint-disable-next-line</code> with justification, since disabling the rule
+project-wide would remove a real correctness check for accidental control chars
+elsewhere.</p>
+<h2 id="no-type-aware-linting-yet">No type-aware linting yet <a class="anchor" href="#no-type-aware-linting-yet" aria-label="Link to this section">#</a></h2>
+<p><code>tseslint.configs.recommendedTypeChecked</code> would catch more (e.g. unsafe <code>any</code> flows,
+floating promises) but requires <code>parserOptions.project</code> pointing at a <a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/tsconfig.json"><code>tsconfig.json</code></a>
+that includes the files being linted — including tests, which the current
+<a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/tsconfig.json"><code>tsconfig.json</code></a> excludes. To upgrade:</p>
+<ol>
+<li>Either widen <a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/tsconfig.json"><code>tsconfig.json</code></a>&#39;s <code>include</code>/remove the test exclusions, or add a
+second tsconfig (e.g. <code>tsconfig.eslint.json</code>) that includes tests, referenced only
+from <a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/eslint.config.js"><code>eslint.config.js</code></a>.</li>
+<li>Swap <code>tseslint.configs.recommended</code> for <code>tseslint.configs.recommendedTypeChecked</code>
+and add <code>languageOptions.parserOptions.project</code>.</li>
+<li>Expect a new round of violations; triage warn-vs-error again per the same
+&quot;green gate first&quot; principle.</li>
+</ol>
+<h2 id="ci">CI <a class="anchor" href="#ci" aria-label="Link to this section">#</a></h2>
+<p>Lint and format are not yet wired into CI — only <code>npm run build</code> runs today. Frontend
+CI should run, in order: <code>npm ci</code> → <code>npm run lint</code> → <code>npm run format:check</code> →
+<code>npm run build</code> → <code>npm test</code>. This is a CI-workflow change, out of scope for this
+change (owned separately).</p>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/docs/eslint-prettier.md">rim-ui/docs/eslint-prettier.md</a> at <code>58e3ec0</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+<script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
+</body>
+</html>

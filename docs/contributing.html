@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Contributing · RIM</title>
+<meta name="description" content="Anyone can contribute. This repository is licensed under the Apache License 2.0 (see LICENSE), and contributions are accepted under the same license.">
+<link rel="icon" href="../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../index.html" aria-label="RIM home">
+      <picture><source srcset="../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../index.html#what">What RIM is</a>
+      <a href="../index.html#how">How it works</a>
+      <a href="self-hosting.html">Self-host</a>
+      <a href="../configure/index.html">Configure</a>
+      <a href="index.html">Docs</a>
+      <a href="../api/index.html">API</a>
+      <a href="../specs/index.html">Specs</a>
+      <a href="contributing.html" aria-current="page">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="index.html">Docs</a><span aria-hidden="true">/</span><a href="project.html">Project</a><span aria-hidden="true">/</span><span>Contributing</span></div>
+  <div class="page with-toc">
+    <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
+<ol>
+<li><a href="#pull-requests">Pull requests</a></li>
+<li><a href="#what-belongs-in-the-core">What belongs in the core</a></li>
+<li><a href="#gates">Gates</a></li>
+<li><a href="#code-conventions">Code conventions</a></li>
+<li><a href="#commit-messages">Commit messages</a></li>
+<li><a href="#graphql-schema-changes">GraphQL schema changes</a></li>
+<li><a href="#who-can-merge-and-publish">Who can merge and publish</a><ol><li><a href="#repository-settings">Repository settings</a></li></ol></li>
+</ol>
+</details></aside>
+    <main id="content" class="prose">
+<h1 id="contributing">Contributing</h1>
+<p>Anyone can contribute. This repository is licensed under the Apache License 2.0 (see <code>LICENSE</code>),
+and contributions are accepted under the same license.</p>
+<p>Everyone taking part follows the code of conduct in <a href="code-of-conduct.html"><code>CODE_OF_CONDUCT.md</code></a>. A vulnerability is
+not reported as an issue or a pull request: <a href="security.html"><code>SECURITY.md</code></a> says how to report it privately.</p>
+<h2 id="pull-requests">Pull requests <a class="anchor" href="#pull-requests" aria-label="Link to this section">#</a></h2>
+<p>Use whatever tools you like to write the code, including AI assistants. The pull request has to
+describe what it implements and why, in your words. A diff without that is sent back unread.</p>
+<p>Every pull request against <code>master</code> says:</p>
+<ul>
+<li><strong>What changes, and for whom</strong>: the behaviour a user, an operator or a client author sees
+after it merges.</li>
+<li><strong>What it does not do</strong>: the cases it leaves out on purpose, so a reviewer does not look for
+them.</li>
+<li><strong>How it was tested</strong>: the commands you ran and the tail of their output (see &quot;Gates&quot; below).
+If a suite could not run, say which and why.</li>
+<li><strong>Which spec or doc it changes</strong>: a change to a contract in <a href="https://github.com/rim-platform/rim-server/tree/c86029b35a7ef7770b05e7bda62909f988343f7f/docs/specs"><code>docs/specs/</code></a> or to a page in
+<a href="https://github.com/rim-platform/rim-server/tree/c86029b35a7ef7770b05e7bda62909f988343f7f/docs"><code>docs/</code></a> is part of the same pull request as the code.</li>
+</ul>
+<p>A change an operator, a user or a client author sees adds its line under <code>Unreleased</code> in
+<a href="changelog.html"><code>CHANGELOG.md</code></a>; the top of that file says how.</p>
+<p>Open an issue first for anything beyond a fix: a new feature, a new GraphQL root, a migration, a
+new dependency, a change to a spec. Agreeing on the shape before the code saves both sides a
+rewrite.</p>
+<h2 id="what-belongs-in-the-core">What belongs in the core <a class="anchor" href="#what-belongs-in-the-core" aria-label="Link to this section">#</a></h2>
+<p>The server is a decentralized chat platform plus the programmable layer: commands, keybinds,
+macros, pipelines, plugins and the AI command surface. A feature for one kind of community (an
+incident tracker, a game tool, a ticket workflow) is a vertical, and verticals are built as
+plugins, bots or pipelines on top of the core, not inside it. When a request can be met by a
+plugin, a bot, a pipeline or a macro, the core gains the primitive that makes it possible and
+the vertical stays outside. <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/ROADMAP.md"><code>ROADMAP.md</code></a> (&quot;Principles for sequencing&quot;, &quot;Architecture
+guardrails&quot;) has the reasoning; every new server feature also answers what it does in an
+encrypted conversation and with more than one server.</p>
+<h2 id="gates">Gates <a class="anchor" href="#gates" aria-label="Link to this section">#</a></h2>
+<p>A pull request is merged when all of these pass locally; paste their tails into the pull
+request.</p>
+<pre><code class="language-sh">cargo fmt --all --check
+cargo clippy --workspace --all-targets -- -D warnings
+cargo test --workspace</code></pre>
+<p><code>cargo test --workspace</code> includes <code>cargo test -p migration</code>, which checks that every migration
+file is registered in <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/migration/src/lib.rs"><code>migration/src/lib.rs</code></a> and that every migration has a <code>down</code> that undoes
+its <code>up</code>. <code>sea migrate generate</code> has dropped registrations when it rewrites that file, so run it
+after generating a migration.</p>
+<p>Three feature-gated suites need a running PostgreSQL 17 and <code>DATABASE_URL</code>. They fail loudly
+when <code>DATABASE_URL</code> is unset; leave the feature flag off to skip them.</p>
+<pre><code class="language-sh">cargo test -p rim_infra_db --features db-tests -- --test-threads=1
+cargo test -p rim_api --features e2e-tests -- --test-threads=1
+cargo test -p rim_infra_services --features infra-db-tests -- --test-threads=1</code></pre>
+<p>The <code>rim_api</code> end-to-end suite also runs two servers in one process
+(<a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/rim_api/tests/s2s_e2e.rs"><code>rim_api/tests/s2s_e2e.rs</code></a>) to test server-to-server traffic over loopback. The second server
+uses a second database named like the one in <code>DATABASE_URL</code> with <code>b</code> appended
+(<code>rim_test</code> and <code>rim_testb</code>); the suite creates it when it is missing, so the database user
+needs the right to create databases.</p>
+<p>Run suites that share a database with <code>--test-threads=1</code>.</p>
+<h2 id="code-conventions">Code conventions <a class="anchor" href="#code-conventions" aria-label="Link to this section">#</a></h2>
+<p><a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/CLAUDE.md"><code>CLAUDE.md</code></a> describes the layering, the patterns and the conventions; the points reviewers check
+most:</p>
+<ul>
+<li><strong>Layers.</strong> <code>rim_api</code> and the non-GraphQL transports in <code>rim_server</code> call service traits from
+<code>rim_services</code>, never their implementations, and only services reach repositories. The
+composition root in <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/rim_server/src/app.rs"><code>rim_server/src/app.rs</code></a> is the one place that builds the implementations;
+<a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/CLAUDE.md"><code>CLAUDE.md</code></a> describes both exceptions to the layer chain.</li>
+<li><strong>Errors.</strong> No <code>unwrap</code> or <code>expect</code> in library code; <code>ServiceResult</code> at service boundaries.</li>
+<li><strong>Imports.</strong> <code>std</code>, then external crates, then local modules, separated by blank lines.</li>
+<li><strong>Visibility.</strong> New modules are <code>pub(crate)</code> unless something outside the crate uses them.</li>
+<li><strong>Migrations.</strong> Generate them with <code>sea migrate generate &lt;name&gt;</code>, never by hand. A
+migration only expands the schema (a table, a column that is nullable or has a default, an
+index), so the previous release&#39;s server keeps working on it and an operator can roll the
+binary back. Removing or renaming takes two releases: one stops using the column or table, the
+next drops it, with an <strong>Upgrade:</strong> line in the changelog. Every <code>down</code> undoes its <code>up</code>.
+<a href="operations/upgrade.html"><code>docs/operations/upgrade.md</code></a> is the operator&#39;s side of this.</li>
+<li><strong>Comments</strong> say what an item is and what it does, briefly. No history (&quot;was&quot;, &quot;used to&quot;,
+&quot;now&quot;), no references to plans, tickets, stages or pull requests, and no &quot;see section N of the
+spec&quot;. The commit message and the pull request carry the why of a change.</li>
+</ul>
+<h2 id="commit-messages">Commit messages <a class="anchor" href="#commit-messages" aria-label="Link to this section">#</a></h2>
+<p>A plain imperative first line of at most 72 characters (&quot;Add slow mode to channels&quot;), a blank
+line, and a body that says why the change is made. No trailers of any kind: no
+<code>Co-Authored-By</code>, no <code>Signed-off-by</code>.</p>
+<h2 id="graphql-schema-changes">GraphQL schema changes <a class="anchor" href="#graphql-schema-changes" aria-label="Link to this section">#</a></h2>
+<p>The clients in <code>rim-ui</code> generate their TypeScript types from the server&#39;s schema. A pull request
+that adds or changes a GraphQL type, field, enum or argument exports the schema for them. With
+the server running locally:</p>
+<pre><code class="language-sh">curl -s http://localhost:8080/api/sdl &gt; ../rim-ui/schema.graphql
+cd ../rim-ui &amp;&amp; npm run codegen</code></pre>
+<p>Enum variants become <code>SCREAMING_SNAKE</code> and fields <code>camelCase</code> in the schema. New resolvers go
+into the last <code>QueryGroupN</code> or <code>MutationGroupN</code> (or into an existing domain object) so the field
+order of the existing schema does not change; <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/CLAUDE.md"><code>CLAUDE.md</code></a> explains why.</p>
+<h2 id="who-can-merge-and-publish">Who can merge and publish <a class="anchor" href="#who-can-merge-and-publish" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><p><strong>Every change is a pull request.</strong> Nobody pushes to <code>master</code> directly, the maintainer
+included.</p>
+</li>
+<li><p><strong>CI must pass.</strong> The jobs of <code>.github/workflows/ci.yaml</code> are required checks; a pull request
+whose checks fail or did not run cannot merge.</p>
+</li>
+<li><p><strong>The maintainer merges.</strong> <code>.github/CODEOWNERS</code> names the maintainer, @dvorakj31, as the
+reviewer of every path, and only the maintainer has write access. Everyone else works from a
+fork.</p>
+</li>
+<li><p><strong>The maintainer releases.</strong> Only the maintainer can push a <code>v*</code> tag. The tag starts
+<code>.github/workflows/release.yaml</code>, which publishes nothing until the maintainer approves the
+run in the <code>release</code> environment.</p>
+</li>
+<li><p><strong>Images are signed.</strong> <code>ghcr.io/rim-platform/rim-server</code> is signed with cosign keyless by the
+release workflow. The certificate names the workflow and the tag, so an image built or signed
+anywhere else does not verify:</p>
+<pre><code class="language-sh">v=&lt;version&gt;
+cosign verify ghcr.io/rim-platform/rim-server:$v \
+  --certificate-identity https://github.com/rim-platform/rim-server/.github/workflows/release.yaml@refs/tags/v$v \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com</code></pre>
+<p>Each release also carries the image&#39;s SBOM (SPDX JSON), attested to the image;
+<code>cosign verify-attestation --type spdxjson</code> with the same flags checks it.</p>
+</li>
+</ul>
+<h3 id="repository-settings">Repository settings <a class="anchor" href="#repository-settings" aria-label="Link to this section">#</a></h3>
+<p>The rules above live in the repository&#39;s settings on GitHub, which the maintainer keeps:</p>
+<ol>
+<li><strong>Ruleset on <code>master</code>.</strong> Require a pull request before merging, with one approval and review
+from Code Owners. Require the status checks <code>Lint &amp; Format</code>, <code>Test &amp; Coverage</code>,
+<code>Security Audit</code> and <code>Docker Build</code>. Block force pushes and deletion. Bypass list: the
+maintainer, for pull requests only, so the maintainer&#39;s own pull requests merge without a
+second reviewer.</li>
+<li><strong>Ruleset on tags <code>v*</code>.</strong> Restrict creations, updates and deletions. Bypass list: the
+maintainer only.</li>
+<li><strong>Environment <code>release</code>.</strong> Required reviewer: the maintainer, with &quot;Prevent self-review&quot; off
+(the maintainer pushes the tag and approves the run). Deployment branches and tags: the tag
+pattern <code>v*</code> only. Administrators may not bypass the protection rules.</li>
+<li><strong>Actions.</strong> Workflow permissions: read repository contents and packages. Actions may not
+create or approve pull requests. Workflows from forks need approval for all external
+contributors. Allowed actions: GitHub&#39;s own and those the workflows name (<code>docker/*</code>,
+<code>actions-rust-lang/setup-rust-toolchain</code>, <code>taiki-e/install-action</code>, <code>anchore/sbom-action</code>,
+<code>sigstore/cosign-installer</code>). Requiring actions pinned to a full commit SHA can follow once
+<code>ci.yaml</code> pins its actions as <code>release.yaml</code> does.</li>
+<li><strong>Access.</strong> Nobody but the maintainer holds the write role or above.</li>
+<li><strong>Package <code>rim-server</code>.</strong> After the first release: visibility public, and under &quot;Manage
+Actions access&quot; only this repository, with the write role.</li>
+</ol>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/CONTRIBUTING.md">rim-server/CONTRIBUTING.md</a> at <code>c86029b</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+<script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
+</body>
+</html>

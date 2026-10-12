@@ -1,0 +1,1066 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Inputs · API · RIM</title>
+<meta name="description" content="The inputs of the RIM GraphQL schema.">
+<link rel="icon" href="../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../index.html" aria-label="RIM home">
+      <picture><source srcset="../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../index.html#what">What RIM is</a>
+      <a href="../index.html#how">How it works</a>
+      <a href="../docs/self-hosting.html">Self-host</a>
+      <a href="../configure/index.html">Configure</a>
+      <a href="../docs/index.html">Docs</a>
+      <a href="index.html" aria-current="page">API</a>
+      <a href="../specs/index.html">Specs</a>
+      <a href="../docs/contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="index.html">API</a><span aria-hidden="true">/</span><span>Inputs</span></div>
+  <div class="page with-toc">
+    <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
+<ol>
+<li><a href="#AddWorkspacePluginInput">AddWorkspacePluginInput</a><ol><li><a href="#AuditLogFilterInput">AuditLogFilterInput</a></li><li><a href="#AuditLogPaginationInput">AuditLogPaginationInput</a></li><li><a href="#ChannelCursorInput">ChannelCursorInput</a></li><li><a href="#ChannelListFilter">ChannelListFilter</a></li><li><a href="#ClaimMlsKeyPackagesInput">ClaimMlsKeyPackagesInput</a></li><li><a href="#CommandContextInput">CommandContextInput</a></li><li><a href="#ConfirmationProofInput">ConfirmationProofInput</a></li><li><a href="#CreateAttachmentInput">CreateAttachmentInput</a></li><li><a href="#CreateChannelLensInput">CreateChannelLensInput</a></li><li><a href="#CreateConversationInput">CreateConversationInput</a></li><li><a href="#CreateCustomEmojiInput">CreateCustomEmojiInput</a></li><li><a href="#CreateInviteInput">CreateInviteInput</a></li><li><a href="#CreateKeybindInput">CreateKeybindInput</a></li><li><a href="#CreateMacroInput">CreateMacroInput</a></li><li><a href="#CreatePipelineInput">CreatePipelineInput</a></li><li><a href="#CreateServerInput">CreateServerInput</a></li><li><a href="#CreateUserCommandInput">CreateUserCommandInput</a></li><li><a href="#DeleteAttachmentInput">DeleteAttachmentInput</a></li><li><a href="#DeleteKeybindInput">DeleteKeybindInput</a></li><li><a href="#DeleteMessageInput">DeleteMessageInput</a></li><li><a href="#DeleteUserCommandInput">DeleteUserCommandInput</a></li><li><a href="#DeleteWorkspaceStateInput">DeleteWorkspaceStateInput</a></li><li><a href="#DndWindowInput">DndWindowInput</a></li><li><a href="#EditEncryptedMessageInput">EditEncryptedMessageInput</a></li><li><a href="#EditMessageInput">EditMessageInput</a></li><li><a href="#EnrollIdentityKeyInput">EnrollIdentityKeyInput</a></li><li><a href="#ExecuteCommandInput">ExecuteCommandInput</a></li><li><a href="#ExecuteMacroInput">ExecuteMacroInput</a></li><li><a href="#FilterConditionInput">FilterConditionInput</a></li><li><a href="#FilterSpecInput">FilterSpecInput</a></li><li><a href="#FinalizeAttachmentInput">FinalizeAttachmentInput</a></li><li><a href="#ForwardMessageInput">ForwardMessageInput</a></li><li><a href="#HeartbeatInput">HeartbeatInput</a></li><li><a href="#InBandTokenInput">InBandTokenInput</a></li><li><a href="#InboxCursorInput">InboxCursorInput</a></li><li><a href="#JoinRemoteWorkspaceInput">JoinRemoteWorkspaceInput</a></li><li><a href="#JoinServerByInviteInput">JoinServerByInviteInput</a></li><li><a href="#LoginInput">LoginInput</a></li><li><a href="#MacroStepInput">MacroStepInput</a></li><li><a href="#MarkAllAsReadInput">MarkAllAsReadInput</a></li><li><a href="#MarkAsReadInput">MarkAsReadInput</a></li><li><a href="#MessageChangeCursorInput">MessageChangeCursorInput</a></li><li><a href="#MessageChangesInput">MessageChangesInput</a></li><li><a href="#MessageCursorInput">MessageCursorInput</a></li><li><a href="#MessageReportCursorInput">MessageReportCursorInput</a></li><li><a href="#MlsDeviceRefInput">MlsDeviceRefInput</a></li><li><a href="#MuteConversationInput">MuteConversationInput</a></li><li><a href="#NotificationCursorInput">NotificationCursorInput</a></li><li><a href="#PinMessageInput">PinMessageInput</a></li><li><a href="#PipelineActionInput">PipelineActionInput</a></li><li><a href="#PipelineFilterConditionInput">PipelineFilterConditionInput</a></li><li><a href="#PipelineFilterInput">PipelineFilterInput</a></li><li><a href="#PipelineTriggerInput">PipelineTriggerInput</a></li><li><a href="#PredecessorInput">PredecessorInput</a></li><li><a href="#RemoteMemberInput">RemoteMemberInput</a></li><li><a href="#ReplyToMessageInput">ReplyToMessageInput</a></li><li><a href="#ReportEncryptedMessageInput">ReportEncryptedMessageInput</a></li><li><a href="#RequestMlsReaddInput">RequestMlsReaddInput</a></li><li><a href="#RotateIdentityKeyInput">RotateIdentityKeyInput</a></li><li><a href="#SealedMessageInput">SealedMessageInput</a></li><li><a href="#SearchMessagesInput">SearchMessagesInput</a></li><li><a href="#SendEncryptedMessageInput">SendEncryptedMessageInput</a></li><li><a href="#SendMessageInput">SendMessageInput</a></li><li><a href="#SetWorkspaceStateInput">SetWorkspaceStateInput</a></li><li><a href="#SignedStatementInput">SignedStatementInput</a></li><li><a href="#SignupWithInviteInput">SignupWithInviteInput</a></li><li><a href="#SignupWithKeyInput">SignupWithKeyInput</a></li><li><a href="#SubmitMlsCommitInput">SubmitMlsCommitInput</a></li><li><a href="#ToggleReactionInput">ToggleReactionInput</a></li><li><a href="#UnmuteConversationInput">UnmuteConversationInput</a></li><li><a href="#UnpinMessageInput">UnpinMessageInput</a></li><li><a href="#UpdateChannelLensInput">UpdateChannelLensInput</a></li><li><a href="#UpdateConversationTopicInput">UpdateConversationTopicInput</a></li><li><a href="#UpdateKeybindInput">UpdateKeybindInput</a></li><li><a href="#UpdateMacroInput">UpdateMacroInput</a></li><li><a href="#UpdateMyProfileInput">UpdateMyProfileInput</a></li><li><a href="#UpdateNotificationSettingsInput">UpdateNotificationSettingsInput</a></li><li><a href="#UpdatePipelineInput">UpdatePipelineInput</a></li><li><a href="#UpdateUserCommandInput">UpdateUserCommandInput</a></li><li><a href="#UpdateWorkspacePluginInput">UpdateWorkspacePluginInput</a></li><li><a href="#UserCommandStepInput">UserCommandStepInput</a></li></ol></li>
+</ol>
+</details></aside>
+    <main id="content" class="prose">
+<h1>Inputs</h1>
+<p class="lede">82 inputs, in the order the schema defines them.</p>
+<input id="filter" class="search" type="search" placeholder="Filter inputs by name" aria-label="Filter inputs by name" autocomplete="off">
+<p id="filter-none" class="muted" hidden>Nothing matches.</p>
+<section class="entry" id="AddWorkspacePluginInput" data-name="AddWorkspacePluginInput">
+<h3><code>AddWorkspacePluginInput</code><span class="kind">input</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>serverId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>statement</code></td><td><code><a href="inputs.html#SignedStatementInput">SignedStatementInput</a>!</code></td><td></td></tr>
+<tr><td><code>status</code></td><td><code><a href="enums.html#WorkspacePluginStatus">WorkspacePluginStatus</a>!</code></td><td></td></tr>
+<tr><td><code>bundleUrl</code></td><td><code><a href="scalars.html#String">String</a></code></td><td><p>Only for a bundle source; omitted, this server&#39;s copy, which must have been uploaded.</p>
+</td></tr>
+<tr><td><code>publisherKeyLog</code></td><td><code>[<a href="inputs.html#SignedStatementInput">SignedStatementInput</a>!]</code></td><td><p>Required when the publisher is not enrolled on this server.</p>
+</td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="mutation.html#addWorkspacePlugin">Mutation.addWorkspacePlugin</a></p>
+</section>
+<section class="entry" id="AuditLogFilterInput" data-name="AuditLogFilterInput">
+<h3><code>AuditLogFilterInput</code><span class="kind">input</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>actorUserId</code></td><td><code><a href="scalars.html#ID">ID</a></code></td><td></td></tr>
+<tr><td><code>serverId</code></td><td><code><a href="scalars.html#ID">ID</a></code></td><td></td></tr>
+<tr><td><code>commandId</code></td><td><code><a href="scalars.html#String">String</a></code></td><td></td></tr>
+<tr><td><code>typedVerb</code></td><td><code><a href="enums.html#TypedVerbGql">TypedVerbGql</a></code></td><td></td></tr>
+<tr><td><code>since</code></td><td><code><a href="scalars.html#String">String</a></code></td><td></td></tr>
+<tr><td><code>until</code></td><td><code><a href="scalars.html#String">String</a></code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="query.html#listAuditLog">Query.listAuditLog</a></p>
+</section>
+<section class="entry" id="AuditLogPaginationInput" data-name="AuditLogPaginationInput">
+<h3><code>AuditLogPaginationInput</code><span class="kind">input</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>after</code></td><td><code><a href="scalars.html#String">String</a></code></td><td><p>Opaque cursor from the previous page&#39;s <code>nextCursor</code>.</p>
+</td></tr>
+<tr><td><code>limit</code></td><td><code><a href="scalars.html#Int">Int</a></code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="query.html#listAuditLog">Query.listAuditLog</a></p>
+</section>
+<section class="entry" id="ChannelCursorInput" data-name="ChannelCursorInput">
+<h3><code>ChannelCursorInput</code><span class="kind">input</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>createdAt</code></td><td><code><a href="scalars.html#DateTime">DateTime</a>!</code></td><td></td></tr>
+<tr><td><code>conversationId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="query.html#channels">Query.channels</a></p>
+</section>
+<section class="entry" id="ChannelListFilter" data-name="ChannelListFilter">
+<h3><code>ChannelListFilter</code><span class="kind">input</span></h3>
+<div class="desc"><p>Narrows the <a href="query.html#channels"><code>channels</code></a> query. By default it lists every channel the viewer can see (public
+channels plus private channels they belong to) that is not archived.</p>
+</div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>joinedOnly</code></td><td><code><a href="scalars.html#Boolean">Boolean</a>!</code> <span class="faint">= false</span></td><td><p>Only channels the viewer has joined (the sidebar list).</p>
+</td></tr>
+<tr><td><code>includeArchived</code></td><td><code><a href="scalars.html#Boolean">Boolean</a>!</code> <span class="faint">= false</span></td><td><p>Include archived channels.</p>
+</td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="query.html#channels">Query.channels</a></p>
+</section>
+<section class="entry" id="ClaimMlsKeyPackagesInput" data-name="ClaimMlsKeyPackagesInput">
+<h3><code>ClaimMlsKeyPackagesInput</code><span class="kind">input</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>serverId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>conversationId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>devices</code></td><td><code>[<a href="inputs.html#MlsDeviceRefInput">MlsDeviceRefInput</a>!]!</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="mutation.html#claimMlsKeyPackages">Mutation.claimMlsKeyPackages</a></p>
+</section>
+<section class="entry" id="CommandContextInput" data-name="CommandContextInput">
+<h3><code>CommandContextInput</code><span class="kind">input</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>workspaceId</code></td><td><code><a href="scalars.html#ID">ID</a></code></td><td></td></tr>
+<tr><td><code>conversationId</code></td><td><code><a href="scalars.html#ID">ID</a></code></td><td></td></tr>
+<tr><td><code>threadId</code></td><td><code><a href="scalars.html#ID">ID</a></code></td><td></td></tr>
+<tr><td><code>selectedText</code></td><td><code><a href="scalars.html#String">String</a></code></td><td></td></tr>
+<tr><td><code>selectedMessageId</code></td><td><code><a href="scalars.html#ID">ID</a></code></td><td></td></tr>
+<tr><td><code>selectedMessageIds</code></td><td><code>[<a href="scalars.html#ID">ID</a>!]</code></td><td></td></tr>
+<tr><td><code>focusedSurface</code></td><td><code><a href="scalars.html#String">String</a></code></td><td></td></tr>
+<tr><td><code>activePanel</code></td><td><code><a href="scalars.html#String">String</a></code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="inputs.html#ExecuteCommandInput">ExecuteCommandInput</a>, <a href="inputs.html#ExecuteMacroInput">ExecuteMacroInput</a>, <a href="query.html#commands">Query.commands</a></p>
+</section>
+<section class="entry" id="ConfirmationProofInput" data-name="ConfirmationProofInput">
+<h3><code>ConfirmationProofInput</code><span class="kind">input</span></h3>
+<div class="desc"><p>A confirmation proof: the token and args hash of the challenge a previous call returned.</p>
+</div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>inBandToken</code></td><td><code><a href="inputs.html#InBandTokenInput">InBandTokenInput</a>!</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="inputs.html#ExecuteCommandInput">ExecuteCommandInput</a>, <a href="inputs.html#ExecuteMacroInput">ExecuteMacroInput</a></p>
+</section>
+<section class="entry" id="CreateAttachmentInput" data-name="CreateAttachmentInput">
+<h3><code>CreateAttachmentInput</code><span class="kind">input</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>serverId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>conversationId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>messageId</code></td><td><code><a href="scalars.html#ID">ID</a></code></td><td></td></tr>
+<tr><td><code>filename</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td></td></tr>
+<tr><td><code>contentType</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td></td></tr>
+<tr><td><code>sizeBytes</code></td><td><code><a href="scalars.html#Int">Int</a>!</code></td><td></td></tr>
+<tr><td><code>blobSha256</code></td><td><code><a href="scalars.html#String">String</a></code></td><td><p>Required in an encrypted conversation: unpadded base64url SHA-256 of the blob.</p>
+</td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="mutation.html#createAttachment">Mutation.createAttachment</a></p>
+</section>
+<section class="entry" id="CreateChannelLensInput" data-name="CreateChannelLensInput">
+<h3><code>CreateChannelLensInput</code><span class="kind">input</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>serverId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>conversationId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>name</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td></td></tr>
+<tr><td><code>filterSpec</code></td><td><code><a href="inputs.html#FilterSpecInput">FilterSpecInput</a>!</code></td><td></td></tr>
+<tr><td><code>isShared</code></td><td><code><a href="scalars.html#Boolean">Boolean</a></code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="mutation.html#createChannelLens">Mutation.createChannelLens</a></p>
+</section>
+<section class="entry" id="CreateConversationInput" data-name="CreateConversationInput">
+<h3><code>CreateConversationInput</code><span class="kind">input</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>serverId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>otherUserId</code></td><td><code><a href="scalars.html#ID">ID</a></code></td><td><p>For DM conversations.</p>
+</td></tr>
+<tr><td><code>memberIds</code></td><td><code>[<a href="scalars.html#ID">ID</a>!]</code></td><td><p>For Group conversations.</p>
+</td></tr>
+<tr><td><code>isChannel</code></td><td><code><a href="scalars.html#Boolean">Boolean</a></code></td><td><p>For Channel conversations.</p>
+</td></tr>
+<tr><td><code>title</code></td><td><code><a href="scalars.html#String">String</a></code></td><td></td></tr>
+<tr><td><code>isPrivate</code></td><td><code><a href="scalars.html#Boolean">Boolean</a>!</code> <span class="faint">= false</span></td><td><p>Channels only: visible to invited members alone. Cannot be changed later.</p>
+</td></tr>
+<tr><td><code>encrypted</code></td><td><code><a href="scalars.html#Boolean">Boolean</a></code></td><td><p>DMs and groups only: end-to-end encrypted from creation. Every member needs a device set
+up for encryption. Defaults to false.</p>
+</td></tr>
+<tr><td><code>remoteMembers</code></td><td><code>[<a href="inputs.html#RemoteMemberInput">RemoteMemberInput</a>!]</code></td><td><p>People from other servers, in the direct space only. With no <code>otherUserId</code> or
+<code>memberIds</code> and one remote member, the conversation is a DM with them.</p>
+</td></tr>
+<tr><td><code>predecessor</code></td><td><code><a href="inputs.html#PredecessorInput">PredecessorInput</a></code></td><td><p>The conversation this one succeeds, when its home is gone.</p>
+</td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="mutation.html#createConversation">Mutation.createConversation</a></p>
+</section>
+<section class="entry" id="CreateCustomEmojiInput" data-name="CreateCustomEmojiInput">
+<h3><code>CreateCustomEmojiInput</code><span class="kind">input</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>serverId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>name</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td></td></tr>
+<tr><td><code>imageBase64</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="mutation.html#createCustomEmoji">Mutation.createCustomEmoji</a></p>
+</section>
+<section class="entry" id="CreateInviteInput" data-name="CreateInviteInput">
+<h3><code>CreateInviteInput</code><span class="kind">input</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>serverId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>expiresAt</code></td><td><code><a href="scalars.html#DateTime">DateTime</a></code></td><td></td></tr>
+<tr><td><code>maxUses</code></td><td><code><a href="scalars.html#Int">Int</a></code></td><td></td></tr>
+<tr><td><code>recipientEmail</code></td><td><code><a href="scalars.html#String">String</a></code></td><td><p>Optional recipient to email the invite link to. Validated server-side;
+malformed addresses return a validation error.</p>
+</td></tr>
+<tr><td><code>role</code></td><td><code><a href="enums.html#ServerMemberRoleGql">ServerMemberRoleGql</a></code></td><td><p>Role granted on join: <code>MEMBER</code> (default) or <code>GUEST</code>. Any other value is a
+<code>VALIDATION</code> error.</p>
+</td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="mutation.html#createInvite">Mutation.createInvite</a></p>
+</section>
+<section class="entry" id="CreateKeybindInput" data-name="CreateKeybindInput">
+<h3><code>CreateKeybindInput</code><span class="kind">input</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>scope</code></td><td><code><a href="enums.html#KeybindScope">KeybindScope</a>!</code></td><td></td></tr>
+<tr><td><code>workspaceId</code></td><td><code><a href="scalars.html#ID">ID</a></code></td><td></td></tr>
+<tr><td><code>keystroke</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td></td></tr>
+<tr><td><code>commandId</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td></td></tr>
+<tr><td><code>context</code></td><td><code><a href="enums.html#KeybindContext">KeybindContext</a>!</code></td><td></td></tr>
+<tr><td><code>presetArgs</code></td><td><code><a href="scalars.html#JSON">JSON</a></code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="mutation.html#createKeybind">Mutation.createKeybind</a></p>
+</section>
+<section class="entry" id="CreateMacroInput" data-name="CreateMacroInput">
+<h3><code>CreateMacroInput</code><span class="kind">input</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>serverId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>name</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td></td></tr>
+<tr><td><code>description</code></td><td><code><a href="scalars.html#String">String</a></code></td><td></td></tr>
+<tr><td><code>steps</code></td><td><code>[<a href="inputs.html#MacroStepInput">MacroStepInput</a>!]!</code></td><td></td></tr>
+<tr><td><code>aiCallable</code></td><td><code><a href="scalars.html#Boolean">Boolean</a>!</code> <span class="faint">= false</span></td><td></td></tr>
+<tr><td><code>nlDescription</code></td><td><code><a href="scalars.html#String">String</a>!</code> <span class="faint">= &quot;&quot;</span></td><td></td></tr>
+<tr><td><code>intentSamples</code></td><td><code>[<a href="scalars.html#String">String</a>!]!</code> <span class="faint">= []</span></td><td></td></tr>
+<tr><td><code>sensitivity</code></td><td><code><a href="enums.html#CommandSensitivity">CommandSensitivity</a>!</code> <span class="faint">= SAFE</span></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="mutation.html#createMacro">Mutation.createMacro</a></p>
+</section>
+<section class="entry" id="CreatePipelineInput" data-name="CreatePipelineInput">
+<h3><code>CreatePipelineInput</code><span class="kind">input</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>serverId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>name</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td></td></tr>
+<tr><td><code>description</code></td><td><code><a href="scalars.html#String">String</a></code></td><td></td></tr>
+<tr><td><code>trigger</code></td><td><code><a href="inputs.html#PipelineTriggerInput">PipelineTriggerInput</a>!</code></td><td></td></tr>
+<tr><td><code>filter</code></td><td><code><a href="inputs.html#PipelineFilterInput">PipelineFilterInput</a></code></td><td></td></tr>
+<tr><td><code>actions</code></td><td><code>[<a href="inputs.html#PipelineActionInput">PipelineActionInput</a>!]!</code></td><td></td></tr>
+<tr><td><code>cooldownSecs</code></td><td><code><a href="scalars.html#Int">Int</a></code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="mutation.html#createPipeline">Mutation.createPipeline</a></p>
+</section>
+<section class="entry" id="CreateServerInput" data-name="CreateServerInput">
+<h3><code>CreateServerInput</code><span class="kind">input</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>name</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="mutation.html#createServer">Mutation.createServer</a></p>
+</section>
+<section class="entry" id="CreateUserCommandInput" data-name="CreateUserCommandInput">
+<h3><code>CreateUserCommandInput</code><span class="kind">input</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>commandId</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td></td></tr>
+<tr><td><code>title</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td></td></tr>
+<tr><td><code>description</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td></td></tr>
+<tr><td><code>steps</code></td><td><code>[<a href="inputs.html#UserCommandStepInput">UserCommandStepInput</a>!]!</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="mutation.html#createUserCommand">Mutation.createUserCommand</a></p>
+</section>
+<section class="entry" id="DeleteAttachmentInput" data-name="DeleteAttachmentInput">
+<h3><code>DeleteAttachmentInput</code><span class="kind">input</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>serverId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>attachmentId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="mutation.html#deleteAttachment">Mutation.deleteAttachment</a></p>
+</section>
+<section class="entry" id="DeleteKeybindInput" data-name="DeleteKeybindInput">
+<h3><code>DeleteKeybindInput</code><span class="kind">input</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>keybindId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="mutation.html#deleteKeybind">Mutation.deleteKeybind</a></p>
+</section>
+<section class="entry" id="DeleteMessageInput" data-name="DeleteMessageInput">
+<h3><code>DeleteMessageInput</code><span class="kind">input</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>serverId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>conversationId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>messageId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="mutation.html#deleteMessage">Mutation.deleteMessage</a></p>
+</section>
+<section class="entry" id="DeleteUserCommandInput" data-name="DeleteUserCommandInput">
+<h3><code>DeleteUserCommandInput</code><span class="kind">input</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>commandId</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="mutation.html#deleteUserCommand">Mutation.deleteUserCommand</a></p>
+</section>
+<section class="entry" id="DeleteWorkspaceStateInput" data-name="DeleteWorkspaceStateInput">
+<h3><code>DeleteWorkspaceStateInput</code><span class="kind">input</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>serverId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>key</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td></td></tr>
+<tr><td><code>scope</code></td><td><code><a href="enums.html#WorkspaceStateScopeGql">WorkspaceStateScopeGql</a>!</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="mutation.html#deleteWorkspaceState">Mutation.deleteWorkspaceState</a></p>
+</section>
+<section class="entry" id="DndWindowInput" data-name="DndWindowInput">
+<h3><code>DndWindowInput</code><span class="kind">input</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>start</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td><p><code>&quot;HH:MM&quot;</code> (or <code>&quot;HH:MM:SS&quot;</code>).</p>
+</td></tr>
+<tr><td><code>end</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td><p><code>&quot;HH:MM&quot;</code> (or <code>&quot;HH:MM:SS&quot;</code>); must differ from <code>start</code>.</p>
+</td></tr>
+<tr><td><code>timezone</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td><p>IANA timezone name, e.g. <code>Europe/Prague</code>.</p>
+</td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="inputs.html#UpdateNotificationSettingsInput">UpdateNotificationSettingsInput</a></p>
+</section>
+<section class="entry" id="EditEncryptedMessageInput" data-name="EditEncryptedMessageInput">
+<h3><code>EditEncryptedMessageInput</code><span class="kind">input</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>serverId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>conversationId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>messageId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>envelope</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="mutation.html#editEncryptedMessage">Mutation.editEncryptedMessage</a></p>
+</section>
+<section class="entry" id="EditMessageInput" data-name="EditMessageInput">
+<h3><code>EditMessageInput</code><span class="kind">input</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>serverId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>conversationId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>messageId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>text</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="mutation.html#editMessage">Mutation.editMessage</a></p>
+</section>
+<section class="entry" id="EnrollIdentityKeyInput" data-name="EnrollIdentityKeyInput">
+<h3><code>EnrollIdentityKeyInput</code><span class="kind">input</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>keyLog</code></td><td><code>[<a href="inputs.html#SignedStatementInput">SignedStatementInput</a>!]!</code></td><td><p>The whole key log, inception first.</p>
+</td></tr>
+<tr><td><code>device</code></td><td><code><a href="inputs.html#SignedStatementInput">SignedStatementInput</a>!</code></td><td><p>Certificate of the device enrolling; this session becomes its session.</p>
+</td></tr>
+<tr><td><code>proof</code></td><td><code><a href="inputs.html#SignedStatementInput">SignedStatementInput</a>!</code></td><td><p>A <a href="mutation.html#login"><code>login</code></a> statement signed by that device over a fresh <a href="mutation.html#keyLoginChallenge"><code>keyLoginChallenge</code></a>, proving the
+caller holds the device key.</p>
+</td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="mutation.html#enrollIdentityKey">Mutation.enrollIdentityKey</a></p>
+</section>
+<section class="entry" id="ExecuteCommandInput" data-name="ExecuteCommandInput">
+<h3><code>ExecuteCommandInput</code><span class="kind">input</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>commandId</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td></td></tr>
+<tr><td><code>args</code></td><td><code><a href="scalars.html#JSON">JSON</a></code></td><td></td></tr>
+<tr><td><code>commandContext</code></td><td><code><a href="inputs.html#CommandContextInput">CommandContextInput</a></code></td><td></td></tr>
+<tr><td><code>confirmation</code></td><td><code><a href="inputs.html#ConfirmationProofInput">ConfirmationProofInput</a></code></td><td><p>Confirmation proof from a previous <a href="mutation.html#executeCommand"><code>executeCommand</code></a> that returned
+<code>status: CONFIRMATION_REQUIRED</code>. Required when re-submitting that call. The server
+binds the proof to the actor, command id, arguments and context, so it cannot confirm a
+different call.</p>
+</td></tr>
+<tr><td><code>isPipe</code></td><td><code><a href="scalars.html#Boolean">Boolean</a></code></td><td></td></tr>
+<tr><td><code>initiator</code></td><td><code><a href="enums.html#CommandInitiator">CommandInitiator</a></code></td><td><p>Who issued this command. When omitted, the server treats the call as <code>PALETTE</code>, a
+human action, never as an agent action. <code>AGENT</code> fails with <code>FEATURE_DISABLED</code> while the
+instance has the AI command surface off.</p>
+</td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="mutation.html#executeCommand">Mutation.executeCommand</a></p>
+</section>
+<section class="entry" id="ExecuteMacroInput" data-name="ExecuteMacroInput">
+<h3><code>ExecuteMacroInput</code><span class="kind">input</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>macroId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>commandContext</code></td><td><code><a href="inputs.html#CommandContextInput">CommandContextInput</a></code></td><td></td></tr>
+<tr><td><code>confirmation</code></td><td><code><a href="inputs.html#ConfirmationProofInput">ConfirmationProofInput</a></code></td><td><p>Confirmation proof, as in <code>ExecuteCommandInput.confirmation</code>. One proof issued for the
+macro covers every step of it.</p>
+</td></tr>
+<tr><td><code>initiator</code></td><td><code><a href="enums.html#CommandInitiator">CommandInitiator</a></code></td><td><p>Who triggered this macro, as in <code>ExecuteCommandInput.initiator</code>: <code>PALETTE</code> when omitted.
+Every step runs with this initiator.</p>
+</td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="mutation.html#executeMacro">Mutation.executeMacro</a></p>
+</section>
+<section class="entry" id="FilterConditionInput" data-name="FilterConditionInput">
+<h3><code>FilterConditionInput</code><span class="kind">input</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>field</code></td><td><code><a href="enums.html#FilterField">FilterField</a>!</code></td><td></td></tr>
+<tr><td><code>op</code></td><td><code><a href="enums.html#FilterOp">FilterOp</a>!</code></td><td></td></tr>
+<tr><td><code>value</code></td><td><code><a href="scalars.html#JSON">JSON</a>!</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="inputs.html#FilterSpecInput">FilterSpecInput</a></p>
+</section>
+<section class="entry" id="FilterSpecInput" data-name="FilterSpecInput">
+<h3><code>FilterSpecInput</code><span class="kind">input</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>conditions</code></td><td><code>[<a href="inputs.html#FilterConditionInput">FilterConditionInput</a>!]!</code></td><td></td></tr>
+<tr><td><code>logic</code></td><td><code><a href="enums.html#FilterLogic">FilterLogic</a>!</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="inputs.html#CreateChannelLensInput">CreateChannelLensInput</a>, <a href="inputs.html#UpdateChannelLensInput">UpdateChannelLensInput</a></p>
+</section>
+<section class="entry" id="FinalizeAttachmentInput" data-name="FinalizeAttachmentInput">
+<h3><code>FinalizeAttachmentInput</code><span class="kind">input</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>serverId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>attachmentId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="mutation.html#finalizeAttachment">Mutation.finalizeAttachment</a></p>
+</section>
+<section class="entry" id="ForwardMessageInput" data-name="ForwardMessageInput">
+<h3><code>ForwardMessageInput</code><span class="kind">input</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>serverId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>sourceConversationId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>targetConversationId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>messageId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="mutation.html#forwardMessage">Mutation.forwardMessage</a></p>
+</section>
+<section class="entry" id="HeartbeatInput" data-name="HeartbeatInput">
+<h3><code>HeartbeatInput</code><span class="kind">input</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>workspaceId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>status</code></td><td><code><a href="enums.html#PresenceStatus">PresenceStatus</a>!</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="mutation.html#heartbeat">Mutation.heartbeat</a></p>
+</section>
+<section class="entry" id="InBandTokenInput" data-name="InBandTokenInput">
+<h3><code>InBandTokenInput</code><span class="kind">input</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>token</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td></td></tr>
+<tr><td><code>argsHash</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="inputs.html#ConfirmationProofInput">ConfirmationProofInput</a></p>
+</section>
+<section class="entry" id="InboxCursorInput" data-name="InboxCursorInput">
+<h3><code>InboxCursorInput</code><span class="kind">input</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>lastActivityAt</code></td><td><code><a href="scalars.html#DateTime">DateTime</a>!</code></td><td></td></tr>
+<tr><td><code>conversationId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="query.html#inboxConversations">Query.inboxConversations</a></p>
+</section>
+<section class="entry" id="JoinRemoteWorkspaceInput" data-name="JoinRemoteWorkspaceInput">
+<h3><code>JoinRemoteWorkspaceInput</code><span class="kind">input</span></h3>
+<div class="desc"><p>Join a workspace on another host through this relay.</p>
+</div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>hostServerId</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td></td></tr>
+<tr><td><code>hostOrigin</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td><p>The host&#39;s origin, from the invite link.</p>
+</td></tr>
+<tr><td><code>inviteToken</code></td><td><code><a href="scalars.html#String">String</a></code></td><td><p>The invite token; null for a current member.</p>
+</td></tr>
+<tr><td><code>proof</code></td><td><code><a href="inputs.html#SignedStatementInput">SignedStatementInput</a>!</code></td><td><p>A <a href="mutation.html#login"><code>login</code></a> statement over a <a href="mutation.html#remoteJoinChallenge"><code>remoteJoinChallenge</code></a>, naming the host&#39;s server id.</p>
+</td></tr>
+<tr><td><code>delegation</code></td><td><code><a href="inputs.html#SignedStatementInput">SignedStatementInput</a>!</code></td><td><p>A delegation of the signing device for this relay, the host and the workspace.</p>
+</td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="mutation.html#joinRemoteWorkspace">Mutation.joinRemoteWorkspace</a></p>
+</section>
+<section class="entry" id="JoinServerByInviteInput" data-name="JoinServerByInviteInput">
+<h3><code>JoinServerByInviteInput</code><span class="kind">input</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>inviteToken</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="mutation.html#joinServerByInvite">Mutation.joinServerByInvite</a></p>
+</section>
+<section class="entry" id="LoginInput" data-name="LoginInput">
+<h3><code>LoginInput</code><span class="kind">input</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>username</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td></td></tr>
+<tr><td><code>password</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="mutation.html#login">Mutation.login</a></p>
+</section>
+<section class="entry" id="MacroStepInput" data-name="MacroStepInput">
+<h3><code>MacroStepInput</code><span class="kind">input</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>commandId</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td></td></tr>
+<tr><td><code>args</code></td><td><code><a href="scalars.html#JSON">JSON</a></code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="inputs.html#CreateMacroInput">CreateMacroInput</a>, <a href="inputs.html#UpdateMacroInput">UpdateMacroInput</a></p>
+</section>
+<section class="entry" id="MarkAllAsReadInput" data-name="MarkAllAsReadInput">
+<h3><code>MarkAllAsReadInput</code><span class="kind">input</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>workspaceId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="mutation.html#markAllAsRead">Mutation.markAllAsRead</a></p>
+</section>
+<section class="entry" id="MarkAsReadInput" data-name="MarkAsReadInput">
+<h3><code>MarkAsReadInput</code><span class="kind">input</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>workspaceId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>conversationId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>readAt</code></td><td><code><a href="scalars.html#DateTime">DateTime</a>!</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="mutation.html#markAsRead">Mutation.markAsRead</a></p>
+</section>
+<section class="entry" id="MessageChangeCursorInput" data-name="MessageChangeCursorInput">
+<h3><code>MessageChangeCursorInput</code><span class="kind">input</span></h3>
+<div class="desc"><p>One conversation to read in <a href="query.html#messageChanges"><code>messageChanges</code></a>, with the cursor the client stored for it.</p>
+</div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>conversationId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>after</code></td><td><code><a href="scalars.html#String">String</a></code></td><td><p>The <code>cursor</code> a previous <a href="query.html#messageChanges"><code>messageChanges</code></a> call returned for this conversation. Opaque.
+Omit (or pass null) to read the conversation&#39;s whole history from the beginning.</p>
+</td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="inputs.html#MessageChangesInput">MessageChangesInput</a></p>
+</section>
+<section class="entry" id="MessageChangesInput" data-name="MessageChangesInput">
+<h3><code>MessageChangesInput</code><span class="kind">input</span></h3>
+<div class="desc"><p>Input for <a href="query.html#messageChanges"><code>messageChanges</code></a>.</p>
+</div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>serverId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>conversations</code></td><td><code>[<a href="inputs.html#MessageChangeCursorInput">MessageChangeCursorInput</a>!]!</code></td><td><p>At most 100 conversations. One the caller cannot read comes back with status <code>NO_ACCESS</code>.</p>
+</td></tr>
+<tr><td><code>limit</code></td><td><code><a href="scalars.html#Int">Int</a></code></td><td><p>Maximum changes per conversation. Clamped to 1..=200; defaults to 100.</p>
+</td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="query.html#messageChanges">Query.messageChanges</a></p>
+</section>
+<section class="entry" id="MessageCursorInput" data-name="MessageCursorInput">
+<h3><code>MessageCursorInput</code><span class="kind">input</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>sentAt</code></td><td><code><a href="scalars.html#DateTime">DateTime</a>!</code></td><td></td></tr>
+<tr><td><code>messageId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="query.html#messages">Query.messages</a>, <a href="query.html#threadMessages">Query.threadMessages</a>, <a href="inputs.html#SearchMessagesInput">SearchMessagesInput</a></p>
+</section>
+<section class="entry" id="MessageReportCursorInput" data-name="MessageReportCursorInput">
+<h3><code>MessageReportCursorInput</code><span class="kind">input</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>createdAt</code></td><td><code><a href="scalars.html#DateTime">DateTime</a>!</code></td><td></td></tr>
+<tr><td><code>reportId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="query.html#messageReports">Query.messageReports</a></p>
+</section>
+<section class="entry" id="MlsDeviceRefInput" data-name="MlsDeviceRefInput">
+<h3><code>MlsDeviceRefInput</code><span class="kind">input</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>principalId</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td></td></tr>
+<tr><td><code>deviceId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="inputs.html#ClaimMlsKeyPackagesInput">ClaimMlsKeyPackagesInput</a></p>
+</section>
+<section class="entry" id="MuteConversationInput" data-name="MuteConversationInput">
+<h3><code>MuteConversationInput</code><span class="kind">input</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>serverId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>conversationId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>mutedUntil</code></td><td><code><a href="scalars.html#DateTime">DateTime</a></code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="mutation.html#muteConversation">Mutation.muteConversation</a></p>
+</section>
+<section class="entry" id="NotificationCursorInput" data-name="NotificationCursorInput">
+<h3><code>NotificationCursorInput</code><span class="kind">input</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>createdAt</code></td><td><code><a href="scalars.html#DateTime">DateTime</a>!</code></td><td></td></tr>
+<tr><td><code>notificationId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="query.html#myNotifications">Query.myNotifications</a></p>
+</section>
+<section class="entry" id="PinMessageInput" data-name="PinMessageInput">
+<h3><code>PinMessageInput</code><span class="kind">input</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>serverId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>conversationId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>messageId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="mutation.html#pinMessage">Mutation.pinMessage</a></p>
+</section>
+<section class="entry" id="PipelineActionInput" data-name="PipelineActionInput">
+<h3><code>PipelineActionInput</code><span class="kind">input</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>commandId</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td></td></tr>
+<tr><td><code>args</code></td><td><code><a href="scalars.html#JSON">JSON</a></code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="inputs.html#CreatePipelineInput">CreatePipelineInput</a>, <a href="inputs.html#UpdatePipelineInput">UpdatePipelineInput</a></p>
+</section>
+<section class="entry" id="PipelineFilterConditionInput" data-name="PipelineFilterConditionInput">
+<h3><code>PipelineFilterConditionInput</code><span class="kind">input</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>conditionType</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td></td></tr>
+<tr><td><code>pattern</code></td><td><code><a href="scalars.html#String">String</a></code></td><td></td></tr>
+<tr><td><code>userId</code></td><td><code><a href="scalars.html#ID">ID</a></code></td><td></td></tr>
+<tr><td><code>conversationId</code></td><td><code><a href="scalars.html#ID">ID</a></code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="inputs.html#PipelineFilterInput">PipelineFilterInput</a></p>
+</section>
+<section class="entry" id="PipelineFilterInput" data-name="PipelineFilterInput">
+<h3><code>PipelineFilterInput</code><span class="kind">input</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>conditions</code></td><td><code>[<a href="inputs.html#PipelineFilterConditionInput">PipelineFilterConditionInput</a>!]!</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="inputs.html#CreatePipelineInput">CreatePipelineInput</a>, <a href="inputs.html#UpdatePipelineInput">UpdatePipelineInput</a></p>
+</section>
+<section class="entry" id="PipelineTriggerInput" data-name="PipelineTriggerInput">
+<h3><code>PipelineTriggerInput</code><span class="kind">input</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>kind</code></td><td><code><a href="enums.html#PipelineTriggerKindGql">PipelineTriggerKindGql</a>!</code></td><td></td></tr>
+<tr><td><code>conversationId</code></td><td><code><a href="scalars.html#ID">ID</a></code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="inputs.html#CreatePipelineInput">CreatePipelineInput</a>, <a href="inputs.html#UpdatePipelineInput">UpdatePipelineInput</a></p>
+</section>
+<section class="entry" id="PredecessorInput" data-name="PredecessorInput">
+<h3><code>PredecessorInput</code><span class="kind">input</span></h3>
+<div class="desc"><p>The conversation a successor replaces.</p>
+</div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>hostServerId</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td></td></tr>
+<tr><td><code>conversationId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="inputs.html#CreateConversationInput">CreateConversationInput</a></p>
+</section>
+<section class="entry" id="RemoteMemberInput" data-name="RemoteMemberInput">
+<h3><code>RemoteMemberInput</code><span class="kind">input</span></h3>
+<div class="desc"><p>Someone from another server to start a conversation with.</p>
+</div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>principalId</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td></td></tr>
+<tr><td><code>relayUrls</code></td><td><code>[<a href="scalars.html#String">String</a>!]!</code></td><td><p>Their relays, tried in order to fetch their identity.</p>
+</td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="inputs.html#CreateConversationInput">CreateConversationInput</a></p>
+</section>
+<section class="entry" id="ReplyToMessageInput" data-name="ReplyToMessageInput">
+<h3><code>ReplyToMessageInput</code><span class="kind">input</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>serverId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>conversationId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>rootMessageId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>text</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td></td></tr>
+<tr><td><code>parentMessageId</code></td><td><code><a href="scalars.html#ID">ID</a></code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="mutation.html#replyToMessage">Mutation.replyToMessage</a></p>
+</section>
+<section class="entry" id="ReportEncryptedMessageInput" data-name="ReportEncryptedMessageInput">
+<h3><code>ReportEncryptedMessageInput</code><span class="kind">input</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>serverId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>conversationId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>messageId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>reason</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td></td></tr>
+<tr><td><code>content</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td><p>The decrypted content, exactly as committed to.</p>
+</td></tr>
+<tr><td><code>frankingKey</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td></td></tr>
+<tr><td><code>receipt</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td></td></tr>
+<tr><td><code>receiptKeyId</code></td><td><code><a href="scalars.html#Int">Int</a>!</code></td><td></td></tr>
+<tr><td><code>senderUserId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>senderDeviceId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>sentAtUs</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td><p>Decimal microseconds.</p>
+</td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="mutation.html#reportEncryptedMessage">Mutation.reportEncryptedMessage</a></p>
+</section>
+<section class="entry" id="RequestMlsReaddInput" data-name="RequestMlsReaddInput">
+<h3><code>RequestMlsReaddInput</code><span class="kind">input</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>serverId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>conversationId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>request</code></td><td><code><a href="inputs.html#SignedStatementInput">SignedStatementInput</a>!</code></td><td><p>The <code>mls-readd</code> statement, signed by the session&#39;s device key.</p>
+</td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="mutation.html#requestMlsReadd">Mutation.requestMlsReadd</a></p>
+</section>
+<section class="entry" id="RotateIdentityKeyInput" data-name="RotateIdentityKeyInput">
+<h3><code>RotateIdentityKeyInput</code><span class="kind">input</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>entry</code></td><td><code><a href="inputs.html#SignedStatementInput">SignedStatementInput</a>!</code></td><td></td></tr>
+<tr><td><code>device</code></td><td><code><a href="inputs.html#SignedStatementInput">SignedStatementInput</a></code></td><td><p>Device certificate under the new identity key. Required for a recovery rotation.</p>
+</td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="mutation.html#rotateIdentityKey">Mutation.rotateIdentityKey</a></p>
+</section>
+<section class="entry" id="SealedMessageInput" data-name="SealedMessageInput">
+<h3><code>SealedMessageInput</code><span class="kind">input</span></h3>
+<div class="desc"><p>A sealed offer or answer: the 12-byte nonce and the AES-GCM ciphertext with its 16-byte tag
+appended, both unpadded base64url. The server checks only the encoding and the size.</p>
+</div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>nonce</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td></td></tr>
+<tr><td><code>ciphertext</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="mutation.html#sendDeviceLinkOffer">Mutation.sendDeviceLinkOffer</a>, <a href="mutation.html#sendDeviceLinkAnswer">Mutation.sendDeviceLinkAnswer</a></p>
+</section>
+<section class="entry" id="SearchMessagesInput" data-name="SearchMessagesInput">
+<h3><code>SearchMessagesInput</code><span class="kind">input</span></h3>
+<div class="desc"><p>Input for the <a href="query.html#searchMessages"><code>searchMessages</code></a> full-text-search query. <code>query</code> accepts free text plus the
+<code>from:</code>, <code>in:</code>, <code>has:</code>, <code>before:</code> and <code>after:</code> operators.</p>
+</div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>serverId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>query</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td></td></tr>
+<tr><td><code>conversationId</code></td><td><code><a href="scalars.html#ID">ID</a></code></td><td><p>Optional explicit single-conversation scope, in addition to the <code>in:</code> search operator.</p>
+</td></tr>
+<tr><td><code>limit</code></td><td><code><a href="scalars.html#Int">Int</a></code></td><td><p>Clamped server-side; defaults to 25 if omitted.</p>
+</td></tr>
+<tr><td><code>cursor</code></td><td><code><a href="inputs.html#MessageCursorInput">MessageCursorInput</a></code></td><td></td></tr>
+<tr><td><code>dir</code></td><td><code><a href="enums.html#PageDir">PageDir</a></code></td><td><p>Defaults to <code>AFTER</code> (most-recent-first) if omitted.</p>
+</td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="query.html#searchMessages">Query.searchMessages</a></p>
+</section>
+<section class="entry" id="SendEncryptedMessageInput" data-name="SendEncryptedMessageInput">
+<h3><code>SendEncryptedMessageInput</code><span class="kind">input</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>serverId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>conversationId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>messageId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td><p>Chosen by the client (UUID v7).</p>
+</td></tr>
+<tr><td><code>envelope</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td></td></tr>
+<tr><td><code>threadRootMessageId</code></td><td><code><a href="scalars.html#ID">ID</a></code></td><td></td></tr>
+<tr><td><code>forwardedFromMessageId</code></td><td><code><a href="scalars.html#ID">ID</a></code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="mutation.html#sendEncryptedMessage">Mutation.sendEncryptedMessage</a></p>
+</section>
+<section class="entry" id="SendMessageInput" data-name="SendMessageInput">
+<h3><code>SendMessageInput</code><span class="kind">input</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>serverId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>conversationId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>text</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td></td></tr>
+<tr><td><code>parentMessageId</code></td><td><code><a href="scalars.html#ID">ID</a></code></td><td></td></tr>
+<tr><td><code>forwardedFromMessageId</code></td><td><code><a href="scalars.html#ID">ID</a></code></td><td><p>The message this one forwards by sending its content again (an encrypted message&#39;s
+content, after the person confirmed it is posted unencrypted). The caller must be able
+to read it.</p>
+</td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="mutation.html#sendMessage">Mutation.sendMessage</a></p>
+</section>
+<section class="entry" id="SetWorkspaceStateInput" data-name="SetWorkspaceStateInput">
+<h3><code>SetWorkspaceStateInput</code><span class="kind">input</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>serverId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>key</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td></td></tr>
+<tr><td><code>value</code></td><td><code><a href="scalars.html#JSON">JSON</a>!</code></td><td></td></tr>
+<tr><td><code>scope</code></td><td><code><a href="enums.html#WorkspaceStateScopeGql">WorkspaceStateScopeGql</a>!</code></td><td></td></tr>
+<tr><td><code>ttlSeconds</code></td><td><code><a href="scalars.html#Int">Int</a></code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="mutation.html#setWorkspaceState">Mutation.setWorkspaceState</a></p>
+</section>
+<section class="entry" id="SignedStatementInput" data-name="SignedStatementInput">
+<h3><code>SignedStatementInput</code><span class="kind">input</span></h3>
+<div class="desc"><p>A signed statement as the client sends it: the exact JSON text that was signed, and its
+signature (<code>ed25519:&lt;base64url&gt;</code> in version 2 statements, bare base64url in version 1).</p>
+</div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>payload</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td></td></tr>
+<tr><td><code>signature</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="inputs.html#AddWorkspacePluginInput">AddWorkspacePluginInput</a>, <a href="inputs.html#EnrollIdentityKeyInput">EnrollIdentityKeyInput</a>, <a href="inputs.html#JoinRemoteWorkspaceInput">JoinRemoteWorkspaceInput</a>, <a href="mutation.html#loginWithKey">Mutation.loginWithKey</a>, <a href="mutation.html#addDeviceKey">Mutation.addDeviceKey</a>, <a href="mutation.html#revokeDeviceKey">Mutation.revokeDeviceKey</a>, <a href="mutation.html#publishProfileCard">Mutation.publishProfileCard</a>, <a href="mutation.html#renewDelegations">Mutation.renewDelegations</a>, <a href="mutation.html#applyRemoteRevocation">Mutation.applyRemoteRevocation</a>, <a href="inputs.html#RequestMlsReaddInput">RequestMlsReaddInput</a>, <a href="inputs.html#RotateIdentityKeyInput">RotateIdentityKeyInput</a>, <a href="inputs.html#SignupWithKeyInput">SignupWithKeyInput</a>, <a href="inputs.html#UpdateWorkspacePluginInput">UpdateWorkspacePluginInput</a></p>
+</section>
+<section class="entry" id="SignupWithInviteInput" data-name="SignupWithInviteInput">
+<h3><code>SignupWithInviteInput</code><span class="kind">input</span></h3>
+<div class="desc"><p>Input for <a href="mutation.html#signupWithInvite"><code>signupWithInvite</code></a>.</p>
+<p>Exactly one token MUST be set in invite-only mode; all must be absent in
+open mode. The resolver enforces this with a <code>Validation</code> error.</p>
+<p><code>email</code> is required (max 254 chars, server trims + lowercases, case-insensitive unique).
+<code>displayName</code> is optional; falls back to <code>username</code> server-side if absent or blank.</p>
+</div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>username</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td></td></tr>
+<tr><td><code>email</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td><p>Required. The user&#39;s email address. Trimmed and lowercased before storage.
+Must look like <code>local@domain.tld</code> and be at most 254 characters.</p>
+</td></tr>
+<tr><td><code>displayName</code></td><td><code><a href="scalars.html#String">String</a></code></td><td><p>Optional display name (1–80 chars when present). Falls back to <code>username</code>
+when absent or blank after trim.</p>
+</td></tr>
+<tr><td><code>password</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td></td></tr>
+<tr><td><code>instanceInviteToken</code></td><td><code><a href="scalars.html#String">String</a></code></td><td></td></tr>
+<tr><td><code>workspaceInviteToken</code></td><td><code><a href="scalars.html#String">String</a></code></td><td></td></tr>
+<tr><td><code>acceptedTermsUrl</code></td><td><code><a href="scalars.html#String">String</a></code></td><td><p>The terms of service the person accepted: <code>serverInfo.termsUrl</code>, sent back unchanged.
+Required when the server has terms (<code>VALIDATION</code> when missing or different); ignored
+when it has none.</p>
+</td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="mutation.html#signupWithInvite">Mutation.signupWithInvite</a></p>
+</section>
+<section class="entry" id="SignupWithKeyInput" data-name="SignupWithKeyInput">
+<h3><code>SignupWithKeyInput</code><span class="kind">input</span></h3>
+<div class="desc"><p>Input for <a href="mutation.html#signupWithKey"><code>signupWithKey</code></a>: an account created from a key identity alone, with no password
+and no email. The tokens follow the same rules as <a href="mutation.html#signupWithInvite"><code>signupWithInvite</code></a>: exactly one in
+invite-only mode, none in open mode. In pow mode it takes one token or <code>proofOfWork</code>.</p>
+</div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>username</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td></td></tr>
+<tr><td><code>displayName</code></td><td><code><a href="scalars.html#String">String</a></code></td><td><p>Optional display name (1–80 chars when present). Falls back to <code>username</code> when absent
+or blank after trim.</p>
+</td></tr>
+<tr><td><code>keyLog</code></td><td><code>[<a href="inputs.html#SignedStatementInput">SignedStatementInput</a>!]!</code></td><td><p>The whole key log, inception first.</p>
+</td></tr>
+<tr><td><code>device</code></td><td><code><a href="inputs.html#SignedStatementInput">SignedStatementInput</a>!</code></td><td><p>Certificate of the device signing up; the new session belongs to it.</p>
+</td></tr>
+<tr><td><code>proof</code></td><td><code><a href="inputs.html#SignedStatementInput">SignedStatementInput</a>!</code></td><td><p>A <a href="mutation.html#login"><code>login</code></a> statement signed by that device over a fresh <a href="mutation.html#keyLoginChallenge"><code>keyLoginChallenge</code></a>.</p>
+</td></tr>
+<tr><td><code>instanceInviteToken</code></td><td><code><a href="scalars.html#String">String</a></code></td><td></td></tr>
+<tr><td><code>workspaceInviteToken</code></td><td><code><a href="scalars.html#String">String</a></code></td><td></td></tr>
+<tr><td><code>proofOfWork</code></td><td><code><a href="scalars.html#String">String</a></code></td><td><p>In pow registration mode: an 8-byte nonce, unpadded base64url, such that
+<code>SHA-256(&quot;rim.pow.v1\0&quot; || server id || &quot;\0&quot; || inception payload || nonce)</code> starts with
+the descriptor&#39;s <code>powBits</code> zero bits.</p>
+</td></tr>
+<tr><td><code>acceptedTermsUrl</code></td><td><code><a href="scalars.html#String">String</a></code></td><td><p>The terms of service the person accepted, as for <a href="mutation.html#signupWithInvite"><code>signupWithInvite</code></a>.</p>
+</td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="mutation.html#signupWithKey">Mutation.signupWithKey</a></p>
+</section>
+<section class="entry" id="SubmitMlsCommitInput" data-name="SubmitMlsCommitInput">
+<h3><code>SubmitMlsCommitInput</code><span class="kind">input</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>serverId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>conversationId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>incarnation</code></td><td><code><a href="scalars.html#Int">Int</a>!</code></td><td></td></tr>
+<tr><td><code>epoch</code></td><td><code><a href="scalars.html#Int">Int</a>!</code></td><td></td></tr>
+<tr><td><code>cipherSuite</code></td><td><code><a href="scalars.html#Int">Int</a></code></td><td><p>Required for an incarnation&#39;s first Commit (epoch 0).</p>
+</td></tr>
+<tr><td><code>commit</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td></td></tr>
+<tr><td><code>welcome</code></td><td><code><a href="scalars.html#String">String</a></code></td><td><p>Required when the Commit adds devices.</p>
+</td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="mutation.html#submitMlsCommit">Mutation.submitMlsCommit</a></p>
+</section>
+<section class="entry" id="ToggleReactionInput" data-name="ToggleReactionInput">
+<h3><code>ToggleReactionInput</code><span class="kind">input</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>serverId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>conversationId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>messageId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>emoji</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="mutation.html#toggleReaction">Mutation.toggleReaction</a></p>
+</section>
+<section class="entry" id="UnmuteConversationInput" data-name="UnmuteConversationInput">
+<h3><code>UnmuteConversationInput</code><span class="kind">input</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>serverId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>conversationId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="mutation.html#unmuteConversation">Mutation.unmuteConversation</a></p>
+</section>
+<section class="entry" id="UnpinMessageInput" data-name="UnpinMessageInput">
+<h3><code>UnpinMessageInput</code><span class="kind">input</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>serverId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>conversationId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>messageId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="mutation.html#unpinMessage">Mutation.unpinMessage</a></p>
+</section>
+<section class="entry" id="UpdateChannelLensInput" data-name="UpdateChannelLensInput">
+<h3><code>UpdateChannelLensInput</code><span class="kind">input</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>serverId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>lensId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>name</code></td><td><code><a href="scalars.html#String">String</a></code></td><td></td></tr>
+<tr><td><code>filterSpec</code></td><td><code><a href="inputs.html#FilterSpecInput">FilterSpecInput</a></code></td><td></td></tr>
+<tr><td><code>isShared</code></td><td><code><a href="scalars.html#Boolean">Boolean</a></code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="mutation.html#updateChannelLens">Mutation.updateChannelLens</a></p>
+</section>
+<section class="entry" id="UpdateConversationTopicInput" data-name="UpdateConversationTopicInput">
+<h3><code>UpdateConversationTopicInput</code><span class="kind">input</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>serverId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>conversationId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>topic</code></td><td><code><a href="scalars.html#String">String</a></code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="mutation.html#updateConversationTopic">Mutation.updateConversationTopic</a></p>
+</section>
+<section class="entry" id="UpdateKeybindInput" data-name="UpdateKeybindInput">
+<h3><code>UpdateKeybindInput</code><span class="kind">input</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>keybindId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>keystroke</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td></td></tr>
+<tr><td><code>commandId</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td></td></tr>
+<tr><td><code>context</code></td><td><code><a href="enums.html#KeybindContext">KeybindContext</a>!</code></td><td></td></tr>
+<tr><td><code>presetArgs</code></td><td><code><a href="scalars.html#JSON">JSON</a></code></td><td></td></tr>
+<tr><td><code>isEnabled</code></td><td><code><a href="scalars.html#Boolean">Boolean</a>!</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="mutation.html#updateKeybind">Mutation.updateKeybind</a></p>
+</section>
+<section class="entry" id="UpdateMacroInput" data-name="UpdateMacroInput">
+<h3><code>UpdateMacroInput</code><span class="kind">input</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>macroId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>name</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td></td></tr>
+<tr><td><code>description</code></td><td><code><a href="scalars.html#String">String</a></code></td><td></td></tr>
+<tr><td><code>steps</code></td><td><code>[<a href="inputs.html#MacroStepInput">MacroStepInput</a>!]!</code></td><td></td></tr>
+<tr><td><code>aiCallable</code></td><td><code><a href="scalars.html#Boolean">Boolean</a>!</code> <span class="faint">= false</span></td><td></td></tr>
+<tr><td><code>nlDescription</code></td><td><code><a href="scalars.html#String">String</a>!</code> <span class="faint">= &quot;&quot;</span></td><td></td></tr>
+<tr><td><code>intentSamples</code></td><td><code>[<a href="scalars.html#String">String</a>!]!</code> <span class="faint">= []</span></td><td></td></tr>
+<tr><td><code>sensitivity</code></td><td><code><a href="enums.html#CommandSensitivity">CommandSensitivity</a>!</code> <span class="faint">= SAFE</span></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="mutation.html#updateMacro">Mutation.updateMacro</a></p>
+</section>
+<section class="entry" id="UpdateMyProfileInput" data-name="UpdateMyProfileInput">
+<h3><code>UpdateMyProfileInput</code><span class="kind">input</span></h3>
+<div class="desc"><p>Patch fields on the authenticated user&#39;s profile.</p>
+<p>Each field is independently optional. Omitting a field leaves the existing
+value unchanged. Sending an explicit empty string clears the field
+(after trim + control-char strip).</p>
+</div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>displayName</code></td><td><code><a href="scalars.html#String">String</a></code></td><td></td></tr>
+<tr><td><code>avatarUrl</code></td><td><code><a href="scalars.html#String">String</a></code></td><td></td></tr>
+<tr><td><code>statusText</code></td><td><code><a href="scalars.html#String">String</a></code></td><td></td></tr>
+<tr><td><code>bio</code></td><td><code><a href="scalars.html#String">String</a></code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="mutation.html#updateMyProfile">Mutation.updateMyProfile</a></p>
+</section>
+<section class="entry" id="UpdateNotificationSettingsInput" data-name="UpdateNotificationSettingsInput">
+<h3><code>UpdateNotificationSettingsInput</code><span class="kind">input</span></h3>
+<div class="desc"><p>Replaces the editable settings (the manual pause is separate: <a href="mutation.html#setDoNotDisturb"><code>setDoNotDisturb</code></a>).</p>
+</div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>defaultLevel</code></td><td><code><a href="enums.html#NotificationLevel">NotificationLevel</a>!</code></td><td></td></tr>
+<tr><td><code>keywords</code></td><td><code>[<a href="scalars.html#String">String</a>!]!</code></td><td><p>At most 20, each 2 to 40 characters; stored lower-cased and deduplicated.</p>
+</td></tr>
+<tr><td><code>dnd</code></td><td><code><a href="inputs.html#DndWindowInput">DndWindowInput</a></code></td><td><p>Null turns the daily window off.</p>
+</td></tr>
+<tr><td><code>digest</code></td><td><code><a href="enums.html#DigestFrequency">DigestFrequency</a>!</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="mutation.html#updateNotificationSettings">Mutation.updateNotificationSettings</a></p>
+</section>
+<section class="entry" id="UpdatePipelineInput" data-name="UpdatePipelineInput">
+<h3><code>UpdatePipelineInput</code><span class="kind">input</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>pipelineId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>name</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td></td></tr>
+<tr><td><code>description</code></td><td><code><a href="scalars.html#String">String</a></code></td><td></td></tr>
+<tr><td><code>trigger</code></td><td><code><a href="inputs.html#PipelineTriggerInput">PipelineTriggerInput</a>!</code></td><td></td></tr>
+<tr><td><code>filter</code></td><td><code><a href="inputs.html#PipelineFilterInput">PipelineFilterInput</a></code></td><td></td></tr>
+<tr><td><code>actions</code></td><td><code>[<a href="inputs.html#PipelineActionInput">PipelineActionInput</a>!]!</code></td><td></td></tr>
+<tr><td><code>cooldownSecs</code></td><td><code><a href="scalars.html#Int">Int</a></code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="mutation.html#updatePipeline">Mutation.updatePipeline</a></p>
+</section>
+<section class="entry" id="UpdateUserCommandInput" data-name="UpdateUserCommandInput">
+<h3><code>UpdateUserCommandInput</code><span class="kind">input</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>commandId</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td></td></tr>
+<tr><td><code>title</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td></td></tr>
+<tr><td><code>description</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td></td></tr>
+<tr><td><code>steps</code></td><td><code>[<a href="inputs.html#UserCommandStepInput">UserCommandStepInput</a>!]!</code></td><td></td></tr>
+<tr><td><code>isEnabled</code></td><td><code><a href="scalars.html#Boolean">Boolean</a>!</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="mutation.html#updateUserCommand">Mutation.updateUserCommand</a></p>
+</section>
+<section class="entry" id="UpdateWorkspacePluginInput" data-name="UpdateWorkspacePluginInput">
+<h3><code>UpdateWorkspacePluginInput</code><span class="kind">input</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>serverId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>pluginId</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td></td></tr>
+<tr><td><code>statement</code></td><td><code><a href="inputs.html#SignedStatementInput">SignedStatementInput</a></code></td><td><p>A new version, or a re-signed one, of the same plugin.</p>
+</td></tr>
+<tr><td><code>status</code></td><td><code><a href="enums.html#WorkspacePluginStatus">WorkspacePluginStatus</a></code></td><td></td></tr>
+<tr><td><code>bundleUrl</code></td><td><code><a href="scalars.html#String">String</a></code></td><td></td></tr>
+<tr><td><code>publisherKeyLog</code></td><td><code>[<a href="inputs.html#SignedStatementInput">SignedStatementInput</a>!]</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="mutation.html#updateWorkspacePlugin">Mutation.updateWorkspacePlugin</a></p>
+</section>
+<section class="entry" id="UserCommandStepInput" data-name="UserCommandStepInput">
+<h3><code>UserCommandStepInput</code><span class="kind">input</span></h3>
+<div class="desc"></div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>commandId</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td></td></tr>
+<tr><td><code>args</code></td><td><code><a href="scalars.html#JSON">JSON</a></code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="inputs.html#CreateUserCommandInput">CreateUserCommandInput</a>, <a href="inputs.html#UpdateUserCommandInput">UpdateUserCommandInput</a></p>
+</section>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Generated from <a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>58e3ec0</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+<script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
+<script>
+(() => {
+  const q = document.getElementById("filter");
+  if (!q) return;
+  const items = [...document.querySelectorAll("[data-name]")];
+  const groups = [...document.querySelectorAll("[data-group]")];
+  const none = document.getElementById("filter-none");
+  const run = () => {
+    const v = q.value.trim().toLowerCase();
+    let shown = 0;
+    for (const el of items) {
+      const hit = v ? el.dataset.name.toLowerCase().includes(v) : !el.closest("[data-search-only]");
+      el.hidden = !hit;
+      if (hit) shown += 1;
+    }
+    for (const g of groups) g.hidden = !g.querySelector("[data-name]:not([hidden])");
+    if (none) none.hidden = shown > 0 || !v;
+  };
+  q.addEventListener("input", run);
+  run();
+})();
+</script>
+</body>
+</html>

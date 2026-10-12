@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Audit retention · RIM</title>
+<meta name="description" content="rim-server keeps two audit records, and retention treats them differently:">
+<link rel="icon" href="../../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../../index.html" aria-label="RIM home">
+      <picture><source srcset="../../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../../index.html#what">What RIM is</a>
+      <a href="../../index.html#how">How it works</a>
+      <a href="../self-hosting.html">Self-host</a>
+      <a href="../../configure/index.html">Configure</a>
+      <a href="../index.html" aria-current="page">Docs</a>
+      <a href="../../api/index.html">API</a>
+      <a href="../../specs/index.html">Specs</a>
+      <a href="../contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="../index.html">Docs</a><span aria-hidden="true">/</span><a href="../operators.html">Operators</a><span aria-hidden="true">/</span><span>Audit retention</span></div>
+  <div class="page with-toc">
+    <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
+<ol>
+<li><a href="#turning-it-on">Turning it on</a></li>
+<li><a href="#the-command">The command</a></li>
+<li><a href="#metrics">Metrics</a></li>
+<li><a href="#the-audit-file">The audit file</a></li>
+</ol>
+</details></aside>
+    <main id="content" class="prose">
+<h1 id="audit-retention">Audit retention</h1>
+<p>rim-server keeps two audit records, and retention treats them differently:</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Record</th>
+<th>Where</th>
+<th>Retention</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Command audit log</td>
+<td>the <code>command_audit_log</code> table, read by the admin audit view (<code>listAuditLog</code>)</td>
+<td><code>RIM_AUDIT_RETENTION_DAYS</code>, this page</td>
+</tr>
+<tr>
+<td>Audit file</td>
+<td><code>audit.log</code> in <code>RIM_AUDIT_LOG_PATH</code> (and every audit event on stdout)</td>
+<td>the operator&#39;s own log; rotate it with logrotate, below</td>
+</tr>
+</tbody></table></div>
+<p>Unset, nothing changes: the table keeps every row forever.</p>
+<p>The admin audit view shows the retention in force. It reads <code>serverInfo.auditRetentionDays</code>,
+readable without a session: the configured days, or null when rows are kept forever.</p>
+<h2 id="turning-it-on">Turning it on <a class="anchor" href="#turning-it-on" aria-label="Link to this section">#</a></h2>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>RIM_AUDIT_RETENTION_DAYS</code></td>
+<td>Days a command audit row is kept, 1 to 3650. Unset (the default) keeps rows forever. A value outside the range, or one that is not a whole number, stops the server at boot.</td>
+</tr>
+</tbody></table></div>
+<p>With a retention set, the server purges rows older than that many days a minute after it starts
+and then every 24 hours. A purge runs in two steps:</p>
+<ol>
+<li><strong>Export.</strong> Every row older than the cutoff is written, oldest first, to
+<code>&lt;RIM_DATA_DIR&gt;/audit-exports/audit-&lt;oldest&gt;-&lt;newest&gt;.jsonl.gz</code>, where the two timestamps
+are the <code>created_at</code> of the first and last row (<code>20260712T030000Z</code>). The file is gzipped
+JSON Lines, one row per line. It is written under a hidden <code>.partial</code> name, synced to disk and
+only then renamed; a name already taken gets a <code>-2</code>, <code>-3</code>, … suffix.</li>
+<li><strong>Delete.</strong> Only then are the exported rows deleted, 5000 per statement, so a large table
+never holds one long lock. Rows newer than the last exported row are never deleted, even if
+they appear below the cutoff during the run.</li>
+</ol>
+<p>If the export fails (the directory cannot be created, the disk is full, the database stops
+answering while the rows are read), nothing is deleted and the server logs a warning; the next
+run tries again. If a delete fails halfway, the rows deleted so far are gone and are in the
+file; the rest stay, and the next run exports them again into a new file, so the same row can
+appear in two export files.</p>
+<p>Each line holds the fields of the admin audit view, plus the parent macro row:</p>
+<pre><code class="language-json">{&quot;id&quot;:&quot;0192…&quot;,&quot;actorUserId&quot;:&quot;0192…&quot;,&quot;serverId&quot;:&quot;0192…&quot;,&quot;commandId&quot;:&quot;/topic&quot;,&quot;initiator&quot;:&quot;palette&quot;,&quot;argsRedacted&quot;:{&quot;topic&quot;:&quot;[redacted]&quot;},&quot;sensitivity&quot;:&quot;low&quot;,&quot;dangerous&quot;:false,&quot;confirmationKind&quot;:&quot;none&quot;,&quot;typedVerb&quot;:&quot;write&quot;,&quot;outcome&quot;:&quot;success&quot;,&quot;errorKind&quot;:null,&quot;capabilityCheckOutcome&quot;:null,&quot;confirmationOutcome&quot;:null,&quot;parentAuditId&quot;:null,&quot;createdAt&quot;:&quot;2026-07-12T03:00:00.123456+00:00&quot;}</code></pre>
+<p><code>typedVerb</code> and <code>outcome</code> are the stored lowercase values (<code>delete</code>, <code>permission_denied</code>), not
+the GraphQL enum names.</p>
+<p>Read one with:</p>
+<pre><code class="language-sh">zcat audit-20260712T030000Z-20260713T025959Z.jsonl.gz | jq .</code></pre>
+<p>The server never deletes an export. They hold user and workspace ids and the redacted command
+arguments: keep them where the backups go, encrypted, and delete them when your own retention
+for archived audit data runs out (<strong>FILL</strong>: how long, and where they are copied).</p>
+<p>Each run is on record itself: an audit event <code>audit.retention.purged</code> (<code>target</code> <code>audit</code>) with
+<code>trigger</code> (<code>job</code> or <code>cli</code>), <code>cutoff</code>, <code>exported</code>, <code>deleted</code> and <code>export_path</code> (empty when nothing
+was old enough). A purge that stops logs <code>audit.retention.failed</code> with the <code>error</code> instead.</p>
+<p>More than one server process on the same database each runs the job; the second run of a day
+finds nothing left to purge. <a href="background-jobs.html"><code>docs/operations/background-jobs.md</code></a> lists the server&#39;s other
+scheduled jobs.</p>
+<h2 id="the-command">The command <a class="anchor" href="#the-command" aria-label="Link to this section">#</a></h2>
+<p>The same purge, by hand:</p>
+<pre><code class="language-text">rim_server audit purge [--dry-run] [--older-than-days &lt;1-3650&gt;]</code></pre>
+<p>Without <code>--older-than-days</code> it uses <code>RIM_AUDIT_RETENTION_DAYS</code> and refuses to run when that is
+unset. <code>--dry-run</code> deletes and writes nothing; it prints how many rows would go and their date
+range. In the relay deployment:</p>
+<pre><code class="language-sh">rim-relay audit purge --dry-run
+# would purge 1832 audit rows older than 2026-07-12T09:14:03+00:00 (90 days), from 2026-04-01T08:00:12+00:00 to 2026-07-12T09:10:44+00:00
+rim-relay audit purge
+# purged 1832 audit rows older than 2026-07-12T09:14:05+00:00 (90 days), from … to …
+# exported 1832 rows to /data/audit-exports/audit-20260401T080012Z-20260712T091044Z.jsonl.gz
+rim-relay audit purge --older-than-days 365 --dry-run</code></pre>
+<p>Exit code 0 on success, 1 on an error (no retention configured, the database unreachable, a
+failed export), 2 on a usage error.</p>
+<h2 id="metrics">Metrics <a class="anchor" href="#metrics" aria-label="Link to this section">#</a></h2>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Type</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>rim_audit_rows_purged_total</code></td>
+<td>counter</td>
+<td>Audit rows the purge deleted.</td>
+</tr>
+<tr>
+<td><code>rim_audit_retention_days</code></td>
+<td>gauge</td>
+<td><code>RIM_AUDIT_RETENTION_DAYS</code>, set at boot; <code>0</code> when rows are kept forever.</td>
+</tr>
+</tbody></table></div>
+<p>Both need <code>RIM_METRICS_ADDR</code> (<a href="metrics.html"><code>docs/operations/metrics.md</code></a>). A purge run from the command line
+is a separate process and is not counted.</p>
+<h2 id="the-audit-file">The audit file <a class="anchor" href="#the-audit-file" aria-label="Link to this section">#</a></h2>
+<p><code>audit.log</code> is appended to for as long as the server runs and is never trimmed by it. The server
+keeps the file open, so rotate it with <code>copytruncate</code>:</p>
+<pre><code class="language-text">/data/audit.log {
+    daily
+    rotate 90
+    compress
+    delaycompress
+    missingok
+    notifempty
+    copytruncate
+}</code></pre>
+<p>In the compose deployments the file is in the <code>rim_rim_data</code> volume (<code>rim-relay_rim_data</code> on a
+relay); run logrotate on the host against the volume&#39;s mount point, or ship stdout to your log
+store and keep the file short.</p>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/docs/operations/audit-retention.md">rim-server/docs/operations/audit-retention.md</a> at <code>c86029b</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+<script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
+</body>
+</html>

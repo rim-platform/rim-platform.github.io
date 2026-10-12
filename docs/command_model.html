@@ -1,0 +1,739 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Command Model · RIM</title>
+<meta name="description" content="This document defines the command model for RIM.">
+<link rel="icon" href="../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../index.html" aria-label="RIM home">
+      <picture><source srcset="../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../index.html#what">What RIM is</a>
+      <a href="../index.html#how">How it works</a>
+      <a href="self-hosting.html">Self-host</a>
+      <a href="../configure/index.html">Configure</a>
+      <a href="index.html" aria-current="page">Docs</a>
+      <a href="../api/index.html">API</a>
+      <a href="../specs/index.html">Specs</a>
+      <a href="contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="index.html">Docs</a><span aria-hidden="true">/</span><a href="project.html">Project</a><span aria-hidden="true">/</span><span>Command Model</span></div>
+  <div class="page with-toc">
+    <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
+<ol>
+<li><a href="#purpose">Purpose</a></li>
+<li><a href="#current-backend-state">Current Backend State</a></li>
+<li><a href="#product-requirements">Product Requirements</a></li>
+<li><a href="#command-identity">Command Identity</a></li>
+<li><a href="#command-kinds">Command Kinds</a><ol><li><a href="#built-in-commands">Built-in Commands</a></li><li><a href="#plugin-provided-commands">Plugin-Provided Commands</a></li><li><a href="#integration-provided-commands">Integration-Provided Commands</a></li><li><a href="#user-defined-commands">User-Defined Commands</a></li></ol></li>
+<li><a href="#macros">Macros</a></li>
+<li><a href="#command-contract">Command Contract</a><ol><li><a href="#required-fields">Required Fields</a></li><li><a href="#recommended-fields">Recommended Fields</a></li><li><a href="#timeout-gate-t1">Timeout gate (T1)</a></li></ol></li>
+<li><a href="#arguments">Arguments</a></li>
+<li><a href="#context-model-for-commands">Context Model For Commands</a></li>
+<li><a href="#invocation-sources">Invocation Sources</a><ol><li><a href="#command-palette">Command Palette</a></li><li><a href="#keybinds">Keybinds</a></li><li><a href="#context-actions">Context Actions</a></li><li><a href="#plugin-ui">Plugin UI</a></li><li><a href="#automations">Automations</a></li></ol></li>
+<li><a href="#execution-targets">Execution Targets</a></li>
+<li><a href="#command-results">Command Results</a></li>
+<li><a href="#dangerous-local-commands">Dangerous Local Commands</a></li>
+<li><a href="#security-rules">Security Rules</a></li>
+<li><a href="#availability-rules">Availability Rules</a></li>
+<li><a href="#example-command-shapes">Example Command Shapes</a><ol><li><a href="#built-in-command">Built-in Command</a></li><li><a href="#integration-command">Integration Command</a></li><li><a href="#plugin-command">Plugin Command</a></li><li><a href="#user-defined-command">User-Defined Command</a></li></ol></li>
+<li><a href="#non-goals">Non-Goals</a></li>
+<li><a href="#summary-of-decisions">Summary Of Decisions</a></li>
+</ol>
+</details></aside>
+    <main id="content" class="prose">
+<h1 id="command-model">Command Model</h1>
+<p>This document defines the command model for RIM.</p>
+<p>The command system is one of the core differentiators of the product. Commands are the backbone for:</p>
+<ul>
+<li>built-in workflows</li>
+<li>user-defined workflows</li>
+<li>keybinds</li>
+<li>plugin-provided actions</li>
+<li>context actions</li>
+<li>automations</li>
+</ul>
+<h2 id="purpose">Purpose <a class="anchor" href="#purpose" aria-label="Link to this section">#</a></h2>
+<p>A command is a named, invokable action with:</p>
+<ul>
+<li>a stable id</li>
+<li>declared arguments</li>
+<li>declared context requirements</li>
+<li>declared capabilities</li>
+<li>a defined execution target</li>
+<li>a structured result</li>
+</ul>
+<p>Commands should be the common execution unit across the product.</p>
+<p>This means:</p>
+<ul>
+<li>the command palette invokes commands</li>
+<li>keybinds invoke commands</li>
+<li>context actions invoke commands</li>
+<li>plugins register commands</li>
+<li>automations may invoke commands</li>
+<li>user-defined workflows are commands too</li>
+</ul>
+<h2 id="current-backend-state">Current Backend State <a class="anchor" href="#current-backend-state" aria-label="Link to this section">#</a></h2>
+<p>The current backend/contracts implementation already provides:</p>
+<ul>
+<li>built-in command definitions</li>
+<li>command listing and single-command lookup</li>
+<li>backend command execution</li>
+<li>persisted user-defined commands/macros</li>
+<li>user-defined command create/update/delete flows</li>
+<li>command context-aware filtering for palette/context-menu/keybind use cases</li>
+</ul>
+<p>Current v1 constraint:</p>
+<ul>
+<li>persisted user-defined commands may only compose backend-executable commands</li>
+<li>desktop-local command composition belongs to a later client/runtime slice</li>
+</ul>
+<h2 id="product-requirements">Product Requirements <a class="anchor" href="#product-requirements" aria-label="Link to this section">#</a></h2>
+<p>The command system must be:</p>
+<ul>
+<li>easy to understand for end users</li>
+<li>easy to extend for plugin authors</li>
+<li>easy to wire into keybinds and context actions</li>
+<li>safe by default</li>
+<li>explicit about dangerous local behavior</li>
+</ul>
+<h2 id="command-identity">Command Identity <a class="anchor" href="#command-identity" aria-label="Link to this section">#</a></h2>
+<p>Every command must have a stable, namespaced id.</p>
+<p>Examples:</p>
+<ul>
+<li><code>chat.post_message</code></li>
+<li><code>chat.open_thread</code></li>
+<li><code>workspace.open_panel</code></li>
+<li><code>integration.youtrack.create_issue</code></li>
+<li><code>plugin.k8s.restart_pod</code></li>
+<li><code>user.clone_repo_and_open</code></li>
+</ul>
+<p>Namespacing rules:</p>
+<ul>
+<li>built-in commands should use product namespaces like <code>chat.*</code>, <code>workspace.*</code>, <code>call.*</code></li>
+<li>integration commands should use <code>integration.&lt;name&gt;.*</code></li>
+<li>plugin commands should use <code>plugin.&lt;plugin_id&gt;.*</code></li>
+<li>user-defined commands should use <code>user.*</code></li>
+</ul>
+<h2 id="command-kinds">Command Kinds <a class="anchor" href="#command-kinds" aria-label="Link to this section">#</a></h2>
+<p>RIM should support the following command sources.</p>
+<h3 id="built-in-commands">Built-in Commands <a class="anchor" href="#built-in-commands" aria-label="Link to this section">#</a></h3>
+<ul>
+<li>Shipped by RIM.</li>
+<li>Stable and documented.</li>
+<li>Usually available in the command palette.</li>
+</ul>
+<p>Channel builtins (<a href="messaging.html"><code>docs/messaging.md</code></a>, Channel Visibility And Membership). Apart from the read-only
+<code>chat.list_channels</code> (<code>Safe</code>, <code>chat.read</code>), all are <code>Backend</code>, <code>Mutating</code>, <code>chat.write</code>, palette-
+and keybind-visible. <code>conversation_id</code>
+falls back to the focused conversation (<code>context.conversation_id</code>). Authorization (membership,
+private-channel visibility, Owner/Moderator) lives in <code>ConversationService</code>, so the agent can
+never do more than the user it acts for.</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Id</th>
+<th>Args</th>
+<th>AI-callable</th>
+<th>Dangerous</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>chat.list_channels</code></td>
+<td><code>server_id</code></td>
+<td>yes</td>
+<td>no</td>
+<td>Read; each channel is <code>{id, title, conversation_type, is_private, is_archived, is_member}</code> (<code>is_member</code> is the caller&#39;s; member ids are never returned). Default filter: every visible, unarchived channel</td>
+</tr>
+<tr>
+<td><code>chat.create_channel</code></td>
+<td><code>server_id</code>, <code>name</code>, <code>description?</code>, <code>is_private?</code> (default false), <code>member_ids?</code></td>
+<td>yes</td>
+<td>no</td>
+<td>Members are added right after creation; privacy cannot change later</td>
+</tr>
+<tr>
+<td><code>chat.join_channel</code></td>
+<td><code>server_id</code>, <code>conversation_id</code></td>
+<td>yes</td>
+<td>no</td>
+<td>Public, unarchived channels only; idempotent</td>
+</tr>
+<tr>
+<td><code>chat.leave_conversation</code></td>
+<td><code>server_id</code>, <code>conversation_id</code></td>
+<td>yes</td>
+<td>no</td>
+<td>Channels and groups, not DMs</td>
+</tr>
+<tr>
+<td><code>chat.invite_to_conversation</code></td>
+<td><code>server_id</code>, <code>conversation_id</code>, <code>user_ids</code></td>
+<td>yes</td>
+<td>no</td>
+<td>Caller must be a member</td>
+</tr>
+<tr>
+<td><code>chat.archive_channel</code></td>
+<td><code>server_id</code>, <code>conversation_id</code></td>
+<td>yes</td>
+<td>no</td>
+<td>Owner/Moderator</td>
+</tr>
+<tr>
+<td><code>chat.unarchive_channel</code></td>
+<td><code>server_id</code>, <code>conversation_id</code></td>
+<td>yes</td>
+<td>no</td>
+<td>Owner/Moderator</td>
+</tr>
+<tr>
+<td><code>chat.remove_conversation_member</code></td>
+<td><code>server_id</code>, <code>conversation_id</code>, <code>user_id</code></td>
+<td>no</td>
+<td>yes</td>
+<td>Owner/Moderator, or yourself; confirmation required</td>
+</tr>
+</tbody></table></div>
+<p>Moderation builtins. All are
+<code>Backend</code> and <code>Mutating</code>; the <code>admin.*</code> ones require <code>admin.manage_members</code>, the <code>chat.*</code> ones
+<code>chat.write</code>. They call <code>ModerationService</code>, which enforces the roles (Owner/Moderator, who may
+target whom) and writes the moderation audit row (<a href="messaging.html"><code>docs/messaging.md</code></a>, Roles And Moderation), so
+a command execution is audited twice: the generic command row plus the moderation row.
+<code>chat.delete_message</code> (context menu, selected message) goes through <code>MessageService</code> as before,
+which now lets an Owner/Moderator delete other people&#39;s messages.</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Id</th>
+<th>Args</th>
+<th>AI-callable</th>
+<th>Dangerous</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>admin.kick</code></td>
+<td><code>server_id</code>, <code>user_id</code>, <code>reason?</code></td>
+<td>no</td>
+<td>yes</td>
+<td>Owner/Moderator; confirmation required</td>
+</tr>
+<tr>
+<td><code>admin.ban</code></td>
+<td><code>server_id</code>, <code>user_id</code>, <code>reason?</code>, <code>expires_at?</code> (RFC 3339)</td>
+<td>no</td>
+<td>yes</td>
+<td>Owner/Moderator; confirmation required</td>
+</tr>
+<tr>
+<td><code>admin.unban</code></td>
+<td><code>server_id</code>, <code>user_id</code></td>
+<td>no</td>
+<td>no</td>
+<td>Owner/Moderator</td>
+</tr>
+<tr>
+<td><code>admin.timeout</code></td>
+<td><code>server_id</code>, <code>user_id</code>, <code>minutes</code> (1..=43200), <code>reason?</code></td>
+<td>yes</td>
+<td>no</td>
+<td>Owner/Moderator</td>
+</tr>
+<tr>
+<td><code>admin.set_role</code></td>
+<td><code>server_id</code>, <code>user_id</code>, <code>role</code> (<code>moderator</code>/<code>member</code>/<code>guest</code>)</td>
+<td>no</td>
+<td>yes</td>
+<td>Owner: any but owner; Moderator: member/guest; confirmation required</td>
+</tr>
+<tr>
+<td><code>chat.set_slow_mode</code></td>
+<td><code>server_id</code>, <code>conversation_id</code>, <code>seconds</code> (0..=21600)</td>
+<td>yes</td>
+<td>no</td>
+<td>Owner/Moderator; channels only; <code>conversation_id</code> falls back to the focused conversation</td>
+</tr>
+<tr>
+<td><code>chat.report_message</code></td>
+<td><code>reason</code></td>
+<td>yes</td>
+<td>no</td>
+<td>Context menu; requires <code>workspace</code>, <code>conversation</code> and <code>selected_message</code> context</td>
+</tr>
+</tbody></table></div>
+<p>Notification builtins (<a href="messaging.html"><code>docs/messaging.md</code></a>, Notification Rules). All are
+<code>Backend</code>, <code>Mutating</code>, palette- and keybind-visible, AI-callable, in category <code>Notifications</code>,
+and need <strong>no capability</strong>: like <code>chat.mark_as_read</code> they change only the caller&#39;s own state.
+They call <code>NotificationService</code>, which requires workspace membership (and, for the level, read
+access to the conversation). Being <code>Mutating</code>, they are refused while the caller is timed out
+(T1); the GraphQL mutations are not.</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Id</th>
+<th>Args</th>
+<th>AI-callable</th>
+<th>Dangerous</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>notifications.set_level</code></td>
+<td><code>server_id</code>, <code>conversation_id</code>, <code>level</code> (<code>all</code>/<code>mentions</code>/<code>none</code>/<code>default</code>)</td>
+<td>yes</td>
+<td>no</td>
+<td><code>default</code> clears the override; <code>conversation_id</code> falls back to the focused conversation. Payload <code>{conversation_id, level, effective_level}</code></td>
+</tr>
+<tr>
+<td><code>notifications.dnd</code></td>
+<td><code>server_id</code>, <code>mode</code> (<code>on</code>/<code>off</code>/<code>until</code>), <code>until?</code> (RFC 3339), <code>minutes?</code> (1..=10080)</td>
+<td>yes</td>
+<td>no</td>
+<td>The manual do-not-disturb pause (separate from the daily window); <code>until</code> mode needs <code>until</code> or <code>minutes</code>. Payload <code>{paused, until}</code></td>
+</tr>
+<tr>
+<td><code>notifications.mark_all_read</code></td>
+<td><code>server_id</code></td>
+<td>yes</td>
+<td>no</td>
+<td>Marks every notification of the workspace read (not the conversations&#39; unread counts). Payload <code>{marked}</code></td>
+</tr>
+</tbody></table></div>
+<p>General builtins the agent may call. None declares a new capability. The navigation
+commands are <code>DesktopLocal</code>: the server refuses to execute them, so the desktop agent runs them
+through the client&#39;s local handlers, and only when they are <code>Safe</code> and not dangerous (anything
+stricter goes to <code>executeCommand</code>, which refuses it). The five writes were raised from <code>Safe</code> to
+<code>Mutating</code>, which has three effects beyond the agent&#39;s confirmation
+gate: a timed-out member can no longer run them through the command path (T1; the GraphQL
+<code>markAsRead</code> mutation is not affected), server-side pipelines (initiator <code>Plugin</code>) can no longer
+run them because nobody is there to confirm, and they count towards the agent&#39;s per-turn
+mutating-call cap. Palette and keybind still run them in one step.</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Id</th>
+<th>Args</th>
+<th>Sensitivity</th>
+<th>Agent confirmation</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>workspace.open_search</code>, <code>workspace.search_in_channel</code>, <code>workspace.open_marketplace</code>, <code>workspace.toggle_sidebar</code>, <code>workspace.previous_channel</code>, <code>workspace.next_channel</code>, <code>workspace.next_unread_channel</code>, <code>workspace.close_panel</code>, <code>workspace.reopen_last_thread</code>, <code>chat.scroll_to_bottom</code>, <code>chat.scroll_to_top</code></td>
+<td>none</td>
+<td><code>Safe</code></td>
+<td>no</td>
+<td><code>DesktopLocal</code>, run by the client</td>
+</tr>
+<tr>
+<td><code>state.get</code></td>
+<td><code>server_id</code>, <code>key</code>, <code>scope?</code></td>
+<td><code>Safe</code></td>
+<td>no</td>
+<td>Read</td>
+</tr>
+<tr>
+<td><code>state.list</code></td>
+<td><code>server_id</code>, <code>prefix?</code>, <code>scope?</code>, <code>limit?</code></td>
+<td><code>Safe</code></td>
+<td>no</td>
+<td>Read</td>
+</tr>
+<tr>
+<td><code>state.set</code></td>
+<td><code>server_id</code>, <code>key</code>, <code>value</code>, <code>scope?</code>, <code>ttl?</code></td>
+<td><code>Mutating</code></td>
+<td>yes</td>
+<td></td>
+</tr>
+<tr>
+<td><code>state.incr</code></td>
+<td><code>server_id</code>, <code>key</code>, <code>delta?</code>, <code>scope?</code></td>
+<td><code>Mutating</code></td>
+<td>yes</td>
+<td></td>
+</tr>
+<tr>
+<td><code>state.delete</code></td>
+<td><code>server_id</code>, <code>key</code>, <code>scope?</code></td>
+<td><code>Mutating</code></td>
+<td>yes</td>
+<td></td>
+</tr>
+<tr>
+<td><code>chat.mark_as_read</code></td>
+<td><code>server_id</code>, <code>conversation_id</code></td>
+<td><code>Mutating</code></td>
+<td>yes</td>
+<td></td>
+</tr>
+<tr>
+<td><code>chat.create_group</code></td>
+<td><code>server_id</code>, <code>member_ids</code>, <code>title?</code></td>
+<td><code>Mutating</code></td>
+<td>yes</td>
+<td><code>member_ids</code> is a JSON array or one comma-separated string</td>
+</tr>
+</tbody></table></div>
+<p>Data the agent sends to its model provider grows with this set: <code>state.get</code> and <code>state.list</code> return
+stored values, including the caller&#39;s own <code>scope: user</code> entries, and nothing redacts secrets kept
+in workspace state. Kept off the AI surface on purpose: <code>chat.edit_message</code>,
+<code>chat.delete_message</code>, <code>chat.reply_to_selected_message</code> and <code>chat.copy_message_text</code> (they act on
+the user&#39;s selected message, which the agent cannot supply), <code>admin.invite_member</code> (its result is
+an invite token that would pass through the model provider), and <code>chat.mark_all_as_read</code>
+(duplicates <code>notifications.mark_all_read</code>).</p>
+<p>List arguments such as <code>user_ids</code> and <code>member_ids</code> accept a JSON array of ids or one
+comma-separated string, because the agent&#39;s tool schema types every argument as a scalar.</p>
+<p>AI-callable builtins: 41. They are seventeen chat, channel and navigation builtins
+(<code>chat.post_message</code>, <code>chat.open_thread</code>, <code>workspace.open_settings</code>,
+<code>workspace.navigate_to_channel</code>, <code>workspace.switch_workspace</code>, <code>chat.list_channels</code>,
+<code>chat.create_channel</code>, <code>chat.list_members</code>, <code>chat.search_messages</code>, <code>chat.get_recent_messages</code>,
+<code>chat.pin_message</code>, <code>chat.toggle_reaction</code> and the five channel membership builtins above),
+<code>admin.timeout</code>, <code>chat.set_slow_mode</code> and <code>chat.report_message</code>, the three <code>notifications.*</code>
+builtins, and the eighteen general builtins above. The set is pinned by
+<code>collect_ai_callable_inventory_matches_reviewed_set</code> (<code>registry/mod.rs</code>) and
+<code>list_commands_ai_surface_returns_forty_one_commands_with_caps</code> (<code>command_tests.rs</code>). The
+capability union the AI surface checks is <code>admin.manage_members</code>, <code>chat.read</code> and <code>chat.write</code>;
+the notification and general builtins declare none.</p>
+<h3 id="plugin-provided-commands">Plugin-Provided Commands <a class="anchor" href="#plugin-provided-commands" aria-label="Link to this section">#</a></h3>
+<ul>
+<li>Registered by plugins.</li>
+<li>May be local-runtime or plugin-runtime specific.</li>
+<li>Must declare required capabilities.</li>
+</ul>
+<h3 id="integration-provided-commands">Integration-Provided Commands <a class="anchor" href="#integration-provided-commands" aria-label="Link to this section">#</a></h3>
+<ul>
+<li>Registered by integrations such as bots, webhooks, or external tool connectors.</li>
+<li>Usually remote or backend-oriented.</li>
+</ul>
+<h3 id="user-defined-commands">User-Defined Commands <a class="anchor" href="#user-defined-commands" aria-label="Link to this section">#</a></h3>
+<ul>
+<li>Created by the user.</li>
+<li>May wrap built-in, plugin, or integration commands.</li>
+<li>May compose multiple commands into a single workflow.</li>
+</ul>
+<p>Current v1 backend constraint:</p>
+<ul>
+<li>persisted user-defined commands may only compose backend-executable commands</li>
+<li>desktop-local command composition belongs to a later client/runtime slice</li>
+</ul>
+<h2 id="macros">Macros <a class="anchor" href="#macros" aria-label="Link to this section">#</a></h2>
+<p>Macros are not a separate root command type.</p>
+<p>Decision:</p>
+<ul>
+<li>a macro is a user-defined command composed from other commands</li>
+</ul>
+<p>This keeps the model simpler:</p>
+<ul>
+<li>one command abstraction</li>
+<li>one invocation system</li>
+<li>one keybind target model</li>
+</ul>
+<h2 id="command-contract">Command Contract <a class="anchor" href="#command-contract" aria-label="Link to this section">#</a></h2>
+<p>Each command should expose the following metadata.</p>
+<h3 id="required-fields">Required Fields <a class="anchor" href="#required-fields" aria-label="Link to this section">#</a></h3>
+<ul>
+<li><code>id</code></li>
+<li><code>title</code></li>
+<li><code>description</code></li>
+<li><code>source_kind</code></li>
+<li><code>execution_target</code></li>
+<li><code>arguments</code></li>
+<li><code>required_context</code></li>
+<li><code>required_capabilities</code></li>
+</ul>
+<h3 id="recommended-fields">Recommended Fields <a class="anchor" href="#recommended-fields" aria-label="Link to this section">#</a></h3>
+<ul>
+<li><code>visible_in_palette</code></li>
+<li><code>visible_in_context_menus</code></li>
+<li><code>visible_in_keybind_picker</code></li>
+<li><code>dangerous</code></li>
+<li><code>supports_preview</code></li>
+<li><code>supports_dry_run</code></li>
+</ul>
+<h3 id="timeout-gate-t1">Timeout gate (T1) <a class="anchor" href="#timeout-gate-t1" aria-label="Link to this section">#</a></h3>
+<p>After the capability and confirmation gates, <code>execute_command</code> refuses any command whose <code>sensitivity</code> is <code>Mutating</code> or
+<code>Restricted</code> with <code>ServiceError::TimedOut { until }</code> (GraphQL <code>TIMED_OUT</code>, extension <code>until</code>)
+when the actor is timed out in the context&#39;s workspace (<code>ModerationService::active_timeout</code>).
+<code>Safe</code> and <code>Sensitive</code> commands still run. The gate also runs on nested dispatch (user-command
+steps, pipe stages), before the rate limiter, inside the audit wrapper. Without a workspace
+context it has nothing to check; the services behind the command apply their own write gates
+anyway. Gate order: C1 capability → H1 confirmation → T1 timeout → R1 rate limit.</p>
+<h2 id="arguments">Arguments <a class="anchor" href="#arguments" aria-label="Link to this section">#</a></h2>
+<p>Arguments should be typed from day one.</p>
+<p>Initial recommended argument kinds:</p>
+<ul>
+<li><code>string</code></li>
+<li><code>integer</code></li>
+<li><code>float</code></li>
+<li><code>boolean</code></li>
+<li><code>enum</code></li>
+<li><code>user_id</code></li>
+<li><code>conversation_id</code></li>
+<li><code>message_id</code></li>
+<li><code>thread_id</code></li>
+<li><code>workspace_id</code></li>
+<li><code>selection_text</code></li>
+</ul>
+<p>Each argument definition should include:</p>
+<ul>
+<li><code>name</code></li>
+<li><code>title</code></li>
+<li><code>description</code></li>
+<li><code>type</code></li>
+<li><code>required</code></li>
+<li><code>default_value</code> if applicable</li>
+<li><code>allowed_values</code> for enums</li>
+</ul>
+<p>Arguments should be usable by:</p>
+<ul>
+<li>command palette forms</li>
+<li>plugin-provided UIs</li>
+<li>macros/user-defined command composition</li>
+<li>API surfaces later</li>
+</ul>
+<h2 id="context-model-for-commands">Context Model For Commands <a class="anchor" href="#context-model-for-commands" aria-label="Link to this section">#</a></h2>
+<p>Commands should explicitly declare required context.</p>
+<p>Examples of context sources:</p>
+<ul>
+<li>selected text</li>
+<li>selected message</li>
+<li>selected thread</li>
+<li>current conversation</li>
+<li>current workspace</li>
+<li>active call/session</li>
+<li>current user/principal</li>
+</ul>
+<p>This is important for:</p>
+<ul>
+<li>discoverability</li>
+<li>context menu filtering</li>
+<li>keybind eligibility</li>
+<li>plugin action registration</li>
+</ul>
+<p>If required context is missing, the command must not be silently invoked.</p>
+<h2 id="invocation-sources">Invocation Sources <a class="anchor" href="#invocation-sources" aria-label="Link to this section">#</a></h2>
+<p>Commands should be invokable from multiple surfaces.</p>
+<h3 id="command-palette">Command Palette <a class="anchor" href="#command-palette" aria-label="Link to this section">#</a></h3>
+<ul>
+<li>Main discovery surface.</li>
+<li>Should show only commands valid for the current context unless the user explicitly asks for all.</li>
+</ul>
+<h3 id="keybinds">Keybinds <a class="anchor" href="#keybinds" aria-label="Link to this section">#</a></h3>
+<ul>
+<li>Keybinds should point to commands, not to custom one-off handlers.</li>
+<li>A keybind may provide fixed arguments or derive arguments from current context.</li>
+</ul>
+<h3 id="context-actions">Context Actions <a class="anchor" href="#context-actions" aria-label="Link to this section">#</a></h3>
+<ul>
+<li>Text selection, message menus, thread actions, channel actions, etc.</li>
+<li>A context action should usually map to a command invocation.</li>
+</ul>
+<h3 id="plugin-ui">Plugin UI <a class="anchor" href="#plugin-ui" aria-label="Link to this section">#</a></h3>
+<ul>
+<li>Buttons, panels, modals, or toolbars can invoke commands.</li>
+</ul>
+<h3 id="automations">Automations <a class="anchor" href="#automations" aria-label="Link to this section">#</a></h3>
+<ul>
+<li>Event-driven or scheduled workflows may invoke commands later.</li>
+</ul>
+<h2 id="execution-targets">Execution Targets <a class="anchor" href="#execution-targets" aria-label="Link to this section">#</a></h2>
+<p>Every command should declare where it runs.</p>
+<p>Initial execution targets:</p>
+<ul>
+<li><code>backend</code></li>
+<li><code>desktop_local</code></li>
+<li><code>plugin_runtime</code></li>
+<li><code>integration_runtime</code></li>
+</ul>
+<p>Why this matters:</p>
+<ul>
+<li>security and capabilities differ per target</li>
+<li>availability differs by platform</li>
+<li>result handling and latency expectations differ</li>
+</ul>
+<h2 id="command-results">Command Results <a class="anchor" href="#command-results" aria-label="Link to this section">#</a></h2>
+<p>Every command should return a structured result envelope.</p>
+<p>Decision:</p>
+<ul>
+<li>commands should not be modeled as only success/failure</li>
+<li>even simple commands should return a consistent result shape</li>
+</ul>
+<p>Minimum result envelope should include:</p>
+<ul>
+<li><code>status</code></li>
+<li><code>message</code> or summary</li>
+<li>optional structured payload</li>
+<li>optional follow-up actions</li>
+</ul>
+<p>This supports:</p>
+<ul>
+<li>command palette feedback</li>
+<li>automation chaining</li>
+<li>plugin UI responses</li>
+<li>audit/event recording later</li>
+</ul>
+<h2 id="dangerous-local-commands">Dangerous Local Commands <a class="anchor" href="#dangerous-local-commands" aria-label="Link to this section">#</a></h2>
+<p>User-defined commands may run local OS processes on desktop.</p>
+<p>Decision:</p>
+<ul>
+<li>allowed, but only with an explicit dangerous capability</li>
+</ul>
+<p>Additional rule:</p>
+<ul>
+<li>local process execution should show a confirmation dialog by default</li>
+<li>the user may disable the confirmation later</li>
+<li>the safe default is confirmation enabled</li>
+</ul>
+<p>This applies especially to commands such as:</p>
+<ul>
+<li>running shell commands</li>
+<li>launching local tools</li>
+<li>opening paths or files</li>
+<li>interacting with local system automation</li>
+</ul>
+<p>The confirmation UX should clearly show:</p>
+<ul>
+<li>what command will run</li>
+<li>what runtime/capability is involved</li>
+<li>whether the command came from:<ul>
+<li>built-in logic</li>
+<li>a plugin</li>
+<li>an integration</li>
+<li>a user-defined command</li>
+</ul>
+</li>
+</ul>
+<h2 id="security-rules">Security Rules <a class="anchor" href="#security-rules" aria-label="Link to this section">#</a></h2>
+<p>Commands must inherit the security model of their provider.</p>
+<p>Examples:</p>
+<ul>
+<li>built-in commands use built-in permissions</li>
+<li>plugin commands use plugin-declared capabilities</li>
+<li>integration commands use integration capabilities and tokens</li>
+<li>user-defined commands cannot exceed the capabilities of the commands they compose plus any local
+execution permissions explicitly granted by the user</li>
+</ul>
+<p>Security rules:</p>
+<ul>
+<li>no implicit privilege escalation</li>
+<li>no hidden local process execution</li>
+<li>no hidden remote side effects</li>
+<li>dangerous commands must be marked clearly</li>
+</ul>
+<h2 id="availability-rules">Availability Rules <a class="anchor" href="#availability-rules" aria-label="Link to this section">#</a></h2>
+<p>A command may be:</p>
+<ul>
+<li>globally available</li>
+<li>available only in certain contexts</li>
+<li>available only on certain platforms</li>
+<li>available only when a required capability is granted</li>
+<li>available only when the workspace has the command&#39;s optional module (<code>feature</code>) turned on</li>
+</ul>
+<p>Visibility: the <code>commands</code> and <code>commandDiscover</code> queries list only the commands the caller could
+run in the given context, so the palette and the AI agent never offer one that <code>executeCommand</code>
+refuses for who the caller is. A command the server runs (<code>backend</code>) is listed only when the
+context names a workspace the caller is a member of, their role there may run it, and each of its
+required capabilities passes the capability gate; a user command needs the role every step
+needs. The role a builtin needs is the one the service behind it enforces: the Owner for
+<code>admin.invite_member</code>; an Owner or Moderator for <code>admin.kick</code>, <code>admin.ban</code>, <code>admin.unban</code>,
+<code>admin.timeout</code>, <code>admin.set_role</code>, <code>chat.set_slow_mode</code>, <code>chat.archive_channel</code> and
+<code>chat.unarchive_channel</code>; a member (not a guest) for <code>chat.create_channel</code>; a member, or a guest
+in the direct space, for <code>chat.create_group</code>, <code>chat.join_channel</code> and
+<code>chat.invite_to_conversation</code>; any member, guests included, for the rest. The commands the client
+runs itself (<code>desktop_local</code>) need no workspace and are listed to every signed-in caller, with a
+workspace or without. Naming the direct space makes the caller a guest of it, as other reads
+there do. A listed command can still be refused for its arguments, a confirmation it needs, or a
+timeout in force.</p>
+<p>Examples:</p>
+<ul>
+<li><code>chat.post_message</code> may require conversation context or explicit arguments</li>
+<li><code>plugin.k8s.restart_pod</code> may require desktop runtime and plugin capability approval</li>
+<li><code>integration.youtrack.create_issue</code> may require integration installation and auth</li>
+</ul>
+<h2 id="example-command-shapes">Example Command Shapes <a class="anchor" href="#example-command-shapes" aria-label="Link to this section">#</a></h2>
+<h3 id="built-in-command">Built-in Command <a class="anchor" href="#built-in-command" aria-label="Link to this section">#</a></h3>
+<ul>
+<li><code>id</code>: <code>chat.post_message</code></li>
+<li>target: <code>backend</code></li>
+<li>context: current conversation optional</li>
+<li>capabilities: <code>chat.write</code></li>
+</ul>
+<h3 id="integration-command">Integration Command <a class="anchor" href="#integration-command" aria-label="Link to this section">#</a></h3>
+<ul>
+<li><code>id</code>: <code>integration.youtrack.create_issue</code></li>
+<li>target: <code>integration_runtime</code></li>
+<li>context: selected text or selected message optional</li>
+<li>capabilities: <code>action.invoke</code>, integration-specific external access</li>
+</ul>
+<h3 id="plugin-command">Plugin Command <a class="anchor" href="#plugin-command" aria-label="Link to this section">#</a></h3>
+<ul>
+<li><code>id</code>: <code>plugin.k8s.restart_pod</code></li>
+<li>target: <code>plugin_runtime</code></li>
+<li>context: selected pod or active panel context</li>
+<li>capabilities: plugin-declared runtime permissions</li>
+</ul>
+<h3 id="user-defined-command">User-Defined Command <a class="anchor" href="#user-defined-command" aria-label="Link to this section">#</a></h3>
+<ul>
+<li><code>id</code>: <code>user.clone_repo_and_open</code></li>
+<li>target: <code>desktop_local</code></li>
+<li>composed from:<ul>
+<li><code>workspace.prompt_input</code></li>
+<li>local process execution</li>
+<li><code>workspace.open_folder</code></li>
+</ul>
+</li>
+<li>dangerous capability required because it runs a local process</li>
+</ul>
+<h2 id="non-goals">Non-Goals <a class="anchor" href="#non-goals" aria-label="Link to this section">#</a></h2>
+<p>The command model does not define:</p>
+<ul>
+<li>a scripting language: macros pipe one command&#39;s result into the next step, and anything
+beyond that belongs in a plugin</li>
+<li>dataflow beyond a linear pipe</li>
+<li>distributed workflow execution</li>
+<li>a typed payload schema per command result: results share one envelope</li>
+<li>the UI for editing commands, which is the client&#39;s concern</li>
+</ul>
+<h2 id="summary-of-decisions">Summary Of Decisions <a class="anchor" href="#summary-of-decisions" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>Commands are the common execution unit across palette, keybinds, context actions, plugins, and
+automations.</li>
+<li>Command ids are namespaced.</li>
+<li>User-defined commands may compose other commands.</li>
+<li>Macros are user-defined composed commands, not a separate root type.</li>
+<li>Commands use typed arguments.</li>
+<li>Commands declare required context.</li>
+<li>Commands declare execution target.</li>
+<li>Commands return structured result envelopes.</li>
+<li>User-defined local process execution is allowed on desktop only behind an explicit dangerous
+capability.</li>
+<li>Dangerous local commands should show a confirmation dialog by default, with an option to disable
+it later.</li>
+</ul>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/docs/command_model.md">rim-server/docs/command_model.md</a> at <code>c86029b</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+<script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
+</body>
+</html>

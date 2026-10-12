@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Messaging Contract · RIM</title>
+<meta name="description" content="This document describes the backend contract for conversations, messages, threads, and attachments.">
+<link rel="icon" href="../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../index.html" aria-label="RIM home">
+      <picture><source srcset="../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../index.html#what">What RIM is</a>
+      <a href="../index.html#how">How it works</a>
+      <a href="self-hosting.html">Self-host</a>
+      <a href="../configure/index.html">Configure</a>
+      <a href="index.html" aria-current="page">Docs</a>
+      <a href="../api/index.html">API</a>
+      <a href="../specs/index.html">Specs</a>
+      <a href="contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="index.html">Docs</a><span aria-hidden="true">/</span><a href="client-authors.html">Client authors</a><span aria-hidden="true">/</span><span>Messaging Contract</span></div>
+  <div class="page with-toc">
+    <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
+<ol>
+<li><a href="#product-terms">Product Terms</a></li>
+<li><a href="#conversation-types">Conversation Types</a></li>
+<li><a href="#channel-visibility-and-membership">Channel Visibility And Membership</a></li>
+<li><a href="#archived-channels">Archived Channels</a></li>
+<li><a href="#roles-and-moderation">Roles And Moderation</a><ol><li><a href="#roles">Roles</a></li><li><a href="#guest-restrictions-enforced-in-the-services">Guest restrictions (enforced in the services)</a></li><li><a href="#kick-ban-timeout">Kick, ban, timeout</a></li><li><a href="#slow-mode">Slow mode</a></li><li><a href="#deleting-messages">Deleting messages</a></li><li><a href="#reports">Reports</a></li><li><a href="#audit">Audit</a></li><li><a href="#realtime-events">Realtime events</a></li></ol></li>
+<li><a href="#notification-rules">Notification Rules</a><ol><li><a href="#settings">Settings</a></li><li><a href="#the-decision-per-member-except-the-author">The decision, per member except the author</a></li><li><a href="#inbox">Inbox</a></li><li><a href="#notificationdue-event">NotificationDue event</a></li></ol></li>
+<li><a href="#titles">Titles</a></li>
+<li><a href="#timeline-and-threads">Timeline And Threads</a></li>
+<li><a href="#reply-semantics">Reply Semantics</a></li>
+<li><a href="#thread_id-vs-root_thread_id">thread_id vs root_thread_id</a></li>
+<li><a href="#attachments">Attachments</a></li>
+<li><a href="#pagination">Pagination</a></li>
+<li><a href="#permalinks">Permalinks</a></li>
+</ol>
+</details></aside>
+    <main id="content" class="prose">
+<h1 id="messaging-contract">Messaging Contract</h1>
+<p>This document describes the backend contract for conversations, messages, threads, and attachments.</p>
+<h2 id="product-terms">Product Terms <a class="anchor" href="#product-terms" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><code>workspace</code> is the product-level term.</li>
+<li><code>Conversation</code> is the messaging container used for channels, DMs, and group chats.</li>
+<li><code>MessageThread</code> is an optional thread opened from a timeline message.</li>
+</ul>
+<h2 id="conversation-types">Conversation Types <a class="anchor" href="#conversation-types" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><code>Channel</code>: stable shared conversation inside a server/workspace, public or private.</li>
+<li><code>Direct</code>: 1:1 conversation between two users.</li>
+<li><code>Group</code>: multi-user private conversation.</li>
+</ul>
+<h2 id="channel-visibility-and-membership">Channel Visibility And Membership <a class="anchor" href="#channel-visibility-and-membership" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>Public channels</strong> (<code>isPrivate = false</code>) are readable by every workspace member, joined or not
+(except guests, see Roles And Moderation below).
+Joining (<code>joinChannel</code>) adds a <code>conversation_member</code> row; joined channels are what the sidebar
+lists (<code>channels(filter: { joinedOnly: true })</code>), all public channels appear in browse
+(<code>channels</code> with the default filter). Posting does not require joining.</li>
+<li><strong>Private channels</strong> (<code>isPrivate = true</code>) are readable, listable, searchable and subscribable by
+their members only. A workspace member outside one gets <code>NOT_FOUND</code> on every read and write —
+never <code>FORBIDDEN</code> — so the response does not reveal that the channel exists. This holds for
+workspace owners and moderators too.</li>
+<li>Privacy is chosen at creation (<code>createConversation(input: { isChannel: true, isPrivate: true })</code>)
+and <strong>cannot be changed later</strong> in either direction. <code>isPrivate</code> on a DM or group is rejected
+with <code>VALIDATION</code>.</li>
+<li>The creator of any channel is its first member. A private channel&#39;s initial members are added
+by the client with <code>addConversationMembers</code> right after creation.</li>
+<li><code>addConversationMembers</code> (invite): the caller must be a member of the channel or group (for a
+public channel: join first, <code>FORBIDDEN</code> otherwise); targets must be workspace members;
+existing members are skipped. Not valid for DMs.</li>
+<li><code>leaveConversation</code>: channels and groups, not DMs. Leaving a public channel you never joined
+is a no-op. Leaving a private channel as its last member is allowed; it then stays invisible to
+everyone, and only an Owner/Moderator can archive it, by id (from the audit log).</li>
+<li><code>removeConversationMember</code>: Owner/Moderator may remove anyone (also from a private channel
+they are not in); everyone else only themselves.</li>
+<li>DMs and groups are unchanged: non-members get <code>FORBIDDEN</code>.</li>
+<li>Mentions (<code>&lt;@user&gt;</code>) are stored and notified (<code>UserMentioned</code>) only for users who can read the
+conversation: any workspace member for a public channel, members otherwise.</li>
+<li>Realtime: events of a private channel, DM or group reach only its members; public-channel
+events reach the whole workspace. The visibility fields on <code>WorkspaceEvent</code> (<code>is_private</code>,
+<code>member_user_ids</code>, and <code>conversation_type</code> where it was not already serialized) are
+server-side only and never serialized, so the WebSocket JSON is unchanged.</li>
+<li>Existing workspace members became members of every existing channel when the
+<code>m20261005_005743_add_channel_privacy_and_archive</code> migration ran, so the joined list did not start empty. A user who joins the workspace later
+(invite acceptance, join by invite, owner adding them, server creation — all through
+<code>util::add_workspace_member</code>) is joined to every public, unarchived channel at that moment;
+private and archived channels are not joined.</li>
+<li>Unread counts (<code>unreadCounts</code>) and <code>markAllAsRead</code> cover only conversations the user is a
+member of: joined public channels, private channels, DMs and groups. A public channel the user
+can read but has not joined carries no unread badge; after joining, messages count from the
+join time.</li>
+</ul>
+<h2 id="archived-channels">Archived Channels <a class="anchor" href="#archived-channels" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>Owner/Moderator archive and unarchive channels (<code>setConversationArchived</code>); other roles get
+<code>FORBIDDEN</code>. Only channels can be archived (<code>VALIDATION</code> otherwise).</li>
+<li>An archived conversation is read-only: sending, replying, editing, deleting and forwarding into
+it, reactions, pins, topic edits, threads, attachments, typing, joining and inviting fail with
+<code>CONVERSATION_ARCHIVED</code>. Leaving and removing members still work.</li>
+<li>Archived channels are hidden from <code>channels</code> unless <code>includeArchived: true</code>, and stay readable
+and searchable by whoever could read them before.</li>
+</ul>
+<h2 id="roles-and-moderation">Roles And Moderation <a class="anchor" href="#roles-and-moderation" aria-label="Link to this section">#</a></h2>
+<h3 id="roles">Roles <a class="anchor" href="#roles" aria-label="Link to this section">#</a></h3>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Role</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>OWNER</code></td>
+<td>Everything. One per workspace; the role cannot be granted (<code>setMemberRole</code> with <code>OWNER</code> is <code>VALIDATION</code>).</td>
+</tr>
+<tr>
+<td><code>MODERATOR</code></td>
+<td>Moderation (kick, ban, timeout, delete any message, slow mode, reports) and channel management (archive, remove members). Changes roles only between <code>MEMBER</code> and <code>GUEST</code>.</td>
+</tr>
+<tr>
+<td><code>MEMBER</code></td>
+<td>The default. Reads and writes wherever they are a member (public channels without joining), creates channels and groups, joins public channels, invites people into conversations.</td>
+</tr>
+<tr>
+<td><code>GUEST</code></td>
+<td>Restricted. Reads and writes only in conversations they were explicitly added to.</td>
+</tr>
+</tbody></table></div>
+<ul>
+<li><strong>Migration:</strong> before the member role existed every new member was created as <code>guest</code>, so &quot;guest&quot; meant an
+ordinary member. The <code>m20261005_024730_add_member_role</code> migration adds <code>member</code> to the
+<code>server_member_role</code> enum and turns <strong>every existing <code>guest</code> into <code>member</code></strong>; the column
+default is now <code>member</code>.</li>
+<li>New members get <code>MEMBER</code> on every join path (invite acceptance, join by invite, owner-added).
+Invites carry a role (<code>CreateInviteInput.role</code>, <code>MEMBER</code> by default, <code>GUEST</code> for a guest link;
+any other value is <code>VALIDATION</code>). Workspace invites (<code>createInvite</code>) stay owner-only.</li>
+<li><code>ServerMember.memberRole</code> is the enum <code>ServerMemberRoleGql</code> (it was a string); the field name is
+unchanged. <code>ServerMember.timeoutUntil</code> is set while the member is timed out.</li>
+<li><code>setMemberRole(serverId, userId, role)</code>: the Owner may set <code>MODERATOR</code>, <code>MEMBER</code> or <code>GUEST</code> on
+anyone but themselves; a Moderator may move a <code>MEMBER</code> to <code>GUEST</code> and back; everyone else gets
+<code>FORBIDDEN</code>. Changing your own role is <code>VALIDATION</code>. Emits <code>MemberRoleChanged</code>.</li>
+</ul>
+<h3 id="guest-restrictions-enforced-in-the-services">Guest restrictions (enforced in the services) <a class="anchor" href="#guest-restrictions-enforced-in-the-services" aria-label="Link to this section">#</a></h3>
+<ul>
+<li>Creating a channel or a group, joining a channel, inviting into a conversation
+(<code>addConversationMembers</code>) and creating workspace invites: <code>FORBIDDEN</code>. Guests may open DMs.</li>
+<li>A public channel the guest has not been added to behaves like a private channel: <code>NOT_FOUND</code>
+on every read and write, absent from <code>channels</code> (a guest&#39;s channel list is always the joined
+list, whatever <code>joinedOnly</code> says), and from <code>searchMessages</code>, and its realtime
+events do not reach the guest.</li>
+<li><code>serverMembers</code> for a guest lists only themselves and the members of conversations they share;
+<code>ServerMember</code> lookups of anyone else are <code>NOT_FOUND</code>. The directory events <code>MemberJoined</code>,
+<code>MemberLeft</code> and <code>MemberRoleChanged</code> reach a guest only when they are about the guest.</li>
+<li>Guests are not auto-joined to public channels when they join the workspace.</li>
+<li>Inside a conversation they belong to, a guest can do everything a member can.</li>
+</ul>
+<h3 id="kick-ban-timeout">Kick, ban, timeout <a class="anchor" href="#kick-ban-timeout" aria-label="Link to this section">#</a></h3>
+<p>Who may target whom (kick, ban, timeout, clear timeout): the actor must be Owner or Moderator;
+nobody can target the Owner; a Moderator cannot target another Moderator; nobody targets
+themselves (<code>VALIDATION</code>). Otherwise <code>FORBIDDEN</code>.</p>
+<ul>
+<li><code>kickMember</code>: removes the member from the workspace and from every conversation of it, emits
+<code>MemberLeft</code>. They can re-join with a new invite.</li>
+<li><code>banMember(reason, expiresAt)</code>: records a ban (<code>server_ban</code>), then removes the member like a
+kick. A user who is not a member can be banned pre-emptively. While a ban is active (no
+<code>expiresAt</code>, or <code>expiresAt</code> in the future) accepting an invite, joining by invite and being
+added by the owner fail with <code>FORBIDDEN</code>; the refused join consumes no invite use.
+<code>unbanMember</code> deletes the ban; <code>serverBans</code> lists active bans (Owner/Moderator).</li>
+<li><code>timeoutMember(until, reason)</code>: <code>until</code> must be in the future and at most 30 days ahead. While
+it lasts, every write fails with <code>TIMED_OUT</code> (extension <code>until</code>, RFC 3339): sending, replying,
+editing, forwarding, reactions, pins, topic, attachments (REST upload: 403 with <code>until</code>),
+joining, inviting, creating conversations, and <code>executeCommand</code> of
+any <code>Mutating</code> (or stricter) command in that workspace. Reads continue, and a timed-out author
+may still delete their own messages over GraphQL. Expired timeouts are ignored;
+<code>clearTimeout</code> ends one early.</li>
+</ul>
+<h3 id="slow-mode">Slow mode <a class="anchor" href="#slow-mode" aria-label="Link to this section">#</a></h3>
+<ul>
+<li><code>setSlowMode(serverId, conversationId, seconds)</code>: Owner/Moderator, channels only, <code>0..=21600</code>
+(<code>0</code> turns it off), not on archived channels. Shown as <code>Conversation.slowModeSeconds</code>; changes
+emit <code>ConversationUpdated</code>.</li>
+<li>While it is on, a member&#39;s <code>sendMessage</code>, <code>replyToMessage</code> or forward into the channel fails
+with <code>RATE_LIMITED</code> (extension <code>retryAfterSeconds</code>, rounded up) if their previous message there
+is younger than the interval. Owner and Moderators are exempt. The check reads the author&#39;s
+last <code>sent_at</code> in the conversation; no in-memory state.</li>
+</ul>
+<h3 id="deleting-messages">Deleting messages <a class="anchor" href="#deleting-messages" aria-label="Link to this section">#</a></h3>
+<p><code>deleteMessage</code>: the author, or an Owner/Moderator of the workspace who can read the
+conversation (a moderator outside a private channel gets <code>NOT_FOUND</code>, like any read). A
+moderator delete writes an <code>admin.delete_message</code> audit row with the message id and author (no
+text). <code>MessageDeleted</code> is unchanged.</p>
+<h3 id="reports">Reports <a class="anchor" href="#reports" aria-label="Link to this section">#</a></h3>
+<ul>
+<li><code>reportMessage(serverId, conversationId, messageId, reason)</code>: any member who can read the
+message, once per message (<code>CONFLICT</code> on a second report); deleted messages cannot be
+reported. Allowed while timed out.</li>
+<li><code>messageReports(serverId, status, dir, cursor, limit)</code>: Owner/Moderator, ordered newest first
+(<code>(createdAt, id)</code> descending; <code>AFTER</code> walks toward older reports) with the standard cursor
+contract (<a href="pagination.html"><code>docs/pagination.md</code></a>). Moderators
+see every report of the workspace, but the reported message&#39;s current text and author
+(<code>messageText</code>, <code>messageAuthorId</code>) are included only when the moderator can read the
+conversation (<code>messageReadable</code>); for a private channel they are not in, only the ids and the
+reporter&#39;s reason are shown.</li>
+<li><code>resolveReport(serverId, reportId, outcome: RESOLVED | DISMISSED)</code>: Owner/Moderator; a report
+that is no longer open is <code>CONFLICT</code>.</li>
+</ul>
+<h3 id="audit">Audit <a class="anchor" href="#audit" aria-label="Link to this section">#</a></h3>
+<p>Every moderation action writes one <code>command_audit_log</code> row (initiator <code>moderation</code>) through one
+shared helper, whether it came from GraphQL or a command: <code>admin.set_member_role</code>, <code>admin.kick</code>,
+<code>admin.ban</code>, <code>admin.unban</code>, <code>admin.timeout</code>, <code>admin.clear_timeout</code>, <code>chat.set_slow_mode</code>,
+<code>chat.report_message</code>, <code>admin.resolve_report</code>, <code>admin.delete_message</code>. Arguments hold ids and
+flags only, never reasons or message text. An action run as a command also gets the generic
+command-execution row. Refused actions are not audited by the helper.</p>
+<h3 id="realtime-events">Realtime events <a class="anchor" href="#realtime-events" aria-label="Link to this section">#</a></h3>
+<p>Two new <code>WorkspaceEvent</code> variants (snake_case fields, like every other variant):</p>
+<ul>
+<li><code>{&quot;type&quot;: &quot;MemberLeft&quot;, &quot;workspace_id&quot;: &quot;…&quot;, &quot;user_id&quot;: &quot;…&quot;}</code> — a member was kicked or banned.
+Delivered to the workspace (guests: only about themselves), including the removed user, whose
+subscription then ends.</li>
+<li><code>{&quot;type&quot;: &quot;MemberRoleChanged&quot;, &quot;workspace_id&quot;: &quot;…&quot;, &quot;user_id&quot;: &quot;…&quot;, &quot;role&quot;: &quot;member&quot;}</code> — <code>role</code>
+is <code>owner</code>, <code>moderator</code>, <code>member</code> or <code>guest</code>. Same visibility as <code>MemberLeft</code>. A subscriber whose
+own role changes to or from <code>guest</code> gets the matching visibility from the next event on.</li>
+</ul>
+<h2 id="notification-rules">Notification Rules <a class="anchor" href="#notification-rules" aria-label="Link to this section">#</a></h2>
+<p>The server decides, once per message, who is told about it.
+For every recipient it stores a notification (the inbox, the bell badge and the email digest) and
+sends that user a private <code>NotificationDue</code> event; clients only render what the server decided.
+Sound and preview stay device-local client settings.</p>
+<h3 id="settings">Settings <a class="anchor" href="#settings" aria-label="Link to this section">#</a></h3>
+<ul>
+<li><strong>Per-conversation level</strong> (<code>setConversationNotificationLevel</code>, <code>Conversation.notificationLevel</code>):
+<code>ALL</code>, <code>MENTIONS</code> or <code>NONE</code>; null inherits the workspace default.
+<code>Conversation.effectiveNotificationLevel</code> is what applies now: <code>NONE</code> while a timed mute is in
+effect, else the conversation level, else the workspace default.</li>
+<li><strong>Workspace settings</strong> (<code>myNotificationSettings</code>, <code>updateNotificationSettings</code>), per user and
+workspace: <code>defaultLevel</code> (default <code>ALL</code>), <code>keywords</code> (at most 20, each 2 to 40 characters after
+trimming, stored lower-cased and deduplicated), a daily do-not-disturb window <code>dnd</code>
+(<code>start</code>/<code>end</code> as <code>&quot;HH:MM&quot;</code> in an IANA <code>timezone</code>; crosses midnight when <code>end &lt; start</code>; <code>start</code>
+must differ from <code>end</code>), and <code>digest</code> (<code>OFF</code>, <code>HOURLY</code>, <code>DAILY</code>; <a href="email.html"><code>docs/email.md</code></a>).</li>
+<li><strong>Do-not-disturb pause</strong> (<code>setDoNotDisturb</code>, command <code>notifications.dnd</code>): on until turned off,
+or until an instant (<code>dndPaused</code>, <code>dndPausedUntil</code>). It is separate from the daily window and
+<code>updateNotificationSettings</code> leaves it alone.</li>
+<li><strong>Mutes</strong> keep working: <code>muteConversation</code> with <code>mutedUntil</code> is a timed <code>NONE</code> (it clears a
+<code>NONE</code> level so the mute really ends; another level stays); without <code>mutedUntil</code> it sets level
+<code>NONE</code>. <code>unmuteConversation</code> clears <code>mutedUntil</code> and a <code>NONE</code> level. <code>isMuted</code> is true for a
+timed mute in effect or level <code>NONE</code>; <code>mutedConversations</code> lists rows with level <code>NONE</code> or any
+<code>mutedUntil</code>.</li>
+</ul>
+<h3 id="the-decision-per-member-except-the-author">The decision, per member except the author <a class="anchor" href="#the-decision-per-member-except-the-author" aria-label="Link to this section">#</a></h3>
+<ol>
+<li>Candidates are the conversation&#39;s members (the list its events go to): a private channel
+never notifies a non-member, and a public-channel reader who has not joined is not notified.
+A timeout does not affect receiving.</li>
+<li>A timed mute in effect yields nothing.</li>
+<li>Effective level = conversation level, else workspace default. <code>NONE</code> yields nothing, direct
+messages and mentions included.</li>
+<li>Reason, strongest first: <code>direct</code> (a Direct conversation), <code>mention</code> (<code>&lt;@user&gt;</code> naming the
+member, or <code>@channel</code> / <code>@here</code> as a whole word), <code>keyword</code> (a keyword as a whole word,
+case-insensitive, outside <code>&lt;@…&gt;</code> tokens), <code>thread_reply</code> (a reply in a thread whose root the
+member wrote or where they replied), else <code>all</code>.</li>
+<li><code>MENTIONS</code> admits every reason but <code>all</code>; <code>ALL</code> admits everything.</li>
+<li>Inside the do-not-disturb window (in the user&#39;s timezone) or pause the notification is still
+stored, but the event carries <code>quiet: true</code> so clients neither toast nor play a sound.</li>
+</ol>
+<p>One message yields at most one notification per user (unique <code>(user, message)</code>). Notifications
+are created after the message commits (<code>sendMessage</code>, <code>replyToMessage</code>, and forwards into the
+target conversation) and best-effort: a failure is logged and never fails the send. Edits do not
+notify again. Deleting a message deletes its unread notifications (read ones stay).
+<code>UserMentioned</code> is still emitted for the mentions view.</p>
+<h3 id="inbox">Inbox <a class="anchor" href="#inbox" aria-label="Link to this section">#</a></h3>
+<ul>
+<li><code>myNotifications(serverId, unreadOnly, dir, cursor, limit)</code>: newest first (<code>createdAt DESC, id DESC</code>, standard cursors; <code>AFTER</code> goes to older ones). Each item has <code>reason</code>, <code>createdAt</code>,
+<code>readAt</code> and nested <code>conversation</code> / <code>message</code>, which are null once the viewer can no longer
+read the conversation.</li>
+<li><code>myUnreadNotificationCount(serverId)</code>; <code>markNotificationsRead(serverId, ids | allBefore)</code>
+(exactly one; returns how many changed; ids of other users are ignored).</li>
+<li><code>markAsRead</code> on a conversation also marks its notifications for messages sent up to <code>readAt</code>
+read, in the same transaction; <code>markAllAsRead</code> marks every notification of the workspace read.</li>
+<li>Notifications older than 90 days are deleted hourly.</li>
+</ul>
+<h3 id="notificationdue-event"><code>NotificationDue</code> event <a class="anchor" href="#notificationdue-event" aria-label="Link to this section">#</a></h3>
+<pre><code class="language-json">{&quot;type&quot;: &quot;NotificationDue&quot;, &quot;workspace_id&quot;: &quot;…&quot;, &quot;user_id&quot;: &quot;…&quot;, &quot;notification_id&quot;: &quot;…&quot;,
+ &quot;conversation_id&quot;: &quot;…&quot;, &quot;message_id&quot;: &quot;…&quot;, &quot;reason&quot;: &quot;mention&quot;, &quot;quiet&quot;: false}</code></pre>
+<p><code>reason</code> is <code>direct</code>, <code>mention</code>, <code>keyword</code>, <code>thread_reply</code> or <code>all</code>. The event is delivered only
+to <code>user_id</code> (the server-side scope list is <code>[user_id]</code>), guests included; it is a new variant and
+no existing event changed.</p>
+<h2 id="titles">Titles <a class="anchor" href="#titles" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><code>Channel</code> and <code>Group</code> conversations may have an optional <code>title</code>.</li>
+<li>Empty or whitespace-only titles are normalized to <code>None</code>.</li>
+<li><code>Direct</code> conversations cannot have titles.</li>
+</ul>
+<h2 id="timeline-and-threads">Timeline And Threads <a class="anchor" href="#timeline-and-threads" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>Every message belongs to a <code>conversation_id</code>.</li>
+<li>A timeline message has <code>thread_id = None</code>.</li>
+<li>A thread reply has <code>thread_id = Some(thread_id)</code>.</li>
+<li>Creating a thread from a timeline message is optional.</li>
+<li>The root message remains in the main timeline after a thread is created.</li>
+<li>Replies inside the thread live only in the thread view; they do not appear in the main timeline listing.</li>
+</ul>
+<h2 id="reply-semantics">Reply Semantics <a class="anchor" href="#reply-semantics" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>Timeline replies use <code>parent_message_id</code> and still stay in the main timeline.</li>
+<li>Thread replies may point to:<ul>
+<li>the root timeline message for the thread, or</li>
+<li>another message already inside the same thread.</li>
+</ul>
+</li>
+<li>A message from another conversation or another thread is rejected as a reply parent.</li>
+</ul>
+<h2 id="thread_id-vs-root_thread_id"><code>thread_id</code> vs <code>root_thread_id</code> <a class="anchor" href="#thread_id-vs-root_thread_id" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><code>thread_id</code><ul>
+<li><code>None</code> for main timeline messages</li>
+<li><code>Some(thread_id)</code> for thread replies</li>
+</ul>
+</li>
+<li><code>root_thread_id</code><ul>
+<li><code>Some(thread_id)</code> only for a timeline message that is the root of an existing thread</li>
+<li><code>None</code> for ordinary timeline messages</li>
+<li><code>None</code> for thread replies</li>
+</ul>
+</li>
+</ul>
+<p>This lets clients render the timeline normally while also knowing whether a timeline message can open an existing thread.</p>
+<h2 id="attachments">Attachments <a class="anchor" href="#attachments" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>Sending a message takes no attachments; the author adds them to a message they already sent.</li>
+<li><code>createAttachment(serverId, conversationId, messageId, filename, contentType, sizeBytes)</code>:
+only the message&#39;s author, at most 25 MB. The declared size is reserved against the
+workspace quota (<code>RIM_MAX_WORKSPACE_STORAGE_BYTES</code>), the attachment is stored as pending
+upload, the message&#39;s <code>has_attachments</code> is set, and the answer is an upload ticket: the
+attachment id, an upload token, the size limit and an expiry.</li>
+<li><code>POST /api/files/upload</code> (multipart: <code>upload_token</code>, <code>attachment_id</code> and one file) stores the
+bytes and marks the attachment uploaded; a file larger than declared is refused.</li>
+<li><code>finalizeAttachment</code> marks an uploaded attachment ready. <code>deleteAttachment</code> removes it and
+refreshes <code>has_attachments</code>.</li>
+<li>An upload still pending 15 minutes after it started is marked failed by the stale-attachment
+cleanup job (<a href="operations/background-jobs.html"><code>docs/operations/background-jobs.md</code></a>).</li>
+<li>Reading an attachment (<code>GET /api/attachments/{id}/download</code>) needs workspace membership and read
+access to the conversation of its message.</li>
+<li>In an encrypted conversation the client uploads the encrypted blob: <code>createAttachment</code> then
+requires <code>blobSha256</code>, a fixed file name and type, and the upload is checked against the hash
+(<a href="../specs/e2ee-mls-v1.html"><code>docs/specs/e2ee-mls-v1.md</code></a>, &quot;Attachments&quot;).</li>
+<li>The <code>attachments</code> instance feature switches all of this off (<a href="operations/features.html"><code>docs/operations/features.md</code></a>).</li>
+</ul>
+<h2 id="pagination">Pagination <a class="anchor" href="#pagination" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>Timeline messages: <code>ORDER BY sent_at DESC, id DESC</code></li>
+<li>Thread messages: <code>ORDER BY sent_at DESC, id DESC</code></li>
+<li>Inbox conversations: <code>ORDER BY last_activity_at DESC, id DESC</code></li>
+<li>Channels: <code>ORDER BY created_at ASC, id ASC</code> (filtered by <code>ChannelListFilter</code>: <code>joinedOnly</code>,
+<code>includeArchived</code>; both default to <code>false</code>)</li>
+</ul>
+<p>Cursor pagination uses overfetch (<code>limit + 1</code>) so <code>next</code> and <code>prev</code> reflect actual additional data, not page-size guesses.</p>
+<h2 id="permalinks">Permalinks <a class="anchor" href="#permalinks" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>A timeline message&#39;s permalink is
+<code>/workspaces/{server}/conversations/{conversation}/messages/{message}</code>.</li>
+<li>A thread reply&#39;s permalink is
+<code>/workspaces/{server}/conversations/{conversation}/threads/{thread}/messages/{message}</code>.</li>
+<li>The email digest links each message by its permalink.</li>
+</ul>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/docs/messaging.md">rim-server/docs/messaging.md</a> at <code>c86029b</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+<script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
+</body>
+</html>

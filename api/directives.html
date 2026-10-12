@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Directives · API · RIM</title>
+<meta name="description" content="The directives of the RIM GraphQL schema.">
+<link rel="icon" href="../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../index.html" aria-label="RIM home">
+      <picture><source srcset="../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../index.html#what">What RIM is</a>
+      <a href="../index.html#how">How it works</a>
+      <a href="../docs/self-hosting.html">Self-host</a>
+      <a href="../configure/index.html">Configure</a>
+      <a href="../docs/index.html">Docs</a>
+      <a href="index.html" aria-current="page">API</a>
+      <a href="../specs/index.html">Specs</a>
+      <a href="../docs/contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="index.html">API</a><span aria-hidden="true">/</span><span>Directives</span></div>
+  <div class="page with-toc">
+    <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
+<ol>
+<li><a href="#include">@include</a><ol><li><a href="#skip">@skip</a></li><li><a href="#specifiedBy">@specifiedBy</a></li></ol></li>
+</ol>
+</details></aside>
+    <main id="content" class="prose">
+<h1>Directives</h1>
+<p class="lede">3 directives, in the order the schema defines them.</p>
+<input id="filter" class="search" type="search" placeholder="Filter directives by name" aria-label="Filter directives by name" autocomplete="off">
+<p id="filter-none" class="muted" hidden>Nothing matches.</p>
+<section class="entry" id="include" data-name="@include">
+<h3><code>@include</code><span class="kind">directive</span></h3>
+<div class="desc"><p>Directs the executor to include this field or fragment only when the <code>if</code> argument is true.</p>
+</div>
+<div class="sig">directive @include(if: Boolean!) on FIELD | FRAGMENT_SPREAD | INLINE_FRAGMENT</div>
+
+</section>
+<section class="entry" id="skip" data-name="@skip">
+<h3><code>@skip</code><span class="kind">directive</span></h3>
+<div class="desc"><p>Directs the executor to skip this field or fragment when the <code>if</code> argument is true.</p>
+</div>
+<div class="sig">directive @skip(if: Boolean!) on FIELD | FRAGMENT_SPREAD | INLINE_FRAGMENT</div>
+
+</section>
+<section class="entry" id="specifiedBy" data-name="@specifiedBy">
+<h3><code>@specifiedBy</code><span class="kind">directive</span></h3>
+<div class="desc"><p>Provides a scalar specification URL for specifying the behavior of custom scalar types.</p>
+</div>
+<div class="sig">directive @specifiedBy(url: String!) on SCALAR</div>
+
+</section>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Generated from <a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>58e3ec0</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+<script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
+<script>
+(() => {
+  const q = document.getElementById("filter");
+  if (!q) return;
+  const items = [...document.querySelectorAll("[data-name]")];
+  const groups = [...document.querySelectorAll("[data-group]")];
+  const none = document.getElementById("filter-none");
+  const run = () => {
+    const v = q.value.trim().toLowerCase();
+    let shown = 0;
+    for (const el of items) {
+      const hit = v ? el.dataset.name.toLowerCase().includes(v) : !el.closest("[data-search-only]");
+      el.hidden = !hit;
+      if (hit) shown += 1;
+    }
+    for (const g of groups) g.hidden = !g.querySelector("[data-name]:not([hidden])");
+    if (none) none.hidden = shown > 0 || !v;
+  };
+  q.addEventListener("input", run);
+  run();
+})();
+</script>
+</body>
+</html>

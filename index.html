@@ -98,6 +98,10 @@
   .card h3 { font-size: 16px; font-weight: 600; }
   .card p { color: var(--muted); font-size: 14px; margin-top: 8px; }
   .card .tag { font-family: var(--font-mono); font-size: 11px; color: var(--accent); }
+  a.card { display: block; color: var(--fg); }
+  a.card:hover { text-decoration: none; border-color: var(--accent); }
+  .speclist li a { color: var(--fg); }
+  .speclist li a:hover { color: var(--accent); }
 
   /* Diagram */
   .flow { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; align-items: center; gap: 10px; margin-top: 24px; }
@@ -152,19 +156,19 @@
   <!-- ============ Proposed landing page ============ -->
   <header class="nav">
     <a class="brand" href="#top" id="top" aria-label="RIM">
-      <img src="assets/rim-mark-inverse.svg" alt="" width="28" height="28">
+      <picture><source srcset="assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
       RIM
     </a>
     <nav aria-label="Site">
       <a href="#what">What RIM is</a>
       <a href="#how">How it works</a>
       <a href="#download">Download</a>
-      <a href="#selfhost">Self-host</a>
-      <a href="#config">Configure</a>
-      <a href="#docs">Docs</a>
-      <a href="#api">API</a>
-      <a href="#specs">Specs</a>
-      <a href="#contribute">Contribute</a>
+      <a href="docs/self-hosting.html">Self-host</a>
+      <a href="configure/index.html">Configure</a>
+      <a href="docs/index.html">Docs</a>
+      <a href="api/index.html">API</a>
+      <a href="specs/index.html">Specs</a>
+      <a href="docs/contributing.html">Contribute</a>
       <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
     </nav>
   </header>
@@ -247,9 +251,9 @@
     <h2>The desktop app, for the machine you work on</h2>
     <p class="sub">Linux, macOS and Windows builds, each with a checksum and signed for the in-app updater. Point it at your own server or at a relay. The web client needs no download: your server serves it on the same domain.</p>
     <div class="grid three">
-      <div class="card"><h3>Linux</h3><p>AppImage, .deb and .rpm. Keys live in the system keyring or RIM's encrypted vault.</p><span class="pill warm" style="display:inline-block;margin-top:10px;font-family:var(--font-mono);font-size:11px;padding:2px 8px;border:1px solid var(--warm);border-radius:999px;color:var(--warm)">coming with the first release</span></div>
-      <div class="card"><h3>macOS</h3><p>Universal .dmg. Notarized once the organisation has a developer account; the updater verifies its own signature regardless.</p><span class="pill warm" style="display:inline-block;margin-top:10px;font-family:var(--font-mono);font-size:11px;padding:2px 8px;border:1px solid var(--warm);border-radius:999px;color:var(--warm)">coming with the first release</span></div>
-      <div class="card"><h3>Windows</h3><p>.msi and a setup .exe. SmartScreen warns until the installer carries a code-signing certificate.</p><span class="pill warm" style="display:inline-block;margin-top:10px;font-family:var(--font-mono);font-size:11px;padding:2px 8px;border:1px solid var(--warm);border-radius:999px;color:var(--warm)">coming with the first release</span></div>
+      <div class="card"><h3>Linux</h3><p>AppImage, .deb and .rpm. Keys live in the system keyring or RIM's encrypted vault.</p><a class="pill warm" href="docs/client/guide.html#quickstart" style="display:inline-block;margin-top:10px;font-family:var(--font-mono);font-size:11px;padding:2px 8px;border:1px solid var(--warm);border-radius:999px;color:var(--warm)">coming with the first release</a></div>
+      <div class="card"><h3>macOS</h3><p>Universal .dmg. Notarized once the organisation has a developer account; the updater verifies its own signature regardless.</p><a class="pill warm" href="docs/client/guide.html#quickstart" style="display:inline-block;margin-top:10px;font-family:var(--font-mono);font-size:11px;padding:2px 8px;border:1px solid var(--warm);border-radius:999px;color:var(--warm)">coming with the first release</a></div>
+      <div class="card"><h3>Windows</h3><p>.msi and a setup .exe. SmartScreen warns until the installer carries a code-signing certificate.</p><a class="pill warm" href="docs/client/guide.html#quickstart" style="display:inline-block;margin-top:10px;font-family:var(--font-mono);font-size:11px;padding:2px 8px;border:1px solid var(--warm);border-radius:999px;color:var(--warm)">coming with the first release</a></div>
     </div>
     <p class="sub" style="margin-top:18px">Until then: <code>git clone</code>, <code>npm ci</code>, <code>npm run tauri build</code>. The page says exactly that, with the toolchain versions.</p>
   </section>
@@ -281,12 +285,12 @@ RIM_FEATURES_DISABLED=attachments,email</pre>
     <table>
       <thead><tr><th>Group</th><th>Variables</th><th>Notes</th></tr></thead>
       <tbody>
-        <tr><td><b>Listening</b></td><td class="mono">RIM_SERVER_HOST, RIM_SERVER_PORT, RIM_PUBLIC_BASE_URL, RIM_CORS_ALLOWED_ORIGIN, RIM_TRUST_FORWARDED_HEADERS, RIM_FORCE_SECURE_COOKIES, RIM_KEY_LOGIN_AUDIENCES</td><td>A non-loopback bind needs an audience or the public URL.</td></tr>
-        <tr><td><b>Database and data</b></td><td class="mono">DATABASE_URL, RIM_DATABASE_MAX_CONNECTIONS, RIM_DATA_DIR, RIM_STORAGE_LOCAL_PATH, RIM_MAX_WORKSPACE_STORAGE_BYTES, RIM_SERVER_KEY_FILE, RIM_FRANKING_KEY_FILE</td><td>The data directory is the server's identity; back it up.</td></tr>
-        <tr><td><b>Signups and sessions</b></td><td class="mono">RIM_OPEN_REGISTRATION, RIM_REGISTRATION_POW_BITS, RIM_SESSION_TTL_DAYS, RIM_BOOTSTRAP_TOKEN_TTL_SECONDS</td><td>Invite-only by default; invites come from the CLI.</td></tr>
-        <tr><td><b>Roles and federation</b></td><td class="mono">RIM_ROLE, RIM_S2S_*, RIM_RELAY_*, RIM_HOST_ALLOWED_RELAYS</td><td>relay, host or both; quotas per user on a public relay.</td></tr>
-        <tr><td><b>Mail</b></td><td class="mono">RIM_SMTP_HOST, RIM_SMTP_PORT, RIM_SMTP_USERNAME, RIM_SMTP_PASSWORD, RIM_SMTP_FROM, RIM_SMTP_TLS, RIM_NOTIFICATION_DIGEST_INTERVAL_SECS</td><td>Without SMTP the email feature reports "unavailable".</td></tr>
-        <tr><td><b>Operations</b></td><td class="mono">RIM_METRICS_ADDR, RIM_AUDIT_LOG_PATH, RIM_AUDIT_RETENTION_DAYS, RIM_FEATURES_DISABLED, RUST_LOG, RIM_ENABLE_GRAPHIQL</td><td>Metrics on their own port; features off per instance.</td></tr>
+        <tr><td><b><a href="configure/index.html#listening">Listening</a></b></td><td class="mono">RIM_SERVER_HOST, RIM_SERVER_PORT, RIM_PUBLIC_BASE_URL, RIM_CORS_ALLOWED_ORIGIN, RIM_TRUST_FORWARDED_HEADERS, RIM_FORCE_SECURE_COOKIES, RIM_KEY_LOGIN_AUDIENCES</td><td>A non-loopback bind needs an audience or the public URL.</td></tr>
+        <tr><td><b><a href="configure/index.html#database-and-data">Database and data</a></b></td><td class="mono">DATABASE_URL, RIM_DATABASE_MAX_CONNECTIONS, RIM_DATA_DIR, RIM_STORAGE_LOCAL_PATH, RIM_MAX_WORKSPACE_STORAGE_BYTES, RIM_SERVER_KEY_FILE, RIM_FRANKING_KEY_FILE</td><td>The data directory is the server's identity; back it up.</td></tr>
+        <tr><td><b><a href="configure/index.html#signups-and-sessions">Signups and sessions</a></b></td><td class="mono">RIM_OPEN_REGISTRATION, RIM_REGISTRATION_POW_BITS, RIM_SESSION_TTL_DAYS</td><td>Invite-only by default; invites come from the CLI.</td></tr>
+        <tr><td><b><a href="configure/index.html#roles-and-federation">Roles and federation</a></b></td><td class="mono">RIM_ROLE, RIM_S2S_*, RIM_RELAY_*, RIM_HOST_ALLOWED_RELAYS</td><td>relay, host or both; quotas per user on a public relay.</td></tr>
+        <tr><td><b><a href="configure/index.html#mail">Mail</a></b></td><td class="mono">RIM_SMTP_HOST, RIM_SMTP_PORT, RIM_SMTP_USERNAME, RIM_SMTP_PASSWORD, RIM_SMTP_FROM, RIM_SMTP_TLS, RIM_NOTIFICATION_DIGEST_INTERVAL_SECS</td><td>Without SMTP the email feature reports "unavailable".</td></tr>
+        <tr><td><b><a href="configure/index.html#operations">Operations</a></b></td><td class="mono">RIM_METRICS_ADDR, RIM_AUDIT_LOG_PATH, RIM_AUDIT_RETENTION_DAYS, RIM_FEATURES_DISABLED, RUST_LOG, RIM_ENABLE_GRAPHIQL</td><td>Metrics on their own port; features off per instance.</td></tr>
       </tbody>
     </table>
     </div>
@@ -297,10 +301,10 @@ RIM_FEATURES_DISABLED=attachments,email</pre>
     <div class="eyebrow">Docs</div>
     <h2>Guides for the four people who run RIM</h2>
     <div class="grid four">
-      <div class="card"><h3>Operators</h3><p>Self-hosting, upgrades, backups, metrics, audit retention, feature switches, the public relay runbook.</p></div>
-      <div class="card"><h3>Plugin authors</h3><p>The plugin protocol, the TypeScript SDK, the web plugin sandbox, signing a workspace plugin.</p></div>
-      <div class="card"><h3>Client authors</h3><p>The GraphQL reference, sessions and CSRF, subscriptions over WebSocket, error codes, pagination, the file routes.</p></div>
-      <div class="card"><h3>People using it</h3><p>Keys and recovery, linking a device, keyboard profiles and Vim mode, encrypted conversations, relays.</p></div>
+      <a class="card" href="docs/operators.html"><h3>Operators</h3><p>Self-hosting, upgrades, backups, metrics, audit retention, feature switches, the public relay runbook.</p></a>
+      <a class="card" href="docs/plugin-authors.html"><h3>Plugin authors</h3><p>The plugin protocol, the TypeScript SDK, the web plugin sandbox, signing a workspace plugin.</p></a>
+      <a class="card" href="docs/client-authors.html"><h3>Client authors</h3><p>The GraphQL reference, sessions and CSRF, subscriptions over WebSocket, error codes, pagination, the file routes.</p></a>
+      <a class="card" href="docs/using-rim.html"><h3>People using it</h3><p>Keys and recovery, linking a device, keyboard profiles and Vim mode, encrypted conversations, relays.</p></a>
     </div>
   </section>
 
@@ -309,9 +313,9 @@ RIM_FEATURES_DISABLED=attachments,email</pre>
     <h2>One GraphQL endpoint, and the HTTP around it</h2>
     <p class="sub">Everything a client does goes through <code>POST /api</code>; subscriptions arrive over <code>/api/ws</code>. The schema is published at <code>/api/sdl</code> with a description on every type and field, and the reference on this site is generated from it, so it cannot drift from the server.</p>
     <div class="grid three">
-      <div class="card"><span class="tag">reference</span><h3>Every query, mutation and subscription</h3><p>228 types, 122 queries, 205 mutations and 7 subscriptions, grouped by domain, each with its description, arguments and the error codes it can answer.</p></div>
-      <div class="card"><span class="tag">contract</span><h3>Talking to a server</h3><p>The session cookie and the key-login challenge that issues it, the CSRF header on mutations, origins, the twenty error codes in <code>extensions.code</code>, cursor pagination, <code>serverInfo</code> for version and feature negotiation.</p></div>
-      <div class="card"><span class="tag">http</span><h3>The routes outside GraphQL</h3><p>Upload and download, avatars, plugin bundles, the signed discovery document at <code>/.well-known/rim-server</code>, the probes and metrics, and the server-to-server API under <code>/s2s/v1</code>.</p></div>
+      <a class="card" href="api/index.html"><span class="tag">reference</span><h3>Every query, mutation and subscription</h3><p>225 types, 57 queries, 106 mutations and 2 subscriptions, grouped by domain, each with its description, arguments and the error codes it can answer.</p></a>
+      <a class="card" href="docs/api.html"><span class="tag">contract</span><h3>Talking to a server</h3><p>The session cookie and the key-login challenge that issues it, the CSRF header on mutations, origins, the twenty error codes in <code>extensions.code</code>, cursor pagination, <code>serverInfo</code> for version and feature negotiation.</p></a>
+      <a class="card" href="docs/api.html#endpoints"><span class="tag">http</span><h3>The routes outside GraphQL</h3><p>Upload and download, avatars, plugin bundles, the signed discovery document at <code>/.well-known/rim-server</code>, the probes and metrics, and the server-to-server API under <code>/s2s/v1</code>.</p></a>
     </div>
   </section>
 
@@ -319,14 +323,14 @@ RIM_FEATURES_DISABLED=attachments,email</pre>
     <div class="eyebrow">Specifications</div>
     <h2>Build a client or a server from the published specs</h2>
     <ul class="speclist">
-      <li><span>Plugin protocol</span><span class="v">v1</span></li>
-      <li><span>Web plugins</span><span class="v">v1</span></li>
-      <li><span>Workspace plugin registry</span><span class="v">v1</span></li>
-      <li><span>Key identity: logs, devices, profile cards, login proofs</span><span class="v">v1</span></li>
-      <li><span>Device linking</span><span class="v">v1</span></li>
-      <li><span>End-to-end encryption with MLS</span><span class="v">v1</span></li>
-      <li><span>Server-to-server: descriptors, RFC 9421 signatures, relays and hosts</span><span class="v">v1</span></li>
-      <li><span>History archive and the backup endpoint</span><span class="v">v1</span></li>
+      <li><span><a href="specs/plugin-protocol-v1.html">Plugin protocol</a></span><span class="v">v1</span></li>
+      <li><span><a href="specs/web-plugins-v1.html">Web plugins</a></span><span class="v">v1</span></li>
+      <li><span><a href="specs/workspace-plugins-v1.html">Workspace plugin registry</a></span><span class="v">v1</span></li>
+      <li><span><a href="specs/key-identity-v1.html">Key identity: logs, devices, profile cards, login proofs</a></span><span class="v">v1</span></li>
+      <li><span><a href="specs/device-linking-v1.html">Device linking</a></span><span class="v">v1</span></li>
+      <li><span><a href="specs/e2ee-mls-v1.html">End-to-end encryption with MLS</a></span><span class="v">v1</span></li>
+      <li><span><a href="specs/server-to-server-v1.html">Server-to-server: descriptors, RFC 9421 signatures, relays and hosts</a></span><span class="v">v1</span></li>
+      <li><span><a href="specs/history-archive-v1.html">History archive</a> and <a href="specs/backup-endpoint-v1.html">the backup endpoint</a></span><span class="v">v1</span></li>
     </ul>
   </section>
 
@@ -344,9 +348,9 @@ RIM_FEATURES_DISABLED=attachments,email</pre>
     <h2>Pull requests say what they change and why</h2>
     <p class="sub">Use whatever tools you like to write the code, including AI assistants. What we read is the pull request: it has to describe what it implements and the reason for it, in your words. A diff without that is sent back unread.</p>
     <div class="grid three">
-      <div class="card"><h3>Every PR carries</h3><p>What changes, for whom, and why now. What it does not do. How you tested it, with the gate output. Which spec or doc it changes, if any.</p></div>
-      <div class="card"><h3>Before you start</h3><p>Open an issue for anything beyond a fix, so the design is agreed first. Server features that belong to one domain are plugins, not core; the roadmap says where the line is.</p></div>
-      <div class="card"><h3>What the repos enforce</h3><p>Formatting, lint with warnings as errors, the full test suites including the database and two-server ones, a comment style that says what code does and not its history, commits without trailers.</p></div>
+      <a class="card" href="docs/contributing.html#pull-requests"><h3>Every PR carries</h3><p>What changes, for whom, and why now. What it does not do. How you tested it, with the gate output. Which spec or doc it changes, if any.</p></a>
+      <a class="card" href="docs/contributing.html#what-belongs-in-the-core"><h3>Before you start</h3><p>Open an issue for anything beyond a fix, so the design is agreed first. Server features that belong to one domain are plugins, not core; the roadmap says where the line is.</p></a>
+      <a class="card" href="docs/contributing.html#gates"><h3>What the repos enforce</h3><p>Formatting, lint with warnings as errors, the full test suites including the database and two-server ones, a comment style that says what code does and not its history, commits without trailers.</p></a>
     </div>
 
     <h3 style="margin-top:32px;font-size:18px">How the server code is laid out, and why we keep it that way</h3>

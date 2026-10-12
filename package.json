@@ -1,0 +1,19 @@
+{
+  "name": "rim-site",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Renders the RIM project site from the rim-server and rim-ui repositories.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "check": "node scripts/check.mjs"
+  },
+  "devDependencies": {
+    "graphql": "17.0.2",
+    "marked": "18.0.14"
+  }
+}

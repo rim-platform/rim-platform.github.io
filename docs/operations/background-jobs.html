@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Background jobs · RIM</title>
+<meta name="description" content="rim-server runs these jobs inside its own process on a timer; there is no cron to set up. Each starts with the server and stops when it shuts down. A run that fails logs an error and the next run tries again. More than …">
+<link rel="icon" href="../../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../../index.html" aria-label="RIM home">
+      <picture><source srcset="../../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../../index.html#what">What RIM is</a>
+      <a href="../../index.html#how">How it works</a>
+      <a href="../self-hosting.html">Self-host</a>
+      <a href="../../configure/index.html">Configure</a>
+      <a href="../index.html" aria-current="page">Docs</a>
+      <a href="../../api/index.html">API</a>
+      <a href="../../specs/index.html">Specs</a>
+      <a href="../contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="../index.html">Docs</a><span aria-hidden="true">/</span><a href="../operators.html">Operators</a><span aria-hidden="true">/</span><span>Background jobs</span></div>
+  <div class="page">
+
+    <main id="content" class="prose">
+<h1 id="background-jobs">Background jobs</h1>
+<p>rim-server runs these jobs inside its own process on a timer; there is no cron to set up. Each
+starts with the server and stops when it shuts down. A run that fails logs an error and the next
+run tries again. More than one server process on the same database each runs every job; the
+purges are idempotent, so a second run finds nothing left to do.</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Job</th>
+<th>Interval</th>
+<th>Setting</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Presence and typing</td>
+<td>30 seconds</td>
+<td>none</td>
+<td>Moves users without a heartbeat to away after 90 seconds and offline after 180, and drops stale typing indicators.</td>
+</tr>
+<tr>
+<td>Pipeline evaluator</td>
+<td>on every event</td>
+<td>none</td>
+<td>Runs the workspace pipelines that match each event.</td>
+</tr>
+<tr>
+<td>Notification digest</td>
+<td>15 minutes</td>
+<td><code>RIM_NOTIFICATION_DIGEST_INTERVAL_SECS</code> (at least 60)</td>
+<td>Emails due notification digests. Off when the email feature is disabled.</td>
+</tr>
+<tr>
+<td>Notification and MLS retention</td>
+<td>hourly</td>
+<td>none</td>
+<td>Deletes notifications older than 90 days and the MLS rows the encryption retention rules let go.</td>
+</tr>
+<tr>
+<td>Server-to-server upkeep</td>
+<td>every minute</td>
+<td><code>RIM_RELAY_RETENTION_DAYS</code> (default 30) for the relay queue</td>
+<td>Deletes expired server-to-server nonces, relay queue items and DM requests past retention, outbox rows past their retention, old seen-request records and ended delegations; picks up a server key or franking key rotated by the CLI.</td>
+</tr>
+<tr>
+<td>Revocation fan-out</td>
+<td>5 seconds</td>
+<td>runs while server-to-server traffic is on</td>
+<td>Sends device revocations due for another attempt to the hosts holding the person.</td>
+</tr>
+<tr>
+<td>Outbox writer and sender</td>
+<td>on every event</td>
+<td>runs while server-to-server traffic is on</td>
+<td>Turns events into signed envelopes and delivers each relay&#39;s outbox in order.</td>
+</tr>
+<tr>
+<td>Metrics sampler</td>
+<td>30 seconds</td>
+<td>runs when <code>RIM_METRICS_ADDR</code> is set</td>
+<td>Reads the relay queue, the database pool and pending migrations into gauges (<a href="metrics.html"><code>docs/operations/metrics.md</code></a>).</td>
+</tr>
+<tr>
+<td>Audit retention</td>
+<td>daily, first a minute after boot</td>
+<td><code>RIM_AUDIT_RETENTION_DAYS</code>; unset, the job does not run</td>
+<td>Exports and deletes command audit rows past retention (<a href="audit-retention.html"><code>docs/operations/audit-retention.md</code></a>).</td>
+</tr>
+<tr>
+<td>Stale attachment cleanup</td>
+<td>daily, first 5 minutes after boot</td>
+<td>none</td>
+<td>Marks attachment uploads still pending 15 minutes after they started as failed, so they stop counting as in progress. Logs the count and adds it to <code>rim_attachments_cleaned_total</code>.</td>
+</tr>
+<tr>
+<td>IP deny list</td>
+<td>30 seconds, first loaded at boot</td>
+<td>none</td>
+<td>Reads the IP blocks in force, so a block or unblock made with <code>rim_server ip</code> applies within 30 seconds, and deletes expired blocks. A read that fails keeps the list it had.</td>
+</tr>
+<tr>
+<td>Workspace state expiry</td>
+<td>hourly, first 5 minutes after boot</td>
+<td>none</td>
+<td>Deletes workspace state entries whose time to live ran out. Logs the count and adds it to <code>rim_workspace_state_purged_total</code>.</td>
+</tr>
+</tbody></table></div>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/docs/operations/background-jobs.md">rim-server/docs/operations/background-jobs.md</a> at <code>c86029b</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+
+</body>
+</html>

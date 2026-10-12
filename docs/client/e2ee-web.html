@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>End-to-end encrypted DMs and groups in the web app · RIM</title>
+<meta name="description" content="A browser set up as a linked device (web-linked-device.md) reads and sends in encrypted DMs and groups like the desktop app. It runs the same rim_mls crate (docs/rim-mls.md) compiled to WebAssembly, keeps its MLS state …">
+<link rel="icon" href="../../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../../index.html" aria-label="RIM home">
+      <picture><source srcset="../../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../../index.html#what">What RIM is</a>
+      <a href="../../index.html#how">How it works</a>
+      <a href="../self-hosting.html">Self-host</a>
+      <a href="../../configure/index.html">Configure</a>
+      <a href="../index.html" aria-current="page">Docs</a>
+      <a href="../../api/index.html">API</a>
+      <a href="../../specs/index.html">Specs</a>
+      <a href="../contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="../index.html">Docs</a><span aria-hidden="true">/</span><a href="../using-rim.html">Using RIM</a><span aria-hidden="true">/</span><span>End-to-end encrypted DMs and groups in the web app</span></div>
+  <div class="page with-toc">
+    <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
+<ol>
+<li><a href="#what-lives-where">What lives where</a></li>
+<li><a href="#the-wasm-build">The wasm build</a></li>
+<li><a href="#the-headless-browser-gate">The headless browser gate</a></li>
+<li><a href="#storage">Storage</a></li>
+<li><a href="#how-it-runs">How it runs</a></li>
+<li><a href="#what-the-person-sees">What the person sees</a></li>
+<li><a href="#hardening">Hardening</a></li>
+<li><a href="#limits">Limits</a></li>
+<li><a href="#plugins">Plugins</a></li>
+<li><a href="#trying-it-against-a-desktop">Trying it against a desktop</a></li>
+</ol>
+</details></aside>
+    <main id="content" class="prose">
+<h1 id="end-to-end-encrypted-dms-and-groups-in-the-web-app">End-to-end encrypted DMs and groups in the web app</h1>
+<p>A browser set up as a linked device (<a href="web-linked-device.html"><code>web-linked-device.md</code></a>) reads and sends in encrypted DMs and
+groups like the desktop app. It runs the same <code>rim_mls</code> crate (<a href="rim-mls.html"><code>docs/rim-mls.md</code></a>) compiled to
+WebAssembly, keeps its MLS state and the decrypted messages in IndexedDB, and drives the same
+runtime as the desktop (<a href="https://github.com/rim-platform/rim-ui/tree/58e3ec03c43064632a6a6f610d92413040229dfd/src/features/e2ee/runtime"><code>src/features/e2ee/runtime/</code></a>), against a second backend with the Tauri
+side&#39;s command surface. The contract is rim-server <code>docs/specs/e2ee-mls-v1.md</code> (&quot;The web
+client&quot;); <a href="e2ee-desktop.html"><code>e2ee-desktop.md</code></a> describes the desktop, whose behaviour the web matches.</p>
+<h2 id="what-lives-where">What lives where <a class="anchor" href="#what-lives-where" aria-label="Link to this section">#</a></h2>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Where</th>
+<th>What</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><a href="https://github.com/rim-platform/rim-ui/tree/58e3ec03c43064632a6a6f610d92413040229dfd/src-tauri/crates/rim_mls_wasm"><code>src-tauri/crates/rim_mls_wasm</code></a></td>
+<td>The <code>wasm-bindgen</code> facade: an <code>Engine</code> over one account&#39;s journaled <code>MemoryStore</code> (<code>changes</code>, <code>keep</code>, <code>rollback</code>, <code>export</code>), the crate&#39;s operations over base64url bytes and JSON text, a <code>DeviceDirectory</code> over the page&#39;s answers, <code>buildContent</code>, <code>planKeyPackageUpload</code>, <code>verifyReadd</code>, <code>mayHonorReadd</code>. A failure throws an <code>Error</code> named by its code (<code>E2EE_NO_GROUP</code>, …)</td>
+</tr>
+<tr>
+<td><a href="https://github.com/rim-platform/rim-ui/tree/58e3ec03c43064632a6a6f610d92413040229dfd/src/features/e2ee/wasm"><code>src/features/e2ee/wasm/</code></a></td>
+<td>Its build (<code>wasm-bindgen --target web</code>), committed: <code>rim_mls_wasm.js</code>, <code>.d.ts</code>, <code>rim_mls_wasm_bg.wasm</code>, and <code>source.json</code> (the hash of the crate sources it was built from and its size)</td>
+</tr>
+<tr>
+<td><a href="https://github.com/rim-platform/rim-ui/tree/58e3ec03c43064632a6a6f610d92413040229dfd/src/features/e2ee/web"><code>src/features/e2ee/web/</code></a></td>
+<td>The web backend: <code>store.ts</code> (the unit of work), <code>db.ts</code> (IndexedDB), <code>groupState.ts</code>, <code>feed.ts</code> (the client loop), <code>outgoing.ts</code>, <code>directory.ts</code>, <code>attachments.ts</code> (WebCrypto), <code>messageRows.ts</code>, <code>webCommands.ts</code> (the command surface and the cache calls), <code>webSession.ts</code> (whether this browser can take part), <code>mlsModule.ts</code>, <code>webAccount.ts</code></td>
+</tr>
+<tr>
+<td><a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/src/features/e2ee/api/e2eeCommands.ts"><code>src/features/e2ee/api/e2eeCommands.ts</code></a></td>
+<td>Routes every command by its account: a web account (<code>{ …, principalId, deviceId, web: true }</code>) goes to <code>webE2eeCommands</code>, any other to the Tauri side. Attachments use WebCrypto outside Tauri</td>
+</tr>
+<tr>
+<td><a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/src/features/messages/api/messageCache.ts"><code>src/features/messages/api/messageCache.ts</code></a></td>
+<td>Routes the cache calls the same way; <code>encryptedStoreAccount()</code> is the desktop&#39;s cache account or the web store&#39;s account</td>
+</tr>
+<tr>
+<td><a href="https://github.com/rim-platform/rim-ui/tree/58e3ec03c43064632a6a6f610d92413040229dfd/src/features/e2ee/runtime"><code>src/features/e2ee/runtime/</code></a></td>
+<td>Shared with the desktop; <code>webReturn.ts</code> handles a browser coming back after 60 days</td>
+</tr>
+<tr>
+<td><a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/scripts/build-wasm.mjs"><code>scripts/build-wasm.mjs</code></a>, <a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/scripts/wasm-sources.mjs"><code>scripts/wasm-sources.mjs</code></a></td>
+<td>The build, and the source hash a Vitest test checks</td>
+</tr>
+</tbody></table></div>
+<p>The web backend and the module load lazily (dynamic imports): the desktop app never loads them,
+and the web app loads the 2.4 MB module only once a signed-in account has a device key here.</p>
+<h2 id="the-wasm-build">The wasm build <a class="anchor" href="#the-wasm-build" aria-label="Link to this section">#</a></h2>
+<pre><code class="language-sh">rustup target add wasm32-unknown-unknown
+cargo install wasm-bindgen-cli --version 0.2.114 --locked   # the version rim_mls_wasm pins
+npm run build:wasm</code></pre>
+<p><code>build:wasm</code> runs <code>cargo build -p rim_mls_wasm --target wasm32-unknown-unknown --profile wasm</code>
+(from <a href="https://github.com/rim-platform/rim-ui/tree/58e3ec03c43064632a6a6f610d92413040229dfd/src-tauri"><code>src-tauri/</code></a>, whose <code>.cargo/config.toml</code> selects getrandom&#39;s WebCrypto backend for that
+target), then <code>wasm-bindgen --target web</code> into <a href="https://github.com/rim-platform/rim-ui/tree/58e3ec03c43064632a6a6f610d92413040229dfd/src/features/e2ee/wasm"><code>src/features/e2ee/wasm/</code></a>, and writes
+<code>source.json</code>. The <code>wasm</code> profile inherits <code>release</code> with <code>opt-level = &quot;s&quot;</code>, LTO and one codegen
+unit; the desktop&#39;s <code>release</code> is unchanged. No <code>wasm-opt</code> pass (binaryen is not needed).</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th></th>
+<th>Bytes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>rim_mls_wasm_bg.wasm</code></td>
+<td>2,426,824</td>
+</tr>
+<tr>
+<td>gzip -9 (<code>source.json</code>)</td>
+<td>692,971</td>
+</tr>
+<tr>
+<td>gzip -6 (as the Docker image&#39;s nginx serves it)</td>
+<td>699,817</td>
+</tr>
+<tr>
+<td>brotli -q 11</td>
+<td>511,257</td>
+</tr>
+</tbody></table></div>
+<p><strong>The build is committed</strong>, because <code>npm run build</code> must work without a Rust toolchain: CI&#39;s
+build job and the Docker image build the web app with Node only, and Vitest loads the module.
+<a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/src/features/e2ee/web/wasmArtifact.test.ts"><code>src/features/e2ee/web/wasmArtifact.test.ts</code></a> fails when <code>rim_mls</code> or <code>rim_mls_wasm</code> changed
+since the committed build (it hashes their <code>Cargo.toml</code> and <a href="https://github.com/rim-platform/rim-ui/tree/58e3ec03c43064632a6a6f610d92413040229dfd/src"><code>src/</code></a>): run <code>npm run build:wasm</code>
+and commit the result. <code>rim_mls</code> runs in the browser with <code>openmls</code>&#39;s <code>js</code> feature (the clock
+through <code>web-time</code>), getrandom 0.2&#39;s <code>js</code> and 0.3&#39;s <code>wasm_js</code> features, and its <code>sqlite</code> feature
+off; libcrux runs its portable (non-SIMD) code.</p>
+<p>The page compiles the module with <code>WebAssembly</code>; the Docker image&#39;s content security policy
+allows that with <code>'wasm-unsafe-eval'</code> in <code>script-src</code> (and nothing else is evaluated).</p>
+<h2 id="the-headless-browser-gate">The headless browser gate <a class="anchor" href="#the-headless-browser-gate" aria-label="Link to this section">#</a></h2>
+<p><code>rim_mls</code>&#39;s whole test suite (vectors, formats, providers, the multi-device simulations,
+tampering) and the facade&#39;s tests run in headless Chromium through <code>wasm-bindgen-test</code>:</p>
+<pre><code class="language-sh">npm run test:wasm
+# = cd src-tauri &amp;&amp; cargo test -p rim_mls -p rim_mls_wasm --no-default-features \
+#     --target wasm32-unknown-unknown</code></pre>
+<p>The target&#39;s runner is <code>wasm-bindgen-test-runner</code> (from wasm-bindgen-cli); it starts
+<code>chromedriver</code> from <code>PATH</code> (or <code>CHROMEDRIVER=/path/to/chromedriver</code>) and Chrome or Chromium,
+headless. The test modules use <code>wasm_bindgen_test</code> as <code>#[test]</code> on wasm32, so the same tests run
+natively with <code>cargo test</code>. Two tests stay native: the SQLite store&#39;s (no <code>sqlite</code> feature in
+the browser). <code>wait</code> in the simulations spins on the clock in the browser, which cannot block a
+thread.</p>
+<h2 id="storage">Storage <a class="anchor" href="#storage" aria-label="Link to this section">#</a></h2>
+<p>One IndexedDB database, <code>rim-e2ee</code> (version 2: version 1 lacked <code>pins</code> and <code>peers</code>, which the
+upgrade adds); every record is keyed by the account first (<code>endpoint</code> without a trailing <code>/</code>,
+<code>principalId</code>):</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Store</th>
+<th>Key</th>
+<th>Holds</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>mls</code></td>
+<td><code>[endpoint, principalId, label, key]</code></td>
+<td><code>rim_mls</code>&#39;s entries as its <code>MemoryStore</code> has them: OpenMLS state (<code>openmls.v1.*</code>), this device&#39;s MLS signature key and <code>mls-key</code> statement (<code>rim.device</code>), group records, key package records. Key and value base64url</td>
+</tr>
+<tr>
+<td><code>messages</code></td>
+<td><code>[endpoint, principalId, id]</code></td>
+<td>The messages of the conversations this browser follows (encrypted ones it opened, and any a plugin asked for), as the desktop&#39;s cache rows: <code>text</code>, the server&#39;s JSON without text or envelope (<code>payload</code>, with <code>payload.e2ee</code>), <code>version</code>, <code>sentAtUs</code>, <code>e2eeState</code> (<code>decrypted</code>, <code>invalid</code>, <code>placeholder</code>, <code>outgoing</code>, <code>null</code> for plaintext from before encryption and tombstones). Indexes by time and by thread</td>
+</tr>
+<tr>
+<td><code>groups</code></td>
+<td><code>[…, workspaceId, conversationId]</code></td>
+<td><code>e2ee_conversation</code>&#39;s fields (incarnation, next incarnation, join epoch, removal, leaves to verify, devices that failed, a misbehaving committer, a re-add wait, last update path, resets) and the re-adds this browser honored</td>
+</tr>
+<tr>
+<td><code>sync</code></td>
+<td><code>[…, workspaceId, conversationId]</code></td>
+<td>The change feed&#39;s cursor, whether more is pending, whether the history was read once, last viewed</td>
+</tr>
+<tr>
+<td><code>outgoing</code></td>
+<td><code>[…, messageId]</code></td>
+<td>Messages and edits until the server acknowledges them, with the content, franking key and commitment to send them again</td>
+</tr>
+<tr>
+<td><code>devices</code></td>
+<td><code>[…, peerPrincipalId, deviceId]</code></td>
+<td>Devices whose certificate verified, with the certified key</td>
+</tr>
+<tr>
+<td><code>accounts</code></td>
+<td><code>[endpoint, principalId]</code></td>
+<td>This device&#39;s public key (from its certificate) and when the browser last ran encryption</td>
+</tr>
+<tr>
+<td><code>pins</code></td>
+<td><code>[…, workspaceId, conversationId]</code></td>
+<td>Conversations this browser knows are encrypted (the server&#39;s <code>encryptedAt</code> as first seen) and a direct message&#39;s two principals; kept through <code>forget</code> and <code>NO_ACCESS</code></td>
+</tr>
+<tr>
+<td><code>peers</code></td>
+<td><code>[…, peerPrincipalId]</code></td>
+<td>Per principal, the seq and hash of the head of the longest key log verified here, and the device ids seen revoked</td>
+</tr>
+</tbody></table></div>
+<p><strong>Write-through.</strong> OpenMLS&#39;s storage is synchronous and IndexedDB is not, so the engine keeps
+the account&#39;s state in memory, loaded from <code>mls</code> when the store opens. Every operation is one
+unit of work (<code>WebStore.run</code>): it reads what it needs, runs the engine (whose <code>MemoryStore</code>
+journals each entry it changes), and stages its records; then the journal&#39;s changed entries and
+the staged records are written in <strong>one IndexedDB transaction</strong>. Only when it completes is the
+journal kept (<code>keep</code>) and the result returned; if the operation throws or the transaction fails,
+the journal is rolled back (<code>rollback</code>) and nothing is written. So:</p>
+<ul>
+<li>a message is decrypted once, together with storing its plaintext: a failed write leaves both
+undone, and the entry decrypts on the next sync;</li>
+<li>no envelope is sent and no Commit submitted before the state that produced it is stored, and
+no plaintext is shown before it is stored;</li>
+<li>units of work of one account run one at a time.</li>
+</ul>
+<p>A panic in the module traps; the store then refuses further work in that page, and nothing the
+trapped operation did was written. Reloading the page reloads the state from IndexedDB.</p>
+<p><strong>One tab.</strong> Two tabs would each advance their own copy of the group state. The tab that takes
+the Web Lock <code>rim-e2ee:&lt;endpoint&gt;:&lt;principalId&gt;</code> (held while the page lives) runs encryption;
+another tab says &quot;Encrypted conversations are open in another tab of this browser&quot; and looks
+again every 30 seconds.</p>
+<h2 id="how-it-runs">How it runs <a class="anchor" href="#how-it-runs" aria-label="Link to this section">#</a></h2>
+<p>The webview runtime is the desktop&#39;s, unchanged in what it does:</p>
+<ul>
+<li><strong>Session</strong> (<code>runtime/session.ts</code>): outside Tauri, <code>resolveWebSession</code> checks WebCrypto
+Ed25519 and IndexedDB, a confirmed device key for the signed-in user in <code>rim-key-identity</code>,
+the module, and the tab lock, then opens the store. Its answer is
+<code>useE2eeStore.webEncryption</code> (<code>ready</code>, <code>checking</code>, <code>noDeviceKey</code>, <code>otherTab</code>, <code>unsupported</code>)
+and <code>capabilities.encryptedConversations</code>.</li>
+<li><strong>Identity</strong>: the MLS signature key is generated by the module; the <code>mls-key</code> statement is
+signed by the non-extractable WebCrypto device key over <code>rim.mls-key.v1\0</code>, and checked
+against the device&#39;s certificate as the server serves it. Re-add requests are signed the same
+way over <code>rim.mls-readd.v1\0</code>.</li>
+<li><strong>Key packages</strong>: on start and every 12 hours while a tab is open (<code>myMlsKeyPackageStatus</code>,
+<code>planKeyPackageUpload</code>, prune, top up, last resort). A closed browser uploads nothing.</li>
+<li><strong>The client loop</strong> (<code>web/feed.ts</code>, a port of the desktop&#39;s <code>feed.rs</code> and cache sync): the
+conversations this browser follows (an encrypted conversation once opened, and any
+conversation a plugin reads), Commits applied up to each entry&#39;s epoch, decrypt once, placeholders,
+invalid rows, stops (<code>needCommits</code>, <code>noGroupState</code>, <code>awaitingReadd</code>, <code>needThreadRoot</code>) and
+<code>RESET</code> / <code>NO_ACCESS</code> as on the desktop.</li>
+<li><strong>Groups</strong>: create, commit, settle, process, join, re-add requests and checks, incarnations,
+ranking: <code>web/groupState.ts</code> and <code>web/directory.ts</code> port <code>group.rs</code> and <code>directory.rs</code>; key
+logs are replayed and certificates checked with WebCrypto (<code>key-identity/browser</code>), the leaves
+by the module.</li>
+<li><strong>Sending</strong>: the plaintext row is stored under the chosen UUID v7 before the envelope leaves;
+<code>STALE_EPOCH</code> re-encrypts the same content and franking key in the new epoch.</li>
+<li><strong>Attachments</strong>: AES-256-GCM with HKDF-SHA256 in WebCrypto (appendix A.3, tested byte for
+byte); the content entry waits in the page until the message is encrypted.</li>
+<li><strong>Link previews</strong>: none. A browser cannot read other sites&#39; pages (CORS), so the web app sends
+encrypted messages without previews; it shows the previews a desktop sender embedded.</li>
+<li><strong>Keyword notifications</strong>: matched after decrypting, as on the desktop, and shown with the
+Notifications API only when the person already allowed this site&#39;s notifications.</li>
+<li><strong>A browser unused for 60 days</strong>: the other devices have removed it, or are about to (no key
+package upload in 60 days). When it comes back, before uploading key packages, it asks to be
+re-added where the server still counts it in a group and drops its old state elsewhere; its
+fresh key packages make it a pending add, and it joins through the Welcomes. Messages sent
+meanwhile show as &quot;Earlier messages were sent before this device joined&quot;.</li>
+<li><strong>No migration from the web</strong>: a browser creates new encrypted DMs and groups, but never
+upgrades an existing plaintext one (the upgrading device must be a desktop device). Where
+everyone is ready, the web app says &quot;Not encrypted yet: everyone is ready, and a member&#39;s
+desktop app turns encryption on here when it opens this conversation. A browser does not.&quot;</li>
+</ul>
+<h2 id="what-the-person-sees">What the person sees <a class="anchor" href="#what-the-person-sees" aria-label="Link to this section">#</a></h2>
+<p>The desktop&#39;s timeline states and notices (<a href="e2ee-desktop.html"><code>e2ee-desktop.md</code></a>, &quot;What the person sees&quot;), and:</p>
+<ul>
+<li>&quot;Set up this browser as a linked device to read encrypted conversations&quot; (no device key here);</li>
+<li>&quot;This browser cannot run encrypted conversations&quot; (no WebCrypto Ed25519, IndexedDB or
+WebAssembly);</li>
+<li>&quot;Encrypted conversations are open in another tab of this browser. Close it to read them here.&quot;;</li>
+<li>next to the browser&#39;s key actions: &quot;Encrypted conversations in this browser are only as safe
+as this browser profile.&quot;</li>
+</ul>
+<p>The history archive is the desktop&#39;s: the web app offers no &quot;Restore from history archive&quot;.</p>
+<h2 id="hardening">Hardening <a class="anchor" href="#hardening" aria-label="Link to this section">#</a></h2>
+<p>The browser holds the server to what it saw exactly as the desktop does (<a href="e2ee-desktop.html"><code>e2ee-desktop.md</code></a>,
+&quot;Hardening&quot;), in its own stores:</p>
+<ul>
+<li>the encryption pin and a DM&#39;s two principals in <code>pins</code>; a <code>groups</code> record of a held group counts
+as pinned too and is pinned before <code>forget</code> drops it (the feed also keeps empty records for the
+plaintext conversations a plugin reads, which are never pinned);</li>
+<li>key-log head pins and remembered revocations in <code>peers</code>, checked in <code>web/directory.ts</code> before
+the module checks the leaves; a forked principal&#39;s leaves are <code>keyLogForked</code>;</li>
+<li>rows without an author principal or with another sender device are &quot;could not be verified&quot;;
+the module refuses a replayed Welcome (<code>E2EE_STALE_WELCOME</code>) and a lying Commit, and reports
+which principals each processed Commit added and removed;</li>
+<li>certificates before a recovery, equal identity and recovery keys, and log entries or
+revocations with fields the spec does not name are refused in <code>key-identity/browser</code>.</li>
+</ul>
+<h2 id="limits">Limits <a class="anchor" href="#limits" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>The MLS signature key and HPKE private keys are bytes in IndexedDB (OpenMLS signs and
+decapsulates synchronously); only the device key is a non-extractable WebCrypto key. Anything
+that can run script in the page, or read the browser profile, can read them.</li>
+<li>Clearing the site&#39;s data deletes the state and the plaintext; the device then needs a re-add
+in every group, and earlier messages are gone from this browser.</li>
+<li>Key packages are only refreshed while a tab is open; a browser closed for 60 days leaves its
+groups.</li>
+<li>No local search over encrypted messages in the app&#39;s search, no history archive, no link
+previews in the web app. Plugins search the store by substring (below).</li>
+</ul>
+<h2 id="plugins">Plugins <a class="anchor" href="#plugins" aria-label="Link to this section">#</a></h2>
+<p>A web plugin&#39;s <code>rim.chat.*</code> reads (<a href="plugin-chat-methods.html"><code>docs/plugin-chat-methods.md</code></a>) come from this store once the
+browser is set up for encrypted conversations: <code>webChatCache</code> (<code>plugins/chat/appMessageService.ts</code>)
+over <code>web/pluginView.ts</code>, which gives the desktop cache&#39;s plugin shape and leaves out the same rows
+(checked against <a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/protocol/plugin-chat-vectors.json"><code>protocol/plugin-chat-vectors.json</code></a>). A conversation a plugin asks for that the
+store does not hold yet is followed and answers <code>notCached</code> until its history is read; a browser
+not set up answers <code>noCache</code>. Search is a case-insensitive substring match over the stored rows,
+newest first, not the desktop&#39;s word-prefix index. A web plugin&#39;s <code>rim.chat.post_message</code> into an encrypted
+conversation goes through the same encrypted send path as the person&#39;s own messages.</p>
+<h2 id="trying-it-against-a-desktop">Trying it against a desktop <a class="anchor" href="#trying-it-against-a-desktop" aria-label="Link to this section">#</a></h2>
+<p>Needs rim-server with the e2ee server work running locally, a desktop app signed in with a
+device key (<a href="device-linking-desktop.html"><code>device-linking-desktop.md</code></a>), and the web app (<code>npm run dev</code>) linked to the same
+account or another one (<a href="web-linked-device.html"><code>web-linked-device.md</code></a>, &quot;Trying it against a desktop old device&quot;), in a
+browser with WebCrypto Ed25519 and WebAssembly (current Chrome, Firefox or Safari).</p>
+<ol>
+<li>Link the browser and sign in: the browser uploads key packages, and <code>principalDevices</code> shows it
+<code>mlsActive</code>.</li>
+<li>From the desktop, open a new DM with the web account (or, with the browser linked to the same
+account, any encrypted DM): the browser joins from the Welcome; send from both sides, edit,
+delete, reply in a thread, attach a file.</li>
+<li>Open the same account in a second tab: it says another tab runs encryption.</li>
+<li>Clear the site&#39;s data and link again: the desktop re-adds the new device, which shows earlier
+messages as one line.</li>
+</ol>
+<p>Tests: <code>npx vitest run src/features/e2ee</code> (the web backend against a simulated server with
+<code>fake-indexeddb</code> and the committed module: create, join, send, receive, placeholders, invalid
+rows, re-add, a failed write rolled back, a reload, stale sends, refused sends and edits,
+incarnations, leaf checks, attachments against appendix A.3), and <code>npm run test:wasm</code>.</p>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/docs/e2ee-web.md">rim-ui/docs/e2ee-web.md</a> at <code>58e3ec0</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+<script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
+</body>
+</html>

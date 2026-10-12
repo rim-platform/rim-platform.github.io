@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Message Search (Full-Text Search) · RIM</title>
+<meta name="description" content="searchMessages runs Postgres full-text search over message text, scoped to conversations the requesting actor can see. This document covers the query operator syntax, the ranking/pagination design, and the visibility …">
+<link rel="icon" href="../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../index.html" aria-label="RIM home">
+      <picture><source srcset="../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../index.html#what">What RIM is</a>
+      <a href="../index.html#how">How it works</a>
+      <a href="self-hosting.html">Self-host</a>
+      <a href="../configure/index.html">Configure</a>
+      <a href="index.html" aria-current="page">Docs</a>
+      <a href="../api/index.html">API</a>
+      <a href="../specs/index.html">Specs</a>
+      <a href="contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="index.html">Docs</a><span aria-hidden="true">/</span><a href="client-authors.html">Client authors</a><span aria-hidden="true">/</span><span>Message Search (Full-Text Search)</span></div>
+  <div class="page with-toc">
+    <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
+<ol>
+<li><a href="#operator-syntax">Operator syntax</a></li>
+<li><a href="#ranking-vs-pagination--why-recency-not-relevance">Ranking vs. pagination — why recency, not relevance</a></li>
+<li><a href="#visibility-security-critical">Visibility (security-critical)</a></li>
+<li><a href="#underlying-storage">Underlying storage</a></li>
+<li><a href="#graphql-contract">GraphQL contract</a></li>
+</ol>
+</details></aside>
+    <main id="content" class="prose">
+<h1 id="message-search-full-text-search">Message Search (Full-Text Search)</h1>
+<p><code>searchMessages</code> runs Postgres full-text search over message text, scoped to conversations the
+requesting actor can see. This document covers the query operator syntax, the ranking/pagination
+design, and the visibility contract.</p>
+<h2 id="operator-syntax">Operator syntax <a class="anchor" href="#operator-syntax" aria-label="Link to this section">#</a></h2>
+<p>The <code>query</code> string mixes free text with structured operators. Operators are stripped from the
+free text before it is passed to Postgres&#39;s <code>websearch_to_tsquery</code>; the remainder is the tsquery.
+Whitespace-separated tokens matching <code>key:value</code> are treated as operators; everything else
+(including an unrecognized <code>key:</code>, or an operator with an empty value) is free text — the parser
+never errors on unknown syntax, matching <code>websearch_to_tsquery</code>&#39;s own forgiving behavior.</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Operator</th>
+<th>Example</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>from:</code></td>
+<td><code>from:@alice</code>, <code>from:&lt;user-uuid&gt;</code></td>
+<td>Only messages sent by this user.</td>
+</tr>
+<tr>
+<td><code>in:</code></td>
+<td><code>in:#general</code>, <code>in:&lt;conversation-uuid&gt;</code></td>
+<td>Only messages in this channel.</td>
+</tr>
+<tr>
+<td><code>has:link</code></td>
+<td><code>has:link</code></td>
+<td>Only messages containing a URL (<code>https?://</code>).</td>
+</tr>
+<tr>
+<td><code>has:attachment</code> / <code>has:file</code></td>
+<td><code>has:attachment</code></td>
+<td>Only messages with at least one attachment.</td>
+</tr>
+<tr>
+<td><code>before:</code></td>
+<td><code>before:2026-07-01</code></td>
+<td>Messages sent strictly before UTC midnight on this date (exclusive).</td>
+</tr>
+<tr>
+<td><code>after:</code></td>
+<td><code>after:2026-06-01</code></td>
+<td>Messages sent on or after UTC midnight on this date (inclusive).</td>
+</tr>
+</tbody></table></div>
+<p>Multiple <code>has:</code> operators AND-combine. Operators can be freely mixed with free text and with each
+other, e.g. <code>deploy from:@alice in:#ops has:link after:2026-06-01</code>.</p>
+<p><strong>Unknown/inaccessible <code>from:</code>/<code>in:</code> targets never error.</strong> If <code>from:</code> doesn&#39;t resolve to a real
+user, or <code>in:</code> doesn&#39;t resolve to a channel the actor can see, the query returns an <strong>empty page</strong>,
+not an error — this avoids leaking whether a username or channel exists to someone who can&#39;t see
+it (see &quot;Visibility&quot; below).</p>
+<h2 id="ranking-vs-pagination--why-recency-not-relevance">Ranking vs. pagination — why recency, not relevance <a class="anchor" href="#ranking-vs-pagination--why-recency-not-relevance" aria-label="Link to this section">#</a></h2>
+<p>Search results are <strong>paginated by recency</strong> (<code>sentAt</code>, <code>id</code> — the same cursor contract as every
+other message list; see <a href="pagination.html"><code>docs/pagination.md</code></a>), not by relevance. Each result also carries a <code>rank</code>
+(<code>ts_rank</code> score) and an optional <code>headline</code> (<code>ts_headline</code> snippet with <code>&lt;mark&gt;...&lt;/mark&gt;</code>
+highlights) for client-side display or secondary sort.</p>
+<p>This is a deliberate tradeoff: cursor pagination requires a stable total order with a unique
+tie-breaker. <code>ts_rank</code> is neither unique nor stable across concurrent inserts, so paginating by
+rank would produce skips and duplicates across pages. Pagination by <code>(sentAt, id)</code> avoids that at
+the cost of not surfacing the single &quot;best&quot; match first — the client can still sort a page&#39;s
+<code>items</code> by <code>rank</code> for display if it wants a best-match-first feel within a page. A dedicated
+relevance-ranked top-N (non-paginated) query is a possible future addition for grounded AI recall,
+but is out of scope here.</p>
+<h2 id="visibility-security-critical">Visibility (security-critical) <a class="anchor" href="#visibility-security-critical" aria-label="Link to this section">#</a></h2>
+<p>Search <strong>never returns a message from a conversation the actor cannot see</strong> — this is upheld
+per-request by <code>DefaultMessageService::search_messages</code>, which computes the accessible
+conversation set from <code>list_accessible_conversation_ids</code> (plus a full member-access gate when an
+explicit <code>conversationId</code> scope is given) before ever calling the repository. The repository
+itself is intentionally visibility-agnostic: it only ever searches the conversation ids it&#39;s
+handed, and an empty set yields zero rows — never &quot;search everything&quot;. See the doc comments on
+<code>MessageSearchParams</code> (<code>rim_core::message::repository</code>) and the db-tests in
+<a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/rim_infra_db/tests/message_search_fts.rs"><code>rim_infra_db/tests/message_search_fts.rs</code></a> for the enforced guarantees.</p>
+<h2 id="underlying-storage">Underlying storage <a class="anchor" href="#underlying-storage" aria-label="Link to this section">#</a></h2>
+<p><code>message.search_tsv</code> is a <code>GENERATED ALWAYS ... STORED</code> <code>tsvector</code> column
+(<code>to_tsvector('english', coalesce(text, ''))</code>) with a GIN index, added in migration
+<code>m20260708_225022_add_message_search_tsv</code>. The <code>'english'</code> text-search configuration is
+hardcoded; per-workspace configuration or a <code>simple</code> fallback for non-English content is a
+possible follow-up, not implemented here.</p>
+<h2 id="graphql-contract">GraphQL contract <a class="anchor" href="#graphql-contract" aria-label="Link to this section">#</a></h2>
+<pre><code class="language-graphql">input SearchMessagesInput {
+  serverId: ID!
+  query: String!
+  conversationId: ID
+  limit: Int
+  cursor: MessageCursorInput
+  dir: PageDir
+}
+
+type SearchResultMessage {
+  # ...existing message fields...
+  rank: Float!
+  headline: String
+}
+
+type SearchResultPage {
+  items: [SearchResultMessage!]!
+  next: MessageCursorOutput
+  prev: MessageCursorOutput
+  pageInfo: PageInfo!
+}</code></pre>
+<p>This is a <strong>breaking change</strong> from the pre-Track-B1 <code>searchMessages</code> (which returned a flat,
+unpaginated <code>[SearchResultMessage!]!</code> and took top-level <code>limit</code>/<code>includeDeleted</code> args). Frontend
+codegen must be re-run against the updated schema.</p>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/docs/search.md">rim-server/docs/search.md</a> at <code>c86029b</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+<script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
+</body>
+</html>

@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{title}}</title>
+<meta name="description" content="{{description}}">
+<link rel="icon" href="{{root}}favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="{{root}}assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="{{root}}index.html" aria-label="RIM home">
+      <picture><source srcset="{{root}}assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="{{root}}assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+{{nav}}
+    </nav>
+  </header>
+{{crumbs}}
+  <div class="page{{layoutClass}}">
+{{toc}}
+    <main id="content" class="prose">
+{{content}}
+    </main>
+  </div>
+  <footer class="site">
+    <span>{{footer}}</span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+{{scripts}}
+</body>
+</html>

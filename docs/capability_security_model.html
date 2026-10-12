@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Capability And Security Model · RIM</title>
+<meta name="description" content="This document defines the capability and security model for RIM.">
+<link rel="icon" href="../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../index.html" aria-label="RIM home">
+      <picture><source srcset="../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../index.html#what">What RIM is</a>
+      <a href="../index.html#how">How it works</a>
+      <a href="self-hosting.html">Self-host</a>
+      <a href="../configure/index.html">Configure</a>
+      <a href="index.html" aria-current="page">Docs</a>
+      <a href="../api/index.html">API</a>
+      <a href="../specs/index.html">Specs</a>
+      <a href="contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="index.html">Docs</a><span aria-hidden="true">/</span><a href="plugin-authors.html">Plugin authors</a><span aria-hidden="true">/</span><span>Capability And Security Model</span></div>
+  <div class="page with-toc">
+    <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
+<ol>
+<li><a href="#purpose">Purpose</a></li>
+<li><a href="#core-rule">Core Rule</a></li>
+<li><a href="#who-uses-capabilities">Who Uses Capabilities</a></li>
+<li><a href="#capability-grant-model">Capability Grant Model</a></li>
+<li><a href="#capability-categories">Capability Categories</a><ol><li><a href="#communication">Communication</a></li><li><a href="#workflow">Workflow</a></li><li><a href="#ui">UI</a></li><li><a href="#local-system">Local System</a></li><li><a href="#network--external-access">Network / External Access</a></li><li><a href="#settings">Settings</a></li></ol></li>
+<li><a href="#decisions">Decisions</a></li>
+<li><a href="#dangerous-capabilities">Dangerous Capabilities</a></li>
+<li><a href="#command-capability-inheritance">Command Capability Inheritance</a></li>
+<li><a href="#user-defined-commands-and-macros">User-Defined Commands And Macros</a></li>
+<li><a href="#dangerous-local-execution">Dangerous Local Execution</a></li>
+<li><a href="#partial-capability-grant">Partial Capability Grant</a></li>
+<li><a href="#admin-restriction-direction">Admin Restriction Direction</a></li>
+<li><a href="#command-execution-gate-order">Command Execution Gate Order</a></li>
+<li><a href="#trust-boundaries">Trust Boundaries</a></li>
+<li><a href="#visibility-rules">Visibility Rules</a></li>
+<li><a href="#revocation-rules">Revocation Rules</a></li>
+<li><a href="#persistence-model">Persistence Model</a></li>
+<li><a href="#non-goals">Non-Goals</a></li>
+<li><a href="#summary-of-decisions">Summary Of Decisions</a></li>
+</ol>
+</details></aside>
+    <main id="content" class="prose">
+<h1 id="capability-and-security-model">Capability And Security Model</h1>
+<p>This document defines the capability and security model for RIM.</p>
+<p>RIM is a chat app on steroids, but plugins, commands, integrations, and local behaviors must not
+turn into a hidden privilege surface. Capabilities are the core language for controlling what
+extensions and extension-provided commands are allowed to do.</p>
+<h2 id="purpose">Purpose <a class="anchor" href="#purpose" aria-label="Link to this section">#</a></h2>
+<p>A capability is an explicit permission that allows a plugin, integration, command provider, or
+future app principal to access a sensitive product surface or perform a sensitive action.</p>
+<p>Capabilities are intended to make extension behavior:</p>
+<ul>
+<li>explicit</li>
+<li>reviewable</li>
+<li>grantable</li>
+<li>revocable</li>
+<li>auditable later</li>
+</ul>
+<h2 id="core-rule">Core Rule <a class="anchor" href="#core-rule" aria-label="Link to this section">#</a></h2>
+<p>Capabilities are explicit, not implicit.</p>
+<p>Nothing should gain sensitive power just because it exists in the system. Sensitive access must be:</p>
+<ul>
+<li>declared</li>
+<li>granted</li>
+<li>visible</li>
+</ul>
+<h2 id="who-uses-capabilities">Who Uses Capabilities <a class="anchor" href="#who-uses-capabilities" aria-label="Link to this section">#</a></h2>
+<p>Capabilities should primarily apply to extension-like actors and providers, including:</p>
+<ul>
+<li>plugins</li>
+<li>integrations</li>
+<li>app principals</li>
+<li>bot principals</li>
+<li>webhook principals</li>
+</ul>
+<p>Users still have product permissions and membership rules, but extension capabilities are a separate
+security layer.</p>
+<h2 id="capability-grant-model">Capability Grant Model <a class="anchor" href="#capability-grant-model" aria-label="Link to this section">#</a></h2>
+<p>Recommended model:</p>
+<ul>
+<li>the provider declares requested capabilities</li>
+<li>the user or admin grants them explicitly</li>
+<li>the granted state is persisted</li>
+<li>the granted state can be revoked later</li>
+</ul>
+<p>Example:</p>
+<ul>
+<li>a plugin declares:<ul>
+<li><code>ui.panel</code></li>
+<li><code>chat.read</code></li>
+<li><code>local.process</code></li>
+</ul>
+</li>
+<li>the user sees an install/enable prompt</li>
+<li>the user grants or denies capabilities</li>
+<li>the final granted state becomes the effective permission set</li>
+</ul>
+<h2 id="capability-categories">Capability Categories <a class="anchor" href="#capability-categories" aria-label="Link to this section">#</a></h2>
+<p>The initial model should use a small set of broad, understandable capabilities.</p>
+<h3 id="communication">Communication <a class="anchor" href="#communication" aria-label="Link to this section">#</a></h3>
+<ul>
+<li><code>chat.read</code></li>
+<li><code>chat.write</code></li>
+</ul>
+<h3 id="workflow">Workflow <a class="anchor" href="#workflow" aria-label="Link to this section">#</a></h3>
+<ul>
+<li><code>action.invoke</code></li>
+<li><code>event.emit</code></li>
+</ul>
+<h3 id="ui">UI <a class="anchor" href="#ui" aria-label="Link to this section">#</a></h3>
+<ul>
+<li><code>ui.panel</code></li>
+</ul>
+<p>Later candidates may include:</p>
+<ul>
+<li><code>ui.context_action</code></li>
+<li><code>ui.composer_extension</code></li>
+</ul>
+<h3 id="local-system">Local System <a class="anchor" href="#local-system" aria-label="Link to this section">#</a></h3>
+<ul>
+<li><code>local.process</code></li>
+<li><code>local.filesystem</code></li>
+</ul>
+<p>Later candidates may include:</p>
+<ul>
+<li><code>local.notifications</code></li>
+<li><code>local.window_control</code></li>
+</ul>
+<h3 id="network--external-access">Network / External Access <a class="anchor" href="#network--external-access" aria-label="Link to this section">#</a></h3>
+<ul>
+<li><code>http.outbound</code></li>
+</ul>
+<h3 id="settings">Settings <a class="anchor" href="#settings" aria-label="Link to this section">#</a></h3>
+<p>Potential later split:</p>
+<ul>
+<li><code>settings.read</code></li>
+<li><code>settings.write</code></li>
+</ul>
+<p>These can be added once the settings model becomes more active.</p>
+<h2 id="decisions">Decisions <a class="anchor" href="#decisions" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><code>http.outbound</code> starts as one broad capability.</li>
+<li><code>chat.read</code> and <code>chat.write</code> stay broad for now.</li>
+<li>later tightening is expected once the platform hardens.</li>
+</ul>
+<h2 id="dangerous-capabilities">Dangerous Capabilities <a class="anchor" href="#dangerous-capabilities" aria-label="Link to this section">#</a></h2>
+<p>Some capabilities should be considered dangerous from the beginning.</p>
+<p>Initial dangerous capabilities:</p>
+<ul>
+<li><code>local.process</code></li>
+<li><code>local.filesystem</code></li>
+<li>broad <code>http.outbound</code></li>
+</ul>
+<p>Dangerous capability rules:</p>
+<ul>
+<li>they must be visibly marked</li>
+<li>they should get stronger install/enable prompts</li>
+<li>dangerous actions may still require per-action confirmation later</li>
+<li>they should be easy to revoke</li>
+</ul>
+<h2 id="command-capability-inheritance">Command Capability Inheritance <a class="anchor" href="#command-capability-inheritance" aria-label="Link to this section">#</a></h2>
+<p>Commands should not invent permissions for themselves.</p>
+<p>Recommended rule:</p>
+<ul>
+<li>commands inherit capabilities from their provider/source</li>
+</ul>
+<p>This means:</p>
+<ul>
+<li>built-in commands use built-in trusted behavior</li>
+<li>plugin commands use plugin-granted capabilities only</li>
+<li>integration commands use integration-granted capabilities only</li>
+<li>user-defined commands/macros cannot exceed the capabilities of the commands they compose plus any
+explicit local permissions granted by the user</li>
+</ul>
+<p>This rule is required to avoid privilege escalation.</p>
+<h2 id="user-defined-commands-and-macros">User-Defined Commands And Macros <a class="anchor" href="#user-defined-commands-and-macros" aria-label="Link to this section">#</a></h2>
+<p>User-defined commands should remain powerful, but they must not bypass capability checks.</p>
+<p>Rules:</p>
+<ul>
+<li>user-defined commands may compose other commands</li>
+<li>user-defined commands may run local processes on desktop only if the dangerous local capability
+model allows it</li>
+<li>user-defined commands cannot gain more power than the capabilities of the commands or dangerous
+local permissions they use</li>
+</ul>
+<h2 id="dangerous-local-execution">Dangerous Local Execution <a class="anchor" href="#dangerous-local-execution" aria-label="Link to this section">#</a></h2>
+<p>User-defined and plugin-provided local process execution is allowed in the product direction already
+agreed earlier.</p>
+<p>Rules:</p>
+<ul>
+<li>local process execution requires explicit dangerous capability</li>
+<li>execution should show confirmation by default</li>
+<li>the user may later disable confirmation explicitly</li>
+<li>the UI should show the origin of the action:<ul>
+<li>built-in</li>
+<li>plugin</li>
+<li>integration</li>
+<li>user-defined command</li>
+</ul>
+</li>
+</ul>
+<h2 id="partial-capability-grant">Partial Capability Grant <a class="anchor" href="#partial-capability-grant" aria-label="Link to this section">#</a></h2>
+<p>Recommended direction:</p>
+<ul>
+<li>partial grants are desirable if the implementation can support them cleanly</li>
+<li>first version may fall back to full-set approval if needed</li>
+</ul>
+<p>This keeps the early implementation realistic without giving up a better long-term direction.</p>
+<h2 id="admin-restriction-direction">Admin Restriction Direction <a class="anchor" href="#admin-restriction-direction" aria-label="Link to this section">#</a></h2>
+<p>Recommended direction:</p>
+<ul>
+<li>workspace admins should eventually be able to restrict dangerous capabilities regardless of user
+preference</li>
+</ul>
+<p>This is especially important for:</p>
+<ul>
+<li><code>local.process</code></li>
+<li><code>local.filesystem</code></li>
+<li>broad external network access</li>
+</ul>
+<p>Admin policy enforcement over capabilities does not exist yet; designs should leave room for it.</p>
+<h2 id="command-execution-gate-order">Command Execution Gate Order <a class="anchor" href="#command-execution-gate-order" aria-label="Link to this section">#</a></h2>
+<p><code>execute_command</code> checks, in order: C1 capability (every required capability, workspace
+membership included) → H1 confirmation (dangerous commands) → T1 timeout (a
+timed-out actor cannot run <code>Mutating</code>/<code>Restricted</code> commands in that workspace) → R1 rate limit.
+Every rejection is audited. T1 also runs on nested dispatch (user-command steps, pipe stages).
+Workspace roles (Owner, Moderator, Member, Guest) are not capabilities: they are enforced by the services the commands call (<a href="messaging.html"><code>docs/messaging.md</code></a>, Roles
+And Moderation), so a command can never do more than the same action through GraphQL.</p>
+<h2 id="trust-boundaries">Trust Boundaries <a class="anchor" href="#trust-boundaries" aria-label="Link to this section">#</a></h2>
+<p>RIM should make trust boundaries visible.</p>
+<p>Recommended trust groups:</p>
+<ul>
+<li><code>built_in</code></li>
+<li><code>user_defined</code></li>
+<li><code>plugin</code></li>
+<li><code>integration</code></li>
+</ul>
+<p>Later, bot/app/webhook principals should also become explicit trust-bearing identities.</p>
+<p>Trust boundaries should be visible in:</p>
+<ul>
+<li>installation prompts</li>
+<li>dangerous action confirmations</li>
+<li>debugging and logging surfaces</li>
+<li>future audit/event records</li>
+</ul>
+<h2 id="visibility-rules">Visibility Rules <a class="anchor" href="#visibility-rules" aria-label="Link to this section">#</a></h2>
+<p>Capability-sensitive behavior should never be hidden.</p>
+<p>The UI should make it clear:</p>
+<ul>
+<li>which provider owns the action</li>
+<li>which dangerous capabilities are involved</li>
+<li>whether the action is local or remote</li>
+<li>whether the action may modify external state</li>
+</ul>
+<h2 id="revocation-rules">Revocation Rules <a class="anchor" href="#revocation-rules" aria-label="Link to this section">#</a></h2>
+<p>Granted capabilities should be revocable later.</p>
+<p>Revocation should disable or limit:</p>
+<ul>
+<li>plugin commands that require those capabilities</li>
+<li>panels or automations that depend on those capabilities</li>
+<li>integration behaviors that require those capabilities</li>
+</ul>
+<p>The system should fail clearly, not silently, when revoked capabilities make an extension partially
+unusable.</p>
+<h2 id="persistence-model">Persistence Model <a class="anchor" href="#persistence-model" aria-label="Link to this section">#</a></h2>
+<p>Recommended persistence split:</p>
+<ul>
+<li>capability declarations -&gt; code/plugin/integration manifest source of truth</li>
+<li>granted capabilities -&gt; persisted</li>
+<li>dangerous confirmation preferences -&gt; persisted where appropriate</li>
+<li>policy restrictions -&gt; later persisted once policy/admin controls exist</li>
+</ul>
+<h2 id="non-goals">Non-Goals <a class="anchor" href="#non-goals" aria-label="Link to this section">#</a></h2>
+<p>This model does not define:</p>
+<ul>
+<li>a complete policy engine</li>
+<li>fully general sandbox DSLs</li>
+<li>delegated impersonation flows</li>
+</ul>
+<p>Per-origin network grants for web plugins (<code>network.fetch</code>) are defined in
+<a href="../specs/web-plugins-v1.html"><code>docs/specs/web-plugins-v1.md</code></a>. Plugin access to encrypted conversations (<code>chat.read.encrypted</code>,
+<code>chat.write.encrypted</code>) is defined in <a href="../specs/e2ee-mls-v1.html"><code>docs/specs/e2ee-mls-v1.md</code></a>.</p>
+<h2 id="summary-of-decisions">Summary Of Decisions <a class="anchor" href="#summary-of-decisions" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>capabilities are explicit permissions for sensitive product surfaces and actions</li>
+<li>extensions and future non-user principals are the main capability holders</li>
+<li><code>http.outbound</code> is broad in the first version</li>
+<li><code>chat.read</code> and <code>chat.write</code> stay broad in the first version</li>
+<li>dangerous capabilities include at least <code>local.process</code>, <code>local.filesystem</code>, and broad
+<code>http.outbound</code></li>
+<li>commands inherit capabilities from their provider</li>
+<li>user-defined commands/macros cannot exceed what they compose plus explicitly granted dangerous
+local behavior</li>
+<li>partial grant is desirable, but full-set approval is acceptable for the first version</li>
+<li>admin restriction of dangerous capabilities is expected later</li>
+<li>trust boundaries must be visible to users</li>
+</ul>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/docs/capability_security_model.md">rim-server/docs/capability_security_model.md</a> at <code>c86029b</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+<script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
+</body>
+</html>

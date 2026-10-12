@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>@rim/plugin-sdk · RIM</title>
+<meta name="description" content="Write a RIM plugin in TypeScript. A plugin is either a local process the RIM desktop app starts and talks to over stdio (DesktopLocalProcess), or a bundle that runs in a sandboxed frame of the app, on the desktop and on …">
+<link rel="icon" href="../../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../../index.html" aria-label="RIM home">
+      <picture><source srcset="../../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../../index.html#what">What RIM is</a>
+      <a href="../../index.html#how">How it works</a>
+      <a href="../self-hosting.html">Self-host</a>
+      <a href="../../configure/index.html">Configure</a>
+      <a href="../index.html" aria-current="page">Docs</a>
+      <a href="../../api/index.html">API</a>
+      <a href="../../specs/index.html">Specs</a>
+      <a href="../contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="../index.html">Docs</a><span aria-hidden="true">/</span><a href="../plugin-authors.html">Plugin authors</a><span aria-hidden="true">/</span><span>@rim/plugin-sdk</span></div>
+  <div class="page with-toc">
+    <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
+<ol>
+<li><a href="#requirements">Requirements</a></li>
+<li><a href="#two-transports-one-api">Two transports, one API</a></li>
+<li><a href="#a-plugin-in-one-file">A plugin in one file</a></li>
+<li><a href="#what-the-sdk-guarantees">What the SDK guarantees</a></li>
+<li><a href="#logging">Logging</a></li>
+<li><a href="#the-host">The host</a><ol><li><a href="#panels-experimental">Panels (experimental)</a></li><li><a href="#storage-experimental-websandboxed">Storage (experimental, WebSandboxed)</a></li><li><a href="#chat-experimental">Chat (experimental)</a></li></ol></li>
+<li><a href="#testing-without-the-app">Testing without the app</a></li>
+<li><a href="#installing-a-plugin">Installing a plugin</a></li>
+<li><a href="#working-on-the-sdk">Working on the SDK</a></li>
+</ol>
+</details></aside>
+    <main id="content" class="prose">
+<h1 id="rimplugin-sdk">@rim/plugin-sdk</h1>
+<p>Write a RIM plugin in TypeScript. A plugin is either a local process the RIM desktop
+app starts and talks to over stdio (<code>DesktopLocalProcess</code>), or a bundle that runs in a
+sandboxed frame of the app, on the desktop and on the web, and talks over a
+<code>MessagePort</code> (<code>WebSandboxed</code>). The SDK speaks
+<a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/protocol/plugin-protocol-v1.schema.json">plugin protocol v1</a> for you over either
+transport: the handshake and version negotiation, heartbeats, the dangerous-command
+gate, errors and shutdown.</p>
+<p>The SDK lives in rim-ui until the protocol settles, and is not published to npm yet.
+Start from <a href="https://github.com/rim-platform/rim-ui/tree/58e3ec03c43064632a6a6f610d92413040229dfd/plugins/template-ts"><code>plugins/template-ts</code></a>, which uses it.</p>
+<h2 id="requirements">Requirements <a class="anchor" href="#requirements" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>Node 22.18 or newer. It runs <code>.ts</code> files as they are, so a plugin needs no build step
+while you work on it inside rim-ui. Node does not do this for files under
+<code>node_modules</code>, so a plugin that depends on <code>@rim/plugin-sdk</code> from outside rim-ui runs
+only once bundled (see below); its tests still run with Vitest.</li>
+<li>esbuild, only to bundle a plugin for installing (see below).</li>
+</ul>
+<h2 id="two-transports-one-api">Two transports, one API <a class="anchor" href="#two-transports-one-api" aria-label="Link to this section">#</a></h2>
+<p><code>run()</code> picks the transport itself:</p>
+<ul>
+<li>in a WebSandboxed plugin&#39;s frame, where the frame shell has set
+<code>globalThis.rimPluginPort</code>, it talks over that port (one JSON text per message) and
+checks the plugin against the manifest text in <code>globalThis.rimPluginManifest</code>;</li>
+<li>anywhere else it talks over the process&#39;s stdio, in length-prefixed frames, and
+reads <code>rim-plugin.json</code> from the working directory.</li>
+</ul>
+<p><code>RunOptions.transport</code> overrides both. A transport is
+<code>{ messages: AsyncIterable&lt;string&gt;; send(text): void; close(): void }</code>;
+<code>stdioTransport()</code> and <code>portTransport(port)</code> are the two the SDK ships.</p>
+<p>The package has a <code>browser</code> export condition, <a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/sdk/plugin-sdk/src/index.browser.ts"><code>src/index.browser.ts</code></a>, with the same API
+and no <code>node:</code> imports; <code>rim-plugin-bundle</code> uses it for WebSandboxed plugins. A web
+plugin gets no Node APIs and no filesystem: it reaches the network only at the origins
+its manifest lists in <code>network_origins</code>, once the user approves <code>network.fetch</code>.</p>
+<h2 id="a-plugin-in-one-file">A plugin in one file <a class="anchor" href="#a-plugin-in-one-file" aria-label="Link to this section">#</a></h2>
+<pre><code class="language-ts">#!/usr/bin/env node
+import { definePlugin, PluginError } from &quot;@rim/plugin-sdk&quot;;
+
+await definePlugin({
+  id: &quot;dev.example.pods&quot;, // plugin_id in rim-plugin.json
+  commands: {
+    list_pods: {
+      async run({ args, invoker, host }) {
+        host.log.info(`listing pods for ${invoker?.displayName ?? &quot;nobody&quot;}`);
+        return { payload: await listPods(args.namespace), message: &quot;3 pods&quot; };
+      },
+    },
+    restart_pod: {
+      dangerous: true, // must match &quot;dangerous&quot;: true in rim-plugin.json
+      async run({ args }) {
+        if (typeof args.pod !== &quot;string&quot;) throw new PluginError(&quot;pod is required&quot;);
+        await restart(args.pod);
+      },
+    },
+  },
+}).run();</code></pre>
+<p>The entrypoint in <code>rim-plugin.json</code> points at this file, and the file must be
+executable (<code>chmod +x</code>), because the host runs it directly through its <code>#!</code> line.</p>
+<h2 id="what-the-sdk-guarantees">What the SDK guarantees <a class="anchor" href="#what-the-sdk-guarantees" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>Commands.</strong> Each key in <code>commands</code> is a command id from <code>rim-plugin.json</code>. <code>run</code>
+gets a frozen context: <code>args</code>, <code>invoker</code>, <code>initiator</code> (<code>&quot;user&quot;</code> or <code>&quot;agent&quot;</code>),
+<code>confirmed</code> and <code>host</code>. Return <code>{ payload, message }</code> or nothing. Unknown command
+ids are answered with <code>INVALID_PARAMS</code>.</li>
+<li><strong>Dangerous commands.</strong> Mark a command <code>dangerous: true</code> here and in the manifest.
+The host asks the user to confirm every run and never lets the AI agent run one. The
+SDK also refuses, without calling <code>run</code>, any run that is not confirmed by the user
+(<code>PLUGIN_ERROR</code> with <code>data: { reason: &quot;confirmation_required&quot; }</code>). Nothing in the
+SDK lets a plugin set <code>confirmed</code> itself. If the manifest marks a command dangerous
+and the code does not, the SDK treats it as dangerous.</li>
+<li><strong>People.</strong> The signed-in user and a command&#39;s invoker are <code>{ principalId, displayName }</code> and nothing else. <code>principalId</code> is an opaque <code>PrincipalId</code>: store it
+and compare it, never parse it. Ids starting <code>rimp0_</code> are provisional and are
+replaced once, when the person enrolls a key identity, so keep stored ids somewhere
+you can rewrite. <code>onPrincipalChanged</code> runs when the user signs in, out or switches,
+or their id switches; <code>onPrincipalsRemapped</code> gets every <code>{ from, to }</code> switch the host
+knows, after every handshake, so apply it idempotently.</li>
+<li><strong>Errors.</strong> Throw <code>PluginError(message, { code, data })</code> to choose the JSON-RPC
+error; anything else thrown becomes <code>PLUGIN_ERROR</code> with its message. <code>ErrorCode</code>
+lists the protocol&#39;s codes.</li>
+<li><strong>Compatibility.</strong> The SDK ignores fields and notifications it does not know,
+answers unknown requests with <code>METHOD_NOT_FOUND</code>, and answers a host that speaks no
+version it knows with <code>accepted: false</code>, naming the version it speaks.</li>
+<li><strong>Manifest check.</strong> On start the SDK reads <code>rim-plugin.json</code> from the working
+directory (the plugin directory, when the host starts it). It refuses the handshake
+when the manifest names another plugin, and logs commands that are in one place but
+not the other.</li>
+<li><strong>Shutdown.</strong> On <code>rim.shutdown</code> or when stdin closes, the SDK runs <code>onShutdown</code> and
+exits. The host kills a plugin that is still running about a second later.</li>
+</ul>
+<h2 id="logging">Logging <a class="anchor" href="#logging" aria-label="Link to this section">#</a></h2>
+<p>stdout carries protocol frames, so the SDK sends <code>console.log</code> and friends to stderr,
+which the host passes through. <code>host.log.info(...)</code> (and <code>debug</code>, <code>warn</code>, <code>error</code>)
+writes to the RIM log with the plugin id in front. Never write to <code>process.stdout</code>
+yourself.</p>
+<h2 id="the-host">The host <a class="anchor" href="#the-host" aria-label="Link to this section">#</a></h2>
+<p><code>onReady(host)</code> runs after the handshake, and every command context has <code>host</code>:</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>pluginId</code></td>
+<td>The id the host started the plugin under.</td>
+</tr>
+<tr>
+<td><code>hostVersion</code></td>
+<td>The RIM app&#39;s version.</td>
+</tr>
+<tr>
+<td><code>protocolVersion</code></td>
+<td>The version this connection speaks (1).</td>
+</tr>
+<tr>
+<td><code>grantedCapabilities</code></td>
+<td>What the user approved when the plugin started.</td>
+</tr>
+<tr>
+<td><code>principal</code></td>
+<td>The signed-in user right now, or <code>null</code>.</td>
+</tr>
+<tr>
+<td><code>log</code></td>
+<td>Lines for the RIM log.</td>
+</tr>
+<tr>
+<td><code>panels</code></td>
+<td>Panel state, below.</td>
+</tr>
+<tr>
+<td><code>storage</code></td>
+<td>A WebSandboxed plugin&#39;s small store, below.</td>
+</tr>
+<tr>
+<td><code>chat</code></td>
+<td>The person&#39;s messages, below.</td>
+</tr>
+</tbody></table></div>
+<h3 id="panels-experimental">Panels (experimental) <a class="anchor" href="#panels-experimental" aria-label="Link to this section">#</a></h3>
+<p><code>host.panels.set(panelId, state)</code> replaces a panel&#39;s state and
+<code>host.panels.patch(panelId, partial)</code> merges top-level keys into it. Both send
+<code>rim.ui.update_panel</code>, which the host routes but protocol v1 has not frozen yet, so
+the shape may still change. The plugin needs <code>&quot;ui.panel&quot;</code> in its manifest
+<code>capabilities</code>, approved by the user; otherwise the call rejects with a
+<code>HostRequestError</code> whose <code>code</code> is <code>CAPABILITY_DENIED</code>. A panel id the manifest does
+not declare is rejected before anything is sent.</p>
+<h3 id="storage-experimental-websandboxed">Storage (experimental, WebSandboxed) <a class="anchor" href="#storage-experimental-websandboxed" aria-label="Link to this section">#</a></h3>
+<p>A web plugin&#39;s frame has an opaque origin, so no <code>localStorage</code> or IndexedDB of its
+own. <code>await host.storage.get(key)</code> answers the stored JSON value or <code>null</code>;
+<code>await host.storage.set(key, value)</code> stores it, and <code>null</code> deletes the key. The host
+keeps 1 MiB per plugin, signed-in account and device, unencrypted: never keep tokens
+in it. Keys are 1 to 128 characters of <code>A-Z a-z 0-9 . _ -</code>; a set past the quota
+rejects with <code>INVALID_PARAMS</code> and <code>data: { reason: &quot;quota&quot; }</code>, and with nobody signed
+in both reject with <code>INVALID_PARAMS</code>. <code>rim.storage.*</code> is not frozen in v1. A
+local-process host answers both with <code>METHOD_NOT_FOUND</code>: a process has its own files.</p>
+<h3 id="chat-experimental">Chat (experimental) <a class="anchor" href="#chat-experimental" aria-label="Link to this section">#</a></h3>
+<p><code>host.chat</code> reads and posts the person&#39;s messages through the app&#39;s message service, the
+same for both kinds of plugin (<a href="plugin-chat-methods.html">the method reference</a>):</p>
+<pre><code class="language-ts">const { messages, hasOlder } = await host.chat.listMessages(conversationId, { limit: 50 });
+const message = await host.chat.getMessage(messageId); // or null
+const hits = await host.chat.searchMessages(&quot;deploy&quot;, { conversationId });
+const { id } = await host.chat.postMessage(conversationId, &quot;on it&quot;, { threadId });</code></pre>
+<p>A message is <code>{ id, conversationId, threadId, author, text, sentAt, editedAt, encrypted, attachments }</code>, with <code>author</code> a <code>Principal</code> and attachments as name, type and size only.
+Reads come from what the person&#39;s device stores. The calls need <code>&quot;chat.read&quot;</code> or
+<code>&quot;chat.write&quot;</code> approved, and in an encrypted DM or group also <code>&quot;chat.read.encrypted&quot;</code> or
+<code>&quot;chat.write.encrypted&quot;</code> (a manifest asking for an encrypted one must ask for the plain one
+too); otherwise they reject with <code>CAPABILITY_DENIED</code>. <code>rim.chat.*</code> is routed by both hosts
+but not frozen in v1, so the shapes may still change.</p>
+<h2 id="testing-without-the-app">Testing without the app <a class="anchor" href="#testing-without-the-app" aria-label="Link to this section">#</a></h2>
+<p><code>@rim/plugin-sdk/testing</code> runs a plugin against an in-memory host. Like the app, it
+refuses <code>host.panels</code> calls with <code>CAPABILITY_DENIED</code> unless <code>grantedCapabilities</code>
+includes <code>&quot;ui.panel&quot;</code> (and <code>host.chat</code> calls without <code>&quot;chat.read&quot;</code> or <code>&quot;chat.write&quot;</code>),
+and <code>onRequest</code> answers the rest:</p>
+<pre><code class="language-ts">import { startTestHost } from &quot;@rim/plugin-sdk/testing&quot;;
+
+const host = startTestHost(createPlugin(), { manifestPath: &quot;rim-plugin.json&quot; });
+await host.handshake();
+expect(await host.execute(&quot;greet&quot;)).toEqual({ result: { payload: &quot;Hello, Test User!&quot; } });
+expect((await host.execute(&quot;restart_pod&quot;, { pod: &quot;web-1&quot; })).error?.code).toBe(-32002);
+await host.execute(&quot;restart_pod&quot;, { pod: &quot;web-1&quot; }, { confirmed: true });
+await host.shutdown();</code></pre>
+<p><code>startTestHost(plugin, { transport: &quot;port&quot; })</code> runs the plugin over a Node
+<code>MessageChannel</code>, as a web plugin&#39;s frame does, with the same assertions. <code>onRequest</code>
+can answer <code>rim.storage.get</code> and <code>rim.storage.set</code> to test a plugin&#39;s store, and the
+<code>rim.chat.*</code> calls, which the test host refuses with <code>CAPABILITY_DENIED</code> unless
+<code>grantedCapabilities</code> has <code>&quot;chat.read&quot;</code> (or <code>&quot;chat.write&quot;</code> for posting).</p>
+<h2 id="installing-a-plugin">Installing a plugin <a class="anchor" href="#installing-a-plugin" aria-label="Link to this section">#</a></h2>
+<p>A plugin in <code>~/.rim/plugins</code> runs from its own folder, without the SDK source or
+your <code>node_modules</code>, so bundle it into one file first:</p>
+<pre><code class="language-sh">npm run plugin:bundle -- plugins/template-ts          # in rim-ui
+cp -r plugins/template-ts/dist/dev.example.template-ts ~/.rim/plugins/</code></pre>
+<p>The output folder is emptied first, so the bundler refuses a folder that holds the
+plugin or has other files in it. The bundle directory holds <code>rim-plugin.json</code> (with
+<code>entrypoint</code> set to <code>main.mjs</code>), <code>main.mjs</code> with the SDK inside, and the plugin&#39;s
+<code>panels/</code> folder (dotfiles left out). Beside the folder the bundler writes the same
+files as one <code>&lt;plugin_id&gt;-&lt;version&gt;.rimbundle</code> and prints its hash and size:</p>
+<pre><code class="language-text">sha256 &lt;64 lowercase hex characters&gt;  size &lt;bytes&gt;</code></pre>
+<p><code>sha256sum</code> on the file prints the same hash. Install the folder on the desktop, or
+serve the <code>.rimbundle</code> over https with <code>Access-Control-Allow-Origin: *</code> and install it
+on the web or the desktop with <strong>Install from link</strong> and
+<code>https://host/path/&lt;plugin_id&gt;-&lt;version&gt;.rimbundle#sha256=&lt;hash&gt;</code>.</p>
+<p>For a WebSandboxed plugin the bundler builds for the browser (<code>platform: &quot;browser&quot;</code>,
+the <code>browser</code> condition, ES2022, no <code>#!</code> line) and fails when the output still imports
+something or names a <code>node:</code> module: the frame shell loads the entry from a <code>blob:</code>
+URL, where nothing can be imported. Every file besides the manifest and <code>main.mjs</code>
+comes from <code>panels/</code>. Then enable the plugin in <strong>Settings → Plugins</strong>.</p>
+<h2 id="working-on-the-sdk">Working on the SDK <a class="anchor" href="#working-on-the-sdk" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/sdk/plugin-sdk/src/generated/protocol.ts"><code>src/generated/protocol.ts</code></a> is generated from the schema: run <code>npm run sdk:generate</code>
+after the schema changes. A test fails while it is stale.</li>
+<li><code>npm run sdk:typecheck</code> checks the SDK and the template with the strict settings
+plugins use (<code>erasableSyntaxOnly</code>, so Node can run the source).</li>
+<li><code>npm test</code> runs the SDK tests, including the template over real stdio, both from
+source and bundled, and over a <code>MessageChannel</code>. The app&#39;s web host runs the
+template&#39;s browser build over a port in its own conformance test
+(<a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/src/features/plugins/web/conformance.test.ts"><code>src/features/plugins/web/conformance.test.ts</code></a>). The Rust conformance tests
+(<a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/src-tauri/src/plugin_host/protocol/conformance.rs"><code>src-tauri/src/plugin_host/protocol/conformance.rs</code></a>) run the template against the
+schema and through the host&#39;s own start-up and command path.</li>
+</ul>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/sdk/plugin-sdk/README.md">rim-ui/sdk/plugin-sdk/README.md</a> at <code>58e3ec0</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+<script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
+</body>
+</html>

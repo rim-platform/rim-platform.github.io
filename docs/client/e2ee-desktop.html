@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>End-to-end encrypted DMs and groups on the desktop · RIM</title>
+<meta name="description" content="DMs and groups are end-to-end encrypted with MLS (RFC 9420); channels stay plaintext. The contract is rim-server docs/specs/e2ee-mls-v1.md; the engine is the rim_mls crate (docs/rim-mls.md). This page is how the desktop …">
+<link rel="icon" href="../../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../../index.html" aria-label="RIM home">
+      <picture><source srcset="../../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../../index.html#what">What RIM is</a>
+      <a href="../../index.html#how">How it works</a>
+      <a href="../self-hosting.html">Self-host</a>
+      <a href="../../configure/index.html">Configure</a>
+      <a href="../index.html" aria-current="page">Docs</a>
+      <a href="../../api/index.html">API</a>
+      <a href="../../specs/index.html">Specs</a>
+      <a href="../contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="../index.html">Docs</a><span aria-hidden="true">/</span><a href="../using-rim.html">Using RIM</a><span aria-hidden="true">/</span><span>End-to-end encrypted DMs and groups on the desktop</span></div>
+  <div class="page with-toc">
+    <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
+<ol>
+<li><a href="#what-lives-where">What lives where</a><ol><li><a href="#cache-tables-schemas-v6-and-v7">Cache tables (schemas v6 and v7)</a></li></ol></li>
+<li><a href="#the-client-loop">The client loop</a></li>
+<li><a href="#sending">Sending</a></li>
+<li><a href="#membership">Membership</a></li>
+<li><a href="#key-packages-and-identity">Key packages and identity</a></li>
+<li><a href="#hardening">Hardening</a></li>
+<li><a href="#what-the-person-sees">What the person sees</a></li>
+<li><a href="#plugins-the-agent-pipelines-and-lenses">Plugins, the agent, pipelines and lenses</a></li>
+<li><a href="#reporting-an-encrypted-message">Reporting an encrypted message</a></li>
+<li><a href="#trying-it-with-two-desktops">Trying it with two desktops</a></li>
+</ol>
+</details></aside>
+    <main id="content" class="prose">
+<h1 id="end-to-end-encrypted-dms-and-groups-on-the-desktop">End-to-end encrypted DMs and groups on the desktop</h1>
+<p>DMs and groups are end-to-end encrypted with MLS (RFC 9420); channels stay plaintext. The
+contract is rim-server <code>docs/specs/e2ee-mls-v1.md</code>; the engine is the <code>rim_mls</code> crate
+(<a href="rim-mls.html"><code>docs/rim-mls.md</code></a>). This page is how the desktop app puts them together.</p>
+<h2 id="what-lives-where">What lives where <a class="anchor" href="#what-lives-where" aria-label="Link to this section">#</a></h2>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Where</th>
+<th>What</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><a href="https://github.com/rim-platform/rim-ui/tree/58e3ec03c43064632a6a6f610d92413040229dfd/src-tauri/crates/rim_mls"><code>src-tauri/crates/rim_mls</code></a></td>
+<td>MLS through OpenMLS: identity, key packages, groups, Commits, Welcomes, encrypt and decrypt once, content and authenticated-data rules, franking, attachments</td>
+</tr>
+<tr>
+<td><a href="https://github.com/rim-platform/rim-ui/tree/58e3ec03c43064632a6a6f610d92413040229dfd/src-tauri/src/e2ee"><code>src-tauri/src/e2ee/</code></a></td>
+<td>The app&#39;s side: Tauri commands, the change-feed handler that decrypts into the cache, leaf verification (<code>DeviceDirectory</code> over key logs and device certificates), sends with stored plaintext, attachments over raw IPC, sender-side link previews</td>
+</tr>
+<tr>
+<td><a href="https://github.com/rim-platform/rim-ui/tree/58e3ec03c43064632a6a6f610d92413040229dfd/src-tauri/src/message_cache"><code>src-tauri/src/message_cache/</code></a></td>
+<td>The SQLCipher cache: MLS state (<code>mls_storage</code>, schema v5), the e2ee tables (schema v6) and the pins (schema v7) live in the same file as the messages</td>
+</tr>
+<tr>
+<td><a href="https://github.com/rim-platform/rim-ui/tree/58e3ec03c43064632a6a6f610d92413040229dfd/src-tauri/src/key_identity"><code>src-tauri/src/key_identity/</code></a></td>
+<td>The device key; it signs <code>mls-key</code> statements and re-add requests (<code>sign_mls</code>) and nothing else for e2ee</td>
+</tr>
+<tr>
+<td><a href="https://github.com/rim-platform/rim-ui/tree/58e3ec03c43064632a6a6f610d92413040229dfd/src/features/e2ee/api"><code>src/features/e2ee/api/</code></a></td>
+<td><code>documents.ts</code> (every e2ee GraphQL document), <code>e2eeApi.ts</code> (server calls), <code>e2eeCommands.ts</code> (Tauri commands)</td>
+</tr>
+<tr>
+<td><a href="https://github.com/rim-platform/rim-ui/tree/58e3ec03c43064632a6a6f610d92413040229dfd/src/features/e2ee/runtime"><code>src/features/e2ee/runtime/</code></a></td>
+<td>The webview&#39;s driver: client loop inputs, groups (create, commit, settle, join, re-add, recovery), membership ranking, sending, events, the 12-hour key package refresh</td>
+</tr>
+<tr>
+<td><a href="https://github.com/rim-platform/rim-ui/tree/58e3ec03c43064632a6a6f610d92413040229dfd/src/features/e2ee"><code>src/features/e2ee/</code></a> components, hooks, utils</td>
+<td>Timeline notices, composer notices, lock marks, encrypted attachments, mention and keyword rules</td>
+</tr>
+</tbody></table></div>
+<p>The webview holds the session cookie, so it makes every server call and hands the answers to
+the Tauri side; the Tauri side never talks to the server for e2ee (apart from link previews,
+which only the sender fetches).</p>
+<h3 id="cache-tables-schemas-v6-and-v7">Cache tables (schemas v6 and v7) <a class="anchor" href="#cache-tables-schemas-v6-and-v7" aria-label="Link to this section">#</a></h3>
+<ul>
+<li><code>message.e2ee_state</code>: <code>decrypted</code>, <code>invalid</code> (decrypted, broke a rule, stored without content),
+<code>placeholder</code> (this device cannot decrypt it: sent before it joined, or in an older
+incarnation) or <code>outgoing</code> (sent here, not acknowledged yet). <code>NULL</code> for plaintext rows.</li>
+<li><code>e2ee_conversation</code>: per conversation, the incarnation this device holds, an incarnation it
+is creating, the first epoch it can read, whether it was removed, whether leaves wait for
+verification, devices that failed verification, a committer whose Commit was refused for
+lying, a pending re-add request, the last update path, who reset each incarnation, and
+(<code>membership</code>, v7) the principals processed Commits added and removed.</li>
+<li><code>e2ee_outgoing</code>: messages and edits until the server acknowledges them, with the content and
+franking key to resend them in a newer epoch.</li>
+<li><code>e2ee_verified_device</code>: devices whose certificate verified, with the certified key.</li>
+<li><code>e2ee_readd_honored</code>: when this device last acted on a device&#39;s re-add request.</li>
+<li><code>e2ee_pin</code> (v7): conversations this device knows are encrypted, with the server&#39;s
+<code>encryptedAt</code> as first seen and a direct message&#39;s two principals. Never deleted, <code>forget</code>
+included. The migration pins every conversation whose group this device held, was creating
+or waited to be re-added to.</li>
+<li><code>e2ee_peer</code> (v7): per principal, the seq and hash of the head of the longest key log verified
+here, and the device ids seen revoked.</li>
+</ul>
+<p>The row upsert keeps &quot;higher version wins&quot;, with two exceptions: a placeholder never replaces
+a readable row, and a readable row (decrypted, or restored from the archive) replaces a
+placeholder whatever the versions. <code>RESET</code> drops plaintext rows and placeholders and keeps
+decrypted ones. The archive skips placeholders and outgoing rows; decrypted rows carry
+<code>payload.e2ee</code> (<a href="../../specs/history-archive-v1.html"><code>docs/specs/history-archive-v1.md</code></a>).</p>
+<h2 id="the-client-loop">The client loop <a class="anchor" href="#the-client-loop" aria-label="Link to this section">#</a></h2>
+<p>The cache sync (<a href="local-message-cache.html"><code>docs/local-message-cache.md</code></a>) drives it; nothing decrypts outside the feed.</p>
+<pre><code class="language-text">per feed page:
+  for each conversation in it that is encrypted or has local group state:
+    fetch mlsCommits(incarnation, from the local epoch)          (webview)
+    fetch thread(id).rootMessageId for encrypted thread replies   (webview)
+  message_cache_sync_apply(page, those inputs)                     (Tauri, one transaction)
+    per encrypted entry, in version order:
+      older incarnation, before the join epoch, or &gt; 2 epochs back -&gt; placeholder
+      past the local epoch -&gt; apply the handed-in Commits up to it first
+      decrypt once -&gt; decrypted row | invalid row | own message (keeps its stored plaintext)
+    feed drained -&gt; apply the remaining Commits
+  notes -&gt; webview: what stopped, leaves to verify, decrypted messages for keyword toasts</code></pre>
+<p>A conversation stops (its cursor stays, nothing past the entry is stored) when a Commit or a
+thread root is missing, when the device has no state for the entry&#39;s incarnation, or when its
+group waits for a re-add. The webview resolves it and syncs again: Welcomes are processed; a
+device the server counts in the group but that has no state asks to be re-added; a device that
+is not in the group gets placeholders.</p>
+<p>Real-time <code>NewMessage</code> / <code>MessageUpdated</code> of encrypted messages are only signals, like
+<code>MlsCommitAccepted</code>; the timeline re-reads the cache after each page.</p>
+<h2 id="sending">Sending <a class="anchor" href="#sending" aria-label="Link to this section">#</a></h2>
+<p><code>sendEncrypted</code> (and <code>editEncrypted</code>) run under the conversation&#39;s lock:</p>
+<ol>
+<li>Catch up (the loop above for this conversation). No group yet: create it. Pending removals:
+commit them first.</li>
+<li>Encrypt files on the Tauri side (<code>e2ee_attachment_encrypt</code>: the secret stays there until the
+message is encrypted) and fetch link previews (<code>e2ee_link_preview</code>).</li>
+<li><code>e2ee_encrypt_message</code>: the content (client-chosen UUID v7, <code>&lt;@principalId&gt;</code> mentions,
+<code>replyTo</code>, <code>threadRootId</code>, <code>forwardedFrom</code>, attachments, previews) is encrypted and its
+plaintext row stored as <code>outgoing</code> in the same transaction.</li>
+<li><code>sendEncryptedMessage</code>. <code>STALE_EPOCH</code>: catch up, <code>e2ee_reencrypt_message</code> (same id, content
+and franking key), send again. <code>MLS_COMMIT_REQUIRED</code>: commit, re-encrypt, send. No answer:
+send the same bytes again. Any other refusal undoes the row (a refused edit puts the old
+text back) and gives the body back to the composer.</li>
+<li>Upload the blobs with <code>blobSha256</code>, file name <code>encrypted</code>, type <code>application/octet-stream</code>.</li>
+</ol>
+<p>Edits send the whole new content at <code>rev + 1</code>. Deletes, reactions and pins are unchanged.
+Forwards into an encrypted conversation send new content (an encrypted source&#39;s blobs are
+uploaded again under the new message); an encrypted message forwarded into a plaintext
+conversation asks first, then uses <code>sendMessage(forwardedFromMessageId)</code>.</p>
+<h2 id="membership">Membership <a class="anchor" href="#membership" aria-label="Link to this section">#</a></h2>
+<p><code>Conversation.mlsGroup</code> lists the group devices, pending adds and removes, and re-add requests.
+On <code>MlsMembershipChanged</code> the device rechecks every leaf against fresh key logs and device lists,
+then, if it can commit, waits <code>min(rank, 8) × 15 s</code> plus up to 3 s and commits every pending
+change at once (after refetching and checking that its epoch is the server&#39;s). The device that
+added or removed members commits at once; a member&#39;s own other device ranks first for its new
+device. Also scheduled per conversation: creating a group nobody created within a minute, the
+weekly self-update (a day&#39;s spread after it falls due), a new incarnation when a re-add waits
+over 10 minutes or the group runs another suite.</p>
+<p>A leaf that does not verify (after one refetch) stops sending in the conversation, shows
+&quot;Unverified device present&quot;, and is removed at once if the server agrees.</p>
+<h2 id="key-packages-and-identity">Key packages and identity <a class="anchor" href="#key-packages-and-identity" aria-label="Link to this section">#</a></h2>
+<p>On start and every 12 hours: <code>e2ee_ensure_identity</code> (the MLS key and its <code>mls-key</code> statement,
+signed by the device key), then <code>myMlsKeyPackageStatus</code> → <code>e2ee_key_packages</code> (prune, top up to
+20 below 10, a new last-resort package when needed) → <code>uploadMlsKeyPackages</code>. A re-add request
+uploads 5 fresh one-time packages after the request. A key package&#39;s lifetime runs from an hour
+before it was made to an hour short of 90 days after, so a server whose clock is behind this
+one still accepts it.</p>
+<h2 id="hardening">Hardening <a class="anchor" href="#hardening" aria-label="Link to this section">#</a></h2>
+<p>What this device holds the server to, whatever it answers later:</p>
+<ul>
+<li><strong>Encryption pin.</strong> A conversation whose group this device holds, creates or waits to be
+re-added to, that it saw an encrypted feed entry in, or that it saw <code>encryptedAt</code> on is pinned
+in <code>e2ee_pin</code> for good. The UI treats a conversation as encrypted when the server says so or
+it is pinned. A pinned conversation the server answers <code>encryptedAt: null</code> for shows
+&quot;Encryption was reset by the server&quot; and stops sending; every plaintext write (<code>sendMessage</code>,
+<code>replyToMessage</code>, <code>editMessage</code>, <code>forwardMessage</code>, a plugin&#39;s post) asks the pin first and is
+refused; it is never upgraded again.</li>
+<li><strong>Direct messages.</strong> A DM is pinned to its two principals on first use (the two the server
+lists, one of them this device&#39;s). Pending adds of anyone else are never committed and the
+conversation says &quot;The server tried to add &lt;name&gt; to this conversation&quot; and stops sending
+until they are gone; leaf verification counts only the two as members, so a third principal&#39;s
+leaf is &quot;Unverified device present&quot; and removed.</li>
+<li><strong>Membership lines.</strong> &quot;&lt;name&gt; was added&quot; and &quot;&lt;name&gt; was removed&quot; come from the Commits this
+device processed (principals that gained their first leaf or lost their last), placed before
+the first message of the epoch the Commit made, never from the server&#39;s member list.</li>
+<li><strong>Sender.</strong> A feed entry whose author has no principal id, or whose <code>senderDeviceId</code> is not the
+decrypted sender&#39;s device, is stored as &quot;could not be verified&quot;. A decrypted message is shown
+as its MLS sender&#39;s: device to principal to workspace member.</li>
+<li><strong>Welcomes.</strong> A Welcome to an epoch this device&#39;s state of that incarnation already reached is
+refused (<code>E2EE_STALE_WELCOME</code>, acknowledged, no re-add request) unless the group waits for a
+re-add. A Welcome that does not open while the device holds working state of its incarnation
+is a leftover, not a reason to ask for a re-add.</li>
+<li><strong>Commits.</strong> A Commit whose proposals are not exactly the adds and removes its summary names,
+or that carries any proposal other than Add and Remove, is never merged: the group waits for
+a re-add and the committer is named as misbehaving.</li>
+<li><strong>Peer keys.</strong> Another device&#39;s HPKE public key must be 1,216 bytes, an X-Wing key of suite
+0x004F. A key package with a key of another length is not added, a Commit that leaves one in
+the tree is never merged (the group waits for a re-add, the committer is named as
+misbehaving), a Welcome whose tree holds one is refused, and this device&#39;s own Commit fails
+rather than encrypt to one, unless it removes that device.</li>
+<li><strong>Key logs.</strong> The first key log verified for a principal pins its head (<code>e2ee_peer</code>). A served
+log must contain the pinned head; a shorter or forked one is refused (&quot;&lt;name&gt;&#39;s identity
+changed in a way RIM cannot verify&quot;, reason <code>keyLogForked</code>) and the pin moves only along valid
+rotations.</li>
+<li><strong>Certificates.</strong> A device certificate signed at a <code>keySeq</code> that a recovery rotation follows is
+refused, as the server refuses such plugin manifests.</li>
+<li><strong>Revocations.</strong> A <code>revocation</code> is verified (by an identity key of the log, or by the revoked
+device&#39;s own key). A verified revocation or a <code>revokedAt</code> is remembered with the head pin, so a
+server that stops listing it changes nothing here; one that does not verify keeps the device
+out this time only.</li>
+<li><strong>Principals from another relay.</strong> A principal this relay cannot answer for is fetched with
+<code>remoteIdentity</code> from their own relay (<a href="relay-client.html"><code>relay-client.md</code></a>) and goes through the same checks,
+the head pin and the revocation memory; its profile card must also verify against the log&#39;s
+head, or nothing served about it is used (&quot;keyLogInvalid&quot;).</li>
+<li><strong>Keys.</strong> Ed25519 keys must be canonically encoded points that are not of small order, an
+inception&#39;s or rotation&#39;s identity key must differ from its recovery key, and key log entries
+with unknown fields are refused, as on the server.</li>
+</ul>
+<h2 id="what-the-person-sees">What the person sees <a class="anchor" href="#what-the-person-sees" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>A lock beside encrypted messages and conversations.</li>
+<li>&quot;Messages from here on are end-to-end encrypted&quot; where the conversation became encrypted, and
+&quot;sent before encryption&quot; on older plaintext messages.</li>
+<li>&quot;Earlier messages were sent before this device joined&quot;, one line per run of placeholders,
+with &quot;Restore from history archive&quot; when an archive is set up.</li>
+<li>&quot;Encryption was reset by &lt;name&gt;&#39;s &lt;device&gt;&quot; between incarnations.</li>
+<li>&quot;A message from &lt;sender&gt; could not be verified&quot; for invalid messages.</li>
+<li>&quot;&lt;name&gt; was added&quot; and &quot;&lt;name&gt; was removed&quot; where processed Commits changed who is in the
+group.</li>
+<li>Above the composer: &quot;Not encrypted yet: &lt;name&gt; has not set up encryption on a desktop device&quot;;
+the unverified-device warning (sending stops); &quot;This device can&#39;t read new messages until
+another device re-adds it&quot;. The web app runs the same flows once the browser is a linked
+device (<a href="e2ee-web.html"><code>e2ee-web.md</code></a>).</li>
+<li>Keyword notifications for encrypted groups at the &quot;mentions&quot; level are matched on this
+device after decrypting, as a desktop notification without an inbox entry.</li>
+</ul>
+<p>New DMs and groups are created with <code>encrypted: true</code> when every member has a device set up
+for encryption (<code>PrincipalDevice.mlsActive</code>); existing ones are upgraded by an eligible member&#39;s
+desktop when it opens them and everyone is ready.</p>
+<h2 id="plugins-the-agent-pipelines-and-lenses">Plugins, the agent, pipelines and lenses <a class="anchor" href="#plugins-the-agent-pipelines-and-lenses" aria-label="Link to this section">#</a></h2>
+<p>The server cannot read an encrypted conversation, so whatever reads its text does it on this
+device, and only when the person allowed it.</p>
+<ul>
+<li><strong>Plugins</strong> read and post through the client message service (<a href="plugin-chat-methods.html"><code>docs/plugin-chat-methods.md</code></a>):
+reads come from the cache, posts go through the encrypted send path. An encrypted DM or group
+needs <code>chat.read.encrypted</code> or <code>chat.write.encrypted</code> on top of the plain capability, each
+with its own consent line, and the plugin&#39;s Activity in Settings counts the encrypted
+messages it read per day. A plugin never sees franking keys, attachment secrets, MLS state or
+ciphertext, nor placeholders or messages that could not be verified.</li>
+<li><strong>The agent</strong> is off in every encrypted conversation until the person turns it on from the
+conversation&#39;s menu (&quot;Agent: off in this conversation&quot;), after the warning that the text of
+the conversation goes to the model provider; the switch is per conversation and kept on this
+device (<code>useAgentEncryptedStore</code>). When it is on, <code>chat.get_recent_messages</code> and
+<code>chat.search_messages</code> read the cache instead of the server, and <code>chat.post_message</code> sends
+through the encrypted send path after the person confirms each post
+(<a href="https://github.com/rim-platform/rim-ui/tree/58e3ec03c43064632a6a6f610d92413040229dfd/src/features/agent/encrypted"><code>src/features/agent/encrypted/</code></a>). A server-wide <code>chat.search_messages</code> adds this device&#39;s
+hits in the conversations the agent is on in. <code>chat.create_group</code> still creates a plaintext
+group on the server; this desktop then upgrades it as any plaintext group
+(<code>runtime/upgrade.ts</code>), once every member is ready.</li>
+<li><strong>Pipelines</strong> run on the server on metadata only: a &quot;Message contains&quot; condition never
+matches an encrypted message, and the editor says so under the pattern.</li>
+<li><strong>Lenses</strong> are applied on this device in an encrypted conversation, over the loaded pages:
+&quot;Text contains&quot; and &quot;Has links&quot; never match an encrypted message; author, attachments and
+pins match as usual (<a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/src/features/lenses/utils/localLens.ts"><code>src/features/lenses/utils/localLens.ts</code></a>). The lens editor says so
+under a text condition.</li>
+</ul>
+<h2 id="reporting-an-encrypted-message">Reporting an encrypted message <a class="anchor" href="#reporting-an-encrypted-message" aria-label="Link to this section">#</a></h2>
+<p>&quot;Report Message&quot; on an encrypted message sends <code>reportEncryptedMessage</code> with what the cache row
+keeps in <code>payload.e2ee</code>: the exact content bytes (<code>content</code>, base64url of its UTF-8), the
+franking key, the server&#39;s receipt and its key id, the sender&#39;s user and device ids, and
+<code>sentAtUs</code>. The server recomputes the commitment and the receipt; a match stores the content
+with the report, so it stays reportable after the sender deletes the message. The dialog says
+that the content and attachments go to the moderators and nothing else from the conversation.
+A placeholder (this device could not decrypt it), a message that could not be verified, and an
+own message the server has not acknowledged yet cannot be reported; the dialog says why.</p>
+<p>Moderators see a verified report in Settings → Workspace → Moderation as &quot;Encrypted · verified&quot;.
+&quot;Show reported message&quot; fetches <code>messageReport</code> (each fetch is an audit row, so it is fetched
+once per opening) and shows:</p>
+<ul>
+<li>the body as plain text, <code>&lt;@principalId&gt;</code> mentions as <code>@name</code>;</li>
+<li>each attachment&#39;s name and size, downloaded from
+<code>/api/reports/{reportId}/attachments/{blobSha256}</code> and decrypted by
+<code>e2ee_reported_attachment_decrypt</code> with the entry of the verified content (hash, then size,
+checked), so a moderator outside the conversation can open it;</li>
+<li>the sender, their device, the conversation (its title when this device knows it) and the send
+time, and &quot;Verified: this is the exact message &lt;sender&gt;&#39;s device sent. Other messages in the
+conversation are not shown and are not verified.&quot;;</li>
+<li>when the server deletes the content (90 days after the report is closed);</li>
+<li>&quot;Delete message&quot;, which deletes the message for everyone, also from a conversation the
+moderator is not in.</li>
+</ul>
+<h2 id="trying-it-with-two-desktops">Trying it with two desktops <a class="anchor" href="#trying-it-with-two-desktops" aria-label="Link to this section">#</a></h2>
+<p>Needs rim-server with the e2ee server work (S4-1) merged and running locally, and two accounts
+that signed in with device keys (key-only signup or enrollment, <a href="device-linking-desktop.html"><code>docs/device-linking-desktop.md</code></a>).</p>
+<ol>
+<li>Run the server and export its schema: <code>curl -s http://localhost:8080/api/sdl &gt; schema.graphql &amp;&amp; npm run codegen</code>.</li>
+<li>Start two desktop instances, each with its own app data: two computers or two OS users are
+simplest. On Linux one machine works with a second data directory: run <code>npm run tauri dev</code>
+for the first, and the built app (<code>npm run tauri build</code>) with
+<code>XDG_DATA_HOME=/tmp/rim-second src-tauri/target/release/rim-ui</code> for the second.</li>
+<li>Sign in as each account. Each uploads key packages on start.</li>
+<li>Open a new DM from one to the other: it is created encrypted, and the other side joins from
+the Welcome. Send, edit, delete, react, reply in a thread, attach a file.</li>
+<li>For a migration, open an existing plaintext DM: the marker appears where it became
+encrypted.</li>
+<li>Link a second device to one account: the other members&#39; devices add it after their rank&#39;s
+delay; it shows earlier messages as one line and restores them from the history archive.</li>
+<li>To try reports, make a third account a workspace Moderator. Report a message with an
+attachment from the DM, then open it in the moderator&#39;s Settings → Moderation, download the
+attachment and delete the message.</li>
+</ol>
+<p>Tests: <code>cd src-tauri &amp;&amp; cargo test e2ee</code> (against <code>rim_mls</code> and real cache databases, with an
+in-process server), <code>cargo test plugin_view</code>, <code>npx vitest run src/features/e2ee src/features/plugins/chat src/features/agent/encrypted</code>.</p>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/docs/e2ee-desktop.md">rim-ui/docs/e2ee-desktop.md</a> at <code>58e3ec0</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+<script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
+</body>
+</html>

@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pagination Contract · RIM</title>
+<meta name="description" content="This repo uses cursor-based pagination for any list that can grow without bound (messages, inbox conversations, etc.). The goal is: stable ordering, no duplicates between pages, and consistent semantics across all …">
+<link rel="icon" href="../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../index.html" aria-label="RIM home">
+      <picture><source srcset="../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../index.html#what">What RIM is</a>
+      <a href="../index.html#how">How it works</a>
+      <a href="self-hosting.html">Self-host</a>
+      <a href="../configure/index.html">Configure</a>
+      <a href="index.html" aria-current="page">Docs</a>
+      <a href="../api/index.html">API</a>
+      <a href="../specs/index.html">Specs</a>
+      <a href="contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="index.html">Docs</a><span aria-hidden="true">/</span><a href="client-authors.html">Client authors</a><span aria-hidden="true">/</span><span>Pagination Contract</span></div>
+  <div class="page with-toc">
+    <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
+<ol>
+<li><a href="#definitions">Definitions</a></li>
+<li><a href="#cursor-comparison-rules">Cursor Comparison Rules</a></li>
+<li><a href="#page-fields">Page Fields</a></li>
+<li><a href="#how-to-compute-next-and-prev">How To Compute next and prev</a></li>
+<li><a href="#endpoint-ordering-current">Endpoint Ordering (Current)</a></li>
+</ol>
+</details></aside>
+    <main id="content" class="prose">
+<h1 id="pagination-contract">Pagination Contract</h1>
+<p>This repo uses cursor-based pagination for any list that can grow without bound (messages, inbox
+conversations, etc.). The goal is: stable ordering, no duplicates between pages, and
+consistent semantics across all storage backends.</p>
+<h2 id="definitions">Definitions <a class="anchor" href="#definitions" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>Each endpoint defines a fixed sort key and direction (ASC/DESC), and a cursor type that matches
+that sort key.</li>
+<li><code>PageDir</code> describes the relation to the cursor <em>in terms of the sort key</em>, not UI scrolling.<ul>
+<li><code>Before</code>: items strictly before the cursor.</li>
+<li><code>After</code>: items strictly after the cursor.</li>
+</ul>
+</li>
+<li>Tie-breaker IDs are mandatory to make ordering deterministic.</li>
+</ul>
+<h2 id="cursor-comparison-rules">Cursor Comparison Rules <a class="anchor" href="#cursor-comparison-rules" aria-label="Link to this section">#</a></h2>
+<p>For a cursor <code>(ts, id)</code>, comparisons are applied relative to the endpoint&#39;s display order.</p>
+<ul>
+<li>For <code>ASC</code> endpoints:<ul>
+<li><code>Before</code>: <code>(ts &lt; cursor.ts) OR (ts == cursor.ts AND id &lt; cursor.id)</code></li>
+<li><code>After</code>: <code>(ts &gt; cursor.ts) OR (ts == cursor.ts AND id &gt; cursor.id)</code></li>
+</ul>
+</li>
+<li>For <code>DESC</code> endpoints:<ul>
+<li><code>Before</code>: <code>(ts &gt; cursor.ts) OR (ts == cursor.ts AND id &gt; cursor.id)</code></li>
+<li><code>After</code>: <code>(ts &lt; cursor.ts) OR (ts == cursor.ts AND id &lt; cursor.id)</code></li>
+</ul>
+</li>
+</ul>
+<p>The DB query must always include an <code>ORDER BY</code> that matches the endpoint order.</p>
+<h2 id="page-fields">Page Fields <a class="anchor" href="#page-fields" aria-label="Link to this section">#</a></h2>
+<p><code>Page&lt;T, C&gt;</code> has:</p>
+<ul>
+<li><code>items</code>: returned in the endpoint&#39;s defined order.</li>
+<li><code>next</code>: cursor to continue in the <em>same</em> <code>PageDir</code> as the request.</li>
+<li><code>prev</code>: cursor to go in the <em>opposite</em> <code>PageDir</code>.</li>
+</ul>
+<p>This allows a client to implement infinite scroll by repeatedly calling the same endpoint with:</p>
+<ul>
+<li><code>cursor = page.next</code></li>
+<li><code>dir = (unchanged)</code></li>
+</ul>
+<h2 id="how-to-compute-next-and-prev">How To Compute <code>next</code> and <code>prev</code> <a class="anchor" href="#how-to-compute-next-and-prev" aria-label="Link to this section">#</a></h2>
+<p>Given the returned <code>items</code> and a request <code>dir</code>:</p>
+<ul>
+<li>For <code>ASC</code> endpoints:<ul>
+<li><code>After</code>: <code>next = max</code>, <code>prev = min</code></li>
+<li><code>Before</code>: <code>next = min</code>, <code>prev = max</code></li>
+</ul>
+</li>
+<li>For <code>DESC</code> endpoints:<ul>
+<li><code>After</code>: <code>next = min</code>, <code>prev = max</code></li>
+<li><code>Before</code>: <code>next = max</code>, <code>prev = min</code></li>
+</ul>
+</li>
+</ul>
+<p>If <code>items</code> is empty, both cursors are <code>None</code>.</p>
+<h2 id="endpoint-ordering-current">Endpoint Ordering (Current) <a class="anchor" href="#endpoint-ordering-current" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>Messages in a thread:<ul>
+<li><code>ORDER BY sent_at DESC, id DESC</code> (DB fetches newest-first; API returns in display order oldest-first)</li>
+<li>cursor: <code>(sent_at, message_id)</code></li>
+</ul>
+</li>
+<li>Inbox conversations (DM + Group):<ul>
+<li><code>ORDER BY last_activity_at DESC, id DESC</code></li>
+<li>cursor: <code>(last_activity_at, conversation_id)</code></li>
+</ul>
+</li>
+<li>Channels:<ul>
+<li><code>ORDER BY created_at ASC, id ASC</code> (stable, oldest-first)</li>
+<li>cursor: <code>(created_at, conversation_id)</code></li>
+</ul>
+</li>
+</ul>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/docs/pagination.md">rim-server/docs/pagination.md</a> at <code>c86029b</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+<script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
+</body>
+</html>

@@ -1,0 +1,962 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mutation · API · RIM</title>
+<meta name="description" content="Every field of the RIM GraphQL Mutation type.">
+<link rel="icon" href="../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../index.html" aria-label="RIM home">
+      <picture><source srcset="../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../index.html#what">What RIM is</a>
+      <a href="../index.html#how">How it works</a>
+      <a href="../docs/self-hosting.html">Self-host</a>
+      <a href="../configure/index.html">Configure</a>
+      <a href="../docs/index.html">Docs</a>
+      <a href="index.html" aria-current="page">API</a>
+      <a href="../specs/index.html">Specs</a>
+      <a href="../docs/contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="index.html">API</a><span aria-hidden="true">/</span><span>Mutation</span></div>
+  <div class="page with-toc">
+    <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
+<ol>
+<li><a href="#group-invite">Invite (2)</a></li>
+<li><a href="#group-server">Server (2)</a></li>
+<li><a href="#group-message">Message (9)</a></li>
+<li><a href="#group-conversation">Conversation (9)</a></li>
+<li><a href="#group-channel">Channel (4)</a></li>
+<li><a href="#group-attachment">Attachment (3)</a></li>
+<li><a href="#group-command">Command (1)</a></li>
+<li><a href="#group-user">User (3)</a></li>
+<li><a href="#group-keybind">Keybind (3)</a></li>
+<li><a href="#group-emoji">Emoji (2)</a></li>
+<li><a href="#group-macro">Macro (4)</a></li>
+<li><a href="#group-workspace">Workspace (6)</a></li>
+<li><a href="#group-pipeline">Pipeline (4)</a></li>
+<li><a href="#group-report">Report (4)</a></li>
+<li><a href="#group-notification">Notification (2)</a></li>
+<li><a href="#group-key">Key (7)</a></li>
+<li><a href="#group-device">Device (7)</a></li>
+<li><a href="#group-relay">Relay (2)</a></li>
+<li><a href="#group-other">Other (32)</a></li>
+</ol>
+</details></aside>
+    <main id="content" class="prose">
+<h1>Mutation</h1>
+<p class="lede">106 mutations, grouped by the domain their name starts with or names, in the order the schema lists them.</p>
+<input id="filter" class="search" type="search" placeholder="Filter fields by name" aria-label="Filter fields by name" autocomplete="off">
+<p id="filter-none" class="muted" hidden>Nothing matches.</p>
+<section data-group>
+<h2 id="group-invite">Invite <span class="faint">2</span></h2>
+<section class="entry" id="createInvite" data-name="createInvite">
+<h3><code>createInvite</code></h3>
+<div class="sig">createInvite(input: <a href="inputs.html#CreateInviteInput">CreateInviteInput</a>!): <a href="objects.html#CreateInvitePayload">CreateInvitePayload</a>!</div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+<section class="entry" id="signupWithInvite" data-name="signupWithInvite">
+<h3><code>signupWithInvite</code></h3>
+<div class="sig">signupWithInvite(input: <a href="inputs.html#SignupWithInviteInput">SignupWithInviteInput</a>!): <a href="objects.html#SignupWithInvitePayloadGql">SignupWithInvitePayloadGql</a>!</div>
+<div class="desc"><p>Unified signup mutation for all token-based and open-mode registration paths.</p>
+<p>In invite-only mode, exactly one of <code>instanceInviteToken</code> or <code>workspaceInviteToken</code>
+must be supplied.
+In open mode, all token fields must be absent.</p>
+<p>On success, sets session and CSRF cookies via <code>AuthIntent</code>.</p>
+</div>
+
+</section>
+</section>
+<section data-group>
+<h2 id="group-server">Server <span class="faint">2</span></h2>
+<section class="entry" id="joinServerByInvite" data-name="joinServerByInvite">
+<h3><code>joinServerByInvite</code></h3>
+<div class="sig">joinServerByInvite(input: <a href="inputs.html#JoinServerByInviteInput">JoinServerByInviteInput</a>!): <a href="objects.html#JoinServerByInvitePayload">JoinServerByInvitePayload</a>!</div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+<section class="entry" id="createServer" data-name="createServer">
+<h3><code>createServer</code></h3>
+<div class="sig">createServer(input: <a href="inputs.html#CreateServerInput">CreateServerInput</a>!): <a href="objects.html#Server">Server</a>!</div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+</section>
+<section data-group>
+<h2 id="group-message">Message <span class="faint">9</span></h2>
+<section class="entry" id="sendMessage" data-name="sendMessage">
+<h3><code>sendMessage</code></h3>
+<div class="sig">sendMessage(input: <a href="inputs.html#SendMessageInput">SendMessageInput</a>!): <a href="objects.html#Message">Message</a>!</div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+<section class="entry" id="replyToMessage" data-name="replyToMessage">
+<h3><code>replyToMessage</code></h3>
+<div class="sig">replyToMessage(input: <a href="inputs.html#ReplyToMessageInput">ReplyToMessageInput</a>!): <a href="objects.html#Message">Message</a>!</div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+<section class="entry" id="editMessage" data-name="editMessage">
+<h3><code>editMessage</code></h3>
+<div class="sig">editMessage(input: <a href="inputs.html#EditMessageInput">EditMessageInput</a>!): <a href="objects.html#Message">Message</a>!</div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+<section class="entry" id="forwardMessage" data-name="forwardMessage">
+<h3><code>forwardMessage</code></h3>
+<div class="sig">forwardMessage(input: <a href="inputs.html#ForwardMessageInput">ForwardMessageInput</a>!): <a href="objects.html#Message">Message</a>!</div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+<section class="entry" id="deleteMessage" data-name="deleteMessage">
+<h3><code>deleteMessage</code></h3>
+<div class="sig">deleteMessage(input: <a href="inputs.html#DeleteMessageInput">DeleteMessageInput</a>!): <a href="scalars.html#Boolean">Boolean</a>!</div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+<section class="entry" id="pinMessage" data-name="pinMessage">
+<h3><code>pinMessage</code></h3>
+<div class="sig">pinMessage(input: <a href="inputs.html#PinMessageInput">PinMessageInput</a>!): <a href="scalars.html#Boolean">Boolean</a>!</div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+<section class="entry" id="unpinMessage" data-name="unpinMessage">
+<h3><code>unpinMessage</code></h3>
+<div class="sig">unpinMessage(input: <a href="inputs.html#UnpinMessageInput">UnpinMessageInput</a>!): <a href="scalars.html#Boolean">Boolean</a>!</div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+<section class="entry" id="sendEncryptedMessage" data-name="sendEncryptedMessage">
+<h3><code>sendEncryptedMessage</code></h3>
+<div class="sig">sendEncryptedMessage(input: <a href="inputs.html#SendEncryptedMessageInput">SendEncryptedMessageInput</a>!): <a href="objects.html#Message">Message</a>!</div>
+<div class="desc"><p>An encrypted message under a client-chosen id, in the group&#39;s current epoch. Sending
+the same id and envelope again answers the stored message.</p>
+</div>
+
+</section>
+<section class="entry" id="editEncryptedMessage" data-name="editEncryptedMessage">
+<h3><code>editEncryptedMessage</code></h3>
+<div class="sig">editEncryptedMessage(input: <a href="inputs.html#EditEncryptedMessageInput">EditEncryptedMessageInput</a>!): <a href="objects.html#Message">Message</a>!</div>
+<div class="desc"><p>A new envelope carrying an encrypted message&#39;s complete new content.</p>
+</div>
+
+</section>
+</section>
+<section data-group>
+<h2 id="group-conversation">Conversation <span class="faint">9</span></h2>
+<section class="entry" id="createConversation" data-name="createConversation">
+<h3><code>createConversation</code></h3>
+<div class="sig">createConversation(input: <a href="inputs.html#CreateConversationInput">CreateConversationInput</a>!): <a href="objects.html#Conversation">Conversation</a>!</div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+<section class="entry" id="updateConversationTopic" data-name="updateConversationTopic">
+<h3><code>updateConversationTopic</code></h3>
+<div class="sig">updateConversationTopic(input: <a href="inputs.html#UpdateConversationTopicInput">UpdateConversationTopicInput</a>!): <a href="objects.html#Conversation">Conversation</a>!</div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+<section class="entry" id="leaveConversation" data-name="leaveConversation">
+<h3><code>leaveConversation</code></h3>
+<div class="sig">leaveConversation(serverId: <a href="scalars.html#ID">ID</a>!, conversationId: <a href="scalars.html#ID">ID</a>!): <a href="scalars.html#Boolean">Boolean</a>!</div>
+<div class="desc"><p>Leave a channel or group (not a DM).</p>
+</div>
+
+</section>
+<section class="entry" id="addConversationMembers" data-name="addConversationMembers">
+<h3><code>addConversationMembers</code></h3>
+<div class="sig">addConversationMembers(
+  serverId: <a href="scalars.html#ID">ID</a>!
+  conversationId: <a href="scalars.html#ID">ID</a>!
+  userIds: [<a href="scalars.html#ID">ID</a>!]!
+): <a href="objects.html#Conversation">Conversation</a>!</div>
+<div class="desc"><p>Add (invite) workspace members to a channel or group the caller belongs to.</p>
+</div>
+
+</section>
+<section class="entry" id="removeConversationMember" data-name="removeConversationMember">
+<h3><code>removeConversationMember</code></h3>
+<div class="sig">removeConversationMember(
+  serverId: <a href="scalars.html#ID">ID</a>!
+  conversationId: <a href="scalars.html#ID">ID</a>!
+  userId: <a href="scalars.html#ID">ID</a>!
+): <a href="scalars.html#Boolean">Boolean</a>!</div>
+<div class="desc"><p>Remove a member from a channel or group: Owner/Moderator may remove anyone, others only
+themselves.</p>
+</div>
+
+</section>
+<section class="entry" id="setConversationArchived" data-name="setConversationArchived">
+<h3><code>setConversationArchived</code></h3>
+<div class="sig">setConversationArchived(
+  serverId: <a href="scalars.html#ID">ID</a>!
+  conversationId: <a href="scalars.html#ID">ID</a>!
+  archived: <a href="scalars.html#Boolean">Boolean</a>!
+): <a href="objects.html#Conversation">Conversation</a>!</div>
+<div class="desc"><p>Archive or unarchive a channel (Owner/Moderator). Archived channels are read-only.</p>
+</div>
+
+</section>
+<section class="entry" id="muteConversation" data-name="muteConversation">
+<h3><code>muteConversation</code></h3>
+<div class="sig">muteConversation(input: <a href="inputs.html#MuteConversationInput">MuteConversationInput</a>!): <a href="scalars.html#Boolean">Boolean</a>!</div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+<section class="entry" id="unmuteConversation" data-name="unmuteConversation">
+<h3><code>unmuteConversation</code></h3>
+<div class="sig">unmuteConversation(input: <a href="inputs.html#UnmuteConversationInput">UnmuteConversationInput</a>!): <a href="scalars.html#Boolean">Boolean</a>!</div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+<section class="entry" id="setConversationNotificationLevel" data-name="setConversationNotificationLevel">
+<h3><code>setConversationNotificationLevel</code></h3>
+<div class="sig">setConversationNotificationLevel(
+  serverId: <a href="scalars.html#ID">ID</a>!
+  conversationId: <a href="scalars.html#ID">ID</a>!
+  level: <a href="enums.html#NotificationLevel">NotificationLevel</a>
+): <a href="objects.html#ConversationNotificationLevel">ConversationNotificationLevel</a>!</div>
+<div class="desc"><p>Set the viewer&#39;s level for one conversation they can read; <code>level: null</code> goes back to
+the workspace default. <a href="mutation.html#muteConversation"><code>muteConversation</code></a>/<a href="mutation.html#unmuteConversation"><code>unmuteConversation</code></a> keep working alongside.</p>
+</div>
+
+</section>
+</section>
+<section data-group>
+<h2 id="group-channel">Channel <span class="faint">4</span></h2>
+<section class="entry" id="joinChannel" data-name="joinChannel">
+<h3><code>joinChannel</code></h3>
+<div class="sig">joinChannel(serverId: <a href="scalars.html#ID">ID</a>!, conversationId: <a href="scalars.html#ID">ID</a>!): <a href="objects.html#Conversation">Conversation</a>!</div>
+<div class="desc"><p>Join a public, unarchived channel. Idempotent.</p>
+</div>
+
+</section>
+<section class="entry" id="createChannelLens" data-name="createChannelLens">
+<h3><code>createChannelLens</code></h3>
+<div class="sig">createChannelLens(input: <a href="inputs.html#CreateChannelLensInput">CreateChannelLensInput</a>!): <a href="objects.html#ChannelLens">ChannelLens</a>!</div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+<section class="entry" id="updateChannelLens" data-name="updateChannelLens">
+<h3><code>updateChannelLens</code></h3>
+<div class="sig">updateChannelLens(input: <a href="inputs.html#UpdateChannelLensInput">UpdateChannelLensInput</a>!): <a href="objects.html#ChannelLens">ChannelLens</a>!</div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+<section class="entry" id="deleteChannelLens" data-name="deleteChannelLens">
+<h3><code>deleteChannelLens</code></h3>
+<div class="sig">deleteChannelLens(serverId: <a href="scalars.html#ID">ID</a>!, lensId: <a href="scalars.html#ID">ID</a>!): <a href="scalars.html#Boolean">Boolean</a>!</div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+</section>
+<section data-group>
+<h2 id="group-attachment">Attachment <span class="faint">3</span></h2>
+<section class="entry" id="createAttachment" data-name="createAttachment">
+<h3><code>createAttachment</code></h3>
+<div class="sig">createAttachment(input: <a href="inputs.html#CreateAttachmentInput">CreateAttachmentInput</a>!): <a href="objects.html#UploadTicket">UploadTicket</a>!</div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+<section class="entry" id="finalizeAttachment" data-name="finalizeAttachment">
+<h3><code>finalizeAttachment</code></h3>
+<div class="sig">finalizeAttachment(input: <a href="inputs.html#FinalizeAttachmentInput">FinalizeAttachmentInput</a>!): <a href="objects.html#Attachment">Attachment</a>!</div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+<section class="entry" id="deleteAttachment" data-name="deleteAttachment">
+<h3><code>deleteAttachment</code></h3>
+<div class="sig">deleteAttachment(input: <a href="inputs.html#DeleteAttachmentInput">DeleteAttachmentInput</a>!): <a href="scalars.html#Boolean">Boolean</a>!</div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+</section>
+<section data-group>
+<h2 id="group-command">Command <span class="faint">1</span></h2>
+<section class="entry" id="executeCommand" data-name="executeCommand">
+<h3><code>executeCommand</code></h3>
+<div class="sig">executeCommand(input: <a href="inputs.html#ExecuteCommandInput">ExecuteCommandInput</a>!): <a href="objects.html#CommandResult">CommandResult</a>!</div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+</section>
+<section data-group>
+<h2 id="group-user">User <span class="faint">3</span></h2>
+<section class="entry" id="createUserCommand" data-name="createUserCommand">
+<h3><code>createUserCommand</code></h3>
+<div class="sig">createUserCommand(input: <a href="inputs.html#CreateUserCommandInput">CreateUserCommandInput</a>!): <a href="objects.html#Command">Command</a>!</div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+<section class="entry" id="updateUserCommand" data-name="updateUserCommand">
+<h3><code>updateUserCommand</code></h3>
+<div class="sig">updateUserCommand(input: <a href="inputs.html#UpdateUserCommandInput">UpdateUserCommandInput</a>!): <a href="objects.html#Command">Command</a>!</div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+<section class="entry" id="deleteUserCommand" data-name="deleteUserCommand">
+<h3><code>deleteUserCommand</code></h3>
+<div class="sig">deleteUserCommand(input: <a href="inputs.html#DeleteUserCommandInput">DeleteUserCommandInput</a>!): <a href="scalars.html#Boolean">Boolean</a>!</div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+</section>
+<section data-group>
+<h2 id="group-keybind">Keybind <span class="faint">3</span></h2>
+<section class="entry" id="createKeybind" data-name="createKeybind">
+<h3><code>createKeybind</code></h3>
+<div class="sig">createKeybind(input: <a href="inputs.html#CreateKeybindInput">CreateKeybindInput</a>!): <a href="objects.html#Keybind">Keybind</a>!</div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+<section class="entry" id="updateKeybind" data-name="updateKeybind">
+<h3><code>updateKeybind</code></h3>
+<div class="sig">updateKeybind(input: <a href="inputs.html#UpdateKeybindInput">UpdateKeybindInput</a>!): <a href="objects.html#Keybind">Keybind</a>!</div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+<section class="entry" id="deleteKeybind" data-name="deleteKeybind">
+<h3><code>deleteKeybind</code></h3>
+<div class="sig">deleteKeybind(input: <a href="inputs.html#DeleteKeybindInput">DeleteKeybindInput</a>!): <a href="scalars.html#Boolean">Boolean</a>!</div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+</section>
+<section data-group>
+<h2 id="group-emoji">Emoji <span class="faint">2</span></h2>
+<section class="entry" id="createCustomEmoji" data-name="createCustomEmoji">
+<h3><code>createCustomEmoji</code></h3>
+<div class="sig">createCustomEmoji(input: <a href="inputs.html#CreateCustomEmojiInput">CreateCustomEmojiInput</a>!): <a href="objects.html#CustomEmoji">CustomEmoji</a>!</div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+<section class="entry" id="deleteCustomEmoji" data-name="deleteCustomEmoji">
+<h3><code>deleteCustomEmoji</code></h3>
+<div class="sig">deleteCustomEmoji(emojiId: <a href="scalars.html#ID">ID</a>!): <a href="scalars.html#Boolean">Boolean</a>!</div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+</section>
+<section data-group>
+<h2 id="group-macro">Macro <span class="faint">4</span></h2>
+<section class="entry" id="createMacro" data-name="createMacro">
+<h3><code>createMacro</code></h3>
+<div class="sig">createMacro(input: <a href="inputs.html#CreateMacroInput">CreateMacroInput</a>!): <a href="objects.html#MacroDef">MacroDef</a>!</div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+<section class="entry" id="updateMacro" data-name="updateMacro">
+<h3><code>updateMacro</code></h3>
+<div class="sig">updateMacro(input: <a href="inputs.html#UpdateMacroInput">UpdateMacroInput</a>!): <a href="objects.html#MacroDef">MacroDef</a>!</div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+<section class="entry" id="deleteMacro" data-name="deleteMacro">
+<h3><code>deleteMacro</code></h3>
+<div class="sig">deleteMacro(macroId: <a href="scalars.html#ID">ID</a>!): <a href="scalars.html#Boolean">Boolean</a>!</div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+<section class="entry" id="executeMacro" data-name="executeMacro">
+<h3><code>executeMacro</code></h3>
+<div class="sig">executeMacro(input: <a href="inputs.html#ExecuteMacroInput">ExecuteMacroInput</a>!): <a href="objects.html#CommandResult">CommandResult</a>!</div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+</section>
+<section data-group>
+<h2 id="group-workspace">Workspace <span class="faint">6</span></h2>
+<section class="entry" id="setWorkspaceState" data-name="setWorkspaceState">
+<h3><code>setWorkspaceState</code></h3>
+<div class="sig">setWorkspaceState(input: <a href="inputs.html#SetWorkspaceStateInput">SetWorkspaceStateInput</a>!): <a href="objects.html#WorkspaceStateEntryGql">WorkspaceStateEntryGql</a>!</div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+<section class="entry" id="deleteWorkspaceState" data-name="deleteWorkspaceState">
+<h3><code>deleteWorkspaceState</code></h3>
+<div class="sig">deleteWorkspaceState(input: <a href="inputs.html#DeleteWorkspaceStateInput">DeleteWorkspaceStateInput</a>!): <a href="scalars.html#Boolean">Boolean</a>!</div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+<section class="entry" id="addWorkspacePlugin" data-name="addWorkspacePlugin">
+<h3><code>addWorkspacePlugin</code></h3>
+<div class="sig">addWorkspacePlugin(input: <a href="inputs.html#AddWorkspacePluginInput">AddWorkspacePluginInput</a>!): <a href="objects.html#WorkspacePlugin">WorkspacePlugin</a>!</div>
+<div class="desc"><p>Add the statement&#39;s plugin to the workspace&#39;s registry. Owner or Moderator.</p>
+</div>
+
+</section>
+<section class="entry" id="updateWorkspacePlugin" data-name="updateWorkspacePlugin">
+<h3><code>updateWorkspacePlugin</code></h3>
+<div class="sig">updateWorkspacePlugin(input: <a href="inputs.html#UpdateWorkspacePluginInput">UpdateWorkspacePluginInput</a>!): <a href="objects.html#WorkspacePlugin">WorkspacePlugin</a>!</div>
+<div class="desc"><p>Change an entry&#39;s statement, status or bundle URL. Owner or Moderator.</p>
+</div>
+
+</section>
+<section class="entry" id="removeWorkspacePlugin" data-name="removeWorkspacePlugin">
+<h3><code>removeWorkspacePlugin</code></h3>
+<div class="sig">removeWorkspacePlugin(serverId: <a href="scalars.html#ID">ID</a>!, pluginId: <a href="scalars.html#String">String</a>!): <a href="scalars.html#Boolean">Boolean</a>!</div>
+<div class="desc"><p>Remove an entry from the workspace&#39;s registry. Owner or Moderator.</p>
+</div>
+
+</section>
+<section class="entry" id="joinRemoteWorkspace" data-name="joinRemoteWorkspace">
+<h3><code>joinRemoteWorkspace</code></h3>
+<div class="sig">joinRemoteWorkspace(input: <a href="inputs.html#JoinRemoteWorkspaceInput">JoinRemoteWorkspaceInput</a>!): <a href="objects.html#RemoteJoinResult">RemoteJoinResult</a>!</div>
+<div class="desc"><p>Join a workspace on another host: the relay presents the caller&#39;s identity, proof and
+delegation, and records the subscription.</p>
+</div>
+
+</section>
+</section>
+<section data-group>
+<h2 id="group-pipeline">Pipeline <span class="faint">4</span></h2>
+<section class="entry" id="createPipeline" data-name="createPipeline">
+<h3><code>createPipeline</code></h3>
+<div class="sig">createPipeline(input: <a href="inputs.html#CreatePipelineInput">CreatePipelineInput</a>!): <a href="objects.html#PipelineGql">PipelineGql</a>!</div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+<section class="entry" id="updatePipeline" data-name="updatePipeline">
+<h3><code>updatePipeline</code></h3>
+<div class="sig">updatePipeline(input: <a href="inputs.html#UpdatePipelineInput">UpdatePipelineInput</a>!): <a href="objects.html#PipelineGql">PipelineGql</a>!</div>
+<div class="desc"><p>Replace a pipeline&#39;s definition. Allowed for its creator and for an Owner or Moderator
+of its workspace; anyone else gets <code>FORBIDDEN</code>.</p>
+</div>
+
+</section>
+<section class="entry" id="deletePipeline" data-name="deletePipeline">
+<h3><code>deletePipeline</code></h3>
+<div class="sig">deletePipeline(pipelineId: <a href="scalars.html#ID">ID</a>!): <a href="scalars.html#Boolean">Boolean</a>!</div>
+<div class="desc"><p>Delete a pipeline. Allowed for its creator and for an Owner or Moderator of its
+workspace; anyone else gets <code>FORBIDDEN</code>.</p>
+</div>
+
+</section>
+<section class="entry" id="togglePipeline" data-name="togglePipeline">
+<h3><code>togglePipeline</code></h3>
+<div class="sig">togglePipeline(pipelineId: <a href="scalars.html#ID">ID</a>!, enabled: <a href="scalars.html#Boolean">Boolean</a>!): <a href="objects.html#PipelineGql">PipelineGql</a>!</div>
+<div class="desc"><p>Switch a pipeline on or off. Allowed for its creator and for an Owner or Moderator of
+its workspace; anyone else gets <code>FORBIDDEN</code>.</p>
+</div>
+
+</section>
+</section>
+<section data-group>
+<h2 id="group-report">Report <span class="faint">4</span></h2>
+<section class="entry" id="reportMessage" data-name="reportMessage">
+<h3><code>reportMessage</code></h3>
+<div class="sig">reportMessage(
+  serverId: <a href="scalars.html#ID">ID</a>!
+  conversationId: <a href="scalars.html#ID">ID</a>!
+  messageId: <a href="scalars.html#ID">ID</a>!
+  reason: <a href="scalars.html#String">String</a>!
+): <a href="objects.html#MessageReport">MessageReport</a>!</div>
+<div class="desc"><p>Report a message to the workspace moderators. Any member who can read it, once per
+message (<code>CONFLICT</code> on a second report). Audited (<code>chat.report_message</code>).</p>
+</div>
+
+</section>
+<section class="entry" id="resolveReport" data-name="resolveReport">
+<h3><code>resolveReport</code></h3>
+<div class="sig">resolveReport(
+  serverId: <a href="scalars.html#ID">ID</a>!
+  reportId: <a href="scalars.html#ID">ID</a>!
+  outcome: <a href="enums.html#ReportOutcome">ReportOutcome</a>!
+): <a href="objects.html#MessageReport">MessageReport</a>!</div>
+<div class="desc"><p>Close an open report as resolved or dismissed (Owner/Moderator). Audited
+(<code>admin.resolve_report</code>).</p>
+</div>
+
+</section>
+<section class="entry" id="reportEncryptedMessage" data-name="reportEncryptedMessage">
+<h3><code>reportEncryptedMessage</code></h3>
+<div class="sig">reportEncryptedMessage(input: <a href="inputs.html#ReportEncryptedMessageInput">ReportEncryptedMessageInput</a>!): <a href="scalars.html#Boolean">Boolean</a>!</div>
+<div class="desc"><p>Report an encrypted message by revealing its content and franking key; the server checks
+them against its receipt before the moderators see them.</p>
+</div>
+
+</section>
+<section class="entry" id="reportDmRequest" data-name="reportDmRequest">
+<h3><code>reportDmRequest</code></h3>
+<div class="sig">reportDmRequest(id: <a href="scalars.html#ID">ID</a>!, reason: <a href="scalars.html#String">String</a>!): <a href="scalars.html#Boolean">Boolean</a>!</div>
+<div class="desc"><p>Report a DM request as abuse; a pending one is ignored too.</p>
+</div>
+
+</section>
+</section>
+<section data-group>
+<h2 id="group-notification">Notification <span class="faint">2</span></h2>
+<section class="entry" id="updateNotificationSettings" data-name="updateNotificationSettings">
+<h3><code>updateNotificationSettings</code></h3>
+<div class="sig">updateNotificationSettings(serverId: <a href="scalars.html#ID">ID</a>!, input: <a href="inputs.html#UpdateNotificationSettingsInput">UpdateNotificationSettingsInput</a>!): <a href="objects.html#NotificationSettings">NotificationSettings</a>!</div>
+<div class="desc"><p>Replace the viewer&#39;s notification settings in the workspace (default level, keywords,
+daily do-not-disturb window, digest). Keywords: at most 20, each 2 to 40 characters.</p>
+</div>
+
+</section>
+<section class="entry" id="markNotificationsRead" data-name="markNotificationsRead">
+<h3><code>markNotificationsRead</code></h3>
+<div class="sig">markNotificationsRead(
+  serverId: <a href="scalars.html#ID">ID</a>!
+  ids: [<a href="scalars.html#ID">ID</a>!]
+  allBefore: <a href="scalars.html#DateTime">DateTime</a>
+): <a href="scalars.html#Int">Int</a>!</div>
+<div class="desc"><p>Mark the viewer&#39;s notifications read: the given <code>ids</code>, or every notification created at
+or before <code>allBefore</code> (exactly one of the two). Returns how many changed.</p>
+</div>
+
+</section>
+</section>
+<section data-group>
+<h2 id="group-key">Key <span class="faint">7</span></h2>
+<section class="entry" id="keyLoginChallenge" data-name="keyLoginChallenge">
+<h3><code>keyLoginChallenge</code></h3>
+<div class="sig">keyLoginChallenge: <a href="objects.html#KeyLoginChallenge">KeyLoginChallenge</a>!</div>
+<div class="desc"><p>Start a key login: a single-use challenge for a device to sign. No session needed.</p>
+</div>
+
+</section>
+<section class="entry" id="loginWithKey" data-name="loginWithKey">
+<h3><code>loginWithKey</code></h3>
+<div class="sig">loginWithKey(proof: <a href="inputs.html#SignedStatementInput">SignedStatementInput</a>!): <a href="objects.html#LoginPayload">LoginPayload</a>!</div>
+<div class="desc"><p>Sign in with a <a href="mutation.html#login"><code>login</code></a> statement signed by an enrolled device key. Sets the same session
+cookie as <a href="mutation.html#login"><code>login</code></a>.</p>
+</div>
+
+</section>
+<section class="entry" id="enrollIdentityKey" data-name="enrollIdentityKey">
+<h3><code>enrollIdentityKey</code></h3>
+<div class="sig">enrollIdentityKey(input: <a href="inputs.html#EnrollIdentityKeyInput">EnrollIdentityKeyInput</a>!): <a href="objects.html#KeyIdentity">KeyIdentity</a>!</div>
+<div class="desc"><p>Bind a key identity to the signed-in account. Afterwards the password no longer signs in.</p>
+</div>
+
+</section>
+<section class="entry" id="rotateIdentityKey" data-name="rotateIdentityKey">
+<h3><code>rotateIdentityKey</code></h3>
+<div class="sig">rotateIdentityKey(input: <a href="inputs.html#RotateIdentityKeyInput">RotateIdentityKeyInput</a>!): <a href="objects.html#KeyIdentity">KeyIdentity</a>!</div>
+<div class="desc"><p>Append a rotation to the key log. A rotation signed by the recovery key works without a
+session, revokes every device and session, and enrolls the device given with it.</p>
+</div>
+
+</section>
+<section class="entry" id="signupWithKey" data-name="signupWithKey">
+<h3><code>signupWithKey</code></h3>
+<div class="sig">signupWithKey(input: <a href="inputs.html#SignupWithKeyInput">SignupWithKeyInput</a>!): <a href="objects.html#SignupWithInvitePayloadGql">SignupWithInvitePayloadGql</a>!</div>
+<div class="desc"><p>Create an account from a key identity alone: no password, no email. The registration
+mode applies as for <a href="mutation.html#signupWithInvite"><code>signupWithInvite</code></a> (exactly one token in invite-only mode, none in
+open mode). Signs the new account in on the device that signed up, setting the same
+session and CSRF cookies as <a href="mutation.html#signupWithInvite"><code>signupWithInvite</code></a>.</p>
+</div>
+
+</section>
+<section class="entry" id="uploadMlsKeyPackages" data-name="uploadMlsKeyPackages">
+<h3><code>uploadMlsKeyPackages</code></h3>
+<div class="sig">uploadMlsKeyPackages(keyPackages: [<a href="scalars.html#String">String</a>!]!): <a href="objects.html#MlsKeyPackageStatus">MlsKeyPackageStatus</a>!</div>
+<div class="desc"><p>Store key packages of the session&#39;s device, all or none. A last-resort package replaces
+the device&#39;s previous one.</p>
+</div>
+
+</section>
+<section class="entry" id="claimMlsKeyPackages" data-name="claimMlsKeyPackages">
+<h3><code>claimMlsKeyPackages</code></h3>
+<div class="sig">claimMlsKeyPackages(input: <a href="inputs.html#ClaimMlsKeyPackagesInput">ClaimMlsKeyPackagesInput</a>!): [<a href="objects.html#ClaimedKeyPackage">ClaimedKeyPackage</a>!]!</div>
+<div class="desc"><p>One key package per device waiting to be added; devices with none usable are left out.</p>
+</div>
+
+</section>
+</section>
+<section data-group>
+<h2 id="group-device">Device <span class="faint">7</span></h2>
+<section class="entry" id="addDeviceKey" data-name="addDeviceKey">
+<h3><code>addDeviceKey</code></h3>
+<div class="sig">addDeviceKey(certificate: <a href="inputs.html#SignedStatementInput">SignedStatementInput</a>!): <a href="objects.html#DeviceKey">DeviceKey</a>!</div>
+<div class="desc"><p>Add a device certified by the current identity key.</p>
+</div>
+
+</section>
+<section class="entry" id="revokeDeviceKey" data-name="revokeDeviceKey">
+<h3><code>revokeDeviceKey</code></h3>
+<div class="sig">revokeDeviceKey(revocation: <a href="inputs.html#SignedStatementInput">SignedStatementInput</a>!): <a href="objects.html#DeviceKey">DeviceKey</a>!</div>
+<div class="desc"><p>Revoke a device, signed by the identity key or by the device itself. Ends its sessions.</p>
+</div>
+
+</section>
+<section class="entry" id="startDeviceLink" data-name="startDeviceLink">
+<h3><code>startDeviceLink</code></h3>
+<div class="sig">startDeviceLink: <a href="objects.html#StartedDeviceLink">StartedDeviceLink</a>!</div>
+<div class="desc"><p>Start linking a new device to the signed-in account. Cancels the account&#39;s previous
+live link. The link lives 10 minutes.</p>
+</div>
+
+</section>
+<section class="entry" id="sendDeviceLinkOffer" data-name="sendDeviceLinkOffer">
+<h3><code>sendDeviceLinkOffer</code></h3>
+<div class="sig">sendDeviceLinkOffer(linkId: <a href="scalars.html#String">String</a>!, offer: <a href="inputs.html#SealedMessageInput">SealedMessageInput</a>!): <a href="scalars.html#Boolean">Boolean</a>!</div>
+<div class="desc"><p>The new device&#39;s sealed offer. No session needed: the link id is the capability.</p>
+</div>
+
+</section>
+<section class="entry" id="sendDeviceLinkAnswer" data-name="sendDeviceLinkAnswer">
+<h3><code>sendDeviceLinkAnswer</code></h3>
+<div class="sig">sendDeviceLinkAnswer(linkId: <a href="scalars.html#String">String</a>!, answer: <a href="inputs.html#SealedMessageInput">SealedMessageInput</a>!): <a href="objects.html#DeviceLink">DeviceLink</a>!</div>
+<div class="desc"><p>The old device&#39;s sealed answer, carrying the new device&#39;s certificate. The link then
+lives another 10 minutes.</p>
+</div>
+
+</section>
+<section class="entry" id="completeDeviceLink" data-name="completeDeviceLink">
+<h3><code>completeDeviceLink</code></h3>
+<div class="sig">completeDeviceLink(linkId: <a href="scalars.html#String">String</a>!): <a href="scalars.html#Boolean">Boolean</a>!</div>
+<div class="desc"><p>Called by the new device right after its first <a href="mutation.html#loginWithKey"><code>loginWithKey</code></a>.</p>
+</div>
+
+</section>
+<section class="entry" id="cancelDeviceLink" data-name="cancelDeviceLink">
+<h3><code>cancelDeviceLink</code></h3>
+<div class="sig">cancelDeviceLink(linkId: <a href="scalars.html#String">String</a>!): <a href="scalars.html#Boolean">Boolean</a>!</div>
+<div class="desc"><p>Cancel a link from either device, with or without a session.</p>
+</div>
+
+</section>
+</section>
+<section data-group>
+<h2 id="group-relay">Relay <span class="faint">2</span></h2>
+<section class="entry" id="ackRelayItems" data-name="ackRelayItems">
+<h3><code>ackRelayItems</code></h3>
+<div class="sig">ackRelayItems(upTo: <a href="scalars.html#ID">ID</a>!): <a href="scalars.html#Boolean">Boolean</a>!</div>
+<div class="desc"><p>Move the session device&#39;s cursor up to <code>upTo</code>.</p>
+</div>
+
+</section>
+<section class="entry" id="leaveRelay" data-name="leaveRelay">
+<h3><code>leaveRelay</code></h3>
+<div class="sig">leaveRelay: <a href="scalars.html#Boolean">Boolean</a>!</div>
+<div class="desc"><p>Cancel the caller&#39;s subscriptions at every host, then delete their queue, requests,
+contacts and blocks on this relay.</p>
+</div>
+
+</section>
+</section>
+<section data-group>
+<h2 id="group-other">Other <span class="faint">32</span></h2>
+<section class="entry" id="login" data-name="login">
+<h3><code>login</code></h3>
+<div class="sig">login(input: <a href="inputs.html#LoginInput">LoginInput</a>!): <a href="objects.html#LoginPayload">LoginPayload</a>!</div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+<section class="entry" id="logout" data-name="logout">
+<h3><code>logout</code></h3>
+<div class="sig">logout: <a href="scalars.html#Boolean">Boolean</a>!</div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+<section class="entry" id="logoutOtherSessions" data-name="logoutOtherSessions">
+<h3><code>logoutOtherSessions</code></h3>
+<div class="sig">logoutOtherSessions: <a href="scalars.html#Int">Int</a>!</div>
+<div class="desc"><p>End every session of the signed-in account except this one. Returns how many ended.</p>
+</div>
+
+</section>
+<section class="entry" id="toggleReaction" data-name="toggleReaction">
+<h3><code>toggleReaction</code></h3>
+<div class="sig">toggleReaction(input: <a href="inputs.html#ToggleReactionInput">ToggleReactionInput</a>!): [<a href="objects.html#ReactionGroup">ReactionGroup</a>!]!</div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+<section class="entry" id="markAsRead" data-name="markAsRead">
+<h3><code>markAsRead</code></h3>
+<div class="sig">markAsRead(input: <a href="inputs.html#MarkAsReadInput">MarkAsReadInput</a>!): <a href="scalars.html#Boolean">Boolean</a>!</div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+<section class="entry" id="markAllAsRead" data-name="markAllAsRead">
+<h3><code>markAllAsRead</code></h3>
+<div class="sig">markAllAsRead(input: <a href="inputs.html#MarkAllAsReadInput">MarkAllAsReadInput</a>!): <a href="scalars.html#Boolean">Boolean</a>!</div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+<section class="entry" id="startTyping" data-name="startTyping">
+<h3><code>startTyping</code></h3>
+<div class="sig">startTyping(serverId: <a href="scalars.html#ID">ID</a>!, conversationId: <a href="scalars.html#ID">ID</a>!): <a href="scalars.html#Boolean">Boolean</a>!</div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+<section class="entry" id="heartbeat" data-name="heartbeat">
+<h3><code>heartbeat</code></h3>
+<div class="sig">heartbeat(input: <a href="inputs.html#HeartbeatInput">HeartbeatInput</a>!): <a href="scalars.html#Boolean">Boolean</a>!</div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+<section class="entry" id="requestPasswordReset" data-name="requestPasswordReset">
+<h3><code>requestPasswordReset</code></h3>
+<div class="sig">requestPasswordReset(username: <a href="scalars.html#String">String</a>!): <a href="scalars.html#Boolean">Boolean</a>!</div>
+<div class="desc"><p><code>FEATURE_DISABLED</code> while the operator has disabled email. Without SMTP the reset mail is
+logged instead of sent.</p>
+</div>
+
+</section>
+<section class="entry" id="resetPassword" data-name="resetPassword">
+<h3><code>resetPassword</code></h3>
+<div class="sig">resetPassword(token: <a href="scalars.html#String">String</a>!, newPassword: <a href="scalars.html#String">String</a>!): <a href="scalars.html#Boolean">Boolean</a>!</div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+<section class="entry" id="updateMyProfile" data-name="updateMyProfile">
+<h3><code>updateMyProfile</code></h3>
+<div class="sig">updateMyProfile(input: <a href="inputs.html#UpdateMyProfileInput">UpdateMyProfileInput</a>!): <a href="objects.html#User">User</a>!</div>
+<div class="desc"><p>Update fields on the authenticated user&#39;s profile.</p>
+<p>Returns the full updated <a href="objects.html#User"><code>User</code></a> so the client can refresh local cache
+without an extra <code>me { ... }</code> round-trip.</p>
+<h1 id="errors">Errors</h1>
+<ul>
+<li><code>UNAUTHENTICATED</code> — no session.</li>
+<li><code>FORBIDDEN</code> — <code>displayName</code> from a member whose relay is another server; their
+display name comes from their profile card.</li>
+<li><code>VALIDATION</code> — <code>displayName</code> &gt; 64 chars, <code>statusText</code> &gt; 256 chars,
+<code>bio</code> &gt; 2000 chars, or <code>avatarUrl</code> not under <code>/api/files/</code>.</li>
+<li><code>NOT_FOUND</code> — caller&#39;s user row missing (should not happen in practice).</li>
+<li><code>INTERNAL</code> — repository failure.</li>
+</ul>
+<h1 id="examples">Examples</h1>
+<pre><code class="language-graphql">mutation Update($input: UpdateMyProfileInput!) {
+updateMyProfile(input: $input) {
+id username displayName avatarUrl statusText bio
+}
+}</code></pre>
+</div>
+
+</section>
+<section class="entry" id="setMemberRole" data-name="setMemberRole">
+<h3><code>setMemberRole</code></h3>
+<div class="sig">setMemberRole(
+  serverId: <a href="scalars.html#ID">ID</a>!
+  userId: <a href="scalars.html#ID">ID</a>!
+  role: <a href="enums.html#ServerMemberRoleGql">ServerMemberRoleGql</a>!
+): <a href="objects.html#ServerMember">ServerMember</a>!</div>
+<div class="desc"><p>Change a member&#39;s role. Owner: any role but <code>OWNER</code>, never their own. Moderator:
+<code>MEMBER</code> &lt;-&gt; <code>GUEST</code> only. Audited (<code>admin.set_member_role</code>).</p>
+</div>
+
+</section>
+<section class="entry" id="kickMember" data-name="kickMember">
+<h3><code>kickMember</code></h3>
+<div class="sig">kickMember(
+  serverId: <a href="scalars.html#ID">ID</a>!
+  userId: <a href="scalars.html#ID">ID</a>!
+  reason: <a href="scalars.html#String">String</a>
+): <a href="scalars.html#Boolean">Boolean</a>!</div>
+<div class="desc"><p>Remove a member from the workspace (Owner/Moderator; nobody can kick the owner, and a
+moderator cannot kick a moderator). They may re-join with a new invite. Audited.</p>
+</div>
+
+</section>
+<section class="entry" id="banMember" data-name="banMember">
+<h3><code>banMember</code></h3>
+<div class="sig">banMember(
+  serverId: <a href="scalars.html#ID">ID</a>!
+  userId: <a href="scalars.html#ID">ID</a>!
+  reason: <a href="scalars.html#String">String</a>
+  expiresAt: <a href="scalars.html#DateTime">DateTime</a>
+): <a href="objects.html#ServerBan">ServerBan</a>!</div>
+<div class="desc"><p>Remove a member and block them from re-joining until <code>expiresAt</code> (or until unbanned
+when omitted). Same targeting rules as <a href="mutation.html#kickMember"><code>kickMember</code></a>. Audited.</p>
+</div>
+
+</section>
+<section class="entry" id="unbanMember" data-name="unbanMember">
+<h3><code>unbanMember</code></h3>
+<div class="sig">unbanMember(serverId: <a href="scalars.html#ID">ID</a>!, userId: <a href="scalars.html#ID">ID</a>!): <a href="scalars.html#Boolean">Boolean</a>!</div>
+<div class="desc"><p>Lift a ban (Owner/Moderator). Returns whether a ban existed. Audited.</p>
+</div>
+
+</section>
+<section class="entry" id="timeoutMember" data-name="timeoutMember">
+<h3><code>timeoutMember</code></h3>
+<div class="sig">timeoutMember(
+  serverId: <a href="scalars.html#ID">ID</a>!
+  userId: <a href="scalars.html#ID">ID</a>!
+  until: <a href="scalars.html#DateTime">DateTime</a>!
+  reason: <a href="scalars.html#String">String</a>
+): <a href="objects.html#MemberTimeout">MemberTimeout</a>!</div>
+<div class="desc"><p>Time a member out until <code>until</code> (at most 30 days ahead): they keep reading but every
+write fails with <code>TIMED_OUT</code>. Same targeting rules as <a href="mutation.html#kickMember"><code>kickMember</code></a>. Audited.</p>
+</div>
+
+</section>
+<section class="entry" id="clearTimeout" data-name="clearTimeout">
+<h3><code>clearTimeout</code></h3>
+<div class="sig">clearTimeout(serverId: <a href="scalars.html#ID">ID</a>!, userId: <a href="scalars.html#ID">ID</a>!): <a href="scalars.html#Boolean">Boolean</a>!</div>
+<div class="desc"><p>End a member&#39;s timeout early. Returns whether one was in force. Audited.</p>
+</div>
+
+</section>
+<section class="entry" id="setSlowMode" data-name="setSlowMode">
+<h3><code>setSlowMode</code></h3>
+<div class="sig">setSlowMode(
+  serverId: <a href="scalars.html#ID">ID</a>!
+  conversationId: <a href="scalars.html#ID">ID</a>!
+  seconds: <a href="scalars.html#Int">Int</a>!
+): <a href="objects.html#Conversation">Conversation</a>!</div>
+<div class="desc"><p>Set a channel&#39;s slow mode, in seconds (0 to 21600; 0 turns it off). Owner/Moderator.
+Audited (<code>chat.set_slow_mode</code>).</p>
+</div>
+
+</section>
+<section class="entry" id="setDoNotDisturb" data-name="setDoNotDisturb">
+<h3><code>setDoNotDisturb</code></h3>
+<div class="sig">setDoNotDisturb(
+  serverId: <a href="scalars.html#ID">ID</a>!
+  paused: <a href="scalars.html#Boolean">Boolean</a>!
+  until: <a href="scalars.html#DateTime">DateTime</a>
+): <a href="objects.html#NotificationSettings">NotificationSettings</a>!</div>
+<div class="desc"><p>Turn the viewer&#39;s manual do-not-disturb pause on (until turned off, or until <code>until</code>)
+or off. While paused, notifications are still recorded but arrive <code>quiet</code>.</p>
+</div>
+
+</section>
+<section class="entry" id="publishProfileCard" data-name="publishProfileCard">
+<h3><code>publishProfileCard</code></h3>
+<div class="sig">publishProfileCard(card: <a href="inputs.html#SignedStatementInput">SignedStatementInput</a>!): <a href="objects.html#ProfileCard">ProfileCard</a>!</div>
+<div class="desc"><p>Publish a profile card signed by the current identity key.</p>
+</div>
+
+</section>
+<section class="entry" id="submitMlsCommit" data-name="submitMlsCommit">
+<h3><code>submitMlsCommit</code></h3>
+<div class="sig">submitMlsCommit(input: <a href="inputs.html#SubmitMlsCommitInput">SubmitMlsCommitInput</a>!): <a href="objects.html#MlsCommit">MlsCommit</a>!</div>
+<div class="desc"><p>A Commit for the group&#39;s current epoch, or an incarnation&#39;s first Commit (epoch 0).
+<code>STALE_EPOCH</code> names the current incarnation and epoch when another Commit came first.</p>
+</div>
+
+</section>
+<section class="entry" id="ackMlsWelcomes" data-name="ackMlsWelcomes">
+<h3><code>ackMlsWelcomes</code></h3>
+<div class="sig">ackMlsWelcomes(ids: [<a href="scalars.html#ID">ID</a>!]!): <a href="scalars.html#Int">Int</a>!</div>
+<div class="desc"><p>Acknowledge Welcomes of the session&#39;s device; answers how many were acknowledged now.</p>
+</div>
+
+</section>
+<section class="entry" id="requestMlsReadd" data-name="requestMlsReadd">
+<h3><code>requestMlsReadd</code></h3>
+<div class="sig">requestMlsReadd(input: <a href="inputs.html#RequestMlsReaddInput">RequestMlsReaddInput</a>!): <a href="scalars.html#Boolean">Boolean</a>!</div>
+<div class="desc"><p>Ask the group&#39;s other devices to remove and add the session&#39;s device again.</p>
+</div>
+
+</section>
+<section class="entry" id="addContact" data-name="addContact">
+<h3><code>addContact</code></h3>
+<div class="sig">addContact(principalId: <a href="scalars.html#String">String</a>!, relayUrls: [<a href="scalars.html#String">String</a>!]!): <a href="objects.html#Contact">Contact</a>!</div>
+<div class="desc"><p>Add a contact, or replace its relay URLs (1 to 8 of at most 256 bytes each).</p>
+</div>
+
+</section>
+<section class="entry" id="removeContact" data-name="removeContact">
+<h3><code>removeContact</code></h3>
+<div class="sig">removeContact(principalId: <a href="scalars.html#String">String</a>!): <a href="scalars.html#Boolean">Boolean</a>!</div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+<section class="entry" id="acceptDmRequest" data-name="acceptDmRequest">
+<h3><code>acceptDmRequest</code></h3>
+<div class="sig">acceptDmRequest(id: <a href="scalars.html#ID">ID</a>!): <a href="objects.html#DmRequest">DmRequest</a>!</div>
+<div class="desc"><p>Release the request&#39;s held items, let later ones flow, and add the sender as a contact.</p>
+</div>
+
+</section>
+<section class="entry" id="ignoreDmRequest" data-name="ignoreDmRequest">
+<h3><code>ignoreDmRequest</code></h3>
+<div class="sig">ignoreDmRequest(id: <a href="scalars.html#ID">ID</a>!): <a href="objects.html#DmRequest">DmRequest</a>!</div>
+<div class="desc"><p>Delete the request&#39;s held items and drop later items of the conversation.</p>
+</div>
+
+</section>
+<section class="entry" id="blockPrincipal" data-name="blockPrincipal">
+<h3><code>blockPrincipal</code></h3>
+<div class="sig">blockPrincipal(principalId: <a href="scalars.html#String">String</a>!): <a href="scalars.html#Boolean">Boolean</a>!</div>
+<div class="desc"><p>Ignore a principal&#39;s pending requests and refuse its invites and key package claims.</p>
+</div>
+
+</section>
+<section class="entry" id="unblockPrincipal" data-name="unblockPrincipal">
+<h3><code>unblockPrincipal</code></h3>
+<div class="sig">unblockPrincipal(principalId: <a href="scalars.html#String">String</a>!): <a href="scalars.html#Boolean">Boolean</a>!</div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+<section class="entry" id="remoteJoinChallenge" data-name="remoteJoinChallenge">
+<h3><code>remoteJoinChallenge</code></h3>
+<div class="sig">remoteJoinChallenge(
+  hostServerId: <a href="scalars.html#String">String</a>!
+  hostOrigin: <a href="scalars.html#String">String</a>!
+  inviteToken: <a href="scalars.html#String">String</a>
+): <a href="objects.html#RemoteJoinChallenge">RemoteJoinChallenge</a>!</div>
+<div class="desc"><p>Pin the host at <code>hostOrigin</code> as <code>hostServerId</code> and fetch a login challenge from it for a
+join, with the workspace <code>inviteToken</code> names (the invite is not used).</p>
+</div>
+
+</section>
+<section class="entry" id="renewDelegations" data-name="renewDelegations">
+<h3><code>renewDelegations</code></h3>
+<div class="sig">renewDelegations(delegations: [<a href="inputs.html#SignedStatementInput">SignedStatementInput</a>!]!): [<a href="objects.html#RemoteSubscription">RemoteSubscription</a>!]!</div>
+<div class="desc"><p>Present fresh delegations of the caller&#39;s devices to their hosts; one entry per
+delegation, in order.</p>
+</div>
+
+</section>
+<section class="entry" id="applyRemoteRevocation" data-name="applyRemoteRevocation">
+<h3><code>applyRemoteRevocation</code></h3>
+<div class="sig">applyRemoteRevocation(revocation: <a href="inputs.html#SignedStatementInput">SignedStatementInput</a>!): <a href="objects.html#SignedStatement">SignedStatement</a>!</div>
+<div class="desc"><p>Apply a device revocation on this host directly, as an app does when a host did not
+acknowledge it through the relay. Needs no session: it acts only on the revocation&#39;s
+signature, and attempts are limited per IP. Returns the host&#39;s signed acknowledgement.</p>
+</div>
+
+</section>
+</section>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Generated from <a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>58e3ec0</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+<script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
+<script>
+(() => {
+  const q = document.getElementById("filter");
+  if (!q) return;
+  const items = [...document.querySelectorAll("[data-name]")];
+  const groups = [...document.querySelectorAll("[data-group]")];
+  const none = document.getElementById("filter-none");
+  const run = () => {
+    const v = q.value.trim().toLowerCase();
+    let shown = 0;
+    for (const el of items) {
+      const hit = v ? el.dataset.name.toLowerCase().includes(v) : !el.closest("[data-search-only]");
+      el.hidden = !hit;
+      if (hit) shown += 1;
+    }
+    for (const g of groups) g.hidden = !g.querySelector("[data-name]:not([hidden])");
+    if (none) none.hidden = shown > 0 || !v;
+  };
+  q.addEventListener("input", run);
+  run();
+})();
+</script>
+</body>
+</html>

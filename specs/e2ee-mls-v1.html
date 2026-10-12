@@ -1,0 +1,1585 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>End-to-end encryption with MLS v1 · RIM</title>
+<meta name="description" content="Status: implemented, normative. Library, providers, cipher suite and test vectors: docs/decisions/mls-library-2026-10-09.md. Read key-identity-v1.md (keys, tagged encodings, statements) and device-linking-v1.md first. …">
+<link rel="icon" href="../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../index.html" aria-label="RIM home">
+      <picture><source srcset="../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../index.html#what">What RIM is</a>
+      <a href="../index.html#how">How it works</a>
+      <a href="../docs/self-hosting.html">Self-host</a>
+      <a href="../configure/index.html">Configure</a>
+      <a href="../docs/index.html">Docs</a>
+      <a href="../api/index.html">API</a>
+      <a href="index.html" aria-current="page">Specs</a>
+      <a href="../docs/contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="index.html">Specs</a><span aria-hidden="true">/</span><span>End-to-end encryption with MLS v1</span></div>
+  <div class="page with-toc">
+    <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
+<ol>
+<li><a href="#summary">Summary</a></li>
+<li><a href="#scope">Scope</a></li>
+<li><a href="#identity-and-credentials">Identity and credentials</a><ol><li><a href="#the-mls-key-statement">The mls-key statement</a></li><li><a href="#verifying-a-leaf">Verifying a leaf</a></li><li><a href="#a-leaf-that-does-not-verify">A leaf that does not verify</a></li><li><a href="#device-list-changes">Device list changes</a></li></ol></li>
+<li><a href="#key-packages">Key packages</a></li>
+<li><a href="#groups">Groups</a><ol><li><a href="#group-id-and-configuration">Group id and configuration</a></li><li><a href="#creating-a-group">Creating a group</a></li><li><a href="#welcome-delivery-and-joining">Welcome delivery and joining</a></li><li><a href="#leaving-removal-and-the-groups-end">Leaving, removal and the group's end</a></li><li><a href="#lost-state-and-re-add-requests">Lost state and re-add requests</a></li><li><a href="#incarnations">Incarnations</a></li></ol></li>
+<li><a href="#sequencing">Sequencing</a><ol><li><a href="#what-the-server-checks">What the server checks</a></li><li><a href="#one-commit-per-epoch">One Commit per epoch</a></li><li><a href="#ordering">Ordering</a></li><li><a href="#replay-and-gaps">Replay and gaps</a></li></ol></li>
+<li><a href="#the-message-envelope">The message envelope</a><ol><li><a href="#rows-and-tables">Rows and tables</a></li><li><a href="#application-data">Application data</a></li><li><a href="#authenticated-data">Authenticated data</a></li><li><a href="#edits-deletes-and-metadata">Edits, deletes and metadata</a></li><li><a href="#clients-decrypt-once-store-render">Clients: decrypt once, store, render</a></li><li><a href="#the-change-feed">The change feed</a></li></ol></li>
+<li><a href="#mentions-and-notifications">Mentions and notifications</a></li>
+<li><a href="#attachments">Attachments</a></li>
+<li><a href="#franking">Franking</a></li>
+<li><a href="#server-features-in-encrypted-conversations">Server features in encrypted conversations</a></li>
+<li><a href="#plugins-and-the-client-message-service">Plugins and the client message service</a></li>
+<li><a href="#migration-of-existing-conversations">Migration of existing conversations</a></li>
+<li><a href="#the-web-client-s4-6">The web client (S4-6)</a></li>
+<li><a href="#storage">Storage</a></li>
+<li><a href="#graphql">GraphQL</a><ol><li><a href="#errors">Errors</a></li><li><a href="#events">Events</a></li></ol></li>
+<li><a href="#limits-and-audit">Limits and audit</a></li>
+<li><a href="#threat-model">Threat model</a></li>
+<li><a href="#test-plan">Test plan</a></li>
+<li><a href="#deferred">Deferred</a></li>
+<li><a href="#appendix-a-known-answer-vectors">Appendix A: known-answer vectors</a><ol><li><a href="#a1-group-id">A.1 Group id</a></li><li><a href="#a2-mls-key-statement-and-credential-identity">A.2 mls-key statement and credential identity</a></li><li><a href="#a3-attachment">A.3 Attachment</a></li><li><a href="#a4-content-franking-and-authenticated-data">A.4 Content, franking and authenticated data</a></li><li><a href="#a5-franking-receipt">A.5 Franking receipt</a></li><li><a href="#a6-re-add-request">A.6 Re-add request</a></li></ol></li>
+</ol>
+</details></aside>
+    <main id="content" class="prose">
+<h1 id="end-to-end-encryption-with-mls-v1">End-to-end encryption with MLS v1</h1>
+<p class="status"><span><b>End-to-end encryption with MLS v1</b></span><span>version 1</span><span>status: implemented, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/docs/specs/e2ee-mls-v1.md">rim-server/docs/specs/e2ee-mls-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/c86029b35a7ef7770b05e7bda62909f988343f7f">c86029b</a></span></p>
+<p><em>Status: implemented, normative. Library, providers, cipher suite and test vectors:
+<a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/docs/decisions/mls-library-2026-10-09.md"><code>docs/decisions/mls-library-2026-10-09.md</code></a>. Read <a href="key-identity-v1.html"><code>key-identity-v1.md</code></a> (keys, tagged encodings,
+statements) and <a href="device-linking-v1.html"><code>device-linking-v1.md</code></a> first. This document is the contract between the server
+(<code>E2eeService</code>), the <code>rim_mls</code> crate in rim-ui, the desktop client and the web client. Labels of
+the form S4-n below name the change that built an item: S4-1 the server, S4-2 the <code>rim_mls</code>
+crate, S4-3 to S4-5 the desktop client, S4-6 the web client.</em></p>
+<h2 id="summary">Summary <a class="anchor" href="#summary" aria-label="Link to this section">#</a></h2>
+<ol>
+<li><strong>DMs and groups</strong> are encrypted; channels, private ones included, stay plaintext. New DMs and
+groups are encrypted when every member is ready; existing ones are upgraded once, by a member
+device, behind a visible &quot;encrypted since&quot; marker. Old plaintext stays.</li>
+<li>One MLS group per conversation, suite <strong>0x004F</strong> (X25519 + ML-KEM-768, AES-128-GCM, Ed25519).
+Members are <strong>devices</strong>. The server owns conversation membership; the group follows it.</li>
+<li>Credentials: a per-device <strong>MLS signature key</strong> certified by the device key (an <code>mls-key</code>
+statement), chained to the key log. Clients verify every leaf.</li>
+<li>Each device keeps 20 one-time <strong>key packages</strong> and one last-resort package on the server,
+90-day lifetime. The server validates them on upload and hands them out once.</li>
+<li>The server is the <strong>sequencer</strong>: one Commit per <code>(conversation, incarnation, epoch)</code>, enforced by
+a row lock and a unique index; the loser gets <code>STALE_EPOCH</code>. Application messages are accepted
+only in the current epoch, so the change feed is in epoch order.</li>
+<li>Every MLS message is a PrivateMessage. Its cleartext <strong>authenticated data</strong> carries what the
+server may read: mentions, the franking commitment, and the membership summary of a Commit.
+The server checks the summary against the members and the key packages it issued.</li>
+<li>An encrypted message is a <code>message</code> row with <code>text</code> null and an MLS envelope. Edits replace the
+envelope (same row, new version); deletes are server tombstones; reactions, pins, threads and
+forward origins are server metadata.</li>
+<li>A client decrypts each message <strong>once</strong>, in one transaction with storing its plaintext. A new
+device joins through a Welcome and reads older history from the drive archive.</li>
+<li>Attachments: AES-256-GCM under a per-file secret, uploaded as opaque blobs checked by SHA-256.</li>
+<li><strong>Franking</strong>: an HMAC commitment in the authenticated data, a server receipt over it, and a
+report that reveals one message&#39;s content and franking key to the moderators.</li>
+</ol>
+<h2 id="scope">Scope <a class="anchor" href="#scope" aria-label="Link to this section">#</a></h2>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Conversation</th>
+<th>Encrypted in v1</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Direct</code></td>
+<td>Yes</td>
+<td>Two members, no shared history for later joiners, nothing server-side depends on its text</td>
+</tr>
+<tr>
+<td><code>Group</code></td>
+<td>Yes</td>
+<td>Member-only by construction (<code>is_private</code> is always false for groups; the server has no other reader)</td>
+</tr>
+<tr>
+<td><code>Channel</code>, private</td>
+<td>No</td>
+<td>Channels are where server search, pipelines, bots and the agent work, and where later joiners read full history; MLS gives a new member nothing from before it joined. Encrypted private channels need history sharing and are deferred</td>
+</tr>
+<tr>
+<td><code>Channel</code>, public</td>
+<td>No</td>
+<td>Readable by every workspace member by design</td>
+</tr>
+</tbody></table></div>
+<ul>
+<li><strong>Ready member.</strong> A user whose <code>principal_id</code> is set and who has at least one <em>MLS-active</em> device:
+not revoked, with a key package uploaded in the last 60 days (<code>device_key.last_key_package_upload_at</code>,
+set by every upload; key package rows themselves expire after 90 days), shown as
+<code>PrincipalDevice.mlsActive</code>. Bots, the CLI and password-only accounts are never ready.</li>
+<li><strong>An encrypted conversation</strong> has <code>conversation.encrypted_at</code> set. It is set when an encrypted
+conversation is created (<code>createConversation(input: { encrypted: true })</code>) or when the first
+Commit of an existing plaintext DM or group is accepted (&quot;Migration&quot;). It is never cleared.</li>
+<li><strong>Clients pin it.</strong> A device that holds group state for a conversation, or ever sees its
+<code>encryptedAt</code> or an encrypted entry in its feed, keeps the conversation encrypted on that
+device for good, through leaving it and <code>NO_ACCESS</code> too. When the server answers
+<code>encryptedAt: null</code> for a pinned conversation, the device shows &quot;Encryption was reset by the
+server&quot; and stops sending there: it never sends plaintext into it (<code>sendMessage</code>,
+<code>replyToMessage</code>, <code>editMessage</code>, <code>forwardMessage</code>, a plugin&#39;s post) and never upgrades it again.</li>
+<li>In an encrypted conversation the server refuses plaintext writes (<code>sendMessage</code>,
+<code>replyToMessage</code>, <code>editMessage</code> on an encrypted row, <code>forwardMessage</code> into it: <code>VALIDATION</code>,
+<code>this conversation is encrypted</code>), and <code>createConversation(encrypted: true)</code> and
+<code>addConversationMembers</code> refuse members who are not ready (<code>VALIDATION</code>,
+<code>every member of an encrypted conversation needs a device set up for encryption</code>).</li>
+<li><strong>Group devices</strong>: the devices that are leaves of the current MLS group, as the server records
+them from accepted Commits (<code>mls_group_device</code>). <strong>Desired devices</strong>: the MLS-active devices of
+the conversation&#39;s current members. <strong>Pending adds</strong> are desired devices not in the group;
+<strong>pending removes</strong> are group devices no longer desired (member left, removed, kicked or banned;
+device revoked; inactive for 60 days).</li>
+<li>At most <strong>100 members and 512 devices</strong> per encrypted conversation (<code>VALIDATION</code> beyond).</li>
+</ul>
+<h2 id="identity-and-credentials">Identity and credentials <a class="anchor" href="#identity-and-credentials" aria-label="Link to this section">#</a></h2>
+<h3 id="the-mls-key-statement">The <code>mls-key</code> statement <a class="anchor" href="#the-mls-key-statement" aria-label="Link to this section">#</a></h3>
+<p>A statement in the <a href="key-identity-v1.html"><code>key-identity-v1.md</code></a> sense (exact signed text, version 2 tagged keys, unknown
+and duplicate fields refused), signed by the <strong>device key</strong> over
+<code>&quot;rim.mls-key.v1\0&quot; || payload</code>, payload at most 16 KiB:</p>
+<pre><code class="language-json">{&quot;v&quot;:2,&quot;type&quot;:&quot;mls-key&quot;,&quot;principalId&quot;:&quot;rimp1_…&quot;,&quot;deviceId&quot;:&quot;&lt;uuid&gt;&quot;,&quot;mlsKey&quot;:&quot;ed25519:…&quot;,&quot;issuedAt&quot;:&quot;…&quot;}</code></pre>
+<ul>
+<li><code>mlsKey</code> is the device&#39;s MLS signature key: Ed25519 (the suite&#39;s signature scheme), generated by
+<code>rim_mls</code>, kept with the group state (never in the archive). One per device; a device that loses
+it generates a new key and statement and is re-added (&quot;Lost state&quot;).</li>
+<li>The MLS leaf&#39;s credential is a <strong>basic credential</strong> whose <code>identity</code> is the UTF-8 JSON
+<code>{&quot;payload&quot;:&quot;&lt;payload text&gt;&quot;,&quot;signature&quot;:&quot;&lt;tagged signature&gt;&quot;}</code> (appendix A.2); the leaf&#39;s
+<code>signature_key</code> must equal the raw bytes of <code>mlsKey</code>.</li>
+<li><code>rim_identity</code> gains the statement type and its verifier; servers and clients use the same code.</li>
+</ul>
+<h3 id="verifying-a-leaf">Verifying a leaf <a class="anchor" href="#verifying-a-leaf" aria-label="Link to this section">#</a></h3>
+<p>A client accepts a leaf (in a Welcome&#39;s tree, an Add, or a re-added leaf) only when all hold:</p>
+<ol>
+<li><code>identity</code> parses as above and the payload is a valid <code>mls-key</code> statement.</li>
+<li><code>keyLog(principalId)</code> replays (<a href="key-identity-v1.html"><code>key-identity-v1.md</code></a>) and contains the head this device pinned
+for the principal (&quot;Key log head pinning&quot; there), and <code>principalDevices</code> lists <code>deviceId</code> with
+a certificate that verifies against that log at its <code>keySeq</code>, no recovery rotation following
+that <code>keySeq</code>, and no revocation. A <code>revocation</code> counts when its signature verifies (by an
+identity key of the log, or by the revoked device&#39;s own key); a device this device once saw
+revoked (a verified revocation, or <code>revokedAt</code>) stays revoked on it whatever <code>principalDevices</code>
+answers later. A revocation that does not verify keeps the device out of that check only.</li>
+<li>The <code>mls-key</code> signature verifies under that certificate&#39;s <code>deviceKey</code>, and its <code>principalId</code> and
+<code>deviceId</code> equal the certificate&#39;s.</li>
+<li><code>mlsKey</code> equals the leaf&#39;s <code>signature_key</code>.</li>
+<li>The principal is a current member of the conversation (from the server&#39;s member list, mapped by
+<code>User.principalId</code>; in a direct message, one of its two pinned principals, &quot;Direct messages&quot;),
+and no other leaf of the group has the same <code>(principalId, deviceId)</code>.</li>
+</ol>
+<p>Clients cache verified <code>(principalId, deviceId, mlsKey)</code> triples and recheck the device list when a
+<code>MlsMembershipChanged</code> event arrives. The server checks rules 1, 3 and 4 at key package upload,
+against the uploading session&#39;s own device.</p>
+<h3 id="a-leaf-that-does-not-verify">A leaf that does not verify <a class="anchor" href="#a-leaf-that-does-not-verify" aria-label="Link to this section">#</a></h3>
+<p>The client still processes the Commit or Welcome (refusing it would fork the group), then:
+refetches the key log and device list once; if the leaf still fails, it marks the conversation
+<strong>&quot;unverified device present&quot;</strong> naming the principal and device id, <strong>stops sending</strong> in it, and
+commits a Remove of that leaf at once (no ranking delay). If the server refuses the Remove (it
+believes the device is desired), the warning stays until the leaf goes away; the person can still
+read, and the UI says that a device RIM cannot verify can read new messages.</p>
+<h3 id="device-list-changes">Device list changes <a class="anchor" href="#device-list-changes" aria-label="Link to this section">#</a></h3>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Event</th>
+<th>Effect</th>
+<th>Who commits</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>A device is linked (<a href="device-linking-v1.html"><code>device-linking-v1.md</code></a>) and uploads key packages</td>
+<td>Pending add</td>
+<td>Ranked group devices, or the member&#39;s own other device first (rank 0)</td>
+</tr>
+<tr>
+<td><code>revokeDeviceKey</code></td>
+<td>Pending remove</td>
+<td>Ranked group devices; any sender first</td>
+</tr>
+<tr>
+<td>Identity rotation (<code>signer: identity</code>)</td>
+<td>None: devices stay enrolled</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Recovery rotation (all devices revoked, a new one enrolled)</td>
+<td>Pending removes, then a pending add</td>
+<td>Ranked group devices</td>
+</tr>
+<tr>
+<td>Member added / removed / kicked / banned / leaves</td>
+<td>Pending adds / removes for all their devices</td>
+<td>The device that made the change, else ranked</td>
+</tr>
+<tr>
+<td>Device inactive 60 days</td>
+<td>Pending remove; re-added when it uploads key packages again</td>
+<td>Ranked</td>
+</tr>
+<tr>
+<td>Re-add request (&quot;Lost state&quot;)</td>
+<td>Remove + Add of that device in one Commit</td>
+<td>Ranked</td>
+</tr>
+<tr>
+<td>Self-update (post-compromise security)</td>
+<td>An empty Commit with an update path, at most every 7 days per device</td>
+<td>The device itself, at a random time within a day of becoming due</td>
+</tr>
+</tbody></table></div>
+<p><strong>Direct messages.</strong> A device pins a direct message to its two principals the first time it sees
+it with exactly two members, one of them its own. It never commits a pending add of any other
+principal and never counts one as a member when it verifies leaves; while the server lists one (as
+a member or a pending add), the conversation shows &quot;The server tried to add &lt;name&gt; to this
+conversation&quot; and the device stops sending there. A DM the server lists with more than two members
+before the device pinned it gets no group from that device.</p>
+<p><strong>Membership lines.</strong> &quot;&lt;name&gt; was added&quot; and &quot;&lt;name&gt; was removed&quot; in the timeline come from the
+Commits the device processed (its own included), never from the server&#39;s member list: a principal
+whose first leaf a Commit added, or whose last leaf it removed, gets a line before the first
+message of the epoch that Commit made. An incarnation&#39;s first Commit adds no lines.</p>
+<p><strong>Ranking.</strong> Pending changes come from <code>Conversation.mlsGroup</code>. Every group device not in pending
+removes sorts the ids of the group devices that are not pending removes (lowercase UUID text, ascending) and takes its position as its
+rank. It waits <code>min(rank, 8) × 15 s</code> plus 0 to 3 s of random jitter, refetches the group, and if a
+change it can make is still pending and its local epoch equals the server&#39;s, it claims key packages
+and commits <strong>all</strong> pending changes at once. A device that is about to send an application message
+commits pending changes first, without waiting (the server refuses its message otherwise, see
+&quot;Sequencing&quot;). Racing devices are harmless: one Commit wins, the others get <code>STALE_EPOCH</code>.</p>
+<h2 id="key-packages">Key packages <a class="anchor" href="#key-packages" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>Per device</strong>: 20 unclaimed one-time packages and one last-resort package (OpenMLS
+<code>mark_as_last_resort</code>), each with the <code>lifetime</code> extension <code>not_before = now − 1 h</code>,
+<code>not_after = now + 90 days − 1 h</code> (so a server whose clock is up to an hour behind the device&#39;s
+still accepts it). Capabilities: suite 0x004F, basic credentials. (OpenMLS checks an
+added package&#39;s lifetime when a device processes the Commit, so a package must outlive the
+Commit retention a catching-up device may need.)</li>
+<li><strong>Rotation</strong>: on start and every 12 hours while running, a device tops up to 20 when fewer than
+10 remain, uploads a new last-resort package when the current one expires within 7 days or was
+claimed more than 5 times (<code>MlsKeyPackageStatus.lastResortClaims</code>), and deletes private keys of
+its packages that expired or were replaced more than 7 days ago. Uploading is also the device&#39;s MLS-activity signal.</li>
+<li><strong>Server validation at upload</strong>: the bytes decode as an <code>MLSMessage</code> carrying a <code>KeyPackage</code>; the
+suite is in the server&#39;s accepted list (<code>[0x004F]</code>); OpenMLS validation passes (signature, protocol
+version); the credential is a basic credential whose <code>mls-key</code> statement verifies under <strong>the
+uploading session&#39;s device key</strong> and names that session&#39;s principal and device; the leaf
+signature key equals <code>mlsKey</code>; <code>not_after</code> is in the future and at most 90 days and 5 minutes
+away (the 5 minutes absorb a client clock ahead of the server&#39;s); the
+<code>KeyPackageRef</code> (OpenMLS <code>hash_ref</code>, 32 bytes for this suite) is new. A new last-resort package
+replaces the device&#39;s previous one in the same transaction.</li>
+<li><strong>Claiming</strong>: <code>claimMlsKeyPackages</code> takes <code>(principalId, deviceId)</code> pairs for one conversation
+and returns one package per device, in one transaction: the oldest unclaimed one-time package
+(<code>FOR UPDATE SKIP LOCKED</code>), else the last-resort package (not consumed). A package with
+<code>not_after</code> less than 14 days away is never handed out and counts as absent; a device with no
+package is left out of the answer. For a <strong>re-add target</strong> the claim takes the newest one-time
+package uploaded after the <code>created_at</code> of the device&#39;s latest open re-add request, never the
+last-resort package; with none, <code>VALIDATION</code> (<code>the device has not uploaded key packages since its re-add request</code>). The caller must be a session device that is a group device, or, while
+the conversation has no group, the session of a conversation member. Every target must be a
+pending add or a re-add target of that conversation, in the group&#39;s suite; when the caller may
+start a new incarnation (&quot;Incarnations&quot;), the targets are instead the current incarnation&#39;s
+group devices plus pending adds, MLS-active and other than the caller, in the preferred suite,
+and the claimed packages may be used only by a Commit with <code>incarnation = current + 1, epoch = 0</code>. The claim records <code>(claimed_at, claimed_by_device_key_id, claimed_for_conversation_id, claimed_for_incarnation)</code>, and a last-resort row counts its claims in <code>claim_count</code>. A Commit
+may use a package claimed for its conversation and incarnation by its committer in the last
+hour; a last-resort row keeps only its latest claim, so a Commit uses it only while that claim
+is the committer&#39;s.</li>
+<li><strong>Last resort</strong> packages are never used for re-adds (see &quot;Lost state&quot;).</li>
+<li>An accepted Commit deletes the one-time packages it added. Claimed one-time rows are deleted 7
+days after the claim; expired rows hourly.</li>
+</ul>
+<h2 id="groups">Groups <a class="anchor" href="#groups" aria-label="Link to this section">#</a></h2>
+<h3 id="group-id-and-configuration">Group id and configuration <a class="anchor" href="#group-id-and-configuration" aria-label="Link to this section">#</a></h3>
+<p>The MLS group id is 24 bytes: ASCII <code>rim1</code>, the conversation UUID&#39;s 16 bytes, the incarnation as
+a big-endian u32 (appendix A.1). Clients refuse a Welcome, Commit or message whose group id does not
+name the conversation and incarnation they expect.</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>OpenMLS setting</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Cipher suite</td>
+<td><code>MLS_128_MLKEM768X25519_AES128GCM_SHA256_Ed25519</code> (0x004F)</td>
+</tr>
+<tr>
+<td>Wire format policy</td>
+<td><code>PURE_CIPHERTEXT_WIRE_FORMAT_POLICY</code>: Commits are PrivateMessages too</td>
+</tr>
+<tr>
+<td>Ratchet tree</td>
+<td><code>use_ratchet_tree_extension(true)</code>: the Welcome carries the tree</td>
+</tr>
+<tr>
+<td>Padding</td>
+<td><code>padding_size(256)</code></td>
+</tr>
+<tr>
+<td>Sender ratchet</td>
+<td>out-of-order tolerance 32, maximum forward distance 10,000</td>
+</tr>
+<tr>
+<td>Past epochs</td>
+<td><code>max_past_epochs(2)</code></td>
+</tr>
+<tr>
+<td>Welcome joins</td>
+<td>Ratchet-tree leaf lifetimes are not validated (RFC 9420 lets a joiner skip it); the certificate checks and the 60-day removal cover stale leaves</td>
+</tr>
+<tr>
+<td>Own pending Commit</td>
+<td>Under the pure-ciphertext policy OpenMLS answers <code>OwnPrivateMessage</code> for a Commit of one&#39;s own; the crate recognizes its pending Commit by its bytes</td>
+</tr>
+<tr>
+<td>Features</td>
+<td><code>draft-ietf-mls-pq-ciphersuites</code> is enabled on <code>openmls_traits</code> and the providers, not on <code>openmls</code> (whose feature pulls <code>openmls_sqlite_storage</code> and its <code>rusqlite</code> 0.37 into the link check); the suite is set explicitly</td>
+</tr>
+<tr>
+<td>Proposals</td>
+<td>None stand-alone: every change is a Commit with its proposals inline</td>
+</tr>
+<tr>
+<td>Authenticated data</td>
+<td>Set before every message (<code>set_aad</code>), see &quot;Authenticated data&quot;. S4-2&#39;s first tests confirm that OpenMLS frames it into Commits as well as application messages</td>
+</tr>
+</tbody></table></div>
+<h3 id="creating-a-group">Creating a group <a class="anchor" href="#creating-a-group" aria-label="Link to this section">#</a></h3>
+<ol>
+<li>The creator&#39;s client calls <code>createConversation(input: { …, encrypted: true })</code>. The server
+checks that every member is ready, creates the conversation with <code>encrypted_at = created_at</code>,
+and no group. A DM pair that already has a DM gets that conversation back, as today; a plaintext
+one is then upgraded as in &quot;Migration&quot;.</li>
+<li>It calls <code>claimMlsKeyPackages</code> for every desired device but its own (with no group there is no
+<code>mlsGroup</code> to list pending adds: the desired devices are the members&#39; devices with
+<code>PrincipalDevice.mlsActive</code>, from <code>principalDevices</code>), creates the group at epoch 0 with
+incarnation 1, adds the devices that got a package, and sends the Commit with the Welcome
+through <code>submitMlsCommit(incarnation: 1, epoch: 0, cipherSuite: 79)</code>.</li>
+<li>The server creates <code>mls_group</code> (epoch 1 after the Commit), records the group devices (the
+committer and the adds), stores the Welcome for each added device, and emits
+<code>MlsWelcomeAvailable</code> to their users.</li>
+<li>If no group exists 60 seconds after creation (the creator crashed), any member device may do
+step 2; the first accepted Commit wins.</li>
+</ol>
+<p>The server refuses an incarnation&#39;s first Commit unless every member has at least one device among
+the resulting group devices (<code>VALIDATION</code>, <code>every member needs at least one device in the group</code>),
+and unless the committer is MLS-active itself. A conversation&#39;s first group (incarnation 1) is
+created by the device of the member &quot;Migration&quot; names, or, for a conversation created encrypted,
+by the creator&#39;s device during the first 60 seconds and any member&#39;s after (<code>FORBIDDEN</code>
+otherwise).</p>
+<h3 id="welcome-delivery-and-joining">Welcome delivery and joining <a class="anchor" href="#welcome-delivery-and-joining" aria-label="Link to this section">#</a></h3>
+<ul>
+<li>A Welcome is stored once with one recipient row per added device, until the device acknowledges
+it (<code>ackMlsWelcomes</code>) or for 30 days. <code>myMlsWelcomes</code> returns the session device&#39;s unacknowledged
+Welcomes, oldest first.</li>
+<li>The device joins (<code>StagedWelcome</code>), checks the group id, verifies every leaf (&quot;Verifying a leaf&quot;),
+fetches and processes the Commits created in its join epoch and later, then acknowledges. A Welcome
+it cannot open (the key package&#39;s private key is gone) leads to a re-add request.</li>
+<li><strong>Replayed Welcomes.</strong> A device refuses a Welcome when it holds state of the same group
+(conversation and incarnation) at the Welcome&#39;s epoch or later, unless that state waits for a
+re-add: a Welcome delivered again (Welcomes stay 30 days, and a last-resort key package&#39;s private
+key stays) would roll the group back and let messages of that epoch decrypt again. The refused
+Welcome is acknowledged. A Welcome that does not open while the device holds working state of
+its incarnation does not lead to a re-add request either.</li>
+<li><strong>A new device&#39;s history.</strong> The feed returns the conversation&#39;s older rows too; their epochs are
+before the device&#39;s join epoch (or their incarnation is older), so they cannot be decrypted
+here. The client shows them as one collapsed line, &quot;Earlier messages were sent before this device
+joined&quot;, with &quot;Restore from history archive&quot; when an archive is set up (<code>history-archive-v1.md</code>);
+restored rows replace the placeholders. Nothing is ever shown as a decryption failure.</li>
+</ul>
+<h3 id="leaving-removal-and-the-groups-end">Leaving, removal and the group&#39;s end <a class="anchor" href="#leaving-removal-and-the-groups-end" aria-label="Link to this section">#</a></h3>
+<ul>
+<li>The server changes membership exactly as today (<code>leaveConversation</code>, <code>removeConversationMember</code>,
+kick, ban). The member&#39;s devices become pending removes; another device commits them.</li>
+<li>A device that processes its own removal deletes its group state and keeps its plaintext cache
+until the change feed answers <code>NO_ACCESS</code>, which drops it as for any conversation.</li>
+<li>Deleting a conversation cascades to its MLS rows. DMs and groups cannot be archived.</li>
+</ul>
+<h3 id="lost-state-and-re-add-requests">Lost state and re-add requests <a class="anchor" href="#lost-state-and-re-add-requests" aria-label="Link to this section">#</a></h3>
+<p>A device whose group state is missing or corrupt, that cannot process a Commit, or that is behind
+past the server&#39;s Commit retention, signs a <strong>re-add request</strong> with its device key over
+<code>&quot;rim.mls-readd.v1\0&quot; || payload</code> and sends it with <code>requestMlsReadd</code>:</p>
+<pre><code class="language-json">{&quot;v&quot;:2,&quot;type&quot;:&quot;mls-readd&quot;,&quot;principalId&quot;:&quot;rimp1_…&quot;,&quot;deviceId&quot;:&quot;&lt;uuid&gt;&quot;,&quot;conversationId&quot;:&quot;&lt;uuid&gt;&quot;,&quot;incarnation&quot;:1,&quot;lastEpoch&quot;:41,&quot;nonce&quot;:&quot;&lt;16 random bytes&gt;&quot;,&quot;issuedAt&quot;:&quot;…&quot;}</code></pre>
+<p><code>lastEpoch</code> is the last epoch it processed, or <code>null</code> with no state. It discards its old group
+state, sends the request, and only then uploads fresh key packages: a re-add is served from a
+package uploaded after the request, never from one of the lost state. The server accepts a
+request only from a device that is still a group device of the incarnation it names, which must
+be the current one (an older one is <code>STALE_EPOCH</code>), and only when it is fresh:</p>
+<ul>
+<li><code>issuedAt</code> is within 10 minutes of the server&#39;s clock, either way (<code>VALIDATION</code>);</li>
+<li><code>lastEpoch</code>, when not <code>null</code>, is at most the group&#39;s epoch and at least the epoch the device was
+last added at (<code>mls_group_device.added_epoch</code>): state the device holds was reached by joining at
+that epoch or later, so a request made before its latest add is refused (<code>VALIDATION</code>);</li>
+<li>its <code>nonce</code> was not used before by that device in that incarnation. The server records every
+accepted nonce in <code>mls_readd_nonce</code> in the same statement that stores the request, and answers
+a reused one with <code>CONFLICT</code> (<code>this re-add request was already sent</code>). A device signs a new
+request, with a new nonce, for every attempt.</li>
+</ul>
+<p>Protections against a server forcing re-adds:</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Rule</th>
+<th>Stops</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>The request is signed by the device key; committers verify it against the device&#39;s certificate before acting</td>
+<td>A server fabricating requests</td>
+</tr>
+<tr>
+<td>A re-add uses a <strong>one-time</strong> key package claimed now, never a last-resort package</td>
+<td>Forcing reuse of an old last-resort init key that may have leaked</td>
+</tr>
+<tr>
+<td>A committer honors at most one request per device and conversation per 24 hours, and the server accepts at most 3 per day</td>
+<td>Churn and key package draining</td>
+</tr>
+<tr>
+<td>The server accepts a request only while it is fresh and only once (<code>issuedAt</code>, <code>lastEpoch</code>, <code>nonce</code> above)</td>
+<td>Replaying a stored request later in the same incarnation, which would force a Remove and Add and, after 10 minutes without a Commit, open the recovery path to a new incarnation</td>
+</tr>
+<tr>
+<td>The re-added leaf is verified like any other</td>
+<td>Substituting another key</td>
+</tr>
+</tbody></table></div>
+<p>While waiting, the conversation shows &quot;This device can&#39;t read new messages until another device
+re-adds it&quot;. A re-add does not restore earlier messages; the cache and the archive do.</p>
+<h3 id="incarnations">Incarnations <a class="anchor" href="#incarnations" aria-label="Link to this section">#</a></h3>
+<p>An incarnation is a fresh MLS group for the same conversation (group id with the next incarnation
+number, epoch 0). <code>submitMlsCommit</code> with <code>incarnation = current + 1</code> and <code>epoch = 0</code> is accepted
+from a group device of the current incarnation only when one holds:</p>
+<ul>
+<li><strong>Suite migration</strong>: <code>cipherSuite</code> is the server&#39;s preferred suite and differs from the current
+incarnation&#39;s, and every claimed package offers it;</li>
+<li><strong>Recovery</strong>: the committer has a re-add request on the current incarnation older than 10
+minutes and no Commit was accepted on it since that request;</li>
+<li><strong>No devices left</strong>: no group device of the current incarnation is MLS-active for a current
+member. Then the committer need not be a group device: any MLS-active device of a member may
+start the next incarnation.</li>
+</ul>
+<p>The old <code>mls_group</code> row gets <code>retired_at</code>; every message, Commit and Welcome of it is refused from
+then on (<code>STALE_EPOCH</code> naming the new incarnation). Clients show &quot;Encryption was reset by
+&lt;name&gt;&#39;s &lt;device&gt;&quot; at that point in the timeline.</p>
+<h2 id="sequencing">Sequencing <a class="anchor" href="#sequencing" aria-label="Link to this section">#</a></h2>
+<p>The server is the MLS delivery service and sequencer. It decodes the outer <code>MLSMessage</code>
+(protocol version, wire format, and the PrivateMessage header fields <code>group_id</code>, <code>epoch</code>,
+<code>content_type</code>, <code>authenticated_data</code>) and never decrypts.</p>
+<h3 id="what-the-server-checks">What the server checks <a class="anchor" href="#what-the-server-checks" aria-label="Link to this section">#</a></h3>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Check</th>
+<th>Application message</th>
+<th>Commit</th>
+<th>Refusal</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Session bound to a device</td>
+<td>✓</td>
+<td>✓</td>
+<td><code>FORBIDDEN</code> (<code>this session is not bound to a device</code>)</td>
+</tr>
+<tr>
+<td>Session device is a group device of the current incarnation and not a pending remove</td>
+<td>✓</td>
+<td>✓ (except an incarnation&#39;s first Commit, see &quot;Incarnations&quot;)</td>
+<td><code>FORBIDDEN</code></td>
+</tr>
+<tr>
+<td>Wire format PrivateMessage; <code>content_type</code> application resp. commit</td>
+<td>✓</td>
+<td>✓</td>
+<td><code>VALIDATION</code></td>
+</tr>
+<tr>
+<td><code>group_id</code> = this conversation&#39;s current incarnation</td>
+<td>✓</td>
+<td>✓</td>
+<td><code>STALE_EPOCH</code> if older, else <code>VALIDATION</code></td>
+</tr>
+<tr>
+<td><code>epoch</code> = current epoch (and ≥ 1 for application messages)</td>
+<td>✓</td>
+<td>✓</td>
+<td><code>STALE_EPOCH</code></td>
+</tr>
+<tr>
+<td>No pending removes</td>
+<td>✓</td>
+<td>—</td>
+<td><code>MLS_COMMIT_REQUIRED</code> (<code>reason: &quot;pendingRemovals&quot;</code>)</td>
+</tr>
+<tr>
+<td>Authenticated data parses and passes its rules</td>
+<td>✓</td>
+<td>✓</td>
+<td><code>VALIDATION</code></td>
+</tr>
+<tr>
+<td>Size caps (&quot;Limits&quot;)</td>
+<td>✓</td>
+<td>✓</td>
+<td><code>VALIDATION</code></td>
+</tr>
+</tbody></table></div>
+<h3 id="one-commit-per-epoch">One Commit per epoch <a class="anchor" href="#one-commit-per-epoch" aria-label="Link to this section">#</a></h3>
+<p>In one transaction:</p>
+<pre><code class="language-sql">SELECT epoch FROM mls_group
+ WHERE conversation_id = $1 AND incarnation = $2 AND retired_at IS NULL
+ FOR UPDATE;
+-- epoch must equal the Commit's epoch, else STALE_EPOCH (current epoch and incarnation in the error)
+INSERT INTO mls_commit (id, conversation_id, incarnation, epoch, …) VALUES (…);  -- uq_mls_commit_epoch
+UPDATE mls_group SET epoch = epoch + 1 WHERE conversation_id = $1 AND incarnation = $2;
+-- apply the summary to mls_group_device, consume the Add key packages, store the Welcome</code></pre>
+<p>The row lock serializes Commits; the unique index <code>(conversation_id, incarnation, epoch)</code> is the
+backstop, and a unique violation is also answered <code>STALE_EPOCH</code>. Application messages take the
+same row <code>FOR SHARE</code> and check the epoch inside their insert transaction. So every application
+message of epoch <em>e</em> commits before the Commit that ends <em>e</em>, and a client that has seen a Commit
+already sees every message of the epoch it ended.</p>
+<h3 id="ordering">Ordering <a class="anchor" href="#ordering" aria-label="Link to this section">#</a></h3>
+<ul>
+<li>Application messages are ordered by the message <code>version</code> (the change feed&#39;s per-conversation
+counter, <code>message-change-feed.md</code>), which is epoch-monotone by the locking above. The feed is the
+only path through which a client decrypts.</li>
+<li>Commits are ordered by epoch: <code>mlsCommits(conversationId, incarnation, afterEpoch)</code>.</li>
+<li><strong>Client loop</strong>, per conversation: fetch new Commits; drain the feed; for each entry, if its epoch
+is above the local epoch, apply Commits up to it first; decrypt; when the feed is drained, apply
+the remaining Commits. Commits from realtime events only trigger this loop.</li>
+<li><strong>Own Commits.</strong> The client keeps its Commit pending until the server answers. Accepted: merge.
+<code>STALE_EPOCH</code>: clear the pending Commit, run the loop, recompute what is still needed, retry.
+No answer: fetch the Commit at that epoch; if it is the client&#39;s own (<code>OwnPendingCommit</code>), merge,
+else clear and process the other.</li>
+<li><strong>Own application messages</strong> are not decryptable by their sender (<code>OwnPrivateMessage</code>): the
+sending device stores the plaintext under the message id it chose before sending. On
+<code>STALE_EPOCH</code> it runs the loop and sends the same content again in the new epoch with the same
+message id.</li>
+<li><strong>A Commit the client cannot process</strong> (OpenMLS refuses it): the device stops at that epoch,
+sends a re-add request, and shows the waiting notice. A Commit that processes but whose
+authenticated-data summary does not name exactly its Add and Remove proposals, or that carries
+any other proposal (GroupContextExtensions, PSK, ReInit, …), is <strong>not merged</strong> either: the device
+stops at that epoch and asks for a re-add the same way, and warns that the committing device
+misbehaved.</li>
+</ul>
+<h3 id="replay-and-gaps">Replay and gaps <a class="anchor" href="#replay-and-gaps" aria-label="Link to this section">#</a></h3>
+<ul>
+<li>MLS deletes each message key after use, so a replayed ciphertext fails to decrypt; the client
+logs it and ignores it. Application data names the message id, which must equal the row id, so a
+ciphertext cannot be moved to another row.</li>
+<li>Per-sender MLS generations skip legitimately (edits replace rows, deletes remove ciphertext), so
+a generation gap is not an error. Withheld Commits are detected (epochs are consecutive and a
+later application message names a higher epoch); withheld application messages can only be
+detected by the feed&#39;s cursor contract, not proven. A relay (Stage 5) that withholds them is
+the residual risk <code>relay-proxied-workspaces-2026-10-09.md</code> accepts.</li>
+</ul>
+<h2 id="the-message-envelope">The message envelope <a class="anchor" href="#the-message-envelope" aria-label="Link to this section">#</a></h2>
+<h3 id="rows-and-tables">Rows and tables <a class="anchor" href="#rows-and-tables" aria-label="Link to this section">#</a></h3>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>MLS message</th>
+<th>Stored as</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Application message</td>
+<td>A <code>message</code> row: <code>text</code> null, <code>encrypted</code> true, <code>mls_ciphertext</code> the <code>MLSMessage</code> bytes, <code>mls_incarnation</code>, <code>mls_epoch</code>, <code>sender_device_key_id</code>, <code>franking_commitment</code>, <code>franking_receipt</code>, <code>franking_key_id</code></td>
+</tr>
+<tr>
+<td>Commit</td>
+<td>An <code>mls_commit</code> row</td>
+</tr>
+<tr>
+<td>Welcome</td>
+<td>An <code>mls_welcome</code> row plus one <code>mls_welcome_recipient</code> row per added device</td>
+</tr>
+<tr>
+<td>Key package</td>
+<td>An <code>mls_key_package</code> row</td>
+</tr>
+<tr>
+<td>Proposal</td>
+<td>Not used</td>
+</tr>
+</tbody></table></div>
+<p>There is no content-type column on <code>message</code>: only application messages are rows, so the
+timeline, the change feed and every existing message query keep their meaning. Handshake messages
+are not timeline items and have their own order (epochs).</p>
+<p><strong>Message ids are chosen by the client</strong> (UUID v7) for encrypted messages, so the sender can store
+its plaintext under the id before the server answers. A repeated <code>sendEncryptedMessage</code> with the
+same id and the same envelope bytes answers the existing message; with other bytes <code>CONFLICT</code>.</p>
+<h3 id="application-data">Application data <a class="anchor" href="#application-data" aria-label="Link to this section">#</a></h3>
+<p>The MLS application message&#39;s plaintext is binary: <code>0x01</code> (format version), the 32-byte
+<strong>franking key</strong>, then the <strong>content</strong>: UTF-8 JSON with the statement rules (unknown and duplicate
+fields refused, every field present, at most 64 KiB):</p>
+<pre><code class="language-json">{&quot;v&quot;:1,&quot;type&quot;:&quot;message&quot;,&quot;id&quot;:&quot;&lt;uuid&gt;&quot;,&quot;rev&quot;:0,&quot;threadRootId&quot;:null,&quot;body&quot;:&quot;hi &lt;@rimp1_…&gt;&quot;,
+ &quot;mentions&quot;:[&quot;rimp1_…&quot;],&quot;mentionAll&quot;:false,&quot;replyTo&quot;:null,&quot;forwardedFrom&quot;:null,
+ &quot;attachments&quot;:[],&quot;linkPreviews&quot;:[]}</code></pre>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Rule</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>id</code></td>
+<td>The message id; must equal the row id and the authenticated data&#39;s <code>messageId</code></td>
+</tr>
+<tr>
+<td><code>rev</code></td>
+<td>0 when sent, +1 per edit; a client never replaces a revision it holds with a lower one</td>
+</tr>
+<tr>
+<td><code>threadRootId</code></td>
+<td>The thread root&#39;s message id for a thread reply, else <code>null</code>; must match the row&#39;s thread (the receiver maps the row&#39;s <code>threadId</code> to its root with <code>thread(…).rootMessageId</code>)</td>
+</tr>
+<tr>
+<td><code>body</code></td>
+<td>0 to 10,000 Unicode scalar values; mentions are <code>&lt;@principalId&gt;</code> tokens</td>
+</tr>
+<tr>
+<td><code>mentions</code></td>
+<td>The distinct principal ids of the body&#39;s <code>&lt;@…&gt;</code> tokens, in order of first appearance, at most 100</td>
+</tr>
+<tr>
+<td><code>mentionAll</code></td>
+<td><code>true</code> when the body notifies everyone: a whole-word <code>@here</code> or <code>@channel</code> outside <code>&lt;@…&gt;</code> tokens, as the server detects it for plaintext</td>
+</tr>
+<tr>
+<td><code>replyTo</code></td>
+<td><code>{&quot;messageId&quot;:&quot;&lt;uuid&gt;&quot;}</code> for a timeline reply, else <code>null</code>. Encrypted only: the server&#39;s <code>parent_message_id</code> stays null</td>
+</tr>
+<tr>
+<td><code>forwardedFrom</code></td>
+<td><code>{&quot;messageId&quot;,&quot;conversationId&quot;,&quot;authorPrincipalId&quot;,&quot;sentAt&quot;}</code> or <code>null</code>: the forwarder&#39;s claim about the origin, shown as &quot;Forwarded by &lt;sender&gt;&quot;</td>
+</tr>
+<tr>
+<td><code>attachments</code></td>
+<td>At most 10 entries, see &quot;Attachments&quot;</td>
+</tr>
+<tr>
+<td><code>linkPreviews</code></td>
+<td>At most 3 <code>{&quot;url&quot;,&quot;title&quot;,&quot;description&quot;,&quot;siteName&quot;}</code> (strings or <code>null</code>, each at most 2,000 characters), fetched by the sender&#39;s client; receivers never fetch</td>
+</tr>
+</tbody></table></div>
+<p>A body, mention list, thread or id that breaks a rule makes the message <strong>invalid</strong>: the client
+shows &quot;A message from &lt;sender&gt; could not be verified&quot; and never its content. So does a content
+whose franking commitment does not match.</p>
+<h3 id="authenticated-data">Authenticated data <a class="anchor" href="#authenticated-data" aria-label="Link to this section">#</a></h3>
+<p>The PrivateMessage&#39;s <code>authenticated_data</code>, readable by the server and signed by the sender&#39;s MLS
+key inside the encryption, is UTF-8 JSON with the same strict rules:</p>
+<pre><code class="language-json">{&quot;v&quot;:1,&quot;type&quot;:&quot;application&quot;,&quot;messageId&quot;:&quot;&lt;uuid&gt;&quot;,&quot;franking&quot;:&quot;&lt;base64url, 32 bytes&gt;&quot;,&quot;mentions&quot;:[&quot;rimp1_…&quot;],&quot;mentionAll&quot;:false}
+{&quot;v&quot;:1,&quot;type&quot;:&quot;commit&quot;,&quot;adds&quot;:[{&quot;principalId&quot;:&quot;rimp1_…&quot;,&quot;deviceId&quot;:&quot;&lt;uuid&gt;&quot;,&quot;keyPackageRef&quot;:&quot;&lt;base64url&gt;&quot;}],&quot;removes&quot;:[{&quot;principalId&quot;:&quot;rimp1_…&quot;,&quot;deviceId&quot;:&quot;&lt;uuid&gt;&quot;}]}</code></pre>
+<ul>
+<li><strong>Application</strong>: at most 8 KiB. The server checks <code>messageId</code> against the request (a UUID v7),
+<code>franking</code> is 32 bytes, every mention is a principal id, distinct, at most 100. The receiver checks after decrypting that <code>messageId</code>,
+<code>mentions</code> and <code>mentionAll</code> equal the content&#39;s and that <code>franking</code> equals the recomputed
+commitment.</li>
+<li><strong>Commit</strong>: at most 256 KiB, no device added or removed twice. The server checks: every add is a
+pending add or a re-add target, uses a key package claimed for this conversation by this device
+in the last hour, named exactly by <code>keyPackageRef</code>, of the group&#39;s suite, and belonging to that
+device; every remove is a group device that is a pending remove or is re-added in the same
+Commit with a re-add request outstanding; the committer is not removed. A Commit with adds
+carries a Welcome of the group&#39;s suite whose <code>new_member</code> refs are exactly the adds&#39;; one
+without adds carries none. The receiver checks that the staged Commit&#39;s Add proposals have exactly these
+<code>KeyPackageRef</code>s and its Remove proposals remove exactly these devices, and that it has no other
+proposal; a Commit that fails this is not merged (&quot;Ordering&quot;).</li>
+</ul>
+<h3 id="edits-deletes-and-metadata">Edits, deletes and metadata <a class="anchor" href="#edits-deletes-and-metadata" aria-label="Link to this section">#</a></h3>
+<ul>
+<li><strong>Edit</strong>: <code>editEncryptedMessage</code> carries a new application message in the current epoch whose
+content has the same <code>id</code>, a higher <code>rev</code>, and the complete new message (not a diff: a device
+that never decrypted the original can render the edit). The server replaces <code>mls_ciphertext</code>,
+<code>mls_epoch</code>, <code>sender_device_key_id</code>, the franking columns and the mention rows, and records the
+edit as the next franking revision (&quot;Franking&quot;); the change-feed trigger bumps <code>version</code> and
+sets <code>edited_at</code>. Only the author (any of their devices) may edit; the receiver checks that the
+sender&#39;s principal is the row author&#39;s.</li>
+<li><strong>Delete</strong>: <code>deleteMessage</code> as today. The server sets <code>is_deleted</code>, nulls <code>mls_ciphertext</code>, and
+keeps the franking columns. No application message is sent: the server is the authority on
+deletion (it can drop a row anyway), and a moderator outside a group must be able to delete.</li>
+<li><strong>Server metadata, visible to the server</strong>: reactions (emoji, who, when), pins (which message,
+who), thread membership (<code>thread_id</code>, the thread rows), the forward origin
+(<code>forwarded_from_message_id</code>), read states, <code>has_attachments</code>, attachment sizes, sender device,
+send and edit times, mentions (below). Reactions and pins stay metadata so the server-side
+counters, events and <code>pinnedMessages</code> keep working; what they leak is the emoji and that someone
+reacted to or pinned a given message, not the message&#39;s content.</li>
+</ul>
+<h3 id="clients-decrypt-once-store-render">Clients: decrypt once, store, render <a class="anchor" href="#clients-decrypt-once-store-render" aria-label="Link to this section">#</a></h3>
+<ul>
+<li><strong>Sender binding.</strong> The row must name its author&#39;s principal (<code>author.principalId</code>) and the
+sending device (<code>encryption.senderDeviceId</code>), and the decrypted MLS sender must be that principal
+and that device; otherwise the message is &quot;could not be verified&quot;, and so is a row without an
+author principal. The timeline shows a decrypted message as its MLS sender&#39;s (device, principal,
+then the workspace member with that principal), not as the row&#39;s author.</li>
+<li>A message decrypts <strong>once</strong> per device (MLS deletes each key after use). <code>rim_mls</code> keeps OpenMLS
+state in the cache database, so decrypting an entry, storing its plaintext row and advancing the
+ratchet commit in one transaction. The timeline of an encrypted conversation reads from the
+cache only.</li>
+<li>Cache rows carry the plaintext as <code>text</code>, the rest as today, plus the envelope&#39;s metadata. The
+upsert rule stays &quot;higher version wins&quot;, except that an entry this device cannot decrypt (before
+its join, older incarnation) is stored only as a placeholder where no plaintext row exists, and
+never replaces one. <code>RESET</code> on an encrypted conversation keeps plaintext rows (they cannot be
+refetched) and re-reads the feed over them.</li>
+<li>An entry more than two epochs behind the device&#39;s group (past <code>max_past_epochs</code>) cannot be
+decrypted either and is a placeholder too. Entries are decrypted in feed order with Commits
+applied only up to each entry&#39;s epoch, so this happens only to a device that processed Commits
+outside the loop.</li>
+<li><code>edited_at</code> and <code>is_deleted</code> come from the feed as for plaintext; a tombstone deletes the plaintext.</li>
+<li>The archive keeps decrypted <code>text</code> and adds <code>payload.e2ee</code> (<code>status</code>, <code>incarnation</code>, <code>epoch</code>,
+<code>senderDeviceId</code>, <code>senderPrincipalId</code>, <code>frankingKey</code>, <code>receipt</code>, <code>receiptKeyId</code>, <code>sentAtUs</code>,
+<code>rev</code>, and <code>content</code>, the exact content bytes a report reveals and the attachment secrets need),
+an additive field in archive version 1 that S4-3 adds to <code>history-archive-v1.md</code>. Placeholders
+are not archived. <code>sig</code> stays <code>null</code>. Group state and MLS keys are never archived.</li>
+</ul>
+<h3 id="the-change-feed">The change feed <a class="anchor" href="#the-change-feed" aria-label="Link to this section">#</a></h3>
+<p><code>messageChanges</code> is unchanged; encrypted rows come back with <code>text: null</code> and the new
+<code>Message.encryption</code> field. Encrypted entries are epoch-monotone in <code>version</code> order. An edit appears
+as one <code>EDITED</code> entry carrying the newest envelope.</p>
+<h2 id="mentions-and-notifications">Mentions and notifications <a class="anchor" href="#mentions-and-notifications" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>The server stores mention rows from the authenticated data: each principal id is mapped to the
+member with that <code>user.principal_id</code>; ids that are not current members are ignored; the author is
+skipped. <code>mentionAll</code> is treated as <code>@channel</code> / <code>@here</code>.</li>
+<li>Notification rules run as today with what the server knows: <code>direct</code>, <code>mention</code>,
+<code>thread_reply</code> and <code>all</code> work; <code>keyword</code> cannot (the desktop and web clients match keywords after
+decrypting and show a local notification, without an inbox entry, only where the server sends
+none: a group at the <code>MENTIONS</code> level, for a message that does not mention the reader; the web
+client only where the person already allowed the site&#39;s notifications). Edits replace mention
+rows and do not notify again.</li>
+<li>Digests and any email say &quot;Encrypted message from &lt;name&gt;&quot;; <code>NotificationDue</code> is unchanged.</li>
+<li><strong>What it leaks</strong>: who was mentioned in which message. Accepted, because the server already knows
+every member, every message&#39;s sender and time, and a DM&#39;s notifications are per message anyway;
+without it encrypted conversations would never notify mentions in groups.</li>
+<li>The server uses the mention list <strong>only</strong> for mention rows and notification routing. A sender can
+lie in it, but receivers refuse a message whose list differs from its content, so a lie costs the
+sender their message.</li>
+</ul>
+<h2 id="attachments">Attachments <a class="anchor" href="#attachments" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>Cipher</strong>: AES-256-GCM. Per file a random 32-byte <code>secret</code>;
+<code>key = HKDF-SHA256(ikm = secret, no salt, info = &quot;rim.e2ee.attachment.v1 key&quot;, L = 32)</code>,
+<code>nonce = HKDF-SHA256(ikm = secret, no salt, info = &quot;rim.e2ee.attachment.v1 nonce&quot;, L = 12)</code>,
+AAD <code>&quot;rim.e2ee.attachment.v1&quot;</code>, one encryption per secret. The blob is the ciphertext with the
+16-byte tag appended. AES-GCM rather than XChaCha20-Poly1305 because WebCrypto has it (the web
+client decrypts up to 25 MB natively and fast) and the desktop already links <code>aes-gcm</code>; with a
+fresh key per file the nonce cannot repeat.</li>
+<li><strong>Content entry</strong>: <code>{&quot;blobSha256&quot;,&quot;secret&quot;,&quot;name&quot;,&quot;mime&quot;,&quot;size&quot;}</code>: SHA-256 of the blob,
+the secret, the file name (1 to 255 characters), the media type as the sender saw it, and the
+plaintext size. The commitment covers the entry, and the blob hash pins the blob, so one blob
+decrypts to one file for every member and for a moderator (AES-GCM is not key-committing; the
+key and the blob are both fixed by the committed content).</li>
+<li><strong>Upload</strong> through the existing flow, after the message is sent: <code>createAttachment(input: { messageId, filename: &quot;encrypted&quot;, contentType: &quot;application/octet-stream&quot;, sizeBytes, blobSha256 })</code>, the upload to <code>/api/files/upload</code>, <code>finalizeAttachment</code>. In an encrypted
+conversation <code>blobSha256</code> is required, the file name and type must be exactly those, and the
+upload handler accepts <code>application/octet-stream</code> only there and refuses bytes whose SHA-256 or
+size differ. In a plaintext conversation <code>blobSha256</code> is refused. The server stores the size and
+the hash, sniffs nothing, and generates nothing from the bytes.</li>
+<li><strong>Download</strong>: <code>Attachment.blobSha256</code> matches a content entry; <code>/api/attachments/{id}/download</code>
+serves <code>application/octet-stream</code> named <code>encrypted.bin</code>; the client checks the hash, decrypts,
+checks the size, and only then hands the file to the UI with the content entry&#39;s name and type.</li>
+<li><strong>Limits</strong>: blob at most <code>MAX_ATTACHMENT_BYTES</code> (25 MiB), so plaintext at most 25 MiB − 16 bytes.
+No thumbnails in v1: images up to 5 MB are downloaded and shown automatically.</li>
+</ul>
+<h2 id="franking">Franking <a class="anchor" href="#franking" aria-label="Link to this section">#</a></h2>
+<p>A report proves one message&#39;s content to the moderators without the server having read it.</p>
+<ol>
+<li><p><strong>Sender</strong>: picks a random 32-byte franking key <code>fk</code> per message and edit, and computes the
+commitment <code>c = HMAC-SHA256(fk, &quot;rim.e2ee.franking.v1\0&quot; || content)</code> over the exact content
+bytes. <code>fk</code> travels inside the application data; <code>c</code> in the authenticated data.</p>
+</li>
+<li><p><strong>Server on receipt</strong>: stores <code>c</code> and a receipt
+<code>r = HMAC-SHA256(K, &quot;rim.e2ee.franking-receipt.v1\0&quot; || message id || conversation id || sender user id || sender device id || sent_at_us || c)</code> (ids as 16 raw UUID bytes, the device id
+being the client device id, <code>sent_at_us</code> the row&#39;s <code>sent_at</code> in microseconds as a big-endian
+i64), where <code>K</code> is the server&#39;s current franking key and <code>franking_key_id</code> its id (&quot;Franking
+keys&quot; below). <code>r</code> and <code>sentAtUs</code> are delivered in <code>Message.encryption</code>. In the same
+transaction it records the version in <code>message_franking_revision</code>: revision 0 when sent, one
+more per edit, each with <code>c</code> from the authenticated data, <code>sent_at_us</code> and the client device
+id of the sending session.</p>
+</li>
+<li><p><strong>Receiver</strong>: recomputes <code>c</code> and refuses the message as invalid on a mismatch, so every message a
+member can see is reportable. <code>fk</code> must be exactly 32 bytes (HMAC&#39;s key padding would otherwise
+let two keys collide). It keeps <code>fk</code>, <code>r</code> and <code>sentAtUs</code> with the plaintext.</p>
+</li>
+<li><p><strong>Report</strong> (<code>reportEncryptedMessage</code>): the reporter sends the content bytes, <code>fk</code>, the receipt,
+its key id, the sender ids and <code>sentAtUs</code>. The server recomputes <code>c</code> from the content and <code>fk</code>
+and checks, comparing secrets and MACs in constant time:</p>
+<ul>
+<li>the sender user is the row&#39;s author, and <code>c</code>, <code>sentAtUs</code> and the sender device equal those of
+<strong>any</strong> recorded revision of the message (or the row&#39;s current <code>franking_commitment</code>,
+<code>sent_at</code> and sender device, while the row still names one). Every revision is compared,
+without stopping at the first match;</li>
+<li><code>r</code> recomputed with key <code>receiptKeyId</code> (any key in the key file, &quot;Franking keys&quot;) equals the
+receipt.</li>
+</ul>
+<p>The revision check means a holder of <code>K</code> (a stolen key file or backup) cannot have the server
+verify content the sender never sent: the receipt alone proves only that <code>K</code> signed it. An
+edit adds a revision rather than replacing one, so every version a receiver saw stays
+reportable: a sender who edits an abusive message does not escape a report of what was
+shown. A message the sender deleted keeps its row and revisions (<code>is_deleted</code>,
+<code>mls_ciphertext</code> nulled), and no retention job deletes message rows, so it stays reportable;
+the report and the revisions reference the row and go with it only when its conversation or
+workspace is deleted. A valid report stores the content in <code>message_report</code> (<code>franked_content</code>,
+<code>franking_verified_at</code>); an invalid one is refused (<code>VALIDATION</code>, <code>the report does not match the message</code>). The usual report rules hold (one per reporter and message).</p>
+</li>
+<li><p><strong>Moderator view</strong> (S4-5): the body as plain text with mentions resolved, the attachment names and
+sizes (a moderator&#39;s client downloads a reported attachment by its <code>blobSha256</code> through a
+report-scoped route and decrypts it with the secret from the verified content), sender,
+device, conversation and time, and the line &quot;Verified: this is the exact message &lt;sender&gt;&#39;s
+device sent. Other messages in the conversation are not shown and are not verified.&quot; A verified
+report lets a moderator delete that message even outside the conversation.</p>
+<ul>
+<li>The report stores the sender&#39;s device id the receipt covered
+(<code>message_report.franked_sender_device_id</code>). <code>messageReports</code> shows every moderator a
+verified report&#39;s <code>messageAuthorId</code>, <code>messageSentAt</code>, <code>frankingVerifiedAt</code>,
+<code>frankedSenderDeviceId</code> and <code>frankedContentExpiresAt</code>, never its content;
+<code>messageReport(serverId, reportId)</code> (Owner/Moderator) adds <code>frankedContent</code> and records
+<code>e2ee.report_viewed</code>.</li>
+<li><code>GET /api/reports/{reportId}/attachments/{blobSha256}</code> (session; Owner/Moderator of the
+report&#39;s workspace) serves the blob of an attachment of the reported message, or a stored
+blob of the workspace that the verified content names, as <code>application/octet-stream</code>
+named <code>encrypted.bin</code> with <code>X-Content-Type-Options: nosniff</code>; anything else is a bare
+<code>404</code>.</li>
+<li><code>deleteMessage</code> by an Owner/Moderator who cannot read the conversation succeeds when the
+message has a verified report.</li>
+</ul>
+</li>
+</ol>
+<p><strong>Franking keys.</strong> <code>K</code> lives in the franking key file, <code>RIM_FRANKING_KEY_FILE</code> (default
+<code>&lt;RIM_DATA_DIR&gt;/franking-key.json</code>, mode <code>0600</code>; the server refuses a file the group or others
+can read):</p>
+<pre><code class="language-json">{&quot;v&quot;:1,&quot;keys&quot;:[{&quot;id&quot;:1,&quot;key&quot;:&quot;&lt;base64url, 32 bytes&gt;&quot;,&quot;createdAt&quot;:&quot;2026-10-10T00:00:00Z&quot;}]}</code></pre>
+<ul>
+<li>The key with the highest id is current: it signs every new receipt and its id is the
+message&#39;s <code>franking_key_id</code>. Keys are held in memory in zeroizing buffers.</li>
+<li>At first boot without the file the server creates it with one random key, id 1. It refuses
+to start when the file is missing but messages carry a <code>franking_key_id</code> (a lost file:
+restore it). <code>message.franking_key_id</code> references no table (migration
+<code>drop_message_franking_key_fk</code>); the <code>franking_key</code> table the first migration created is
+dropped (migration <code>drop_franking_key</code>).</li>
+<li><code>rim_server franking-key rotate</code> adds a key with the next id, which becomes current. Every
+key stays in the file and keeps verifying the receipts it signed for good: a receipt is never
+signed again, so a message stays reportable for as long as it exists. What stops a forged
+report is the check against the stored revisions, not a key&#39;s age. <code>rim_server franking-key show</code> lists the keys. A running server reads the file again every minute, and at once (at
+most every ten seconds) when a report names a key id above the ones it holds.</li>
+</ul>
+<p><strong>Limits.</strong> A report proves one message, not its context: what it replied to, what came before, or
+whether the reporter provoked it (a reporter may report several messages, each proven alone). The
+revealed content is stored on the server from then on. Franking adds no deniability loss: MLS
+messages are already signed by the sender&#39;s MLS key, so any member holding a plaintext and its
+signature could convince a third party. Message deniability is deferred.</p>
+<h2 id="server-features-in-encrypted-conversations">Server features in encrypted conversations <a class="anchor" href="#server-features-in-encrypted-conversations" aria-label="Link to this section">#</a></h2>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Behavior</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Full-text search</td>
+<td>Encrypted rows have no text and no search vector; <code>searchMessages</code> never returns them. Local search covers them (&quot;on this device&quot;)</td>
+</tr>
+<tr>
+<td>Link previews</td>
+<td>No server fetch (<code>spawn_link_preview_fetch</code> skipped). The sender&#39;s client fetches and embeds them; receivers never fetch. The web client sends none (a browser cannot read other sites&#39; pages)</td>
+</tr>
+<tr>
+<td>Pipelines</td>
+<td>Triggers still fire on message events with metadata only; <code>MessageContains</code> never matches an encrypted message</td>
+</tr>
+<tr>
+<td>The agent</td>
+<td>No server-side context or summaries; <code>chat.search_messages</code> never returns encrypted rows; <code>chat.post_message</code> into an encrypted conversation is refused; <code>chat.create_group</code> creates a plaintext group that the creator&#39;s desktop then upgrades (&quot;Migration&quot;). The client agent reads through the message service (below), off by default per conversation, with a warning that the text goes to the model provider; when it is on, the client answers <code>chat.get_recent_messages</code> and <code>chat.search_messages</code> there from the local cache and sends <code>chat.post_message</code> through the encrypted send path, each post confirmed by the person</td>
+</tr>
+<tr>
+<td>Notifications</td>
+<td>From the authenticated mentions and &quot;new message&quot;; digests say &quot;Encrypted message&quot;; keyword notifications are client-local</td>
+</tr>
+<tr>
+<td>Slow mode</td>
+<td>Channels only, so not applicable</td>
+</tr>
+<tr>
+<td>Moderation</td>
+<td>Kick, ban, timeout, membership and roles work; timed-out members cannot send envelopes or commit; reports go through franking (<code>reportMessage</code> refuses an encrypted message, <code>reportEncryptedMessage</code> a plaintext one, and the receipt&#39;s sender must be the row&#39;s author); a moderator delete removes the row&#39;s ciphertext</td>
+</tr>
+<tr>
+<td>Pins, reactions, custom emoji</td>
+<td>Server metadata, unchanged</td>
+</tr>
+<tr>
+<td>Threads</td>
+<td><code>thread_id</code> and thread rows are metadata; replies are encrypted messages with <code>threadRootMessageId</code>; <code>thread_reply</code> notifications work</td>
+</tr>
+<tr>
+<td>Forwarding</td>
+<td><code>forwardMessage</code> refuses an encrypted source or target (<code>VALIDATION</code>). The client forwards by sending new content: <code>sendEncryptedMessage(forwardedFromMessageId)</code> into an encrypted conversation, or, after a confirmation that the text will be posted unencrypted, <code>sendMessage(forwardedFromMessageId)</code> into a plaintext one. The server checks the caller can read the source and records the origin</td>
+</tr>
+<tr>
+<td>Read states, unread counts, typing, presence</td>
+<td>Unchanged</td>
+</tr>
+<tr>
+<td>Bots, webhooks</td>
+<td>Cannot be members, so cannot post</td>
+</tr>
+<tr>
+<td>Export and admin tools</td>
+<td>Encrypted rows are exported as metadata without content; audit rows hold ids only, as today</td>
+</tr>
+</tbody></table></div>
+<h2 id="plugins-and-the-client-message-service">Plugins and the client message service <a class="anchor" href="#plugins-and-the-client-message-service" aria-label="Link to this section">#</a></h2>
+<p>S4-4 implements the client message service; this is its contract.</p>
+<ul>
+<li><strong>Methods</strong> (plugin to host, routed by both hosts but not frozen in protocol v1, listed under
+<code>x-notFrozen</code> in rim-ui&#39;s <code>protocol/plugin-protocol-v1.schema.json</code>; reference in rim-ui
+<code>docs/plugin-chat-methods.md</code>): <code>rim.chat.list_messages { conversationId, before?, limit? }</code> →
+<code>{ messages, hasOlder }</code> (oldest first, <code>before</code> a message id, <code>limit</code> 1 to 100, default 50);
+<code>rim.chat.get_message { messageId }</code> → <code>{ message }</code> (<code>null</code> when not on this device);
+<code>rim.chat.search_messages { query, conversationId?, limit? }</code> → <code>{ messages }</code> (local search,
+newest first); <code>rim.chat.post_message { conversationId, body, threadId? }</code> → <code>{ id }</code>. They
+replace the earlier <code>rim.chat.get_messages</code> and <code>rim.chat.send_message</code> names.</li>
+<li><strong>Capabilities.</strong> <code>chat.read</code> and <code>chat.write</code> cover plaintext conversations.
+<code>chat.read.encrypted</code> and <code>chat.write.encrypted</code> cover encrypted ones and require the plain
+capability as well (a manifest asking for an encrypted one without the plain one is refused
+at install; the broker checks the plain one per method, the service the encrypted one per
+conversation, both answering <code>CAPABILITY_DENIED</code>). Each is its own line in the consent
+prompt; <code>chat.read.encrypted</code> reads &quot;Read your encrypted DMs and groups: this plugin sees
+their decrypted text and can send it anywhere its other permissions allow.&quot;, and
+<code>chat.write.encrypted</code> &quot;Post as you in your encrypted DMs and groups: this plugin sends
+messages in your name there, encrypted like your own.&quot; Web and desktop plugins get the same
+names. A conversation counts as encrypted for its old plaintext too.</li>
+<li><strong>What the service returns</strong>: <code>{ id, conversationId, threadId, author: { principalId, displayName }, text, sentAt, editedAt, encrypted, attachments: [{ name, mime, size }] }</code>, read from
+the local cache, with <code>author</code> a protocol <code>Principal</code> and <code>&lt;@user&gt;</code> mentions as principal ids.
+Never franking keys, attachment secrets or blob hashes, MLS state, ciphertext or keys of any
+kind. Placeholders, messages that could not be verified, tombstones and unacknowledged sends
+are left out. Plugins cannot fetch attachment bytes in v1. A conversation not fully cached on
+the device answers <code>INTERNAL_ERROR</code> with <code>data.reason: &quot;notCached&quot;</code>; the web app, whose plugin
+service does not yet read the browser&#39;s encrypted store, answers reads with <code>&quot;noCache&quot;</code>.</li>
+<li><strong>Writes</strong> go through the same send path as the person&#39;s own messages and are encrypted by the
+client.</li>
+<li><strong>Audit</strong>: the host records, per plugin, when each grant was given and revoked and a daily count of
+encrypted messages read, shown in the plugin&#39;s settings. Revoking stops the plugin, as for every
+capability.</li>
+</ul>
+<h2 id="migration-of-existing-conversations">Migration of existing conversations <a class="anchor" href="#migration-of-existing-conversations" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>Who upgrades</strong>: in a DM either member&#39;s device; in a group a device of the creator
+(<code>created_by</code>), or of any member when the creator is null or no longer a member. The device must be
+a desktop device: the web client takes part in encrypted conversations and creates new ones, but
+never upgrades an existing one. A DM or group whose eligible members open it only in browsers
+stays plaintext until one of them opens it on a desktop.</li>
+<li><strong>When</strong>: the eligible device upgrades automatically when it opens the conversation and every
+member is ready. While someone is not, the conversation shows &quot;Not encrypted yet: &lt;name&gt; has not
+set up encryption on a desktop device&quot;.</li>
+<li><strong>How</strong>: as &quot;Creating a group&quot; step 2 on the existing conversation. The server sets
+<code>encrypted_at</code> in the transaction that accepts incarnation 1&#39;s first Commit, and emits
+<code>ConversationUpdated</code>.</li>
+<li><strong>The marker</strong> is <code>Conversation.encryptedAt</code>: clients render &quot;Messages from here on are end-to-end
+encrypted&quot; at that point, and a quiet &quot;sent before encryption&quot; note on older messages. No
+message row is created.</li>
+<li><strong>Old plaintext stays</strong> on the server, readable by members as before (members added later can
+still read it). People can delete their own old messages.</li>
+</ul>
+<h2 id="the-web-client-s4-6">The web client (S4-6) <a class="anchor" href="#the-web-client-s4-6" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>The same <code>rim_mls</code> crate in wasm with the libcrux provider&#39;s portable code. OpenMLS&#39;s storage
+trait is synchronous and IndexedDB is not, so the crate keeps state in memory and writes the
+entries an operation changed to IndexedDB, in one transaction with the plaintext rows and records
+the operation produced, before the operation&#39;s result is used (no ciphertext is sent, and no
+plaintext shown, before the write lands). A failed write rolls the in-memory state back, so a
+message is still decrypted once.</li>
+<li><strong>Plaintext store</strong>: the web app has no general message cache; decrypt-once requires one, so the web
+client keeps an IndexedDB store of decrypted messages for encrypted conversations.</li>
+<li><strong>Keys</strong>: the MLS signature key and HPKE private keys are raw bytes in IndexedDB, because OpenMLS
+signs and decapsulates synchronously; the device key stays a non-extractable WebCrypto key and
+signs only <code>mls-key</code> statements and re-add requests. There is no keyring.</li>
+<li><strong>Key packages</strong> are refreshed only while a tab is open. A browser unused for 60 days leaves the
+groups and is re-added when it comes back: before uploading key packages it sends a re-add
+request where the server still counts it as a group device and drops its group state elsewhere,
+then joins from the Welcomes its pending adds bring. What was sent meanwhile is not readable
+there.</li>
+<li><strong>One tab</strong> of a browser runs encryption for an account (a lock held while the page lives, the
+Web Locks API); another tab says so and waits. Two tabs would advance two copies of the state.</li>
+<li><strong>No migration</strong> from the web client (&quot;Migration&quot;), and <strong>no link previews</strong> (&quot;Server features in
+encrypted conversations&quot;).</li>
+<li>The web app&#39;s content security policy allows <code>'wasm-unsafe-eval'</code> in <code>script-src</code> to compile the
+module.</li>
+<li>The weaker-storage notice of <code>web-linked-device.md</code> is extended: &quot;Encrypted conversations in this
+browser are only as safe as this browser profile.&quot;</li>
+</ul>
+<h2 id="storage">Storage <a class="anchor" href="#storage" aria-label="Link to this section">#</a></h2>
+<p>One migration, additive (generated with <code>sea migrate generate add_e2ee_mls</code>):</p>
+<pre><code class="language-sql">ALTER TABLE conversation ADD COLUMN encrypted_at timestamptz NULL;
+
+CREATE TABLE franking_key (
+    id integer PRIMARY KEY, secret bytea NOT NULL CHECK (octet_length(secret) = 32),
+    created_at timestamptz NOT NULL DEFAULT now());
+
+CREATE TABLE mls_key_package (
+    id uuid PRIMARY KEY,
+    user_id uuid NOT NULL REFERENCES &quot;user&quot; (id) ON DELETE CASCADE,
+    device_key_id uuid NOT NULL REFERENCES device_key (id) ON DELETE CASCADE,
+    cipher_suite integer NOT NULL, key_package_ref bytea NOT NULL, key_package bytea NOT NULL,
+    last_resort boolean NOT NULL DEFAULT false, not_after timestamptz NOT NULL,
+    created_at timestamptz NOT NULL DEFAULT now(), claimed_at timestamptz NULL,
+    claimed_by_device_key_id uuid NULL REFERENCES device_key (id) ON DELETE SET NULL,
+    claimed_for_conversation_id uuid NULL REFERENCES conversation (id) ON DELETE SET NULL,
+    CONSTRAINT uq_mls_key_package_ref UNIQUE (key_package_ref));
+CREATE INDEX idx_mls_key_package_available ON mls_key_package (device_key_id, cipher_suite, created_at)
+    WHERE claimed_at IS NULL AND NOT last_resort;
+CREATE UNIQUE INDEX uq_mls_key_package_last_resort ON mls_key_package (device_key_id, cipher_suite)
+    WHERE last_resort;
+CREATE INDEX idx_mls_key_package_not_after ON mls_key_package (not_after);
+
+CREATE TABLE mls_group (
+    conversation_id uuid NOT NULL REFERENCES conversation (id) ON DELETE CASCADE,
+    incarnation integer NOT NULL CHECK (incarnation &gt;= 1),
+    group_id bytea NOT NULL, cipher_suite integer NOT NULL,
+    epoch bigint NOT NULL,                      -- the epoch the next Commit must be created in
+    created_by_device_key_id uuid NULL REFERENCES device_key (id) ON DELETE SET NULL,
+    created_at timestamptz NOT NULL DEFAULT now(), retired_at timestamptz NULL,
+    PRIMARY KEY (conversation_id, incarnation), CONSTRAINT uq_mls_group_group_id UNIQUE (group_id));
+CREATE UNIQUE INDEX uq_mls_group_current ON mls_group (conversation_id) WHERE retired_at IS NULL;
+
+CREATE TABLE mls_group_device (
+    conversation_id uuid NOT NULL, incarnation integer NOT NULL,
+    device_key_id uuid NOT NULL REFERENCES device_key (id) ON DELETE CASCADE,
+    user_id uuid NOT NULL REFERENCES &quot;user&quot; (id) ON DELETE CASCADE, added_epoch bigint NOT NULL,
+    PRIMARY KEY (conversation_id, incarnation, device_key_id),
+    FOREIGN KEY (conversation_id, incarnation) REFERENCES mls_group ON DELETE CASCADE);
+
+CREATE TABLE mls_commit (
+    id uuid PRIMARY KEY, conversation_id uuid NOT NULL, incarnation integer NOT NULL,
+    epoch bigint NOT NULL,                      -- created in this epoch; the group moves to epoch + 1
+    sender_user_id uuid NULL REFERENCES &quot;user&quot; (id) ON DELETE SET NULL,
+    sender_device_key_id uuid NULL REFERENCES device_key (id) ON DELETE SET NULL,
+    message bytea NOT NULL, created_at timestamptz NOT NULL DEFAULT now(),
+    FOREIGN KEY (conversation_id, incarnation) REFERENCES mls_group ON DELETE CASCADE,
+    CONSTRAINT uq_mls_commit_epoch UNIQUE (conversation_id, incarnation, epoch));
+
+CREATE TABLE mls_welcome (
+    id uuid PRIMARY KEY, commit_id uuid NOT NULL REFERENCES mls_commit (id) ON DELETE CASCADE,
+    conversation_id uuid NOT NULL REFERENCES conversation (id) ON DELETE CASCADE,
+    incarnation integer NOT NULL,
+    epoch bigint NOT NULL,                      -- the epoch the new devices join at
+    message bytea NOT NULL, created_at timestamptz NOT NULL DEFAULT now(),
+    expires_at timestamptz NOT NULL);
+CREATE TABLE mls_welcome_recipient (
+    welcome_id uuid NOT NULL REFERENCES mls_welcome (id) ON DELETE CASCADE,
+    device_key_id uuid NOT NULL REFERENCES device_key (id) ON DELETE CASCADE,
+    user_id uuid NOT NULL REFERENCES &quot;user&quot; (id) ON DELETE CASCADE, acked_at timestamptz NULL,
+    PRIMARY KEY (welcome_id, device_key_id));
+CREATE INDEX idx_mls_welcome_recipient_device ON mls_welcome_recipient (device_key_id)
+    WHERE acked_at IS NULL;
+
+CREATE TABLE mls_readd_request (
+    id uuid PRIMARY KEY, conversation_id uuid NOT NULL, incarnation integer NOT NULL,
+    device_key_id uuid NOT NULL REFERENCES device_key (id) ON DELETE CASCADE,
+    payload text NOT NULL, signature text NOT NULL,
+    created_at timestamptz NOT NULL DEFAULT now(), fulfilled_epoch bigint NULL,
+    FOREIGN KEY (conversation_id, incarnation) REFERENCES mls_group ON DELETE CASCADE);
+
+ALTER TABLE message
+    ADD COLUMN encrypted boolean NOT NULL DEFAULT false,
+    ADD COLUMN mls_ciphertext bytea NULL,
+    ADD COLUMN mls_incarnation integer NULL,
+    ADD COLUMN mls_epoch bigint NULL,
+    ADD COLUMN sender_device_key_id uuid NULL REFERENCES device_key (id) ON DELETE SET NULL,
+    ADD COLUMN franking_commitment bytea NULL,
+    ADD COLUMN franking_receipt bytea NULL,
+    ADD COLUMN franking_key_id integer NULL REFERENCES franking_key (id),
+    ADD CONSTRAINT chk_message_encrypted_text CHECK (NOT encrypted OR text IS NULL),
+    ADD CONSTRAINT chk_message_encrypted_envelope
+        CHECK (encrypted = (mls_epoch IS NOT NULL AND mls_incarnation IS NOT NULL));
+ALTER TABLE message_attachment ADD COLUMN blob_sha256 bytea NULL;
+ALTER TABLE message_report
+    ADD COLUMN franked_content bytea NULL, ADD COLUMN franking_verified_at timestamptz NULL;</code></pre>
+<p>The migration also adds <code>device_key.last_key_package_upload_at timestamptz NULL</code>, the MLS
+activity signal (key package rows are deleted when they expire, so their age cannot carry it),
+and to <code>mls_key_package</code> the columns <code>claimed_for_incarnation integer NULL</code> (the incarnation a
+claim is for) and <code>claim_count integer NOT NULL DEFAULT 0</code> (claims of a last-resort row, shown as
+<code>MlsKeyPackageStatus.lastResortClaims</code>).
+The change-feed function also sets <code>edited_at</code> when <code>mls_ciphertext</code> changes to a new envelope
+(clearing it on delete is not an edit), and the update trigger gains
+<code>OR NEW.mls_ciphertext IS DISTINCT FROM OLD.mls_ciphertext</code> in its <code>WHEN</code>. <code>down</code> restores
+the previous function and trigger, then drops the new columns, indexes and tables; it refuses to
+run while an encrypted message exists (rolling back would leave rows with neither text nor
+ciphertext). The <code>franking_key</code> table above is no longer used (&quot;Franking keys&quot;). A second
+migration, <code>add_report_sender_device</code>, adds
+<code>message_report.franked_sender_device_id uuid NULL</code>. A third, <code>add_mls_readd_nonce</code>, adds the
+nonces of accepted re-add requests:</p>
+<pre><code class="language-sql">CREATE TABLE mls_readd_nonce (
+    conversation_id uuid NOT NULL, incarnation integer NOT NULL,
+    device_key_id uuid NOT NULL REFERENCES device_key (id) ON DELETE CASCADE,
+    nonce bytea NOT NULL, created_at timestamptz NOT NULL DEFAULT now(),
+    PRIMARY KEY (conversation_id, incarnation, device_key_id, nonce),
+    FOREIGN KEY (conversation_id, incarnation) REFERENCES mls_group ON DELETE CASCADE);
+CREATE INDEX idx_mls_readd_nonce_created_at ON mls_readd_nonce (created_at);</code></pre>
+<p>A fourth, <code>drop_message_franking_key_fk</code>, drops <code>message.franking_key_id</code>&#39;s reference to
+<code>franking_key</code>: key ids come from the franking key file. Its <code>down</code> restores the reference as
+<code>NOT VALID</code>, since rows may name keys the table never held. A fifth,
+<code>add_message_franking_revision</code>, adds every version&#39;s franking commitment and records each
+existing encrypted message whose sender device still exists as its revision 0:</p>
+<pre><code class="language-sql">CREATE TABLE message_franking_revision (
+    message_id uuid NOT NULL REFERENCES message (id) ON DELETE CASCADE,
+    revision integer NOT NULL CHECK (revision &gt;= 0),
+    franking_commitment bytea NOT NULL, sent_at_us bigint NOT NULL,
+    sender_device_id uuid NOT NULL,              -- the client device id the receipt covers
+    created_at timestamptz NOT NULL DEFAULT now(),
+    PRIMARY KEY (message_id, revision));</code></pre>
+<p>Retention: Commits 90 days, Welcomes 30 days, claimed key packages 7 days, re-add requests
+once fulfilled or after 7 days, re-add nonces 1 day (longer than a request stays fresh),
+<code>franked_content</code> 90 days after the report is resolved.</p>
+<p>Code: an <code>e2ee</code> module in <code>rim_core</code> (repository traits), <code>rim_services</code> (<code>E2eeService</code>, DTOs, an
+<code>MlsWire</code> trait for decoding and key package validation), <code>rim_infra_services</code> (the service and the
+OpenMLS-backed <code>MlsWire</code>), <code>rim_infra_db</code>. The auth context gains the session&#39;s <code>device_key_id</code>
+(<code>session.device_key_id</code>), which <code>Actor</code> does not carry today.</p>
+<h2 id="graphql">GraphQL <a class="anchor" href="#graphql" aria-label="Link to this section">#</a></h2>
+<p>Binary values are unpadded base64url strings; <code>MLSMessage</code> bytes are the RFC 9420 <code>MLSMessage</code>
+encoding (key packages, Welcomes and PrivateMessages alike). Epochs fit <code>Int</code> (an incarnation is
+re-created long before 2³¹).</p>
+<pre><code class="language-graphql">type Conversation { encryptedAt: DateTime  mlsGroup: MlsGroup }        # both null for plaintext
+type MlsGroup {
+  groupId: String!  incarnation: Int!  cipherSuite: Int!  epoch: Int!   # epoch: next Commit's epoch
+  devices: [MlsDevice!]!  pendingAdds: [MlsPendingDevice!]!  pendingRemoves: [MlsDevice!]!
+  readdRequests: [MlsReaddRequest!]!
+}
+type MlsDevice { userId: ID!  principalId: String!  deviceId: ID!  addedEpoch: Int! }
+type MlsPendingDevice { userId: ID!  principalId: String!  deviceId: ID!  hasKeyPackage: Boolean! }
+type MlsReaddRequest { principalId: String!  deviceId: ID!  request: SignedStatement!  createdAt: DateTime! }
+
+type MessageEncryption {
+  incarnation: Int!  epoch: Int!  senderDeviceId: ID!
+  ciphertext: String                     # null once deleted
+  frankingReceipt: String!  frankingKeyId: Int!  sentAtUs: String!   # decimal microseconds
+}
+type Message { encryption: MessageEncryption }                         # null for plaintext rows
+type Attachment { blobSha256: String }
+
+type MlsKeyPackageStatus { cipherSuite: Int!  available: Int!  lastResortNotAfter: DateTime  lastResortClaims: Int!  oldestNotAfter: DateTime }
+type ClaimedKeyPackage { userId: ID!  principalId: String!  deviceId: ID!  keyPackage: String!  keyPackageRef: String!  lastResort: Boolean! }
+type MlsCommit { id: ID!  incarnation: Int!  epoch: Int!  senderPrincipalId: String  senderDeviceId: ID  message: String!  createdAt: DateTime! }
+type MlsCommitPage { commits: [MlsCommit!]!  hasMore: Boolean! }
+type MlsWelcome { id: ID!  serverId: ID!  conversationId: ID!  incarnation: Int!  epoch: Int!  message: String!  expiresAt: DateTime! }
+type PrincipalDevice { deviceId: ID!  name: String!  certificate: SignedStatement!  revokedAt: DateTime  revocation: SignedStatement
+                      mlsActive: Boolean! }  # not revoked, a key package uploaded in the last 60 days
+type PrincipalDevices { principalId: String!  devices: [PrincipalDevice!]! }
+type MessageReport {                                                   # additive
+  messageSentAt: DateTime  frankingVerifiedAt: DateTime  frankedSenderDeviceId: ID
+  frankedContent: String  frankedContentExpiresAt: DateTime            # content: messageReport only
+}
+
+input CreateConversationInput { encrypted: Boolean }                   # additive; default false
+input SendMessageInput { forwardedFromMessageId: ID }                  # additive
+input CreateAttachmentInput { blobSha256: String }                     # additive
+input MlsDeviceRefInput { principalId: String!  deviceId: ID! }
+input ClaimMlsKeyPackagesInput { serverId: ID!  conversationId: ID!  devices: [MlsDeviceRefInput!]! }
+input SubmitMlsCommitInput {
+  serverId: ID!  conversationId: ID!  incarnation: Int!  epoch: Int!
+  cipherSuite: Int                       # required for an incarnation's first Commit (epoch 0)
+  commit: String!  welcome: String       # welcome required when the summary has adds
+}
+input SendEncryptedMessageInput {
+  serverId: ID!  conversationId: ID!  messageId: ID!  envelope: String!
+  threadRootMessageId: ID  forwardedFromMessageId: ID
+}
+input EditEncryptedMessageInput { serverId: ID!  conversationId: ID!  messageId: ID!  envelope: String! }
+input RequestMlsReaddInput { serverId: ID!  conversationId: ID!  request: SignedStatementInput! }
+input ReportEncryptedMessageInput {
+  serverId: ID!  conversationId: ID!  messageId: ID!  reason: String!
+  content: String!  frankingKey: String!  receipt: String!  receiptKeyId: Int!
+  senderUserId: ID!  senderDeviceId: ID!  sentAtUs: String!
+}
+
+type Query {
+  myMlsKeyPackageStatus: [MlsKeyPackageStatus!]!                       # session device
+  myMlsWelcomes: [MlsWelcome!]!                                         # session device, unacknowledged
+  mlsCommits(serverId: ID!, conversationId: ID!, incarnation: Int!, afterEpoch: Int, limit: Int): MlsCommitPage!
+  principalDevices(principalIds: [String!]!): [PrincipalDevices!]!     # principals sharing a workspace with the caller
+  messageReport(serverId: ID!, reportId: ID!): MessageReport!           # Owner/Moderator
+}
+type Mutation {
+  uploadMlsKeyPackages(keyPackages: [String!]!): MlsKeyPackageStatus!
+  claimMlsKeyPackages(input: ClaimMlsKeyPackagesInput!): [ClaimedKeyPackage!]!
+  submitMlsCommit(input: SubmitMlsCommitInput!): MlsCommit!
+  sendEncryptedMessage(input: SendEncryptedMessageInput!): Message!
+  editEncryptedMessage(input: EditEncryptedMessageInput!): Message!
+  ackMlsWelcomes(ids: [ID!]!): Int!
+  requestMlsReadd(input: RequestMlsReaddInput!): Boolean!
+  reportEncryptedMessage(input: ReportEncryptedMessageInput!): Boolean!
+}</code></pre>
+<ul>
+<li><code>mlsCommits</code>: <code>afterEpoch</code> exclusive (null from 0), <code>limit</code> 1 to 100 (default 50), oldest first;
+caller must be a conversation member. <code>principalDevices</code> answers one entry per distinct id asked,
+in order, with an empty device list for a principal who shares no workspace with the caller, at
+most 100 ids per call.</li>
+<li>New objects <code>E2eeQueries</code> and <code>E2eeMutations</code> are appended to the last query and mutation groups.
+All mutations need the CSRF header. The GraphQL request body must allow at least 8 MiB (a 4 MiB
+Commit is 5.4 MiB of base64url); the server sets no limit of its own on <code>/api</code>, so a proxy in
+front of it must not set a lower one.</li>
+</ul>
+<h3 id="errors">Errors <a class="anchor" href="#errors" aria-label="Link to this section">#</a></h3>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Code</th>
+<th>When</th>
+<th>Extensions</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>STALE_EPOCH</code> (new)</td>
+<td>A Commit or message for an epoch or incarnation that is not current</td>
+<td><code>incarnation</code>, <code>epoch</code> (current)</td>
+</tr>
+<tr>
+<td><code>MLS_COMMIT_REQUIRED</code> (new)</td>
+<td>A message while removals are pending, or into an encrypted conversation without a group</td>
+<td><code>reason</code>: <code>pendingRemovals</code> or <code>noGroup</code></td>
+</tr>
+<tr>
+<td><code>FORBIDDEN</code></td>
+<td>Session without a device; device not in the group; claim or commit by a non-member</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>VALIDATION</code></td>
+<td>Malformed bytes, wrong wire format or content type, authenticated data or summary rules, size caps, plaintext write into an encrypted conversation, unready members</td>
+<td>reason text; JSON that does not parse into its shape gets a fixed reason, never the parser&#39;s message</td>
+</tr>
+<tr>
+<td><code>CONFLICT</code></td>
+<td>Message id reused with other bytes; second report; a re-add request sent again</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>TIMED_OUT</code>, <code>NOT_FOUND</code>, <code>RATE_LIMITED</code></td>
+<td>As for the plaintext equivalents</td>
+<td>as today</td>
+</tr>
+</tbody></table></div>
+<h3 id="events">Events <a class="anchor" href="#events" aria-label="Link to this section">#</a></h3>
+<p><code>NewMessage</code> and <code>MessageUpdated</code> carry <code>message.encryption</code> (the <code>MessageEncryption</code> fields, snake
+case) and <code>text: null</code>. New variants, delivered to the conversation&#39;s members (server-side scope
+lists as today):</p>
+<pre><code class="language-json">{&quot;type&quot;:&quot;MlsCommitAccepted&quot;,&quot;workspace_id&quot;:&quot;…&quot;,&quot;conversation_id&quot;:&quot;…&quot;,&quot;incarnation&quot;:1,&quot;epoch&quot;:7}
+{&quot;type&quot;:&quot;MlsMembershipChanged&quot;,&quot;workspace_id&quot;:&quot;…&quot;,&quot;conversation_id&quot;:&quot;…&quot;}
+{&quot;type&quot;:&quot;MlsWelcomeAvailable&quot;,&quot;workspace_id&quot;:&quot;…&quot;,&quot;conversation_id&quot;:&quot;…&quot;,&quot;user_id&quot;:&quot;…&quot;,&quot;device_id&quot;:&quot;…&quot;}</code></pre>
+<p><code>epoch</code> is the Commit&#39;s epoch. <code>MlsMembershipChanged</code> fires when pending adds or removes change
+(membership, devices, key package activity, re-add requests): on adds, removals, leaves, kicks and
+bans in an encrypted conversation, on a device revocation or recovery, on a key package upload by
+a device that is not in a group yet, on a re-add request, and with every Commit that adds or
+removes devices. <code>MlsWelcomeAvailable</code> goes to
+<code>user_id</code> only; clients ignore it for other devices.</p>
+<h2 id="limits-and-audit">Limits and audit <a class="anchor" href="#limits-and-audit" aria-label="Link to this section">#</a></h2>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>What</th>
+<th>Limit</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Key package</td>
+<td>16 KiB each; 50 per upload; 100 unclaimed per device and suite</td>
+</tr>
+<tr>
+<td>Claims</td>
+<td>600 devices per user per hour; one-time packages of one device: 100 claims per day, then only its last-resort package</td>
+</tr>
+<tr>
+<td>Commit</td>
+<td>4 MiB; authenticated data 256 KiB</td>
+</tr>
+<tr>
+<td>Welcome</td>
+<td>4 MiB</td>
+</tr>
+<tr>
+<td>Application envelope</td>
+<td>96 KiB; authenticated data 8 KiB; content 64 KiB</td>
+</tr>
+<tr>
+<td>Re-add requests</td>
+<td>3 per device per conversation per day</td>
+</tr>
+<tr>
+<td>Encrypted conversation</td>
+<td>100 members, 512 devices</td>
+</tr>
+</tbody></table></div>
+<p>Rate limiters are the in-memory per-node ones, as for device linking; correctness never depends
+on them. Audit (<code>command_audit_log</code>, ids only): <code>e2ee.enable</code> (incarnation 1 accepted),
+<code>e2ee.reincarnate</code>, <code>e2ee.report</code> (franked report accepted), <code>e2ee.report_viewed</code> (a moderator
+opened a verified report&#39;s content), <code>admin.delete_message</code> as today.
+Logs carry conversation ids, epochs and device row ids, never bytes.</p>
+<h2 id="threat-model">Threat model <a class="anchor" href="#threat-model" aria-label="Link to this section">#</a></h2>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Adversary</th>
+<th>Can</th>
+<th>Cannot</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>The server (full database and code)</td>
+<td>See metadata: members, devices, timing, sizes, sender devices, mentions, reactions, pins, threads, forward origins; withhold or delay messages and Commits; refuse Commits; delete rows; ask nothing a device would sign</td>
+<td>Read content or attachments; add a device of its own (it holds no device key to sign <code>mls-key</code>); forge a message; move a ciphertext to another row or conversation; force a last-resort re-add; read reports it did not receive</td>
+</tr>
+<tr>
+<td>A relay (Stage 5)</td>
+<td>Less than the server: it sees ciphertext and its own users&#39; metadata, and can withhold</td>
+<td>Everything the server cannot</td>
+</tr>
+<tr>
+<td>A compromised current device</td>
+<td>Read everything its leaf can read, past messages in its cache and archive, until it is revoked and removed; send as that device</td>
+<td>Read after its removal (forward secrecy of later epochs); recover messages whose keys were used and deleted, other than through its cache</td>
+</tr>
+<tr>
+<td>A revoked device</td>
+<td>Read messages until its removal Commit is accepted (the server refuses others&#39; messages while the removal is pending, so a sender commits it first)</td>
+<td>Read anything after that Commit</td>
+</tr>
+<tr>
+<td>A member&#39;s old, unrevoked device</td>
+<td>Read like any device; it is removed after 60 days without a key package upload</td>
+<td>—</td>
+</tr>
+<tr>
+<td>A former member</td>
+<td>Keep what its devices decrypted</td>
+<td>Read anything after its devices&#39; removal</td>
+</tr>
+<tr>
+<td>The drive provider</td>
+<td>See archive files and sizes (<code>history-archive-v1.md</code>)</td>
+<td>Read them; group state is never there</td>
+</tr>
+</tbody></table></div>
+<p>Post-compromise security comes from Commits with update paths (every device at most weekly, and
+every membership Commit). Quantum: key agreement is hybrid (X-Wing); signatures and
+authentication are classical.</p>
+<h2 id="test-plan">Test plan <a class="anchor" href="#test-plan" aria-label="Link to this section">#</a></h2>
+<p><strong>Server (S4-1).</strong> Unit tests of <code>E2eeService</code> with mock repositories for every row of the checks,
+errors and summary tables; key package validation with real OpenMLS key packages (bad signature,
+wrong device, wrong <code>mlsKey</code>, expired, foreign suite, reused ref); the creation, migration and
+incarnation rules. <code>rim_infra_db</code> (<code>db-tests</code>): two concurrent Commits for one epoch, exactly one
+wins and the other is <code>STALE_EPOCH</code>; an application message racing a Commit lands in epoch order;
+<code>SKIP LOCKED</code> claims under concurrency never hand one package twice; the last-resort partial
+index; the trigger bumps <code>version</code> and <code>edited_at</code> on a ciphertext change; cascades; migration up
+and down (and <code>down</code> refusing). <code>rim_api</code> e2e (<code>e2e-tests</code>) with a test client built on <code>rim_mls</code>
+fixtures: create an encrypted DM, Welcome, send, edit, delete, react, report with franking (valid,
+tampered content, wrong key, message deleted first); plaintext writes refused; pending removal
+blocks a send until committed; <code>forwardMessage</code> refused; search returns nothing encrypted; digests
+say &quot;Encrypted message&quot;; appendix A receipt and attachment hash.</p>
+<p><strong>Crate (S4-2).</strong> The ADR&#39;s vector table; appendix A byte for byte; both providers create and process
+0x004F groups and interoperate; multi-device simulations against an in-process sequencer: 3 users ×
+3 devices, link and revoke devices, members leave and join, racing committers with ranking, a
+device offline past retention re-added, lost state, a Commit that cannot be processed, an
+incarnation; every leaf-verification failure; authenticated-data mismatches refused; decrypt once
+(a second decrypt fails); crash between decrypt and store leaves both undone.</p>
+<p><strong>Clients (S4-3 to S4-6).</strong> End-to-end flows on two desktop instances against a dev server: new DM,
+migration with marker, new device joining and restoring from the archive, attachments, local
+search, mentions and keyword toasts, reports; plugin grants (S4-4); the web client (S4-6): the
+crate&#39;s test suite in a headless browser (<code>wasm-bindgen-test</code>), and the same flows against a
+simulated server with the same wasm module and a fake IndexedDB (Vitest), by hand against a dev
+server and a desktop peer.</p>
+<h2 id="deferred">Deferred <a class="anchor" href="#deferred" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>Hybrid MLS credential signatures (no composite Ed25519 + ML-DSA-44 MLS suite exists).</li>
+<li>Safety numbers and key transparency, so a person can check another&#39;s devices out of band.</li>
+<li>Sender keys or another scheme for groups beyond 512 devices; encrypted private channels and
+history sharing to new members.</li>
+<li>Message deniability; encrypted reactions and pins; client-made thumbnails; streamed or chunked
+attachments above 25 MB; per-conversation plugin grants.</li>
+<li>Signed archive messages (<code>sig</code>). Groups spanning servers are defined in
+<a href="server-to-server-v1.html"><code>server-to-server-v1.md</code></a>.</li>
+</ul>
+<h2 id="appendix-a-known-answer-vectors">Appendix A: known-answer vectors <a class="anchor" href="#appendix-a-known-answer-vectors" aria-label="Link to this section">#</a></h2>
+<p>Computed with Python <code>cryptography</code> 50.0.2 and cross-checked with Node 26 <code>crypto</code>. Keys are
+<code>SigningKey::from_bytes([seed; 32])</code>; the device is <a href="key-identity-v1.html"><code>key-identity-v1.md</code></a> appendix B&#39;s (seed 20,
+principal <code>rimp1_txDLbnipi5i3kCJtJwBOUixzv_MY8OnU0mcy--Tyje0</code>, device id
+<code>00000000-0000-0000-0000-000000000001</code>). JSON is written with fields in the order shown and no
+spaces; readers do not depend on order. Never use these values for real data.</p>
+<h3 id="a1-group-id">A.1 Group id <a class="anchor" href="#a1-group-id" aria-label="Link to this section">#</a></h3>
+<p>Conversation <code>0199d1a0-0000-7000-8000-000000000001</code>, incarnation 1:
+<code>72696d310199d1a000007000800000000000000100000001</code> (base64url <code>cmltMQGZ0aAAAHAAgAAAAAAAAAEAAAAB</code>).</p>
+<h3 id="a2-mls-key-statement-and-credential-identity">A.2 <code>mls-key</code> statement and credential identity <a class="anchor" href="#a2-mls-key-statement-and-credential-identity" aria-label="Link to this section">#</a></h3>
+<p>MLS key (seed 40): <code>ed25519:6S62BU_pvGgqG887dZ9lqzikz72BxNHzNC5Myc3tiws</code>.</p>
+<pre><code>{&quot;v&quot;:2,&quot;type&quot;:&quot;mls-key&quot;,&quot;principalId&quot;:&quot;rimp1_txDLbnipi5i3kCJtJwBOUixzv_MY8OnU0mcy--Tyje0&quot;,&quot;deviceId&quot;:&quot;00000000-0000-0000-0000-000000000001&quot;,&quot;mlsKey&quot;:&quot;ed25519:6S62BU_pvGgqG887dZ9lqzikz72BxNHzNC5Myc3tiws&quot;,&quot;issuedAt&quot;:&quot;2026-10-09T00:00:00Z&quot;}
+ed25519:6TN4OHOn3VKI00okNthNJOJkuAg1afEO9h-63L9T6VoQxeYA1acXMqTuLBu5_flkzCjPRssEWpP6LkVCi74EDA</code></pre>
+<p>The credential <code>identity</code> is the 382-byte JSON <code>{&quot;payload&quot;:&quot;&lt;the payload above, JSON-escaped&gt;&quot;, &quot;signature&quot;:&quot;&lt;the signature above&gt;&quot;}</code>, SHA-256
+<code>b7334437dc6e0da6588fbfc37540416efc0497c0a75d4eccae1fd92cae969a11</code>.</p>
+<p>A key package carrying it, recorded by S4-2 (key packages contain fresh HPKE keys, so this one is a
+fixture, not something to reproduce): suite 0x004F, one-time, lifetime <code>not_before</code> 1791500400
+(2026-10-08T23:00:00Z) to <code>not_after</code> 2107123200 (2036-10-09T00:00:00Z, long so the fixture keeps
+validating), capabilities suite 0x004F, basic credentials and the last-resort extension. Its
+<code>MLSMessage</code> is 3,027 bytes, SHA-256
+<code>8f7acac056ca4c9e0ec4cf18cf5a3f8cb9849ab65e7444fa54e53012c2ad4553</code>; its <code>KeyPackageRef</code> is
+<code>209c1b0b8c510b5cebec8b09f1ead455e6a8f52e12ec3e2505786f7822ffd055</code>
+(<code>IJwbC4xRC1zr7IsJ8erUVeao9S4S7D4lBXhveCL_0FU</code>). Base64url, wrapped at 100 characters (the line
+breaks are not part of the value):</p>
+<pre><code>AAEABQABAE9EwES3AyuWM0YHc8MXfVvFZQJov_coTvKFJI4cxzbziyBJLm3qFkbWNBZRqYArwktAowP7Vt2sLXaWuzpmdw3MeDWH
+w9OyhZ5Sm4O4N1SrGpOjRM8QXfFFgMUYjl33Hs30vMeXgm9wmDurhFKYqgwlbLshAC4YTLeaBD2YFbazEYrkx4EMZ5F4ZN67GAD3
+i5YpaqW0QD7GGgImYBPBnVpKUc4hswa1Yvv4UsYAg2wmcsjTiWp5V1LYcib7cAjasUl7TbJyJ1CKSC_aHhBktSJBWoaQAx_apJ5p
+TEXsuVixG7PaDn_oS33zu8a8awp5G-CsX4RoPXhpLns1wMYBL970FGn7VJnYUWJlqoLgDluKUu5mFyczn86XgZCHAHPyfmpnxbyA
+T9EXxwMFscH8Hg9mTBNnMAEMA9J7krhJgZ_2tQWoA6qmwXcViWM3gdeMLPF3aAmSZwbat4xnDJmHiVtLOnbgSww5FAeyllQ8a2ES
+b0HsAaQkmtuDct9Ds_rjHJFmkdZEVXA6vRdmM6byvcu6FJOmr0yigks7ySrUnqohg-zSqQYgGeOTwlgUZxYkKwP0HI3oGRuHTSGk
+Zl2kzAKzxxqAvoDwcgfnIRMiMfZCtmeBf3jmuv0IBVA0Vp8rXUQygCmqwpXScnw2NwKiK7j5iV0DnWhCYOW3Gl3Ehawsj2qwKBiz
+DR-bv9wBZMH6nBETNVwUOui5LrX0LnggQuNkXKkMWACrBOKFx1DoqLp3U8nSunaQcOMClPfHrv6mDHhCkwKSGJkZLR2ZxQy0HnBq
+A86jaB7yhg-KbQSIMBzhvXljQJhXumXCVbQFNgO8rtgzUu1XOxp7bhtpnU9zWrYaFSXpJyTnW6uawUnjzeA7we8nzS1suCtTkf6Q
+Z1eqU5Z6HonwV1oCuMvSde_aHW4CqL5WKNkXlM2jTstFPpbMRjqQlRkHCtkqlbWiRiemnsKjLmNFD2j7l6-mojuTe511maO7guML
+PPw1ZonXwUcgBqWaXDTFOmFQCLaiDsCKWsXgV9Q5k_sgLEcnBIDIv8VGvDFMEUosSDsVgeHTNsfASzAxfHNbb4KXT02rgfnDHRao
+BF77o7NipFxgMcFYhsEVb27HMOXpZwjmKFlpE6ypzcr2ER5zRRO7g9QhuEY0d5xTGTJqLMMMsk2JJCbaT8lMcZDgfR0zhvJDou75
+CWq8qRmsPragJntRxZnZz_AZIa5lFjWWN6lRIlNRFrDDChIrUrA0LBgID8tQq4EYEeBiCN0bUy3LIVJ5djXzLaloAgXmzD6qS97K
+JZYqK-rzn4eHNpxAsCGwNUpnaXQ6cZLoYKXRaTnJd81mvcdGUQPZjOdpCX7bAMtqE01WhmrUeMzXTWKyYuvZer1RqDpaFX06IrU0
+qPHsz2LpwFfyySUgaIZDP-qkiLBlZfoHiXF4e1XhoJgZHKJlDiUGaGfEHlSomniLDU3oDBTjBD5be1mopmYEw2aXk452IEa6Grym
+b1MJVxx2rLD6Qb0wEJuhdf1sBABFM6_nFQ74tvpHeY2jitGzYqSxU5l0W_IDQSGvZ8oiPyepkPOXcNig7DBMlqmK7F3T-yHY0pip
+SbY9S9dme9v2GxF7mwatWT5qzt7gvUgs-WxEwJt2w1yXh8oiZ7Bgu_8ZN5PyOQ8mGtjiLzdLpxl5cwnMz3HwQrWas6dlBI8RxBEL
+fNtjmu8TiTwRP09ptp7YDGzGW1Z3KHOnI5_DgmYQLBIiry4HG9XLYblMj5MEzP2JwVT1zOuVktchtlMVE_a3R1QoA8RxdP3gbM8H
+x5fUQ5YScKzIAasQOMu8exZEKjYzwDXyimBhtcUTANhhcWc0kYhZhoQYxYKVAZs0J5tyJOcrBhAMQS77sxtIA0n1Il8ZAUjwt9di
+lyy4J2EmLIDnqfhwn3PSKg7WS9X4dhHRpMMVM6A2HzayRWKsFyJ8M35zKDWml6EWZxeZOXmWNAzIVyDiUPoRy6nLZiw2XGd7UmVb
+daTxk1ScPBG8OHOJEa-oet6lsGwQiU0iAdY2LwwJA0tEaOm0RnAAnEtnM1eQkYyaDocKV5kTqMLzM4nIqC_Tk9pQAWToQxnZLE50
+lC4ZWSoHLVoFQS0ppLwDjta3QzGHXoZ6ujy7SemofkURD9qxUvGxFDTQAXgMqBB5XYHxjpeHdNiyrfhbF2hKK5EAYhjMRMjxWOqB
+qdzAMhBnya43ZHKbf0Lkc9Q1cVI3aFHqeLtBJfWAxgIcXT1RsZ3Uu-oHhmCrzNtVHRrpYYJrB7zscqlRBPp6paXFo3OJULkGI3Vz
+kfYJi_NJghDiKLd0ozPizCPVyxApSYyjXKkCnGf0yyREia8povOTCQXhowpKgoxKBsOBM2SGv_phXl6rlDoTPItUV-ejYrFbu3Wp
+jCQmicg6wdKXU9FgmwBXhaM2f3SnKS-jjOvVuUsCZ79mQWpSad1JJpQGD9oEubgTp674aiS3Mrzqlyo7KwnhMmNXG_YDiQz7OB8U
+oMZUP6q7nYMCirnGSY2EhEh5mutEYdMSIbwyXhsnPA6mIqQJz211EIhnIHsCCeKsPkdgTs6MgHwWsPBWEeujJ3qYdAnlni8MD1Nl
+zNXEaHJJcobimtZjWmqTqNWinOqJcZoHUkB4dJmbcpPDaGbZAMcSxrPsTt3WEvh1Jk9qg65prtUHGEulSLy6DwxWueygGDS3Eb4E
+QNMUDHwlb1eoAcG7FOmaazZEZ-rGM6vwENhHr-gaIhu0pj9TqdyFM7kYyIiAUAi0kLHpTUZbEu0SrJdiMVl8kuN4t9jwIqbGx7kU
+dkVpSmrkyjrxuaKJKa-2SX2By0jolRLoAweyAfXRO8BxpRUFS1B5PW2lSnGhIX5zIhliHM5ZYU8qBNGGmoSCtVNSGab1Qgnsf0Un
+lXx4AT_1Qe3JduyUuQQCZXW1uqVWSmTjhisxKqQoT6voBKCznHCcwDcKPjpCF0E0QA6lGFxzV6FCsWk3db04ks98KX4XzyP0CSzw
+SpqsyPK3MtUUFdhQRULBXo_8QB0Df5uQz9JkPDDQDwV4uiuCXcXkdf92F4lZHSbrTA6LYY9gXdqWwslQEVJDHR8YMH01uzu3QZMK
+UZwwrSh1y-IzQelZlkFIUMyXKNiUXztVjQQ8xWfMtH-yYSsyxaN4N9iTDwZaXn2Mb_aHtoO0pj9lH2yoKj7PVM-NQJoO2H_Plzi0
+lRHlElpOZRTjrXYPbDtk5lX_4YTx7-Kyt0XNIraLKPuLgzkdxkxuBuMDlGAg6S62BU_pvGgqG887dZ9lqzikz72BxNHzNC5Myc3t
+iwsAAUF-eyJwYXlsb2FkIjoie1widlwiOjIsXCJ0eXBlXCI6XCJtbHMta2V5XCIsXCJwcmluY2lwYWxJZFwiOlwicmltcDFfdHhE
+TGJuaXBpNWkza0NKdEp3Qk9VaXh6dl9NWThPblUwbWN5LS1UeWplMFwiLFwiZGV2aWNlSWRcIjpcIjAwMDAwMDAwLTAwMDAtMDAw
+MC0wMDAwLTAwMDAwMDAwMDAwMVwiLFwibWxzS2V5XCI6XCJlZDI1NTE5OjZTNjJCVV9wdkdncUc4ODdkWjlscXppa3o3MkJ4Tkh6
+TkM1TXljM3Rpd3NcIixcImlzc3VlZEF0XCI6XCIyMDI2LTEwLTA5VDAwOjAwOjAwWlwifSIsInNpZ25hdHVyZSI6ImVkMjU1MTk6
+NlRONE9IT24zVktJMDBva050aE5KT0prdUFnMWFmRU85aC02M0w5VDZWb1F4ZVlBMWFjWE1xVHVMQnU1X2Zsa3pDalBSc3NFV3BQ
+NkxrVkNpNzRFREEifQIAAQIATwIACgACAAEBAAAAAGrIIHAAAAAAfZgmAABAQDPykHFoKdbKunP7n4FP9UDQ9_En57ppyY1tesmD
+2TojN0TQDOeyxNN-vAYZS5-sV6Vrx-5HGUagOYHEM0bEsA0AQED9vmhWWtk7lh59jGk95noL-_O2QTrXCP6JclnSHMdiystNZKNh
+Ctim0wqW4cjgJerOpJWKJCZNGLpwpYlOrJUC</code></pre>
+<h3 id="a3-attachment">A.3 Attachment <a class="anchor" href="#a3-attachment" aria-label="Link to this section">#</a></h3>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Secret (bytes <code>a0</code>..<code>bf</code>)</td>
+<td><code>oKGio6SlpqeoqaqrrK2ur7CxsrO0tba3uLm6u7y9vr8</code></td>
+</tr>
+<tr>
+<td>Key</td>
+<td><code>b03b51201f06749186a1768c665aaa48570ab7c6f42886d09ab5a97116b15b8f</code></td>
+</tr>
+<tr>
+<td>Nonce</td>
+<td><code>306c91d469a72d1e1b19c711</code></td>
+</tr>
+<tr>
+<td>Plaintext</td>
+<td><code>hello, attachment\n</code> (18 bytes)</td>
+</tr>
+<tr>
+<td>Blob (ciphertext ‖ tag, 34 bytes)</td>
+<td><code>096d52fa9b833e37ef33d387fc5ecab34eabb410807b85e90c862a44614c7c9cb163</code></td>
+</tr>
+<tr>
+<td><code>blobSha256</code></td>
+<td><code>EHFcZ6hUOIdDi32ptdrCXM2PTHQwKF46-0Ls56yQrac</code></td>
+</tr>
+</tbody></table></div>
+<h3 id="a4-content-franking-and-authenticated-data">A.4 Content, franking and authenticated data <a class="anchor" href="#a4-content-franking-and-authenticated-data" aria-label="Link to this section">#</a></h3>
+<p>Message <code>0199d1a0-0000-7000-8000-000000000002</code> mentioning appendix A&#39;s principal of
+<a href="key-identity-v1.html"><code>key-identity-v1.md</code></a>, with A.3&#39;s attachment. Content (480 bytes):</p>
+<pre><code>{&quot;v&quot;:1,&quot;type&quot;:&quot;message&quot;,&quot;id&quot;:&quot;0199d1a0-0000-7000-8000-000000000002&quot;,&quot;rev&quot;:0,&quot;threadRootId&quot;:null,&quot;body&quot;:&quot;hi &lt;@rimp1_nz1POml8JmCMcFDECrtu60ibohPKnywhcExmOPMvTUo&gt;&quot;,&quot;mentions&quot;:[&quot;rimp1_nz1POml8JmCMcFDECrtu60ibohPKnywhcExmOPMvTUo&quot;],&quot;mentionAll&quot;:false,&quot;replyTo&quot;:null,&quot;forwardedFrom&quot;:null,&quot;attachments&quot;:[{&quot;blobSha256&quot;:&quot;EHFcZ6hUOIdDi32ptdrCXM2PTHQwKF46-0Ls56yQrac&quot;,&quot;secret&quot;:&quot;oKGio6SlpqeoqaqrrK2ur7CxsrO0tba3uLm6u7y9vr8&quot;,&quot;name&quot;:&quot;hello.txt&quot;,&quot;mime&quot;:&quot;text/plain&quot;,&quot;size&quot;:18}],&quot;linkPreviews&quot;:[]}</code></pre>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Franking key (bytes <code>60</code>..<code>7f</code>)</td>
+<td><code>YGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn8</code></td>
+</tr>
+<tr>
+<td>Commitment <code>c</code></td>
+<td><code>71ec48866b283644c13508ddc5c8d4fcc72ba51721dcd3b74b16e5a50d5a874d</code> (<code>cexIhmsoNkTBNQjdxcjU_McrpRch3NO3SxblpQ1ah00</code>)</td>
+</tr>
+<tr>
+<td>Application data (<code>01</code> ‖ key ‖ content, 513 bytes), SHA-256</td>
+<td><code>2034e24c9ef5d4ad3965448fb6beec5852da1a0c87896bb07f14b3c7f63ab776</code></td>
+</tr>
+<tr>
+<td>The PrivateMessage carrying it</td>
+<td>Recorded by S4-2, below: 1,059 bytes, SHA-256 <code>e4feeeb27ad8fe13c9a9ca47b044d2770bfe138278fc953cf05f4c95c880cad1</code></td>
+</tr>
+</tbody></table></div>
+<p>Authenticated data (220 bytes):</p>
+<pre><code>{&quot;v&quot;:1,&quot;type&quot;:&quot;application&quot;,&quot;messageId&quot;:&quot;0199d1a0-0000-7000-8000-000000000002&quot;,&quot;franking&quot;:&quot;cexIhmsoNkTBNQjdxcjU_McrpRch3NO3SxblpQ1ah00&quot;,&quot;mentions&quot;:[&quot;rimp1_nz1POml8JmCMcFDECrtu60ibohPKnywhcExmOPMvTUo&quot;],&quot;mentionAll&quot;:false}</code></pre>
+<p>The recorded PrivateMessage (an <code>MLSMessage</code>; randomized, so a fixture): group A.1, epoch 1, sent by
+A.2&#39;s device (MLS key seed 40) with the authenticated data above, to device
+<code>00000000-0000-0000-0000-000000000002</code> of <code>rimp1_nz1POml8JmCMcFDECrtu60ibohPKnywhcExmOPMvTUo</code>
+(device key seed 21, MLS key seed 41). Decrypting it needs that device&#39;s group state, which is
+recorded beside it in rim-ui (<code>src-tauri/crates/rim_mls/src/tests/fixtures/recorded.json</code>); it
+yields the 513 bytes above, once. Base64url, wrapped at 100 characters:</p>
+<pre><code>AAEAAhhyaW0xAZnRoAAAcACAAAAAAAAAAQAAAAEAAAAAAAAAAQFA3HsidiI6MSwidHlwZSI6ImFwcGxpY2F0aW9uIiwibWVzc2Fn
+ZUlkIjoiMDE5OWQxYTAtMDAwMC03MDAwLTgwMDAtMDAwMDAwMDAwMDAyIiwiZnJhbmtpbmciOiJjZXhJaG1zb05rVEJOUWpkeGNq
+VV9NY3JwUmNoM05PM1N4YmxwUTFhaDAwIiwibWVudGlvbnMiOlsicmltcDFfbnoxUE9tbDhKbUNNY0ZERUNydHU2MGlib2hQS255
+d2hjRXhtT1BNdlRVbyJdLCJtZW50aW9uQWxsIjpmYWxzZX0cLL7g1wnPzKIUoBImlKOgrhhCVqjjc-VnntVg_kMAr6Wk0pZzB4d5
+_6PlQaCph5h39KbBEx_XI8s5qLfNaF4QMvhyqIikXverjJqiXYLIG984_djoNUoTHI_n5UJKcvmekg8AzdCqayDLtvhbC1XKCNwZ
+jbXeuAzKsyYXBe6iSoJV5G6iAaxR3dgIIWRMwEG-lPJCgLAKRZq9OO8gipCgKQBPsx2jYTh9lcTWmZOevEXeu9QNL3v5U73Bysxc
+JIOVJfDJAXNCZetLmKfaIyjCB_TvgkSE5fauernVIQrSBglk-qyz9zm4pLZU1fIYvTsRy5Q2wIPEVrr1gMts1KvAPDmPZwf3QJsf
+G8WxyNo58RccIcu__tl0LVQxNpAz9jmklkwudvFlmJ6W1QwvApprPaLXn0Y8q5_V8EqkE6D3-c_u4-G91SyjxbH6zEkP70bEyS-C
+2YYuakVAzGSOdWBU7qtz74iSr5zQ3QCrn6koC_n-iPoxLyfJ38zth281HxhAmSS_OwpvL5a7eJVM0js48cHByRwW7XEiFGDnQpER
+4tBkp3uIsqb5Tyo9HKu3KEGBibGIThb0bUSy5RVtEaWntoRynwY49PAJG6L02K_djkze8DgL85Bbjxe5jQnip89GZ4_v3zgbcjIV
+net-I-D7sSWa1EeSbAcYi8I60UQ5Kb-txCXzLvFcG2PuFESJVCmbB0HIgbV7vgkmBM0dSFeuKPYtWmnHUoahoaYxPKxrFsNx2qcB
+Vqakpe6UtVFDysrcODec4yO1hOmum3-VIK8sCeyHDJNbOPwSzYQnjkUQJnm_TK-gOxzAhuzBBqm9hPb_P4jbE5ofDMBRrfqjJD67
+bjoEOkw7sM6g1SbPsFxa22xd8VImhCdri-5kUcUuQSzMud9y4Uv2_7c912IM9WqDNcc8A78_64yOeJs56Av3hPipkhRc35ZrLI5l
+_VtBnvgLDn24mAua_GtB4hRJwRcuR58QNEkuq_dsajAy9uH-t7oucN1yGjuo5axBZ5WqqLFfk200cSNc3oa3aEDYrY-7TWpFXa04
+haQfybwlZyfz</code></pre>
+<p>A Commit&#39;s authenticated data adding device <code>…0002</code> of that principal with the ref of bytes
+<code>c0</code>..<code>df</code>:</p>
+<pre><code>{&quot;v&quot;:1,&quot;type&quot;:&quot;commit&quot;,&quot;adds&quot;:[{&quot;principalId&quot;:&quot;rimp1_nz1POml8JmCMcFDECrtu60ibohPKnywhcExmOPMvTUo&quot;,&quot;deviceId&quot;:&quot;00000000-0000-0000-0000-000000000002&quot;,&quot;keyPackageRef&quot;:&quot;wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t8&quot;}],&quot;removes&quot;:[]}</code></pre>
+<h3 id="a5-franking-receipt">A.5 Franking receipt <a class="anchor" href="#a5-franking-receipt" aria-label="Link to this section">#</a></h3>
+<p>Server franking key (bytes <code>80</code>..<code>9f</code>), sender user <code>0199d1a0-0000-7000-8000-0000000000aa</code>, sender
+device <code>…0001</code>, conversation A.1, message A.4, <code>sent_at</code> 2026-10-09T00:00:00.123456Z
+(<code>sentAtUs</code> <code>1791504000123456</code>). Receipt input (133 bytes):</p>
+<pre><code>72696d2e653265652e6672616e6b696e672d726563656970742e7631000199d1a00000700080000000000000020199d1a00000700080000000000000010199d1a00000700080000000000000aa0000000000000000000000000000000100065d5d078a824071ec48866b283644c13508ddc5c8d4fcc72ba51721dcd3b74b16e5a50d5a874d</code></pre>
+<p>Receipt: <code>9c25cd6659b97074696a9445ad323e061debaaf5f97af5ed2f2cd46150d3db75</code>
+(<code>nCXNZlm5cHRpapRFrTI-Bh3rqvX5evXtLyzUYVDT23U</code>).</p>
+<h3 id="a6-re-add-request">A.6 Re-add request <a class="anchor" href="#a6-re-add-request" aria-label="Link to this section">#</a></h3>
+<pre><code>{&quot;v&quot;:2,&quot;type&quot;:&quot;mls-readd&quot;,&quot;principalId&quot;:&quot;rimp1_txDLbnipi5i3kCJtJwBOUixzv_MY8OnU0mcy--Tyje0&quot;,&quot;deviceId&quot;:&quot;00000000-0000-0000-0000-000000000001&quot;,&quot;conversationId&quot;:&quot;0199d1a0-0000-7000-8000-000000000001&quot;,&quot;incarnation&quot;:1,&quot;lastEpoch&quot;:41,&quot;nonce&quot;:&quot;AAECAwQFBgcICQoLDA0ODw&quot;,&quot;issuedAt&quot;:&quot;2026-10-09T00:00:00Z&quot;}
+ed25519:UNry-YBfbQv1nUxStNVtA9jirfxTM5rLE-JA40KZGS9c-tCyl90KEq4W1OxmoxL0msvG62Gc5msFvpCI_h_lCw</code></pre>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/docs/specs/e2ee-mls-v1.md">rim-server/docs/specs/e2ee-mls-v1.md</a> at <code>c86029b</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+<script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
+</body>
+</html>

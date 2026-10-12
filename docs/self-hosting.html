@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Self-hosting a RIM server · RIM</title>
+<meta name="description" content="deploy/compose.yml runs one RIM server on one domain: rim-server with RIM_ROLE=both (it hosts workspaces and is its users' relay), PostgreSQL 17, the web client, and Caddy terminating TLS. Caddy sends /api (with …">
+<link rel="icon" href="../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../index.html" aria-label="RIM home">
+      <picture><source srcset="../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../index.html#what">What RIM is</a>
+      <a href="../index.html#how">How it works</a>
+      <a href="self-hosting.html" aria-current="page">Self-host</a>
+      <a href="../configure/index.html">Configure</a>
+      <a href="index.html">Docs</a>
+      <a href="../api/index.html">API</a>
+      <a href="../specs/index.html">Specs</a>
+      <a href="contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="index.html">Docs</a><span aria-hidden="true">/</span><a href="operators.html">Operators</a><span aria-hidden="true">/</span><span>Self-hosting a RIM server</span></div>
+  <div class="page with-toc">
+    <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
+<ol>
+<li><a href="#before-the-first-start">Before the first start</a><ol><li><a href="#verify-the-images">Verify the images</a></li><li><a href="#the-web-clients-endpoint">The web client's endpoint</a></li></ol></li>
+<li><a href="#first-start">First start</a><ol><li><a href="#the-server-recovery-key">The server recovery key</a></li><li><a href="#the-first-account">The first account</a></li><li><a href="#check-it-answers">Check it answers</a></li></ol></li>
+<li><a href="#updates">Updates</a></li>
+<li><a href="#backups">Backups</a><ol><li><a href="#restore">Restore</a></li><li><a href="#the-restore-drill">The restore drill</a></li></ol></li>
+<li><a href="#monitoring">Monitoring</a></li>
+<li><a href="#limits-and-blocking">Limits and blocking</a></li>
+<li><a href="#optional-features">Optional features</a></li>
+<li><a href="#notice-and-terms">Notice and terms</a></li>
+<li><a href="#another-proxy">Another proxy</a></li>
+</ol>
+</details></aside>
+    <main id="content" class="prose">
+<h1 id="self-hosting-a-rim-server">Self-hosting a RIM server</h1>
+<p><a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/deploy/compose.yml"><code>deploy/compose.yml</code></a> runs one RIM server on one domain: rim-server with <code>RIM_ROLE=both</code> (it
+hosts workspaces and is its users&#39; relay), PostgreSQL 17, the web client, and Caddy terminating
+TLS. Caddy sends <code>/api</code> (with <code>/api/ws</code>), <code>/.well-known/…</code> and <code>/s2s/…</code> to rim-server and every
+other path to the web client, so the client and the API share one origin. The health probes
+stay inside the compose network.
+A public relay is the same file with <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a> on top; <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/deploy/README.md"><code>deploy/README.md</code></a>
+covers it.</p>
+<p>Everything marked <strong>FILL</strong> is the operator&#39;s choice, recorded here once made.</p>
+<h2 id="before-the-first-start">Before the first start <a class="anchor" href="#before-the-first-start" aria-label="Link to this section">#</a></h2>
+<ol>
+<li><p>A Linux host with Docker (Compose v2.20 or later), ports 80 and 443 reachable from the
+internet, and DNS <code>A</code>/<code>AAAA</code> records of your domain pointing at it. Caddy gets the
+certificate from Let&#39;s Encrypt on the first request.</p>
+</li>
+<li><p>This repository at the release you run. The compose files, the Caddyfile and the backup
+scripts come from the checkout; the images are pulled:</p>
+<pre><code class="language-sh">git clone https://github.com/rim-platform/rim-server.git
+cd rim-server
+git checkout v&lt;version&gt;</code></pre>
+<p>The compose files run <code>ghcr.io/rim-platform/rim-server</code> and <code>ghcr.io/rim-platform/rim-web</code>
+at <code>RIM_VERSION</code> from <code>deploy/.env</code>; set it to the same <code>&lt;version&gt;</code>. Left unset it is
+<code>latest</code>, which moves with every release. To build both images on the host instead, check
+out rim-ui next to this repository and add <code>-f deploy/compose.dev.yml</code> to every compose
+command (the alias below) with <code>up --build</code>.</p>
+</li>
+<li><p><code>deploy/.env</code> from the example, filled in:</p>
+<pre><code class="language-sh">cp deploy/.env.example deploy/.env
+chmod 600 deploy/.env
+sed -i &quot;s|^POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=$(openssl rand -base64 32 | tr -d '/+=')|&quot; deploy/.env
+$EDITOR deploy/.env          # RIM_VERSION, RIM_DOMAIN, and SMTP for password resets and invites</code></pre>
+<p>Every variable the compose files read is in <code>.env.example</code> with what it does. Without
+<code>POSTGRES_PASSWORD</code> or <code>RIM_DOMAIN</code> every compose command stops and names the variable.</p>
+</li>
+<li><p>Check the configuration:</p>
+<pre><code class="language-sh">alias dc='docker compose -f deploy/compose.yml'
+dc config &gt;/dev/null &amp;&amp; echo ok</code></pre>
+</li>
+</ol>
+<p>The commands below use that alias, from the repository root.</p>
+<h3 id="verify-the-images">Verify the images <a class="anchor" href="#verify-the-images" aria-label="Link to this section">#</a></h3>
+<p>The release workflows sign every image with <a href="https://docs.sigstore.dev">cosign</a> keyless. The
+certificate names the repository&#39;s release workflow and the tag it ran for, so an image built or
+signed anywhere else does not verify. Before the first start and after every upgrade:</p>
+<pre><code class="language-sh">v=0.1.0                                      # your RIM_VERSION
+dc pull
+cosign verify ghcr.io/rim-platform/rim-server:$v \
+  --certificate-identity https://github.com/rim-platform/rim-server/.github/workflows/release.yaml@refs/tags/v$v \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com
+cosign verify ghcr.io/rim-platform/rim-web:$v \
+  --certificate-identity https://github.com/rim-platform/rim-ui/.github/workflows/release.yaml@refs/tags/v$v \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com</code></pre>
+<p>cosign prints the digest it verified, which is also in the GitHub release notes. Setting
+<code>RIM_SERVER_IMAGE</code> and <code>RIM_WEB_IMAGE</code> in <code>deploy/.env</code> to <code>…@sha256:&lt;digest&gt;</code> makes compose run
+exactly those images. Each release also carries the image&#39;s SBOM (SPDX JSON), attested to the
+image: <code>cosign verify-attestation --type spdxjson</code> with the same flags checks it.</p>
+<h3 id="the-web-clients-endpoint">The web client&#39;s endpoint <a class="anchor" href="#the-web-clients-endpoint" aria-label="Link to this section">#</a></h3>
+<p>The web client finds the API through <code>VITE_GRAPHQL_ENDPOINT</code>, baked in when its image is built.
+The published image is built with <code>/api</code>, and <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/deploy/compose.dev.yml"><code>deploy/compose.dev.yml</code></a> passes
+<code>RIM_WEB_GRAPHQL_ENDPOINT</code>, default <code>/api</code>: the client resolves it against the page&#39;s own
+address, so one image serves any domain and needs no CORS. The image&#39;s
+content security policy allows <code>connect-src 'self'</code>, which covers the API and its WebSocket on
+that origin; the browser console notes that it ignores the extra <code>/api</code> source the image adds.
+<code>https://&lt;your domain&gt;/api</code> gives the same result without that note and ties the image to the
+domain.</p>
+<p>Browsers send an <code>Origin</code> header with the client&#39;s requests even on one origin. The server
+accepts its own origin without configuration: that of <code>RIM_PUBLIC_BASE_URL</code> when set, else the
+scheme and <code>Host</code> the request arrived with (<code>X-Forwarded-Proto</code> and <code>X-Forwarded-Host</code> count
+only with <code>RIM_TRUST_FORWARDED_HEADERS=true</code>). Any other origin gets <code>400 Origin is not allowed</code>, with two exceptions: the packaged desktop app&#39;s origins (<code>tauri://localhost</code> on macOS
+and Linux, <code>http://tauri.localhost</code> on Windows), which no web page can carry, and one extra
+origin named by <code>RIM_CORS_ALLOWED_ORIGIN</code>, such as a client served from another domain or the
+desktop development app at <code>http://localhost:1420</code>. The compose file leaves it as a commented
+example.</p>
+<h2 id="first-start">First start <a class="anchor" href="#first-start" aria-label="Link to this section">#</a></h2>
+<pre><code class="language-sh">dc up -d
+dc logs -f rim</code></pre>
+<p>The <code>migrate</code> service applies the migrations and exits; the server starts after it. <code>dc ps</code>
+shows <code>rim</code> as <code>healthy</code> once <code>/readyz</code> passes.</p>
+<h3 id="the-server-recovery-key">The server recovery key <a class="anchor" href="#the-server-recovery-key" aria-label="Link to this section">#</a></h3>
+<p>On its first start the server creates its key and writes the recovery key to
+<code>/data/server-recovery-key.txt</code>, and it logs a warning at every start until the file is gone.
+The recovery key replaces a lost or stolen server key; whoever holds it can make any key this
+server&#39;s, so it never stays on the host:</p>
+<pre><code class="language-sh">dc exec rim cat /data/server-recovery-key.txt
+# store the line offline: a password manager and a printed copy, held by two people
+dc exec rim rm /data/server-recovery-key.txt</code></pre>
+<p><code>dc exec rim /app/rim-server server-key show</code> names the recovery key&#39;s public half, so a copy can
+be checked without using it. Backups never include the file (below). <a href="server-identity.html"><code>docs/server-identity.md</code></a>
+has the key commands, rotation and recovery.</p>
+<h3 id="the-first-account">The first account <a class="anchor" href="#the-first-account" aria-label="Link to this section">#</a></h3>
+<p>Signups are invite-only by default. Issue a single-use link for your own account; it works for
+7 days (<code>--expires-in-days</code> changes that):</p>
+<pre><code class="language-sh">dc exec rim /app/rim-server invite create --public-url https://rim.example.org</code></pre>
+<p><code>--email you@example.org</code> binds the link to that address: it then admits only a password signup
+with it, not a key-only one.</p>
+<p>Open the link it prints (<code>https://rim.example.org/join/…</code>) and sign up. For other people, a link
+for up to 50 signups that lasts up to 30 days:</p>
+<pre><code class="language-sh">dc exec rim /app/rim-server invite create --max-uses 10 --expires-in-days 7 --public-url https://rim.example.org
+dc exec rim /app/rim-server invite list
+dc exec rim /app/rim-server invite revoke &lt;id&gt;</code></pre>
+<p>The owner of a workspace can also invite from the app. <code>RIM_OPEN_REGISTRATION=true</code> lets
+anyone sign up, rate-limited per address; <code>RIM_REGISTRATION_POW_BITS</code> asks a proof-of-work of
+signups without an invite.</p>
+<h3 id="check-it-answers">Check it answers <a class="anchor" href="#check-it-answers" aria-label="Link to this section">#</a></h3>
+<pre><code class="language-sh">dc exec rim curl -fsS http://localhost:8080/readyz; echo
+curl -s https://rim.example.org/.well-known/rim-server | head -c 300; echo
+curl -sI https://rim.example.org/ | head -n 1                 # the web client
+dc exec rim /app/rim-server --version</code></pre>
+<h2 id="updates">Updates <a class="anchor" href="#updates" aria-label="Link to this section">#</a></h2>
+<p>Take a backup first (below): migrations only go forward, so a backup is the way back.</p>
+<pre><code class="language-sh">deploy/backup.sh
+git fetch --tags &amp;&amp; git checkout v&lt;version&gt;
+$EDITOR deploy/.env                          # RIM_VERSION=&lt;version&gt;
+dc pull                                      # then verify them, as above
+dc up -d
+dc logs -f rim</code></pre>
+<p><code>up</code> runs <code>migrate</code> before it starts the new server. To run the migrations alone,
+<code>dc run --rm migrate</code>. Rolling the image back leaves the migrations in place: the previous
+release runs on them, started with <code>dc up -d --no-deps rim web</code>, and anything further back is the
+backup taken before the update. <a href="operations/upgrade.html"><code>docs/operations/upgrade.md</code></a> has the whole procedure, what to
+read in <a href="changelog.html"><code>CHANGELOG.md</code></a> first, and the rollback.</p>
+<h2 id="backups">Backups <a class="anchor" href="#backups" aria-label="Link to this section">#</a></h2>
+<p><a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/deploy/backup.sh"><code>deploy/backup.sh</code></a> writes one archive, <code>rim-backup-&lt;project&gt;-&lt;UTC time&gt;.tar</code>, under
+<code>RIM_BACKUP_DIR</code> (default <code>./backups</code>, which Git ignores). It holds:</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>File</th>
+<th>What</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>rim.dump</code></td>
+<td><code>pg_dump -Fc</code> of the database, checked to read back</td>
+</tr>
+<tr>
+<td><code>rim-data.tgz</code></td>
+<td>the <code>rim_data</code> volume: server key, franking keys, uploads, the audit log and audit exports</td>
+</tr>
+<tr>
+<td><code>env</code></td>
+<td><code>deploy/.env</code></td>
+</tr>
+<tr>
+<td><code>MANIFEST</code>, <code>SHA256SUMS</code></td>
+<td>project, time, server version, checksums</td>
+</tr>
+</tbody></table></div>
+<p>The recovery key file is never in it; the script warns while it is still on the host. The
+database and the data volume are one set: the server key file must match the key log in the
+database, and the server refuses to start on a mixed set. Never restore one without the other.</p>
+<p>With <code>RIM_BACKUP_AGE_RECIPIENT</code> set (an <code>age1…</code> recipient or a file of recipients), the archive
+is encrypted with <a href="https://age-encryption.org">age</a> to <code>….tar.age</code> and nothing unencrypted is
+left on disk. Keep the identity that decrypts it off the host, with the recovery key&#39;s holders.</p>
+<pre><code class="language-sh">deploy/backup.sh
+COMPOSE_FILE=deploy/compose.yml:deploy/compose.relay.yml deploy/backup.sh     # a relay</code></pre>
+<p>The scripts read <code>COMPOSE_FILE</code> and <code>COMPOSE_PROJECT_NAME</code> the way docker compose does,
+<code>RIM_ENV_FILE</code> for another env file, and the <code>RIM_BACKUP_*</code> settings from the environment or
+<code>deploy/.env</code>.</p>
+<p><strong>How often.</strong> Nightly, and before every update or key rotation. A cron entry on the host:</p>
+<pre><code class="language-cron">15 3 * * * cd /srv/rim-server &amp;&amp; deploy/backup.sh &gt;&gt;/var/log/rim-backup.log 2&gt;&amp;1</code></pre>
+<p><strong>Where copies go.</strong> Off the host, encrypted: <strong>FILL</strong> the destination (object storage, another
+machine) and how long copies are kept. The archive holds the server&#39;s private key and every
+user&#39;s data; treat it like the host itself.</p>
+<h3 id="restore">Restore <a class="anchor" href="#restore" aria-label="Link to this section">#</a></h3>
+<p><a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/deploy/restore.sh"><code>deploy/restore.sh</code></a> restores an archive into a stopped stack: it drops and recreates the
+database from the dump, empties the data volume and refills it, starts the stack and waits for
+<code>/readyz</code>. It asks for the project name before it replaces anything (<code>RIM_RESTORE_YES=1</code> skips
+that).</p>
+<pre><code class="language-sh">dc stop rim
+deploy/restore.sh backups/rim-backup-rim-20261010T031500Z.tar
+RIM_BACKUP_AGE_IDENTITY=~/rim-backup.key deploy/restore.sh backups/….tar.age</code></pre>
+<p>On a new host, check out the repositories, take <code>deploy/.env</code> from the archive&#39;s <code>env</code> file, build
+or pull the images, and run the same command. A newer image applies its migrations to the
+restored database when it starts.</p>
+<h3 id="the-restore-drill">The restore drill <a class="anchor" href="#the-restore-drill" aria-label="Link to this section">#</a></h3>
+<p>A backup is good once it has been restored. <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/deploy/restore-drill.sh"><code>deploy/restore-drill.sh</code></a> restores the newest archive
+(or the one given) into a throwaway project, <code>rim-drill</code>, waits for <code>/readyz</code>, prints the server
+key and the row counts of a few tables, and removes the project and its volumes. The drill&#39;s
+server has server-to-server traffic and mail off and publishes no port, so it never speaks for the
+real one; it runs next to the live stack on the same host.</p>
+<pre><code class="language-sh">deploy/restore-drill.sh
+deploy/restore-drill.sh backups/rim-backup-rim-20261010T031500Z.tar</code></pre>
+<p>Run it after the first backup, every quarter, and after changing the backup setup. Compare the
+server id and key seq with <code>dc exec rim /app/rim-server server-key show</code> and the row counts with
+production&#39;s. Record each drill: <strong>FILL</strong> where.</p>
+<h2 id="monitoring">Monitoring <a class="anchor" href="#monitoring" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><p><strong>Probes.</strong> rim-server answers <code>/healthz</code> (200 while the process runs) and <code>/readyz</code> (200
+when the database answers, no migration is pending and the key files are readable, else 503
+naming the failing checks) on its own port, without a session. They are for Docker and the
+compose network: the <code>rim</code> service&#39;s healthcheck uses <code>/readyz</code>, and Caddy answers both paths
+with 404. From the host:</p>
+<pre><code class="language-sh">dc ps                                                    # rim, postgres and web: healthy
+dc exec rim curl -fsS http://localhost:8080/readyz; echo
+dc exec rim curl -fsS http://localhost:8080/healthz; echo</code></pre>
+<p>An outside uptime check watches the public origin instead, for example
+<code>https://&lt;domain&gt;/.well-known/rim-server</code> and the web client&#39;s <code>/</code>.</p>
+</li>
+<li><p><strong>Metrics.</strong> Uncomment <code>RIM_METRICS_ADDR: 0.0.0.0:9090</code> in the <code>rim</code> service and run
+Prometheus in a container on the compose project&#39;s <code>internal</code> network, scraping <code>rim:9090</code>.
+Never publish the port or route it through Caddy. <a href="operations/metrics.html"><code>docs/operations/metrics.md</code></a> lists the
+metrics and what to alert on.</p>
+</li>
+<li><p><strong>Logs.</strong> JSON on stdout: <code>dc logs --since 1h rim</code>. Audit events (<code>&quot;target&quot;:&quot;audit&quot;</code>) also go
+to <code>/data/audit.log</code>; <a href="operations/audit-retention.html"><code>docs/operations/audit-retention.md</code></a> covers its rotation and
+<code>RIM_AUDIT_RETENTION_DAYS</code> for the audit table.</p>
+</li>
+<li><p><strong>Background jobs.</strong> <a href="operations/background-jobs.html"><code>docs/operations/background-jobs.md</code></a> lists what the server runs on a
+timer, how often, and the setting that changes it.</p>
+</li>
+<li><p><strong>Disk.</strong> The <code>postgres_data</code> and <code>rim_data</code> volumes, and <code>RIM_BACKUP_DIR</code>.</p>
+</li>
+</ul>
+<h2 id="limits-and-blocking">Limits and blocking <a class="anchor" href="#limits-and-blocking" aria-label="Link to this section">#</a></h2>
+<p>A server open to the internet can limit what one client sends: requests per address, mutations
+per session, messages per user, and WebSocket connections and subscriptions. Every limit is off
+until its <code>RIM_RATE_*</code> variable is set in <code>deploy/.env</code> (the &quot;Request limits&quot; block of
+<a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/deploy/.env.example"><code>deploy/.env.example</code></a>); <a href="api.html"><code>docs/api.md</code></a> (&quot;Limits&quot;) says what clients see past each one. An
+address or range that keeps misbehaving is blocked outright with
+<code>dc exec rim /app/rim-server ip block 203.0.113.0/24 --reason &quot;scraping&quot; --expires-in-days 30</code>:
+it gets 403 <code>{&quot;error&quot;:&quot;blocked&quot;}</code> on every route but <code>/healthz</code>, server-to-server routes
+included. Leave out <code>--expires-in-days</code> to block until <code>ip unblock</code>; <code>ip list</code> shows every block
+with its expiry. A running server reads the list every 30 seconds, so a change applies within
+that; each block and unblock is written to the audit log as <code>ip.block</code> or <code>ip.unblock</code>. Behind
+Caddy the address is the client&#39;s, since <code>RIM_TRUST_FORWARDED_HEADERS</code> is on; behind another
+proxy it must replace <code>X-Forwarded-For</code> (next sections), or one forged header unblocks a client.</p>
+<h2 id="optional-features">Optional features <a class="anchor" href="#optional-features" aria-label="Link to this section">#</a></h2>
+<p>Attachments, link previews, email, custom emoji, workspace plugins and the AI command surface
+can be switched off with <code>RIM_FEATURES_DISABLED</code> (commented out in the <code>rim</code> service);
+<a href="operations/features.html"><code>docs/operations/features.md</code></a> lists what each one covers and what clients see.</p>
+<h2 id="notice-and-terms">Notice and terms <a class="anchor" href="#notice-and-terms" aria-label="Link to this section">#</a></h2>
+<p><code>RIM_INSTANCE_NOTICE</code> is a short text, at most 500 characters, that clients show people on
+your server, such as who runs it and how to reach you. <code>RIM_TERMS_URL</code> is the address of your
+terms of service; once it is set, every signup has to accept those terms and the server records
+on the account when it did and which URL it accepted. Both are commented out in
+<a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/deploy/.env.example"><code>deploy/.env.example</code></a> and reach the <code>rim</code> service when set; clients read them from
+<code>serverInfo</code>. A notice over 500 characters or a terms URL that is not an absolute http(s) URL
+stops the server at boot. Changing the terms URL does not ask existing accounts to accept again.</p>
+<h2 id="another-proxy">Another proxy <a class="anchor" href="#another-proxy" aria-label="Link to this section">#</a></h2>
+<p>Caddy is an example. Any TLS proxy works if it:</p>
+<ul>
+<li>sends <code>/api</code> (with <code>/api/ws</code> as a WebSocket upgrade), <code>/.well-known/…</code> and <code>/s2s/…</code> to
+<code>rim:8080</code> unchanged, and the rest to <code>web:80</code>;</li>
+<li>keeps <code>/healthz</code> and <code>/readyz</code> off the public side;</li>
+<li>accepts bodies up to 32 MiB;</li>
+<li>sets <code>X-Forwarded-For</code> itself, replacing what the client sent;</li>
+<li>is the only way in.</li>
+</ul>
+<p><a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/deploy/README.md"><code>deploy/README.md</code></a> has an nginx example for the relay&#39;s paths.</p>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/docs/self-hosting.md">rim-server/docs/self-hosting.md</a> at <code>c86029b</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+<script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
+</body>
+</html>

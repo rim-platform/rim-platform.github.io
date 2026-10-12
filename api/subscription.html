@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Subscription · API · RIM</title>
+<meta name="description" content="Every field of the RIM GraphQL Subscription type.">
+<link rel="icon" href="../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../index.html" aria-label="RIM home">
+      <picture><source srcset="../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../index.html#what">What RIM is</a>
+      <a href="../index.html#how">How it works</a>
+      <a href="../docs/self-hosting.html">Self-host</a>
+      <a href="../configure/index.html">Configure</a>
+      <a href="../docs/index.html">Docs</a>
+      <a href="index.html" aria-current="page">API</a>
+      <a href="../specs/index.html">Specs</a>
+      <a href="../docs/contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="index.html">API</a><span aria-hidden="true">/</span><span>Subscription</span></div>
+  <div class="page with-toc">
+    <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
+<ol>
+<li><a href="#group-workspace">Workspace (1)</a></li>
+<li><a href="#group-relay">Relay (1)</a></li>
+</ol>
+</details></aside>
+    <main id="content" class="prose">
+<h1>Subscription</h1>
+<p class="lede">2 subscriptions, grouped by the domain their name starts with or names, in the order the schema lists them. Subscriptions arrive over the WebSocket at <code>/api/ws</code>.</p>
+<input id="filter" class="search" type="search" placeholder="Filter fields by name" aria-label="Filter fields by name" autocomplete="off">
+<p id="filter-none" class="muted" hidden>Nothing matches.</p>
+<section data-group>
+<h2 id="group-workspace">Workspace <span class="faint">1</span></h2>
+<section class="entry" id="workspaceEvents" data-name="workspaceEvents">
+<h3><code>workspaceEvents</code></h3>
+<div class="sig">workspaceEvents(workspaceId: <a href="scalars.html#ID">ID</a>!): <a href="scalars.html#String">String</a>!</div>
+<div class="desc"><p>Subscribe to all real-time events for a workspace.
+Returns events as JSON strings — the client parses the <code>type</code> field to determine the event kind.</p>
+</div>
+
+</section>
+</section>
+<section data-group>
+<h2 id="group-relay">Relay <span class="faint">1</span></h2>
+<section class="entry" id="relayStream" data-name="relayStream">
+<h3><code>relayStream</code></h3>
+<div class="sig">relayStream(after: <a href="scalars.html#ID">ID</a>): <a href="scalars.html#String">String</a>!</div>
+<div class="desc"><p>Host events queued for the session&#39;s device on this relay, above <code>after</code> (the device&#39;s
+cursor when omitted), then live ones, as JSON strings:
+<code>{&quot;type&quot;:&quot;RelayItem&quot;,&quot;id&quot;,&quot;hostServerId&quot;,&quot;workspaceId&quot;,&quot;envelope&quot;}</code>, and the
+<code>DmRequestReceived</code>, <code>QueueOverflow</code> and <code>RevocationAcked</code> notices. While one is open
+the hosts of the user&#39;s workspaces see them online.</p>
+</div>
+
+</section>
+</section>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Generated from <a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>58e3ec0</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+<script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
+<script>
+(() => {
+  const q = document.getElementById("filter");
+  if (!q) return;
+  const items = [...document.querySelectorAll("[data-name]")];
+  const groups = [...document.querySelectorAll("[data-group]")];
+  const none = document.getElementById("filter-none");
+  const run = () => {
+    const v = q.value.trim().toLowerCase();
+    let shown = 0;
+    for (const el of items) {
+      const hit = v ? el.dataset.name.toLowerCase().includes(v) : !el.closest("[data-search-only]");
+      el.hidden = !hit;
+      if (hit) shown += 1;
+    }
+    for (const g of groups) g.hidden = !g.querySelector("[data-name]:not([hidden])");
+    if (none) none.hidden = shown > 0 || !v;
+  };
+  q.addEventListener("input", run);
+  run();
+})();
+</script>
+</body>
+</html>

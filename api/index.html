@@ -1,0 +1,483 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>API · RIM</title>
+<meta name="description" content="The RIM GraphQL API reference and the HTTP contract around it.">
+<link rel="icon" href="../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../index.html" aria-label="RIM home">
+      <picture><source srcset="../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../index.html#what">What RIM is</a>
+      <a href="../index.html#how">How it works</a>
+      <a href="../docs/self-hosting.html">Self-host</a>
+      <a href="../configure/index.html">Configure</a>
+      <a href="../docs/index.html">Docs</a>
+      <a href="index.html" aria-current="page">API</a>
+      <a href="../specs/index.html">Specs</a>
+      <a href="../docs/contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+
+  <div class="page">
+
+    <main id="content" class="prose">
+<h1>API</h1>
+<p class="lede">Everything a client does goes through one GraphQL endpoint, <code>POST /api</code>; subscriptions arrive over <code>/api/ws</code>. The server publishes its schema at <code>/api/sdl</code>. This reference is generated from it: 225 types, 57 queries, 106 mutations and 2 subscriptions.</p>
+<input id="filter" class="search" type="search" placeholder="Filter the whole schema by name" aria-label="Filter the whole schema by name" autocomplete="off">
+<p id="filter-none" class="muted" hidden>Nothing matches.</p>
+<div data-search-only><ul class="hits">
+<li data-name="createInvite"><a href="mutation.html#createInvite"><code>createInvite</code></a><span class="kind">mutation</span></li>
+<li data-name="signupWithInvite"><a href="mutation.html#signupWithInvite"><code>signupWithInvite</code></a><span class="kind">mutation</span></li>
+<li data-name="joinServerByInvite"><a href="mutation.html#joinServerByInvite"><code>joinServerByInvite</code></a><span class="kind">mutation</span></li>
+<li data-name="createServer"><a href="mutation.html#createServer"><code>createServer</code></a><span class="kind">mutation</span></li>
+<li data-name="sendMessage"><a href="mutation.html#sendMessage"><code>sendMessage</code></a><span class="kind">mutation</span></li>
+<li data-name="replyToMessage"><a href="mutation.html#replyToMessage"><code>replyToMessage</code></a><span class="kind">mutation</span></li>
+<li data-name="editMessage"><a href="mutation.html#editMessage"><code>editMessage</code></a><span class="kind">mutation</span></li>
+<li data-name="forwardMessage"><a href="mutation.html#forwardMessage"><code>forwardMessage</code></a><span class="kind">mutation</span></li>
+<li data-name="deleteMessage"><a href="mutation.html#deleteMessage"><code>deleteMessage</code></a><span class="kind">mutation</span></li>
+<li data-name="pinMessage"><a href="mutation.html#pinMessage"><code>pinMessage</code></a><span class="kind">mutation</span></li>
+<li data-name="unpinMessage"><a href="mutation.html#unpinMessage"><code>unpinMessage</code></a><span class="kind">mutation</span></li>
+<li data-name="sendEncryptedMessage"><a href="mutation.html#sendEncryptedMessage"><code>sendEncryptedMessage</code></a><span class="kind">mutation</span></li>
+<li data-name="editEncryptedMessage"><a href="mutation.html#editEncryptedMessage"><code>editEncryptedMessage</code></a><span class="kind">mutation</span></li>
+<li data-name="createConversation"><a href="mutation.html#createConversation"><code>createConversation</code></a><span class="kind">mutation</span></li>
+<li data-name="updateConversationTopic"><a href="mutation.html#updateConversationTopic"><code>updateConversationTopic</code></a><span class="kind">mutation</span></li>
+<li data-name="leaveConversation"><a href="mutation.html#leaveConversation"><code>leaveConversation</code></a><span class="kind">mutation</span></li>
+<li data-name="addConversationMembers"><a href="mutation.html#addConversationMembers"><code>addConversationMembers</code></a><span class="kind">mutation</span></li>
+<li data-name="removeConversationMember"><a href="mutation.html#removeConversationMember"><code>removeConversationMember</code></a><span class="kind">mutation</span></li>
+<li data-name="setConversationArchived"><a href="mutation.html#setConversationArchived"><code>setConversationArchived</code></a><span class="kind">mutation</span></li>
+<li data-name="muteConversation"><a href="mutation.html#muteConversation"><code>muteConversation</code></a><span class="kind">mutation</span></li>
+<li data-name="unmuteConversation"><a href="mutation.html#unmuteConversation"><code>unmuteConversation</code></a><span class="kind">mutation</span></li>
+<li data-name="setConversationNotificationLevel"><a href="mutation.html#setConversationNotificationLevel"><code>setConversationNotificationLevel</code></a><span class="kind">mutation</span></li>
+<li data-name="joinChannel"><a href="mutation.html#joinChannel"><code>joinChannel</code></a><span class="kind">mutation</span></li>
+<li data-name="createChannelLens"><a href="mutation.html#createChannelLens"><code>createChannelLens</code></a><span class="kind">mutation</span></li>
+<li data-name="updateChannelLens"><a href="mutation.html#updateChannelLens"><code>updateChannelLens</code></a><span class="kind">mutation</span></li>
+<li data-name="deleteChannelLens"><a href="mutation.html#deleteChannelLens"><code>deleteChannelLens</code></a><span class="kind">mutation</span></li>
+<li data-name="createAttachment"><a href="mutation.html#createAttachment"><code>createAttachment</code></a><span class="kind">mutation</span></li>
+<li data-name="finalizeAttachment"><a href="mutation.html#finalizeAttachment"><code>finalizeAttachment</code></a><span class="kind">mutation</span></li>
+<li data-name="deleteAttachment"><a href="mutation.html#deleteAttachment"><code>deleteAttachment</code></a><span class="kind">mutation</span></li>
+<li data-name="executeCommand"><a href="mutation.html#executeCommand"><code>executeCommand</code></a><span class="kind">mutation</span></li>
+<li data-name="createUserCommand"><a href="mutation.html#createUserCommand"><code>createUserCommand</code></a><span class="kind">mutation</span></li>
+<li data-name="updateUserCommand"><a href="mutation.html#updateUserCommand"><code>updateUserCommand</code></a><span class="kind">mutation</span></li>
+<li data-name="deleteUserCommand"><a href="mutation.html#deleteUserCommand"><code>deleteUserCommand</code></a><span class="kind">mutation</span></li>
+<li data-name="createKeybind"><a href="mutation.html#createKeybind"><code>createKeybind</code></a><span class="kind">mutation</span></li>
+<li data-name="updateKeybind"><a href="mutation.html#updateKeybind"><code>updateKeybind</code></a><span class="kind">mutation</span></li>
+<li data-name="deleteKeybind"><a href="mutation.html#deleteKeybind"><code>deleteKeybind</code></a><span class="kind">mutation</span></li>
+<li data-name="createCustomEmoji"><a href="mutation.html#createCustomEmoji"><code>createCustomEmoji</code></a><span class="kind">mutation</span></li>
+<li data-name="deleteCustomEmoji"><a href="mutation.html#deleteCustomEmoji"><code>deleteCustomEmoji</code></a><span class="kind">mutation</span></li>
+<li data-name="createMacro"><a href="mutation.html#createMacro"><code>createMacro</code></a><span class="kind">mutation</span></li>
+<li data-name="updateMacro"><a href="mutation.html#updateMacro"><code>updateMacro</code></a><span class="kind">mutation</span></li>
+<li data-name="deleteMacro"><a href="mutation.html#deleteMacro"><code>deleteMacro</code></a><span class="kind">mutation</span></li>
+<li data-name="executeMacro"><a href="mutation.html#executeMacro"><code>executeMacro</code></a><span class="kind">mutation</span></li>
+<li data-name="setWorkspaceState"><a href="mutation.html#setWorkspaceState"><code>setWorkspaceState</code></a><span class="kind">mutation</span></li>
+<li data-name="deleteWorkspaceState"><a href="mutation.html#deleteWorkspaceState"><code>deleteWorkspaceState</code></a><span class="kind">mutation</span></li>
+<li data-name="addWorkspacePlugin"><a href="mutation.html#addWorkspacePlugin"><code>addWorkspacePlugin</code></a><span class="kind">mutation</span></li>
+<li data-name="updateWorkspacePlugin"><a href="mutation.html#updateWorkspacePlugin"><code>updateWorkspacePlugin</code></a><span class="kind">mutation</span></li>
+<li data-name="removeWorkspacePlugin"><a href="mutation.html#removeWorkspacePlugin"><code>removeWorkspacePlugin</code></a><span class="kind">mutation</span></li>
+<li data-name="joinRemoteWorkspace"><a href="mutation.html#joinRemoteWorkspace"><code>joinRemoteWorkspace</code></a><span class="kind">mutation</span></li>
+<li data-name="createPipeline"><a href="mutation.html#createPipeline"><code>createPipeline</code></a><span class="kind">mutation</span></li>
+<li data-name="updatePipeline"><a href="mutation.html#updatePipeline"><code>updatePipeline</code></a><span class="kind">mutation</span></li>
+<li data-name="deletePipeline"><a href="mutation.html#deletePipeline"><code>deletePipeline</code></a><span class="kind">mutation</span></li>
+<li data-name="togglePipeline"><a href="mutation.html#togglePipeline"><code>togglePipeline</code></a><span class="kind">mutation</span></li>
+<li data-name="reportMessage"><a href="mutation.html#reportMessage"><code>reportMessage</code></a><span class="kind">mutation</span></li>
+<li data-name="resolveReport"><a href="mutation.html#resolveReport"><code>resolveReport</code></a><span class="kind">mutation</span></li>
+<li data-name="reportEncryptedMessage"><a href="mutation.html#reportEncryptedMessage"><code>reportEncryptedMessage</code></a><span class="kind">mutation</span></li>
+<li data-name="reportDmRequest"><a href="mutation.html#reportDmRequest"><code>reportDmRequest</code></a><span class="kind">mutation</span></li>
+<li data-name="updateNotificationSettings"><a href="mutation.html#updateNotificationSettings"><code>updateNotificationSettings</code></a><span class="kind">mutation</span></li>
+<li data-name="markNotificationsRead"><a href="mutation.html#markNotificationsRead"><code>markNotificationsRead</code></a><span class="kind">mutation</span></li>
+<li data-name="keyLoginChallenge"><a href="mutation.html#keyLoginChallenge"><code>keyLoginChallenge</code></a><span class="kind">mutation</span></li>
+<li data-name="loginWithKey"><a href="mutation.html#loginWithKey"><code>loginWithKey</code></a><span class="kind">mutation</span></li>
+<li data-name="enrollIdentityKey"><a href="mutation.html#enrollIdentityKey"><code>enrollIdentityKey</code></a><span class="kind">mutation</span></li>
+<li data-name="rotateIdentityKey"><a href="mutation.html#rotateIdentityKey"><code>rotateIdentityKey</code></a><span class="kind">mutation</span></li>
+<li data-name="signupWithKey"><a href="mutation.html#signupWithKey"><code>signupWithKey</code></a><span class="kind">mutation</span></li>
+<li data-name="uploadMlsKeyPackages"><a href="mutation.html#uploadMlsKeyPackages"><code>uploadMlsKeyPackages</code></a><span class="kind">mutation</span></li>
+<li data-name="claimMlsKeyPackages"><a href="mutation.html#claimMlsKeyPackages"><code>claimMlsKeyPackages</code></a><span class="kind">mutation</span></li>
+<li data-name="addDeviceKey"><a href="mutation.html#addDeviceKey"><code>addDeviceKey</code></a><span class="kind">mutation</span></li>
+<li data-name="revokeDeviceKey"><a href="mutation.html#revokeDeviceKey"><code>revokeDeviceKey</code></a><span class="kind">mutation</span></li>
+<li data-name="startDeviceLink"><a href="mutation.html#startDeviceLink"><code>startDeviceLink</code></a><span class="kind">mutation</span></li>
+<li data-name="sendDeviceLinkOffer"><a href="mutation.html#sendDeviceLinkOffer"><code>sendDeviceLinkOffer</code></a><span class="kind">mutation</span></li>
+<li data-name="sendDeviceLinkAnswer"><a href="mutation.html#sendDeviceLinkAnswer"><code>sendDeviceLinkAnswer</code></a><span class="kind">mutation</span></li>
+<li data-name="completeDeviceLink"><a href="mutation.html#completeDeviceLink"><code>completeDeviceLink</code></a><span class="kind">mutation</span></li>
+<li data-name="cancelDeviceLink"><a href="mutation.html#cancelDeviceLink"><code>cancelDeviceLink</code></a><span class="kind">mutation</span></li>
+<li data-name="ackRelayItems"><a href="mutation.html#ackRelayItems"><code>ackRelayItems</code></a><span class="kind">mutation</span></li>
+<li data-name="leaveRelay"><a href="mutation.html#leaveRelay"><code>leaveRelay</code></a><span class="kind">mutation</span></li>
+<li data-name="login"><a href="mutation.html#login"><code>login</code></a><span class="kind">mutation</span></li>
+<li data-name="logout"><a href="mutation.html#logout"><code>logout</code></a><span class="kind">mutation</span></li>
+<li data-name="logoutOtherSessions"><a href="mutation.html#logoutOtherSessions"><code>logoutOtherSessions</code></a><span class="kind">mutation</span></li>
+<li data-name="toggleReaction"><a href="mutation.html#toggleReaction"><code>toggleReaction</code></a><span class="kind">mutation</span></li>
+<li data-name="markAsRead"><a href="mutation.html#markAsRead"><code>markAsRead</code></a><span class="kind">mutation</span></li>
+<li data-name="markAllAsRead"><a href="mutation.html#markAllAsRead"><code>markAllAsRead</code></a><span class="kind">mutation</span></li>
+<li data-name="startTyping"><a href="mutation.html#startTyping"><code>startTyping</code></a><span class="kind">mutation</span></li>
+<li data-name="heartbeat"><a href="mutation.html#heartbeat"><code>heartbeat</code></a><span class="kind">mutation</span></li>
+<li data-name="requestPasswordReset"><a href="mutation.html#requestPasswordReset"><code>requestPasswordReset</code></a><span class="kind">mutation</span></li>
+<li data-name="resetPassword"><a href="mutation.html#resetPassword"><code>resetPassword</code></a><span class="kind">mutation</span></li>
+<li data-name="updateMyProfile"><a href="mutation.html#updateMyProfile"><code>updateMyProfile</code></a><span class="kind">mutation</span></li>
+<li data-name="setMemberRole"><a href="mutation.html#setMemberRole"><code>setMemberRole</code></a><span class="kind">mutation</span></li>
+<li data-name="kickMember"><a href="mutation.html#kickMember"><code>kickMember</code></a><span class="kind">mutation</span></li>
+<li data-name="banMember"><a href="mutation.html#banMember"><code>banMember</code></a><span class="kind">mutation</span></li>
+<li data-name="unbanMember"><a href="mutation.html#unbanMember"><code>unbanMember</code></a><span class="kind">mutation</span></li>
+<li data-name="timeoutMember"><a href="mutation.html#timeoutMember"><code>timeoutMember</code></a><span class="kind">mutation</span></li>
+<li data-name="clearTimeout"><a href="mutation.html#clearTimeout"><code>clearTimeout</code></a><span class="kind">mutation</span></li>
+<li data-name="setSlowMode"><a href="mutation.html#setSlowMode"><code>setSlowMode</code></a><span class="kind">mutation</span></li>
+<li data-name="setDoNotDisturb"><a href="mutation.html#setDoNotDisturb"><code>setDoNotDisturb</code></a><span class="kind">mutation</span></li>
+<li data-name="publishProfileCard"><a href="mutation.html#publishProfileCard"><code>publishProfileCard</code></a><span class="kind">mutation</span></li>
+<li data-name="submitMlsCommit"><a href="mutation.html#submitMlsCommit"><code>submitMlsCommit</code></a><span class="kind">mutation</span></li>
+<li data-name="ackMlsWelcomes"><a href="mutation.html#ackMlsWelcomes"><code>ackMlsWelcomes</code></a><span class="kind">mutation</span></li>
+<li data-name="requestMlsReadd"><a href="mutation.html#requestMlsReadd"><code>requestMlsReadd</code></a><span class="kind">mutation</span></li>
+<li data-name="addContact"><a href="mutation.html#addContact"><code>addContact</code></a><span class="kind">mutation</span></li>
+<li data-name="removeContact"><a href="mutation.html#removeContact"><code>removeContact</code></a><span class="kind">mutation</span></li>
+<li data-name="acceptDmRequest"><a href="mutation.html#acceptDmRequest"><code>acceptDmRequest</code></a><span class="kind">mutation</span></li>
+<li data-name="ignoreDmRequest"><a href="mutation.html#ignoreDmRequest"><code>ignoreDmRequest</code></a><span class="kind">mutation</span></li>
+<li data-name="blockPrincipal"><a href="mutation.html#blockPrincipal"><code>blockPrincipal</code></a><span class="kind">mutation</span></li>
+<li data-name="unblockPrincipal"><a href="mutation.html#unblockPrincipal"><code>unblockPrincipal</code></a><span class="kind">mutation</span></li>
+<li data-name="remoteJoinChallenge"><a href="mutation.html#remoteJoinChallenge"><code>remoteJoinChallenge</code></a><span class="kind">mutation</span></li>
+<li data-name="renewDelegations"><a href="mutation.html#renewDelegations"><code>renewDelegations</code></a><span class="kind">mutation</span></li>
+<li data-name="applyRemoteRevocation"><a href="mutation.html#applyRemoteRevocation"><code>applyRemoteRevocation</code></a><span class="kind">mutation</span></li>
+<li data-name="commands"><a href="query.html#commands"><code>commands</code></a><span class="kind">query</span></li>
+<li data-name="commandDiscover"><a href="query.html#commandDiscover"><code>commandDiscover</code></a><span class="kind">query</span></li>
+<li data-name="resolvedKeybinds"><a href="query.html#resolvedKeybinds"><code>resolvedKeybinds</code></a><span class="kind">query</span></li>
+<li data-name="conversation"><a href="query.html#conversation"><code>conversation</code></a><span class="kind">query</span></li>
+<li data-name="inboxConversations"><a href="query.html#inboxConversations"><code>inboxConversations</code></a><span class="kind">query</span></li>
+<li data-name="mutedConversations"><a href="query.html#mutedConversations"><code>mutedConversations</code></a><span class="kind">query</span></li>
+<li data-name="channels"><a href="query.html#channels"><code>channels</code></a><span class="kind">query</span></li>
+<li data-name="channelLenses"><a href="query.html#channelLenses"><code>channelLenses</code></a><span class="kind">query</span></li>
+<li data-name="applyChannelLens"><a href="query.html#applyChannelLens"><code>applyChannelLens</code></a><span class="kind">query</span></li>
+<li data-name="messages"><a href="query.html#messages"><code>messages</code></a><span class="kind">query</span></li>
+<li data-name="message"><a href="query.html#message"><code>message</code></a><span class="kind">query</span></li>
+<li data-name="messageChanges"><a href="query.html#messageChanges"><code>messageChanges</code></a><span class="kind">query</span></li>
+<li data-name="threadByRootMessage"><a href="query.html#threadByRootMessage"><code>threadByRootMessage</code></a><span class="kind">query</span></li>
+<li data-name="threadMessages"><a href="query.html#threadMessages"><code>threadMessages</code></a><span class="kind">query</span></li>
+<li data-name="pinnedMessages"><a href="query.html#pinnedMessages"><code>pinnedMessages</code></a><span class="kind">query</span></li>
+<li data-name="messageReports"><a href="query.html#messageReports"><code>messageReports</code></a><span class="kind">query</span></li>
+<li data-name="messageReport"><a href="query.html#messageReport"><code>messageReport</code></a><span class="kind">query</span></li>
+<li data-name="searchMessages"><a href="query.html#searchMessages"><code>searchMessages</code></a><span class="kind">query</span></li>
+<li data-name="myServers"><a href="query.html#myServers"><code>myServers</code></a><span class="kind">query</span></li>
+<li data-name="server"><a href="query.html#server"><code>server</code></a><span class="kind">query</span></li>
+<li data-name="serverMembers"><a href="query.html#serverMembers"><code>serverMembers</code></a><span class="kind">query</span></li>
+<li data-name="serverBans"><a href="query.html#serverBans"><code>serverBans</code></a><span class="kind">query</span></li>
+<li data-name="remoteServer"><a href="query.html#remoteServer"><code>remoteServer</code></a><span class="kind">query</span></li>
+<li data-name="serverInfo"><a href="query.html#serverInfo"><code>serverInfo</code></a><span class="kind">query</span></li>
+<li data-name="workspacePresence"><a href="query.html#workspacePresence"><code>workspacePresence</code></a><span class="kind">query</span></li>
+<li data-name="workspaceState"><a href="query.html#workspaceState"><code>workspaceState</code></a><span class="kind">query</span></li>
+<li data-name="workspaceStateList"><a href="query.html#workspaceStateList"><code>workspaceStateList</code></a><span class="kind">query</span></li>
+<li data-name="workspacePlugins"><a href="query.html#workspacePlugins"><code>workspacePlugins</code></a><span class="kind">query</span></li>
+<li data-name="customEmojis"><a href="query.html#customEmojis"><code>customEmojis</code></a><span class="kind">query</span></li>
+<li data-name="myMacros"><a href="query.html#myMacros"><code>myMacros</code></a><span class="kind">query</span></li>
+<li data-name="macroByName"><a href="query.html#macroByName"><code>macroByName</code></a><span class="kind">query</span></li>
+<li data-name="pipelines"><a href="query.html#pipelines"><code>pipelines</code></a><span class="kind">query</span></li>
+<li data-name="listAuditLog"><a href="query.html#listAuditLog"><code>listAuditLog</code></a><span class="kind">query</span></li>
+<li data-name="previewInviteToken"><a href="query.html#previewInviteToken"><code>previewInviteToken</code></a><span class="kind">query</span></li>
+<li data-name="myNotificationSettings"><a href="query.html#myNotificationSettings"><code>myNotificationSettings</code></a><span class="kind">query</span></li>
+<li data-name="myNotifications"><a href="query.html#myNotifications"><code>myNotifications</code></a><span class="kind">query</span></li>
+<li data-name="myUnreadNotificationCount"><a href="query.html#myUnreadNotificationCount"><code>myUnreadNotificationCount</code></a><span class="kind">query</span></li>
+<li data-name="myKeyIdentity"><a href="query.html#myKeyIdentity"><code>myKeyIdentity</code></a><span class="kind">query</span></li>
+<li data-name="keyLog"><a href="query.html#keyLog"><code>keyLog</code></a><span class="kind">query</span></li>
+<li data-name="myMlsKeyPackageStatus"><a href="query.html#myMlsKeyPackageStatus"><code>myMlsKeyPackageStatus</code></a><span class="kind">query</span></li>
+<li data-name="deviceLink"><a href="query.html#deviceLink"><code>deviceLink</code></a><span class="kind">query</span></li>
+<li data-name="deviceLinkAnswer"><a href="query.html#deviceLinkAnswer"><code>deviceLinkAnswer</code></a><span class="kind">query</span></li>
+<li data-name="principalDevices"><a href="query.html#principalDevices"><code>principalDevices</code></a><span class="kind">query</span></li>
+<li data-name="deviceRevocationStatus"><a href="query.html#deviceRevocationStatus"><code>deviceRevocationStatus</code></a><span class="kind">query</span></li>
+<li data-name="relayInfo"><a href="query.html#relayInfo"><code>relayInfo</code></a><span class="kind">query</span></li>
+<li data-name="relayItems"><a href="query.html#relayItems"><code>relayItems</code></a><span class="kind">query</span></li>
+<li data-name="thread"><a href="query.html#thread"><code>thread</code></a><span class="kind">query</span></li>
+<li data-name="me"><a href="query.html#me"><code>me</code></a><span class="kind">query</span></li>
+<li data-name="unreadCounts"><a href="query.html#unreadCounts"><code>unreadCounts</code></a><span class="kind">query</span></li>
+<li data-name="registrationMode"><a href="query.html#registrationMode"><code>registrationMode</code></a><span class="kind">query</span></li>
+<li data-name="myMlsWelcomes"><a href="query.html#myMlsWelcomes"><code>myMlsWelcomes</code></a><span class="kind">query</span></li>
+<li data-name="mlsCommits"><a href="query.html#mlsCommits"><code>mlsCommits</code></a><span class="kind">query</span></li>
+<li data-name="remoteIdentity"><a href="query.html#remoteIdentity"><code>remoteIdentity</code></a><span class="kind">query</span></li>
+<li data-name="contacts"><a href="query.html#contacts"><code>contacts</code></a><span class="kind">query</span></li>
+<li data-name="dmRequests"><a href="query.html#dmRequests"><code>dmRequests</code></a><span class="kind">query</span></li>
+<li data-name="streamHeads"><a href="query.html#streamHeads"><code>streamHeads</code></a><span class="kind">query</span></li>
+<li data-name="remoteSubscriptions"><a href="query.html#remoteSubscriptions"><code>remoteSubscriptions</code></a><span class="kind">query</span></li>
+<li data-name="workspaceEvents"><a href="subscription.html#workspaceEvents"><code>workspaceEvents</code></a><span class="kind">subscription</span></li>
+<li data-name="relayStream"><a href="subscription.html#relayStream"><code>relayStream</code></a><span class="kind">subscription</span></li>
+<li data-name="Attachment"><a href="objects.html#Attachment"><code>Attachment</code></a><span class="kind">object</span></li>
+<li data-name="AuditLogEntry"><a href="objects.html#AuditLogEntry"><code>AuditLogEntry</code></a><span class="kind">object</span></li>
+<li data-name="AuditLogPage"><a href="objects.html#AuditLogPage"><code>AuditLogPage</code></a><span class="kind">object</span></li>
+<li data-name="AuditLogPageInfo"><a href="objects.html#AuditLogPageInfo"><code>AuditLogPageInfo</code></a><span class="kind">object</span></li>
+<li data-name="ChannelCursorOutput"><a href="objects.html#ChannelCursorOutput"><code>ChannelCursorOutput</code></a><span class="kind">object</span></li>
+<li data-name="ChannelLens"><a href="objects.html#ChannelLens"><code>ChannelLens</code></a><span class="kind">object</span></li>
+<li data-name="ChannelPage"><a href="objects.html#ChannelPage"><code>ChannelPage</code></a><span class="kind">object</span></li>
+<li data-name="ClaimedKeyPackage"><a href="objects.html#ClaimedKeyPackage"><code>ClaimedKeyPackage</code></a><span class="kind">object</span></li>
+<li data-name="Command"><a href="objects.html#Command"><code>Command</code></a><span class="kind">object</span></li>
+<li data-name="CommandArgument"><a href="objects.html#CommandArgument"><code>CommandArgument</code></a><span class="kind">object</span></li>
+<li data-name="CommandResult"><a href="objects.html#CommandResult"><code>CommandResult</code></a><span class="kind">object</span></li>
+<li data-name="ConfirmationChallenge"><a href="objects.html#ConfirmationChallenge"><code>ConfirmationChallenge</code></a><span class="kind">object</span></li>
+<li data-name="Contact"><a href="objects.html#Contact"><code>Contact</code></a><span class="kind">object</span></li>
+<li data-name="Conversation"><a href="objects.html#Conversation"><code>Conversation</code></a><span class="kind">object</span></li>
+<li data-name="ConversationMessageChanges"><a href="objects.html#ConversationMessageChanges"><code>ConversationMessageChanges</code></a><span class="kind">object</span></li>
+<li data-name="ConversationNotificationLevel"><a href="objects.html#ConversationNotificationLevel"><code>ConversationNotificationLevel</code></a><span class="kind">object</span></li>
+<li data-name="ConversationPage"><a href="objects.html#ConversationPage"><code>ConversationPage</code></a><span class="kind">object</span></li>
+<li data-name="ConversationPredecessor"><a href="objects.html#ConversationPredecessor"><code>ConversationPredecessor</code></a><span class="kind">object</span></li>
+<li data-name="CreateInvitePayload"><a href="objects.html#CreateInvitePayload"><code>CreateInvitePayload</code></a><span class="kind">object</span></li>
+<li data-name="CustomEmoji"><a href="objects.html#CustomEmoji"><code>CustomEmoji</code></a><span class="kind">object</span></li>
+<li data-name="DeviceKey"><a href="objects.html#DeviceKey"><code>DeviceKey</code></a><span class="kind">object</span></li>
+<li data-name="DeviceLink"><a href="objects.html#DeviceLink"><code>DeviceLink</code></a><span class="kind">object</span></li>
+<li data-name="DmRequest"><a href="objects.html#DmRequest"><code>DmRequest</code></a><span class="kind">object</span></li>
+<li data-name="DndWindow"><a href="objects.html#DndWindow"><code>DndWindow</code></a><span class="kind">object</span></li>
+<li data-name="FilterConditionGql"><a href="objects.html#FilterConditionGql"><code>FilterConditionGql</code></a><span class="kind">object</span></li>
+<li data-name="FilterSpecGql"><a href="objects.html#FilterSpecGql"><code>FilterSpecGql</code></a><span class="kind">object</span></li>
+<li data-name="InboxCursorOutput"><a href="objects.html#InboxCursorOutput"><code>InboxCursorOutput</code></a><span class="kind">object</span></li>
+<li data-name="InviteTokenPreviewGql"><a href="objects.html#InviteTokenPreviewGql"><code>InviteTokenPreviewGql</code></a><span class="kind">object</span></li>
+<li data-name="JoinServerByInvitePayload"><a href="objects.html#JoinServerByInvitePayload"><code>JoinServerByInvitePayload</code></a><span class="kind">object</span></li>
+<li data-name="KeyIdentity"><a href="objects.html#KeyIdentity"><code>KeyIdentity</code></a><span class="kind">object</span></li>
+<li data-name="KeyLogEntry"><a href="objects.html#KeyLogEntry"><code>KeyLogEntry</code></a><span class="kind">object</span></li>
+<li data-name="KeyLoginChallenge"><a href="objects.html#KeyLoginChallenge"><code>KeyLoginChallenge</code></a><span class="kind">object</span></li>
+<li data-name="Keybind"><a href="objects.html#Keybind"><code>Keybind</code></a><span class="kind">object</span></li>
+<li data-name="LinkPreview"><a href="objects.html#LinkPreview"><code>LinkPreview</code></a><span class="kind">object</span></li>
+<li data-name="LoginPayload"><a href="objects.html#LoginPayload"><code>LoginPayload</code></a><span class="kind">object</span></li>
+<li data-name="MacroDef"><a href="objects.html#MacroDef"><code>MacroDef</code></a><span class="kind">object</span></li>
+<li data-name="MacroStep"><a href="objects.html#MacroStep"><code>MacroStep</code></a><span class="kind">object</span></li>
+<li data-name="MemberTimeout"><a href="objects.html#MemberTimeout"><code>MemberTimeout</code></a><span class="kind">object</span></li>
+<li data-name="Message"><a href="objects.html#Message"><code>Message</code></a><span class="kind">object</span></li>
+<li data-name="MessageChange"><a href="objects.html#MessageChange"><code>MessageChange</code></a><span class="kind">object</span></li>
+<li data-name="MessageCursorOutput"><a href="objects.html#MessageCursorOutput"><code>MessageCursorOutput</code></a><span class="kind">object</span></li>
+<li data-name="MessageEncryption"><a href="objects.html#MessageEncryption"><code>MessageEncryption</code></a><span class="kind">object</span></li>
+<li data-name="MessagePage"><a href="objects.html#MessagePage"><code>MessagePage</code></a><span class="kind">object</span></li>
+<li data-name="MessageReport"><a href="objects.html#MessageReport"><code>MessageReport</code></a><span class="kind">object</span></li>
+<li data-name="MessageReportCursorOutput"><a href="objects.html#MessageReportCursorOutput"><code>MessageReportCursorOutput</code></a><span class="kind">object</span></li>
+<li data-name="MessageReportPage"><a href="objects.html#MessageReportPage"><code>MessageReportPage</code></a><span class="kind">object</span></li>
+<li data-name="MlsCommit"><a href="objects.html#MlsCommit"><code>MlsCommit</code></a><span class="kind">object</span></li>
+<li data-name="MlsCommitPage"><a href="objects.html#MlsCommitPage"><code>MlsCommitPage</code></a><span class="kind">object</span></li>
+<li data-name="MlsDevice"><a href="objects.html#MlsDevice"><code>MlsDevice</code></a><span class="kind">object</span></li>
+<li data-name="MlsGroup"><a href="objects.html#MlsGroup"><code>MlsGroup</code></a><span class="kind">object</span></li>
+<li data-name="MlsKeyPackageStatus"><a href="objects.html#MlsKeyPackageStatus"><code>MlsKeyPackageStatus</code></a><span class="kind">object</span></li>
+<li data-name="MlsPendingDevice"><a href="objects.html#MlsPendingDevice"><code>MlsPendingDevice</code></a><span class="kind">object</span></li>
+<li data-name="MlsReaddRequest"><a href="objects.html#MlsReaddRequest"><code>MlsReaddRequest</code></a><span class="kind">object</span></li>
+<li data-name="MlsWelcome"><a href="objects.html#MlsWelcome"><code>MlsWelcome</code></a><span class="kind">object</span></li>
+<li data-name="MutedConversation"><a href="objects.html#MutedConversation"><code>MutedConversation</code></a><span class="kind">object</span></li>
+<li data-name="Notification"><a href="objects.html#Notification"><code>Notification</code></a><span class="kind">object</span></li>
+<li data-name="NotificationCursorOutput"><a href="objects.html#NotificationCursorOutput"><code>NotificationCursorOutput</code></a><span class="kind">object</span></li>
+<li data-name="NotificationPage"><a href="objects.html#NotificationPage"><code>NotificationPage</code></a><span class="kind">object</span></li>
+<li data-name="NotificationSettings"><a href="objects.html#NotificationSettings"><code>NotificationSettings</code></a><span class="kind">object</span></li>
+<li data-name="PageInfo"><a href="objects.html#PageInfo"><code>PageInfo</code></a><span class="kind">object</span></li>
+<li data-name="PipeStageResult"><a href="objects.html#PipeStageResult"><code>PipeStageResult</code></a><span class="kind">object</span></li>
+<li data-name="PipelineActionGql"><a href="objects.html#PipelineActionGql"><code>PipelineActionGql</code></a><span class="kind">object</span></li>
+<li data-name="PipelineFilterConditionGql"><a href="objects.html#PipelineFilterConditionGql"><code>PipelineFilterConditionGql</code></a><span class="kind">object</span></li>
+<li data-name="PipelineFilterGql"><a href="objects.html#PipelineFilterGql"><code>PipelineFilterGql</code></a><span class="kind">object</span></li>
+<li data-name="PipelineGql"><a href="objects.html#PipelineGql"><code>PipelineGql</code></a><span class="kind">object</span></li>
+<li data-name="PipelineTriggerGql"><a href="objects.html#PipelineTriggerGql"><code>PipelineTriggerGql</code></a><span class="kind">object</span></li>
+<li data-name="PluginSource"><a href="objects.html#PluginSource"><code>PluginSource</code></a><span class="kind">object</span></li>
+<li data-name="PrincipalDevice"><a href="objects.html#PrincipalDevice"><code>PrincipalDevice</code></a><span class="kind">object</span></li>
+<li data-name="PrincipalDevices"><a href="objects.html#PrincipalDevices"><code>PrincipalDevices</code></a><span class="kind">object</span></li>
+<li data-name="ProfileCard"><a href="objects.html#ProfileCard"><code>ProfileCard</code></a><span class="kind">object</span></li>
+<li data-name="ReactionGroup"><a href="objects.html#ReactionGroup"><code>ReactionGroup</code></a><span class="kind">object</span></li>
+<li data-name="RelayInfo"><a href="objects.html#RelayInfo"><code>RelayInfo</code></a><span class="kind">object</span></li>
+<li data-name="RelayItem"><a href="objects.html#RelayItem"><code>RelayItem</code></a><span class="kind">object</span></li>
+<li data-name="RelayItemPage"><a href="objects.html#RelayItemPage"><code>RelayItemPage</code></a><span class="kind">object</span></li>
+<li data-name="RemoteIdentity"><a href="objects.html#RemoteIdentity"><code>RemoteIdentity</code></a><span class="kind">object</span></li>
+<li data-name="RemoteJoinChallenge"><a href="objects.html#RemoteJoinChallenge"><code>RemoteJoinChallenge</code></a><span class="kind">object</span></li>
+<li data-name="RemoteJoinResult"><a href="objects.html#RemoteJoinResult"><code>RemoteJoinResult</code></a><span class="kind">object</span></li>
+<li data-name="RemotePrincipalDevice"><a href="objects.html#RemotePrincipalDevice"><code>RemotePrincipalDevice</code></a><span class="kind">object</span></li>
+<li data-name="RemoteServer"><a href="objects.html#RemoteServer"><code>RemoteServer</code></a><span class="kind">object</span></li>
+<li data-name="RemoteSubscription"><a href="objects.html#RemoteSubscription"><code>RemoteSubscription</code></a><span class="kind">object</span></li>
+<li data-name="RevocationFanout"><a href="objects.html#RevocationFanout"><code>RevocationFanout</code></a><span class="kind">object</span></li>
+<li data-name="SealedMessage"><a href="objects.html#SealedMessage"><code>SealedMessage</code></a><span class="kind">object</span></li>
+<li data-name="SearchResultMessage"><a href="objects.html#SearchResultMessage"><code>SearchResultMessage</code></a><span class="kind">object</span></li>
+<li data-name="SearchResultPage"><a href="objects.html#SearchResultPage"><code>SearchResultPage</code></a><span class="kind">object</span></li>
+<li data-name="Server"><a href="objects.html#Server"><code>Server</code></a><span class="kind">object</span></li>
+<li data-name="ServerBan"><a href="objects.html#ServerBan"><code>ServerBan</code></a><span class="kind">object</span></li>
+<li data-name="ServerFeatureInfo"><a href="objects.html#ServerFeatureInfo"><code>ServerFeatureInfo</code></a><span class="kind">object</span></li>
+<li data-name="ServerInfo"><a href="objects.html#ServerInfo"><code>ServerInfo</code></a><span class="kind">object</span></li>
+<li data-name="ServerMember"><a href="objects.html#ServerMember"><code>ServerMember</code></a><span class="kind">object</span></li>
+<li data-name="SignedStatement"><a href="objects.html#SignedStatement"><code>SignedStatement</code></a><span class="kind">object</span></li>
+<li data-name="SignupWithInvitePayloadGql"><a href="objects.html#SignupWithInvitePayloadGql"><code>SignupWithInvitePayloadGql</code></a><span class="kind">object</span></li>
+<li data-name="StartedDeviceLink"><a href="objects.html#StartedDeviceLink"><code>StartedDeviceLink</code></a><span class="kind">object</span></li>
+<li data-name="StreamHead"><a href="objects.html#StreamHead"><code>StreamHead</code></a><span class="kind">object</span></li>
+<li data-name="Thread"><a href="objects.html#Thread"><code>Thread</code></a><span class="kind">object</span></li>
+<li data-name="UnreadCount"><a href="objects.html#UnreadCount"><code>UnreadCount</code></a><span class="kind">object</span></li>
+<li data-name="UploadTicket"><a href="objects.html#UploadTicket"><code>UploadTicket</code></a><span class="kind">object</span></li>
+<li data-name="User"><a href="objects.html#User"><code>User</code></a><span class="kind">object</span></li>
+<li data-name="UserPresenceGql"><a href="objects.html#UserPresenceGql"><code>UserPresenceGql</code></a><span class="kind">object</span></li>
+<li data-name="WorkspaceInvitePreviewGql"><a href="objects.html#WorkspaceInvitePreviewGql"><code>WorkspaceInvitePreviewGql</code></a><span class="kind">object</span></li>
+<li data-name="WorkspacePlugin"><a href="objects.html#WorkspacePlugin"><code>WorkspacePlugin</code></a><span class="kind">object</span></li>
+<li data-name="WorkspaceStateEntryGql"><a href="objects.html#WorkspaceStateEntryGql"><code>WorkspaceStateEntryGql</code></a><span class="kind">object</span></li>
+<li data-name="AddWorkspacePluginInput"><a href="inputs.html#AddWorkspacePluginInput"><code>AddWorkspacePluginInput</code></a><span class="kind">input</span></li>
+<li data-name="AuditLogFilterInput"><a href="inputs.html#AuditLogFilterInput"><code>AuditLogFilterInput</code></a><span class="kind">input</span></li>
+<li data-name="AuditLogPaginationInput"><a href="inputs.html#AuditLogPaginationInput"><code>AuditLogPaginationInput</code></a><span class="kind">input</span></li>
+<li data-name="ChannelCursorInput"><a href="inputs.html#ChannelCursorInput"><code>ChannelCursorInput</code></a><span class="kind">input</span></li>
+<li data-name="ChannelListFilter"><a href="inputs.html#ChannelListFilter"><code>ChannelListFilter</code></a><span class="kind">input</span></li>
+<li data-name="ClaimMlsKeyPackagesInput"><a href="inputs.html#ClaimMlsKeyPackagesInput"><code>ClaimMlsKeyPackagesInput</code></a><span class="kind">input</span></li>
+<li data-name="CommandContextInput"><a href="inputs.html#CommandContextInput"><code>CommandContextInput</code></a><span class="kind">input</span></li>
+<li data-name="ConfirmationProofInput"><a href="inputs.html#ConfirmationProofInput"><code>ConfirmationProofInput</code></a><span class="kind">input</span></li>
+<li data-name="CreateAttachmentInput"><a href="inputs.html#CreateAttachmentInput"><code>CreateAttachmentInput</code></a><span class="kind">input</span></li>
+<li data-name="CreateChannelLensInput"><a href="inputs.html#CreateChannelLensInput"><code>CreateChannelLensInput</code></a><span class="kind">input</span></li>
+<li data-name="CreateConversationInput"><a href="inputs.html#CreateConversationInput"><code>CreateConversationInput</code></a><span class="kind">input</span></li>
+<li data-name="CreateCustomEmojiInput"><a href="inputs.html#CreateCustomEmojiInput"><code>CreateCustomEmojiInput</code></a><span class="kind">input</span></li>
+<li data-name="CreateInviteInput"><a href="inputs.html#CreateInviteInput"><code>CreateInviteInput</code></a><span class="kind">input</span></li>
+<li data-name="CreateKeybindInput"><a href="inputs.html#CreateKeybindInput"><code>CreateKeybindInput</code></a><span class="kind">input</span></li>
+<li data-name="CreateMacroInput"><a href="inputs.html#CreateMacroInput"><code>CreateMacroInput</code></a><span class="kind">input</span></li>
+<li data-name="CreatePipelineInput"><a href="inputs.html#CreatePipelineInput"><code>CreatePipelineInput</code></a><span class="kind">input</span></li>
+<li data-name="CreateServerInput"><a href="inputs.html#CreateServerInput"><code>CreateServerInput</code></a><span class="kind">input</span></li>
+<li data-name="CreateUserCommandInput"><a href="inputs.html#CreateUserCommandInput"><code>CreateUserCommandInput</code></a><span class="kind">input</span></li>
+<li data-name="DeleteAttachmentInput"><a href="inputs.html#DeleteAttachmentInput"><code>DeleteAttachmentInput</code></a><span class="kind">input</span></li>
+<li data-name="DeleteKeybindInput"><a href="inputs.html#DeleteKeybindInput"><code>DeleteKeybindInput</code></a><span class="kind">input</span></li>
+<li data-name="DeleteMessageInput"><a href="inputs.html#DeleteMessageInput"><code>DeleteMessageInput</code></a><span class="kind">input</span></li>
+<li data-name="DeleteUserCommandInput"><a href="inputs.html#DeleteUserCommandInput"><code>DeleteUserCommandInput</code></a><span class="kind">input</span></li>
+<li data-name="DeleteWorkspaceStateInput"><a href="inputs.html#DeleteWorkspaceStateInput"><code>DeleteWorkspaceStateInput</code></a><span class="kind">input</span></li>
+<li data-name="DndWindowInput"><a href="inputs.html#DndWindowInput"><code>DndWindowInput</code></a><span class="kind">input</span></li>
+<li data-name="EditEncryptedMessageInput"><a href="inputs.html#EditEncryptedMessageInput"><code>EditEncryptedMessageInput</code></a><span class="kind">input</span></li>
+<li data-name="EditMessageInput"><a href="inputs.html#EditMessageInput"><code>EditMessageInput</code></a><span class="kind">input</span></li>
+<li data-name="EnrollIdentityKeyInput"><a href="inputs.html#EnrollIdentityKeyInput"><code>EnrollIdentityKeyInput</code></a><span class="kind">input</span></li>
+<li data-name="ExecuteCommandInput"><a href="inputs.html#ExecuteCommandInput"><code>ExecuteCommandInput</code></a><span class="kind">input</span></li>
+<li data-name="ExecuteMacroInput"><a href="inputs.html#ExecuteMacroInput"><code>ExecuteMacroInput</code></a><span class="kind">input</span></li>
+<li data-name="FilterConditionInput"><a href="inputs.html#FilterConditionInput"><code>FilterConditionInput</code></a><span class="kind">input</span></li>
+<li data-name="FilterSpecInput"><a href="inputs.html#FilterSpecInput"><code>FilterSpecInput</code></a><span class="kind">input</span></li>
+<li data-name="FinalizeAttachmentInput"><a href="inputs.html#FinalizeAttachmentInput"><code>FinalizeAttachmentInput</code></a><span class="kind">input</span></li>
+<li data-name="ForwardMessageInput"><a href="inputs.html#ForwardMessageInput"><code>ForwardMessageInput</code></a><span class="kind">input</span></li>
+<li data-name="HeartbeatInput"><a href="inputs.html#HeartbeatInput"><code>HeartbeatInput</code></a><span class="kind">input</span></li>
+<li data-name="InBandTokenInput"><a href="inputs.html#InBandTokenInput"><code>InBandTokenInput</code></a><span class="kind">input</span></li>
+<li data-name="InboxCursorInput"><a href="inputs.html#InboxCursorInput"><code>InboxCursorInput</code></a><span class="kind">input</span></li>
+<li data-name="JoinRemoteWorkspaceInput"><a href="inputs.html#JoinRemoteWorkspaceInput"><code>JoinRemoteWorkspaceInput</code></a><span class="kind">input</span></li>
+<li data-name="JoinServerByInviteInput"><a href="inputs.html#JoinServerByInviteInput"><code>JoinServerByInviteInput</code></a><span class="kind">input</span></li>
+<li data-name="LoginInput"><a href="inputs.html#LoginInput"><code>LoginInput</code></a><span class="kind">input</span></li>
+<li data-name="MacroStepInput"><a href="inputs.html#MacroStepInput"><code>MacroStepInput</code></a><span class="kind">input</span></li>
+<li data-name="MarkAllAsReadInput"><a href="inputs.html#MarkAllAsReadInput"><code>MarkAllAsReadInput</code></a><span class="kind">input</span></li>
+<li data-name="MarkAsReadInput"><a href="inputs.html#MarkAsReadInput"><code>MarkAsReadInput</code></a><span class="kind">input</span></li>
+<li data-name="MessageChangeCursorInput"><a href="inputs.html#MessageChangeCursorInput"><code>MessageChangeCursorInput</code></a><span class="kind">input</span></li>
+<li data-name="MessageChangesInput"><a href="inputs.html#MessageChangesInput"><code>MessageChangesInput</code></a><span class="kind">input</span></li>
+<li data-name="MessageCursorInput"><a href="inputs.html#MessageCursorInput"><code>MessageCursorInput</code></a><span class="kind">input</span></li>
+<li data-name="MessageReportCursorInput"><a href="inputs.html#MessageReportCursorInput"><code>MessageReportCursorInput</code></a><span class="kind">input</span></li>
+<li data-name="MlsDeviceRefInput"><a href="inputs.html#MlsDeviceRefInput"><code>MlsDeviceRefInput</code></a><span class="kind">input</span></li>
+<li data-name="MuteConversationInput"><a href="inputs.html#MuteConversationInput"><code>MuteConversationInput</code></a><span class="kind">input</span></li>
+<li data-name="NotificationCursorInput"><a href="inputs.html#NotificationCursorInput"><code>NotificationCursorInput</code></a><span class="kind">input</span></li>
+<li data-name="PinMessageInput"><a href="inputs.html#PinMessageInput"><code>PinMessageInput</code></a><span class="kind">input</span></li>
+<li data-name="PipelineActionInput"><a href="inputs.html#PipelineActionInput"><code>PipelineActionInput</code></a><span class="kind">input</span></li>
+<li data-name="PipelineFilterConditionInput"><a href="inputs.html#PipelineFilterConditionInput"><code>PipelineFilterConditionInput</code></a><span class="kind">input</span></li>
+<li data-name="PipelineFilterInput"><a href="inputs.html#PipelineFilterInput"><code>PipelineFilterInput</code></a><span class="kind">input</span></li>
+<li data-name="PipelineTriggerInput"><a href="inputs.html#PipelineTriggerInput"><code>PipelineTriggerInput</code></a><span class="kind">input</span></li>
+<li data-name="PredecessorInput"><a href="inputs.html#PredecessorInput"><code>PredecessorInput</code></a><span class="kind">input</span></li>
+<li data-name="RemoteMemberInput"><a href="inputs.html#RemoteMemberInput"><code>RemoteMemberInput</code></a><span class="kind">input</span></li>
+<li data-name="ReplyToMessageInput"><a href="inputs.html#ReplyToMessageInput"><code>ReplyToMessageInput</code></a><span class="kind">input</span></li>
+<li data-name="ReportEncryptedMessageInput"><a href="inputs.html#ReportEncryptedMessageInput"><code>ReportEncryptedMessageInput</code></a><span class="kind">input</span></li>
+<li data-name="RequestMlsReaddInput"><a href="inputs.html#RequestMlsReaddInput"><code>RequestMlsReaddInput</code></a><span class="kind">input</span></li>
+<li data-name="RotateIdentityKeyInput"><a href="inputs.html#RotateIdentityKeyInput"><code>RotateIdentityKeyInput</code></a><span class="kind">input</span></li>
+<li data-name="SealedMessageInput"><a href="inputs.html#SealedMessageInput"><code>SealedMessageInput</code></a><span class="kind">input</span></li>
+<li data-name="SearchMessagesInput"><a href="inputs.html#SearchMessagesInput"><code>SearchMessagesInput</code></a><span class="kind">input</span></li>
+<li data-name="SendEncryptedMessageInput"><a href="inputs.html#SendEncryptedMessageInput"><code>SendEncryptedMessageInput</code></a><span class="kind">input</span></li>
+<li data-name="SendMessageInput"><a href="inputs.html#SendMessageInput"><code>SendMessageInput</code></a><span class="kind">input</span></li>
+<li data-name="SetWorkspaceStateInput"><a href="inputs.html#SetWorkspaceStateInput"><code>SetWorkspaceStateInput</code></a><span class="kind">input</span></li>
+<li data-name="SignedStatementInput"><a href="inputs.html#SignedStatementInput"><code>SignedStatementInput</code></a><span class="kind">input</span></li>
+<li data-name="SignupWithInviteInput"><a href="inputs.html#SignupWithInviteInput"><code>SignupWithInviteInput</code></a><span class="kind">input</span></li>
+<li data-name="SignupWithKeyInput"><a href="inputs.html#SignupWithKeyInput"><code>SignupWithKeyInput</code></a><span class="kind">input</span></li>
+<li data-name="SubmitMlsCommitInput"><a href="inputs.html#SubmitMlsCommitInput"><code>SubmitMlsCommitInput</code></a><span class="kind">input</span></li>
+<li data-name="ToggleReactionInput"><a href="inputs.html#ToggleReactionInput"><code>ToggleReactionInput</code></a><span class="kind">input</span></li>
+<li data-name="UnmuteConversationInput"><a href="inputs.html#UnmuteConversationInput"><code>UnmuteConversationInput</code></a><span class="kind">input</span></li>
+<li data-name="UnpinMessageInput"><a href="inputs.html#UnpinMessageInput"><code>UnpinMessageInput</code></a><span class="kind">input</span></li>
+<li data-name="UpdateChannelLensInput"><a href="inputs.html#UpdateChannelLensInput"><code>UpdateChannelLensInput</code></a><span class="kind">input</span></li>
+<li data-name="UpdateConversationTopicInput"><a href="inputs.html#UpdateConversationTopicInput"><code>UpdateConversationTopicInput</code></a><span class="kind">input</span></li>
+<li data-name="UpdateKeybindInput"><a href="inputs.html#UpdateKeybindInput"><code>UpdateKeybindInput</code></a><span class="kind">input</span></li>
+<li data-name="UpdateMacroInput"><a href="inputs.html#UpdateMacroInput"><code>UpdateMacroInput</code></a><span class="kind">input</span></li>
+<li data-name="UpdateMyProfileInput"><a href="inputs.html#UpdateMyProfileInput"><code>UpdateMyProfileInput</code></a><span class="kind">input</span></li>
+<li data-name="UpdateNotificationSettingsInput"><a href="inputs.html#UpdateNotificationSettingsInput"><code>UpdateNotificationSettingsInput</code></a><span class="kind">input</span></li>
+<li data-name="UpdatePipelineInput"><a href="inputs.html#UpdatePipelineInput"><code>UpdatePipelineInput</code></a><span class="kind">input</span></li>
+<li data-name="UpdateUserCommandInput"><a href="inputs.html#UpdateUserCommandInput"><code>UpdateUserCommandInput</code></a><span class="kind">input</span></li>
+<li data-name="UpdateWorkspacePluginInput"><a href="inputs.html#UpdateWorkspacePluginInput"><code>UpdateWorkspacePluginInput</code></a><span class="kind">input</span></li>
+<li data-name="UserCommandStepInput"><a href="inputs.html#UserCommandStepInput"><code>UserCommandStepInput</code></a><span class="kind">input</span></li>
+<li data-name="AttachmentStatusEnum"><a href="enums.html#AttachmentStatusEnum"><code>AttachmentStatusEnum</code></a><span class="kind">enum</span></li>
+<li data-name="AuditOutcomeGql"><a href="enums.html#AuditOutcomeGql"><code>AuditOutcomeGql</code></a><span class="kind">enum</span></li>
+<li data-name="CommandArgumentType"><a href="enums.html#CommandArgumentType"><code>CommandArgumentType</code></a><span class="kind">enum</span></li>
+<li data-name="CommandExecutionTarget"><a href="enums.html#CommandExecutionTarget"><code>CommandExecutionTarget</code></a><span class="kind">enum</span></li>
+<li data-name="CommandInitiator"><a href="enums.html#CommandInitiator"><code>CommandInitiator</code></a><span class="kind">enum</span></li>
+<li data-name="CommandResultStatus"><a href="enums.html#CommandResultStatus"><code>CommandResultStatus</code></a><span class="kind">enum</span></li>
+<li data-name="CommandSensitivity"><a href="enums.html#CommandSensitivity"><code>CommandSensitivity</code></a><span class="kind">enum</span></li>
+<li data-name="CommandSourceKind"><a href="enums.html#CommandSourceKind"><code>CommandSourceKind</code></a><span class="kind">enum</span></li>
+<li data-name="CommandSurface"><a href="enums.html#CommandSurface"><code>CommandSurface</code></a><span class="kind">enum</span></li>
+<li data-name="ConversationChangesStatus"><a href="enums.html#ConversationChangesStatus"><code>ConversationChangesStatus</code></a><span class="kind">enum</span></li>
+<li data-name="ConversationTypeEnum"><a href="enums.html#ConversationTypeEnum"><code>ConversationTypeEnum</code></a><span class="kind">enum</span></li>
+<li data-name="DeviceLinkState"><a href="enums.html#DeviceLinkState"><code>DeviceLinkState</code></a><span class="kind">enum</span></li>
+<li data-name="DigestFrequency"><a href="enums.html#DigestFrequency"><code>DigestFrequency</code></a><span class="kind">enum</span></li>
+<li data-name="DmRequestStatus"><a href="enums.html#DmRequestStatus"><code>DmRequestStatus</code></a><span class="kind">enum</span></li>
+<li data-name="FilterField"><a href="enums.html#FilterField"><code>FilterField</code></a><span class="kind">enum</span></li>
+<li data-name="FilterLogic"><a href="enums.html#FilterLogic"><code>FilterLogic</code></a><span class="kind">enum</span></li>
+<li data-name="FilterOp"><a href="enums.html#FilterOp"><code>FilterOp</code></a><span class="kind">enum</span></li>
+<li data-name="InviteTokenTypeGql"><a href="enums.html#InviteTokenTypeGql"><code>InviteTokenTypeGql</code></a><span class="kind">enum</span></li>
+<li data-name="KeyLogEntryKind"><a href="enums.html#KeyLogEntryKind"><code>KeyLogEntryKind</code></a><span class="kind">enum</span></li>
+<li data-name="KeybindContext"><a href="enums.html#KeybindContext"><code>KeybindContext</code></a><span class="kind">enum</span></li>
+<li data-name="KeybindScope"><a href="enums.html#KeybindScope"><code>KeybindScope</code></a><span class="kind">enum</span></li>
+<li data-name="KeybindSource"><a href="enums.html#KeybindSource"><code>KeybindSource</code></a><span class="kind">enum</span></li>
+<li data-name="MessageChangeKind"><a href="enums.html#MessageChangeKind"><code>MessageChangeKind</code></a><span class="kind">enum</span></li>
+<li data-name="MessageReportStatus"><a href="enums.html#MessageReportStatus"><code>MessageReportStatus</code></a><span class="kind">enum</span></li>
+<li data-name="NotificationLevel"><a href="enums.html#NotificationLevel"><code>NotificationLevel</code></a><span class="kind">enum</span></li>
+<li data-name="NotificationReason"><a href="enums.html#NotificationReason"><code>NotificationReason</code></a><span class="kind">enum</span></li>
+<li data-name="PageDir"><a href="enums.html#PageDir"><code>PageDir</code></a><span class="kind">enum</span></li>
+<li data-name="PipelineTriggerKindGql"><a href="enums.html#PipelineTriggerKindGql"><code>PipelineTriggerKindGql</code></a><span class="kind">enum</span></li>
+<li data-name="PluginRuntimeKind"><a href="enums.html#PluginRuntimeKind"><code>PluginRuntimeKind</code></a><span class="kind">enum</span></li>
+<li data-name="PluginSignatureStatus"><a href="enums.html#PluginSignatureStatus"><code>PluginSignatureStatus</code></a><span class="kind">enum</span></li>
+<li data-name="PluginSourceKind"><a href="enums.html#PluginSourceKind"><code>PluginSourceKind</code></a><span class="kind">enum</span></li>
+<li data-name="PresenceStatus"><a href="enums.html#PresenceStatus"><code>PresenceStatus</code></a><span class="kind">enum</span></li>
+<li data-name="RegistrationModeGql"><a href="enums.html#RegistrationModeGql"><code>RegistrationModeGql</code></a><span class="kind">enum</span></li>
+<li data-name="ReportOutcome"><a href="enums.html#ReportOutcome"><code>ReportOutcome</code></a><span class="kind">enum</span></li>
+<li data-name="RevocationFanoutStatus"><a href="enums.html#RevocationFanoutStatus"><code>RevocationFanoutStatus</code></a><span class="kind">enum</span></li>
+<li data-name="ServerFeatureState"><a href="enums.html#ServerFeatureState"><code>ServerFeatureState</code></a><span class="kind">enum</span></li>
+<li data-name="ServerMemberRoleGql"><a href="enums.html#ServerMemberRoleGql"><code>ServerMemberRoleGql</code></a><span class="kind">enum</span></li>
+<li data-name="TypedVerbGql"><a href="enums.html#TypedVerbGql"><code>TypedVerbGql</code></a><span class="kind">enum</span></li>
+<li data-name="WorkspacePluginStatus"><a href="enums.html#WorkspacePluginStatus"><code>WorkspacePluginStatus</code></a><span class="kind">enum</span></li>
+<li data-name="WorkspaceStateScopeGql"><a href="enums.html#WorkspaceStateScopeGql"><code>WorkspaceStateScopeGql</code></a><span class="kind">enum</span></li>
+<li data-name="DateTime"><a href="scalars.html#DateTime"><code>DateTime</code></a><span class="kind">scalar</span></li>
+<li data-name="JSON"><a href="scalars.html#JSON"><code>JSON</code></a><span class="kind">scalar</span></li>
+<li data-name="String"><a href="scalars.html#String"><code>String</code></a><span class="kind">scalar</span></li>
+<li data-name="Int"><a href="scalars.html#Int"><code>Int</code></a><span class="kind">scalar</span></li>
+<li data-name="Float"><a href="scalars.html#Float"><code>Float</code></a><span class="kind">scalar</span></li>
+<li data-name="Boolean"><a href="scalars.html#Boolean"><code>Boolean</code></a><span class="kind">scalar</span></li>
+<li data-name="ID"><a href="scalars.html#ID"><code>ID</code></a><span class="kind">scalar</span></li>
+<li data-name="@include"><a href="directives.html#include"><code>@include</code></a><span class="kind">directive</span></li>
+<li data-name="@skip"><a href="directives.html#skip"><code>@skip</code></a><span class="kind">directive</span></li>
+<li data-name="@specifiedBy"><a href="directives.html#specifiedBy"><code>@specifiedBy</code></a><span class="kind">directive</span></li>
+</ul></div>
+<ul class="cards">
+<li><a href="../docs/api.html"><b>Talking to a server</b><span>The endpoints, the session cookie and CSRF, origins, limits, error codes and pagination: the contract around the schema.</span></a></li>
+<li><a href="query.html"><b>Query</b><span>57 fields, grouped by domain.</span></a></li>
+<li><a href="mutation.html"><b>Mutation</b><span>106 fields, grouped by domain.</span></a></li>
+<li><a href="subscription.html"><b>Subscription</b><span>2 fields, grouped by domain.</span></a></li>
+<li><a href="objects.html"><b>Objects</b><span>101 objects.</span></a></li>
+<li><a href="inputs.html"><b>Inputs</b><span>82 inputs.</span></a></li>
+<li><a href="enums.html"><b>Enums</b><span>40 enums.</span></a></li>
+<li><a href="scalars.html"><b>Scalars</b><span>7 scalars.</span></a></li>
+<li><a href="directives.html"><b>Directives</b><span>3 directives.</span></a></li>
+</ul>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Generated from <a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>58e3ec0</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+<script>
+(() => {
+  const q = document.getElementById("filter");
+  if (!q) return;
+  const items = [...document.querySelectorAll("[data-name]")];
+  const groups = [...document.querySelectorAll("[data-group]")];
+  const none = document.getElementById("filter-none");
+  const run = () => {
+    const v = q.value.trim().toLowerCase();
+    let shown = 0;
+    for (const el of items) {
+      const hit = v ? el.dataset.name.toLowerCase().includes(v) : !el.closest("[data-search-only]");
+      el.hidden = !hit;
+      if (hit) shown += 1;
+    }
+    for (const g of groups) g.hidden = !g.querySelector("[data-name]:not([hidden])");
+    if (none) none.hidden = shown > 0 || !v;
+  };
+  q.addEventListener("input", run);
+  run();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,408 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The relay · RIM</title>
+<meta name="description" content="A relay is the server a person's app talks to. It keeps their account, devices and profile card, queues what other servers send them, files conversations from strangers in a request inbox, and forwards their requests to …">
+<link rel="icon" href="../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../index.html" aria-label="RIM home">
+      <picture><source srcset="../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../index.html#what">What RIM is</a>
+      <a href="../index.html#how">How it works</a>
+      <a href="self-hosting.html">Self-host</a>
+      <a href="../configure/index.html">Configure</a>
+      <a href="index.html" aria-current="page">Docs</a>
+      <a href="../api/index.html">API</a>
+      <a href="../specs/index.html">Specs</a>
+      <a href="contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="index.html">Docs</a><span aria-hidden="true">/</span><a href="operators.html">Operators</a><span aria-hidden="true">/</span><span>The relay</span></div>
+  <div class="page with-toc">
+    <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
+<ol>
+<li><a href="#for-operators">For operators</a><ol><li><a href="#configuration">Configuration</a></li><li><a href="#the-direct-space">The direct space</a></li><li><a href="#people-from-other-servers">People from other servers</a></li><li><a href="#queues-and-the-outbox">Queues and the outbox</a></li><li><a href="#the-request-inbox">The request inbox</a></li><li><a href="#forwarded-requests">Forwarded requests</a></li><li><a href="#workspaces-with-members-from-other-servers">Workspaces with members from other servers</a></li><li><a href="#cleanup-and-audit">Cleanup and audit</a></li><li><a href="#the-public-relay">The public relay</a></li></ol></li>
+<li><a href="#for-clients">For clients</a><ol><li><a href="#joining-a-workspace-on-another-host">Joining a workspace on another host</a></li><li><a href="#keeping-delegations-fresh">Keeping delegations fresh</a></li><li><a href="#revoking-a-device">Revoking a device</a></li><li><a href="#signing-in-to-a-host-directly">Signing in to a host directly</a></li></ol></li>
+</ol>
+</details></aside>
+    <main id="content" class="prose">
+<h1 id="the-relay">The relay</h1>
+<p>A relay is the server a person&#39;s app talks to. It keeps their account, devices and profile card,
+queues what other servers send them, files conversations from strangers in a request inbox, and
+forwards their requests to the servers that host the spaces they use. Every server is the relay of
+its local users unless it runs with <code>RIM_ROLE=host</code>. This page explains what a relay and a host
+do, for operators and for client authors. The contract is <a href="../specs/server-to-server-v1.html"><code>docs/specs/server-to-server-v1.md</code></a>;
+the server&#39;s key, id and transport settings are in <a href="server-identity.html"><code>docs/server-identity.md</code></a>; deploying a public
+relay is <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/deploy/README.md"><code>deploy/README.md</code></a> and running one is <a href="operations/relay-public.html"><code>docs/operations/relay-public.md</code></a>.</p>
+<p>Nothing here runs until server-to-server traffic is on (<code>RIM_PUBLIC_BASE_URL</code> is an <code>https</code> URL).
+Before that, a server is the relay and host of its own users only, as it always was.</p>
+<h2 id="for-operators">For operators <a class="anchor" href="#for-operators" aria-label="Link to this section">#</a></h2>
+<h3 id="configuration">Configuration <a class="anchor" href="#configuration" aria-label="Link to this section">#</a></h3>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>RIM_ROLE</code></td>
+<td><code>both</code></td>
+<td><code>relay</code> creates no new workspaces; <code>host</code> refuses <code>/api/remote/…</code>, contacts, DM requests and deliveries</td>
+</tr>
+<tr>
+<td><code>RIM_RELAY_QUEUE_BYTES_PER_USER</code></td>
+<td>268435456</td>
+<td>Bytes queued per local user; over it the oldest items are dropped</td>
+</tr>
+<tr>
+<td><code>RIM_RELAY_RETENTION_DAYS</code></td>
+<td>30</td>
+<td>How long queued items and DM requests are kept</td>
+</tr>
+<tr>
+<td><code>RIM_S2S_DEVICE_RATE_PER_MIN</code></td>
+<td>120</td>
+<td>Forwarded requests per device per minute: those a local user&#39;s device sends through <code>/api/remote/…</code>, and those a host accepts</td>
+</tr>
+<tr>
+<td><code>RIM_S2S_SUBSCRIPTIONS_PER_PEER</code></td>
+<td>10000</td>
+<td>Active delegations one relay may hold on this host; past it new delegations are refused as <code>limited</code>, while renewals of active ones still go through</td>
+</tr>
+<tr>
+<td><code>RIM_HOST_ALLOWED_RELAYS</code></td>
+<td>empty = any</td>
+<td>Server ids of the relays allowed to join, subscribe, forward, report presence and bring revocations here</td>
+</tr>
+<tr>
+<td><code>RIM_RELAY_FORWARDS_PER_USER_PER_DAY</code></td>
+<td>50000</td>
+<td>Requests a local user sends through <code>/api/remote/…</code> per day</td>
+</tr>
+<tr>
+<td><code>RIM_RELAY_DM_REQUESTS_PER_DAY</code></td>
+<td>20</td>
+<td>DM requests one sender principal files here per day, and invites a local user sends per day to people on other servers who are not their contacts</td>
+</tr>
+<tr>
+<td><code>RIM_RELAY_CARD_MAX_BYTES</code></td>
+<td>131072</td>
+<td>Largest profile card a local user publishes</td>
+</tr>
+<tr>
+<td><code>RIM_RELAY_KEY_PACKAGES_PER_DEVICE</code></td>
+<td>100</td>
+<td>Unclaimed one-time key packages per device and cipher suite</td>
+</tr>
+<tr>
+<td><code>RIM_RELAY_DEVICES_PER_USER</code></td>
+<td>32</td>
+<td>Devices a local user keeps, revoked ones not counted</td>
+</tr>
+<tr>
+<td><code>RIM_REGISTRATION_POW_BITS</code></td>
+<td>unset</td>
+<td>Turns on proof-of-work signups, &quot;The public relay&quot;</td>
+</tr>
+</tbody></table></div>
+<h3 id="the-direct-space">The direct space <a class="anchor" href="#the-direct-space" aria-label="Link to this section">#</a></h3>
+<p>Each server has one <code>server</code> row of kind <code>direct</code>, named &quot;Direct messages&quot;, created at start. It
+holds the DMs and groups its users start with people on other servers, and is never listed by
+<code>servers</code> nor found by name. Everyone in it is a guest: nobody sees its member list, and nobody
+creates channels, invites or plugins there. Local users join it on first use: a signed-in
+<code>relayInfo</code>, or any read or write of the direct space that needs membership; people from
+other servers join when a local user adds them. Custom emojis, plugins, workspace keybinds,
+pipelines, workspace state and channels answer <code>VALIDATION</code> (&quot;not available in the direct
+space&quot;) there, reads and writes alike, and the refused call joins nobody.</p>
+<p>A conversation&#39;s home is the relay whose direct space holds it. The home sequences it: it stores
+the messages, Commits and Welcomes, and every member&#39;s app reads and writes there, through their
+own relay when it is elsewhere.</p>
+<h3 id="people-from-other-servers">People from other servers <a class="anchor" href="#people-from-other-servers" aria-label="Link to this section">#</a></h3>
+<p>When a local user adds someone from another server, this server fetches their identity (key log,
+devices with certificates and revocations, profile card) from their relay, checks every signature,
+and stores them as a <code>user</code> row of kind <code>remote</code> named <code>r_</code> and the first 30 characters of their
+principal id. Their relay pushes identity changes (<code>POST /s2s/v1/identity</code>) to the servers that
+queued items or filed requests for them; <code>principalDevices</code> also refetches a remote person&#39;s
+identity when the stored copy is over an hour old. If such a person later signs up here with
+their key, the remote row becomes their local account and keeps its memberships.</p>
+<p>Remote users never sign in here and never run account mutations here: sign-in, sign-up, device
+and key changes, card publishing, profile, workspace creation, device links, instance invites
+and the relay&#39;s own mutations are refused with <code>FORBIDDEN</code> (&quot;not available to remote
+members&quot;).</p>
+<h3 id="queues-and-the-outbox">Queues and the outbox <a class="anchor" href="#queues-and-the-outbox" aria-label="Link to this section">#</a></h3>
+<p>Every event of a space with remote members becomes a signed host event (<code>host-event</code>) on a stream:
+<code>c:&lt;conversationId&gt;</code> for a conversation&#39;s events, <code>u:&lt;principalId&gt;</code> for one person&#39;s (their
+notifications, mentions, read states, Welcomes, DM invites, and for a guest the directory events
+about them), <code>w</code> for other space-wide events, <code>e</code> for typing and presence. Each stream&#39;s <code>seq</code>
+counts from 1 without gaps; <code>e</code> has none. The host appends one outbox row per relay that should
+get the event (for a workspace, the relays holding an active delegation of the person; for the
+direct space, the relays the person&#39;s newest card lists, else the relay that served their
+identity) and a sender delivers each relay&#39;s rows in order (<code>POST /s2s/v1/deliver</code>), backing off
+from 1 second to 5 minutes. Outbox rows are kept 7 days. A relay that refuses a person as unknown
+is not sent their events for 24 hours. Each server process keeps that refusal in memory: a restart
+forgets it, and with several nodes each node learns it from the relay on its own.</p>
+<p>A relay stores each envelope once and one item per recipient. Each device reads its user&#39;s items
+above its cursor; a device added later starts at the newest item queued before it. An item is
+deleted once every non-revoked device of its user has acknowledged it, and after the retention
+period regardless. Over the per-user byte cap the oldest items go first and the devices online get
+a <code>QueueOverflow</code> notice; a device offline at the time sees the gap in the stream&#39;s <code>seq</code>. A relay
+pulls what a host still holds for it (<code>GET /s2s/v1/outbox</code>) every minute, so a delivery missed
+while the relay was down arrives on the next pull.</p>
+<h3 id="the-request-inbox">The request inbox <a class="anchor" href="#the-request-inbox" aria-label="Link to this section">#</a></h3>
+<p>A relay files a conversation as a DM request when its invite (<code>DmInvite</code>) comes from someone who
+is not the recipient&#39;s contact, was never accepted by them and shares no workspace this server
+hosts with them. The request keeps the sender&#39;s card
+and holds up to three items of the conversation; later ones are dropped until it is accepted.
+Conversations from contacts are recorded as accepted at once. Items of a conversation the relay
+has no invite for are refused (<code>not_subscribed</code>), so a host cannot skip the inbox.</p>
+<p>The same rule covers conversations of this server&#39;s own direct space whose creator is someone
+else: a person from another relay creating a DM with a local user through the forward path, or a
+local stranger. The server files its own invite for the local member; until they accept, the
+conversation is left out of their <code>inboxConversations</code>, its events out of their
+<code>workspaceEvents</code>, and its notifications, mentions and unread counts out of the notification
+list, the bell, <code>unreadCounts</code> and the email digest; its first events are held with
+the request. Everything appears once they accept. This needs
+server-to-server traffic to be on; with it off, conversations in the direct space are live at
+once.</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Action</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>acceptDmRequest</code></td>
+<td>Held items released; later items flow; the sender becomes a contact</td>
+</tr>
+<tr>
+<td><code>ignoreDmRequest</code></td>
+<td>Held items deleted but the invite, which stays with the request; later items dropped; the request expires after 30 days</td>
+</tr>
+<tr>
+<td><code>blockPrincipal</code></td>
+<td>Pending requests from the principal ignored as above; its invites (<code>blocked</code>) and key package claims refused</td>
+</tr>
+<tr>
+<td><code>reportDmRequest</code></td>
+<td>Filed in <code>relay_abuse_report</code> for the operator and audited as <code>relay.dm_request_reported</code>; a pending request is ignored</td>
+</tr>
+<tr>
+<td>Nothing</td>
+<td>Expires after the retention period</td>
+</tr>
+</tbody></table></div>
+<p>Limits: 100 pending requests per recipient and <code>RIM_RELAY_DM_REQUESTS_PER_DAY</code> (20) per sender
+principal per day on this relay; past them invites are refused as <code>limited</code>. A claim of a local user&#39;s key packages by a stranger
+(not a contact, never accepted, sharing no workspace here) gets last-resort packages only, at
+most 20 claims per stranger per day.</p>
+<h3 id="forwarded-requests">Forwarded requests <a class="anchor" href="#forwarded-requests" aria-label="Link to this section">#</a></h3>
+<p>A local user&#39;s app reaches a space hosted elsewhere at <code>/api/remote/&lt;hostServerId&gt;/&lt;path&gt;</code> with
+its session cookie (and <code>X-CSRF-Token</code> for <code>POST</code>), a device-signed request statement in
+<code>Rim-Device-Request</code> (unpadded base64url of the payload) and its signature in
+<code>Rim-Device-Signature</code>. The relay checks that the statement names the session&#39;s principal and
+device, that the device is not revoked and that the signature verifies, then forwards the body
+unchanged to <code>&lt;host&gt;/s2s/v1/forward/&lt;path&gt;</code> and returns the host&#39;s answer unchanged. A host it
+cannot reach is <code>502 {&quot;error&quot;:&quot;upstream_unavailable&quot;,&quot;hostServerId&quot;:…}</code>.</p>
+<p>The host checks the S2S signature, the device request (a device of a user it holds, its own id,
+the method, path and body hash, the <code>seq</code> window), and that the relay may carry the user&#39;s
+traffic: the relay holds an active delegation of that device for a workspace the user is still a
+member of, or the user is a member of its direct space and their newest card lists the relay&#39;s
+origin (<code>403 not_delegated</code> otherwise). It then runs GraphQL (<code>POST /api</code>), attachment downloads and
+uploads, avatar uploads (<code>POST /api/files/avatar</code>), stored-file downloads (<code>GET /api/files/&lt;path&gt;</code>)
+or plugin bundle downloads as that user and device, with no session, and signs every
+answer, refusals included, with <code>Rim-Host-Response</code> and <code>Rim-Host-Signature</code>. Per-IP limits key
+on <code>relay:&lt;serverId&gt;:&lt;principalId&gt;</code>.</p>
+<p>A device request&#39;s <code>seq</code> is accepted once: the host remembers accepted values for at least 10
+minutes and until they fall below its window (5 minutes in microseconds under the device&#39;s
+highest), and refuses a repeat or a lower value with <code>409 {&quot;error&quot;:&quot;replay&quot;,&quot;highestSeq&quot;:…}</code>.</p>
+<h3 id="workspaces-with-members-from-other-servers">Workspaces with members from other servers <a class="anchor" href="#workspaces-with-members-from-other-servers" aria-label="Link to this section">#</a></h3>
+<p>A person whose relay is another server joins a workspace here through that relay. Their app gets
+a login challenge from this server (<code>POST /s2s/v1/join/challenge</code>, 120 seconds, single use),
+with the workspace its invite names, and
+signs it with this server&#39;s id as the audience, so the proof is good here only. It also signs a
+<strong>delegation</strong>: its relay may receive this workspace&#39;s events for the person and forward that
+device&#39;s signed requests here, for at most 24 hours. The relay presents both with the person&#39;s key
+log, devices and card (<code>POST /s2s/v1/join</code>). This server checks everything, joins the person by
+the invite exactly as <code>joinServerByInvite</code> does (bans included; a current member sends no invite),
+stores them as a remote user and keeps the delegation.</p>
+<p>A delegation is accepted when its device is a live device of the person, it names this server
+and the presenting relay, its relay key hash names a key of the relay&#39;s log that no recovery
+rotation replaced, the person is a current, unbanned member, and it runs at most 24 hours. It is
+kept until its expiry or a day after acceptance, whichever is first, one per workspace, device and
+relay. Relays renew them (<code>POST /s2s/v1/subscriptions</code>, at most 64 at a time, each accepted or
+refused with a reason) and cancel them (<code>POST /s2s/v1/subscriptions/cancel</code>). A workspace&#39;s events
+go to the relays holding an active delegation of a recipient; those relays may forward the
+device&#39;s requests. A kick or a ban ends the person&#39;s delegations once their <code>MemberLeft</code> is queued;
+a revoked device&#39;s delegations end with it.</p>
+<p>Relays report whether their users are online (<code>POST /s2s/v1/presence</code>); this server shows a remote
+member online in every workspace their relay holds a delegation for, until the relay reports them
+offline.</p>
+<p>A revocation of a remote member&#39;s device arrives from their relay (<code>POST /s2s/v1/revocations</code>) or
+straight from their app (<code>applyRemoteRevocation</code>). This server checks it against its copy of the
+person&#39;s key log, marks the device revoked, ends its delegations and sessions, removes it from
+encrypted groups, and answers a signed acknowledgement; a repeat gets the same one.</p>
+<p>When their relay is down, a remote member&#39;s desktop app may sign in here directly with its device
+key (<code>loginWithKey</code>, audience this server&#39;s id). This server first tries to refresh the person&#39;s
+identity from their relays, waiting up to 10 seconds, and issues a session of 24 hours. Account
+mutations stay refused on it.</p>
+<h3 id="cleanup-and-audit">Cleanup and audit <a class="anchor" href="#cleanup-and-audit" aria-label="Link to this section">#</a></h3>
+<p>Every minute the server deletes acknowledged and expired items, envelopes no item uses, expired
+requests, outbox rows over 7 days and accepted <code>seq</code> values out of the window, ends expired
+delegations and those of revoked devices or departed members, and marks this relay&#39;s expired
+subscriptions lapsed. Every 5 seconds it sends revocations due for another attempt. Audit events
+(target <code>audit</code>, ids only): <code>relay.principal_blocked</code> (<code>scope</code> <code>user</code> for a user&#39;s block,
+<code>server</code> for an operator&#39;s), <code>relay.principal_unblocked</code>, <code>relay.blocked_principal_refused</code>,
+<code>relay.dm_request_reported</code>, <code>relay.abuse_report_filed</code>, <code>relay.abuse_report_resolved</code>,
+<code>relay.registration_pow</code>, <code>relay.left</code>, <code>key_identity_adopted</code> and <code>host.revocation_applied</code>; <code>host.remote_join</code> and
+<code>host.delegation_accepted</code> are also written to <code>command_audit_log</code> (initiator <code>s2s</code>).</p>
+<h3 id="the-public-relay">The public relay <a class="anchor" href="#the-public-relay" aria-label="Link to this section">#</a></h3>
+<p>A relay anyone may sign up on runs <code>RIM_ROLE=relay</code> with the settings of
+<a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a> on top of <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/deploy/compose.yml"><code>deploy/compose.yml</code></a>. This section says how its
+registration and blocks behave; <a href="operations/relay-public.html"><code>docs/operations/relay-public.md</code></a> has its quotas, the operator&#39;s
+commands and the abuse policy.</p>
+<p><strong>Registration.</strong> <code>RIM_REGISTRATION_POW_BITS</code> (1 to 40; 24 on the public relay) turns on <code>pow</code>
+registration, whatever <code>RIM_OPEN_REGISTRATION</code> says. <code>signupWithKey</code> then takes a registration
+token (instance invite or workspace invite) or <code>proofOfWork</code>: an 8-byte nonce,
+unpadded base64url, such that</p>
+<pre><code>SHA-256(&quot;rim.pow.v1\0&quot; || this server's id || &quot;\0&quot; || inception payload || nonce)</code></pre>
+<p>starts with that many zero bits. The work is bound to this server and one principal, and
+checking it is one hash. Proof-of-work signups also count against the open-signup limit per IP
+and are audited as <code>relay.registration_pow</code>. Password signups take a token, as in invite-only
+mode. The descriptor says <code>&quot;registration&quot;:{&quot;mode&quot;:&quot;pow&quot;,&quot;powBits&quot;:24}</code> and <code>registrationMode</code>
+answers <code>POW</code>. A signup link from <code>rim_server invite create</code> lets a person in without the work;
+it needs no account or workspace, so it works with <code>RIM_ROLE=relay</code>.</p>
+<p><strong>Quotas</strong> per local user are the <code>RIM_RELAY_*</code> settings above. The per-minute and per-day
+counters are in memory, per node.</p>
+<p><strong>Blocking a principal.</strong> <code>rim_server principal block &lt;principalId&gt; --reason &lt;text&gt;</code> stores the
+block in <code>relay_principal_block</code>, ends the sessions of the account holding the principal here
+and ignores its pending DM requests for every recipient. From then on, until <code>principal unblock</code>: its logins, signups and enrollments are refused (<code>FORBIDDEN</code>); deliveries to it are
+refused as <code>unknown_principal</code> and its invites as <code>blocked</code>; its key packages are not handed
+out, and it claims none; <code>GET /s2s/v1/principals/&lt;id&gt;</code> answers <code>404</code>; forwarded requests it
+signs are refused with <code>403</code>. <code>principal list</code> shows the blocks.</p>
+<p><strong>Blocking a peer.</strong> <code>rim_server peer block &lt;serverId&gt;</code> sets the pinned peer&#39;s status to
+<code>blocked</code>, which the request check reads on every request: its requests get
+<code>403 peer_not_allowed</code> and nothing is sent to it. <code>peer unblock</code> makes it <code>active</code> again. A
+forked peer stays forked; a peer never pinned is refused with <code>RIM_S2S_DENIED_PEERS</code> instead.
+Audited as <code>s2s.peer_blocked</code> and <code>s2s.peer_unblocked</code>.</p>
+<p><strong>Abuse reports.</strong> <code>reportDmRequest</code> in the app and reports that come by mail (<code>rim_server abuse-reports add</code>) both end in <code>relay_abuse_report</code>, which <code>abuse-reports list</code> and
+<code>abuse-reports resolve</code> work through.</p>
+<h2 id="for-clients">For clients <a class="anchor" href="#for-clients" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><code>relayInfo { serverId roles directSpaceId }</code> (no session needed) names the direct space.</li>
+<li><code>remoteServer(origin)</code> pins another server through the relay and returns its discovery
+document to verify and pin in the app.</li>
+<li><code>remoteIdentity(principalId, relayUrl)</code> returns a principal&#39;s key log, devices and card, from
+this server or fetched from <code>relayUrl</code> and cached for 24 hours. Verify the log against the
+principal id, each certificate against the log and the card against the head.</li>
+<li><code>contacts</code>, <code>addContact(principalId, relayUrls)</code>, <code>removeContact(principalId)</code>: the contact list
+the request inbox filters by. Relay URLs are 1 to 8 of 1 to 256 bytes of printable ASCII
+without <code>?</code>, <code>#</code> or <code>@</code>.</li>
+<li><code>createConversation(input: { serverId: &lt;directSpaceId&gt;, remoteMembers: [{ principalId, relayUrls }], encrypted })</code> starts a DM (one remote member, no <code>otherUserId</code> or <code>memberIds</code>) or a
+group with people on other servers; people on this relay may be named the same way. A
+conversation with someone on another relay must be <code>encrypted</code> (otherwise <code>VALIDATION</code>,
+&quot;conversations with people on other servers are encrypted&quot;), and
+every member needs an MLS-active device. Any
+<code>memberIds</code>, or more than one remote member, makes a group. The caller needs a published profile
+card: their relays show it in the request inbox. <code>predecessor: { hostServerId, conversationId }</code>
+records the conversation a successor replaces, and <code>Conversation.predecessor</code> returns it.</li>
+<li>On a relay in <code>pow</code> registration mode (<code>registrationMode</code> is <code>POW</code>; the difficulty is the
+discovery document&#39;s <code>registration.powBits</code>), <code>signupWithKey</code> takes <code>proofOfWork</code>: count from
+0, hash as in &quot;The public relay&quot; with the counter as the 8-byte big-endian nonce, and send the
+first nonce that meets the difficulty, unpadded base64url. A registration token instead skips
+the work.</li>
+<li><code>dmRequests(status)</code>, <code>acceptDmRequest</code>, <code>ignoreDmRequest</code>, <code>blockPrincipal</code>,
+<code>unblockPrincipal</code>, <code>reportDmRequest</code> work the request inbox. A request&#39;s <code>heldItems</code> are
+host-signed envelopes to read before deciding, the <code>DmInvite</code> first; verify it to bind the
+conversation&#39;s space to its home before reading or leaving it.</li>
+<li><code>relayStream(after)</code> on the existing WebSocket yields the session device&#39;s items above <code>after</code>
+(its cursor when omitted), then live ones, as JSON strings:
+<code>{&quot;type&quot;:&quot;RelayItem&quot;,&quot;id&quot;,&quot;hostServerId&quot;,&quot;workspaceId&quot;,&quot;envelope&quot;:{&quot;payload&quot;,&quot;signature&quot;}}</code>, plus
+<code>{&quot;type&quot;:&quot;DmRequestReceived&quot;,&quot;requestId&quot;}</code> and
+<code>{&quot;type&quot;:&quot;QueueOverflow&quot;,&quot;spaces&quot;:[{&quot;hostServerId&quot;,&quot;workspaceId&quot;}]}</code>. <code>relayItems(after, limit)</code>
+pulls the same items; <code>ackRelayItems(upTo)</code> moves the device&#39;s cursor. The session must be bound
+to a device.</li>
+<li>For every item, check the envelope&#39;s signature under the host key pinned for
+<code>hostServerId</code> at its <code>keySeq</code>, that <code>host</code> is that server, and that the stream matches the event
+(<code>c:</code> its conversation, <code>u:</code> your principal). Apply a stream&#39;s events in <code>seq</code> order; on a gap,
+reconcile through the host (its change feed and <code>streamHeads(serverId, streams)</code> through the
+forward path).</li>
+<li><code>leaveRelay</code> cancels the caller&#39;s subscriptions at every host, then deletes their queue,
+requests, contacts and blocks on this relay.</li>
+</ul>
+<h3 id="joining-a-workspace-on-another-host">Joining a workspace on another host <a class="anchor" href="#joining-a-workspace-on-another-host" aria-label="Link to this section">#</a></h3>
+<ol>
+<li><p>Read the invite link <code>rim-invite:1:&lt;hostServerId&gt;:&lt;hostKeyHash&gt;:&lt;inviteToken&gt;:&lt;hostOrigin&gt;</code>
+and pin the host with <code>remoteServer(origin)</code>.</p>
+</li>
+<li><p><code>remoteJoinChallenge(hostServerId, hostOrigin, inviteToken)</code> returns
+<code>{ challengeId nonce expiresAt workspaceId }</code>: <code>workspaceId</code> is the workspace the invite names
+(the invite is looked up, not used), null without one. Sign a <code>login</code> statement over the
+challenge with <code>audience</code> = the host&#39;s server id.</p>
+</li>
+<li><p>Sign a delegation with the device key over <code>rim.delegation.v1\0 || payload</code>:</p>
+<pre><code class="language-json">{&quot;v&quot;:2,&quot;type&quot;:&quot;delegation&quot;,&quot;principalId&quot;:&quot;rimp1_…&quot;,&quot;deviceId&quot;:&quot;&lt;uuid&gt;&quot;,&quot;relay&quot;:&quot;&lt;relay server id&gt;&quot;,
+ &quot;relayKeyHash&quot;:&quot;&lt;hash of the relay's current key&gt;&quot;,&quot;host&quot;:&quot;&lt;host server id&gt;&quot;,&quot;workspaceId&quot;:&quot;&lt;uuid&gt;&quot;,
+ &quot;scope&quot;:&quot;workspace&quot;,&quot;nonce&quot;:&quot;&lt;16 random bytes, base64url&gt;&quot;,&quot;issuedAt&quot;:&quot;…&quot;,&quot;expiresAt&quot;:&quot;…&quot;}</code></pre>
+<p><code>expiresAt</code> is at most 24 hours after <code>issuedAt</code>. <code>relayInfo</code> names the relay; its key hash is
+in the relay&#39;s discovery document.</p>
+</li>
+<li><p><code>joinRemoteWorkspace(input: { hostServerId, hostOrigin, inviteToken, proof, delegation })</code>
+returns <code>{ hostServerId workspaceId userId role }</code>; <code>inviteToken</code> is null for a current member.
+The workspace is then used through <code>/api/remote/&lt;hostServerId&gt;/api</code>, and its events arrive on
+<code>relayStream</code>.</p>
+</li>
+</ol>
+<h3 id="keeping-delegations-fresh">Keeping delegations fresh <a class="anchor" href="#keeping-delegations-fresh" aria-label="Link to this section">#</a></h3>
+<ul>
+<li><code>remoteSubscriptions</code> lists <code>{ hostServerId workspaceId status expiresAt }</code> with <code>status</code>
+<code>active</code>, <code>lapsed</code> (every delegation expired) or <code>ended</code> (cancelled).</li>
+<li>When the current delegations have less than 6 hours left, an online device signs fresh ones and
+sends them with <code>renewDelegations(delegations)</code>. Each entry of the answer is <code>active</code> with its
+<code>expiresAt</code>, or <code>refused</code> with a <code>reason</code>: one of the host&#39;s (<code>not_member</code>, <code>expired</code>, …), or
+<code>host_unreachable</code> (try again later; the subscription is unchanged) or <code>host_refused</code> (the host
+turned the presentation down). The relay logs what lies behind the last two.</li>
+<li>While a device has <code>relayStream</code> open, the hosts see the person online; 30 seconds after the last
+stream closes they see them offline.</li>
+</ul>
+<h3 id="revoking-a-device">Revoking a device <a class="anchor" href="#revoking-a-device" aria-label="Link to this section">#</a></h3>
+<p><code>revokeDeviceKey</code> on the relay also sends the revocation to every host and DM home holding the
+person, retrying at 10 s, 30 s, 1 min, 2 min, 5 min and then every 15 minutes for a day.
+<code>deviceRevocationStatus(deviceId)</code> lists <code>{ hostServerId status attempts ack }</code> per host, <code>status</code>
+<code>PENDING</code>, <code>ACKED</code> or <code>GAVE_UP</code>; <code>relayStream</code> pushes
+<code>{&quot;type&quot;:&quot;RevocationAcked&quot;,&quot;deviceId&quot;,&quot;hostServerId&quot;,&quot;ack&quot;:{&quot;payload&quot;,&quot;signature&quot;}}</code> as each host
+acknowledges. Check each <code>ack</code> (a <code>revocation-ack</code> statement) under the host&#39;s pinned key and its
+<code>revocationSha256</code> against the revocation. A host that has not acknowledged within 2 minutes gets
+the revocation from the app directly: <code>applyRemoteRevocation(revocation)</code> on the host&#39;s own <code>/api</code>
+needs no session and no CSRF header and returns the acknowledgement; an address may try it 20
+times in 15 minutes.</p>
+<h3 id="signing-in-to-a-host-directly">Signing in to a host directly <a class="anchor" href="#signing-in-to-a-host-directly" aria-label="Link to this section">#</a></h3>
+<p>When the relay is unreachable, the desktop app calls <code>keyLoginChallenge</code> and <code>loginWithKey</code> on the
+host&#39;s own <code>/api</code> with <code>audience</code> = the host&#39;s server id. The session lasts 24 hours; account
+mutations are refused on it (<code>FORBIDDEN</code>), as through the relay.</p>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/docs/relay.md">rim-server/docs/relay.md</a> at <code>c86029b</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+<script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
+</body>
+</html>

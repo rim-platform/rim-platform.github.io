@@ -1,0 +1,1224 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RIM plugin protocol v1 · RIM</title>
+<meta name="description" content="Status: frozen, normative. This is the contract between the RIM desktop host and a plugin process. It is written for someone building a plugin from scratch, in any language, without an SDK.">
+<link rel="icon" href="../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../index.html" aria-label="RIM home">
+      <picture><source srcset="../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../index.html#what">What RIM is</a>
+      <a href="../index.html#how">How it works</a>
+      <a href="../docs/self-hosting.html">Self-host</a>
+      <a href="../configure/index.html">Configure</a>
+      <a href="../docs/index.html">Docs</a>
+      <a href="../api/index.html">API</a>
+      <a href="index.html" aria-current="page">Specs</a>
+      <a href="../docs/contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="index.html">Specs</a><span aria-hidden="true">/</span><span>RIM plugin protocol v1</span></div>
+  <div class="page with-toc">
+    <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
+<ol>
+<li><a href="#contents">Contents</a></li>
+<li><a href="#1-the-protocol-in-one-minute">1. The protocol in one minute</a></li>
+<li><a href="#2-process-and-transport">2. Process and transport</a></li>
+<li><a href="#3-framing">3. Framing</a></li>
+<li><a href="#4-message-envelope">4. Message envelope</a></li>
+<li><a href="#5-request-and-response-ids">5. Request and response ids</a></li>
+<li><a href="#6-connection-lifecycle">6. Connection lifecycle</a></li>
+<li><a href="#7-handshake-and-version-negotiation">7. Handshake and version negotiation</a><ol><li><a href="#request-rimhandshake-host-to-plugin">Request: rim.handshake (host to plugin)</a></li><li><a href="#response-plugin-to-host">Response (plugin to host)</a></li><li><a href="#negotiation-rules">Negotiation rules</a></li></ol></li>
+<li><a href="#8-errors">8. Errors</a></li>
+<li><a href="#9-running-commands">9. Running commands</a><ol><li><a href="#request-rimcommandexecute-host-to-plugin">Request: rim.command.execute (host to plugin)</a></li><li><a href="#response-plugin-to-host-1">Response (plugin to host)</a></li></ol></li>
+<li><a href="#10-the-dangerous-command-confirmation-gate">10. The dangerous-command confirmation gate</a></li>
+<li><a href="#11-people-principals">11. People: principals</a><ol><li><a href="#what-a-plugin-sees-of-a-person">What a plugin sees of a person</a></li><li><a href="#the-signed-in-user-notice-rimprincipalchanged">The signed-in-user notice: rim.principal.changed</a></li><li><a href="#todays-ids-are-provisional-and-will-change-once">Today's ids are provisional, and will change once</a></li><li><a href="#the-id-switch-notice-rimprincipalsremapped">The id switch notice: rim.principals.remapped</a></li></ol></li>
+<li><a href="#12-capabilities">12. Capabilities</a><ol><li><a href="#capability-names">Capability names</a></li><li><a href="#what-the-host-enforces">What the host enforces</a></li><li><a href="#rules-for-v1">Rules for v1</a></li></ol></li>
+<li><a href="#13-heartbeats">13. Heartbeats</a></li>
+<li><a href="#14-logging">14. Logging</a></li>
+<li><a href="#15-shutdown-and-app-quit">15. Shutdown and app quit</a></li>
+<li><a href="#16-compatibility-and-versioning">16. Compatibility and versioning</a><ol><li><a href="#what-may-still-be-added-within-v1">What may still be added within v1</a></li><li><a href="#what-forces-v2">What forces v2</a></li><li><a href="#how-the-two-sides-stay-compatible">How the two sides stay compatible</a></li></ol></li>
+<li><a href="#17-method-reference-what-exists-and-what-does-not">17. Method reference: what exists and what does not</a><ol><li><a href="#frozen-in-v1">Frozen in v1</a></li><li><a href="#routed-by-the-host-but-not-part-of-v1">Routed by the host but not part of v1</a></li><li><a href="#not-implemented">Not implemented</a></li></ol></li>
+<li><a href="#18-worked-example-one-whole-session">18. Worked example: one whole session</a></li>
+<li><a href="#19-a-complete-plugin-in-python">19. A complete plugin in Python</a></li>
+<li><a href="#20-plugin-author-checklist">20. Plugin author checklist</a></li>
+<li><a href="#where-this-lives-in-the-host">Where this lives in the host</a></li>
+</ol>
+</details></aside>
+    <main id="content" class="prose">
+<h1 id="rim-plugin-protocol-v1">RIM plugin protocol v1</h1>
+<p class="status"><span><b>RIM plugin protocol v1</b></span><span>version 1</span><span>status: frozen, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/docs/specs/plugin-protocol-v1.md">rim-server/docs/specs/plugin-protocol-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/c86029b35a7ef7770b05e7bda62909f988343f7f">c86029b</a></span></p>
+<p><strong>Status: frozen, normative.</strong> This is the contract between the RIM desktop host and a plugin
+process. It is written for someone building a plugin from scratch, in any language, without an
+SDK.</p>
+<p>The machine-readable source of truth is the JSON Schema
+<a href="https://github.com/rim-platform/rim-ui/blob/master/protocol/plugin-protocol-v1.schema.json"><code>protocol/plugin-protocol-v1.schema.json</code></a>
+in rim-ui. Every frame described here is a <code>$defs</code> entry there, with an example, and the host&#39;s
+conformance tests (<code>rim-ui/src-tauri/src/plugin_host/protocol/conformance.rs</code>) check those
+examples against the frames the host really builds. <strong>If this document and the schema ever
+disagree, the schema wins</strong>, and this document has a bug.</p>
+<p>The key words MUST, MUST NOT, SHOULD and MAY are used as in RFC 2119.</p>
+<p>Two later documents build on this one without changing it: <a href="web-plugins-v1.html"><code>web-plugins-v1.md</code></a> (the
+<code>WebSandboxed</code> kind: the same messages over a sandboxed iframe&#39;s <code>MessagePort</code>) and
+<a href="workspace-plugins-v1.html"><code>workspace-plugins-v1.md</code></a> (per-workspace registries and manifests signed by a publisher&#39;s key).</p>
+<h2 id="contents">Contents <a class="anchor" href="#contents" aria-label="Link to this section">#</a></h2>
+<ol>
+<li><a href="#1-the-protocol-in-one-minute">The protocol in one minute</a></li>
+<li><a href="#2-process-and-transport">Process and transport</a></li>
+<li><a href="#3-framing">Framing</a></li>
+<li><a href="#4-message-envelope">Message envelope</a></li>
+<li><a href="#5-request-and-response-ids">Request and response ids</a></li>
+<li><a href="#6-connection-lifecycle">Connection lifecycle</a></li>
+<li><a href="#7-handshake-and-version-negotiation">Handshake and version negotiation</a></li>
+<li><a href="#8-errors">Errors</a></li>
+<li><a href="#9-running-commands">Running commands</a></li>
+<li><a href="#10-the-dangerous-command-confirmation-gate">The dangerous-command confirmation gate</a></li>
+<li><a href="#11-people-principals">People: principals</a></li>
+<li><a href="#12-capabilities">Capabilities</a></li>
+<li><a href="#13-heartbeats">Heartbeats</a></li>
+<li><a href="#14-logging">Logging</a></li>
+<li><a href="#15-shutdown-and-app-quit">Shutdown and app quit</a></li>
+<li><a href="#16-compatibility-and-versioning">Compatibility and versioning</a></li>
+<li><a href="#17-method-reference-what-exists-and-what-does-not">Method reference: what exists and what does not</a></li>
+<li><a href="#18-worked-example-one-whole-session">Worked example: one whole session</a></li>
+<li><a href="#19-a-complete-plugin-in-python">A complete plugin in Python</a></li>
+<li><a href="#20-plugin-author-checklist">Plugin author checklist</a></li>
+</ol>
+<h2 id="1-the-protocol-in-one-minute">1. The protocol in one minute <a class="anchor" href="#1-the-protocol-in-one-minute" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>The host starts your plugin as a child process and talks to it over <strong>stdin and stdout</strong>.
+stderr is yours for free-form logging.</li>
+<li>Every message is a <strong>frame</strong>: a 4-byte <strong>little-endian</strong> unsigned length, then that many bytes of
+UTF-8 JSON. Each JSON document is one <strong>JSON-RPC 2.0</strong> message.</li>
+<li>The host&#39;s first request is <strong><code>rim.handshake</code></strong>. You answer which protocol version you speak.</li>
+<li>The host runs your commands with <strong><code>rim.command.execute</code></strong> and pings you with
+<strong><code>rim.heartbeat</code></strong> every 30 seconds.</li>
+<li>The host tells you who is signed in with a <strong><code>Principal</code></strong> (<code>{ principalId, displayName }</code>),
+both in the handshake and in <strong><code>rim.principal.changed</code></strong> when that changes.</li>
+<li>You may write to the host log with <strong><code>rim.log</code></strong>.</li>
+<li>When the host sends <strong><code>rim.shutdown</code></strong> or closes your stdin, you exit.</li>
+</ul>
+<p>That is all of frozen v1. Everything else a plugin can do today is listed, with its real status,
+in <a href="#17-method-reference-what-exists-and-what-does-not">section 17</a>.</p>
+<h2 id="2-process-and-transport">2. Process and transport <a class="anchor" href="#2-process-and-transport" aria-label="Link to this section">#</a></h2>
+<p>A plugin is a directory with a manifest (<code>rim-plugin.json</code>) and an <code>entrypoint</code> file. The manifest
+format is defined by the host (<code>rim-ui/src-tauri/src/plugin_host/manifest.rs</code>, and comment-header
+&quot;simple mode&quot; in <code>simple_manifest.rs</code>), not by this protocol; this document only refers to the
+manifest fields the protocol depends on. Section 19 shows a minimal manifest.</p>
+<p>A plugin id (<code>plugin_id</code> in the manifest) is reverse-domain: at least three dot-separated
+segments of ASCII letters, digits and hyphens, such as <code>dev.example.hello-world</code>. Underscores are
+not allowed. Ids starting with <code>dev.rim.</code> or <code>com.rim.</code> are reserved.</p>
+<p>The host starts the plugin like this:</p>
+<ul>
+<li>It executes <code>&lt;plugin dir&gt;/&lt;entrypoint&gt;</code> <strong>directly</strong>, with no interpreter, no arguments, the
+plugin directory as the working directory and the user&#39;s environment. On Unix the entrypoint
+must be executable; a script needs a shebang line such as <code>#!/usr/bin/env python3</code>.</li>
+<li>stdin is a pipe from the host to the plugin. stdout is a pipe from the plugin to the host.
+<strong>Nothing but frames may be written to stdout</strong>: a stray <code>print</code> corrupts the stream.</li>
+<li>stderr is inherited by the host process and is not part of the protocol.</li>
+<li>One process is one connection. The host starts a plugin when the user enables it and, at app
+start, every plugin that was enabled when the app last ran. Start-up is not lazy in v1.</li>
+</ul>
+<h2 id="3-framing">3. Framing <a class="anchor" href="#3-framing" aria-label="Link to this section">#</a></h2>
+<pre><code>+----------------+-----------------------------------------+
+| length: u32 LE | payload: `length` bytes of UTF-8 JSON   |
++----------------+-----------------------------------------+</code></pre>
+<ul>
+<li>The length prefix is <strong>4 bytes, unsigned, little-endian</strong>. Earlier RIM docs said big-endian;
+that was wrong, and the host has always used little-endian.</li>
+<li>The length counts payload bytes only, not the 4 prefix bytes.</li>
+<li>The payload is exactly one JSON-RPC 2.0 message encoded as UTF-8 JSON. There is no newline
+delimiter, no batching (JSON arrays are not valid frames) and no MessagePack in v1.</li>
+<li><strong>A payload is at most 4,194,304 bytes (4 MiB)</strong>, in both directions. A frame that announces a
+larger length ends the connection: the host stops reading and the plugin is stopped. Keep
+results small; page large data yourself.</li>
+<li>A frame whose payload is not valid JSON, or not a valid JSON-RPC message, is logged and dropped.
+The connection survives, because the length prefix kept the framing intact. Nobody answers it,
+so neither side ever has to handle a response with a <code>null</code> id.</li>
+</ul>
+<p>For example, the notification
+<code>{&quot;jsonrpc&quot;:&quot;2.0&quot;,&quot;method&quot;:&quot;rim.log&quot;,&quot;params&quot;:{&quot;level&quot;:&quot;info&quot;,&quot;message&quot;:&quot;started&quot;}}</code> is 82 bytes
+long, so its frame starts with the bytes <code>52 00 00 00</code>.</p>
+<p>Reading a frame in Python:</p>
+<pre><code class="language-python">header = sys.stdin.buffer.read(4)          # b&quot;&quot; means the host closed stdin: exit
+(length,) = struct.unpack(&quot;&lt;I&quot;, header)    # &quot;&lt;I&quot; = little-endian u32
+message = json.loads(sys.stdin.buffer.read(length))</code></pre>
+<p>Reads from a pipe can return fewer bytes than asked for. Loop until you have all 4 header bytes
+and all <code>length</code> payload bytes; treat end-of-file in the middle of a frame as a closed connection.</p>
+<h2 id="4-message-envelope">4. Message envelope <a class="anchor" href="#4-message-envelope" aria-label="Link to this section">#</a></h2>
+<p>v1 uses plain JSON-RPC 2.0. Three shapes travel in <strong>both</strong> directions:</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Shape</th>
+<th>Fields</th>
+<th>Answered?</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Request</td>
+<td><code>jsonrpc: &quot;2.0&quot;</code>, <code>id</code>, <code>method</code>, <code>params</code> (optional)</td>
+<td>Yes, exactly once, with a response carrying the same <code>id</code></td>
+</tr>
+<tr>
+<td>Response</td>
+<td><code>jsonrpc: &quot;2.0&quot;</code>, <code>id</code>, and exactly one of <code>result</code> or <code>error</code></td>
+<td>No</td>
+</tr>
+<tr>
+<td>Notification</td>
+<td><code>jsonrpc: &quot;2.0&quot;</code>, <code>method</code>, <code>params</code> (optional), <strong>no <code>id</code></strong></td>
+<td>No</td>
+</tr>
+</tbody></table></div>
+<p>How a receiver tells them apart, which is exactly what the host does:</p>
+<ul>
+<li>has <code>method</code> and a non-null <code>id</code>: a request;</li>
+<li>has <code>method</code> and no <code>id</code> (or <code>id: null</code>): a notification;</li>
+<li>has <code>id</code> and no <code>method</code>: a response;</li>
+<li>anything else: invalid, logged and dropped.</li>
+</ul>
+<p>Further rules:</p>
+<ul>
+<li><strong>Field names in params and results are camelCase</strong> (<code>protocolVersion</code>, <code>commandId</code>,
+<code>principalId</code>).</li>
+<li>Requests can be in flight in both directions at once. The host answers your requests while
+one of its own requests to you is pending, and you MUST be able to do the same, or at least
+never deadlock waiting for one response while another frame arrives first.</li>
+<li>Responses may arrive in any order. Match them by <code>id</code>, never by position.</li>
+<li><strong>Senders emit exactly the frozen shapes. Receivers ignore fields they do not know</strong> rather
+than fail, so one side&#39;s bug does not break the connection. The host does.</li>
+<li>An unknown <strong>request</strong> is answered with <code>METHOD_NOT_FOUND</code> (<code>-32601</code>). An unknown
+<strong>notification</strong> is ignored. This is what lets v1 grow new methods without breaking anyone
+(see <a href="#16-compatibility-and-versioning">section 16</a>).</li>
+</ul>
+<h2 id="5-request-and-response-ids">5. Request and response ids <a class="anchor" href="#5-request-and-response-ids" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>An <code>id</code> is an integer or a string, <strong>never <code>null</code></strong>. The answering side echoes it unchanged,
+with the same JSON type (<code>2</code> and <code>&quot;2&quot;</code> are different ids).</li>
+<li>The host numbers its requests <code>1, 2, 3, ...</code> per connection, so the handshake is normally id
+<code>1</code>. It numbers heartbeats <code>-1, -2, -3, ...</code>, so a negative integer id from the host is always
+a heartbeat.</li>
+<li>A plugin MAY number its own requests however it likes (integers, <code>&quot;log-1&quot;</code>, UUIDs). The two
+directions are independent: your ids only need to be unique among your own pending requests.</li>
+<li>The host answers every request you send, including denials, so a plugin never has to time out
+on the host. The host does time out on plugins (10 seconds for the handshake, 5 for a
+heartbeat, 30 for a command); a late answer to a request the host gave up on is dropped.</li>
+</ul>
+<h2 id="6-connection-lifecycle">6. Connection lifecycle <a class="anchor" href="#6-connection-lifecycle" aria-label="Link to this section">#</a></h2>
+<pre><code>host                                              plugin
+ | spawn entrypoint                                  |
+ |------------------ rim.handshake (id 1) ----------&gt;|
+ |&lt;----------- rim.log (optional, any number) -------|
+ |&lt;------------- handshake result (id 1) ------------|   accepted: true
+ |                                                   |
+ |------- rim.command.execute (id 2, 3, ...) -------&gt;|   whenever the user or agent runs a command
+ |&lt;-------------- result or error -------------------|
+ |------- rim.heartbeat (id -1, -2, ...) -----------&gt;|   every 30 s
+ |&lt;-------------------- {} --------------------------|
+ |------- rim.principal.changed (notification) -----&gt;|   on sign-in, sign-out, account switch
+ |&lt;--------------- rim.log (any time) ---------------|
+ |                                                   |
+ |------------- rim.shutdown (notification) --------&gt;|
+ | close stdin                                       |   plugin exits</code></pre>
+<ol>
+<li><strong>Spawn.</strong> The host starts the process (section 2).</li>
+<li><strong>Handshake.</strong> The host&#39;s first frame is <code>rim.handshake</code>. Until you have answered it, send
+nothing but <code>rim.log</code>. The host waits up to <strong>10 seconds</strong> for the answer; a plugin that does
+not answer in time, refuses, or answers wrongly is stopped (section 7).</li>
+<li><strong>Running.</strong> The host sends commands, heartbeats and principal changes; the plugin answers
+and may log. A plugin with nothing to do just waits on stdin.</li>
+<li><strong>Stopping.</strong> The host sends <code>rim.shutdown</code>, then closes stdin. The plugin exits
+(section 15). A plugin MUST also exit when stdin reaches end-of-file without a
+<code>rim.shutdown</code>, because that is how a host that crashed says goodbye.</li>
+</ol>
+<p>If the plugin exits or crashes on its own, the connection ends, commands for it fail with
+&quot;plugin process is not running&quot;, and the user can start it again by re-enabling it. The host does
+not restart plugins automatically in v1.</p>
+<h2 id="7-handshake-and-version-negotiation">7. Handshake and version negotiation <a class="anchor" href="#7-handshake-and-version-negotiation" aria-label="Link to this section">#</a></h2>
+<p>The handshake has <strong>the same shape in every protocol version</strong>, so any host can negotiate with
+any plugin, including one from the future.</p>
+<h3 id="request-rimhandshake-host-to-plugin">Request: <code>rim.handshake</code> (host to plugin) <a class="anchor" href="#request-rimhandshake-host-to-plugin" aria-label="Link to this section">#</a></h3>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>protocolVersion</code></td>
+<td>integer ≥ 1</td>
+<td>The version the host prefers: the first entry of <code>supportedVersions</code>.</td>
+</tr>
+<tr>
+<td><code>supportedVersions</code></td>
+<td>array of integers, newest first, at least one</td>
+<td>Every protocol version the host speaks. Today <code>[1]</code>.</td>
+</tr>
+<tr>
+<td><code>pluginId</code></td>
+<td>string</td>
+<td>The plugin id from the manifest the host loaded for this process.</td>
+</tr>
+<tr>
+<td><code>hostVersion</code></td>
+<td>string</td>
+<td>The RIM app version, for logs and diagnostics. Do not branch on it; branch on the protocol version.</td>
+</tr>
+<tr>
+<td><code>grantedCapabilities</code></td>
+<td>array of strings</td>
+<td>Capabilities the user approved for this plugin (section 12).</td>
+</tr>
+<tr>
+<td><code>principal</code></td>
+<td><code>Principal</code> or <code>null</code></td>
+<td>The signed-in user the plugin acts for, or <code>null</code> when nobody is signed in yet (section 11).</td>
+</tr>
+</tbody></table></div>
+<pre><code class="language-json">{
+  &quot;jsonrpc&quot;: &quot;2.0&quot;,
+  &quot;id&quot;: 1,
+  &quot;method&quot;: &quot;rim.handshake&quot;,
+  &quot;params&quot;: {
+    &quot;protocolVersion&quot;: 1,
+    &quot;supportedVersions&quot;: [1],
+    &quot;pluginId&quot;: &quot;dev.example.hello-world&quot;,
+    &quot;hostVersion&quot;: &quot;0.1.0&quot;,
+    &quot;grantedCapabilities&quot;: [],
+    &quot;principal&quot;: {
+      &quot;principalId&quot;: &quot;rimp0_PWcag22GowE59KogGTaUReeoF_q4E5EVi28q83uaGBU&quot;,
+      &quot;displayName&quot;: &quot;Jakub&quot;
+    }
+  }
+}</code></pre>
+<h3 id="response-plugin-to-host">Response (plugin to host) <a class="anchor" href="#response-plugin-to-host" aria-label="Link to this section">#</a></h3>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Result field</th>
+<th>Type</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>accepted</code></td>
+<td>boolean</td>
+<td>Whether the plugin accepts the connection.</td>
+</tr>
+<tr>
+<td><code>protocolVersion</code></td>
+<td>integer ≥ 1</td>
+<td>The version the plugin chose. MUST be one of <code>supportedVersions</code>.</td>
+</tr>
+<tr>
+<td><code>pluginId</code></td>
+<td>string</td>
+<td>The plugin&#39;s own id. MUST equal <code>params.pluginId</code>.</td>
+</tr>
+<tr>
+<td><code>error</code></td>
+<td>string or <code>null</code>, optional</td>
+<td>Why the plugin refused, when <code>accepted</code> is false.</td>
+</tr>
+</tbody></table></div>
+<pre><code class="language-json">{
+  &quot;jsonrpc&quot;: &quot;2.0&quot;,
+  &quot;id&quot;: 1,
+  &quot;result&quot;: { &quot;accepted&quot;: true, &quot;protocolVersion&quot;: 1, &quot;pluginId&quot;: &quot;dev.example.hello-world&quot; }
+}</code></pre>
+<h3 id="negotiation-rules">Negotiation rules <a class="anchor" href="#negotiation-rules" aria-label="Link to this section">#</a></h3>
+<ul>
+<li><p><strong>The plugin picks.</strong> It answers with one version from <code>supportedVersions</code>, normally the
+newest one it speaks. Every frame after the handshake follows the chosen version.</p>
+</li>
+<li><p><strong>A plugin that speaks none of the offered versions</strong> answers <code>accepted: false</code>, sets
+<code>protocolVersion</code> to the version it does speak, and says why in <code>error</code>. The host logs the
+reason and stops the plugin, so a plugin that refuses SHOULD exit right after sending its
+answer. For example:</p>
+<pre><code class="language-json">{
+  &quot;jsonrpc&quot;: &quot;2.0&quot;,
+  &quot;id&quot;: 1,
+  &quot;result&quot;: {
+    &quot;accepted&quot;: false,
+    &quot;protocolVersion&quot;: 2,
+    &quot;pluginId&quot;: &quot;dev.example.hello-world&quot;,
+    &quot;error&quot;: &quot;host speaks protocol [1], this plugin needs 2&quot;
+  }
+}</code></pre>
+</li>
+<li><p><strong>A plugin that refuses for any other reason</strong> (a <code>pluginId</code> it does not recognise, a missing
+capability it cannot work without) answers the same way, with <code>accepted: false</code> and <code>error</code>.</p>
+</li>
+<li><p>The host also stops the plugin when the answer picks a version it did not offer, when
+<code>pluginId</code> differs from the one it sent, when the result does not have the shape above, or when
+the answer is a JSON-RPC <code>error</code> instead of a <code>result</code>.</p>
+</li>
+<li><p>After a failed handshake the host sends no <code>rim.shutdown</code> and does not close stdin first; it
+goes straight to steps 3 to 5 of section 15 (one second to exit, then <code>SIGTERM</code>, then a kill).</p>
+</li>
+<li><p>The handshake is the host&#39;s first request and happens once per connection. There is no
+re-negotiation; a plugin that wants another version is restarted.</p>
+</li>
+</ul>
+<h2 id="8-errors">8. Errors <a class="anchor" href="#8-errors" aria-label="Link to this section">#</a></h2>
+<p>A failed request is answered with a JSON-RPC error response:</p>
+<pre><code class="language-json">{ &quot;jsonrpc&quot;: &quot;2.0&quot;, &quot;id&quot;: 2, &quot;error&quot;: { &quot;code&quot;: -32002, &quot;message&quot;: &quot;kubectl failed: context not found&quot; } }</code></pre>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>code</code></td>
+<td>integer</td>
+<td>One of the codes below, or another integer the plugin documents.</td>
+</tr>
+<tr>
+<td><code>message</code></td>
+<td>string</td>
+<td>One line, human-readable. The host may show it to the user, so write it for a person.</td>
+</tr>
+<tr>
+<td><code>data</code></td>
+<td>any JSON, optional</td>
+<td>Machine-readable details.</td>
+</tr>
+</tbody></table></div>
+<p>The codes v1 defines:</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Name</th>
+<th>Meaning</th>
+<th>Typically sent by</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>-32700</code></td>
+<td><code>PARSE_ERROR</code></td>
+<td>The frame is not valid JSON.</td>
+<td>Reserved: the host drops such frames and does not answer.</td>
+</tr>
+<tr>
+<td><code>-32600</code></td>
+<td><code>INVALID_REQUEST</code></td>
+<td>The JSON is not a valid JSON-RPC 2.0 message.</td>
+<td>Reserved, as above.</td>
+</tr>
+<tr>
+<td><code>-32601</code></td>
+<td><code>METHOD_NOT_FOUND</code></td>
+<td>The receiver does not implement the method.</td>
+<td>Both sides, for any unknown request.</td>
+</tr>
+<tr>
+<td><code>-32602</code></td>
+<td><code>INVALID_PARAMS</code></td>
+<td>Params are missing or have the wrong shape, <strong>including an unknown <code>commandId</code></strong>.</td>
+<td>Both sides.</td>
+</tr>
+<tr>
+<td><code>-32603</code></td>
+<td><code>INTERNAL_ERROR</code></td>
+<td>The receiver failed while handling a valid request.</td>
+<td>Both sides.</td>
+</tr>
+<tr>
+<td><code>-32000</code></td>
+<td><code>CAPABILITY_DENIED</code></td>
+<td>The user has not approved the capability the method needs.</td>
+<td>Host.</td>
+</tr>
+<tr>
+<td><code>-32001</code></td>
+<td><code>RATE_LIMITED</code></td>
+<td>The plugin called a capability more often than its per-minute limit.</td>
+<td>Host.</td>
+</tr>
+<tr>
+<td><code>-32002</code></td>
+<td><code>PLUGIN_ERROR</code></td>
+<td>The plugin ran the command and it failed; <code>message</code> says why.</td>
+<td>Plugin, for a failed command.</td>
+</tr>
+</tbody></table></div>
+<p>JSON-RPC 2.0 reserves <code>-32768</code> to <code>-32000</code>, and RIM uses only the codes above from that range. A
+plugin&#39;s own error codes SHOULD lie outside it. A new protocol error code can be added within v1
+only after it is documented in the schema (section 16).</p>
+<p>How the host surfaces a plugin&#39;s error: when your answer to <code>rim.command.execute</code> is an error,
+the command fails for the user with your <code>message</code>, and your <code>code</code> and <code>data</code> are passed along
+to the UI unchanged.</p>
+<h2 id="9-running-commands">9. Running commands <a class="anchor" href="#9-running-commands" aria-label="Link to this section">#</a></h2>
+<p>A plugin&#39;s commands are declared in its manifest. The fields this protocol depends on:</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Manifest field</th>
+<th>Effect on the protocol</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>id</code></td>
+<td>The <code>commandId</code> the host sends. The UI and keybinds address the command as <code>plugin.&lt;pluginId&gt;.&lt;id&gt;</code>; the plugin only ever sees <code>&lt;id&gt;</code>.</td>
+</tr>
+<tr>
+<td><code>dangerous</code></td>
+<td>Turns on the confirmation gate (section 10).</td>
+</tr>
+<tr>
+<td><code>required_capabilities</code></td>
+<td>The host refuses to run the command unless every listed capability is approved (section 12).</td>
+</tr>
+<tr>
+<td><code>ai_callable</code></td>
+<td>The AI agent may run the command, after the user consented to this plugin&#39;s AI commands.</td>
+</tr>
+<tr>
+<td><code>arguments</code></td>
+<td>Describes the <code>args</code> object for the UI and the agent. The host does not validate <code>args</code> against it; the plugin MUST validate its own input.</td>
+</tr>
+</tbody></table></div>
+<h3 id="request-rimcommandexecute-host-to-plugin">Request: <code>rim.command.execute</code> (host to plugin) <a class="anchor" href="#request-rimcommandexecute-host-to-plugin" aria-label="Link to this section">#</a></h3>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>commandId</code></td>
+<td>string</td>
+<td>The <code>id</code> of a command in the plugin&#39;s manifest.</td>
+</tr>
+<tr>
+<td><code>args</code></td>
+<td>object</td>
+<td>The command&#39;s arguments, keyed by argument name. <code>{}</code> when there are none; never <code>null</code>, never an array.</td>
+</tr>
+<tr>
+<td><code>invoker</code></td>
+<td><code>Principal</code> or <code>null</code></td>
+<td>The signed-in user on whose behalf the command runs, or <code>null</code> when nobody is signed in.</td>
+</tr>
+<tr>
+<td><code>initiator</code></td>
+<td><code>&quot;user&quot;</code> or <code>&quot;agent&quot;</code></td>
+<td><code>user</code>: a person ran it from the palette, a keybind, a panel or a context action. <code>agent</code>: the AI agent ran it, after the user consented to this plugin&#39;s AI commands.</td>
+</tr>
+<tr>
+<td><code>confirmed</code></td>
+<td>boolean</td>
+<td><code>true</code> only for a <code>dangerous</code> command the user confirmed for this run. Always <code>false</code> for a command that is not dangerous.</td>
+</tr>
+</tbody></table></div>
+<pre><code class="language-json">{
+  &quot;jsonrpc&quot;: &quot;2.0&quot;,
+  &quot;id&quot;: 2,
+  &quot;method&quot;: &quot;rim.command.execute&quot;,
+  &quot;params&quot;: {
+    &quot;commandId&quot;: &quot;greet&quot;,
+    &quot;args&quot;: { &quot;name&quot;: &quot;RIM&quot; },
+    &quot;invoker&quot;: { &quot;principalId&quot;: &quot;rimp0_PWcag22GowE59KogGTaUReeoF_q4E5EVi28q83uaGBU&quot;, &quot;displayName&quot;: &quot;Jakub&quot; },
+    &quot;initiator&quot;: &quot;user&quot;,
+    &quot;confirmed&quot;: false
+  }
+}</code></pre>
+<h3 id="response-plugin-to-host-1">Response (plugin to host) <a class="anchor" href="#response-plugin-to-host-1" aria-label="Link to this section">#</a></h3>
+<p>On success the <code>result</code> is an object:</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Result field</th>
+<th>Type</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>payload</code></td>
+<td>any JSON, optional</td>
+<td>The command&#39;s output. Missing means <code>null</code>.</td>
+</tr>
+<tr>
+<td><code>message</code></td>
+<td>string, optional</td>
+<td>A one-line summary the host may show to the user.</td>
+</tr>
+</tbody></table></div>
+<pre><code class="language-json">{ &quot;jsonrpc&quot;: &quot;2.0&quot;, &quot;id&quot;: 2, &quot;result&quot;: { &quot;payload&quot;: &quot;Hello, RIM!&quot; } }</code></pre>
+<p>On failure, answer with an error response instead (section 8): normally <code>PLUGIN_ERROR</code>
+(<code>-32002</code>) when the command ran and failed, and <code>INVALID_PARAMS</code> (<code>-32602</code>) for an unknown
+<code>commandId</code> or bad <code>args</code>.</p>
+<p>Rules:</p>
+<ul>
+<li>The host gives up on a command after <strong>30 seconds</strong> and reports a timeout to the user. A
+command that takes longer should answer early with what it started and report progress some
+other way; v1 has no progress or cancellation messages.</li>
+<li>A <code>result</code> that is not an object fails the command with &quot;invalid command result&quot;, even if it
+is valid JSON.</li>
+<li>The host only sends <code>commandId</code>s that the manifest declares, but a plugin MUST still answer an
+unknown one with <code>INVALID_PARAMS</code>, never by crashing.</li>
+<li>Several commands can be in flight at once. A plugin MAY handle them one at a time; the host
+matches answers by <code>id</code>.</li>
+</ul>
+<h2 id="10-the-dangerous-command-confirmation-gate">10. The dangerous-command confirmation gate <a class="anchor" href="#10-the-dangerous-command-confirmation-gate" aria-label="Link to this section">#</a></h2>
+<p>A command whose manifest entry has <code>&quot;dangerous&quot;: true</code> (restarting a pod, deleting a branch,
+sending money) runs only after <strong>the user confirmed that run</strong>. The gate works like this:</p>
+<ol>
+<li><strong>The host refuses an unconfirmed dangerous command before anything reaches the plugin.</strong> The
+UI asks the user first; without that confirmation the command fails with
+<code>CONFIRMATION_REQUIRED</code> and the plugin never hears about it.</li>
+<li><strong><code>confirmed: true</code> is set only by the host, and only after the user confirmed this run.</strong> It
+is not a field a panel, a keybind preset or a plugin can supply: the host computes it.</li>
+<li><strong>The AI agent can never confirm.</strong> A dangerous command the agent starts is always refused
+before it reaches the plugin, even if the command is <code>ai_callable</code>. The agent can propose it;
+only a person can run it.</li>
+<li><strong>A plugin SHOULD still refuse a dangerous command that arrives with <code>confirmed: false</code></strong>,
+with <code>PLUGIN_ERROR</code> and a message such as &quot;this command needs confirmation&quot;. The host never
+sends one, so this check costs nothing and protects you from a host bug.</li>
+</ol>
+<p>A confirmed dangerous run looks like this:</p>
+<pre><code class="language-json">{
+  &quot;jsonrpc&quot;: &quot;2.0&quot;,
+  &quot;id&quot;: 7,
+  &quot;method&quot;: &quot;rim.command.execute&quot;,
+  &quot;params&quot;: {
+    &quot;commandId&quot;: &quot;restart_pod&quot;,
+    &quot;args&quot;: { &quot;namespace&quot;: &quot;prod&quot;, &quot;pod&quot;: &quot;api-7f9c&quot; },
+    &quot;invoker&quot;: { &quot;principalId&quot;: &quot;rimp0_PWcag22GowE59KogGTaUReeoF_q4E5EVi28q83uaGBU&quot;, &quot;displayName&quot;: &quot;Jakub&quot; },
+    &quot;initiator&quot;: &quot;user&quot;,
+    &quot;confirmed&quot;: true
+  }
+}</code></pre>
+<p>Changing what the gate means (for example letting a confirmation cover several runs) is a v2
+change (section 16).</p>
+<h2 id="11-people-principals">11. People: principals <a class="anchor" href="#11-people-principals" aria-label="Link to this section">#</a></h2>
+<h3 id="what-a-plugin-sees-of-a-person">What a plugin sees of a person <a class="anchor" href="#what-a-plugin-sees-of-a-person" aria-label="Link to this section">#</a></h3>
+<p>A plugin sees a person <strong>only</strong> as a <code>Principal</code>:</p>
+<pre><code class="language-json">{ &quot;principalId&quot;: &quot;rimp0_PWcag22GowE59KogGTaUReeoF_q4E5EVi28q83uaGBU&quot;, &quot;displayName&quot;: &quot;Jakub&quot; }</code></pre>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Rules</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>principalId</code></td>
+<td>Opaque and stable. 1 to 128 characters from <code>A-Z a-z 0-9 _ . -</code>. <strong>Never</strong> the user&#39;s account UUID and never a <code>name@domain</code>. It does not change when the user&#39;s keys change.</td>
+</tr>
+<tr>
+<td><code>displayName</code></td>
+<td>A label to show. Not unique, may change at any time, never empty. Never use it as a key.</td>
+</tr>
+</tbody></table></div>
+<p>A plugin <strong>may</strong> store and compare <code>principalId</code>. It <strong>must not</strong> parse it, derive anything from
+its format, or assume its length or prefix. No other information about the user (account id,
+email, server address) reaches a plugin through this protocol.</p>
+<p>Principals appear in three places: <code>principal</code> in the handshake, <code>invoker</code> in every
+<code>rim.command.execute</code>, and <code>principal</code> in <code>rim.principal.changed</code>.</p>
+<h3 id="the-signed-in-user-notice-rimprincipalchanged">The signed-in-user notice: <code>rim.principal.changed</code> <a class="anchor" href="#the-signed-in-user-notice-rimprincipalchanged" aria-label="Link to this section">#</a></h3>
+<p>The host sends this notification to every running plugin whenever the signed-in user changes:
+sign-in, sign-out, switching account, or a new principal id scheme (below).</p>
+<pre><code class="language-json">{ &quot;jsonrpc&quot;: &quot;2.0&quot;, &quot;method&quot;: &quot;rim.principal.changed&quot;, &quot;params&quot;: { &quot;principal&quot;: null } }</code></pre>
+<p><code>params.principal</code> is the signed-in user from now on, or <code>null</code> after sign-out. It replaces the
+<code>principal</code> the plugin got in the handshake. A plugin that keeps per-user state SHOULD switch to
+the new user&#39;s state, and after sign-out SHOULD stop doing anything on the old user&#39;s behalf. If
+the user changes while the handshake is in flight, the host sends <code>rim.principal.changed</code> right
+after the handshake completes, so a plugin never keeps a stale principal.</p>
+<p>A plugin that does not care about the user simply ignores this notification, as it would any
+notification it does not use.</p>
+<h3 id="todays-ids-are-provisional-and-will-change-once">Today&#39;s ids are provisional, and will change once <a class="anchor" href="#todays-ids-are-provisional-and-will-change-once" aria-label="Link to this section">#</a></h3>
+<p>Until RIM ships key-based identity, every <code>principalId</code> is <strong>provisional</strong>: it starts with
+<code>rimp0_</code> and is a one-way hash of the user&#39;s account id. It is the same for one account on every
+device and in every session, and it cannot be turned back into the account id.</p>
+<p>When key identity ships:</p>
+<ul>
+<li>each person&#39;s id becomes a hash of the first entry of their key log (<code>rimp1_</code>, see
+<a href="key-identity-v1.html"><code>docs/specs/key-identity-v1.md</code></a>), which survives key rotation;</li>
+<li>the switch happens <strong>once</strong>. Every <code>rimp0_</code> id maps to exactly one new id, and new ids never
+start with <code>rimp0_</code>;</li>
+<li>the host tells running plugins with <code>rim.principal.changed</code>, carrying the new id of the
+signed-in user;</li>
+<li>the host also sends the full old-to-new mapping in <code>rim.principals.remapped</code> (below), so a
+plugin that stored <code>rimp0_</code> ids can rewrite them.</li>
+</ul>
+<p>So: <strong>keep stored principal ids somewhere you can rewrite</strong> (a table column or a map key, not a
+filename baked into a git repo), and treat &quot;the same person under a new id&quot; as possible exactly
+once.</p>
+<h3 id="the-id-switch-notice-rimprincipalsremapped">The id switch notice: <code>rim.principals.remapped</code> <a class="anchor" href="#the-id-switch-notice-rimprincipalsremapped" aria-label="Link to this section">#</a></h3>
+<p>Added within v1 (section 16) with the desktop client of key identity. Old hosts never send it;
+old plugins ignore it like any notification they do not use.</p>
+<pre><code class="language-json">{ &quot;jsonrpc&quot;: &quot;2.0&quot;, &quot;method&quot;: &quot;rim.principals.remapped&quot;,
+  &quot;params&quot;: { &quot;mappings&quot;: [ { &quot;from&quot;: &quot;rimp0_PWcag22GowE59KogGTaUReeoF_q4E5EVi28q83uaGBU&quot;,
+                              &quot;to&quot;: &quot;rimp1_nz1POml8JmCMcFDECrtu60ibohPKnywhcExmOPMvTUo&quot; } ] } }</code></pre>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>mappings</code></td>
+<td>array of <code>{ from, to }</code>, 1 to 1000 items</td>
+<td>Every provisional id this host has seen switch, with its new id. Each <code>from</code> appears once.</td>
+</tr>
+</tbody></table></div>
+<ul>
+<li>The host sends it <strong>right after every successful handshake</strong> whenever it knows at least one
+mapping, and to every running plugin when it learns a new one (in that case after the
+<code>rim.principal.changed</code> that carries the new id of the signed-in user).</li>
+<li>The list is the <strong>whole</strong> mapping this host knows, not only the new entries, so the same
+mapping arrives many times. Applying it must be idempotent: replace every stored <code>from</code> with its
+<code>to</code>, and leave ids that are not a <code>from</code> alone.</li>
+<li>A host learns a mapping when it sees a person&#39;s key-based id for the first time; today that is
+the signed-in user, since no other person reaches a plugin yet. Mappings are kept per device,
+so another device may send a different (shorter or longer) list.</li>
+<li><code>from</code> always starts with <code>rimp0_</code> and <code>to</code> never does; still treat both as opaque ids.</li>
+</ul>
+<h2 id="12-capabilities">12. Capabilities <a class="anchor" href="#12-capabilities" aria-label="Link to this section">#</a></h2>
+<p>A capability is a permission the user grants a plugin. The plugin lists the capabilities it wants
+in its manifest (<code>capabilities</code>); the user approves some or all of them; the approved list
+arrives in <code>grantedCapabilities</code> in the handshake.</p>
+<p>The host enforces capabilities in two places:</p>
+<ul>
+<li><strong>On commands.</strong> A command whose manifest entry lists <code>required_capabilities</code> is refused
+before it reaches the plugin unless every one of them is approved.</li>
+<li><strong>On plugin-to-host calls.</strong> Each host method that needs a capability is checked against the
+approved list. A call without it is answered with <code>CAPABILITY_DENIED</code> (<code>-32000</code>); a
+notification without it is dropped. Each capability also has a rate limit, <strong>120 calls per
+minute</strong> by default, counted per plugin; a call over the limit gets <code>RATE_LIMITED</code> (<code>-32001</code>).
+<code>rim.log</code> needs no capability and has no limit.</li>
+</ul>
+<h3 id="capability-names">Capability names <a class="anchor" href="#capability-names" aria-label="Link to this section">#</a></h3>
+<p>The protocol knows two kinds of capability name. Both are valid in <code>grantedCapabilities</code> in v1:</p>
+<ul>
+<li><strong>Plugin-scoped names</strong>, <code>plugin.&lt;pluginId&gt;.&lt;verb&gt;</code>, such as
+<code>plugin.dev.example.k8stools.restart_pod</code>. They exist so the user can approve, say, &quot;restart
+pods&quot; separately from &quot;list pods&quot;, and so <code>required_capabilities</code> on a command can point at
+them. The host guards no method of its own with them; it checks them only on commands.</li>
+<li><strong>Built-in names</strong>, which guard things the host does for the plugin:</li>
+</ul>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Capability</th>
+<th>Guards</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>chat.read</code></td>
+<td><code>rim.chat.get_messages</code>, <code>rim.chat.search_messages</code></td>
+</tr>
+<tr>
+<td><code>chat.write</code></td>
+<td><code>rim.chat.send_message</code> (and the unimplemented edit and delete calls)</td>
+</tr>
+<tr>
+<td><code>events.read</code></td>
+<td><code>rim.events.subscribe</code></td>
+</tr>
+<tr>
+<td><code>ui.panel</code></td>
+<td><code>rim.ui.update_panel</code> (and the unimplemented <code>rim.ui.show_panel</code>)</td>
+</tr>
+<tr>
+<td><code>ui.notify</code></td>
+<td>Notifications a plugin&#39;s panel sends through the panel bridge; <code>rim.ui.show_notification</code> is unimplemented on the process side</td>
+</tr>
+<tr>
+<td><code>local.process</code></td>
+<td><code>rim.process.spawn</code>, <code>rim.process.kill</code> (unimplemented)</td>
+</tr>
+<tr>
+<td><code>network</code></td>
+<td><code>rim.network.http_request</code>, <code>rim.network.websocket_connect</code> (unimplemented)</td>
+</tr>
+<tr>
+<td><code>fs.read</code>, <code>fs.write</code></td>
+<td><code>rim.fs.read_file</code>, <code>rim.fs.list_dir</code>, <code>rim.fs.write_file</code> (unimplemented)</td>
+</tr>
+</tbody></table></div>
+<p>None of the methods the built-in names guard is part of frozen v1 (section 17).</p>
+<h3 id="what-the-host-enforces">What the host enforces <a class="anchor" href="#what-the-host-enforces" aria-label="Link to this section">#</a></h3>
+<p>These are properties of the rim-ui host, not of the protocol, and a host may change them without
+a protocol change. They changed with the TypeScript SDK PR (rim-ui #16), so both are described;
+check <code>rim-ui/src-tauri/src/plugin_host/validation.rs</code> in the host version you target.</p>
+<ul>
+<li><strong>Which names a manifest may declare.</strong> A manifest that declares any other name fails to
+install.<ul>
+<li>From rim-ui #16 onward: the built-in names <code>ui.panel</code> and <code>ui.notify</code>, and the plugin&#39;s own
+keys <code>plugin.&lt;pluginId&gt;.&lt;verb&gt;</code>, where the verb uses only <code>[a-z0-9_.]</code> and neither starts
+nor ends with <code>.</code> nor contains <code>..</code>. The other built-in names are rejected: <code>chat.read</code>,
+<code>chat.write</code> and <code>events.read</code> guard calls that nothing serves yet and that are not in v1,
+and <code>local.process</code>, <code>network</code>, <code>fs.read</code> and <code>fs.write</code> guard nothing at all.</li>
+<li>Before rim-ui #16: only <code>plugin.&lt;pluginId&gt;.&lt;verb&gt;</code> keys, with the <strong>whole</strong> key in
+<code>[a-z0-9_.]</code>. No plugin could hold a built-in name, so <code>rim.ui.update_panel</code> was always
+answered <code>CAPABILITY_DENIED</code>, and a plugin id with an uppercase letter or a hyphen could
+declare no capability at all.</li>
+<li>In both: a key is 4 to 128 bytes long and has no segment named <code>system</code>, <code>internal</code>,
+<code>admin</code> or <code>audit</code>.</li>
+</ul>
+</li>
+<li><strong>Approving while the plugin runs.</strong> <code>grantedCapabilities</code> is the approved list when the
+connection started, and v1 has no notification for changes to it. A capability the user
+approves while the plugin runs reaches the command gate at once, but the plugin&#39;s own calls to
+the host are checked against the start-time list until the process restarts. A plugin that
+needs a newly approved capability should ask the user to disable and re-enable it.</li>
+<li><strong>Revoking.</strong> Revoking a capability marks the plugin disabled, so it does not start with the
+app next time.<ul>
+<li>From rim-ui #16 onward: revoking also stops the running plugin, so a revoked capability is
+never used again.</li>
+<li>Before rim-ui #16: the running process was not stopped, and its own calls kept the
+start-time list until it stopped.</li>
+</ul>
+</li>
+</ul>
+<h3 id="rules-for-v1">Rules for v1 <a class="anchor" href="#rules-for-v1" aria-label="Link to this section">#</a></h3>
+<ul>
+<li><code>grantedCapabilities</code> is a list of strings. A plugin MUST ignore names it does not know.</li>
+<li>A new capability name may be added within v1 (section 16). A plugin learns about it only by
+finding it in <code>grantedCapabilities</code>.</li>
+<li>A capability is a host-side permission, not a sandbox. A local plugin process runs as the user
+and can do anything the user can; capabilities govern what the <strong>host</strong> will do for it.</li>
+</ul>
+<h2 id="13-heartbeats">13. Heartbeats <a class="anchor" href="#13-heartbeats" aria-label="Link to this section">#</a></h2>
+<p>Every 30 seconds the host sends:</p>
+<pre><code class="language-json">{ &quot;jsonrpc&quot;: &quot;2.0&quot;, &quot;id&quot;: -1, &quot;method&quot;: &quot;rim.heartbeat&quot; }</code></pre>
+<p>There are no params. The plugin answers with <strong>any object</strong> as <code>result</code>; <code>{}</code> will do, and the
+reference plugin sends <code>{&quot;pong&quot;: true}</code>:</p>
+<pre><code class="language-json">{ &quot;jsonrpc&quot;: &quot;2.0&quot;, &quot;id&quot;: -1, &quot;result&quot;: { &quot;pong&quot;: true } }</code></pre>
+<p>A plugin that has not answered within <strong>5 seconds</strong> is marked unresponsive. A late answer to
+that heartbeat is dropped; the mark clears when the plugin answers a later one. A plugin that does long work SHOULD do it off the thread that reads stdin, so
+heartbeats keep flowing.</p>
+<h2 id="14-logging">14. Logging <a class="anchor" href="#14-logging" aria-label="Link to this section">#</a></h2>
+<p><code>rim.log</code> (plugin to host) writes one line to the host log, tagged with the plugin id. It needs no
+capability and is the one call allowed before the handshake is answered.</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>level</code></td>
+<td><code>&quot;debug&quot;</code>, <code>&quot;info&quot;</code>, <code>&quot;warn&quot;</code> or <code>&quot;error&quot;</code></td>
+<td>Severity. Any other value is <code>INVALID_PARAMS</code>.</td>
+</tr>
+<tr>
+<td><code>message</code></td>
+<td>string</td>
+<td>The line to log.</td>
+</tr>
+</tbody></table></div>
+<p>Send it as a <strong>notification</strong> (no <code>id</code>), which gets no answer:</p>
+<pre><code class="language-json">{ &quot;jsonrpc&quot;: &quot;2.0&quot;, &quot;method&quot;: &quot;rim.log&quot;, &quot;params&quot;: { &quot;level&quot;: &quot;info&quot;, &quot;message&quot;: &quot;handshake complete&quot; } }</code></pre>
+<p>or as a <strong>request</strong> (with an <code>id</code>), which the host answers with <code>{ &quot;ok&quot;: true }</code>:</p>
+<pre><code class="language-json">{ &quot;jsonrpc&quot;: &quot;2.0&quot;, &quot;id&quot;: &quot;log-1&quot;, &quot;result&quot;: { &quot;ok&quot;: true } }</code></pre>
+<p>stderr also works for debugging, but only <code>rim.log</code> lines carry the plugin id and a level.</p>
+<h2 id="15-shutdown-and-app-quit">15. Shutdown and app quit <a class="anchor" href="#15-shutdown-and-app-quit" aria-label="Link to this section">#</a></h2>
+<p><code>rim.shutdown</code> is a notification from the host: <strong>exit now.</strong></p>
+<pre><code class="language-json">{ &quot;jsonrpc&quot;: &quot;2.0&quot;, &quot;method&quot;: &quot;rim.shutdown&quot; }</code></pre>
+<p>What the host does, in order:</p>
+<ol>
+<li>sends <code>rim.shutdown</code> (it waits at most 250 ms to write it, so a plugin that stopped reading
+cannot hold up the stop);</li>
+<li>closes the plugin&#39;s stdin;</li>
+<li>waits <strong>1 second</strong> for the process to exit;</li>
+<li>on Unix, sends <code>SIGTERM</code> and waits <strong>2 more seconds</strong>; on Windows, it kills the process at
+this point instead;</li>
+<li>kills the process (<code>SIGKILL</code>) if it is still running.</li>
+</ol>
+<p>When the <strong>whole app quits</strong>, every plugin gets the same sequence at the same moment, and any
+plugin still running <strong>4 seconds</strong> after the quit began is killed outright.</p>
+<p>What a plugin should do:</p>
+<ul>
+<li>On <code>rim.shutdown</code> or on end-of-file on stdin, flush what must be flushed, and exit. Aim for
+well under a second; anything after the first second is borrowed time.</li>
+<li>Do not send anything after <code>rim.shutdown</code>; nobody is reading.</li>
+<li>Do not rely on <code>SIGTERM</code> handlers for cleanup: Windows never sends one, and a plugin killed at
+the deadline gets no signal it can handle.</li>
+</ul>
+<h2 id="16-compatibility-and-versioning">16. Compatibility and versioning <a class="anchor" href="#16-compatibility-and-versioning" aria-label="Link to this section">#</a></h2>
+<p><code>protocolVersion</code> is a single integer. <strong>There are no minor versions</strong>: v1 is everything in the
+schema plus any methods added under the rules below.</p>
+<h3 id="what-may-still-be-added-within-v1">What may still be added within v1 <a class="anchor" href="#what-may-still-be-added-within-v1" aria-label="Link to this section">#</a></h3>
+<ul>
+<li>A new method or notification in either direction. Old receivers answer an unknown request with
+<code>METHOD_NOT_FOUND</code> and ignore an unknown notification, so old plugins and old hosts keep
+working.</li>
+<li>Freezing a method that is listed as not frozen (section 17), as a new schema entry. Until
+then its shape may change without notice.</li>
+<li>A new capability name in <code>grantedCapabilities</code>.</li>
+<li>A new error code that is not one of the codes in section 8, documented in the schema before
+the host sends it.</li>
+</ul>
+<h3 id="what-forces-v2">What forces v2 <a class="anchor" href="#what-forces-v2" aria-label="Link to this section">#</a></h3>
+<ul>
+<li>Adding, removing, renaming or retyping a field in any frozen frame, <strong>including an optional
+field</strong>.</li>
+<li>A new value in a closed set, such as <code>initiator</code> or the <code>rim.log</code> levels.</li>
+<li>A different meaning for an existing method, field, value or error code, including the
+handshake, which keeps the same shape in every version.</li>
+<li>A change to framing, the frame size limit, the id rules or the confirmation gate.</li>
+</ul>
+<h3 id="how-the-two-sides-stay-compatible">How the two sides stay compatible <a class="anchor" href="#how-the-two-sides-stay-compatible" aria-label="Link to this section">#</a></h3>
+<ul>
+<li>Senders emit exactly the frozen shapes; receivers ignore unknown fields rather than fail.</li>
+<li>The host lists every version it speaks in <code>supportedVersions</code>, newest first, and the plugin
+picks one (section 7). When a v2 exists, a host will offer both <code>[2, 1]</code> for as long as it
+supports v1; the RIM roadmap commits to supporting the current and the previous protocol
+version. A v1 plugin keeps working on that host by answering <code>1</code>.</li>
+<li>A plugin that only speaks a newer version than the host offers refuses the handshake, as in
+section 7, and the user sees why.</li>
+</ul>
+<h2 id="17-method-reference-what-exists-and-what-does-not">17. Method reference: what exists and what does not <a class="anchor" href="#17-method-reference-what-exists-and-what-does-not" aria-label="Link to this section">#</a></h2>
+<p>This is the complete list. If a method is not in this section, the host does not implement it.</p>
+<h3 id="frozen-in-v1">Frozen in v1 <a class="anchor" href="#frozen-in-v1" aria-label="Link to this section">#</a></h3>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Direction</th>
+<th>Kind</th>
+<th>Section</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>rim.handshake</code></td>
+<td>host → plugin</td>
+<td>request</td>
+<td>7</td>
+</tr>
+<tr>
+<td><code>rim.heartbeat</code></td>
+<td>host → plugin</td>
+<td>request</td>
+<td>13</td>
+</tr>
+<tr>
+<td><code>rim.command.execute</code></td>
+<td>host → plugin</td>
+<td>request</td>
+<td>9, 10</td>
+</tr>
+<tr>
+<td><code>rim.principal.changed</code></td>
+<td>host → plugin</td>
+<td>notification</td>
+<td>11</td>
+</tr>
+<tr>
+<td><code>rim.principals.remapped</code></td>
+<td>host → plugin</td>
+<td>notification</td>
+<td>11</td>
+</tr>
+<tr>
+<td><code>rim.shutdown</code></td>
+<td>host → plugin</td>
+<td>notification</td>
+<td>15</td>
+</tr>
+<tr>
+<td><code>rim.log</code></td>
+<td>plugin → host</td>
+<td>request or notification</td>
+<td>14</td>
+</tr>
+</tbody></table></div>
+<h3 id="routed-by-the-host-but-not-part-of-v1">Routed by the host but not part of v1 <a class="anchor" href="#routed-by-the-host-but-not-part-of-v1" aria-label="Link to this section">#</a></h3>
+<p>The host&#39;s broker recognises these names, but their shapes are <strong>not frozen</strong> and will change
+(to camelCase, with a <code>Principal</code> for every person) when they are wired end to end. Do not build
+on them.</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Direction</th>
+<th>Capability</th>
+<th>What happens today</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>rim.chat.send_message</code></td>
+<td>plugin → host</td>
+<td><code>chat.write</code></td>
+<td>Answered <code>CAPABILITY_DENIED</code>, since no host lets a manifest request <code>chat.write</code> (section 12). Behind the gate it is not wired either.</td>
+</tr>
+<tr>
+<td><code>rim.chat.get_messages</code></td>
+<td>plugin → host</td>
+<td><code>chat.read</code></td>
+<td>As above, with <code>chat.read</code>.</td>
+</tr>
+<tr>
+<td><code>rim.chat.search_messages</code></td>
+<td>plugin → host</td>
+<td><code>chat.read</code></td>
+<td>As above, with <code>chat.read</code>.</td>
+</tr>
+<tr>
+<td><code>rim.events.subscribe</code></td>
+<td>plugin → host</td>
+<td><code>events.read</code></td>
+<td>As above, with <code>events.read</code>.</td>
+</tr>
+<tr>
+<td><code>rim.event.&lt;type&gt;</code></td>
+<td>host → plugin</td>
+<td><code>events.read</code></td>
+<td>Never sent today, since nothing can subscribe.</td>
+</tr>
+<tr>
+<td><code>rim.ui.update_panel</code></td>
+<td>plugin → host</td>
+<td><code>ui.panel</code></td>
+<td>Wired to the panel state store. Hosts before rim-ui #16 cannot grant <code>ui.panel</code> (section 12) and answer <code>CAPABILITY_DENIED</code>. The panel page does not receive the stored state yet.</td>
+</tr>
+</tbody></table></div>
+<p>The chat read and send calls are deliberately <strong>not in v1</strong>: they will go through the client&#39;s
+single message service, so that a plugin sees exactly what the user sees, before their shapes are
+frozen.</p>
+<p>The client message service now serves them as <code>rim.chat.list_messages</code>, <code>rim.chat.get_message</code>,
+<code>rim.chat.search_messages</code> and <code>rim.chat.post_message</code>, still routed and not frozen, with the
+capabilities <code>chat.read</code>, <code>chat.write</code>, <code>chat.read.encrypted</code> and <code>chat.write.encrypted</code>: see
+<a href="e2ee-mls-v1.html"><code>e2ee-mls-v1.md</code></a>, &quot;Plugins and the client message service&quot;.</p>
+<h3 id="not-implemented">Not implemented <a class="anchor" href="#not-implemented" aria-label="Link to this section">#</a></h3>
+<p>Earlier RIM documents listed methods that the host has never implemented. They do not exist:</p>
+<ul>
+<li><code>initialize</code>, <code>execute_command</code>, <code>deliver_event</code>, <code>shutdown</code> (the real names are
+<code>rim.handshake</code>, <code>rim.command.execute</code>, <code>rim.event.&lt;type&gt;</code> and <code>rim.shutdown</code>);</li>
+<li><code>rim.chat.get_conversations</code>, <code>rim.chat.edit_message</code>, <code>rim.chat.delete_message</code>;</li>
+<li><code>rim.ui.register_panel</code>, <code>rim.ui.show_panel</code>, <code>rim.ui.show_notification</code> (panels are declared
+in the manifest; notifications are a panel-side feature, see <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/docs/local_plugin_host.md"><code>docs/local_plugin_host.md</code></a>);</li>
+<li><code>rim.settings.get</code>, <code>rim.settings.set</code>;</li>
+<li><code>rim.process.*</code>, <code>rim.network.*</code>, <code>rim.fs.*</code>;</li>
+<li>MessagePack framing and any <code>supported_formats</code> / <code>chosen_format</code> negotiation.</li>
+</ul>
+<p>Calling one gets <code>METHOD_NOT_FOUND</code>, except that a name in the host&#39;s capability table
+(section 12) is checked first and gets <code>CAPABILITY_DENIED</code> when the plugin lacks that capability.</p>
+<h2 id="18-worked-example-one-whole-session">18. Worked example: one whole session <a class="anchor" href="#18-worked-example-one-whole-session" aria-label="Link to this section">#</a></h2>
+<p>A plugin <code>dev.example.k8stools</code> with two commands, <code>list_pods</code> and <code>restart_pod</code> (dangerous).
+Arrows show direction; each line is one frame&#39;s JSON payload.</p>
+<pre><code class="language-text"># 1. The host starts the plugin and handshakes. The plugin logs before answering, which is allowed.
+host → plugin  {&quot;jsonrpc&quot;:&quot;2.0&quot;,&quot;id&quot;:1,&quot;method&quot;:&quot;rim.handshake&quot;,&quot;params&quot;:{&quot;protocolVersion&quot;:1,&quot;supportedVersions&quot;:[1],&quot;pluginId&quot;:&quot;dev.example.k8stools&quot;,&quot;hostVersion&quot;:&quot;0.1.0&quot;,&quot;grantedCapabilities&quot;:[&quot;plugin.dev.example.k8stools.restart_pod&quot;],&quot;principal&quot;:{&quot;principalId&quot;:&quot;rimp0_PWcag22GowE59KogGTaUReeoF_q4E5EVi28q83uaGBU&quot;,&quot;displayName&quot;:&quot;Jakub&quot;}}}
+plugin → host  {&quot;jsonrpc&quot;:&quot;2.0&quot;,&quot;method&quot;:&quot;rim.log&quot;,&quot;params&quot;:{&quot;level&quot;:&quot;info&quot;,&quot;message&quot;:&quot;k8stools starting&quot;}}
+plugin → host  {&quot;jsonrpc&quot;:&quot;2.0&quot;,&quot;id&quot;:1,&quot;result&quot;:{&quot;accepted&quot;:true,&quot;protocolVersion&quot;:1,&quot;pluginId&quot;:&quot;dev.example.k8stools&quot;}}
+
+# 2. The user runs &quot;List pods&quot; from the palette.
+host → plugin  {&quot;jsonrpc&quot;:&quot;2.0&quot;,&quot;id&quot;:2,&quot;method&quot;:&quot;rim.command.execute&quot;,&quot;params&quot;:{&quot;commandId&quot;:&quot;list_pods&quot;,&quot;args&quot;:{&quot;namespace&quot;:&quot;prod&quot;},&quot;invoker&quot;:{&quot;principalId&quot;:&quot;rimp0_PWcag22GowE59KogGTaUReeoF_q4E5EVi28q83uaGBU&quot;,&quot;displayName&quot;:&quot;Jakub&quot;},&quot;initiator&quot;:&quot;user&quot;,&quot;confirmed&quot;:false}}
+plugin → host  {&quot;jsonrpc&quot;:&quot;2.0&quot;,&quot;id&quot;:2,&quot;result&quot;:{&quot;payload&quot;:[{&quot;name&quot;:&quot;api-7f9c&quot;,&quot;status&quot;:&quot;Running&quot;}],&quot;message&quot;:&quot;1 pod in prod&quot;}}
+
+# 3. The plugin asks for something the host does not implement; the host says so.
+plugin → host  {&quot;jsonrpc&quot;:&quot;2.0&quot;,&quot;id&quot;:&quot;p-1&quot;,&quot;method&quot;:&quot;rim.kube.config&quot;}
+host → plugin  {&quot;jsonrpc&quot;:&quot;2.0&quot;,&quot;id&quot;:&quot;p-1&quot;,&quot;error&quot;:{&quot;code&quot;:-32601,&quot;message&quot;:&quot;method not found: rim.kube.config&quot;}}
+
+# 4. The AI agent tries to restart a pod. The command is dangerous, so the host refuses it
+#    before it reaches the plugin: no frame is sent at all.
+
+# 5. The user restarts the pod and confirms the dialog. The host sets confirmed: true.
+host → plugin  {&quot;jsonrpc&quot;:&quot;2.0&quot;,&quot;id&quot;:3,&quot;method&quot;:&quot;rim.command.execute&quot;,&quot;params&quot;:{&quot;commandId&quot;:&quot;restart_pod&quot;,&quot;args&quot;:{&quot;namespace&quot;:&quot;prod&quot;,&quot;pod&quot;:&quot;api-7f9c&quot;},&quot;invoker&quot;:{&quot;principalId&quot;:&quot;rimp0_PWcag22GowE59KogGTaUReeoF_q4E5EVi28q83uaGBU&quot;,&quot;displayName&quot;:&quot;Jakub&quot;},&quot;initiator&quot;:&quot;user&quot;,&quot;confirmed&quot;:true}}
+plugin → host  {&quot;jsonrpc&quot;:&quot;2.0&quot;,&quot;id&quot;:3,&quot;error&quot;:{&quot;code&quot;:-32002,&quot;message&quot;:&quot;kubectl failed: context not found&quot;}}
+
+# 6. Thirty seconds after the connection started, a heartbeat.
+host → plugin  {&quot;jsonrpc&quot;:&quot;2.0&quot;,&quot;id&quot;:-1,&quot;method&quot;:&quot;rim.heartbeat&quot;}
+plugin → host  {&quot;jsonrpc&quot;:&quot;2.0&quot;,&quot;id&quot;:-1,&quot;result&quot;:{}}
+
+# 7. The user signs out.
+host → plugin  {&quot;jsonrpc&quot;:&quot;2.0&quot;,&quot;method&quot;:&quot;rim.principal.changed&quot;,&quot;params&quot;:{&quot;principal&quot;:null}}
+
+# 8. The user disables the plugin. The host sends rim.shutdown and closes stdin; the plugin exits.
+host → plugin  {&quot;jsonrpc&quot;:&quot;2.0&quot;,&quot;method&quot;:&quot;rim.shutdown&quot;}</code></pre>
+<p>Step 5 shows the command failing with <code>PLUGIN_ERROR</code>: the user sees &quot;kubectl failed: context not
+found&quot;. Note in step 3 that the plugin&#39;s string id <code>&quot;p-1&quot;</code> comes back unchanged.</p>
+<h2 id="19-a-complete-plugin-in-python">19. A complete plugin in Python <a class="anchor" href="#19-a-complete-plugin-in-python" aria-label="Link to this section">#</a></h2>
+<p>A conforming v1 plugin, standard library only, with one command, <code>greet</code>. Put two files in one
+directory: the manifest <code>rim-plugin.json</code>,</p>
+<pre><code class="language-json">{
+  &quot;manifest_version&quot;: 1,
+  &quot;plugin_id&quot;: &quot;dev.example.greeter&quot;,
+  &quot;display_name&quot;: &quot;Greeter&quot;,
+  &quot;version&quot;: &quot;0.1.0&quot;,
+  &quot;description&quot;: &quot;Says hello.&quot;,
+  &quot;runtime_kind&quot;: &quot;DesktopLocalProcess&quot;,
+  &quot;entrypoint&quot;: &quot;main.py&quot;,
+  &quot;commands&quot;: [
+    {
+      &quot;id&quot;: &quot;greet&quot;,
+      &quot;title&quot;: &quot;Greeter: Greet&quot;,
+      &quot;description&quot;: &quot;Greets someone by name.&quot;,
+      &quot;arguments&quot;: [{ &quot;name&quot;: &quot;name&quot;, &quot;type&quot;: &quot;string&quot;, &quot;required&quot;: false }]
+    }
+  ]
+}</code></pre>
+<p>and <code>main.py</code>, made executable (<code>chmod +x main.py</code>):</p>
+<pre><code class="language-python">#!/usr/bin/env python3
+import json, struct, sys
+
+PLUGIN_ID = &quot;dev.example.greeter&quot;   # must match plugin_id in rim-plugin.json
+VERSION = 1
+
+def read_exact(n):
+    buf = b&quot;&quot;
+    while len(buf) &lt; n:
+        chunk = sys.stdin.buffer.read(n - len(buf))
+        if not chunk:
+            raise EOFError
+        buf += chunk
+    return buf
+
+def read_frame():
+    (length,) = struct.unpack(&quot;&lt;I&quot;, read_exact(4))
+    return json.loads(read_exact(length))
+
+def send(message):
+    body = json.dumps(message).encode(&quot;utf-8&quot;)
+    sys.stdout.buffer.write(struct.pack(&quot;&lt;I&quot;, len(body)) + body)
+    sys.stdout.buffer.flush()
+
+def answer(request, result=None, error=None):
+    reply = {&quot;jsonrpc&quot;: &quot;2.0&quot;, &quot;id&quot;: request[&quot;id&quot;]}
+    reply[&quot;error&quot; if error else &quot;result&quot;] = error or result
+    send(reply)
+
+def log(level, message):
+    send({&quot;jsonrpc&quot;: &quot;2.0&quot;, &quot;method&quot;: &quot;rim.log&quot;, &quot;params&quot;: {&quot;level&quot;: level, &quot;message&quot;: message}})
+
+def handle(msg):
+    method, params = msg.get(&quot;method&quot;), msg.get(&quot;params&quot;) or {}
+    if method == &quot;rim.handshake&quot;:
+        ok = VERSION in params.get(&quot;supportedVersions&quot;, []) and params.get(&quot;pluginId&quot;) == PLUGIN_ID
+        answer(msg, {&quot;accepted&quot;: ok, &quot;protocolVersion&quot;: VERSION, &quot;pluginId&quot;: PLUGIN_ID,
+                     **({} if ok else {&quot;error&quot;: &quot;need protocol 1 and plugin id &quot; + PLUGIN_ID})})
+        if not ok:
+            sys.exit(0)  # refused: the host stops us anyway
+    elif method == &quot;rim.heartbeat&quot;:
+        answer(msg, {})
+    elif method == &quot;rim.command.execute&quot;:
+        if params.get(&quot;commandId&quot;) == &quot;greet&quot;:
+            name = (params.get(&quot;args&quot;) or {}).get(&quot;name&quot;) or &quot;world&quot;
+            answer(msg, {&quot;payload&quot;: f&quot;Hello, {name}!&quot;})
+        else:
+            answer(msg, error={&quot;code&quot;: -32602, &quot;message&quot;: f&quot;unknown command: {params.get('commandId')}&quot;})
+    elif method == &quot;rim.shutdown&quot;:
+        sys.exit(0)
+    elif msg.get(&quot;id&quot;) is not None and method is not None:
+        answer(msg, error={&quot;code&quot;: -32601, &quot;message&quot;: f&quot;method not found: {method}&quot;})
+    # Anything else (unknown notifications, responses to our own requests) is ignored.
+
+def main():
+    log(&quot;info&quot;, &quot;greeter started&quot;)
+    while True:
+        try:
+            msg = read_frame()
+        except EOFError:
+            return  # the host closed stdin: exit
+        except ValueError:
+            continue  # not JSON: drop it, framing is still intact
+        if isinstance(msg, dict):  # anything else is not JSON-RPC: drop it too
+            handle(msg)
+
+if __name__ == &quot;__main__&quot;:
+    main()</code></pre>
+<p>The in-tree reference plugin, <code>rim-ui/plugins/hello-world/</code>, does the same with more comments and
+is driven through every v1 message by the host&#39;s conformance tests.</p>
+<h2 id="20-plugin-author-checklist">20. Plugin author checklist <a class="anchor" href="#20-plugin-author-checklist" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><input disabled="" type="checkbox"> The entrypoint is executable and writes nothing but frames to stdout.</li>
+<li><input disabled="" type="checkbox"> Frames use a 4-byte <strong>little-endian</strong> length and stay under 4 MiB.</li>
+<li><input disabled="" type="checkbox"> Partial reads are looped; end-of-file on stdin means exit.</li>
+<li><input disabled="" type="checkbox"> Nothing but <code>rim.log</code> is sent before the handshake answer.</li>
+<li><input disabled="" type="checkbox"> The handshake picks a version from <code>supportedVersions</code>, echoes <code>pluginId</code>, and refuses with
+<code>accepted: false</code> and an <code>error</code> otherwise.</li>
+<li><input disabled="" type="checkbox"> Every request gets exactly one answer with the same <code>id</code>, including heartbeats.</li>
+<li><input disabled="" type="checkbox"> Unknown requests get <code>METHOD_NOT_FOUND</code>; unknown notifications and unknown fields are
+ignored.</li>
+<li><input disabled="" type="checkbox"> An unknown <code>commandId</code> or bad <code>args</code> gets <code>INVALID_PARAMS</code>; a failed command gets
+<code>PLUGIN_ERROR</code> with a message a person can read.</li>
+<li><input disabled="" type="checkbox"> A dangerous command with <code>confirmed: false</code> is refused.</li>
+<li><input disabled="" type="checkbox"> <code>principalId</code> is stored only where it can be rewritten, and never parsed.</li>
+<li><input disabled="" type="checkbox"> <code>rim.shutdown</code> makes the plugin exit within a second.</li>
+<li><input disabled="" type="checkbox"> Commands answer within 30 seconds; heartbeats keep flowing during long work.</li>
+</ul>
+<h2 id="where-this-lives-in-the-host">Where this lives in the host <a class="anchor" href="#where-this-lives-in-the-host" aria-label="Link to this section">#</a></h2>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Concern</th>
+<th>File in <code>rim-ui/src-tauri/src/plugin_host/</code></th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Frozen frame types, principal derivation</td>
+<td><code>protocol.rs</code></td>
+</tr>
+<tr>
+<td>Conformance tests against the schema</td>
+<td><code>protocol/conformance.rs</code></td>
+</tr>
+<tr>
+<td>Framing, error codes, size limit</td>
+<td><code>wire.rs</code></td>
+</tr>
+<tr>
+<td>Handshake validation</td>
+<td><code>handshake.rs</code></td>
+</tr>
+<tr>
+<td>Broker loop, plugin-to-host dispatch, heartbeats, rate limits</td>
+<td><code>broker.rs</code></td>
+</tr>
+<tr>
+<td>Capability table</td>
+<td><code>capability.rs</code></td>
+</tr>
+<tr>
+<td>Command gates and dispatch</td>
+<td><code>command_exec.rs</code></td>
+</tr>
+<tr>
+<td>Start, stop, app quit, principal notices</td>
+<td><code>runtime.rs</code>, <code>process.rs</code></td>
+</tr>
+<tr>
+<td>Manifest and install-time validation</td>
+<td><code>manifest.rs</code>, <code>validation.rs</code></td>
+</tr>
+</tbody></table></div>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/docs/specs/plugin-protocol-v1.md">rim-server/docs/specs/plugin-protocol-v1.md</a> at <code>c86029b</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+<script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
+</body>
+</html>
