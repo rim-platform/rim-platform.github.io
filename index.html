@@ -156,7 +156,7 @@
   <!-- ============ Proposed landing page ============ -->
   <header class="nav">
     <a class="brand" href="#top" id="top" aria-label="RIM">
-      <img src="assets/rim-mark-inverse.svg" alt="" width="28" height="28">
+      <picture><source srcset="assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
       RIM
     </a>
     <nav aria-label="Site">
@@ -287,7 +287,7 @@ RIM_FEATURES_DISABLED=attachments,email</pre>
       <tbody>
         <tr><td><b><a href="configure/index.html#listening">Listening</a></b></td><td class="mono">RIM_SERVER_HOST, RIM_SERVER_PORT, RIM_PUBLIC_BASE_URL, RIM_CORS_ALLOWED_ORIGIN, RIM_TRUST_FORWARDED_HEADERS, RIM_FORCE_SECURE_COOKIES, RIM_KEY_LOGIN_AUDIENCES</td><td>A non-loopback bind needs an audience or the public URL.</td></tr>
         <tr><td><b><a href="configure/index.html#database-and-data">Database and data</a></b></td><td class="mono">DATABASE_URL, RIM_DATABASE_MAX_CONNECTIONS, RIM_DATA_DIR, RIM_STORAGE_LOCAL_PATH, RIM_MAX_WORKSPACE_STORAGE_BYTES, RIM_SERVER_KEY_FILE, RIM_FRANKING_KEY_FILE</td><td>The data directory is the server's identity; back it up.</td></tr>
-        <tr><td><b><a href="configure/index.html#signups-and-sessions">Signups and sessions</a></b></td><td class="mono">RIM_OPEN_REGISTRATION, RIM_REGISTRATION_POW_BITS, RIM_SESSION_TTL_DAYS, RIM_BOOTSTRAP_TOKEN_TTL_SECONDS</td><td>Invite-only by default; invites come from the CLI.</td></tr>
+        <tr><td><b><a href="configure/index.html#signups-and-sessions">Signups and sessions</a></b></td><td class="mono">RIM_OPEN_REGISTRATION, RIM_REGISTRATION_POW_BITS, RIM_SESSION_TTL_DAYS</td><td>Invite-only by default; invites come from the CLI.</td></tr>
         <tr><td><b><a href="configure/index.html#roles-and-federation">Roles and federation</a></b></td><td class="mono">RIM_ROLE, RIM_S2S_*, RIM_RELAY_*, RIM_HOST_ALLOWED_RELAYS</td><td>relay, host or both; quotas per user on a public relay.</td></tr>
         <tr><td><b><a href="configure/index.html#mail">Mail</a></b></td><td class="mono">RIM_SMTP_HOST, RIM_SMTP_PORT, RIM_SMTP_USERNAME, RIM_SMTP_PASSWORD, RIM_SMTP_FROM, RIM_SMTP_TLS, RIM_NOTIFICATION_DIGEST_INTERVAL_SECS</td><td>Without SMTP the email feature reports "unavailable".</td></tr>
         <tr><td><b><a href="configure/index.html#operations">Operations</a></b></td><td class="mono">RIM_METRICS_ADDR, RIM_AUDIT_LOG_PATH, RIM_AUDIT_RETENTION_DAYS, RIM_FEATURES_DISABLED, RUST_LOG, RIM_ENABLE_GRAPHIQL</td><td>Metrics on their own port; features off per instance.</td></tr>
@@ -313,7 +313,7 @@ RIM_FEATURES_DISABLED=attachments,email</pre>
     <h2>One GraphQL endpoint, and the HTTP around it</h2>
     <p class="sub">Everything a client does goes through <code>POST /api</code>; subscriptions arrive over <code>/api/ws</code>. The schema is published at <code>/api/sdl</code> with a description on every type and field, and the reference on this site is generated from it, so it cannot drift from the server.</p>
     <div class="grid three">
-      <a class="card" href="api/index.html"><span class="tag">reference</span><h3>Every query, mutation and subscription</h3><p>228 types, 122 queries, 205 mutations and 7 subscriptions, grouped by domain, each with its description, arguments and the error codes it can answer.</p></a>
+      <a class="card" href="api/index.html"><span class="tag">reference</span><h3>Every query, mutation and subscription</h3><p>225 types, 57 queries, 106 mutations and 2 subscriptions, grouped by domain, each with its description, arguments and the error codes it can answer.</p></a>
       <a class="card" href="docs/api.html"><span class="tag">contract</span><h3>Talking to a server</h3><p>The session cookie and the key-login challenge that issues it, the CSRF header on mutations, origins, the twenty error codes in <code>extensions.code</code>, cursor pagination, <code>serverInfo</code> for version and feature negotiation.</p></a>
       <a class="card" href="docs/api.html#endpoints"><span class="tag">http</span><h3>The routes outside GraphQL</h3><p>Upload and download, avatars, plugin bundles, the signed discovery document at <code>/.well-known/rim-server</code>, the probes and metrics, and the server-to-server API under <code>/s2s/v1</code>.</p></a>
     </div>
