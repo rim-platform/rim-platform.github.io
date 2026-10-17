@@ -130,7 +130,7 @@ layout, interaction, and runtime decisions aligned with the product direction in
 <li>workspace switcher</li>
 <li>home or inbox</li>
 <li>commands or quick actions entry</li>
-<li>plugin panels entry area</li>
+<li>a Plugins entry whose menu lists the plugin panels</li>
 <li>activity or notifications</li>
 <li>settings</li>
 <li>current user/profile area</li>
@@ -139,7 +139,17 @@ layout, interaction, and runtime decisions aligned with the product direction in
 <ul>
 <li>The side rail should be icon-first and compact.</li>
 <li>It should support unread and activity indicators.</li>
-<li>Plugin panels should appear alongside built-in destinations, but still be visually distinguishable.</li>
+<li>Plugin panels open from the Plugins entry, not from an icon each, so the rail does not grow
+with every installed plugin. The entry opens a menu beside it with one row per panel of
+every enabled, running plugin: the plugin&#39;s name, the panel&#39;s title, and a puzzle marker
+that sets the rows apart from built-in destinations. The tool panel stays as it was.
+Choosing a row opens the panel in its slot. The menu works from the keyboard (Enter or Space
+opens it, the arrow keys move, Enter chooses, Escape closes it and returns focus to the entry)
+and closes on a click outside. With no running plugin that has a panel, it links to the plugin
+settings instead.</li>
+<li>The Plugins entry stays marked while a plugin panel is open.</li>
+<li>Each panel of a running plugin also has an &quot;Open &lt;panel&gt;&quot; command, so the palette or a keybind
+opens it without the rail.</li>
 <li>Switching side-rail destinations should update the active tool panel or global workspace mode.</li>
 </ul>
 <h2 id="tool-panel">Tool Panel <a class="anchor" href="#tool-panel" aria-label="Link to this section">#</a></h2>
@@ -408,7 +418,7 @@ communication plus workflows, not a dressed-up Tauri starter and not a plain cha
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/5db413c6ad9fa050b425094c71034e86d164534c/docs/ui-shell.md">rim-ui/docs/ui-shell.md</a> at <code>5db413c</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/30b3a192cc3db45598b64f15c76c847c25fd1862/docs/ui-shell.md">rim-ui/docs/ui-shell.md</a> at <code>30b3a19</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

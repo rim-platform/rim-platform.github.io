@@ -172,7 +172,7 @@ invite.</p>
 <p>A user can ask for unread notifications by email: <code>digest</code> in their workspace notification
 settings is <code>OFF</code> (default), <code>HOURLY</code> or <code>DAILY</code> (<a href="messaging.html"><code>docs/messaging.md</code></a>, Notification rules). A
 periodic job (<code>rim_infra_services::notification::DefaultNotificationJobs</code>, driven from
-<a href="https://github.com/rim-platform/rim-server/blob/769aebc96b537242ae9303ea5c155659de01ffa7/rim_server/src/app.rs"><code>rim_server/src/app.rs</code></a>, every <code>RIM_NOTIFICATION_DIGEST_INTERVAL_SECS</code> seconds, default 900, minimum 60) sends one email per user per workspace when all of these hold:</p>
+<a href="https://github.com/rim-platform/rim-server/blob/ba1bd32b23c6311a60cab50769960332f7bcf04a/rim_server/src/app.rs"><code>rim_server/src/app.rs</code></a>, every <code>RIM_NOTIFICATION_DIGEST_INTERVAL_SECS</code> seconds, default 900, minimum 60) sends one email per user per workspace when all of these hold:</p>
 <ul>
 <li>the oldest unread, un-emailed notification is at least one interval old (hourly: 60 minutes,
 daily: 24 hours);</li>
@@ -221,7 +221,7 @@ would be the path if one is wanted.</li>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/769aebc96b537242ae9303ea5c155659de01ffa7/docs/email.md">rim-server/docs/email.md</a> at <code>769aebc</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/ba1bd32b23c6311a60cab50769960332f7bcf04a/docs/email.md">rim-server/docs/email.md</a> at <code>ba1bd32</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

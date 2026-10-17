@@ -52,12 +52,12 @@ npm run lint:fix       # eslint . --fix — apply auto-fixes
 npm run format         # prettier --write . — reformat everything
 npm run format:check   # prettier --check . — CI-safe, no writes</code></pre>
 <h2 id="flat-config-rationale">Flat-config rationale <a class="anchor" href="#flat-config-rationale" aria-label="Link to this section">#</a></h2>
-<p><a href="https://github.com/rim-platform/rim-ui/blob/5db413c6ad9fa050b425094c71034e86d164534c/eslint.config.js"><code>eslint.config.js</code></a> is ESM (the package is <code>&quot;type&quot;: &quot;module&quot;</code>), composed in this order:</p>
+<p><a href="https://github.com/rim-platform/rim-ui/blob/30b3a192cc3db45598b64f15c76c847c25fd1862/eslint.config.js"><code>eslint.config.js</code></a> is ESM (the package is <code>&quot;type&quot;: &quot;module&quot;</code>), composed in this order:</p>
 <ol>
 <li><code>js.configs.recommended</code> — core ESLint correctness rules.</li>
 <li><code>tseslint.configs.recommended</code> (typescript-eslint v8) — <strong>not</strong>
 <code>recommendedTypeChecked</code>. Type-aware linting needs <code>parserOptions.project</code>
-wiring, and <a href="https://github.com/rim-platform/rim-ui/blob/5db413c6ad9fa050b425094c71034e86d164534c/tsconfig.json"><code>tsconfig.json</code></a> excludes test files (<a href="https://github.com/rim-platform/rim-ui/blob/5db413c6ad9fa050b425094c71034e86d164534c/tsconfig.json"><code>tsconfig.json</code></a> → <code>exclude</code>),
+wiring, and <a href="https://github.com/rim-platform/rim-ui/blob/30b3a192cc3db45598b64f15c76c847c25fd1862/tsconfig.json"><code>tsconfig.json</code></a> excludes test files (<a href="https://github.com/rim-platform/rim-ui/blob/30b3a192cc3db45598b64f15c76c847c25fd1862/tsconfig.json"><code>tsconfig.json</code></a> → <code>exclude</code>),
 which would break typed linting on the test suite. This config is fast and needs
 no project wiring — pragmatic for standing up the gate today. See &quot;Future
 upgrade&quot; below.</li>
@@ -65,8 +65,8 @@ upgrade&quot; below.</li>
 <li><code>eslint-plugin-react-refresh</code>&#39;s <code>vite</code> preset (Vite HMR hygiene, warn-level).</li>
 <li><code>eslint-config-prettier</code> — <strong>last</strong>, disables every stylistic rule that would
 fight Prettier.</li>
-<li>Global <code>ignores</code>: <code>dist/</code>, <code>coverage/</code>, <code>node_modules/</code>, <a href="https://github.com/rim-platform/rim-ui/tree/5db413c6ad9fa050b425094c71034e86d164534c/src-tauri"><code>src-tauri/</code></a>,
-<a href="https://github.com/rim-platform/rim-ui/tree/5db413c6ad9fa050b425094c71034e86d164534c/src/core/graphql/generated"><code>src/core/graphql/generated/</code></a>, <a href="https://github.com/rim-platform/rim-ui/tree/5db413c6ad9fa050b425094c71034e86d164534c/sdk/plugin-sdk/src/generated"><code>sdk/plugin-sdk/src/generated/</code></a> and <code>*.config.js</code>.</li>
+<li>Global <code>ignores</code>: <code>dist/</code>, <code>coverage/</code>, <code>node_modules/</code>, <a href="https://github.com/rim-platform/rim-ui/tree/30b3a192cc3db45598b64f15c76c847c25fd1862/src-tauri"><code>src-tauri/</code></a>,
+<a href="https://github.com/rim-platform/rim-ui/tree/30b3a192cc3db45598b64f15c76c847c25fd1862/src/core/graphql/generated"><code>src/core/graphql/generated/</code></a>, <a href="https://github.com/rim-platform/rim-ui/tree/30b3a192cc3db45598b64f15c76c847c25fd1862/sdk/plugin-sdk/src/generated"><code>sdk/plugin-sdk/src/generated/</code></a> and <code>*.config.js</code>.</li>
 </ol>
 <p><code>.prettierrc.json</code> matches the codebase&#39;s existing conventions (verified against the
 code, not assumed): double quotes, semicolons, trailing commas, 100-column width.</p>
@@ -109,13 +109,13 @@ project-wide would remove a real correctness check for accidental control chars
 elsewhere.</p>
 <h2 id="no-type-aware-linting-yet">No type-aware linting yet <a class="anchor" href="#no-type-aware-linting-yet" aria-label="Link to this section">#</a></h2>
 <p><code>tseslint.configs.recommendedTypeChecked</code> would catch more (e.g. unsafe <code>any</code> flows,
-floating promises) but requires <code>parserOptions.project</code> pointing at a <a href="https://github.com/rim-platform/rim-ui/blob/5db413c6ad9fa050b425094c71034e86d164534c/tsconfig.json"><code>tsconfig.json</code></a>
+floating promises) but requires <code>parserOptions.project</code> pointing at a <a href="https://github.com/rim-platform/rim-ui/blob/30b3a192cc3db45598b64f15c76c847c25fd1862/tsconfig.json"><code>tsconfig.json</code></a>
 that includes the files being linted — including tests, which the current
-<a href="https://github.com/rim-platform/rim-ui/blob/5db413c6ad9fa050b425094c71034e86d164534c/tsconfig.json"><code>tsconfig.json</code></a> excludes. To upgrade:</p>
+<a href="https://github.com/rim-platform/rim-ui/blob/30b3a192cc3db45598b64f15c76c847c25fd1862/tsconfig.json"><code>tsconfig.json</code></a> excludes. To upgrade:</p>
 <ol>
-<li>Either widen <a href="https://github.com/rim-platform/rim-ui/blob/5db413c6ad9fa050b425094c71034e86d164534c/tsconfig.json"><code>tsconfig.json</code></a>&#39;s <code>include</code>/remove the test exclusions, or add a
+<li>Either widen <a href="https://github.com/rim-platform/rim-ui/blob/30b3a192cc3db45598b64f15c76c847c25fd1862/tsconfig.json"><code>tsconfig.json</code></a>&#39;s <code>include</code>/remove the test exclusions, or add a
 second tsconfig (e.g. <code>tsconfig.eslint.json</code>) that includes tests, referenced only
-from <a href="https://github.com/rim-platform/rim-ui/blob/5db413c6ad9fa050b425094c71034e86d164534c/eslint.config.js"><code>eslint.config.js</code></a>.</li>
+from <a href="https://github.com/rim-platform/rim-ui/blob/30b3a192cc3db45598b64f15c76c847c25fd1862/eslint.config.js"><code>eslint.config.js</code></a>.</li>
 <li>Swap <code>tseslint.configs.recommended</code> for <code>tseslint.configs.recommendedTypeChecked</code>
 and add <code>languageOptions.parserOptions.project</code>.</li>
 <li>Expect a new round of violations; triage warn-vs-error again per the same
@@ -130,7 +130,7 @@ change (owned separately).</p>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/5db413c6ad9fa050b425094c71034e86d164534c/docs/eslint-prettier.md">rim-ui/docs/eslint-prettier.md</a> at <code>5db413c</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/30b3a192cc3db45598b64f15c76c847c25fd1862/docs/eslint-prettier.md">rim-ui/docs/eslint-prettier.md</a> at <code>30b3a19</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>
