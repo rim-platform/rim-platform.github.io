@@ -107,9 +107,11 @@ function safeDecode(s) {
 
 /**
  * Renders `md` for the page at `ctx.out`. Returns the HTML, the first h1 as the title, and
- * the h2/h3 headings for a table of contents.
+ * the h2/h3 headings for a table of contents. With `nestedHeadings` set to a level, the text
+ * is a fragment inside a page section: its headings start at that level and get no id, anchor
+ * or contents entry, so fragments with the same headings can share a page.
  */
-export function renderMarkdown(md, ctx, linker, { codeLinks = true, codeTypes = null } = {}) {
+export function renderMarkdown(md, ctx, linker, { codeLinks = true, codeTypes = null, nestedHeadings = null } = {}) {
   const slugger = new Slugger();
   const headings = [];
   let title = null;
@@ -124,6 +126,10 @@ export function renderMarkdown(md, ctx, linker, { codeLinks = true, codeTypes = 
     renderer: {
       heading({ tokens, depth }) {
         const inner = this.parser.parseInline(tokens);
+        if (nestedHeadings) {
+          const level = Math.min(6, depth + nestedHeadings - 1);
+          return `<h${level}>${inner}</h${level}>\n`;
+        }
         const text = stripTags(inner).trim();
         const id = slugger.slug(text);
         if (depth === 1 && title === null) title = text;
