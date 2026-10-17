@@ -165,7 +165,7 @@ export function renderApi(ui, linker) {
       const target = href.get(code) ?? (rootFieldCount.get(code) === 1 ? rootFieldHref.get(code) : null);
       return target ? rel(out, target) : null;
     };
-    return renderMarkdown(text, ctxFor(out), linker, { codeLinks: false, codeTypes }).html;
+    return renderMarkdown(text, ctxFor(out), linker, { codeLinks: false, codeTypes, nestedHeadings: 4 }).html;
   };
   const deprecation = (node) => {
     const dir = node.directives?.find((x) => x.name.value === "deprecated");

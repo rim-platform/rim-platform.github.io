@@ -49,9 +49,9 @@
 <p>The public relay is the server anyone&#39;s app can use as its relay: accounts, devices, profile
 cards, the queue of what other servers send, the request inbox, and the forward path to the
 servers that host people&#39;s workspaces. It runs the stock image with <code>RIM_ROLE=relay</code> from
-<a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/deploy/compose.yml"><code>deploy/compose.yml</code></a> with the <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a> override (<a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/deploy/README.md"><code>deploy/README.md</code></a> brings it
-up). Its working name is <code>relay.rim.chat</code>; that domain is not registered, so read it as &quot;the
-relay&#39;s domain&quot; wherever this page or the compose files say it.</p>
+<a href="https://github.com/rim-platform/rim-server/blob/769aebc96b537242ae9303ea5c155659de01ffa7/deploy/compose.yml"><code>deploy/compose.yml</code></a> with the <a href="https://github.com/rim-platform/rim-server/blob/769aebc96b537242ae9303ea5c155659de01ffa7/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a> override (<a href="https://github.com/rim-platform/rim-server/blob/769aebc96b537242ae9303ea5c155659de01ffa7/deploy/README.md"><code>deploy/README.md</code></a> brings it
+up). The project&#39;s relay is <code>relay.rim-platform.org</code>; read it as &quot;the relay&#39;s domain&quot; wherever
+this page says it.</p>
 <p>Everything marked <strong>FILL</strong> is a decision or a fact the operator records here before the relay
 opens to the public.</p>
 <p>The commands below assume, on the host, in the repository checkout:</p>
@@ -71,7 +71,7 @@ alias rim-sql='docker compose exec -T postgres psql -U rim -d rim'</code></pre>
 </thead>
 <tbody><tr>
 <td>Configuration</td>
-<td><code>deploy/.env</code> on the host (secrets), <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/deploy/compose.yml"><code>deploy/compose.yml</code></a> and <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a></td>
+<td><code>deploy/.env</code> on the host (secrets), <a href="https://github.com/rim-platform/rim-server/blob/769aebc96b537242ae9303ea5c155659de01ffa7/deploy/compose.yml"><code>deploy/compose.yml</code></a> and <a href="https://github.com/rim-platform/rim-server/blob/769aebc96b537242ae9303ea5c155659de01ffa7/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a></td>
 <td><code>.env</code> in every backup; the compose files are in Git</td>
 </tr>
 <tr>
@@ -119,7 +119,7 @@ alias rim-sql='docker compose exec -T postgres psql -U rim -d rim'</code></pre>
 <h3 id="the-server-recovery-key">The server recovery key <a class="anchor" href="#the-server-recovery-key" aria-label="Link to this section">#</a></h3>
 <p>The recovery key replaces a lost or stolen server key. Whoever holds it can make any key this
 server&#39;s, so it never stays on the host: the first start writes it to
-<code>/data/server-recovery-key.txt</code> and warns at every start until it is gone (<a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/deploy/README.md"><code>deploy/README.md</code></a>,
+<code>/data/server-recovery-key.txt</code> and warns at every start until it is gone (<a href="https://github.com/rim-platform/rim-server/blob/769aebc96b537242ae9303ea5c155659de01ffa7/deploy/README.md"><code>deploy/README.md</code></a>,
 &quot;Start&quot;).</p>
 <div class="tablewrap"><table>
 <thead>
@@ -174,7 +174,7 @@ rim-relay franking-key rotate</code></pre>
 <p>Rotate when <code>/data</code> may have leaked. Losing the file loses the ability to verify reports of
 messages sent before: back it up with everything else in <code>/data</code>.</p>
 <h2 id="backups">Backups <a class="anchor" href="#backups" aria-label="Link to this section">#</a></h2>
-<p><a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/deploy/backup.sh"><code>deploy/backup.sh</code></a> writes one archive of the database dump, the <code>/data</code> volume and <code>deploy/.env</code>;
+<p><a href="https://github.com/rim-platform/rim-server/blob/769aebc96b537242ae9303ea5c155659de01ffa7/deploy/backup.sh"><code>deploy/backup.sh</code></a> writes one archive of the database dump, the <code>/data</code> volume and <code>deploy/.env</code>;
 <a href="../self-hosting.html"><code>docs/self-hosting.md</code></a>, &quot;Backups&quot;, says what is in it. It never includes the recovery key file.</p>
 <p>Nightly (<strong>FILL</strong>: the time and the cron or timer that runs it), before every update and right
 after every key rotation; encrypted with <code>age</code> to <strong>FILL</strong>: the recipient, whose identity is held
@@ -283,6 +283,9 @@ one server to every peer.</p>
 <td>Signups without a registration token need a proof-of-work of that many leading zero bits (about 2^24 hashes); the open-signup limit of 20 per IP per 10 minutes applies too</td>
 </tr>
 </tbody></table></div>
+<p>The public relay keeps the DM defaults, <code>RIM_DM_INBOUND=requests</code> and
+<code>RIM_DM_OUTBOUND=allowed</code>: a stranger&#39;s first message is a request, from anywhere (&quot;Who May Start
+A DM&quot; in <a href="../messaging.html"><code>docs/messaging.md</code></a>).</p>
 <p>To change one, edit <code>deploy/.env</code> and run <code>dc up -d</code>: the server restarts in seconds and apps
 reconnect. The per-minute and per-day counters are in memory, so a restart starts them afresh.
 Each extra bit of proof-of-work doubles a signup&#39;s cost; the descriptor tells apps the new value
@@ -292,7 +295,7 @@ at once.</p>
 prints it on its first line (the token is shown once); <code>rim-relay invite list</code> shows each live
 link&#39;s use count and <code>rim-relay invite revoke &lt;id&gt;</code> ends one. For one person,
 <code>rim-relay invite create --email &lt;their address&gt; --public-url https://&lt;domain&gt;</code> gives a
-single-use link that admits only a password signup with that address.</p>
+single-use link bound to that address: the account it signs up gets that address.</p>
 <h2 id="monitoring">Monitoring <a class="anchor" href="#monitoring" aria-label="Link to this section">#</a></h2>
 <p>Logs are JSON on stdout (<code>dc logs rim</code>); audit events (<code>&quot;target&quot;:&quot;audit&quot;</code>) also go to
 <code>/data/audit.log</code>. The database answers what logs do not. Alert thresholds are <strong>FILL</strong> until a
@@ -347,7 +350,7 @@ month of normal traffic shows the baseline.</p>
 </tr>
 <tr>
 <td>Blocked principals knocking</td>
-<td>audit <code>relay.blocked_principal_refused</code></td>
+<td>audit <code>relay.blocked_principal_refused</code> and <code>blocked_email_refused</code></td>
 <td><strong>FILL</strong></td>
 </tr>
 <tr>
@@ -368,7 +371,7 @@ ORDER BY rows DESC;
 SQL</code></pre>
 <p>Per-status counts of every client request come from the proxy. Caddy keeps no access log by
 default, since it would hold users&#39; IP addresses; during an incident add <code>log</code> to the site block
-of <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/deploy/Caddyfile.relay"><code>deploy/Caddyfile.relay</code></a>, <code>dc restart caddy</code>, and remove it afterwards.</p>
+of <a href="https://github.com/rim-platform/rim-server/blob/769aebc96b537242ae9303ea5c155659de01ffa7/deploy/Caddyfile.relay"><code>deploy/Caddyfile.relay</code></a>, <code>dc restart caddy</code>, and remove it afterwards.</p>
 <h2 id="incidents">Incidents <a class="anchor" href="#incidents" aria-label="Link to this section">#</a></h2>
 <p>Record each incident: start, what was seen, what was done, end (<strong>FILL</strong>: where the record
 goes).</p>
@@ -378,15 +381,27 @@ goes).</p>
 <li>Find the senders:
 <code>rim-sql -c &quot;SELECT from_principal_id, count(*) FROM relay_dm_request WHERE created_at &gt; now() - interval '1 hour' GROUP BY 1 ORDER BY 2 DESC LIMIT 20&quot;</code>
 and <code>rim-relay abuse-reports list --open</code>.</li>
+<li>Look at each: <code>rim-relay principal show &lt;principalId&gt;</code> prints the account, who invited it,
+the accounts its invites created and the reports naming it.</li>
 <li>Block each: <code>rim-relay principal block &lt;principalId&gt; --reason &quot;spam wave &lt;date&gt;&quot;</code>. Their
-sessions end, their pending requests are ignored for everyone here, and their signups,
-logins and deliveries are refused from then on. Resolve the reports that named them.</li>
+sessions end, their invites that have uses left are revoked, their email can neither sign
+up nor sign in, their pending requests are ignored for everyone here, and their signups,
+logins and deliveries are refused from then on. The command prints the accounts the
+blocked one&#39;s invites created (username, principal id, created at).</li>
+<li>When those accounts are part of the wave, block them all at once:
+<code>rim-relay principal block &lt;principalId&gt; --reason &quot;spam wave &lt;date&gt;&quot; --cascade</code> blocks the
+account and every account its invites created, recursively, in one transaction, each with
+the reason followed by &quot;(invited by &lt;username&gt;)&quot;. When the wave came in through an invite,
+cascade from the account that gave it out. Accounts without a key identity (<code>no key identity</code> in the output) are reached only this way. Resolve the reports that named them.</li>
 <li>Make the next account dearer: raise <code>RIM_REGISTRATION_POW_BITS</code> by 2 (four times the work)
 and, if the spam goes to people here, lower <code>RIM_RELAY_DM_REQUESTS_PER_DAY</code>; <code>dc up -d</code>.</li>
 <li>When the senders are on another server, block that server (next section) and write to its
 operator (its discovery document names its origin: <code>rim-sql -c &quot;SELECT origin FROM peer_server WHERE server_id = '&lt;id&gt;'&quot;</code>).</li>
 <li>Lower the settings again a day after the wave ends.</li>
 </ol>
+<p><code>rim-relay principal unblock &lt;principalId&gt;</code> lifts a block and its email block after a review.
+It does not bring back the sessions or the invites the block ended, and it lifts one account:
+unblock each account a cascade blocked.</p>
 <h3 id="a-hostile-peer">A hostile peer <a class="anchor" href="#a-hostile-peer" aria-label="Link to this section">#</a></h3>
 <p>Signs: one <code>peer_server_id</code> in many signature refusals, replays or rate limits; deliveries
 refused as <code>invalid_envelope</code>; reports naming one server.</p>
@@ -422,10 +437,11 @@ receive what peers delivered for its users; never sign as a user or read their D
 it stopped. <strong>FILL</strong>: the channel for such notices.</li>
 </ol>
 <h3 id="a-database-leak">A database leak <a class="anchor" href="#a-database-leak" aria-label="Link to this section">#</a></h3>
-<p>What a dump holds: accounts, key logs, devices and cards (public anyway), session token hashes,
-password hashes of the few password accounts, contacts, DM requests and their senders&#39; cards,
-queued host events (plaintext channel events are readable, DMs are MLS-encrypted), abuse
-reports. No private key: the server and franking keys are files in <code>/data</code>.</p>
+<p>What a dump holds: accounts and who invited them, key logs, devices and cards (public anyway),
+session token hashes, password hashes of the few password accounts, contacts, DM requests and
+their senders&#39; cards, queued host events (plaintext channel events are readable, DMs are
+MLS-encrypted), abuse reports, blocked emails. No private key: the server and franking keys are
+files in <code>/data</code>.</p>
 <ol>
 <li>End every session: <code>rim-sql -c 'UPDATE session SET revoked_at = now() WHERE revoked_at IS NULL'</code>.</li>
 <li>Rotate <code>POSTGRES_PASSWORD</code> as above, and find and close the way out.</li>
@@ -459,18 +475,27 @@ rim-relay abuse-reports resolve &lt;report id&gt;</code></pre>
 <h2 id="command-reference">Command reference <a class="anchor" href="#command-reference" aria-label="Link to this section">#</a></h2>
 <pre><code class="language-sh">rim-relay server-key show | rotate | recover --recovery-key-file F [--new-recovery-key]
 rim-relay franking-key show | rotate
-rim-relay principal block &lt;principalId&gt; --reason &lt;text&gt; | unblock &lt;principalId&gt; | list
+rim-relay principal block &lt;principalId&gt; --reason &lt;text&gt; [--cascade] | unblock &lt;principalId&gt; | show &lt;principalId&gt; | list
 rim-relay peer block &lt;serverId&gt; | unblock &lt;serverId&gt; | reset &lt;serverId&gt;
 rim-relay abuse-reports list [--open] | add [--principal P] [--server S] --reason &lt;text&gt; | resolve &lt;id&gt;
 rim-relay invite create [--email A] [--max-uses N] [--expires-in-days D] [--public-url https://&lt;domain&gt;] | list | revoke &lt;id&gt;
 rim-relay audit purge [--dry-run] [--older-than-days N]
-rim-relay ip block &lt;cidr&gt; --reason &lt;text&gt; [--expires-in-days D] | unblock &lt;cidr&gt; | list</code></pre>
-<p>Every one is audited (<code>target</code> <code>audit</code>): <code>relay.principal_blocked</code> (<code>scope</code> <code>server</code>),
+rim-relay ip block &lt;cidr&gt; --reason &lt;text&gt; [--expires-in-days D] | unblock &lt;cidr&gt; | list
+rim-relay operator grant &lt;username&gt; | revoke &lt;username&gt; | list</code></pre>
+<p><code>operator grant</code> makes an account an instance operator: it reads the abuse reports, principal
+blocks and IP blocks in the app and changes them as the <code>abuse-reports</code>, <code>principal</code> and <code>ip</code>
+commands do (<a href="../api.html"><code>docs/api.md</code></a>, &quot;Instance moderation&quot;). A blocked account or one scheduled for
+deletion cannot be granted the role; <code>operator revoke</code> takes it back and <code>operator list</code> prints
+the operators.</p>
+<p>Every one is audited (<code>target</code> <code>audit</code>): <code>relay.principal_blocked</code> (<code>scope</code> <code>server</code>, one per
+account a block reaches, <code>cascade</code> true for those after the first),
 <code>relay.principal_unblocked</code>, <code>s2s.peer_blocked</code>, <code>s2s.peer_unblocked</code>, <code>s2s.peer_reset</code>,
 <code>relay.abuse_report_filed</code>, <code>relay.abuse_report_resolved</code>, <code>server_key.rotated</code>,
 <code>server_key.recovered</code>, <code>instance_invite_issued</code>,
 <code>instance_invite_revoked</code> (<code>issued_by</code> or <code>actor</code> <code>operator</code>), <code>ip.block</code> and <code>ip.unblock</code>
-(<code>scope</code> <code>server</code>, with the <code>cidr</code>). <code>audit purge</code> writes
+(<code>scope</code> <code>server</code>, with the <code>cidr</code>), <code>operator.granted</code> and <code>operator.revoked</code> (<code>scope</code>
+<code>server</code>, with the <code>user_id</code>). The principal, report and IP lines carry <code>actor_id</code>: <code>cli</code> for
+the command line, the operator&#39;s user id for a change made in the app. <code>audit purge</code> writes
 <code>audit.retention.purged</code> (<code>trigger</code> <code>cli</code>), the same event the daily purge writes; the purge, its
 export files and the logrotate setup for <code>/data/audit.log</code> are in
 <a href="audit-retention.html"><code>docs/operations/audit-retention.md</code></a>.</p>
@@ -478,7 +503,7 @@ export files and the logrotate setup for <code>/data/audit.log</code> are in
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/docs/operations/relay-public.md">rim-server/docs/operations/relay-public.md</a> at <code>c86029b</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/769aebc96b537242ae9303ea5c155659de01ffa7/docs/operations/relay-public.md">rim-server/docs/operations/relay-public.md</a> at <code>769aebc</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

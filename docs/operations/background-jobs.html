@@ -120,12 +120,30 @@ purges are idempotent, so a second run finds nothing left to do.</p>
 <td>none</td>
 <td>Deletes workspace state entries whose time to live ran out. Logs the count and adds it to <code>rim_workspace_state_purged_total</code>.</td>
 </tr>
+<tr>
+<td>Conversation invitation expiry</td>
+<td>hourly, first 5 minutes after boot</td>
+<td>none</td>
+<td>Deletes pending invitations to encrypted conversations not accepted within 30 days. Logs the count and adds it to <code>rim_conversation_invites_expired_total</code>.</td>
+</tr>
+<tr>
+<td>WebSocket session recheck</td>
+<td><code>RIM_WS_SESSION_RECHECK_SECS</code> (default 30), first one interval after boot</td>
+<td><code>RIM_WS_SESSION_RECHECK_SECS</code>; 0 turns it off</td>
+<td>Reads the sessions of this process&#39;s open WebSocket connections, one query per 500 sessions, and closes with <code>4401</code> the connections whose session is revoked, expired or gone: those ended in another process, from the command line or in the database. A read that fails is logged and closes nothing.</td>
+</tr>
+<tr>
+<td>Account purge</td>
+<td>hourly, first 5 minutes after boot</td>
+<td><code>RIM_ACCOUNT_DELETION_GRACE_DAYS</code> (default 14, 0 to 30) sets when a requested deletion is due</td>
+<td>Purges the accounts whose deletion grace period ended, each in its own transaction, at most 100 a run: cancels their subscriptions at other servers, deletes what they own and leaves a tombstone row. Writes an <code>account.purged</code> audit line with the counts per account; an account whose purge fails is logged and tried again next run. <code>rim_server account purge [--dry-run]</code> runs it once.</td>
+</tr>
 </tbody></table></div>
 
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/docs/operations/background-jobs.md">rim-server/docs/operations/background-jobs.md</a> at <code>c86029b</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/769aebc96b537242ae9303ea5c155659de01ffa7/docs/operations/background-jobs.md">rim-server/docs/operations/background-jobs.md</a> at <code>769aebc</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

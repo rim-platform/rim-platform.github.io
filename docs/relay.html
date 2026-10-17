@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>The relay · RIM</title>
-<meta name="description" content="A relay is the server a person's app talks to. It keeps their account, devices and profile card, queues what other servers send them, files conversations from strangers in a request inbox, and forwards their requests to …">
+<meta name="description" content="A relay is the server a person's app talks to. It keeps their account, devices and profile card, queues what other servers send them, files the conversations their DM settings take as requests in a request inbox, and …">
 <link rel="icon" href="../favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
@@ -41,12 +41,13 @@
     <main id="content" class="prose">
 <h1 id="the-relay">The relay</h1>
 <p>A relay is the server a person&#39;s app talks to. It keeps their account, devices and profile card,
-queues what other servers send them, files conversations from strangers in a request inbox, and
+queues what other servers send them, files the conversations their DM settings take as requests
+in a request inbox, and
 forwards their requests to the servers that host the spaces they use. Every server is the relay of
 its local users unless it runs with <code>RIM_ROLE=host</code>. This page explains what a relay and a host
 do, for operators and for client authors. The contract is <a href="../specs/server-to-server-v1.html"><code>docs/specs/server-to-server-v1.md</code></a>;
 the server&#39;s key, id and transport settings are in <a href="server-identity.html"><code>docs/server-identity.md</code></a>; deploying a public
-relay is <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/deploy/README.md"><code>deploy/README.md</code></a> and running one is <a href="operations/relay-public.html"><code>docs/operations/relay-public.md</code></a>.</p>
+relay is <a href="https://github.com/rim-platform/rim-server/blob/769aebc96b537242ae9303ea5c155659de01ffa7/deploy/README.md"><code>deploy/README.md</code></a> and running one is <a href="operations/relay-public.html"><code>docs/operations/relay-public.md</code></a>.</p>
 <p>Nothing here runs until server-to-server traffic is on (<code>RIM_PUBLIC_BASE_URL</code> is an <code>https</code> URL).
 Before that, a server is the relay and host of its own users only, as it always was.</p>
 <h2 id="for-operators">For operators <a class="anchor" href="#for-operators" aria-label="Link to this section">#</a></h2>
@@ -164,15 +165,20 @@ a <code>QueueOverflow</code> notice; a device offline at the time sees the gap i
 pulls what a host still holds for it (<code>GET /s2s/v1/outbox</code>) every minute, so a delivery missed
 while the relay was down arrives on the next pull.</p>
 <h3 id="the-request-inbox">The request inbox <a class="anchor" href="#the-request-inbox" aria-label="Link to this section">#</a></h3>
-<p>A relay files a conversation as a DM request when its invite (<code>DmInvite</code>) comes from someone who
-is not the recipient&#39;s contact, was never accepted by them and shares no workspace this server
-hosts with them. The request keeps the sender&#39;s card
-and holds up to three items of the conversation; later ones are dropped until it is accepted.
-Conversations from contacts are recorded as accepted at once. Items of a conversation the relay
-has no invite for are refused (<code>not_subscribed</code>), so a host cannot skip the inbox.</p>
+<p>A relay files a conversation&#39;s invite (<code>DmInvite</code>) by the recipient&#39;s effective DM setting, the
+three layers of <a href="messaging.html"><code>docs/messaging.md</code></a> (&quot;Who May Start A DM&quot;): the operator&#39;s <code>RIM_DM_INBOUND</code>, then
+the floors of the recipient&#39;s workspaces, then the recipient&#39;s choice, with fellow members of a
+workspace hosted here judged by the recipient&#39;s choice for that workspace (or its default) and
+delivered when they are its Owner or a Moderator. What the setting delivers is recorded as
+accepted at once; what it takes as a request is filed as a DM request; what it refuses is
+answered <code>blocked</code>. A request keeps the sender&#39;s card and holds up to three items of the
+conversation; later ones are dropped until it is accepted. Items of a conversation the relay has
+no invite for are refused (<code>not_subscribed</code>), so a host cannot skip the inbox. A decided
+conversation keeps its decision when the settings change later.</p>
 <p>The same rule covers conversations of this server&#39;s own direct space whose creator is someone
-else: a person from another relay creating a DM with a local user through the forward path, or a
-local stranger. The server files its own invite for the local member; until they accept, the
+else (a person from another relay creating a DM with a local user through the forward path, or a
+local user), and DMs between members of a workspace this server hosts. The server files its own
+invite for the local member; until they accept, the
 conversation is left out of their <code>inboxConversations</code>, its events out of their
 <code>workspaceEvents</code>, and its notifications, mentions and unread counts out of the notification
 list, the bell, <code>unreadCounts</code> and the email digest; its first events are held with
@@ -211,6 +217,13 @@ once.</p>
 principal per day on this relay; past them invites are refused as <code>limited</code>. A claim of a local user&#39;s key packages by a stranger
 (not a contact, never accepted, sharing no workspace here) gets last-resort packages only, at
 most 20 claims per stranger per day.</p>
+<p>With <code>RIM_DM_INBOUND=partners</code> the identity endpoint (<code>GET /s2s/v1/principals/&lt;id&gt;</code>) answers
+only the servers <code>RIM_DM_PARTNERS</code> lists, and with <code>none</code> no server; everyone else gets <code>404</code> as
+for an unknown principal, so a leaked directory reaches nobody. Key package claims from those
+servers are refused (<code>403</code>). A server where the person holds an active subscription to a
+workspace is answered either way: they joined it. Outbound, <code>RIM_DM_OUTBOUND</code> decides which
+servers a local user may start a DM with, claim key packages from, and have direct-space events
+sent to (<a href="messaging.html"><code>docs/messaging.md</code></a>).</p>
 <h3 id="forwarded-requests">Forwarded requests <a class="anchor" href="#forwarded-requests" aria-label="Link to this section">#</a></h3>
 <p>A local user&#39;s app reaches a space hosted elsewhere at <code>/api/remote/&lt;hostServerId&gt;/&lt;path&gt;</code> with
 its session cookie (and <code>X-CSRF-Token</code> for <code>POST</code>), a device-signed request statement in
@@ -269,11 +282,11 @@ subscriptions lapsed. Every 5 seconds it sends revocations due for another attem
 (target <code>audit</code>, ids only): <code>relay.principal_blocked</code> (<code>scope</code> <code>user</code> for a user&#39;s block,
 <code>server</code> for an operator&#39;s), <code>relay.principal_unblocked</code>, <code>relay.blocked_principal_refused</code>,
 <code>relay.dm_request_reported</code>, <code>relay.abuse_report_filed</code>, <code>relay.abuse_report_resolved</code>,
-<code>relay.registration_pow</code>, <code>relay.left</code>, <code>key_identity_adopted</code> and <code>host.revocation_applied</code>; <code>host.remote_join</code> and
+<code>blocked_email_refused</code> (<code>action</code> <code>signup</code> or <code>login</code>), <code>relay.registration_pow</code>, <code>relay.left</code>, <code>key_identity_adopted</code> and <code>host.revocation_applied</code>; <code>host.remote_join</code> and
 <code>host.delegation_accepted</code> are also written to <code>command_audit_log</code> (initiator <code>s2s</code>).</p>
 <h3 id="the-public-relay">The public relay <a class="anchor" href="#the-public-relay" aria-label="Link to this section">#</a></h3>
 <p>A relay anyone may sign up on runs <code>RIM_ROLE=relay</code> with the settings of
-<a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a> on top of <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/deploy/compose.yml"><code>deploy/compose.yml</code></a>. This section says how its
+<a href="https://github.com/rim-platform/rim-server/blob/769aebc96b537242ae9303ea5c155659de01ffa7/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a> on top of <a href="https://github.com/rim-platform/rim-server/blob/769aebc96b537242ae9303ea5c155659de01ffa7/deploy/compose.yml"><code>deploy/compose.yml</code></a>. This section says how its
 registration and blocks behave; <a href="operations/relay-public.html"><code>docs/operations/relay-public.md</code></a> has its quotas, the operator&#39;s
 commands and the abuse policy.</p>
 <p><strong>Registration.</strong> <code>RIM_REGISTRATION_POW_BITS</code> (1 to 40; 24 on the public relay) turns on <code>pow</code>
@@ -295,6 +308,16 @@ and ignores its pending DM requests for every recipient. From then on, until <co
 refused as <code>unknown_principal</code> and its invites as <code>blocked</code>; its key packages are not handed
 out, and it claims none; <code>GET /s2s/v1/principals/&lt;id&gt;</code> answers <code>404</code>; forwarded requests it
 signs are refused with <code>403</code>. <code>principal list</code> shows the blocks.</p>
+<p>In the same transaction the command revokes the account&#39;s instance and workspace invites that
+still have uses left, adds its email (if it has one) to <code>blocked_email</code>, which refuses that
+address at signup (<code>VALIDATION</code>, &quot;this email cannot sign up here&quot;) and at password login
+(<code>FORBIDDEN</code>), and records the reason as an abuse report, resolved by the block. Every account
+records the invite it signed up with and that invite&#39;s creator, so the command then lists the
+accounts the blocked one&#39;s invites created; <code>--cascade</code> blocks them too, recursively, each with
+the reason followed by &quot;(invited by &lt;username&gt;)&quot;. An account without a key identity is blocked
+by its email alone. <code>principal show &lt;principalId&gt;</code> prints the account, its inviter, the tree of
+accounts its invites created, its invites, its open reports and its block. <code>principal unblock</code>
+lifts the principal&#39;s block and its email&#39;s, not the sessions or invites that ended.</p>
 <p><strong>Blocking a peer.</strong> <code>rim_server peer block &lt;serverId&gt;</code> sets the pinned peer&#39;s status to
 <code>blocked</code>, which the request check reads on every request: its requests get
 <code>403 peer_not_allowed</code> and nothing is sent to it. <code>peer unblock</code> makes it <code>active</code> again. A
@@ -312,15 +335,17 @@ this server or fetched from <code>relayUrl</code> and cached for 24 hours. Verif
 principal id, each certificate against the log and the card against the head.</li>
 <li><code>contacts</code>, <code>addContact(principalId, relayUrls)</code>, <code>removeContact(principalId)</code>: the contact list
 the request inbox filters by. Relay URLs are 1 to 8 of 1 to 256 bytes of printable ASCII
-without <code>?</code>, <code>#</code> or <code>@</code>.</li>
+without <code>?</code>, <code>#</code> or <code>@</code>. The caller&#39;s own principal is refused (<code>VALIDATION</code>, &quot;cannot add
+yourself as a contact&quot;).</li>
 <li><code>createConversation(input: { serverId: &lt;directSpaceId&gt;, remoteMembers: [{ principalId, relayUrls }], encrypted })</code> starts a DM (one remote member, no <code>otherUserId</code> or <code>memberIds</code>) or a
 group with people on other servers; people on this relay may be named the same way. A
 conversation with someone on another relay must be <code>encrypted</code> (otherwise <code>VALIDATION</code>,
 &quot;conversations with people on other servers are encrypted&quot;), and
 every member needs an MLS-active device. Any
 <code>memberIds</code>, or more than one remote member, makes a group. The caller needs a published profile
-card: their relays show it in the request inbox. <code>predecessor: { hostServerId, conversationId }</code>
-records the conversation a successor replaces, and <code>Conversation.predecessor</code> returns it.</li>
+card: their relays show it in the request inbox. Remote members that name nobody but the caller
+are refused (<code>VALIDATION</code>, &quot;cannot create DM with yourself&quot;). <code>predecessor: { hostServerId, conversationId }</code> records the conversation a successor replaces, and <code>Conversation.predecessor</code>
+returns it.</li>
 <li>On a relay in <code>pow</code> registration mode (<code>registrationMode</code> is <code>POW</code>; the difficulty is the
 discovery document&#39;s <code>registration.powBits</code>), <code>signupWithKey</code> takes <code>proofOfWork</code>: count from
 0, hash as in &quot;The public relay&quot; with the counter as the 8-byte big-endian nonce, and send the
@@ -399,7 +424,7 @@ mutations are refused on it (<code>FORBIDDEN</code>), as through the relay.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/docs/relay.md">rim-server/docs/relay.md</a> at <code>c86029b</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/769aebc96b537242ae9303ea5c155659de01ffa7/docs/relay.md">rim-server/docs/relay.md</a> at <code>769aebc</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

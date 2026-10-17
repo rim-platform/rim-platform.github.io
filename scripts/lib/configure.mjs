@@ -23,13 +23,13 @@ const GROUPS = [
   },
   {
     title: "Signups and sessions",
-    intro: "Who may sign up and how long a session lasts. The default is invite-only; invites come from the command line.",
-    names: ["RIM_OPEN_REGISTRATION", "RIM_REGISTRATION_POW_BITS", "RIM_SESSION_TTL_DAYS", "RIM_TERMS_URL"],
+    intro: "Who may sign up and how, the names nobody may take, the probation of new accounts, how long a session lasts and how long a deleted account waits before its purge. The default is invite-only; invites come from the command line.",
+    names: ["RIM_OPEN_REGISTRATION", "RIM_REGISTRATION_POW_BITS", "RIM_SIGNUP_REQUIRE_KEYS", "RIM_RESERVED_NAMES", "RIM_PROBATION_HOURS", "RIM_SESSION_TTL_DAYS", "RIM_TERMS_URL", "RIM_ACCOUNT_DELETION_GRACE_DAYS"],
   },
   {
     title: "Roles and federation",
-    intro: "Whether the server is a relay, a host or both, which servers it talks to, and the per-user quotas of a relay.",
-    names: ["RIM_ROLE", "RIM_HOST_ALLOWED_RELAYS"],
+    intro: "Whether the server is a relay, a host or both, which servers it talks to, who outside a shared workspace may start a DM, and the per-user quotas of a relay.",
+    names: ["RIM_ROLE", "RIM_HOST_ALLOWED_RELAYS", "RIM_DM_INBOUND", "RIM_DM_OUTBOUND", "RIM_DM_PARTNERS"],
     prefixes: ["RIM_S2S_", "RIM_RELAY_"],
   },
   {
@@ -40,14 +40,20 @@ const GROUPS = [
   },
   {
     title: "Operations",
-    intro: "Metrics, the audit log, features switched off on this instance, logging and the notice shown to people.",
-    names: ["RIM_METRICS_ADDR", "RIM_AUDIT_LOG_PATH", "RIM_AUDIT_RETENTION_DAYS", "RIM_FEATURES_DISABLED", "RUST_LOG", "RIM_ENABLE_GRAPHIQL", "RIM_INSTANCE_NOTICE"],
+    intro: "Metrics, the audit log, features switched off on this instance, logging, the notice shown to people, and how many link preview fetches and password hashes run at once.",
+    names: ["RIM_METRICS_ADDR", "RIM_AUDIT_LOG_PATH", "RIM_AUDIT_RETENTION_DAYS", "RIM_FEATURES_DISABLED", "RUST_LOG", "RIM_ENABLE_GRAPHIQL", "RIM_INSTANCE_NOTICE", "RIM_LINK_PREVIEW_CONCURRENCY", "RIM_PASSWORD_HASH_CONCURRENCY"],
   },
   {
     title: "Limits and rate limits",
-    intro: "Request, mutation, message and connection limits of the API. Each is off until set.",
-    names: ["RIM_API_MAX_BATCH"],
+    intro: "Request, mutation, message and connection limits of the API, and how often open WebSocket connections recheck their session. Each rate limit is off until set.",
+    names: ["RIM_API_MAX_BATCH", "RIM_WS_SESSION_RECHECK_SECS"],
     prefixes: ["RIM_RATE_"],
+  },
+  {
+    title: "Instance limits",
+    intro: "How much of each thing the instance holds. Each is off until set, except the pending invitations to encrypted conversations; past one a write answers VALIDATION naming the cap, and clients read them from serverInfo.limits.",
+    names: [],
+    prefixes: ["RIM_LIMIT_"],
   },
 ];
 
@@ -149,13 +155,18 @@ function parseSetDefaults(src, consts) {
   return out;
 }
 
-/** A default stated in prose: "Default 600.", "Defaults to 587 …", "`both` (default)". */
-function docDefault(doc) {
+/**
+ * A default stated in prose: "Default 600.", "…; default 8.", "Defaults to 587 …", "`both`
+ * (default)", "`requests` (default: …)", "unset is `true`", "unset is [`CONST`]".
+ */
+function docDefault(doc, consts) {
   const text = doc.replace(/\n/g, " ");
-  let m = text.match(/\bDefaults?(?: to| and most|:)?\s+(`[^`]+`|[^.;(]+?)(?=\s*[.;(]|\s+when\b|$)/);
-  if (m) return m[1].replace(/`/g, "").replace(/^"|"$/g, "").trim();
-  m = text.match(/`"?([^`"]+)"?`\s*\(default\)/);
+  let m = text.match(/(?:\bDefaults?|[;,]\s+defaults?)(?: to| and most|:)?\s+(`[^`]+`|[^.;(]+?)(?=\s*[.;(]|\s+when\b|$)/);
+  if (m && !m[1].startsWith("[")) return m[1].replace(/`/g, "").replace(/^"|"$/g, "").trim();
+  m = text.match(/`"?([^`"]+)"?`\s*\(default[):]/);
   if (m) return m[1];
+  m = text.match(/\b[Uu]nset is\s+(?:\[`(?:RIMConfig::)?(\w+)`\]|`([^`]+)`)/);
+  if (m) return m[1] ? rustValue(m[1], consts) : m[2];
   m = text.match(/driver's default of (\w+)/);
   if (m) return m[1];
   return null;
@@ -277,8 +288,8 @@ export function readConfig(server) {
     const fallbackDefault = accessorDefault(src, f.field);
     v.default =
       setDefaults.get(f.field) ??
-      docDefault(doc) ??
-      (fn ? docDefault(fn.summary) : null) ??
+      docDefault(doc, consts) ??
+      (fn ? docDefault(fn.summary, consts) : null) ??
       (fallbackDefault && /^[\d_]+$/.test(fallbackDefault) ? rustValue(fallbackDefault, consts) : null) ??
       (/\bbool\b/.test(f.type) ? "false" : null);
     v.unset = unsetMeaning(doc) ?? (fn ? unsetMeaning(fn.summary) : null);

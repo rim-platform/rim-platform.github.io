@@ -37,9 +37,10 @@
 <li><a href="#product-terms">Product Terms</a></li>
 <li><a href="#conversation-types">Conversation Types</a></li>
 <li><a href="#channel-visibility-and-membership">Channel Visibility And Membership</a></li>
+<li><a href="#who-may-start-a-dm">Who May Start A DM</a></li>
 <li><a href="#archived-channels">Archived Channels</a></li>
 <li><a href="#roles-and-moderation">Roles And Moderation</a><ol><li><a href="#roles">Roles</a></li><li><a href="#guest-restrictions-enforced-in-the-services">Guest restrictions (enforced in the services)</a></li><li><a href="#kick-ban-timeout">Kick, ban, timeout</a></li><li><a href="#slow-mode">Slow mode</a></li><li><a href="#deleting-messages">Deleting messages</a></li><li><a href="#reports">Reports</a></li><li><a href="#audit">Audit</a></li><li><a href="#realtime-events">Realtime events</a></li></ol></li>
-<li><a href="#notification-rules">Notification Rules</a><ol><li><a href="#settings">Settings</a></li><li><a href="#the-decision-per-member-except-the-author">The decision, per member except the author</a></li><li><a href="#inbox">Inbox</a></li><li><a href="#notificationdue-event">NotificationDue event</a></li></ol></li>
+<li><a href="#notification-rules">Notification Rules</a><ol><li><a href="#settings">Settings</a></li><li><a href="#the-decision-per-member-except-the-author">The decision, per member except the author</a></li><li><a href="#reactions">Reactions</a></li><li><a href="#inbox">Inbox</a></li><li><a href="#notificationdue-event">NotificationDue event</a></li></ol></li>
 <li><a href="#titles">Titles</a></li>
 <li><a href="#timeline-and-threads">Timeline And Threads</a></li>
 <li><a href="#reply-semantics">Reply Semantics</a></li>
@@ -104,6 +105,76 @@ private and archived channels are not joined.</li>
 member of: joined public channels, private channels, DMs and groups. A public channel the user
 can read but has not joined carries no unread badge; after joining, messages count from the
 join time.</li>
+</ul>
+<h2 id="who-may-start-a-dm">Who May Start A DM <a class="anchor" href="#who-may-start-a-dm" aria-label="Link to this section">#</a></h2>
+<p>A first DM from someone arrives directly, as a request the recipient accepts, ignores, blocks or
+reports (<code>dmRequests</code>, see &quot;The request inbox&quot; in <a href="relay.html"><code>docs/relay.md</code></a>), or not at all. Three layers
+decide, and each may only tighten the one above it:</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>Set by</th>
+<th>People outside the recipient&#39;s workspaces</th>
+<th>Fellow members of a workspace</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Server</td>
+<td>The operator: <code>RIM_DM_INBOUND</code>, <code>RIM_DM_OUTBOUND</code>, <code>RIM_DM_PARTNERS</code> (read-only in <code>serverInfo.dmInbound</code>, <code>dmOutbound</code>, <code>dmPartners</code>)</td>
+<td>Inbound <code>OPEN</code>, <code>REQUESTS</code> (default), <code>PARTNERS</code> (people on the listed servers and on this one) or <code>NONE</code>; outbound <code>ALLOWED</code> (default), <code>PARTNERS</code> or <code>NONE</code></td>
+<td>Not the server&#39;s matter</td>
+</tr>
+<tr>
+<td>Workspace</td>
+<td>Its Owner: <code>setWorkspaceDmPolicy</code> (<code>Server.dmOutsideFloor</code>, <code>Server.dmMemberDefault</code>)</td>
+<td>A floor for its members: <code>NONE</code> (default, no floor), <code>REQUESTS</code> or <code>CLOSED</code></td>
+<td>A default: <code>DIRECT</code> (default) or <code>REQUESTS</code></td>
+</tr>
+<tr>
+<td>Person</td>
+<td>Each user: <code>setMyDmSettings</code>, <code>setMyWorkspaceDmSetting</code> (read in <code>myDmSettings</code>)</td>
+<td><code>REQUESTS</code> (default) or <code>NONE</code>, within the floors</td>
+<td>Per workspace <code>DIRECT</code> or <code>REQUESTS</code>, either way</td>
+</tr>
+</tbody></table></div>
+<ul>
+<li><strong>A fellow member</strong> shares a workspace hosted here with the recipient. Their DM is delivered
+when they are an Owner or Moderator of one shared workspace, when they are a contact, or when
+the recipient&#39;s choice (else the workspace&#39;s default) for one shared workspace is <code>DIRECT</code>;
+otherwise it is a request.</li>
+<li><strong>Anyone else.</strong> From another server, <code>RIM_DM_INBOUND</code> must admit their server or the DM is
+refused, contacts included: <code>PARTNERS</code> admits the listed servers, <code>NONE</code> none. Then a contact&#39;s
+DM is delivered. Otherwise the strictest of the operator&#39;s floor (<code>NONE</code> refuses strangers on
+this server too), the floors of the recipient&#39;s workspaces and the recipient&#39;s choice decides
+between a request and a refusal. <code>OPEN</code> sets no floor; with the choices a person has today it
+works as <code>REQUESTS</code>.</li>
+<li><strong>A contact</strong> is someone the recipient added (<code>addContact</code>), accepted, or messaged first:
+creating a DM records the other person as the creator&#39;s contact, so their DM back is never a
+request.</li>
+<li><strong>Outbound.</strong> A DM with someone on another server needs <code>RIM_DM_OUTBOUND</code> to admit their
+relay: <code>createConversation</code> with <code>remoteMembers</code> answers <code>FORBIDDEN</code> (&quot;this server starts no
+direct messages with that server&quot;) otherwise, before their relay is asked anything, and so do
+key package claims for their devices. With <code>NONE</code> nothing of the direct space reaches another
+server; with <code>PARTNERS</code> it goes to the listed servers only.</li>
+<li><strong>Refused here.</strong> A DM in the direct space that a recipient here refuses answers <code>FORBIDDEN</code>
+when it is started (<code>createConversation</code>, <code>addConversationMembers</code>). A refused DM from another
+server is answered as for a block, so its server stops addressing the recipient.</li>
+<li><strong>Workspace DMs.</strong> In a workspace hosted here, a DM a member whose relay is this server takes
+as a request is held in their request inbox like a DM from outside: until they accept it, it stays out of their
+<code>inboxConversations</code> and <code>workspaceEvents</code>, and its notifications and unread counts out of
+theirs. Like the request inbox it needs server-to-server traffic to be on; without it workspace
+DMs arrive directly. Groups are unchanged: their members are added by someone already in them.</li>
+<li><strong>The sender&#39;s view.</strong> <code>Conversation.dmRequestPending</code> is true for a DM whose other member,
+on this server, has not yet accepted it as a request; false once they did or when it was no
+request, null for groups and channels.</li>
+<li><strong>The settings.</strong> <code>setMyDmSettings(outside: REQUESTS)</code> under a floor that refuses DMs from
+outside answers <code>VALIDATION</code> naming it; <code>myDmSettings.effectiveOutside</code> says what applies and
+<code>outsideFloorFrom</code> where a refusing floor comes from (<code>OPERATOR</code>, or <code>WORKSPACE</code> with its id and
+name). <code>setWorkspaceDmPolicy</code> is the Owner&#39;s alone (<code>FORBIDDEN</code> for anyone else);
+<code>setMyWorkspaceDmSetting</code> needs membership of the workspace (<code>NOT_FOUND</code>). <code>Server.dmOutsideFloor</code>
+and <code>Server.dmMemberDefault</code> are null in the direct space. A person whose relay is another server
+sets their choices there; both personal mutations are refused through the forward path.</li>
 </ul>
 <h2 id="archived-channels">Archived Channels <a class="anchor" href="#archived-channels" aria-label="Link to this section">#</a></h2>
 <ul>
@@ -237,7 +308,8 @@ is <code>owner</code>, <code>moderator</code>, <code>member</code> or <code>gues
 own role changes to or from <code>guest</code> gets the matching visibility from the next event on.</li>
 </ul>
 <h2 id="notification-rules">Notification Rules <a class="anchor" href="#notification-rules" aria-label="Link to this section">#</a></h2>
-<p>The server decides, once per message, who is told about it.
+<p>The server decides, once per message, who is told about it, and tells a message&#39;s author when
+someone reacts to it.
 For every recipient it stores a notification (the inbox, the bell badge and the email digest) and
 sends that user a private <code>NotificationDue</code> event; clients only render what the server decided.
 Sound and preview stay device-local client settings.</p>
@@ -251,7 +323,9 @@ effect, else the conversation level, else the workspace default.</li>
 workspace: <code>defaultLevel</code> (default <code>ALL</code>), <code>keywords</code> (at most 20, each 2 to 40 characters after
 trimming, stored lower-cased and deduplicated), a daily do-not-disturb window <code>dnd</code>
 (<code>start</code>/<code>end</code> as <code>&quot;HH:MM&quot;</code> in an IANA <code>timezone</code>; crosses midnight when <code>end &lt; start</code>; <code>start</code>
-must differ from <code>end</code>), and <code>digest</code> (<code>OFF</code>, <code>HOURLY</code>, <code>DAILY</code>; <a href="email.html"><code>docs/email.md</code></a>).</li>
+must differ from <code>end</code>), <code>digest</code> (<code>OFF</code>, <code>HOURLY</code>, <code>DAILY</code>; <a href="email.html"><code>docs/email.md</code></a>), and
+<code>reactions</code> (default <code>true</code>: reactions to the user&#39;s messages notify them; null in
+<code>updateNotificationSettings</code> keeps the stored value).</li>
 <li><strong>Do-not-disturb pause</strong> (<code>setDoNotDisturb</code>, command <code>notifications.dnd</code>): on until turned off,
 or until an instant (<code>dndPaused</code>, <code>dndPausedUntil</code>). It is separate from the daily window and
 <code>updateNotificationSettings</code> leaves it alone.</li>
@@ -277,6 +351,24 @@ member wrote or where they replied), else <code>all</code>.</li>
 <li>Inside the do-not-disturb window (in the user&#39;s timezone) or pause the notification is still
 stored, but the event carries <code>quiet: true</code> so clients neither toast nor play a sound.</li>
 </ol>
+<h3 id="reactions">Reactions <a class="anchor" href="#reactions" aria-label="Link to this section">#</a></h3>
+<p>A reaction added to a message (<code>toggleReaction</code> that adds, not one that removes) tells its author,
+with reason <code>reaction</code>:</p>
+<ol>
+<li>Never about their own reaction or a deleted message, and only while the author is still a
+member of the conversation.</li>
+<li>A timed mute in effect, effective level <code>NONE</code>, or the <code>reactions</code> setting off yields nothing.
+<code>MENTIONS</code> and <code>ALL</code> admit it.</li>
+<li>Inside do-not-disturb it is stored and the event is <code>quiet</code>, as for messages.</li>
+<li>The author has at most one reaction notification per message. The first reaction inserts it;
+each later one replaces its emoji and reactor, marks it unread and moves its <code>createdAt</code> to
+now, so the entry surfaces again. A notification the message already has for another reason
+(a mention, say) is left as it is, and no event is sent.</li>
+<li>Best-effort, after the reaction commits: a failure is logged and never fails the reaction.</li>
+</ol>
+<p>Digest emails list messages only: reaction notifications never trigger, nor appear in, a
+digest. Reading the conversation (<code>markAsRead</code>) marks them read like any other notification of
+its messages.</p>
 <p>One message yields at most one notification per user (unique <code>(user, message)</code>). Notifications
 are created after the message commits (<code>sendMessage</code>, <code>replyToMessage</code>, and forwards into the
 target conversation) and best-effort: a failure is logged and never fails the send. Edits do not
@@ -286,7 +378,8 @@ notify again. Deleting a message deletes its unread notifications (read ones sta
 <ul>
 <li><code>myNotifications(serverId, unreadOnly, dir, cursor, limit)</code>: newest first (<code>createdAt DESC, id DESC</code>, standard cursors; <code>AFTER</code> goes to older ones). Each item has <code>reason</code>, <code>createdAt</code>,
 <code>readAt</code> and nested <code>conversation</code> / <code>message</code>, which are null once the viewer can no longer
-read the conversation.</li>
+read the conversation. A <code>REACTION</code> item also has <code>reactionEmoji</code> and <code>reactedBy</code> (the latest
+reaction); both are null for every other reason.</li>
 <li><code>myUnreadNotificationCount(serverId)</code>; <code>markNotificationsRead(serverId, ids | allBefore)</code>
 (exactly one; returns how many changed; ids of other users are ignored).</li>
 <li><code>markAsRead</code> on a conversation also marks its notifications for messages sent up to <code>readAt</code>
@@ -296,9 +389,14 @@ read, in the same transaction; <code>markAllAsRead</code> marks every notificati
 <h3 id="notificationdue-event"><code>NotificationDue</code> event <a class="anchor" href="#notificationdue-event" aria-label="Link to this section">#</a></h3>
 <pre><code class="language-json">{&quot;type&quot;: &quot;NotificationDue&quot;, &quot;workspace_id&quot;: &quot;…&quot;, &quot;user_id&quot;: &quot;…&quot;, &quot;notification_id&quot;: &quot;…&quot;,
  &quot;conversation_id&quot;: &quot;…&quot;, &quot;message_id&quot;: &quot;…&quot;, &quot;reason&quot;: &quot;mention&quot;, &quot;quiet&quot;: false}</code></pre>
-<p><code>reason</code> is <code>direct</code>, <code>mention</code>, <code>keyword</code>, <code>thread_reply</code> or <code>all</code>. The event is delivered only
-to <code>user_id</code> (the server-side scope list is <code>[user_id]</code>), guests included; it is a new variant and
-no existing event changed.</p>
+<p><code>reason</code> is <code>direct</code>, <code>mention</code>, <code>keyword</code>, <code>thread_reply</code>, <code>all</code> or <code>reaction</code>. A <code>reaction</code>
+event adds <code>reaction_emoji</code> and <code>reaction_by</code> (the reactor&#39;s user id); the two keys are absent
+from every other event:</p>
+<pre><code class="language-json">{&quot;type&quot;: &quot;NotificationDue&quot;, &quot;workspace_id&quot;: &quot;…&quot;, &quot;user_id&quot;: &quot;…&quot;, &quot;notification_id&quot;: &quot;…&quot;,
+ &quot;conversation_id&quot;: &quot;…&quot;, &quot;message_id&quot;: &quot;…&quot;, &quot;reason&quot;: &quot;reaction&quot;, &quot;quiet&quot;: false,
+ &quot;reaction_emoji&quot;: &quot;👍&quot;, &quot;reaction_by&quot;: &quot;…&quot;}</code></pre>
+<p>The event is delivered only to <code>user_id</code> (the server-side scope list is <code>[user_id]</code>), guests
+included.</p>
 <h2 id="titles">Titles <a class="anchor" href="#titles" aria-label="Link to this section">#</a></h2>
 <ul>
 <li><code>Channel</code> and <code>Group</code> conversations may have an optional <code>title</code>.</li>
@@ -381,7 +479,7 @@ requires <code>blobSha256</code>, a fixed file name and type, and the upload is 
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/docs/messaging.md">rim-server/docs/messaging.md</a> at <code>c86029b</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/769aebc96b537242ae9303ea5c155659de01ffa7/docs/messaging.md">rim-server/docs/messaging.md</a> at <code>769aebc</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

@@ -172,7 +172,7 @@ invite.</p>
 <p>A user can ask for unread notifications by email: <code>digest</code> in their workspace notification
 settings is <code>OFF</code> (default), <code>HOURLY</code> or <code>DAILY</code> (<a href="messaging.html"><code>docs/messaging.md</code></a>, Notification rules). A
 periodic job (<code>rim_infra_services::notification::DefaultNotificationJobs</code>, driven from
-<a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/rim_server/src/app.rs"><code>rim_server/src/app.rs</code></a>, every <code>RIM_NOTIFICATION_DIGEST_INTERVAL_SECS</code> seconds, default 900, minimum 60) sends one email per user per workspace when all of these hold:</p>
+<a href="https://github.com/rim-platform/rim-server/blob/769aebc96b537242ae9303ea5c155659de01ffa7/rim_server/src/app.rs"><code>rim_server/src/app.rs</code></a>, every <code>RIM_NOTIFICATION_DIGEST_INTERVAL_SECS</code> seconds, default 900, minimum 60) sends one email per user per workspace when all of these hold:</p>
 <ul>
 <li>the oldest unread, un-emailed notification is at least one interval old (hourly: 60 minutes,
 daily: 24 hours);</li>
@@ -188,7 +188,8 @@ HTML part, linked to the message permalink
 <code>/threads/{thread}</code> for a reply; no links when the base URL is unset). The subject is only
 &quot;<code>N unread notification(s) in &lt;workspace&gt;</code>&quot;, so <code>LogEmailSender</code>, which logs recipient and subject,
 never logs message text. After a successful send the listed notifications get <code>emailed_at</code>; a
-failed send leaves them pending for the next run. Deleted messages are skipped. The job assumes it
+failed send leaves them pending for the next run. Deleted messages are skipped. Reaction
+notifications are never part of a digest: they neither make one due nor appear in it. The job assumes it
 runs on one node.</p>
 <p>Notifications older than 90 days are deleted by an hourly retention task in the same loop.</p>
 <h2 id="retry-policy">Retry policy <a class="anchor" href="#retry-policy" aria-label="Link to this section">#</a></h2>
@@ -220,7 +221,7 @@ would be the path if one is wanted.</li>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/docs/email.md">rim-server/docs/email.md</a> at <code>c86029b</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/769aebc96b537242ae9303ea5c155659de01ffa7/docs/email.md">rim-server/docs/email.md</a> at <code>769aebc</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>
