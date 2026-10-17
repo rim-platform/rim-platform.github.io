@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>@rim/plugin-sdk · RIM</title>
+<title>@rim-platform/plugin-sdk · RIM</title>
 <meta name="description" content="Write a RIM plugin in TypeScript. A plugin is either a local process the RIM desktop app starts and talks to over stdio (DesktopLocalProcess), or a bundle that runs in a sandboxed frame of the app, on the desktop and on …">
 <link rel="icon" href="../../favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -30,38 +30,44 @@
       <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
     </nav>
   </header>
-  <div class="crumbs"><a href="../index.html">Docs</a><span aria-hidden="true">/</span><a href="../plugin-authors.html">Plugin authors</a><span aria-hidden="true">/</span><span>@rim/plugin-sdk</span></div>
+  <div class="crumbs"><a href="../index.html">Docs</a><span aria-hidden="true">/</span><a href="../plugin-authors.html">Plugin authors</a><span aria-hidden="true">/</span><span>@rim-platform/plugin-sdk</span></div>
   <div class="page with-toc">
     <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
 <ol>
+<li><a href="#install">Install</a></li>
 <li><a href="#requirements">Requirements</a></li>
 <li><a href="#two-transports-one-api">Two transports, one API</a></li>
 <li><a href="#a-plugin-in-one-file">A plugin in one file</a></li>
 <li><a href="#what-the-sdk-guarantees">What the SDK guarantees</a></li>
 <li><a href="#logging">Logging</a></li>
-<li><a href="#the-host">The host</a><ol><li><a href="#panels-experimental">Panels (experimental)</a></li><li><a href="#storage-experimental-websandboxed">Storage (experimental, WebSandboxed)</a></li><li><a href="#chat-experimental">Chat (experimental)</a></li></ol></li>
+<li><a href="#the-host">The host</a><ol><li><a href="#context">Context</a></li><li><a href="#panels-experimental">Panels (experimental)</a></li><li><a href="#storage-experimental-websandboxed">Storage (experimental, WebSandboxed)</a></li><li><a href="#chat-experimental">Chat (experimental)</a></li></ol></li>
 <li><a href="#testing-without-the-app">Testing without the app</a></li>
 <li><a href="#installing-a-plugin">Installing a plugin</a></li>
+<li><a href="#publishing-a-plugin">Publishing a plugin</a></li>
 <li><a href="#working-on-the-sdk">Working on the SDK</a></li>
 </ol>
 </details></aside>
     <main id="content" class="prose">
-<h1 id="rimplugin-sdk">@rim/plugin-sdk</h1>
+<h1 id="rim-platformplugin-sdk">@rim-platform/plugin-sdk</h1>
 <p>Write a RIM plugin in TypeScript. A plugin is either a local process the RIM desktop
 app starts and talks to over stdio (<code>DesktopLocalProcess</code>), or a bundle that runs in a
 sandboxed frame of the app, on the desktop and on the web, and talks over a
 <code>MessagePort</code> (<code>WebSandboxed</code>). The SDK speaks
-<a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/protocol/plugin-protocol-v1.schema.json">plugin protocol v1</a> for you over either
+<a href="https://github.com/rim-platform/rim-ui/blob/5db413c6ad9fa050b425094c71034e86d164534c/protocol/plugin-protocol-v1.schema.json">plugin protocol v1</a> for you over either
 transport: the handshake and version negotiation, heartbeats, the dangerous-command
 gate, errors and shutdown.</p>
-<p>The SDK lives in rim-ui until the protocol settles, and is not published to npm yet.
-Start from <a href="https://github.com/rim-platform/rim-ui/tree/58e3ec03c43064632a6a6f610d92413040229dfd/plugins/template-ts"><code>plugins/template-ts</code></a>, which uses it.</p>
+<p>The SDK is developed in rim-ui and published to npm from rim-ui&#39;s releases; it keeps a
+version of its own. Start from <a href="https://github.com/rim-platform/rim-ui/tree/5db413c6ad9fa050b425094c71034e86d164534c/plugins/template-ts"><code>plugins/template-ts</code></a>, which
+uses it.</p>
+<h2 id="install">Install <a class="anchor" href="#install" aria-label="Link to this section">#</a></h2>
+<pre><code class="language-sh">npm install --save-dev @rim-platform/plugin-sdk esbuild</code></pre>
+<p>The package ships JavaScript and type declarations, the in-memory test host
+(<code>@rim-platform/plugin-sdk/testing</code>) and the bundler (<code>npx rim-plugin-bundle</code>). esbuild is
+an optional peer dependency that only the bundler needs.</p>
 <h2 id="requirements">Requirements <a class="anchor" href="#requirements" aria-label="Link to this section">#</a></h2>
 <ul>
 <li>Node 22.18 or newer. It runs <code>.ts</code> files as they are, so a plugin needs no build step
-while you work on it inside rim-ui. Node does not do this for files under
-<code>node_modules</code>, so a plugin that depends on <code>@rim/plugin-sdk</code> from outside rim-ui runs
-only once bundled (see below); its tests still run with Vitest.</li>
+while you work on it: <code>node main.ts</code> runs it with the SDK from <code>node_modules</code>.</li>
 <li>esbuild, only to bundle a plugin for installing (see below).</li>
 </ul>
 <h2 id="two-transports-one-api">Two transports, one API <a class="anchor" href="#two-transports-one-api" aria-label="Link to this section">#</a></h2>
@@ -76,13 +82,13 @@ reads <code>rim-plugin.json</code> from the working directory.</li>
 <p><code>RunOptions.transport</code> overrides both. A transport is
 <code>{ messages: AsyncIterable&lt;string&gt;; send(text): void; close(): void }</code>;
 <code>stdioTransport()</code> and <code>portTransport(port)</code> are the two the SDK ships.</p>
-<p>The package has a <code>browser</code> export condition, <a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/sdk/plugin-sdk/src/index.browser.ts"><code>src/index.browser.ts</code></a>, with the same API
+<p>The package has a <code>browser</code> export condition, <code>dist/index.browser.js</code>, with the same API
 and no <code>node:</code> imports; <code>rim-plugin-bundle</code> uses it for WebSandboxed plugins. A web
 plugin gets no Node APIs and no filesystem: it reaches the network only at the origins
 its manifest lists in <code>network_origins</code>, once the user approves <code>network.fetch</code>.</p>
 <h2 id="a-plugin-in-one-file">A plugin in one file <a class="anchor" href="#a-plugin-in-one-file" aria-label="Link to this section">#</a></h2>
 <pre><code class="language-ts">#!/usr/bin/env node
-import { definePlugin, PluginError } from &quot;@rim/plugin-sdk&quot;;
+import { definePlugin, PluginError } from &quot;@rim-platform/plugin-sdk&quot;;
 
 await definePlugin({
   id: &quot;dev.example.pods&quot;, // plugin_id in rim-plugin.json
@@ -186,6 +192,45 @@ yourself.</p>
 <td>The person&#39;s messages, below.</td>
 </tr>
 </tbody></table></div>
+<h3 id="context">Context <a class="anchor" href="#context" aria-label="Link to this section">#</a></h3>
+<p>A command that acts on where the user is says so with <code>required_context</code> in
+<code>rim-plugin.json</code>, and the host adds the ids to <code>context.args</code> as strings:</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th><code>required_context</code></th>
+<th>The command runs</th>
+<th>The host adds</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>&quot;conversation&quot;</code></td>
+<td>while a conversation is open</td>
+<td><code>conversation_id</code>, and <code>thread_id</code> while a thread is open beside it</td>
+</tr>
+<tr>
+<td><code>&quot;message&quot;</code></td>
+<td>on a message, from its context menu</td>
+<td><code>message_id</code>, <code>conversation_id</code>, and <code>thread_id</code> for a thread reply</td>
+</tr>
+<tr>
+<td><code>&quot;workspace&quot;</code></td>
+<td>in a workspace</td>
+<td><code>workspace_id</code></td>
+</tr>
+</tbody></table></div>
+<pre><code class="language-json">{ &quot;id&quot;: &quot;ask&quot;, &quot;title&quot;: &quot;Polls: Ask&quot;, &quot;description&quot;: &quot;Posts a poll.&quot;, &quot;required_context&quot;: [&quot;conversation&quot;] }</code></pre>
+<pre><code class="language-ts">run: async ({ args, host }) =&gt; {
+  const conversationId = args.conversation_id as string;
+  const threadId = args.thread_id as string | undefined;
+  await host.chat.postMessage(conversationId, &quot;Lunch?&quot;, threadId ? { threadId } : {});
+},</code></pre>
+<p>Without the context the host never calls the plugin: the palette leaves the command out,
+and a keybind, a panel or the AI agent is told &quot;Open a conversation first&quot; (or &quot;Select a
+message first&quot;). The added ids replace any argument of the same name, and a manifest whose
+command requires a context and also declares an argument named like one of its ids fails to
+install. A command without <code>required_context</code> gets no ids, as before; <code>template-ts</code> and
+<code>hello-world</code> declare none.</p>
 <h3 id="panels-experimental">Panels (experimental) <a class="anchor" href="#panels-experimental" aria-label="Link to this section">#</a></h3>
 <p><code>host.panels.set(panelId, state)</code> replaces a panel&#39;s state and
 <code>host.panels.patch(panelId, partial)</code> merges top-level keys into it. Both send
@@ -217,11 +262,11 @@ Reads come from what the person&#39;s device stores. The calls need <code>&quot;
 too); otherwise they reject with <code>CAPABILITY_DENIED</code>. <code>rim.chat.*</code> is routed by both hosts
 but not frozen in v1, so the shapes may still change.</p>
 <h2 id="testing-without-the-app">Testing without the app <a class="anchor" href="#testing-without-the-app" aria-label="Link to this section">#</a></h2>
-<p><code>@rim/plugin-sdk/testing</code> runs a plugin against an in-memory host. Like the app, it
+<p><code>@rim-platform/plugin-sdk/testing</code> runs a plugin against an in-memory host. Like the app, it
 refuses <code>host.panels</code> calls with <code>CAPABILITY_DENIED</code> unless <code>grantedCapabilities</code>
 includes <code>&quot;ui.panel&quot;</code> (and <code>host.chat</code> calls without <code>&quot;chat.read&quot;</code> or <code>&quot;chat.write&quot;</code>),
 and <code>onRequest</code> answers the rest:</p>
-<pre><code class="language-ts">import { startTestHost } from &quot;@rim/plugin-sdk/testing&quot;;
+<pre><code class="language-ts">import { startTestHost } from &quot;@rim-platform/plugin-sdk/testing&quot;;
 
 const host = startTestHost(createPlugin(), { manifestPath: &quot;rim-plugin.json&quot; });
 await host.handshake();
@@ -234,10 +279,19 @@ await host.shutdown();</code></pre>
 can answer <code>rim.storage.get</code> and <code>rim.storage.set</code> to test a plugin&#39;s store, and the
 <code>rim.chat.*</code> calls, which the test host refuses with <code>CAPABILITY_DENIED</code> unless
 <code>grantedCapabilities</code> has <code>&quot;chat.read&quot;</code> (or <code>&quot;chat.write&quot;</code> for posting).</p>
+<p><code>validateManifest</code> checks a manifest by the rules the hosts install it by, and throws a
+<code>ManifestError</code> with the host&#39;s reason; <code>parseManifest</code> and <code>checkInstall</code> are its two
+halves. The web app installs by these same rules:</p>
+<pre><code class="language-ts">import { readFileSync } from &quot;node:fs&quot;;
+import { validateManifest } from &quot;@rim-platform/plugin-sdk/testing&quot;;
+
+const manifest = JSON.parse(readFileSync(&quot;rim-plugin.json&quot;, &quot;utf8&quot;));
+expect(() =&gt; validateManifest({ ...manifest, entrypoint: &quot;main.mjs&quot; })).not.toThrow();</code></pre>
 <h2 id="installing-a-plugin">Installing a plugin <a class="anchor" href="#installing-a-plugin" aria-label="Link to this section">#</a></h2>
 <p>A plugin in <code>~/.rim/plugins</code> runs from its own folder, without the SDK source or
 your <code>node_modules</code>, so bundle it into one file first:</p>
-<pre><code class="language-sh">npm run plugin:bundle -- plugins/template-ts          # in rim-ui
+<pre><code class="language-sh">npx rim-plugin-bundle .                               # in the plugin's folder
+npm run plugin:bundle -- plugins/template-ts          # or, in rim-ui
 cp -r plugins/template-ts/dist/dev.example.template-ts ~/.rim/plugins/</code></pre>
 <p>The output folder is emptied first, so the bundler refuses a folder that holds the
 plugin or has other files in it. The bundle directory holds <code>rim-plugin.json</code> (with
@@ -254,24 +308,64 @@ the <code>browser</code> condition, ES2022, no <code>#!</code> line) and fails w
 something or names a <code>node:</code> module: the frame shell loads the entry from a <code>blob:</code>
 URL, where nothing can be imported. Every file besides the manifest and <code>main.mjs</code>
 comes from <code>panels/</code>. Then enable the plugin in <strong>Settings → Plugins</strong>.</p>
+<h2 id="publishing-a-plugin">Publishing a plugin <a class="anchor" href="#publishing-a-plugin" aria-label="Link to this section">#</a></h2>
+<p>A plugin lives in a repository of its own, <code>plugin-&lt;id&gt;</code>, that holds the built plugin at
+its root beside the sources, so <strong>Install from git URL</strong> finds a complete plugin:</p>
+<pre><code class="language-text">plugin-&lt;id&gt;/
+  rim-plugin.json   # entrypoint &quot;main.mjs&quot;
+  main.mjs          # built and committed
+  panels/           # the panels, as the bundle ships them
+  src/main.ts       # the source the build starts from
+  package.json      # devDependencies: @rim-platform/plugin-sdk, esbuild</code></pre>
+<p><code>--in-place</code> builds the source <code>--entry</code> names into <code>main.mjs</code> beside the manifest, which
+must already point at <code>main.mjs</code>. <code>--check</code> builds it again into a temporary folder and
+exits 1, naming each file, when the committed <code>main.mjs</code> or <code>panels/</code> differ from that
+build, so a repository&#39;s CI catches a <code>main.mjs</code> nobody rebuilt:</p>
+<pre><code class="language-sh">npx rim-plugin-bundle --in-place --entry src/main.ts .   # after changing the source
+npx rim-plugin-bundle --check --entry src/main.ts .      # in CI</code></pre>
+<p><a href="https://github.com/rim-platform/plugin-k8s-pods"><code>plugin-k8s-pods</code></a> (a local process) and
+<a href="https://github.com/rim-platform/plugin-github-prs"><code>plugin-github-prs</code></a> (a web plugin) are
+two such repositories, with CI that runs <code>--check</code> and a release workflow that attaches the
+<code>.rimbundle</code>.</p>
+<p>The build names no absolute path and no time, so the same sources and the same SDK
+version give the same bytes on every machine; commit the lockfile so CI builds with the
+SDK the committed <code>main.mjs</code> was built with. A release is a tag; its <code>.rimbundle</code>
+(<code>npx rim-plugin-bundle --entry src/main.ts .</code>, whose <code>main.mjs</code> is the committed one
+byte for byte) can go on the release for <strong>Install from link</strong>.</p>
+<p>For a WebSandboxed plugin the desktop takes <code>rim-plugin.json</code>, the entrypoint and
+<code>panels/</code> from the checkout and ignores the rest: the sources, <a href="https://github.com/rim-platform/rim-ui/blob/5db413c6ad9fa050b425094c71034e86d164534c/package.json"><code>package.json</code></a> and the
+README stay in the checkout and never reach the plugin&#39;s frame. Those three parts follow
+the bundle rules (names starting with <code>.</code> are skipped, and any other name under <code>panels/</code>
+must be a bundle path), and signing an installed web plugin gives the same bundle hash as
+its <code>.rimbundle</code>. A local-process plugin&#39;s <a href="https://github.com/rim-platform/rim-ui/blob/5db413c6ad9fa050b425094c71034e86d164534c/package.json"><code>package.json</code></a> asks for <code>npm install</code> only when
+it lists <code>dependencies</code>, <code>optionalDependencies</code> or <code>peerDependencies</code>; a committed,
+self-contained <code>main.mjs</code> with only <code>devDependencies</code> installs without that step.</p>
 <h2 id="working-on-the-sdk">Working on the SDK <a class="anchor" href="#working-on-the-sdk" aria-label="Link to this section">#</a></h2>
 <ul>
-<li><a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/sdk/plugin-sdk/src/generated/protocol.ts"><code>src/generated/protocol.ts</code></a> is generated from the schema: run <code>npm run sdk:generate</code>
+<li><a href="https://github.com/rim-platform/rim-ui/blob/5db413c6ad9fa050b425094c71034e86d164534c/sdk/plugin-sdk/src/generated/protocol.ts"><code>src/generated/protocol.ts</code></a> is generated from the schema: run <code>npm run sdk:generate</code>
 after the schema changes. A test fails while it is stale.</li>
-<li><code>npm run sdk:typecheck</code> checks the SDK and the template with the strict settings
-plugins use (<code>erasableSyntaxOnly</code>, so Node can run the source).</li>
+<li><code>npm run sdk:build</code> builds the package into <code>dist/</code>: the JavaScript, the type
+declarations and the bundler. The plugins in rim-ui import <code>@rim-platform/plugin-sdk</code>
+as any plugin does; the npm workspace links it to this folder, so they get <code>dist/</code>,
+exactly what the package ships. <code>npm test</code> builds it first; after changing the SDK,
+rebuild before running a plugin by hand.</li>
+<li><code>npm run sdk:typecheck</code> builds it and checks the SDK and the plugins with the strict
+settings plugins use (<code>erasableSyntaxOnly</code>, so Node can run the source).</li>
+<li><code>npm run sdk:smoke</code> packs the SDK as npm would publish it, installs the tarball into a
+copy of the template outside the repository, and type-checks, tests, runs and bundles
+the copy there. <a href="release-sdk.html"><code>docs/release-sdk.md</code></a> says how a release publishes the package.</li>
 <li><code>npm test</code> runs the SDK tests, including the template over real stdio, both from
 source and bundled, and over a <code>MessageChannel</code>. The app&#39;s web host runs the
 template&#39;s browser build over a port in its own conformance test
-(<a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/src/features/plugins/web/conformance.test.ts"><code>src/features/plugins/web/conformance.test.ts</code></a>). The Rust conformance tests
-(<a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/src-tauri/src/plugin_host/protocol/conformance.rs"><code>src-tauri/src/plugin_host/protocol/conformance.rs</code></a>) run the template against the
+(<a href="https://github.com/rim-platform/rim-ui/blob/5db413c6ad9fa050b425094c71034e86d164534c/src/features/plugins/web/conformance.test.ts"><code>src/features/plugins/web/conformance.test.ts</code></a>). The Rust conformance tests
+(<a href="https://github.com/rim-platform/rim-ui/blob/5db413c6ad9fa050b425094c71034e86d164534c/src-tauri/src/plugin_host/protocol/conformance.rs"><code>src-tauri/src/plugin_host/protocol/conformance.rs</code></a>) run the template against the
 schema and through the host&#39;s own start-up and command path.</li>
 </ul>
 
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/sdk/plugin-sdk/README.md">rim-ui/sdk/plugin-sdk/README.md</a> at <code>58e3ec0</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/5db413c6ad9fa050b425094c71034e86d164534c/sdk/plugin-sdk/README.md">rim-ui/sdk/plugin-sdk/README.md</a> at <code>5db413c</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

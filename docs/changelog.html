@@ -35,7 +35,7 @@
     <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
 <ol>
 <li><a href="#how-entries-are-written">How entries are written</a></li>
-<li><a href="#unreleased">Unreleased</a><ol><li><a href="#added">Added</a></li><li><a href="#changed">Changed</a></li><li><a href="#fixed">Fixed</a></li></ol></li>
+<li><a href="#unreleased">Unreleased</a><ol><li><a href="#added">Added</a></li><li><a href="#changed">Changed</a></li><li><a href="#fixed">Fixed</a></li><li><a href="#security">Security</a></li></ol></li>
 </ol>
 </details></aside>
     <main id="content" class="prose">
@@ -54,43 +54,174 @@ not.</li>
 <li>A change the operator has to act on (a new required setting, a migration that rewrites a
 large table, a contract migration, a changed default) starts with <strong>Upgrade:</strong> and says what
 to do. <a href="operations/upgrade.html"><code>docs/operations/upgrade.md</code></a> is how an upgrade runs.</li>
-<li>A change to the GraphQL schema or a spec in <a href="https://github.com/rim-platform/rim-server/tree/c86029b35a7ef7770b05e7bda62909f988343f7f/docs/specs"><code>docs/specs/</code></a> names the type, field or spec.</li>
+<li>A change to the GraphQL schema or a spec in <a href="https://github.com/rim-platform/rim-server/tree/769aebc96b537242ae9303ea5c155659de01ffa7/docs/specs"><code>docs/specs/</code></a> names the type, field or spec.</li>
 <li>At release time <code>Unreleased</code> becomes <code>## [&lt;version&gt;] - &lt;YYYY-MM-DD&gt;</code> and a new empty
 <code>Unreleased</code> starts above it (<a href="operations/release-checklist.html"><code>docs/operations/release-checklist.md</code></a>).</li>
 </ul>
 <h2 id="unreleased"><a href="https://github.com/rim-platform/rim-server/commits/master">Unreleased</a> <a class="anchor" href="#unreleased" aria-label="Link to this section">#</a></h2>
 <h3 id="added">Added <a class="anchor" href="#added" aria-label="Link to this section">#</a></h3>
 <ul>
-<li><a href="operations/upgrade.html"><code>docs/operations/upgrade.md</code></a>: how to move a server to a new release and back.</li>
-<li>Release images: every release tag publishes <code>ghcr.io/rim-platform/rim-server:&lt;version&gt;</code>
+<li><p>Who may start a DM, in three layers where each only tightens the one above (&quot;Who May Start A
+DM&quot; in <a href="messaging.html"><code>docs/messaging.md</code></a>). The operator sets <code>RIM_DM_INBOUND</code> (<code>open</code>, <code>requests</code> by default,
+<code>partners</code>, <code>none</code>), <code>RIM_DM_OUTBOUND</code> (<code>allowed</code> by default, <code>partners</code>, <code>none</code>) and
+<code>RIM_DM_PARTNERS</code>, shown in the new <code>ServerInfo.dmInbound</code>, <code>dmOutbound</code> and <code>dmPartners</code>; a
+workspace&#39;s Owner sets a floor for DMs from outside and a default for members&#39; DMs with the new
+<code>setWorkspaceDmPolicy</code> (<code>Server.dmOutsideFloor</code>, <code>Server.dmMemberDefault</code>); each person chooses
+with the new <code>setMyDmSettings</code> and <code>setMyWorkspaceDmSetting</code>, read with <code>myDmSettings</code>
+(<code>effectiveOutside</code>, <code>outsideFloorFrom</code>). New enums <code>DmInbound</code>, <code>DmOutbound</code>,
+<code>DmOutsideFloor</code>, <code>DmMembers</code>, <code>DmOutside</code>, <code>DmFloorSourceKind</code>. A workspace DM a member takes
+as a request now goes through their request inbox. <a href="operations/closed-company-server.html"><code>docs/operations/closed-company-server.md</code></a>
+is the recipe for a server closed to DMs from outside or open to partners only.</p>
+</li>
+<li><p>GraphQL <code>Conversation.dmRequestPending</code>: for a DM, true while the other member&#39;s DM request
+for it is pending, so the sender can show that their messages wait for acceptance; null for
+groups and channels.</p>
+</li>
+<li><p>GraphQL <code>ServerInfo.signupRequiresKeys</code>: true when new accounts sign up with a key only and
+<code>signupWithInvite</code> is refused, so a client offers only the key signup.</p>
+</li>
+<li><p>Invitations to encrypted conversations: an encrypted DM or group may now include members who
+have no device ready for encryption. They are listed in the new
+<code>Conversation.pendingMemberIds</code>, see the conversation but cannot read, send or be notified,
+and join with the new <code>acceptConversationInvite</code> once a device is ready, or decline with
+<code>declineConversationInvite</code>. Invitations expire after 30 days, and
+<code>RIM_LIMIT_PENDING_INVITES_PER_USER</code> (<code>serverInfo.limits.pendingInvitesPerUser</code>, default 50)
+caps how many one user holds. Before, the server refused such members; it still refuses a
+creator who is not ready (<code>e2ee-mls-v1.md</code>).</p>
+</li>
+<li><p>Instance moderation in the app: <code>rim_server operator grant | revoke | list</code> makes an account
+an instance operator, <code>me.instanceOperator</code> says whether the caller is one, and the queries
+<code>instanceReports</code>, <code>instancePrincipalBlocks</code>, <code>instanceIpBlocks</code> and the mutations
+<code>instanceBlockPrincipal</code>, <code>instanceUnblockPrincipal</code>, <code>instanceResolveReport</code>,
+<code>instanceBlockIp</code>, <code>instanceUnblockIp</code> do what the <code>abuse-reports</code>, <code>principal</code> and <code>ip</code>
+commands do; anyone else gets <code>FORBIDDEN</code>. Their audit lines now carry <code>actor_id</code>.</p>
+</li>
+<li><p><code>LoginPayload.csrfToken</code> and <code>SignupWithInvitePayloadGql.csrfToken</code>: <code>login</code>, <code>loginWithKey</code>,
+<code>signupWithInvite</code> and <code>signupWithKey</code> return the session&#39;s CSRF token, the value of the
+<code>rim_csrf</code> cookie, so a client that cannot read that cookie (a packaged desktop app talking to
+a server on another host) can send it in <code>X-CSRF-Token</code>.</p>
+</li>
+<li><p><a href="operations/upgrade.html"><code>docs/operations/upgrade.md</code></a>: how to move a server to a new release and back.</p>
+</li>
+<li><p>Release images: every release tag publishes <code>ghcr.io/rim-platform/rim-server:&lt;version&gt;</code>
 (also <code>&lt;major&gt;.&lt;minor&gt;</code>, <code>sha-&lt;short sha&gt;</code> and <code>latest</code>), signed with cosign keyless by the
 release workflow and with an SPDX SBOM attested to it and attached to the GitHub release.
-<a href="self-hosting.html"><code>docs/self-hosting.md</code></a>, &quot;Verify the images&quot;, checks the signature.</li>
-<li>GraphQL <code>ServerInfo.auditRetentionDays</code>: the days command audit rows are kept before they are
+<a href="self-hosting.html"><code>docs/self-hosting.md</code></a>, &quot;Verify the images&quot;, checks the signature.</p>
+</li>
+<li><p>GraphQL <code>ServerInfo.auditRetentionDays</code>: the days command audit rows are kept before they are
 exported and deleted, null when they are kept forever. Readable without a session, like the
-rest of <code>serverInfo</code>.</li>
-<li>Request limits, each off unless set: <code>RIM_RATE_REQUESTS_PER_MIN_PER_IP</code> (requests to <code>/api</code>
+rest of <code>serverInfo</code>.</p>
+</li>
+<li><p>Request limits, each off unless set: <code>RIM_RATE_REQUESTS_PER_MIN_PER_IP</code> (requests to <code>/api</code>
 routes per client address, answered 429 with <code>Retry-After</code>),
 <code>RIM_RATE_MUTATIONS_PER_MIN_PER_SESSION</code>, <code>RIM_RATE_MESSAGES_PER_MIN_PER_USER</code> with
 <code>RIM_RATE_MESSAGES_BURST</code> (both answered <code>RATE_LIMITED</code>), <code>RIM_RATE_WS_CONNECTIONS_PER_USER</code>
 and <code>RIM_RATE_SUBSCRIPTIONS_PER_CONNECTION</code> (the new GraphQL error code
 <code>TOO_MANY_SUBSCRIPTIONS</code>). Refusals are counted in <code>rim_rate_limit_rejections_total</code>, and
-browsers may read <code>Retry-After</code>. <a href="api.html"><code>docs/api.md</code></a> (&quot;Limits&quot;) describes them.</li>
-<li>An IP deny list: <code>rim_server ip block &lt;cidr&gt; --reason &lt;text&gt; [--expires-in-days &lt;1-365&gt;]</code>,
+browsers may read <code>Retry-After</code>. <a href="api.html"><code>docs/api.md</code></a> (&quot;Limits&quot;) describes them.</p>
+</li>
+<li><p>An IP deny list: <code>rim_server ip block &lt;cidr&gt; --reason &lt;text&gt; [--expires-in-days &lt;1-365&gt;]</code>,
 <code>ip unblock &lt;cidr&gt;</code> and <code>ip list</code>. A blocked address or range, IPv4 or IPv6, is answered 403
 with <code>{&quot;error&quot;:&quot;blocked&quot;}</code> on every route but <code>/healthz</code>, server-to-server routes included.
 A running server picks up changes within 30 seconds; blocks are audited as <code>ip.block</code> and
 <code>ip.unblock</code> and refusals counted in <code>rim_ip_blocked_requests_total</code>. Adds the <code>ip_block</code>
-table.</li>
-<li><code>RIM_INSTANCE_NOTICE</code> and <code>RIM_TERMS_URL</code>: a short operator notice and the terms of service
+table.</p>
+</li>
+<li><p><code>RIM_INSTANCE_NOTICE</code> and <code>RIM_TERMS_URL</code>: a short operator notice and the terms of service
 URL, served as GraphQL <code>ServerInfo.instanceNotice</code> and <code>ServerInfo.termsUrl</code>. With terms set,
 <code>signupWithInvite</code> and <code>signupWithKey</code> require <code>acceptedTermsUrl</code> (a new optional field of
 <code>SignupWithInviteInput</code> and <code>SignupWithKeyInput</code>) equal to the terms URL and answer
-<code>VALIDATION</code> otherwise; the acceptance is stored on the account.</li>
+<code>VALIDATION</code> otherwise; the acceptance is stored on the account.</p>
+</li>
+<li><p>Instance limits, each off unless set: <code>RIM_LIMIT_WORKSPACES_PER_USER</code>,
+<code>RIM_LIMIT_MEMBERS_PER_WORKSPACE</code>, <code>RIM_LIMIT_CHANNELS_PER_WORKSPACE</code>,
+<code>RIM_LIMIT_DEVICES_PER_USER</code>, <code>RIM_LIMIT_DM_REQUESTS_PER_DAY</code>,
+<code>RIM_LIMIT_MACROS_PER_WORKSPACE</code>, <code>RIM_LIMIT_PIPELINES_PER_WORKSPACE</code>,
+<code>RIM_LIMIT_PLUGINS_PER_WORKSPACE</code>, <code>RIM_LIMIT_INVITES_PER_USER_PER_DAY</code>,
+<code>RIM_LIMIT_INVITE_MAX_USES</code> and <code>RIM_LIMIT_MESSAGE_BYTES</code>. Creating one more past a cap answers
+<code>VALIDATION</code> naming it. GraphQL <code>ServerInfo.limits</code> (type <code>ServerLimits</code>, one nullable <code>Int</code>
+per cap) reports them; for devices and DM requests it reports the stricter of the cap and the
+relay quota, which is what applies. <a href="api.html"><code>docs/api.md</code></a> (&quot;Limits&quot;) lists them.</p>
+</li>
+<li><p>Probation for new accounts: <code>RIM_PROBATION_HOURS</code> (off unless set) keeps an account younger
+than that from creating a workspace or sending a DM request to a stranger, answered
+<code>VALIDATION</code> naming the minutes left, and <code>RIM_RATE_PROBATION_MESSAGES_PER_MIN</code> gives it a
+lower message rate. GraphQL <code>ServerLimits.probationHours</code> reports the setting and
+<code>User.probationEndsAt</code>, read on <code>me</code>, says when the caller&#39;s probation ends.</p>
+</li>
+<li><p>GraphQL <code>transferWorkspaceOwnership(input: { serverId, userId })</code> hands a workspace to another
+member, who becomes its one owner while the caller becomes a moderator, and
+<code>deleteWorkspace(input: { serverId, confirmName })</code> (answers <code>DeleteWorkspacePayload { deleted }</code>) deletes a workspace with everything in it once its owner types its name.</p>
+</li>
+<li><p>Self-service account deletion: GraphQL <code>requestAccountDeletion(input: { confirmUsername })</code>
+(answers <code>AccountDeletionSchedule { scheduledFor }</code>), <code>cancelAccountDeletion</code> and
+<code>User.deletionScheduledFor</code>, set on <code>me</code> while a deletion is pending. After a grace period
+(<code>RIM_ACCOUNT_DELETION_GRACE_DAYS</code>, default 14, 0 to 30) an hourly job purges the account and
+leaves a tombstone (&quot;Deleted account&quot;) as the author of its encrypted messages; <code>rim_server account purge [--dry-run]</code> runs the purge on demand. The only owner of a workspace with other
+members is refused until they transfer or delete it. The tombstone keeps the key identity id,
+so <code>signupWithKey</code> with a deleted account&#39;s identity answers <code>VALIDATION</code>. Signups may no
+longer take usernames starting with <code>deleted-</code>. Adds <code>user.deletion_requested_at</code>, <code>deletion_scheduled_for</code> and
+<code>deleted_at</code>.</p>
+</li>
+<li><p>The invite chain and the complete ban. Every account records the invite it signed up with
+and that invite&#39;s creator (new nullable <code>user.created_by_invite_id</code> and
+<code>user.invited_by_user_id</code>). <code>rim_server principal block</code> now also revokes the account&#39;s
+invites that have uses left, blocks its email (the new <code>blocked_email</code> table: a signup with
+it answers <code>VALIDATION</code> &quot;this email cannot sign up here&quot;, a password login <code>FORBIDDEN</code>),
+records the reason as a resolved abuse report, and lists the accounts its invites created;
+<code>--cascade</code> blocks those too, recursively, in the same transaction. <code>principal unblock</code> also
+lifts the email block; sessions and invites stay ended. The new <code>principal show &lt;principal-id&gt;</code> prints the account, its inviter, its invite tree, its invites, its open
+reports and its block.</p>
+</li>
+<li><p><code>RIM_RESERVED_NAMES</code>: comma-separated usernames and display names that <code>signupWithInvite</code>,
+<code>signupWithKey</code> and <code>updateMyProfile</code> refuse with <code>VALIDATION</code> &quot;this name is reserved&quot;,
+compared after trimming, Unicode NFKC normalisation and lowercasing, and also followed by
+<code>-</code>, <code>_</code>, <code>.</code> or a space (<code>rim</code> reserves <code>rim-admin</code>, not <code>rimmer</code>). An account whose own
+username is reserved may still take a reserved display name. An empty entry stops the server
+at boot.</p>
+</li>
+<li><p>Reaction notifications: a reaction on someone&#39;s message tells its author with the new
+<code>NotificationReason.REACTION</code>, one entry per message that each later reaction re-surfaces
+unread. <code>Notification.reactionEmoji</code>, <code>Notification.reactedBy</code>, the setting
+<code>NotificationSettings.reactions</code> / <code>UpdateNotificationSettingsInput.reactions</code> (default on),
+and <code>reaction_emoji</code> / <code>reaction_by</code> on the <code>NotificationDue</code> event.</p>
+</li>
 </ul>
 <h3 id="changed">Changed <a class="anchor" href="#changed" aria-label="Link to this section">#</a></h3>
 <ul>
-<li><p><strong>Upgrade:</strong> <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/deploy/compose.yml"><code>deploy/compose.yml</code></a> runs the published images <code>ghcr.io/rim-platform/rim-server</code>
+<li><p>Workspace members are no longer always delivered: a member&#39;s DM follows the recipient&#39;s choice
+for that workspace, <code>DIRECT</code> unless the workspace or the person set <code>REQUESTS</code>; Owners and
+Moderators are always delivered. With the defaults everything arrives as before.</p>
+</li>
+<li><p>Creating a DM records the other person as the creator&#39;s contact (<code>contacts</code>), so their DM back
+is never a request.</p>
+</li>
+<li><p>With <code>RIM_DM_INBOUND=partners</code> or <code>none</code>, <code>GET /s2s/v1/principals/&lt;id&gt;</code> answers <code>404</code> and key
+package claims answer <code>403</code> to servers that are not partners, except a server hosting a
+workspace the person subscribed to (<code>server-to-server-v1.md</code>, &quot;The request inbox&quot;).</p>
+</li>
+<li><p><strong>Upgrade:</strong> password signups are refused by default. <code>RIM_SIGNUP_REQUIRE_KEYS</code> (default
+<code>true</code>) makes <code>signupWithInvite</code> answer <code>FORBIDDEN</code> in every registration mode, so new
+accounts sign up with <code>signupWithKey</code>; existing password accounts still sign in with
+<code>login</code>. Set it to <code>false</code> in <code>deploy/.env</code> while your users run a client that cannot sign up
+with a key.</p>
+</li>
+<li><p><code>signupWithKey</code> accepts an instance invite bound to an email address and gives the new account
+that address, refusing it like a password signup does when another account has it
+(<code>EMAIL_TAKEN</code>) or an operator blocked it (<code>VALIDATION</code>); before, it refused such an invite. A
+password signup with another address now answers &quot;this invite admits only the email address
+it was issued for&quot;.</p>
+</li>
+<li><p><code>enrollIdentityKey</code> ends every other session of the account in the same transaction and
+closes their WebSocket connections; before, other password sessions stayed valid until they
+expired or were signed out.</p>
+</li>
+<li><p><code>key-identity-v1.md</code> and <code>device-linking-v1.md</code>: the web client may create and hold an
+identity, sign up with a key and link other devices; a browser-held identity is never backed
+up, the recovery kit is shown after signup or enrollment and its entropy is kept until the
+person confirms they saved it.</p>
+</li>
+<li><p><strong>Upgrade:</strong> <a href="https://github.com/rim-platform/rim-server/blob/769aebc96b537242ae9303ea5c155659de01ffa7/deploy/compose.yml"><code>deploy/compose.yml</code></a> runs the published images <code>ghcr.io/rim-platform/rim-server</code>
 and <code>ghcr.io/rim-platform/rim-web</code> at <code>RIM_VERSION</code> (default <code>latest</code>) instead of building
 them. Set <code>RIM_VERSION</code> in <code>deploy/.env</code> to the release you run, and run <code>pull</code> then <code>up -d</code>
 where you ran <code>up -d --build</code>. Operators who build locally add <code>-f deploy/compose.dev.yml</code> to
@@ -118,17 +249,80 @@ plugins and plugin bundles (<code>POST /api/plugin-bundles/{server_id}</code> an
 scoped to a workspace, pipelines, workspace state and channels. The caller&#39;s own keybinds,
 asked without a workspace id, still answer.</p>
 </li>
+<li><p>Typing is announced in direct conversations only. <code>startTyping</code> in a channel or a group
+answers <code>false</code> and emits no <code>TypingStarted</code>; it also answers <code>false</code> on a repeat inside the
+throttle window, and <code>true</code> only when it emitted the event.</p>
+</li>
+<li><p>The dependency audit in CI and in the release gates is <code>cargo audit --deny unsound</code>: an
+unsoundness advisory fails it like a vulnerability. Each advisory it accepts is listed in
+<code>.cargo/audit.toml</code> with why it does not apply and when the entry comes out.</p>
+</li>
 </ul>
 <h3 id="fixed">Fixed <a class="anchor" href="#fixed" aria-label="Link to this section">#</a></h3>
 <ul>
+<li>The <code>TypingStarted</code> event of <code>workspaceEvents</code> carries the typing user&#39;s <code>username</code> and
+<code>display_name</code>, so a client can say who is typing.</li>
 <li>A local account&#39;s first use of the direct space, any operation that needs membership there,
 joins it as a guest instead of being refused.</li>
+<li><code>executeCommand</code> refuses a builtin whose required role the caller does not hold in its
+workspace, with <code>FORBIDDEN</code> naming the command, before the service behind it runs; user command
+steps and pipe stages are checked the same way.</li>
+<li>On a server with terms of service, every signup path refuses an account that did not accept
+them, not only the <code>signupWithInvite</code> and <code>signupWithKey</code> resolvers.</li>
+<li><code>addContact</code> refuses the caller&#39;s own principal, and <code>createConversation</code> with <code>remoteMembers</code>
+naming only the caller answers &quot;cannot create DM with yourself&quot; instead of the group message.</li>
+</ul>
+<h3 id="security">Security <a class="anchor" href="#security" aria-label="Link to this section">#</a></h3>
+<ul>
+<li><code>rustls</code> 0.23.46: the TLS library behind outgoing HTTPS requests picks up the fixes for
+RUSTSEC-2026-0346, -0347, -0348 and -0349 (TLS secrets in <code>Debug</code> output, buffered data after
+an ECH rejection, certificate decompression memory, key-exchange downgrade).</li>
+<li>A member removed from a workspace (kicked, banned) or from a conversation (left, removed)
+loses their notifications for it, and the email digest leaves out anything its recipient can
+no longer read. Before, a kicked member&#39;s pending notification was still emailed in the next
+digest, carrying the message&#39;s current text, edits made after the kick included.</li>
+<li>A mutation whose protected field sits in nested fragments, named or inline, needs the CSRF
+header. Before, a request that showed only an exempt field such as <code>logout</code> at its top level
+skipped the check while a fragment two levels down ran <code>updateMyProfile</code>. The server reads
+the operation <code>operationName</code> selects through fragments at any depth, and requires the header
+whenever it cannot account for every root field. The refusal of account mutations for people
+from another server reads operations the same way.</li>
+<li><code>RIM_RATE_MUTATIONS_PER_MIN_PER_SESSION</code> charges every mutation field a request runs: fields
+in nested fragments count, and a fragment spread twice counts twice. Before, fields more than
+one fragment deep were not charged.</li>
+<li><code>/api/ws</code> runs subscriptions only. A query or a mutation sent on it answers one <code>VALIDATION</code>
+error, &quot;only subscriptions over the WebSocket&quot;, and runs nothing. Before, a mutation sent
+there ran without the CSRF check, the mutation budget or the refusal of account mutations
+for people from another server. Clients send queries and mutations to <code>POST /api</code>.</li>
+<li>Link previews stop reading a page at 1 MiB as it arrives, where a page sent without a length
+used to be read whole before the cap applied. At most <code>RIM_LINK_PREVIEW_CONCURRENCY</code> fetches
+(default 8, 1 to 64) run at once; a fetch that waits five seconds for a slot is dropped.</li>
+<li>Link previews and server-to-server requests share one address policy that also refuses
+reserved IPv4 (<code>240.0.0.0/4</code>), benchmarking and protocol-assignment ranges, and IPv6
+addresses that embed a private IPv4 address through NAT64 (<code>64:ff9b::/96</code>) or 6to4
+(<code>2002::/16</code>). Server-to-server requests now ignore proxy environment variables, as link
+previews did. <a href="../specs/server-to-server-v1.html"><code>docs/specs/server-to-server-v1.md</code></a> lists the refused ranges.</li>
+<li>Password hashing and verification (signups, password logins, password resets) run off the
+request workers, at most <code>RIM_PASSWORD_HASH_CONCURRENCY</code> at once (default: the number of
+CPUs, 1 to 64), so a burst of logins no longer stalls other requests. A request that waits
+over 10 seconds for a turn answers <code>UNAVAILABLE</code>.</li>
+<li>A WebSocket connection on <code>/api/ws</code> no longer outlives its session. When the session is
+signed out (<code>logout</code>, <code>logoutOtherSessions</code>), reset, revoked with its device, ended by an
+identity recovery, a requested account deletion, a block or the purge, or reaches its expiry,
+the server ends the connection&#39;s streams and closes it with code <code>4401</code> (&quot;session ended&quot;).
+Every operation on a connection checks the session first. A session ended in another server
+process or from the command line closes its connections within
+<code>RIM_WS_SESSION_RECHECK_SECS</code> (default 30, 0 turns the recheck off). <a href="api.html"><code>docs/api.md</code></a>
+(&quot;Subscriptions&quot;) describes it; a client that sees <code>4401</code> signs in again before reconnecting.</li>
+<li>A message on <code>/api/ws</code> is at most 256 KiB, whole or in fragments; a larger one closes the
+connection with code <code>1009</code> (&quot;message too large&quot;), refused at the frame header where it can
+be. Before, fragments were reassembled without a limit and queued for the server unbounded.</li>
 </ul>
 
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/CHANGELOG.md">rim-server/CHANGELOG.md</a> at <code>c86029b</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/769aebc96b537242ae9303ea5c155659de01ffa7/CHANGELOG.md">rim-server/CHANGELOG.md</a> at <code>769aebc</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

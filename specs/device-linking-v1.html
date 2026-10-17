@@ -42,7 +42,7 @@
 <li><a href="#server-rules">Server rules</a><ol><li><a href="#calls">Calls</a></li><li><a href="#errors">Errors</a></li><li><a href="#link-ids">Link ids</a></li><li><a href="#sealed-bytes">Sealed bytes</a></li><li><a href="#limits">Limits</a></li><li><a href="#expiry-and-cleanup">Expiry and cleanup</a></li></ol></li>
 <li><a href="#storage">Storage</a></li>
 <li><a href="#graphql">GraphQL</a></li>
-<li><a href="#client-rules">Client rules</a><ol><li><a href="#old-device-desktop">Old device (desktop)</a></li><li><a href="#new-device-desktop">New device (desktop)</a></li><li><a href="#web-client">Web client</a></li></ol></li>
+<li><a href="#client-rules">Client rules</a><ol><li><a href="#old-device">Old device</a></li><li><a href="#new-device-desktop">New device (desktop)</a></li><li><a href="#web-client">Web client</a></li></ol></li>
 <li><a href="#failure-and-retry">Failure and retry</a></li>
 <li><a href="#deferred">Deferred</a></li>
 <li><a href="#test-plan">Test plan</a></li>
@@ -51,7 +51,7 @@
 </details></aside>
     <main id="content" class="prose">
 <h1 id="device-linking-v1">Device linking v1</h1>
-<p class="status"><span><b>Device linking v1</b></span><span>version 1</span><span>status: implemented, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/docs/specs/device-linking-v1.md">rim-server/docs/specs/device-linking-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/c86029b35a7ef7770b05e7bda62909f988343f7f">c86029b</a></span></p>
+<p class="status"><span><b>Device linking v1</b></span><span>version 1</span><span>status: implemented, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/769aebc96b537242ae9303ea5c155659de01ffa7/docs/specs/device-linking-v1.md">rim-server/docs/specs/device-linking-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/769aebc96b537242ae9303ea5c155659de01ffa7">769aebc</a></span></p>
 <p><em>Status: implemented, normative. Extends <a href="key-identity-v1.html"><code>docs/specs/key-identity-v1.md</code></a>
 (read it first: keys, tagged encodings, device certificates and challenge login are defined
 there). This document is the contract between the server (<code>DeviceLinkService</code>), the desktop
@@ -499,7 +499,9 @@ appended to the last query and mutation groups.</li>
 polls; the anonymous side needs per-connection limits on that socket first.</li>
 </ul>
 <h2 id="client-rules">Client rules <a class="anchor" href="#client-rules" aria-label="Link to this section">#</a></h2>
-<h3 id="old-device-desktop">Old device (desktop) <a class="anchor" href="#old-device-desktop" aria-label="Link to this section">#</a></h3>
+<h3 id="old-device">Old device <a class="anchor" href="#old-device" aria-label="Link to this section">#</a></h3>
+<p>The device that holds the identity key, desktop or web (<a href="key-identity-v1.html"><code>key-identity-v1.md</code></a>, &quot;Web client&quot;). A
+web client keeps the pending link record of rule 5 in IndexedDB instead of the keyring.</p>
 <ol>
 <li>Linking is offered only when this device holds the head&#39;s identity key
 (<code>LogStatus.holdsIdentityKey</code>). It generates the secret, calls <code>startDeviceLink</code>, and shows the
@@ -550,7 +552,10 @@ works, and the old device keeps it because <code>lastUsedAt</code> is set.</li>
 other failures keep them for the next sign-in.</li>
 </ol>
 <h3 id="web-client">Web client <a class="anchor" href="#web-client" aria-label="Link to this section">#</a></h3>
-<p>Same as the new desktop device, except:</p>
+<p>As the old device, the web client follows &quot;Old device&quot; when it holds the identity key: it signs
+the certificate with its non-extractable identity key. A web client that is itself a linked
+device holds no identity key and links no other device. As the new device, it follows the new
+desktop device, except:</p>
 <ul>
 <li>It only takes a pasted code, and only for its own GraphQL endpoint (cookies and CORS would fail
 for another).</li>
@@ -560,7 +565,6 @@ without Ed25519 in WebCrypto cannot be linked; there is no fallback to extractab
 <li>HKDF and AES-GCM run in SubtleCrypto: <code>importKey(&quot;raw&quot;, secret, &quot;HKDF&quot;)</code>,
 <code>deriveKey({ name: &quot;HKDF&quot;, hash: &quot;SHA-256&quot;, salt, info }, …, { name: &quot;AES-GCM&quot;, length: 256 }, false, [&quot;encrypt&quot;, &quot;decrypt&quot;])</code>, then <code>encrypt({ name: &quot;AES-GCM&quot;, iv, additionalData, tagLength: 128 })</code>, whose output is already ciphertext followed by tag.</li>
 <li><code>platform</code> is <code>web</code>. The secret lives only in the page; a reload abandons the attempt.</li>
-<li>The web client is never the old device in v1: it holds no identity key.</li>
 </ul>
 <h2 id="failure-and-retry">Failure and retry <a class="anchor" href="#failure-and-retry" aria-label="Link to this section">#</a></h2>
 <div class="tablewrap"><table>
@@ -620,7 +624,9 @@ the offer, which the post-quantum decision makes hybrid (X25519 + ML-KEM-768). T
 format already reserves the mechanism (a new <code>keyWraps</code> kind, <code>history-archive-v1.md</code>). A later
 code version adds both; until then the new device unlocks the archive with the passphrase, and
 it needs the folder or drive sign-in in any case.</li>
-<li><strong>Moving the identity key</strong> off the enrolling device, or holding it offline.</li>
+<li><strong>Moving the identity key</strong> off the enrolling device, or holding it offline. A browser-held
+identity cannot move at all until then: its key is not extractable and is never backed up, so
+linking gives another device access to the account, not the identity.</li>
 <li><strong>Short typed codes</strong> with a PAKE (CPace, SPAKE2), so a code can be read aloud.</li>
 <li><strong>QR scanning</strong>, with the mobile PWA; the code format is fixed now so the QR works then.</li>
 <li><strong>A subscription</strong> in place of polling (see GraphQL).</li>
@@ -643,7 +649,7 @@ errors tables, idempotent repeats, expiry at the boundary, answer resetting expi
 <li><code>rim_infra_db</code> (<code>db-tests</code>): two concurrent offers on one link, exactly one wins; transitions
 refuse expired rows; cleanup deletes only rows past one hour; terminal states clear sealed
 columns; the partial unique index; cascade on user delete; migration up and down.</li>
-<li><a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/rim_api/tests/device_link_e2e.rs"><code>rim_api/tests/device_link_e2e.rs</code></a> (<code>e2e-tests</code>), with real sealed messages from
+<li><a href="https://github.com/rim-platform/rim-server/blob/769aebc96b537242ae9303ea5c155659de01ffa7/rim_api/tests/device_link_e2e.rs"><code>rim_api/tests/device_link_e2e.rs</code></a> (<code>e2e-tests</code>), with real sealed messages from
 <code>rim_identity::device_link</code>: the whole flow from <code>startDeviceLink</code> to <code>loginWithKey</code> with the
 linked device and <code>CONSUMED</code> on the old side; anonymous calls on unknown, malformed, expired,
 cancelled and consumed links all <code>UNAUTHENTICATED</code> with identical bodies; another user&#39;s link
@@ -728,7 +734,7 @@ these bytes reproducible; readers do not depend on field order.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/docs/specs/device-linking-v1.md">rim-server/docs/specs/device-linking-v1.md</a> at <code>c86029b</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/769aebc96b537242ae9303ea5c155659de01ffa7/docs/specs/device-linking-v1.md">rim-server/docs/specs/device-linking-v1.md</a> at <code>769aebc</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

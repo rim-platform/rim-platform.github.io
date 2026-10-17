@@ -37,6 +37,7 @@
 <li><a href="#catalogue">Catalogue</a></li>
 <li><a href="#states">States</a></li>
 <li><a href="#setting-it">Setting it</a></li>
+<li><a href="#link-preview-limits">Link preview limits</a></li>
 <li><a href="#what-clients-see">What clients see</a></li>
 </ol>
 </details></aside>
@@ -143,6 +144,41 @@ refused.</p>
 <p>With <code>email</code> disabled, <code>requestPasswordReset</code> answers <code>FEATURE_DISABLED</code>, invite mail is not
 sent (the invite link is still returned to whoever created it), and the notification digest job
 does not run.</p>
+<h2 id="link-preview-limits">Link preview limits <a class="anchor" href="#link-preview-limits" aria-label="Link to this section">#</a></h2>
+<p>While <code>link_previews</code> is on, the server fetches each page under these limits:</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Limit</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Links previewed per message</td>
+<td>5</td>
+</tr>
+<tr>
+<td>Time per fetch, redirects and body included</td>
+<td>5 seconds</td>
+</tr>
+<tr>
+<td>Redirects followed</td>
+<td>5</td>
+</tr>
+<tr>
+<td>Body read</td>
+<td>1 MiB; a longer body is cut off there and the link gets no preview</td>
+</tr>
+<tr>
+<td>Fetches at once, per process</td>
+<td><code>RIM_LINK_PREVIEW_CONCURRENCY</code>, 1 to 64, default 8</td>
+</tr>
+</tbody></table></div>
+<p>A fetch that finds every slot busy for five seconds is dropped with a log line and its link gets
+no preview. The server connects only to public addresses: a link, a redirect or a name
+resolving to a loopback, private, link-local, shared, reserved or other special-use address is
+not fetched, IPv6 forms that embed an IPv4 address (mapped, NAT64, 6to4) included. Outgoing
+requests ignore proxy environment variables.</p>
 <h2 id="what-clients-see">What clients see <a class="anchor" href="#what-clients-see" aria-label="Link to this section">#</a></h2>
 <ul>
 <li><strong><code>serverInfo.features</code></strong>, readable without a session: one entry per feature, in a fixed
@@ -165,7 +201,7 @@ apply to every command are the security boundary, not this switch.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/docs/operations/features.md">rim-server/docs/operations/features.md</a> at <code>c86029b</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/769aebc96b537242ae9303ea5c155659de01ffa7/docs/operations/features.md">rim-server/docs/operations/features.md</a> at <code>769aebc</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

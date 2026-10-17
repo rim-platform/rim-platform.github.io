@@ -209,6 +209,21 @@ workspaces (<code>RIM_ROLE=both</code>), with server-to-server traffic off.</p>
 <td>Comma-separated server ids refused everywhere</td>
 </tr>
 <tr>
+<td><code>RIM_DM_INBOUND</code></td>
+<td><code>requests</code></td>
+<td>Who outside a shared workspace may start a DM with people here: <code>open</code>, <code>requests</code>, <code>partners</code> (the servers <code>RIM_DM_PARTNERS</code> lists, and this one) or <code>none</code>. With <code>partners</code> or <code>none</code> other servers get no identity or key package of anyone here</td>
+</tr>
+<tr>
+<td><code>RIM_DM_OUTBOUND</code></td>
+<td><code>allowed</code></td>
+<td>Whom on other servers people here may start a DM with: <code>allowed</code>, <code>partners</code> or <code>none</code></td>
+</tr>
+<tr>
+<td><code>RIM_DM_PARTNERS</code></td>
+<td>empty</td>
+<td>Comma-separated server ids the <code>partners</code> settings name</td>
+</tr>
+<tr>
 <td><code>RIM_S2S_PEER_RATE_PER_MIN</code></td>
 <td>600</td>
 <td>Requests accepted per peer per minute, per node</td>
@@ -246,7 +261,7 @@ until its operator resets the pin. Each peer appears in the log as <code>s2s.pee
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/docs/server-identity.md">rim-server/docs/server-identity.md</a> at <code>c86029b</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/769aebc96b537242ae9303ea5c155659de01ffa7/docs/server-identity.md">rim-server/docs/server-identity.md</a> at <code>769aebc</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

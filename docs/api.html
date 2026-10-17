@@ -35,9 +35,10 @@
     <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
 <ol>
 <li><a href="#endpoints">Endpoints</a><ol><li><a href="#graphql-post-api">GraphQL: POST /api</a></li><li><a href="#subscriptions-get-apiws">Subscriptions: GET /api/ws</a></li><li><a href="#the-schema-get-apisdl">The schema: GET /api/sdl</a></li><li><a href="#discovery-get-well-knownrim-server">Discovery: GET /.well-known/rim-server</a></li><li><a href="#probes-healthz-and-readyz">Probes: /healthz and /readyz</a></li><li><a href="#metrics-metrics">Metrics: /metrics</a></li><li><a href="#files">Files</a></li><li><a href="#spaces-on-another-server-apiremotehost_server_idtail">Spaces on another server: /api/remote/{host_server_id}/{tail}</a></li><li><a href="#server-to-server-s2sv1">Server to server: /s2s/v1/...</a></li></ol></li>
-<li><a href="#sessions-and-csrf">Sessions and CSRF</a><ol><li><a href="#the-session-cookie">The session cookie</a></li><li><a href="#the-csrf-token">The CSRF token</a></li></ol></li>
+<li><a href="#sessions-and-csrf">Sessions and CSRF</a><ol><li><a href="#the-session-cookie">The session cookie</a></li><li><a href="#handing-over-or-deleting-a-workspace">Handing over or deleting a workspace</a></li><li><a href="#deleting-an-account">Deleting an account</a></li><li><a href="#the-csrf-token">The CSRF token</a></li></ol></li>
 <li><a href="#origins">Origins</a></li>
 <li><a href="#limits">Limits</a></li>
+<li><a href="#instance-moderation">Instance moderation</a></li>
 <li><a href="#errors">Errors</a><ol><li><a href="#graphql-error-codes">GraphQL error codes</a></li><li><a href="#refusals-before-a-route-runs">Refusals before a route runs</a></li><li><a href="#errors-from-the-file-routes">Errors from the file routes</a></li></ol></li>
 <li><a href="#pagination">Pagination</a></li>
 <li><a href="#telling-which-server-you-talk-to">Telling which server you talk to</a></li>
@@ -178,6 +179,18 @@ reads an <code>X-Request-Id</code> header, or makes one, and adds it to every er
 <code>extensions.request_id</code>, so a report can be matched to the server log.</p>
 <p>A person whose relay is another server, signed in here directly, cannot run mutations that
 change their account rather than a space; those answer <code>FORBIDDEN</code> and run at their relay.</p>
+<p>An encrypted DM or group (<code>createConversation(input: { encrypted: true })</code>) needs a creator with a
+device set up for encryption, else <code>VALIDATION</code>. Every other member without such a device is
+invited instead: <code>Conversation.pendingMemberIds</code> lists them, apart from <code>memberIds</code> and
+<code>memberCount</code>. An invitee hears of it through <code>MemberAddedToConversation</code> and finds it in
+<code>inboxConversations</code> with <code>isMember: false</code> and <code>mlsGroup</code> null, but reading, sending or opening
+it answers <code>FORBIDDEN</code>, as for a non-member, it has no unread count and nothing notifies them.
+<code>acceptConversationInvite(serverId, conversationId)</code> makes them a member once a device of theirs
+is set up (<code>VALIDATION</code> before), emits <code>MemberAddedToConversation</code> and <code>MlsMembershipChanged</code>, and
+a member&#39;s device adds them to the group; they read nothing from before. Accepting again changes
+nothing. <code>declineConversationInvite</code> deletes the invitation; both answer <code>NOT_FOUND</code> without one.
+<code>addConversationMembers</code> invites such users too, with the same authorization as adding members.
+An invitation not accepted within 30 days expires. <a href="../specs/e2ee-mls-v1.html"><code>specs/e2ee-mls-v1.md</code></a> is the contract.</p>
 <h3 id="subscriptions-get-apiws">Subscriptions: <code>GET /api/ws</code> <a class="anchor" href="#subscriptions-get-apiws" aria-label="Link to this section">#</a></h3>
 <p>A WebSocket upgrade carrying the session cookie. The subprotocol is chosen with
 <code>Sec-WebSocket-Protocol</code>: <code>graphql-transport-ws</code> (the protocol of the <code>graphql-ws</code> library) or
@@ -186,9 +199,34 @@ is refused with 400, and an upgrade without a valid session with 401: there are 
 subscriptions. A user holding as many connections as <code>RIM_RATE_WS_CONNECTIONS_PER_USER</code> allows
 is refused with 429 and <code>{&quot;error&quot;:&quot;too_many_connections&quot;}</code>. A subscription started past
 <code>RIM_RATE_SUBSCRIPTIONS_PER_CONNECTION</code> on one connection answers one error with the code
-<code>TOO_MANY_SUBSCRIPTIONS</code> and ends; ending another subscription frees its place. The
-subscription roots are <code>workspaceEvents</code> and <code>relayStream</code>; the schema
-describes both.</p>
+<code>TOO_MANY_SUBSCRIPTIONS</code> and ends; ending another subscription frees its place. A client
+message over 256 KiB, whole or in fragments, closes the connection with code <code>1009</code> (&quot;message
+too large&quot;), and more than 32 messages waiting for the server close it with <code>1008</code> (&quot;too many
+messages&quot;). The socket runs subscriptions only: a query or a mutation sent on it answers one
+error with the code <code>VALIDATION</code> and the message &quot;only subscriptions over the WebSocket&quot;, runs
+nothing, and completes; send those to <code>POST /api</code>. The subscription roots are <code>workspaceEvents</code> and
+<code>relayStream</code>; the schema describes both. A <code>TypingStarted</code> event, sent for direct conversations
+only, names the typing user by <code>user_id</code>, <code>username</code> and <code>display_name</code>, which is <code>null</code> when
+they have none.</p>
+<p>A connection lives no longer than the session it was opened with. When that session ends, the
+server ends every stream on the connection and closes it with code <code>4401</code> and reason
+<code>session ended</code>; nothing is sent after the close, and the connection&#39;s place under
+<code>RIM_RATE_WS_CONNECTIONS_PER_USER</code> is free again. A client that sees <code>4401</code> signs in again
+before it reconnects. The session ends this way:</p>
+<ul>
+<li><strong>At once</strong> when this server process ends it: <code>logout</code>, <code>logoutOtherSessions</code>, a password
+reset, a requested account deletion (every other session), a device revocation or an identity
+recovery, and the account purge.</li>
+<li><strong>At its expiry</strong>, read when the connection opens.</li>
+<li><strong>Within <code>RIM_WS_SESSION_RECHECK_SECS</code></strong> (default 30) when it ended where this process did
+not hear of it: in another server process, from the command line (<code>rim_server principal block</code>,
+<code>rim_server account purge</code>), or in the database. Each server process reads the sessions of
+its open connections again every interval, in one query per 500 sessions; <code>0</code> turns the
+recheck off.</li>
+<li><strong>Before the next operation</strong>: every operation sent on the connection first checks the
+session again, before the subscriptions-only refusal. An ended session closes the connection
+with <code>4401</code> instead of answering the operation.</li>
+</ul>
 <h3 id="the-schema-get-apisdl">The schema: <code>GET /api/sdl</code> <a class="anchor" href="#the-schema-get-apisdl" aria-label="Link to this section">#</a></h3>
 <p>The whole GraphQL schema of the running build, in SDL, without a session.</p>
 <h3 id="discovery-get-well-knownrim-server">Discovery: <code>GET /.well-known/rim-server</code> <a class="anchor" href="#discovery-get-well-knownrim-server" aria-label="Link to this section">#</a></h3>
@@ -278,31 +316,82 @@ reports <code>https</code>. These mutations set it, and need no session or CSRF 
 signs a <code>login</code> statement over the nonce with its device key and calls <code>loginWithKey(proof)</code>.
 The session is bound to that device. <a href="../specs/key-identity-v1.html"><code>specs/key-identity-v1.md</code></a> (&quot;Challenge login&quot;) has the
 statement, the audiences and the limits.</li>
-<li><strong>Key-only signup.</strong> <code>signupWithKey</code> creates the account and signs it in.</li>
+<li><strong>Key-only signup.</strong> <code>signupWithKey</code> creates the account and signs it in. An instance invite
+bound to an email address gives the account that address (<code>EMAIL_TAKEN</code> when another account
+has it); otherwise the account has no email.</li>
 <li><strong>Password login.</strong> <code>login(input: { username, password })</code>. An account without a password,
 such as a key-only account or one that enrolled an identity key, cannot sign in this way.</li>
-<li><strong>Invite signup.</strong> <code>signupWithInvite</code> creates a password account and signs it in.</li>
+<li><strong>Invite signup.</strong> <code>signupWithInvite</code> creates a password account and signs it in. It is
+refused with <code>FORBIDDEN</code> while <code>serverInfo.signupRequiresKeys</code> is true, which is the default
+(<code>RIM_SIGNUP_REQUIRE_KEYS</code>); new accounts then sign up with <code>signupWithKey</code>. Password login of
+existing accounts works either way.</li>
 </ul>
 <p>When the server has terms of service (<code>serverInfo.termsUrl</code> is set), both signups must accept
 them: <code>acceptedTermsUrl</code> in the input carries that URL unchanged. A signup without it, or with
 another URL, answers <code>VALIDATION</code>. The server records the acceptance and its time on the
 account. Without terms on the server the field is ignored.</p>
 <p><code>logout</code> ends the session and clears both cookies; <code>logoutOtherSessions</code> ends every other
-session of the account.</p>
+session of the account, and so does <code>enrollIdentityKey</code>, which binds the calling session to the
+new device. Each also closes the WebSocket connections of the sessions it ends (see
+&quot;Subscriptions&quot;).</p>
 <p>A session lasts <code>RIM_SESSION_TTL_DAYS</code> days (default 30) from sign-in: the cookie&#39;s <code>Max-Age</code>
 and the server-side expiry are both set from it, and using the session does not extend it. A
 missing, unknown, revoked or expired session cookie makes the request anonymous; a field that
 needs a session then answers <code>UNAUTHENTICATED</code>.</p>
+<h3 id="handing-over-or-deleting-a-workspace">Handing over or deleting a workspace <a class="anchor" href="#handing-over-or-deleting-a-workspace" aria-label="Link to this section">#</a></h3>
+<p>A workspace has exactly one owner. <code>transferWorkspaceOwnership(input: { serverId, userId })</code>
+makes another member the owner and the caller a moderator, in one step, and answers the
+workspace; both changes are announced with <code>MemberRoleChanged</code>. Only the owner may call it, the
+new owner must be a member and not a guest (<code>NOT_FOUND</code>, <code>VALIDATION</code>), and <code>setMemberRole</code> still
+never grants the owner role.</p>
+<p><code>deleteWorkspace(input: { serverId, confirmName })</code> deletes the workspace for good, with its
+members, channels and conversations, their messages, files, pins and threads, invites, workspace
+state, keybinds, pipelines, macros, plugins, custom emoji and the notification rules scoped to it,
+and answers <code>{ deleted }</code>. Only the owner may call it and <code>confirmName</code> must be the workspace&#39;s
+name (<code>VALIDATION</code> otherwise). Every member gets <code>MemberLeft</code> for themself and their event stream
+for the workspace ends; the workspace then answers like one they never joined. The direct space
+can be neither handed over nor deleted (<code>VALIDATION</code>).</p>
+<h3 id="deleting-an-account">Deleting an account <a class="anchor" href="#deleting-an-account" aria-label="Link to this section">#</a></h3>
+<p><code>requestAccountDeletion(input: { confirmUsername })</code> schedules the signed-in account for
+deletion and answers <code>{ scheduledFor }</code>. The caller types their username again; a different one
+answers <code>VALIDATION</code>, and so does a request from the owner of a workspace that has other
+members, who hands it over or deletes it first (previous section; a workspace where the account
+is the only member is deleted with the account). A request while one is pending answers <code>CONFLICT</code>, and a person from
+another server, who deletes their account at their relay, gets <code>FORBIDDEN</code>. The request ends
+every other session of the account.</p>
+<p>The deletion waits out a grace period, <code>RIM_ACCOUNT_DELETION_GRACE_DAYS</code> (default 14). Until it
+ends the account works as before, <code>me.deletionScheduledFor</code> holds the date (null when nothing is
+pending, and on every other user), and <code>cancelAccountDeletion</code> keeps the account; it returns
+whether a deletion was pending. Both mutations need a session and the CSRF header.</p>
+<p>When the grace period ends, the hourly purge removes the account&#39;s sessions, devices, keys,
+memberships, plaintext messages and files, settings and personal automations, and frees its
+username. The user row stays as a tombstone: <code>deleted-</code> and the start of its id as the username,
+&quot;Deleted account&quot; as the display name, no email, password or key. It cannot sign in and is in no
+member list or search result. It stays the author of the account&#39;s encrypted messages, which are
+kept so a conversation&#39;s history does not shift, and of a message others replied to, which shows
+as deleted (<code>isDeleted: true</code>, no text) with the replies under it. The tombstone keeps the
+account&#39;s key identity id, so the same key identity cannot sign up on this server again:
+<code>signupWithKey</code> with it answers <code>VALIDATION</code>.
+<a href="operations/background-jobs.html"><code>operations/background-jobs.md</code></a> and <a href="self-hosting.html"><code>self-hosting.md</code></a> have the operator&#39;s side.</p>
 <h3 id="the-csrf-token">The CSRF token <a class="anchor" href="#the-csrf-token" aria-label="Link to this section">#</a></h3>
 <p>The mutations that set a session also set the <code>rim_csrf</code> cookie, with the same attributes except
 that it is readable by scripts (not <code>HttpOnly</code>). Its value is an HMAC over the session token. The
 client copies it into the <code>X-CSRF-Token</code> header. The server accepts a request when the header
 equals the cookie and the token is bound to the request&#39;s session cookie.</p>
+<p>Every mutation that starts a session (<code>login</code>, <code>loginWithKey</code>, <code>signupWithInvite</code> and
+<code>signupWithKey</code>) also returns the same token as <code>csrfToken</code> in its payload. A web client reads the
+cookie. A client that cannot read it, such as a packaged desktop app talking to a server on
+another host, keeps <code>csrfToken</code> in memory and sends it in <code>X-CSRF-Token</code>. The cookie still has to
+reach the server with the request: it carries the same attributes as the session cookie, so a
+request that sends the one sends the other.</p>
 <p>The header is required on:</p>
 <ul>
-<li>every GraphQL request that contains a mutation, with the exceptions below. The check runs
-once for the whole batch, before anything executes, and a query that cannot be parsed counts
-as needing it;</li>
+<li>every GraphQL request whose operation is a mutation, with the exceptions below. The check
+runs once for the whole batch, before anything executes, on the operation the request&#39;s
+<code>operationName</code> selects. A query that cannot be parsed counts as needing it, and so does a
+document whose mutation the server cannot classify completely: an operation that cannot be
+selected, a fragment it does not define, fragments that spread each other, or fragments
+nested deeper than 32;</li>
 <li><code>POST /api/files/upload</code>, <code>POST /api/files/avatar</code> and <code>POST /api/plugin-bundles/{server_id}</code>;</li>
 <li><code>POST /api/remote/...</code>.</li>
 </ul>
@@ -310,7 +399,9 @@ as needing it;</li>
 <code>login</code>, <code>logout</code>, <code>signupWithInvite</code>, <code>requestPasswordReset</code>, <code>resetPassword</code>,
 <code>keyLoginChallenge</code>, <code>loginWithKey</code>, <code>signupWithKey</code>, <code>sendDeviceLinkOffer</code> and
 <code>applyRemoteRevocation</code>. <code>rotateIdentityKey</code> and <code>cancelDeviceLink</code> are exempt only when the
-request carries no session cookie. A request is exempt only when every mutation field in it is.</p>
+request carries no session cookie. A request is exempt only when every root field of its
+mutation is, counting the fields of named and inline fragments at any depth and fields under
+<code>@skip</code> or <code>@include</code> whatever their condition.</p>
 <p>A GraphQL request refused by the check gets an error with a message such as
 <code>csrf validation failed</code> and no <code>extensions.code</code>; a file route answers 403.</p>
 <h2 id="origins">Origins <a class="anchor" href="#origins" aria-label="Link to this section">#</a></h2>
@@ -347,7 +438,7 @@ a number above 0, so a private server limits nothing but the batch size.</p>
 </tr>
 <tr>
 <td><code>RIM_RATE_MUTATIONS_PER_MIN_PER_SESSION</code></td>
-<td>Mutation fields per session per minute, each field and alias counted; a request without a session counts against its address.</td>
+<td>Mutation fields per session per minute, each field, alias and fragment expansion counted, a fragment spread twice counting twice; a request without a session counts against its address.</td>
 <td><code>RATE_LIMITED</code> with <code>retryAfterSeconds</code>; nothing in the request runs</td>
 </tr>
 <tr>
@@ -376,10 +467,149 @@ a number above 0, so a private server limits nothing but the batch size.</p>
 process, so a restart forgets them and two processes behind one proxy each allow the full
 amount. <code>/healthz</code>, <code>/readyz</code>, discovery and <code>/s2s/v1/...</code> are outside the per-address limit;
 server-to-server traffic has its own, <code>RIM_S2S_PEER_RATE_PER_MIN</code>.</p>
+<p>An operator can also cap how much of each thing the instance holds. Every cap is off unless its
+variable is set to a number above 0; <code>serverInfo.limits</code> reports each one, so a client can show
+&quot;5 of 5&quot; before it tries. Creating one more past a cap answers <code>VALIDATION</code>, with a message
+naming the cap, such as &quot;this instance allows 5 workspaces per user&quot;.</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Variable</th>
+<th><code>serverInfo.limits</code></th>
+<th>Caps</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>RIM_LIMIT_WORKSPACES_PER_USER</code></td>
+<td><code>workspacesPerUser</code></td>
+<td>Workspaces one user owns.</td>
+</tr>
+<tr>
+<td><code>RIM_LIMIT_MEMBERS_PER_WORKSPACE</code></td>
+<td><code>membersPerWorkspace</code></td>
+<td>Members of a workspace, by invite or signup; the direct space has none.</td>
+</tr>
+<tr>
+<td><code>RIM_LIMIT_CHANNELS_PER_WORKSPACE</code></td>
+<td><code>channelsPerWorkspace</code></td>
+<td>Channels of a workspace, public and private; a new workspace gets only the default channels the cap allows.</td>
+</tr>
+<tr>
+<td><code>RIM_LIMIT_DEVICES_PER_USER</code></td>
+<td><code>devicesPerUser</code></td>
+<td>Devices on one account.</td>
+</tr>
+<tr>
+<td><code>RIM_LIMIT_DM_REQUESTS_PER_DAY</code></td>
+<td><code>dmRequestsPerDay</code></td>
+<td>DM requests one user sends to strangers per day.</td>
+</tr>
+<tr>
+<td><code>RIM_LIMIT_MACROS_PER_WORKSPACE</code></td>
+<td><code>macrosPerWorkspace</code></td>
+<td>Macros of a workspace.</td>
+</tr>
+<tr>
+<td><code>RIM_LIMIT_PIPELINES_PER_WORKSPACE</code></td>
+<td><code>pipelinesPerWorkspace</code></td>
+<td>Pipelines of a workspace.</td>
+</tr>
+<tr>
+<td><code>RIM_LIMIT_PLUGINS_PER_WORKSPACE</code></td>
+<td><code>pluginsPerWorkspace</code></td>
+<td>Plugins of a workspace&#39;s registry, at most the built-in 100.</td>
+</tr>
+<tr>
+<td><code>RIM_LIMIT_INVITES_PER_USER_PER_DAY</code></td>
+<td><code>invitesPerUserPerDay</code></td>
+<td>Workspace invites one user creates in the last 24 hours.</td>
+</tr>
+<tr>
+<td><code>RIM_LIMIT_INVITE_MAX_USES</code></td>
+<td><code>inviteMaxUses</code></td>
+<td>The uses one invite may have.</td>
+</tr>
+<tr>
+<td><code>RIM_LIMIT_MESSAGE_BYTES</code></td>
+<td><code>messageBytes</code></td>
+<td>A message&#39;s text in UTF-8 bytes, at most 65536. An encrypted message&#39;s ciphertext may exceed it by 4096 bytes of framing.</td>
+</tr>
+<tr>
+<td><code>RIM_LIMIT_PENDING_INVITES_PER_USER</code></td>
+<td><code>pendingInvitesPerUser</code></td>
+<td>Pending invitations to encrypted conversations one user holds. Unlike the others it defaults to 50; 0 turns it off. Inviting someone who holds that many refuses the whole create or add.</td>
+</tr>
+</tbody></table></div>
+<p>Devices and DM requests also have a relay quota, <code>RIM_RELAY_DEVICES_PER_USER</code> (default 32) and
+<code>RIM_RELAY_DM_REQUESTS_PER_DAY</code> (default 20). The stricter of the cap and the quota applies,
+and <code>serverInfo.limits</code> reports that number, so <code>devicesPerUser</code> and <code>dmRequestsPerDay</code> are
+never null. A DM request past the daily number stays <code>RATE_LIMITED</code> with <code>retryAfterSeconds</code>,
+as the quota answered before.</p>
+<p><code>RIM_PROBATION_HOURS</code> puts new accounts on probation for that many hours after their creation;
+unset or 0 turns it off, and an account older than the setting is judged by its age like any
+other. During probation an account cannot create a workspace or send a DM request to a stranger,
+someone neither its contact nor in a workspace with it, and both answer <code>VALIDATION</code> saying when
+it can, in minutes rounded up (&quot;a new account can create a workspace in 42 minutes&quot;). Its
+messages follow <code>RIM_RATE_PROBATION_MESSAGES_PER_MIN</code>, with a burst of the same size, instead
+of <code>RIM_RATE_MESSAGES_PER_MIN_PER_USER</code>; unset, the normal rate applies. The <code>probationHours</code>
+of <code>serverInfo.limits</code> reports the setting, null when off, and <code>me { probationEndsAt }</code> tells
+the signed-in caller when theirs ends, null once it has.</p>
 <p>An operator can also block an address or range (<code>rim_server ip block</code>). A blocked address is
 answered 403 with <code>{&quot;error&quot;:&quot;blocked&quot;}</code> and nothing else on every route but <code>/healthz</code>: the API,
 the readiness probe, discovery and <code>/s2s/v1/...</code>. The address is found the same way as for the
 limits.</p>
+<h2 id="instance-moderation">Instance moderation <a class="anchor" href="#instance-moderation" aria-label="Link to this section">#</a></h2>
+<p>An instance operator runs the server&#39;s moderation queue from the app: the abuse reports, the
+principals the server refuses and the IP deny list. The server&#39;s operator makes an account an
+instance operator with <code>rim_server operator grant &lt;username&gt;</code> and takes the role back with
+<code>operator revoke</code>; a blocked account or one scheduled for deletion cannot be granted it.
+<code>me { instanceOperator }</code> tells the signed-in caller whether they hold it (false on every other
+user).</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Root</th>
+<th>Does what the command line does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>instanceReports(openOnly: true)</code></td>
+<td><code>abuse-reports list [--open]</code>, oldest first</td>
+</tr>
+<tr>
+<td><code>instanceResolveReport(id)</code></td>
+<td><code>abuse-reports resolve</code>; <code>NOT_FOUND</code> for no such report</td>
+</tr>
+<tr>
+<td><code>instancePrincipalBlocks</code></td>
+<td><code>principal list</code>, newest first</td>
+</tr>
+<tr>
+<td><code>instanceBlockPrincipal(principalId, reason, cascade: false)</code></td>
+<td><code>principal block [--cascade]</code></td>
+</tr>
+<tr>
+<td><code>instanceUnblockPrincipal(principalId)</code></td>
+<td><code>principal unblock</code></td>
+</tr>
+<tr>
+<td><code>instanceIpBlocks</code></td>
+<td><code>ip list</code></td>
+</tr>
+<tr>
+<td><code>instanceBlockIp(cidr, reason, expiresInDays)</code></td>
+<td><code>ip block [--expires-in-days]</code></td>
+</tr>
+<tr>
+<td><code>instanceUnblockIp(cidr)</code></td>
+<td><code>ip unblock</code></td>
+</tr>
+</tbody></table></div>
+<p>Reports and blocks name the local account holding a principal (<code>subjectUsername</code>, <code>username</code>),
+null when no account here holds it. Each root needs a session and the mutations the CSRF
+header. Anyone but an instance operator gets <code>FORBIDDEN</code>, an app or bot acting for one too.
+Each change writes the same audit line as its command, with the operator&#39;s user id as
+<code>actor_id</code> (<code>cli</code> for the command line).</p>
 <h2 id="errors">Errors <a class="anchor" href="#errors" aria-label="Link to this section">#</a></h2>
 <h3 id="graphql-error-codes">GraphQL error codes <a class="anchor" href="#graphql-error-codes" aria-label="Link to this section">#</a></h3>
 <p>Every error a resolver returns carries <code>extensions.code</code>. A client branches on the code, never
@@ -399,7 +629,7 @@ on the message.</p>
 </tr>
 <tr>
 <td><code>FORBIDDEN</code></td>
-<td>The caller may not do this. Also: a session not bound to a device asking for device-only data, a relay-only field on a server that is not a relay, a remote member&#39;s account mutation.</td>
+<td>The caller may not do this. Also: a session not bound to a device asking for device-only data, a relay-only field on a server that is not a relay, a remote member&#39;s account mutation, a password signup on a server whose signups need a key.</td>
 <td></td>
 </tr>
 <tr>
@@ -604,6 +834,15 @@ kept forever (<a href="operations/audit-retention.html"><code>operations/audit-r
 runs the server; null when there is none. A client shows it where people sign up or sign in.</li>
 <li><strong><code>termsUrl</code></strong>: the terms of service a signup accepts, an absolute http(s) URL; null when the
 server has none. A client links it at signup and sends it back as <code>acceptedTermsUrl</code>.</li>
+<li><strong><code>limits</code></strong>: the instance&#39;s caps (&quot;Limits&quot;), each an integer or null when there is none,
+and <code>probationHours</code>, the probation of new accounts.</li>
+<li><strong><code>signupRequiresKeys</code></strong>: true when new accounts sign up with a key only and
+<code>signupWithInvite</code> answers <code>FORBIDDEN</code> (<code>RIM_SIGNUP_REQUIRE_KEYS</code>, on by default). A client
+then offers only the key signup.</li>
+<li><strong><code>dmInbound</code></strong>, <strong><code>dmOutbound</code></strong>, <strong><code>dmPartners</code></strong>: the operator&#39;s DM settings, floors for
+every account (<code>RIM_DM_INBOUND</code>, <code>RIM_DM_OUTBOUND</code>, <code>RIM_DM_PARTNERS</code>; &quot;Who May Start A DM&quot; in
+<a href="messaging.html"><code>messaging.md</code></a>). A client shows them read-only and explains a greyed choice with
+<code>myDmSettings.outsideFloorFrom</code>.</li>
 </ul>
 <p>The discovery document carries the same <code>features</code> for a client that has not connected yet.</p>
 <h2 id="the-full-graphql-reference">The full GraphQL reference <a class="anchor" href="#the-full-graphql-reference" aria-label="Link to this section">#</a></h2>
@@ -613,13 +852,13 @@ types from it:</p>
 <pre><code class="language-sh">curl -s http://localhost:8080/api/sdl &gt; ../rim-ui/schema.graphql
 cd ../rim-ui &amp;&amp; npm run codegen</code></pre>
 <p>Enum values appear in <code>SCREAMING_SNAKE</code> and fields in <code>camelCase</code>. The models in <a href="messaging.html"><code>messaging.md</code></a>,
-<a href="search.html"><code>search.md</code></a>, <a href="message-change-feed.html"><code>message-change-feed.md</code></a>, <a href="command_model.html"><code>command_model.md</code></a> and the specs in <a href="https://github.com/rim-platform/rim-server/tree/c86029b35a7ef7770b05e7bda62909f988343f7f/docs/specs"><code>specs/</code></a> explain what
+<a href="search.html"><code>search.md</code></a>, <a href="message-change-feed.html"><code>message-change-feed.md</code></a>, <a href="command_model.html"><code>command_model.md</code></a> and the specs in <a href="https://github.com/rim-platform/rim-server/tree/769aebc96b537242ae9303ea5c155659de01ffa7/docs/specs"><code>specs/</code></a> explain what
 the fields mean.</p>
 
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/docs/api.md">rim-server/docs/api.md</a> at <code>c86029b</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/769aebc96b537242ae9303ea5c155659de01ffa7/docs/api.md">rim-server/docs/api.md</a> at <code>769aebc</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

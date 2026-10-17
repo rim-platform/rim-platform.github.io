@@ -37,7 +37,7 @@
 <li><a href="#group-invite">Invite (2)</a></li>
 <li><a href="#group-server">Server (2)</a></li>
 <li><a href="#group-message">Message (9)</a></li>
-<li><a href="#group-conversation">Conversation (9)</a></li>
+<li><a href="#group-conversation">Conversation (11)</a></li>
 <li><a href="#group-channel">Channel (4)</a></li>
 <li><a href="#group-attachment">Attachment (3)</a></li>
 <li><a href="#group-command">Command (1)</a></li>
@@ -45,19 +45,19 @@
 <li><a href="#group-keybind">Keybind (3)</a></li>
 <li><a href="#group-emoji">Emoji (2)</a></li>
 <li><a href="#group-macro">Macro (4)</a></li>
-<li><a href="#group-workspace">Workspace (6)</a></li>
+<li><a href="#group-workspace">Workspace (10)</a></li>
 <li><a href="#group-pipeline">Pipeline (4)</a></li>
-<li><a href="#group-report">Report (4)</a></li>
+<li><a href="#group-report">Report (5)</a></li>
 <li><a href="#group-notification">Notification (2)</a></li>
 <li><a href="#group-key">Key (7)</a></li>
 <li><a href="#group-device">Device (7)</a></li>
 <li><a href="#group-relay">Relay (2)</a></li>
-<li><a href="#group-other">Other (32)</a></li>
+<li><a href="#group-other">Other (39)</a></li>
 </ol>
 </details></aside>
     <main id="content" class="prose">
 <h1>Mutation</h1>
-<p class="lede">106 mutations, grouped by the domain their name starts with or names, in the order the schema lists them.</p>
+<p class="lede">120 mutations, grouped by the domain their name starts with or names, in the order the schema lists them.</p>
 <input id="filter" class="search" type="search" placeholder="Filter fields by name" aria-label="Filter fields by name" autocomplete="off">
 <p id="filter-none" class="muted" hidden>Nothing matches.</p>
 <section data-group>
@@ -74,7 +74,9 @@
 <div class="desc"><p>Unified signup mutation for all token-based and open-mode registration paths.</p>
 <p>In invite-only mode, exactly one of <code>instanceInviteToken</code> or <code>workspaceInviteToken</code>
 must be supplied.
-In open mode, all token fields must be absent.</p>
+In open mode, all token fields must be absent.
+Refused with <code>FORBIDDEN</code> when <code>serverInfo.signupRequiresKeys</code> is true: new accounts then
+sign up with <a href="mutation.html#signupWithKey"><code>signupWithKey</code></a>.</p>
 <p>On success, sets session and CSRF cookies via <code>AuthIntent</code>.</p>
 </div>
 
@@ -156,7 +158,7 @@ the same id and envelope again answers the stored message.</p>
 </section>
 </section>
 <section data-group>
-<h2 id="group-conversation">Conversation <span class="faint">9</span></h2>
+<h2 id="group-conversation">Conversation <span class="faint">11</span></h2>
 <section class="entry" id="createConversation" data-name="createConversation">
 <h3><code>createConversation</code></h3>
 <div class="sig">createConversation(input: <a href="inputs.html#CreateConversationInput">CreateConversationInput</a>!): <a href="objects.html#Conversation">Conversation</a>!</div>
@@ -231,6 +233,23 @@ themselves.</p>
 ): <a href="objects.html#ConversationNotificationLevel">ConversationNotificationLevel</a>!</div>
 <div class="desc"><p>Set the viewer&#39;s level for one conversation they can read; <code>level: null</code> goes back to
 the workspace default. <a href="mutation.html#muteConversation"><code>muteConversation</code></a>/<a href="mutation.html#unmuteConversation"><code>unmuteConversation</code></a> keep working alongside.</p>
+</div>
+
+</section>
+<section class="entry" id="acceptConversationInvite" data-name="acceptConversationInvite">
+<h3><code>acceptConversationInvite</code></h3>
+<div class="sig">acceptConversationInvite(serverId: <a href="scalars.html#ID">ID</a>!, conversationId: <a href="scalars.html#ID">ID</a>!): <a href="objects.html#Conversation">Conversation</a>!</div>
+<div class="desc"><p>Accept the caller&#39;s pending invitation (<code>Conversation.pendingMemberIds</code>): they become a
+member and a member&#39;s device adds theirs to the group. Needs a device set up for
+encryption (<code>VALIDATION</code> otherwise); already a member, it changes nothing; <code>NOT_FOUND</code>
+when the caller was not invited.</p>
+</div>
+
+</section>
+<section class="entry" id="declineConversationInvite" data-name="declineConversationInvite">
+<h3><code>declineConversationInvite</code></h3>
+<div class="sig">declineConversationInvite(serverId: <a href="scalars.html#ID">ID</a>!, conversationId: <a href="scalars.html#ID">ID</a>!): <a href="scalars.html#Boolean">Boolean</a>!</div>
+<div class="desc"><p>Decline the caller&#39;s pending invitation; <code>NOT_FOUND</code> when there is none.</p>
 </div>
 
 </section>
@@ -378,7 +397,7 @@ the workspace default. <a href="mutation.html#muteConversation"><code>muteConver
 </section>
 </section>
 <section data-group>
-<h2 id="group-workspace">Workspace <span class="faint">6</span></h2>
+<h2 id="group-workspace">Workspace <span class="faint">10</span></h2>
 <section class="entry" id="setWorkspaceState" data-name="setWorkspaceState">
 <h3><code>setWorkspaceState</code></h3>
 <div class="sig">setWorkspaceState(input: <a href="inputs.html#SetWorkspaceStateInput">SetWorkspaceStateInput</a>!): <a href="objects.html#WorkspaceStateEntryGql">WorkspaceStateEntryGql</a>!</div>
@@ -420,6 +439,60 @@ delegation, and records the subscription.</p>
 </div>
 
 </section>
+<section class="entry" id="transferWorkspaceOwnership" data-name="transferWorkspaceOwnership">
+<h3><code>transferWorkspaceOwnership</code></h3>
+<div class="sig">transferWorkspaceOwnership(input: <a href="inputs.html#TransferWorkspaceOwnershipInput">TransferWorkspaceOwnershipInput</a>!): <a href="objects.html#Server">Server</a>!</div>
+<div class="desc"><p>Make another member the workspace&#39;s owner. The caller becomes a moderator; a workspace
+has exactly one owner, so this is the only way the owner role moves (<a href="mutation.html#setMemberRole"><code>setMemberRole</code></a>
+never grants it). Both role changes are announced with <code>MemberRoleChanged</code>.</p>
+<h4>Errors</h4>
+<ul>
+<li><code>UNAUTHENTICATED</code>: no session.</li>
+<li><code>FORBIDDEN</code>: the caller is not the owner.</li>
+<li><code>NOT_FOUND</code>: <code>userId</code> is not a member.</li>
+<li><code>VALIDATION</code>: the direct space, a guest as the new owner, or the caller themself.</li>
+</ul>
+</div>
+
+</section>
+<section class="entry" id="deleteWorkspace" data-name="deleteWorkspace">
+<h3><code>deleteWorkspace</code></h3>
+<div class="sig">deleteWorkspace(input: <a href="inputs.html#DeleteWorkspaceInput">DeleteWorkspaceInput</a>!): <a href="objects.html#DeleteWorkspacePayload">DeleteWorkspacePayload</a>!</div>
+<div class="desc"><p>Delete the workspace for good: its members, channels and conversations with their
+messages and files, invites, pins, workspace state, keybinds, pipelines, macros, plugins
+and custom emoji, and the notification rules scoped to it. Every member gets
+<code>MemberLeft</code> for themself and their event stream for the workspace ends; after that the
+workspace answers <code>NOT_FOUND</code> or <code>FORBIDDEN</code> like one they never joined.</p>
+<h4>Errors</h4>
+<ul>
+<li><code>UNAUTHENTICATED</code>: no session.</li>
+<li><code>FORBIDDEN</code>: the caller is not the owner.</li>
+<li><code>VALIDATION</code>: the direct space, or <code>confirmName</code> is not the workspace&#39;s name.</li>
+</ul>
+</div>
+
+</section>
+<section class="entry" id="setWorkspaceDmPolicy" data-name="setWorkspaceDmPolicy">
+<h3><code>setWorkspaceDmPolicy</code></h3>
+<div class="sig">setWorkspaceDmPolicy(
+  workspaceId: <a href="scalars.html#ID">ID</a>!
+  outsideFloor: <a href="enums.html#DmOutsideFloor">DmOutsideFloor</a>!
+  memberDefault: <a href="enums.html#DmMembers">DmMembers</a>!
+): <a href="objects.html#WorkspaceDmPolicy">WorkspaceDmPolicy</a>!</div>
+<div class="desc"><p>Set a workspace&#39;s DM rules: the floor for DMs to its members from outside their
+workspaces, and how a DM from a fellow member arrives unless the recipient chose. The
+workspace&#39;s Owner only; anyone else gets <code>FORBIDDEN</code>.</p>
+</div>
+
+</section>
+<section class="entry" id="setMyWorkspaceDmSetting" data-name="setMyWorkspaceDmSetting">
+<h3><code>setMyWorkspaceDmSetting</code></h3>
+<div class="sig">setMyWorkspaceDmSetting(workspaceId: <a href="scalars.html#ID">ID</a>!, members: <a href="enums.html#DmMembers">DmMembers</a>!): <a href="objects.html#MyDmSettings">MyDmSettings</a>!</div>
+<div class="desc"><p>Set how a DM from the members of one of the caller&#39;s workspaces arrives, whatever the
+workspace&#39;s default. <code>NOT_FOUND</code> unless the caller is a member.</p>
+</div>
+
+</section>
 </section>
 <section data-group>
 <h2 id="group-pipeline">Pipeline <span class="faint">4</span></h2>
@@ -455,7 +528,7 @@ its workspace; anyone else gets <code>FORBIDDEN</code>.</p>
 </section>
 </section>
 <section data-group>
-<h2 id="group-report">Report <span class="faint">4</span></h2>
+<h2 id="group-report">Report <span class="faint">5</span></h2>
 <section class="entry" id="reportMessage" data-name="reportMessage">
 <h3><code>reportMessage</code></h3>
 <div class="sig">reportMessage(
@@ -495,6 +568,17 @@ them against its receipt before the moderators see them.</p>
 <div class="desc"><p>Report a DM request as abuse; a pending one is ignored too.</p>
 </div>
 
+</section>
+<section class="entry" id="instanceResolveReport" data-name="instanceResolveReport">
+<h3><code>instanceResolveReport</code></h3>
+<div class="sig">instanceResolveReport(id: <a href="scalars.html#ID">ID</a>!): <a href="objects.html#InstanceAbuseReport">InstanceAbuseReport</a>!</div>
+<div class="desc"><p>Mark an abuse report resolved; <code>NOT_FOUND</code> when there is no such report. Instance
+operators only; anyone else gets <code>FORBIDDEN</code>.</p>
+</div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Argument</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>id</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td><p>The report&#39;s id.</p>
+</td></tr>
+</tbody></table></div>
 </section>
 </section>
 <section data-group>
@@ -540,7 +624,9 @@ cookie as <a href="mutation.html#login"><code>login</code></a>.</p>
 <section class="entry" id="enrollIdentityKey" data-name="enrollIdentityKey">
 <h3><code>enrollIdentityKey</code></h3>
 <div class="sig">enrollIdentityKey(input: <a href="inputs.html#EnrollIdentityKeyInput">EnrollIdentityKeyInput</a>!): <a href="objects.html#KeyIdentity">KeyIdentity</a>!</div>
-<div class="desc"><p>Bind a key identity to the signed-in account. Afterwards the password no longer signs in.</p>
+<div class="desc"><p>Bind a key identity to the signed-in account. The calling session becomes the new
+device&#39;s and every other session of the account ends. Afterwards the password no longer
+signs in.</p>
 </div>
 
 </section>
@@ -555,10 +641,12 @@ session, revokes every device and session, and enrolls the device given with it.
 <section class="entry" id="signupWithKey" data-name="signupWithKey">
 <h3><code>signupWithKey</code></h3>
 <div class="sig">signupWithKey(input: <a href="inputs.html#SignupWithKeyInput">SignupWithKeyInput</a>!): <a href="objects.html#SignupWithInvitePayloadGql">SignupWithInvitePayloadGql</a>!</div>
-<div class="desc"><p>Create an account from a key identity alone: no password, no email. The registration
-mode applies as for <a href="mutation.html#signupWithInvite"><code>signupWithInvite</code></a> (exactly one token in invite-only mode, none in
-open mode). Signs the new account in on the device that signed up, setting the same
-session and CSRF cookies as <a href="mutation.html#signupWithInvite"><code>signupWithInvite</code></a>.</p>
+<div class="desc"><p>Create an account from a key identity alone, with no password. The registration mode
+applies as for <a href="mutation.html#signupWithInvite"><code>signupWithInvite</code></a> (exactly one token in invite-only mode, none in open
+mode). An instance invite bound to an email address gives the account that address
+(<code>EMAIL_TAKEN</code> when another account has it); otherwise the account has no email. Signs
+the new account in on the device that signed up, setting the same session and CSRF
+cookies as <a href="mutation.html#signupWithInvite"><code>signupWithInvite</code></a>.</p>
 </div>
 
 </section>
@@ -651,7 +739,7 @@ contacts and blocks on this relay.</p>
 </section>
 </section>
 <section data-group>
-<h2 id="group-other">Other <span class="faint">32</span></h2>
+<h2 id="group-other">Other <span class="faint">39</span></h2>
 <section class="entry" id="login" data-name="login">
 <h3><code>login</code></h3>
 <div class="sig">login(input: <a href="inputs.html#LoginInput">LoginInput</a>!): <a href="objects.html#LoginPayload">LoginPayload</a>!</div>
@@ -692,7 +780,11 @@ contacts and blocks on this relay.</p>
 <section class="entry" id="startTyping" data-name="startTyping">
 <h3><code>startTyping</code></h3>
 <div class="sig">startTyping(serverId: <a href="scalars.html#ID">ID</a>!, conversationId: <a href="scalars.html#ID">ID</a>!): <a href="scalars.html#Boolean">Boolean</a>!</div>
-<div class="desc"><p class="faint">No description in the schema.</p></div>
+<div class="desc"><p>Announce that the caller is typing in a direct conversation. Typing is announced in direct
+conversations only: the mutation answers <code>true</code> when it emitted a <code>TypingStarted</code> event and
+<code>false</code> when it did not, which is in a channel or a group, or on a repeat inside the
+throttle window.</p>
+</div>
 
 </section>
 <section class="entry" id="heartbeat" data-name="heartbeat">
@@ -721,7 +813,7 @@ logged instead of sent.</p>
 <div class="desc"><p>Update fields on the authenticated user&#39;s profile.</p>
 <p>Returns the full updated <a href="objects.html#User"><code>User</code></a> so the client can refresh local cache
 without an extra <code>me { ... }</code> round-trip.</p>
-<h1 id="errors">Errors</h1>
+<h4>Errors</h4>
 <ul>
 <li><code>UNAUTHENTICATED</code> — no session.</li>
 <li><code>FORBIDDEN</code> — <code>displayName</code> from a member whose relay is another server; their
@@ -731,7 +823,7 @@ display name comes from their profile card.</li>
 <li><code>NOT_FOUND</code> — caller&#39;s user row missing (should not happen in practice).</li>
 <li><code>INTERNAL</code> — repository failure.</li>
 </ul>
-<h1 id="examples">Examples</h1>
+<h4>Examples</h4>
 <pre><code class="language-graphql">mutation Update($input: UpdateMyProfileInput!) {
 updateMyProfile(input: $input) {
 id username displayName avatarUrl statusText bio
@@ -926,12 +1018,123 @@ signature, and attempts are limited per IP. Returns the host&#39;s signed acknow
 </div>
 
 </section>
+<section class="entry" id="requestAccountDeletion" data-name="requestAccountDeletion">
+<h3><code>requestAccountDeletion</code></h3>
+<div class="sig">requestAccountDeletion(input: <a href="inputs.html#RequestAccountDeletionInput">RequestAccountDeletionInput</a>!): <a href="objects.html#AccountDeletionSchedule">AccountDeletionSchedule</a>!</div>
+<div class="desc"><p>Schedule the signed-in account for deletion once the grace period ends (14 days unless
+the operator set <code>RIM_ACCOUNT_DELETION_GRACE_DAYS</code>, 0 to 30). Every other session of the
+account ends now; this one keeps working, and <a href="mutation.html#cancelAccountDeletion"><code>cancelAccountDeletion</code></a> keeps the account
+until the grace period ends. <code>me.deletionScheduledFor</code> shows the pending deletion.</p>
+<p>Then the account is purged: its sessions, devices, keys, workspace memberships,
+plaintext messages, files and personal settings are removed, workspaces where it was the
+only member are deleted, and its username becomes free. The user row stays as a
+tombstone (<code>deleted-&lt;id prefix&gt;</code>, &quot;Deleted account&quot;, no email, password or key) that
+cannot sign in and shows in no member list or search; it stays the author of the
+account&#39;s encrypted messages, which are kept so the conversations&#39; history does not
+shift, and of a deleted message others replied to. The tombstone keeps the account&#39;s
+key identity id, so the same key identity cannot sign up on this server again.</p>
+<h4>Errors</h4>
+<ul>
+<li><code>UNAUTHENTICATED</code>: no session.</li>
+<li><code>FORBIDDEN</code>: a person from another server, who deletes their account at their relay.</li>
+<li><code>VALIDATION</code>: <code>confirmUsername</code> is not the account&#39;s username, or the account owns a
+workspace that has other members: hand it over (<a href="mutation.html#transferWorkspaceOwnership"><code>transferWorkspaceOwnership</code></a>) or delete
+it (<a href="mutation.html#deleteWorkspace"><code>deleteWorkspace</code></a>) first.</li>
+<li><code>CONFLICT</code>: a deletion is already pending.</li>
+</ul>
+</div>
+
+</section>
+<section class="entry" id="cancelAccountDeletion" data-name="cancelAccountDeletion">
+<h3><code>cancelAccountDeletion</code></h3>
+<div class="sig">cancelAccountDeletion: <a href="scalars.html#Boolean">Boolean</a>!</div>
+<div class="desc"><p>Cancel the signed-in account&#39;s pending deletion during its grace period. Returns whether
+a deletion was pending.</p>
+<h4>Errors</h4>
+<ul>
+<li><code>UNAUTHENTICATED</code>: no session.</li>
+</ul>
+</div>
+
+</section>
+<section class="entry" id="instanceBlockPrincipal" data-name="instanceBlockPrincipal">
+<h3><code>instanceBlockPrincipal</code></h3>
+<div class="sig">instanceBlockPrincipal(
+  principalId: <a href="scalars.html#String">String</a>!
+  reason: <a href="scalars.html#String">String</a>!
+  cascade: <a href="scalars.html#Boolean">Boolean</a>! = false
+): [<a href="objects.html#InstancePrincipalBlockOutcome">InstancePrincipalBlockOutcome</a>!]!</div>
+<div class="desc"><p>Block a principal on this server: its pending DM requests are ignored, and the account
+holding it here has its sessions ended, its invites with uses left revoked and its
+email refused. Returns one outcome per account blocked, the principal&#39;s first. Instance
+operators only; anyone else gets <code>FORBIDDEN</code>.</p>
+</div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Argument</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>principalId</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td><p>The principal to block (<code>rimp1_…</code>).</p>
+</td></tr>
+<tr><td><code>reason</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td><p>Why it is blocked, 1 to 1000 characters.</p>
+</td></tr>
+<tr><td><code>cascade</code></td><td><code><a href="scalars.html#Boolean">Boolean</a>!</code> <span class="faint">= false</span></td><td><p>Also block every account its invites created, recursively.</p>
+</td></tr>
+</tbody></table></div>
+</section>
+<section class="entry" id="instanceUnblockPrincipal" data-name="instanceUnblockPrincipal">
+<h3><code>instanceUnblockPrincipal</code></h3>
+<div class="sig">instanceUnblockPrincipal(principalId: <a href="scalars.html#String">String</a>!): <a href="objects.html#InstancePrincipalUnblockOutcome">InstancePrincipalUnblockOutcome</a>!</div>
+<div class="desc"><p>Lift a principal&#39;s block and its account&#39;s email block. Ended sessions and revoked
+invites stay ended. Instance operators only; anyone else gets <code>FORBIDDEN</code>.</p>
+</div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Argument</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>principalId</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td><p>The principal to unblock (<code>rimp1_…</code>).</p>
+</td></tr>
+</tbody></table></div>
+</section>
+<section class="entry" id="instanceBlockIp" data-name="instanceBlockIp">
+<h3><code>instanceBlockIp</code></h3>
+<div class="sig">instanceBlockIp(
+  cidr: <a href="scalars.html#String">String</a>!
+  reason: <a href="scalars.html#String">String</a>!
+  expiresInDays: <a href="scalars.html#Int">Int</a>
+): <a href="objects.html#InstanceIpBlockOutcome">InstanceIpBlockOutcome</a>!</div>
+<div class="desc"><p>Block an address or range, or replace the reason and expiry of its block. A running
+server applies it within 30 seconds. Instance operators only; anyone else gets
+<code>FORBIDDEN</code>.</p>
+</div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Argument</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>cidr</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td><p>An address or a CIDR range, IPv4 or IPv6.</p>
+</td></tr>
+<tr><td><code>reason</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td><p>Why it is blocked, 1 to 1000 characters.</p>
+</td></tr>
+<tr><td><code>expiresInDays</code></td><td><code><a href="scalars.html#Int">Int</a></code></td><td><p>Days until the block lifts, 1 to 365; null blocks until it is removed.</p>
+</td></tr>
+</tbody></table></div>
+</section>
+<section class="entry" id="instanceUnblockIp" data-name="instanceUnblockIp">
+<h3><code>instanceUnblockIp</code></h3>
+<div class="sig">instanceUnblockIp(cidr: <a href="scalars.html#String">String</a>!): <a href="scalars.html#Boolean">Boolean</a>!</div>
+<div class="desc"><p>Lift the block on an address or range, named as it was blocked or in any form naming
+the same range. Returns whether there was one. A running server applies it within 30
+seconds. Instance operators only; anyone else gets <code>FORBIDDEN</code>.</p>
+</div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Argument</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>cidr</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td><p>The address or CIDR range to unblock.</p>
+</td></tr>
+</tbody></table></div>
+</section>
+<section class="entry" id="setMyDmSettings" data-name="setMyDmSettings">
+<h3><code>setMyDmSettings</code></h3>
+<div class="sig">setMyDmSettings(outside: <a href="enums.html#DmOutside">DmOutside</a>!): <a href="objects.html#MyDmSettings">MyDmSettings</a>!</div>
+<div class="desc"><p>Set who outside the caller&#39;s workspaces may start a DM with them: <code>REQUESTS</code>, or
+<code>NONE</code>. <code>REQUESTS</code> under a floor that refuses such DMs is <code>VALIDATION</code>, naming it.</p>
+</div>
+
+</section>
 </section>
 
     </main>
   </div>
   <footer class="site">
-    <span>Generated from <a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>58e3ec0</code></span>
+    <span>Generated from <a href="https://github.com/rim-platform/rim-ui/blob/5db413c6ad9fa050b425094c71034e86d164534c/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>5db413c</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

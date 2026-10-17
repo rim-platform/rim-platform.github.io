@@ -59,9 +59,9 @@
 </details></aside>
     <main id="content" class="prose">
 <h1 id="end-to-end-encryption-with-mls-v1">End-to-end encryption with MLS v1</h1>
-<p class="status"><span><b>End-to-end encryption with MLS v1</b></span><span>version 1</span><span>status: implemented, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/docs/specs/e2ee-mls-v1.md">rim-server/docs/specs/e2ee-mls-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/c86029b35a7ef7770b05e7bda62909f988343f7f">c86029b</a></span></p>
+<p class="status"><span><b>End-to-end encryption with MLS v1</b></span><span>version 1</span><span>status: implemented, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/769aebc96b537242ae9303ea5c155659de01ffa7/docs/specs/e2ee-mls-v1.md">rim-server/docs/specs/e2ee-mls-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/769aebc96b537242ae9303ea5c155659de01ffa7">769aebc</a></span></p>
 <p><em>Status: implemented, normative. Library, providers, cipher suite and test vectors:
-<a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/docs/decisions/mls-library-2026-10-09.md"><code>docs/decisions/mls-library-2026-10-09.md</code></a>. Read <a href="key-identity-v1.html"><code>key-identity-v1.md</code></a> (keys, tagged encodings,
+<a href="https://github.com/rim-platform/rim-server/blob/769aebc96b537242ae9303ea5c155659de01ffa7/docs/decisions/mls-library-2026-10-09.md"><code>docs/decisions/mls-library-2026-10-09.md</code></a>. Read <a href="key-identity-v1.html"><code>key-identity-v1.md</code></a> (keys, tagged encodings,
 statements) and <a href="device-linking-v1.html"><code>device-linking-v1.md</code></a> first. This document is the contract between the server
 (<code>E2eeService</code>), the <code>rim_mls</code> crate in rim-ui, the desktop client and the web client. Labels of
 the form S4-n below name the change that built an item: S4-1 the server, S4-2 the <code>rim_mls</code>
@@ -69,8 +69,9 @@ crate, S4-3 to S4-5 the desktop client, S4-6 the web client.</em></p>
 <h2 id="summary">Summary <a class="anchor" href="#summary" aria-label="Link to this section">#</a></h2>
 <ol>
 <li><strong>DMs and groups</strong> are encrypted; channels, private ones included, stay plaintext. New DMs and
-groups are encrypted when every member is ready; existing ones are upgraded once, by a member
-device, behind a visible &quot;encrypted since&quot; marker. Old plaintext stays.</li>
+groups are encrypted when their creator is ready; members who are not ready yet are invited
+and become members when they accept with a ready device. Existing ones are upgraded
+once, by a member device, behind a visible &quot;encrypted since&quot; marker. Old plaintext stays.</li>
 <li>One MLS group per conversation, suite <strong>0x004F</strong> (X25519 + ML-KEM-768, AES-128-GCM, Ed25519).
 Members are <strong>devices</strong>. The server owns conversation membership; the group follows it.</li>
 <li>Credentials: a per-device <strong>MLS signature key</strong> certified by the device key (an <code>mls-key</code>
@@ -127,6 +128,17 @@ report that reveals one message&#39;s content and franking key to the moderators
 not revoked, with a key package uploaded in the last 60 days (<code>device_key.last_key_package_upload_at</code>,
 set by every upload; key package rows themselves expire after 90 days), shown as
 <code>PrincipalDevice.mlsActive</code>. Bots, the CLI and password-only accounts are never ready.</li>
+<li><strong>Pending member (invitation).</strong> A member of an encrypted conversation who was not ready when
+they were added (<code>Conversation.pendingMemberIds</code>; not in <code>memberIds</code> or <code>memberCount</code>). They see
+the conversation in their inbox, with <code>mlsGroup</code> null, but cannot read, send or be notified
+there (<code>FORBIDDEN</code>, like a non-member), and their devices are not desired. The server never
+makes them a member on its own: a key-package upload changes nothing. They call
+<code>acceptConversationInvite</code>, which needs them ready (<code>VALIDATION</code> otherwise) and emits
+<code>MemberAddedToConversation</code> and <code>MlsMembershipChanged</code>; a member device then adds their devices
+like any pending add, and they read nothing from before. <code>declineConversationInvite</code> deletes the
+invitation. An invitation expires after 30 days, and one user holds at most
+<code>RIM_LIMIT_PENDING_INVITES_PER_USER</code> (default 50). Remote users and members of the relay&#39;s
+direct space are never invited: they must be ready.</li>
 <li><strong>An encrypted conversation</strong> has <code>conversation.encrypted_at</code> set. It is set when an encrypted
 conversation is created (<code>createConversation(input: { encrypted: true })</code>) or when the first
 Commit of an existing plaintext DM or group is accepted (&quot;Migration&quot;). It is never cleared.</li>
@@ -138,15 +150,17 @@ server&quot; and stops sending there: it never sends plaintext into it (<code>se
 <code>replyToMessage</code>, <code>editMessage</code>, <code>forwardMessage</code>, a plugin&#39;s post) and never upgrades it again.</li>
 <li>In an encrypted conversation the server refuses plaintext writes (<code>sendMessage</code>,
 <code>replyToMessage</code>, <code>editMessage</code> on an encrypted row, <code>forwardMessage</code> into it: <code>VALIDATION</code>,
-<code>this conversation is encrypted</code>), and <code>createConversation(encrypted: true)</code> and
-<code>addConversationMembers</code> refuse members who are not ready (<code>VALIDATION</code>,
-<code>every member of an encrypted conversation needs a device set up for encryption</code>).</li>
+<code>this conversation is encrypted</code>). <code>createConversation(encrypted: true)</code> refuses a creator who
+is not ready (<code>VALIDATION</code>,
+<code>every member of an encrypted conversation needs a device set up for encryption</code>), and adds
+invites every other member who is not ready; <code>addConversationMembers</code> invites them too.</li>
 <li><strong>Group devices</strong>: the devices that are leaves of the current MLS group, as the server records
 them from accepted Commits (<code>mls_group_device</code>). <strong>Desired devices</strong>: the MLS-active devices of
 the conversation&#39;s current members. <strong>Pending adds</strong> are desired devices not in the group;
 <strong>pending removes</strong> are group devices no longer desired (member left, removed, kicked or banned;
 device revoked; inactive for 60 days).</li>
-<li>At most <strong>100 members and 512 devices</strong> per encrypted conversation (<code>VALIDATION</code> beyond).</li>
+<li>At most <strong>100 members and 512 devices</strong> per encrypted conversation (<code>VALIDATION</code> beyond);
+pending members count.</li>
 </ul>
 <h2 id="identity-and-credentials">Identity and credentials <a class="anchor" href="#identity-and-credentials" aria-label="Link to this section">#</a></h2>
 <h3 id="the-mls-key-statement">The <code>mls-key</code> statement <a class="anchor" href="#the-mls-key-statement" aria-label="Link to this section">#</a></h3>
@@ -204,6 +218,11 @@ read, and the UI says that a device RIM cannot verify can read new messages.</p>
 <td>A device is linked (<a href="device-linking-v1.html"><code>device-linking-v1.md</code></a>) and uploads key packages</td>
 <td>Pending add</td>
 <td>Ranked group devices, or the member&#39;s own other device first (rank 0)</td>
+</tr>
+<tr>
+<td>An invited member accepts (<code>acceptConversationInvite</code>)</td>
+<td>The member becomes active; pending adds for their devices</td>
+<td>Ranked group devices</td>
 </tr>
 <tr>
 <td><code>revokeDeviceKey</code></td>
@@ -357,8 +376,8 @@ name the conversation and incarnation they expect.</p>
 <h3 id="creating-a-group">Creating a group <a class="anchor" href="#creating-a-group" aria-label="Link to this section">#</a></h3>
 <ol>
 <li>The creator&#39;s client calls <code>createConversation(input: { …, encrypted: true })</code>. The server
-checks that every member is ready, creates the conversation with <code>encrypted_at = created_at</code>,
-and no group. A DM pair that already has a DM gets that conversation back, as today; a plaintext
+checks that the creator is ready, creates the conversation with <code>encrypted_at = created_at</code>,
+the members who are not ready invited, and no group. A DM pair that already has a DM gets that conversation back, as today; a plaintext
 one is then upgraded as in &quot;Migration&quot;.</li>
 <li>It calls <code>claimMlsKeyPackages</code> for every desired device but its own (with no group there is no
 <code>mlsGroup</code> to list pending adds: the desired devices are the members&#39; devices with
@@ -754,7 +773,7 @@ as one <code>EDITED</code> entry carrying the newest envelope.</p>
 member with that <code>user.principal_id</code>; ids that are not current members are ignored; the author is
 skipped. <code>mentionAll</code> is treated as <code>@channel</code> / <code>@here</code>.</li>
 <li>Notification rules run as today with what the server knows: <code>direct</code>, <code>mention</code>,
-<code>thread_reply</code> and <code>all</code> work; <code>keyword</code> cannot (the desktop and web clients match keywords after
+<code>thread_reply</code>, <code>all</code> and <code>reaction</code> (reactions are not encrypted) work; <code>keyword</code> cannot (the desktop and web clients match keywords after
 decrypting and show a local notification, without an inbox entry, only where the server sends
 none: a group at the <code>MENTIONS</code> level, for a message that does not mention the reader; the web
 client only where the person already allowed the site&#39;s notifications). Edits replace mention
@@ -1576,7 +1595,7 @@ ed25519:UNry-YBfbQv1nUxStNVtA9jirfxTM5rLE-JA40KZGS9c-tCyl90KEq4W1OxmoxL0msvG62Gc
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c86029b35a7ef7770b05e7bda62909f988343f7f/docs/specs/e2ee-mls-v1.md">rim-server/docs/specs/e2ee-mls-v1.md</a> at <code>c86029b</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/769aebc96b537242ae9303ea5c155659de01ffa7/docs/specs/e2ee-mls-v1.md">rim-server/docs/specs/e2ee-mls-v1.md</a> at <code>769aebc</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

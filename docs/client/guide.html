@@ -34,6 +34,8 @@
   <div class="page with-toc">
     <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
 <ol>
+<li><a href="#download">Download</a></li>
+<li><a href="#about-this-repository">About this repository</a></li>
 <li><a href="#what-is-in-it">What is in it</a></li>
 <li><a href="#quickstart">Quickstart</a><ol><li><a href="#linux-build-dependencies">Linux build dependencies</a></li></ol></li>
 <li><a href="#build-configuration">Build configuration</a><ol><li><a href="#history-archive-in-google-drive-dropbox-or-onedrive">History archive in Google Drive, Dropbox or OneDrive</a></li><li><a href="#history-archive-in-s3-compatible-storage-or-on-your-own-server">History archive in S3-compatible storage or on your own server</a></li></ol></li>
@@ -53,6 +55,18 @@ bring-your-own-model AI agent that acts through the same commands behind a human
 A person is a key pair rather than an account on one server, and DMs and private groups are
 end-to-end encrypted. The product vision and the server live in the separate <code>rim-server</code>
 repository.</p>
+<h2 id="download">Download <a class="anchor" href="#download" aria-label="Link to this section">#</a></h2>
+<p>Get the desktop app from the <a href="https://github.com/rim-platform/rim-ui/releases/latest">latest release</a>:</p>
+<ul>
+<li><strong>Linux</strong>: <code>.deb</code> for Debian and Ubuntu, <code>.rpm</code> for Fedora and openSUSE, or the <code>.AppImage</code>
+for any distribution.</li>
+<li><strong>Windows</strong>: the <code>-setup.exe</code> installer, or the <code>.msi</code> for managed installs.</li>
+<li><strong>macOS</strong>: build it from source until signed builds exist.</li>
+</ul>
+<p>It signs in to the public relay, or to your own server with &quot;Use another server&quot; at sign-in.
+<a href="install.html"><code>docs/install.md</code></a> covers what each file is, what Linux needs at run time, the Windows SmartScreen
+warning, how to verify a download, where the app keeps its data, and building from source.</p>
+<h2 id="about-this-repository">About this repository <a class="anchor" href="#about-this-repository" aria-label="Link to this section">#</a></h2>
 <p>This repository is the client, in two builds from one React 19 and TypeScript code base:</p>
 <ul>
 <li><strong>The desktop app</strong>, a Tauri 2 shell around the React app, for Linux, macOS and Windows. It
@@ -175,7 +189,7 @@ committed to this repository.</p>
 </tbody></table></div>
 <p>The <code>RIM_*</code> variables are read when the Rust side is compiled (<code>npm run tauri build</code>) and again
 at start-up, so a development run can set them in the shell before <code>npm run tauri dev</code>. The
-updater also needs its public key and endpoints in <a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/src-tauri/updater.json"><code>src-tauri/updater.json</code></a>, which is committed
+updater also needs its public key and endpoints in <a href="https://github.com/rim-platform/rim-ui/blob/5db413c6ad9fa050b425094c71034e86d164534c/src-tauri/updater.json"><code>src-tauri/updater.json</code></a>, which is committed
 empty; <a href="updater.html"><code>docs/updater.md</code></a> explains the key pair and <code>latest.json</code>.</p>
 <h3 id="history-archive-in-google-drive-dropbox-or-onedrive">History archive in Google Drive, Dropbox or OneDrive <a class="anchor" href="#history-archive-in-google-drive-dropbox-or-onedrive" aria-label="Link to this section">#</a></h3>
 <p>Settings &gt; History can keep the encrypted history archive in the user&#39;s own Google Drive,
@@ -239,7 +253,7 @@ the endpoint, region, bucket, prefix and an access key. Give that key <code>s3:G
 setup check remove its probe), nothing more.</p>
 </li>
 <li><p><strong>Your own server</strong> keeps the archive on a service the user runs: one URL answering <code>GET</code> and
-<code>POST</code>, specified in <a href="../../specs/backup-endpoint-v1.html"><code>docs/specs/backup-endpoint-v1.md</code></a>. <a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/docs/specs/backup-endpoint-reference.py"><code>docs/specs/backup-endpoint-reference.py</code></a>
+<code>POST</code>, specified in <a href="../../specs/backup-endpoint-v1.html"><code>docs/specs/backup-endpoint-v1.md</code></a>. <a href="https://github.com/rim-platform/rim-ui/blob/5db413c6ad9fa050b425094c71034e86d164534c/docs/specs/backup-endpoint-reference.py"><code>docs/specs/backup-endpoint-reference.py</code></a>
 is a complete service in one Python file (standard library only) that stores the files under
 a directory:</p>
 <pre><code class="language-sh">python3 docs/specs/backup-endpoint-reference.py --dir ~/rim-backup --bearer &lt;token&gt;</code></pre>
@@ -251,6 +265,7 @@ npm run format:check         # Prettier
 npm run build                # TypeScript check and Vite build
 npm test                     # Vitest
 npm run sdk:typecheck        # the plugin SDK and the TypeScript example plugins
+npm run sdk:smoke            # the SDK's npm tarball, installed into a copy of the template
 
 # The Tauri side, from src-tauri/
 cargo fmt --check
@@ -259,32 +274,37 @@ cargo test</code></pre>
 <p><code>npm run codegen</code> regenerates the GraphQL types from <code>schema.graphql</code>, which is exported from a
 running server. <code>npm run build:wasm</code> rebuilds the web app&#39;s MLS module after a change to the
 Rust MLS crates, and <code>npm run skew:check</code> lists the operations an older server would refuse
-(<a href="version-skew.html"><code>docs/version-skew.md</code></a>). <a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/CLAUDE.md"><code>CLAUDE.md</code></a> has the architecture and the conventions;
-<a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/CONTRIBUTING.md"><code>CONTRIBUTING.md</code></a> has the rules for a pull request.</p>
+(<a href="version-skew.html"><code>docs/version-skew.md</code></a>). <a href="https://github.com/rim-platform/rim-ui/blob/5db413c6ad9fa050b425094c71034e86d164534c/CLAUDE.md"><code>CLAUDE.md</code></a> has the architecture and the conventions;
+<a href="https://github.com/rim-platform/rim-ui/blob/5db413c6ad9fa050b425094c71034e86d164534c/CONTRIBUTING.md"><code>CONTRIBUTING.md</code></a> has the rules for a pull request.</p>
 <h2 id="plugins">Plugins <a class="anchor" href="#plugins" aria-label="Link to this section">#</a></h2>
-<p><a href="https://github.com/rim-platform/rim-ui/tree/58e3ec03c43064632a6a6f610d92413040229dfd/sdk/plugin-sdk"><code>sdk/plugin-sdk</code></a> is the TypeScript SDK for plugin protocol v1, whose frozen wire contract is
-<a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/protocol/plugin-protocol-v1.schema.json"><code>protocol/plugin-protocol-v1.schema.json</code></a>. <a href="https://github.com/rim-platform/rim-ui/tree/58e3ec03c43064632a6a6f610d92413040229dfd/plugins"><code>plugins/</code></a> holds examples:</p>
+<p><a href="https://github.com/rim-platform/rim-ui/tree/5db413c6ad9fa050b425094c71034e86d164534c/sdk/plugin-sdk"><code>sdk/plugin-sdk</code></a> is the TypeScript SDK for plugin protocol v1, whose frozen wire contract is
+<a href="https://github.com/rim-platform/rim-ui/blob/5db413c6ad9fa050b425094c71034e86d164534c/protocol/plugin-protocol-v1.schema.json"><code>protocol/plugin-protocol-v1.schema.json</code></a>. <a href="https://github.com/rim-platform/rim-ui/tree/5db413c6ad9fa050b425094c71034e86d164534c/plugins"><code>plugins/</code></a> holds examples:</p>
 <ul>
-<li><a href="https://github.com/rim-platform/rim-ui/tree/58e3ec03c43064632a6a6f610d92413040229dfd/plugins/hello-world"><code>plugins/hello-world</code></a>: the reference local process plugin, in Python with no dependencies.</li>
-<li><a href="https://github.com/rim-platform/rim-ui/tree/58e3ec03c43064632a6a6f610d92413040229dfd/plugins/template-ts"><code>plugins/template-ts</code></a>: a starting point for a TypeScript plugin.</li>
-<li><a href="https://github.com/rim-platform/rim-ui/tree/58e3ec03c43064632a6a6f610d92413040229dfd/plugins/k8s-pods"><code>plugins/k8s-pods</code></a>: lists a Kubernetes namespace&#39;s pods and restarts one after confirmation.</li>
-<li><a href="https://github.com/rim-platform/rim-ui/tree/58e3ec03c43064632a6a6f610d92413040229dfd/plugins/github-prs"><code>plugins/github-prs</code></a>: a web plugin listing the open pull requests of public GitHub
-repositories.</li>
+<li><a href="https://github.com/rim-platform/rim-ui/tree/5db413c6ad9fa050b425094c71034e86d164534c/plugins/hello-world"><code>plugins/hello-world</code></a>: the reference local process plugin, in Python with no dependencies.</li>
+<li><a href="https://github.com/rim-platform/rim-ui/tree/5db413c6ad9fa050b425094c71034e86d164534c/plugins/template-ts"><code>plugins/template-ts</code></a>: a starting point for a TypeScript plugin.</li>
+</ul>
+<p>Two plugins the project publishes live in repositories of their own, each with the built
+plugin at its root so the desktop installs it from its git URL:</p>
+<ul>
+<li><a href="https://github.com/rim-platform/plugin-k8s-pods"><code>plugin-k8s-pods</code></a>: lists a Kubernetes
+namespace&#39;s pods and restarts one after confirmation.</li>
+<li><a href="https://github.com/rim-platform/plugin-github-prs"><code>plugin-github-prs</code></a>: a web plugin
+listing the open pull requests of public GitHub repositories.</li>
 </ul>
 <h2 id="documentation">Documentation <a class="anchor" href="#documentation" aria-label="Link to this section">#</a></h2>
-<p><a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/docs/README.md"><code>docs/README.md</code></a> lists every document in <a href="https://github.com/rim-platform/rim-ui/tree/58e3ec03c43064632a6a6f610d92413040229dfd/docs"><code>docs/</code></a>. The product contracts the client implements,
+<p><a href="https://github.com/rim-platform/rim-ui/blob/5db413c6ad9fa050b425094c71034e86d164534c/docs/README.md"><code>docs/README.md</code></a> lists every document in <a href="https://github.com/rim-platform/rim-ui/tree/5db413c6ad9fa050b425094c71034e86d164534c/docs"><code>docs/</code></a>. The product contracts the client implements,
 such as the command, keybind, context, plugin and capability models and the specifications for
-key identity, device linking, encryption and server-to-server, are in <code>rim-server</code>&#39;s <a href="https://github.com/rim-platform/rim-ui/tree/58e3ec03c43064632a6a6f610d92413040229dfd/docs"><code>docs/</code></a>.</p>
+key identity, device linking, encryption and server-to-server, are in <code>rim-server</code>&#39;s <a href="https://github.com/rim-platform/rim-ui/tree/5db413c6ad9fa050b425094c71034e86d164534c/docs"><code>docs/</code></a>.</p>
 <h2 id="security">Security <a class="anchor" href="#security" aria-label="Link to this section">#</a></h2>
-<p>Report a vulnerability privately, as <a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/SECURITY.md"><code>SECURITY.md</code></a> describes, never in a public issue.</p>
+<p>Report a vulnerability privately, as <a href="https://github.com/rim-platform/rim-ui/blob/5db413c6ad9fa050b425094c71034e86d164534c/SECURITY.md"><code>SECURITY.md</code></a> describes, never in a public issue.</p>
 <h2 id="license">License <a class="anchor" href="#license" aria-label="Link to this section">#</a></h2>
 <p>Apache License 2.0, see <code>LICENSE</code> and <code>NOTICE</code>. The license does not cover the RIM name, so
-forks should use a different name. To contribute, see <a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/CONTRIBUTING.md"><code>CONTRIBUTING.md</code></a>.</p>
+forks should use a different name. To contribute, see <a href="https://github.com/rim-platform/rim-ui/blob/5db413c6ad9fa050b425094c71034e86d164534c/CONTRIBUTING.md"><code>CONTRIBUTING.md</code></a>.</p>
 
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/README.md">rim-ui/README.md</a> at <code>58e3ec0</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/5db413c6ad9fa050b425094c71034e86d164534c/README.md">rim-ui/README.md</a> at <code>5db413c</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

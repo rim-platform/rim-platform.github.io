@@ -51,12 +51,13 @@
 <li><a href="#group-key">Key (3)</a></li>
 <li><a href="#group-device">Device (4)</a></li>
 <li><a href="#group-relay">Relay (2)</a></li>
-<li><a href="#group-other">Other (11)</a></li>
+<li><a href="#group-report">Report (1)</a></li>
+<li><a href="#group-other">Other (14)</a></li>
 </ol>
 </details></aside>
     <main id="content" class="prose">
 <h1>Query</h1>
-<p class="lede">57 queries, grouped by the domain their name starts with or names, in the order the schema lists them.</p>
+<p class="lede">61 queries, grouped by the domain their name starts with or names, in the order the schema lists them.</p>
 <input id="filter" class="search" type="search" placeholder="Filter fields by name" aria-label="Filter fields by name" autocomplete="off">
 <p id="filter-none" class="muted" hidden>Nothing matches.</p>
 <section data-group>
@@ -313,8 +314,8 @@ or a sort within the page.</p>
 <section class="entry" id="serverInfo" data-name="serverInfo">
 <h3><code>serverInfo</code></h3>
 <div class="sig">serverInfo: <a href="objects.html#ServerInfo">ServerInfo</a>!</div>
-<div class="desc"><p>The server&#39;s release version, API version, features, audit retention, instance notice
-and terms URL. Readable without a session.</p>
+<div class="desc"><p>The server&#39;s release version, API version, features, audit retention, instance notice,
+terms URL, limits and DM settings. Readable without a session.</p>
 </div>
 
 </section>
@@ -529,7 +530,21 @@ user of a relay becomes a guest of the direct space, if not one yet.</p>
 </section>
 </section>
 <section data-group>
-<h2 id="group-other">Other <span class="faint">11</span></h2>
+<h2 id="group-report">Report <span class="faint">1</span></h2>
+<section class="entry" id="instanceReports" data-name="instanceReports">
+<h3><code>instanceReports</code></h3>
+<div class="sig">instanceReports(openOnly: <a href="scalars.html#Boolean">Boolean</a>! = true): [<a href="objects.html#InstanceAbuseReport">InstanceAbuseReport</a>!]!</div>
+<div class="desc"><p>Abuse reports filed with this server, oldest first. Instance operators only; anyone
+else gets <code>FORBIDDEN</code>.</p>
+</div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Argument</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>openOnly</code></td><td><code><a href="scalars.html#Boolean">Boolean</a>!</code> <span class="faint">= true</span></td><td><p>Only the reports not yet resolved.</p>
+</td></tr>
+</tbody></table></div>
+</section>
+</section>
+<section data-group>
+<h2 id="group-other">Other <span class="faint">14</span></h2>
 <section class="entry" id="thread" data-name="thread">
 <h3><code>thread</code></h3>
 <div class="sig">thread(
@@ -619,12 +634,37 @@ see; streams the caller cannot see are left out.</p>
 </div>
 
 </section>
+<section class="entry" id="instancePrincipalBlocks" data-name="instancePrincipalBlocks">
+<h3><code>instancePrincipalBlocks</code></h3>
+<div class="sig">instancePrincipalBlocks: [<a href="objects.html#InstancePrincipalBlock">InstancePrincipalBlock</a>!]!</div>
+<div class="desc"><p>The principals this server refuses, newest first. Instance operators only; anyone
+else gets <code>FORBIDDEN</code>.</p>
+</div>
+
+</section>
+<section class="entry" id="instanceIpBlocks" data-name="instanceIpBlocks">
+<h3><code>instanceIpBlocks</code></h3>
+<div class="sig">instanceIpBlocks: [<a href="objects.html#InstanceIpBlock">InstanceIpBlock</a>!]!</div>
+<div class="desc"><p>This server&#39;s IP deny list, expired blocks included, oldest first. Instance operators
+only; anyone else gets <code>FORBIDDEN</code>.</p>
+</div>
+
+</section>
+<section class="entry" id="myDmSettings" data-name="myDmSettings">
+<h3><code>myDmSettings</code></h3>
+<div class="sig">myDmSettings: <a href="objects.html#MyDmSettings">MyDmSettings</a>!</div>
+<div class="desc"><p>Who may start a DM with the caller: their choice for people outside their workspaces,
+for each workspace&#39;s members, and what applies once the operator&#39;s and the workspaces&#39;
+floors are taken in, with where a refusing floor comes from.</p>
+</div>
+
+</section>
 </section>
 
     </main>
   </div>
   <footer class="site">
-    <span>Generated from <a href="https://github.com/rim-platform/rim-ui/blob/58e3ec03c43064632a6a6f610d92413040229dfd/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>58e3ec0</code></span>
+    <span>Generated from <a href="https://github.com/rim-platform/rim-ui/blob/5db413c6ad9fa050b425094c71034e86d164534c/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>5db413c</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Branding · RIM</title>
+<meta name="description" content="The brand masters live in rim-server's assets/branding/, with a README that says what each file is for. They are the source of truth; this repository holds copies or renderings of them.">
+<link rel="icon" href="../../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../../index.html" aria-label="RIM home">
+      <picture><source srcset="../../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../../index.html#what">What RIM is</a>
+      <a href="../../index.html#how">How it works</a>
+      <a href="../self-hosting.html">Self-host</a>
+      <a href="../../configure/index.html">Configure</a>
+      <a href="../index.html" aria-current="page">Docs</a>
+      <a href="../../api/index.html">API</a>
+      <a href="../../specs/index.html">Specs</a>
+      <a href="../contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="../index.html">Docs</a><span aria-hidden="true">/</span><a href="../using-rim.html">Using RIM</a><span aria-hidden="true">/</span><span>Branding</span></div>
+  <div class="page">
+
+    <main id="content" class="prose">
+<h1 id="branding">Branding</h1>
+<p>The brand masters live in <code>rim-server</code>&#39;s <code>assets/branding/</code>, with a README that says what each
+file is for. They are the source of truth; this repository holds copies or renderings of them.</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Where</th>
+<th>What</th>
+<th>From</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><a href="https://github.com/rim-platform/rim-ui/blob/5db413c6ad9fa050b425094c71034e86d164534c/public/rim-favicon.svg"><code>public/rim-favicon.svg</code></a>, <a href="https://github.com/rim-platform/rim-ui/blob/5db413c6ad9fa050b425094c71034e86d164534c/public/favicon.ico"><code>public/favicon.ico</code></a></td>
+<td>The browser tab icon, linked from <a href="https://github.com/rim-platform/rim-ui/blob/5db413c6ad9fa050b425094c71034e86d164534c/index.html"><code>index.html</code></a></td>
+<td><code>rim-favicon.svg</code>, <code>favicon.ico</code>, copied as they are</td>
+</tr>
+<tr>
+<td><a href="https://github.com/rim-platform/rim-ui/blob/5db413c6ad9fa050b425094c71034e86d164534c/src/shared/brand/RimLogo.tsx"><code>src/shared/brand/RimLogo.tsx</code></a></td>
+<td><code>RimMark</code>, <code>RimLockup</code> and <code>RimSplash</code>, inline SVG components</td>
+<td>The path data of <code>rim-mark.svg</code>, <code>rim-lockup.svg</code> and <code>rim-splash.svg</code></td>
+</tr>
+<tr>
+<td><a href="https://github.com/rim-platform/rim-ui/tree/5db413c6ad9fa050b425094c71034e86d164534c/src-tauri/icons"><code>src-tauri/icons/</code></a></td>
+<td>The desktop app icons listed in <code>tauri.conf.json</code>&#39;s <code>bundle.icon</code></td>
+<td><code>rim-app-icon-1024.png</code> through <code>tauri icon</code></td>
+</tr>
+</tbody></table></div>
+<p>The components draw with <code>currentColor</code>, so the mark and the wordmark take the text colour of
+the element around them, and the splash&#39;s knocked-out letters take <code>rim-void</code>. Its accent circle
+is the <code>rim-signal</code> colour token, which nothing else uses. The splash is for loading screens
+only, never as the logo, and holds still under <code>prefers-reduced-motion</code>.</p>
+<h2 id="updating-from-the-masters">Updating from the masters <a class="anchor" href="#updating-from-the-masters" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><p>Favicon: copy <code>rim-favicon.svg</code> and <code>favicon.ico</code> into <a href="https://github.com/rim-platform/rim-ui/tree/5db413c6ad9fa050b425094c71034e86d164534c/public"><code>public/</code></a> over the old files.</p>
+</li>
+<li><p>Mark, wordmark or splash: copy the changed <code>d</code> attributes into the path constants of
+<code>RimLogo.tsx</code>, and the splash&#39;s per-letter <code>translate</code> values into <code>RimSplash</code>.</p>
+</li>
+<li><p>Desktop icons: from the root of this repository, with <code>rim-server</code> checked out next to it,</p>
+<pre><code class="language-sh">npx tauri icon ../rim-server/assets/branding/rim-app-icon-1024.png
+rm -r src-tauri/icons/android src-tauri/icons/ios src-tauri/icons/64x64.png</code></pre>
+<p>The removed outputs (the mobile sets and a 64 px size) are not bundled; <code>bundle.icon</code> lists
+the rest.</p>
+</li>
+</ul>
+<p>The window title and the bundle names come from <code>productName</code> (<code>RIM</code>) in <code>tauri.conf.json</code>. The
+<code>identifier</code> <code>com.rim.rim-ui</code> stays as it is: the secret vault&#39;s credential store entry and the
+app data directory are derived from it, and changing it would orphan existing installs.</p>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/5db413c6ad9fa050b425094c71034e86d164534c/docs/branding.md">rim-ui/docs/branding.md</a> at <code>5db413c</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+
+</body>
+</html>
