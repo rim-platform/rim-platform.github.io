@@ -429,8 +429,8 @@ from the beginning: drop the cached copy of this conversation, then apply them.<
 <div class="tablewrap"><table class="fields"><thead><tr><th>Value</th><th>Description</th></tr></thead><tbody>
 <tr><td><code>ALL</code></td><td><p>Every message.</p>
 </td></tr>
-<tr><td><code>MENTIONS</code></td><td><p>Direct messages, mentions (<code>&lt;@user&gt;</code>, <code>@channel</code>, <code>@here</code>), keyword hits and replies in
-the viewer&#39;s threads.</p>
+<tr><td><code>MENTIONS</code></td><td><p>Direct messages, mentions (<code>&lt;@user&gt;</code>, <code>@channel</code>, <code>@here</code>), keyword hits, replies in
+the viewer&#39;s threads and reactions to the viewer&#39;s messages.</p>
 </td></tr>
 <tr><td><code>NONE</code></td><td><p>Nothing, mentions included.</p>
 </td></tr>
@@ -447,6 +447,9 @@ the viewer&#39;s threads.</p>
 <tr><td><code>KEYWORD</code></td><td></td></tr>
 <tr><td><code>THREAD_REPLY</code></td><td></td></tr>
 <tr><td><code>ALL</code></td><td></td></tr>
+<tr><td><code>REACTION</code></td><td><p>Someone reacted to the viewer&#39;s message; one entry per message, re-surfaced by each new
+reaction.</p>
+</td></tr>
 </tbody></table></div>
 <p class="faint">Used by <a href="objects.html#Notification">Notification</a></p>
 </section>
@@ -616,7 +619,7 @@ takes a token.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Generated from <a href="https://github.com/rim-platform/rim-ui/blob/5db413c6ad9fa050b425094c71034e86d164534c/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>5db413c</code></span>
+    <span>Generated from <a href="https://github.com/rim-platform/rim-ui/blob/30b3a192cc3db45598b64f15c76c847c25fd1862/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>30b3a19</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

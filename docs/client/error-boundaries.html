@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Error boundaries · RIM</title>
-<meta name="description" content="RIM's shell has three tiers of React error boundary. Pick the right one when adding a new surface, and always wire resetKeys correctly — a boundary without the right resetKeys can leave a pane permanently stuck in its …">
+<meta name="description" content="RIM's shell has two tiers of React error boundary. Pick the right one when adding a new surface, and always wire resetKeys correctly — a boundary without the right resetKeys can leave a pane permanently stuck in its …">
 <link rel="icon" href="../../favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
@@ -34,7 +34,7 @@
   <div class="page with-toc">
     <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
 <ol>
-<li><a href="#the-three-tiers">The three tiers</a></li>
+<li><a href="#the-two-tiers">The two tiers</a></li>
 <li><a href="#when-to-use-surfaceerrorboundary">When to use SurfaceErrorBoundary</a></li>
 <li><a href="#resetkeys--mandatory-for-any-surface-tied-to-navigable-state">resetKeys — mandatory for any surface tied to navigable state</a></li>
 <li><a href="#current-wiring">Current wiring</a></li>
@@ -43,10 +43,10 @@
 </details></aside>
     <main id="content" class="prose">
 <h1 id="error-boundaries">Error boundaries</h1>
-<p>RIM&#39;s shell has three tiers of React error boundary. Pick the right one when adding
+<p>RIM&#39;s shell has two tiers of React error boundary. Pick the right one when adding
 a new surface, and always wire <code>resetKeys</code> correctly — a boundary without the right
 <code>resetKeys</code> can leave a pane permanently stuck in its fallback UI.</p>
-<h2 id="the-three-tiers">The three tiers <a class="anchor" href="#the-three-tiers" aria-label="Link to this section">#</a></h2>
+<h2 id="the-two-tiers">The two tiers <a class="anchor" href="#the-two-tiers" aria-label="Link to this section">#</a></h2>
 <div class="tablewrap"><table>
 <thead>
 <tr>
@@ -60,19 +60,13 @@ a new surface, and always wire <code>resetKeys</code> correctly — a boundary w
 <td>App</td>
 <td><code>AppErrorBoundary</code></td>
 <td>Whole app, full-screen fallback</td>
-<td><a href="https://github.com/rim-platform/rim-ui/blob/5db413c6ad9fa050b425094c71034e86d164534c/src/app/AppErrorBoundary.tsx"><code>src/app/AppErrorBoundary.tsx</code></a></td>
+<td><a href="https://github.com/rim-platform/rim-ui/blob/30b3a192cc3db45598b64f15c76c847c25fd1862/src/app/AppErrorBoundary.tsx"><code>src/app/AppErrorBoundary.tsx</code></a></td>
 </tr>
 <tr>
 <td>Surface</td>
 <td><code>SurfaceErrorBoundary</code></td>
 <td>One pane inside <code>WorkspaceShell</code></td>
-<td><a href="https://github.com/rim-platform/rim-ui/blob/5db413c6ad9fa050b425094c71034e86d164534c/src/shared/ui/SurfaceErrorBoundary.tsx"><code>src/shared/ui/SurfaceErrorBoundary.tsx</code></a></td>
-</tr>
-<tr>
-<td>Plugin</td>
-<td><code>PluginErrorBoundary</code></td>
-<td>One plugin panel</td>
-<td><a href="https://github.com/rim-platform/rim-ui/blob/5db413c6ad9fa050b425094c71034e86d164534c/src/features/plugins/components/PluginErrorBoundary.tsx"><code>src/features/plugins/components/PluginErrorBoundary.tsx</code></a></td>
+<td><a href="https://github.com/rim-platform/rim-ui/blob/30b3a192cc3db45598b64f15c76c847c25fd1862/src/shared/ui/SurfaceErrorBoundary.tsx"><code>src/shared/ui/SurfaceErrorBoundary.tsx</code></a></td>
 </tr>
 </tbody></table></div>
 <p><strong><code>AppErrorBoundary</code></strong> sits at the app root. If it catches an error, the entire UI is
@@ -86,12 +80,9 @@ Retry/Report buttons) while the rest of the shell — including the WebSocket
 subscription and <code>KeybindProvider</code>, which live above these boundaries in
 <code>WorkspaceShell</code> — stays mounted and functional. This is the default choice for any
 new top-level pane added to the shell.</p>
-<p><strong><code>PluginErrorBoundary</code></strong> is different in kind: it&#39;s not a render-error boundary at
-all, it&#39;s a health-state UI driven by the plugin runtime&#39;s <code>PluginHealth</code> (running /
-crashed / timeout / slow-loading). It already renders its own restart/disable
-actions, so plugin panels (<code>PluginSlotContainer</code>) are <strong>not</strong> additionally wrapped in
-<code>SurfaceErrorBoundary</code> — doing so would produce a confusing double fallback if a
-plugin&#39;s own render also threw synchronously.</p>
+<p>Plugin panels (<code>PluginSlotContainer</code>) are not wrapped in <code>SurfaceErrorBoundary</code>: a plugin
+runs in its own process or sandboxed frame, and the plugin host reports its health (running,
+crashed, timed out) in Settings → Plugins, where it is disabled or re-enabled.</p>
 <h2 id="when-to-use-surfaceerrorboundary">When to use <code>SurfaceErrorBoundary</code> <a class="anchor" href="#when-to-use-surfaceerrorboundary" aria-label="Link to this section">#</a></h2>
 <p>Wrap any new top-level pane rendered inside <code>WorkspaceShell</code> that isn&#39;t a plugin
 panel. Do not wrap:</p>
@@ -100,7 +91,7 @@ panel. Do not wrap:</p>
 <code>WorkspaceShell</code> itself, above any boundary, so a pane crash never tears down the
 WS subscription.</li>
 <li><code>KeybindProvider</code> — global keybind handling must survive a pane crash.</li>
-<li>Plugin panels — they keep <code>PluginErrorBoundary</code>.</li>
+<li>Plugin panels — the plugin host reports their health in Settings → Plugins.</li>
 </ul>
 <h2 id="resetkeys--mandatory-for-any-surface-tied-to-navigable-state"><code>resetKeys</code> — mandatory for any surface tied to navigable state <a class="anchor" href="#resetkeys--mandatory-for-any-surface-tied-to-navigable-state" aria-label="Link to this section">#</a></h2>
 <p><code>SurfaceErrorBoundary</code> does not auto-recover: once it catches an error, it stays in
@@ -120,7 +111,7 @@ render while a conversation is selected, and their content is scoped to that
 conversation.</li>
 </ul>
 <h2 id="current-wiring">Current wiring <a class="anchor" href="#current-wiring" aria-label="Link to this section">#</a></h2>
-<p><code>WorkspaceShell</code> (<a href="https://github.com/rim-platform/rim-ui/blob/5db413c6ad9fa050b425094c71034e86d164534c/src/shell/layouts/AppShell.tsx"><code>src/shell/layouts/AppShell.tsx</code></a>) wraps six surfaces — the
+<p><code>WorkspaceShell</code> (<a href="https://github.com/rim-platform/rim-ui/blob/30b3a192cc3db45598b64f15c76c847c25fd1862/src/shell/layouts/AppShell.tsx"><code>src/shell/layouts/AppShell.tsx</code></a>) wraps six surfaces — the
 conversation surface&#39;s list is complete:</p>
 <ul>
 <li>Tool panel — <code>resetKeys={[selectedConversationId]}</code></li>
@@ -144,7 +135,7 @@ heading (&quot;<code>{surface} failed to load</code>&quot;).</li>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/5db413c6ad9fa050b425094c71034e86d164534c/docs/error-boundaries.md">rim-ui/docs/error-boundaries.md</a> at <code>5db413c</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/30b3a192cc3db45598b64f15c76c847c25fd1862/docs/error-boundaries.md">rim-ui/docs/error-boundaries.md</a> at <code>30b3a19</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

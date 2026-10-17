@@ -1056,6 +1056,10 @@ them.</p>
 <tr><td><code>message</code></td><td><code><a href="objects.html#Message">Message</a></code></td><td><p>The message (timeline or thread reply); null when the viewer can no longer read the
 conversation or the message is gone.</p>
 </td></tr>
+<tr><td><code>reactionEmoji</code></td><td><code><a href="scalars.html#String">String</a></code></td><td><p>The latest reaction&#39;s emoji; null unless <code>reason</code> is <code>REACTION</code>.</p>
+</td></tr>
+<tr><td><code>reactedBy</code></td><td><code><a href="objects.html#User">User</a></code></td><td><p>Who added the latest reaction; null unless <code>reason</code> is <code>REACTION</code>.</p>
+</td></tr>
 </tbody></table></div>
 <p class="faint">Used by <a href="objects.html#NotificationPage">NotificationPage</a></p>
 </section>
@@ -1097,6 +1101,8 @@ semantics: <code>AFTER</code> pages go to older notifications.</p>
 <tr><td><code>dndPausedUntil</code></td><td><code><a href="scalars.html#DateTime">DateTime</a></code></td><td><p>When the manual pause ends; null while <code>dndPaused</code> is false or the pause has no end.</p>
 </td></tr>
 <tr><td><code>digest</code></td><td><code><a href="enums.html#DigestFrequency">DigestFrequency</a>!</code></td><td></td></tr>
+<tr><td><code>reactions</code></td><td><code><a href="scalars.html#Boolean">Boolean</a>!</code></td><td><p>Whether reactions to the viewer&#39;s messages notify them (level <code>MENTIONS</code> or <code>ALL</code>).</p>
+</td></tr>
 </tbody></table></div>
 <p class="faint">Used by <a href="mutation.html#updateNotificationSettings">Mutation.updateNotificationSettings</a>, <a href="mutation.html#setDoNotDisturb">Mutation.setDoNotDisturb</a>, <a href="query.html#myNotificationSettings">Query.myNotificationSettings</a></p>
 </section>
@@ -1513,6 +1519,9 @@ workspaces (<code>RIM_DM_INBOUND</code>): a floor for every account here.</p>
 </td></tr>
 <tr><td><code>dmPartners</code></td><td><code>[<a href="scalars.html#String">String</a>!]!</code></td><td><p>The server ids the <code>PARTNERS</code> settings name (<code>RIM_DM_PARTNERS</code>).</p>
 </td></tr>
+<tr><td><code>defaultWorkspace</code></td><td><code><a href="scalars.html#ID">ID</a></code></td><td><p>The workspace every new account joins as a Member, so a client can open it after a
+signup; null when the server names none (<code>RIM_DEFAULT_WORKSPACE</code>).</p>
+</td></tr>
 </tbody></table></div>
 <p class="faint">Used by <a href="query.html#serverInfo">Query.serverInfo</a></p>
 </section>
@@ -1681,7 +1690,7 @@ messages.</p>
 everyone else.</p>
 </td></tr>
 </tbody></table></div>
-<p class="faint">Used by <a href="objects.html#Message">Message</a>, <a href="mutation.html#updateMyProfile">Mutation.updateMyProfile</a>, <a href="query.html#me">Query.me</a>, <a href="objects.html#SearchResultMessage">SearchResultMessage</a>, <a href="objects.html#Server">Server</a>, <a href="objects.html#ServerBan">ServerBan</a>, <a href="objects.html#WorkspacePlugin">WorkspacePlugin</a></p>
+<p class="faint">Used by <a href="objects.html#Message">Message</a>, <a href="mutation.html#updateMyProfile">Mutation.updateMyProfile</a>, <a href="objects.html#Notification">Notification</a>, <a href="query.html#me">Query.me</a>, <a href="objects.html#SearchResultMessage">SearchResultMessage</a>, <a href="objects.html#Server">Server</a>, <a href="objects.html#ServerBan">ServerBan</a>, <a href="objects.html#WorkspacePlugin">WorkspacePlugin</a></p>
 </section>
 <section class="entry" id="UserPresenceGql" data-name="UserPresenceGql">
 <h3><code>UserPresenceGql</code><span class="kind">object</span></h3>
@@ -1785,7 +1794,7 @@ shares no conversation with them.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Generated from <a href="https://github.com/rim-platform/rim-ui/blob/5db413c6ad9fa050b425094c71034e86d164534c/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>5db413c</code></span>
+    <span>Generated from <a href="https://github.com/rim-platform/rim-ui/blob/30b3a192cc3db45598b64f15c76c847c25fd1862/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>30b3a19</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

@@ -23,8 +23,8 @@ const GROUPS = [
   },
   {
     title: "Signups and sessions",
-    intro: "Who may sign up and how, the names nobody may take, the probation of new accounts, how long a session lasts and how long a deleted account waits before its purge. The default is invite-only; invites come from the command line.",
-    names: ["RIM_OPEN_REGISTRATION", "RIM_REGISTRATION_POW_BITS", "RIM_SIGNUP_REQUIRE_KEYS", "RIM_RESERVED_NAMES", "RIM_PROBATION_HOURS", "RIM_SESSION_TTL_DAYS", "RIM_TERMS_URL", "RIM_ACCOUNT_DELETION_GRACE_DAYS"],
+    intro: "Who may sign up and how, the names nobody may take, the probation of new accounts, the workspace every new account joins, how long a session lasts and how long a deleted account waits before its purge. The default is invite-only; invites come from the command line.",
+    names: ["RIM_OPEN_REGISTRATION", "RIM_REGISTRATION_POW_BITS", "RIM_SIGNUP_REQUIRE_KEYS", "RIM_DEFAULT_WORKSPACE", "RIM_RESERVED_NAMES", "RIM_PROBATION_HOURS", "RIM_SESSION_TTL_DAYS", "RIM_TERMS_URL", "RIM_ACCOUNT_DELETION_GRACE_DAYS"],
   },
   {
     title: "Roles and federation",

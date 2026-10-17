@@ -47,7 +47,7 @@
 </details></aside>
     <main id="content" class="prose">
 <h1>Configure</h1>
-<p class="lede">The server is configured by environment variables, all prefixed <code>RIM_</code> except <code>DATABASE_URL</code> and the log filter <code>RUST_LOG</code>. In development an untracked <code>.env</code> file works too. This page is generated from <a href="https://github.com/rim-platform/rim-server/blob/769aebc96b537242ae9303ea5c155659de01ffa7/rim_server/src/config.rs"><code>rim_server/src/config.rs</code></a>, cross-checked with the variable block of the <a href="https://github.com/rim-platform/rim-server/blob/769aebc96b537242ae9303ea5c155659de01ffa7/Dockerfile"><code>Dockerfile</code></a>; the compose stack's own settings are in <a href="https://github.com/rim-platform/rim-server/blob/769aebc96b537242ae9303ea5c155659de01ffa7/deploy/.env.example"><code>deploy/.env.example</code></a>.</p>
+<p class="lede">The server is configured by environment variables, all prefixed <code>RIM_</code> except <code>DATABASE_URL</code> and the log filter <code>RUST_LOG</code>. In development an untracked <code>.env</code> file works too. This page is generated from <a href="https://github.com/rim-platform/rim-server/blob/ba1bd32b23c6311a60cab50769960332f7bcf04a/rim_server/src/config.rs"><code>rim_server/src/config.rs</code></a>, cross-checked with the variable block of the <a href="https://github.com/rim-platform/rim-server/blob/ba1bd32b23c6311a60cab50769960332f7bcf04a/Dockerfile"><code>Dockerfile</code></a>; the compose stack's own settings are in <a href="https://github.com/rim-platform/rim-server/blob/ba1bd32b23c6311a60cab50769960332f7bcf04a/deploy/.env.example"><code>deploy/.env.example</code></a>.</p>
 <h2 id="listening">Listening <a class="anchor" href="#listening" aria-label="Link to this section">#</a></h2>
 <p class="muted">Where the server listens, the origin clients reach it at, and how it treats the proxy in front of it.</p>
 <div class="tablewrap"><table class="vars">
@@ -94,7 +94,7 @@ plugin bundles; an upload past it is refused. Default 1 GiB (1073741824).</p><p 
 </tbody>
 </table></div>
 <h2 id="signups-and-sessions">Signups and sessions <a class="anchor" href="#signups-and-sessions" aria-label="Link to this section">#</a></h2>
-<p class="muted">Who may sign up and how, the names nobody may take, the probation of new accounts, how long a session lasts and how long a deleted account waits before its purge. The default is invite-only; invites come from the command line.</p>
+<p class="muted">Who may sign up and how, the names nobody may take, the probation of new accounts, the workspace every new account joins, how long a session lasts and how long a deleted account waits before its purge. The default is invite-only; invites come from the command line.</p>
 <div class="tablewrap"><table class="vars">
 <thead><tr><th>Variable</th><th>What it does</th></tr></thead>
 <tbody>
@@ -104,6 +104,12 @@ registration. 1 to 40.</p><p class="faint">Dockerfile: turns on proof-of-work si
 <tr id="RIM_SIGNUP_REQUIRE_KEYS"><td><code>RIM_SIGNUP_REQUIRE_KEYS</code><span class="default">default <code>true</code></span></td><td><p>Refuse every password signup, so new accounts sign up with a key only; unset is <code>true</code>.
 Password sign-in of existing accounts is unaffected.</p>
 <p>Whether password signups are refused: <code>RIM_SIGNUP_REQUIRE_KEYS</code>, <code>true</code> when unset.</p><p class="note">Not in the Dockerfile&#39;s variable block.</p></td></tr>
+<tr id="RIM_DEFAULT_WORKSPACE"><td><code>RIM_DEFAULT_WORKSPACE</code><span class="default">unset by default</span></td><td><p>The id of a workspace on this server that every new account joins as a member, with its
+public channels, whichever way it signs up. Unset keeps signups as they are: a new
+account joins only the workspace its invite names. The server refuses to start when the
+workspace does not exist here or is the direct space.</p>
+<p><code>RIM_DEFAULT_WORKSPACE</code>, trimmed; <code>None</code> when unset or blank. Whether the workspace
+exists is checked against the database at start.</p><p class="faint">Unset, it keeps signups as they are: a new account joins only the workspace its invite names.</p><p class="faint">Refused at boot with a message naming the variable when the value is not a workspace id.</p><p class="note">Not in the Dockerfile&#39;s variable block.</p></td></tr>
 <tr id="RIM_RESERVED_NAMES"><td><code>RIM_RESERVED_NAMES</code><span class="default">unset by default</span></td><td><p>Comma-separated usernames and display names signups and profile edits refuse, with
 each followed by <code>-</code>, <code>_</code>, <code>.</code> or a space.</p>
 <p><code>RIM_RESERVED_NAMES</code>, compared case-insensitively after NFKC normalisation; nothing is
@@ -174,7 +180,7 @@ Default: 900 (15 minutes); values below 60 are raised to 60.</p><p class="note">
 <thead><tr><th>Variable</th><th>What it does</th></tr></thead>
 <tbody>
 <tr id="RIM_METRICS_ADDR"><td><code>RIM_METRICS_ADDR</code><span class="default">unset by default</span></td><td><p><code>host:port</code> of the Prometheus listener serving <code>GET /metrics</code>; unset turns metrics off.</p><p class="faint">Unset, it turns metrics off.</p><p class="faint">Refused at boot with a message naming the variable when the value is not an <code>ip:port</code> address.</p><p class="note">Not in the Dockerfile&#39;s variable block.</p></td></tr>
-<tr id="RIM_AUDIT_LOG_PATH"><td><code>RIM_AUDIT_LOG_PATH</code><span class="default">default the working directory</span></td><td><p>Directory of <code>audit.log</code></p><p class="note">Read by <a href="https://github.com/rim-platform/rim-server/blob/769aebc96b537242ae9303ea5c155659de01ffa7/rim_logging/src/logging.rs"><code>rim_logging/src/logging.rs</code></a>, not config.rs.</p></td></tr>
+<tr id="RIM_AUDIT_LOG_PATH"><td><code>RIM_AUDIT_LOG_PATH</code><span class="default">default the working directory</span></td><td><p>Directory of <code>audit.log</code></p><p class="note">Read by <a href="https://github.com/rim-platform/rim-server/blob/ba1bd32b23c6311a60cab50769960332f7bcf04a/rim_logging/src/logging.rs"><code>rim_logging/src/logging.rs</code></a>, not config.rs.</p></td></tr>
 <tr id="RIM_AUDIT_RETENTION_DAYS"><td><code>RIM_AUDIT_RETENTION_DAYS</code><span class="default">unset by default</span></td><td><p>Days command audit log rows are kept before the daily purge exports and deletes them;
 unset keeps them forever. 1 to 3650.</p><p class="faint">Unset, it keeps them forever.</p><p class="faint">Refused at boot with a message naming the variable when the value is outside 1 to 3650.</p><p class="note">Not in the Dockerfile&#39;s variable block.</p></td></tr>
 <tr id="RIM_FEATURES_DISABLED"><td><code>RIM_FEATURES_DISABLED</code><span class="default">unset by default</span></td><td><p>Comma-separated optional features switched off on this instance, e.g.
@@ -274,7 +280,7 @@ and IP blocks from the app (<a href="../docs/api.html"><code>docs/api.md</code><
     </main>
   </div>
   <footer class="site">
-    <span>Generated from <a href="https://github.com/rim-platform/rim-server/blob/769aebc96b537242ae9303ea5c155659de01ffa7/rim_server/src/config.rs">rim-server/rim_server/src/config.rs</a>, <a href="https://github.com/rim-platform/rim-server/blob/769aebc96b537242ae9303ea5c155659de01ffa7/Dockerfile">Dockerfile</a> and <a href="https://github.com/rim-platform/rim-server/blob/769aebc96b537242ae9303ea5c155659de01ffa7/README.md">README.md</a> at <code>769aebc</code></span>
+    <span>Generated from <a href="https://github.com/rim-platform/rim-server/blob/ba1bd32b23c6311a60cab50769960332f7bcf04a/rim_server/src/config.rs">rim-server/rim_server/src/config.rs</a>, <a href="https://github.com/rim-platform/rim-server/blob/ba1bd32b23c6311a60cab50769960332f7bcf04a/Dockerfile">Dockerfile</a> and <a href="https://github.com/rim-platform/rim-server/blob/ba1bd32b23c6311a60cab50769960332f7bcf04a/README.md">README.md</a> at <code>ba1bd32</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>
