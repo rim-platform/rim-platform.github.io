@@ -215,6 +215,11 @@ function parseDockerfile(src) {
       current.text += ` ${more[1].trim()}`;
       continue;
     }
+    // A label such as "Per-user quotas of a relay:" groups the entries that follow it.
+    if (/^#\s{2,3}\S.*:$/.test(line)) {
+      current = null;
+      continue;
+    }
     break;
   }
   for (const v of vars.values()) {
