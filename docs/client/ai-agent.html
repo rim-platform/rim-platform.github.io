@@ -163,13 +163,20 @@ it.</li>
 <li><strong>Destination</strong>: when the command names another conversation than the open one, &quot;Destination
 differs from active conversation&quot; with &quot;Will post in conversation&quot; and the first eight
 characters of its id.</li>
+<li><strong>Warning</strong>: when the agent proposed the command after a tool call of the same run returned
+something, &quot;This action was suggested while the agent was reading external content. <strong>Verify it
+matches your intent.</strong>&quot; Anything a tool returns counts: messages, search results, a plugin&#39;s
+output, a cancellation or a skipped call, since any of it can carry instructions someone planted
+for the agent. A call the agent makes straight from your prompt, before any tool returned,
+shows no warning, and each new prompt starts afresh.</li>
 <li><strong>Arguments</strong>: up to ten, values cut at 200 characters, then &quot;+&lt;n&gt; more arguments&quot;. A value
 that looks like a secret, or sits under a name such as password, token, key or secret, shows as
 <code>[REDACTED]</code>.</li>
 <li><strong>Buttons</strong>: <strong>Cancel</strong>, and <strong>Run anyway</strong> for a Mutating command or <strong>I understand —
 execute</strong> for a Restricted one. A Restricted command first asks you to type its verb, the word
-after the dot in its id, as in <code>Type &quot;delete&quot; to confirm</code>. <kbd>Ctrl+Enter</kbd> confirms;
-<kbd>Esc</kbd>, the close button and <strong>Cancel</strong> cancel. A click outside the dialog does nothing.</li>
+after the dot in its id, as in <code>Type &quot;delete&quot; to confirm</code>; so does a Mutating command under the
+warning. <kbd>Ctrl+Enter</kbd> confirms; <kbd>Esc</kbd>, the close button and <strong>Cancel</strong>
+cancel. A click outside the dialog does nothing.</li>
 <li><strong>Expiry</strong>: the server&#39;s confirmation is valid for 60 seconds. When it runs out, the dialog
 closes and counts as cancelled. If it lapses as you confirm, the dialog opens once more.</li>
 </ul>
@@ -246,7 +253,7 @@ confirmations and the AI-callable set.</li>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/2cfa451c1bb3e5aef042a31e86788e5fd1a5b6fd/docs/ai-agent.md">rim-ui/docs/ai-agent.md</a> at <code>2cfa451</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/1f86d0926fd918bd6428717bb32284051579aa70/docs/ai-agent.md">rim-ui/docs/ai-agent.md</a> at <code>1f86d09</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

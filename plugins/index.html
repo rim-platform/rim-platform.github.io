@@ -150,10 +150,12 @@ nothing.</li>
 <li><strong>Install from link</strong> (desktop and web) takes a link of the form
 <code>https://&lt;host&gt;/&lt;name&gt;.rimbundle#sha256=&lt;hash&gt;</code>, then <strong>Install</strong>. The bundle is fetched
 without credentials, must hash to the value after <code>#sha256=</code> and must pass the manifest rules
-before anything is installed. The bundle&#39;s host must allow cross-origin requests, so a link
-to a GitHub release asset does not install this way. A link to a plugin already installed
-opens <strong>Replace &lt;name&gt;?</strong>, which shows the version change and the permissions added or
-dropped; the permissions are approved again afterwards.</li>
+before anything is installed. The desktop app fetches the link itself, so a link to a GitHub
+release asset installs; it follows redirects only to other <code>https://</code> links and stops reading
+past 8 MiB. The web app fetches from the browser, so there the bundle&#39;s host must allow
+cross-origin requests (<a href="../docs/client/web-plugins.html#installing-from-a-link">web plugins</a>). A link to a
+plugin already installed opens <strong>Replace &lt;name&gt;?</strong>, which shows the version change and the
+permissions added or dropped; the permissions are approved again afterwards.</li>
 </ul>
 <p>Each way installs only what passes the manifest rules (<a href="../docs/client/plugin-manifest.html">the plugin manifest</a>),
 and the error names what failed:</p>
@@ -365,7 +367,7 @@ for your account, with its permissions, data and files. To use it again, install
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/2cfa451c1bb3e5aef042a31e86788e5fd1a5b6fd/docs/plugins.md">rim-ui/docs/plugins.md</a> at <code>2cfa451</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/1f86d0926fd918bd6428717bb32284051579aa70/docs/plugins.md">rim-ui/docs/plugins.md</a> at <code>1f86d09</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>
