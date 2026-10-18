@@ -52,8 +52,8 @@
 <h1 id="the-plugin-manifest">The plugin manifest</h1>
 <p>Every plugin carries <code>rim-plugin.json</code> at the root of its folder or bundle. This page lists each
 field the desktop parser accepts, in the order of <code>PluginManifest</code> in <code>manifest.rs</code>, with the
-install rules of <code>validation.rs</code>, both in <a href="https://github.com/rim-platform/rim-ui/tree/b8e647d0123104fd732a2aafbeeb723040dfb0ea/src-tauri/src/plugin_host"><code>src-tauri/src/plugin_host/</code></a>. The web app installs by
-their port in the SDK, <code>manifestRules.ts</code>; both pass <a href="https://github.com/rim-platform/rim-ui/blob/b8e647d0123104fd732a2aafbeeb723040dfb0ea/protocol/manifest-vectors.json"><code>protocol/manifest-vectors.json</code></a>, and a
+install rules of <code>validation.rs</code>, both in <a href="https://github.com/rim-platform/rim-ui/tree/839c95eb7e80f1b52da231ecbf06668a6c018fd8/src-tauri/src/plugin_host"><code>src-tauri/src/plugin_host/</code></a>. The web app installs by
+their port in the SDK, <code>manifestRules.ts</code>; both pass <a href="https://github.com/rim-platform/rim-ui/blob/839c95eb7e80f1b52da231ecbf06668a6c018fd8/protocol/manifest-vectors.json"><code>protocol/manifest-vectors.json</code></a>, and a
 plugin&#39;s tests run them with <code>validateManifest</code> (<a href="plugin-sdk.html">the SDK</a>).</p>
 <h2 id="reading-and-checking">Reading and checking <a class="anchor" href="#reading-and-checking" aria-label="Link to this section">#</a></h2>
 <ul>
@@ -209,7 +209,7 @@ command fails with <code>keybind_suggestion references undeclared command: '&lt;
 the entry on every message, otherwise it shows when the list holds <code>&quot;message&quot;</code>. An unknown command
 fails with <code>context_action '&lt;id&gt;' references undeclared command: '&lt;command_id&gt;'</code>.</p>
 <h2 id="panels"><code>panels</code> <a class="anchor" href="#panels" aria-label="Link to this section">#</a></h2>
-<p>A list, default <code>[]</code>. A panel is the folder <code>panels/&lt;id&gt;/</code> with an <a href="https://github.com/rim-platform/rim-ui/blob/b8e647d0123104fd732a2aafbeeb723040dfb0ea/index.html"><code>index.html</code></a>, shown in a
+<p>A list, default <code>[]</code>. A panel is the folder <code>panels/&lt;id&gt;/</code> with an <a href="https://github.com/rim-platform/rim-ui/blob/839c95eb7e80f1b52da231ecbf06668a6c018fd8/index.html"><code>index.html</code></a>, shown in a
 sandboxed frame while its plugin runs (<a href="web-plugins.html#how-a-plugin-runs">loading</a>).</p>
 <ul>
 <li><strong><code>id</code></strong> (string, required): the folder&#39;s name; for <code>WebSandboxed</code>, one bundle path segment,
@@ -315,7 +315,7 @@ plugin with a network permission and a tool panel, verbatim:</p>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/b8e647d0123104fd732a2aafbeeb723040dfb0ea/docs/plugin-manifest.md">rim-ui/docs/plugin-manifest.md</a> at <code>b8e647d</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/839c95eb7e80f1b52da231ecbf06668a6c018fd8/docs/plugin-manifest.md">rim-ui/docs/plugin-manifest.md</a> at <code>839c95e</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

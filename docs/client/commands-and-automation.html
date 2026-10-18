@@ -1,0 +1,402 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Commands and automation · RIM</title>
+<meta name="description" content="Everything RIM does runs as a command: the command palette, keybinds, user commands, macros, pipelines, plugins and the AI agent all run them. This page is for the person using the app and goes deeper than Getting …">
+<link rel="icon" href="../../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../../index.html" aria-label="RIM home">
+      <picture><source srcset="../../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../../index.html#what">What RIM is</a>
+      <a href="../../index.html#how">How it works</a>
+      <a href="../self-hosting.html">Self-host</a>
+      <a href="../../configure/index.html">Configure</a>
+      <a href="../../plugins/index.html">Plugins</a>
+      <a href="../index.html" aria-current="page">Docs</a>
+      <a href="../../api/index.html">API</a>
+      <a href="../../specs/index.html">Specs</a>
+      <a href="../contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="../index.html">Docs</a><span aria-hidden="true">/</span><a href="../using-rim.html">Using RIM</a><span aria-hidden="true">/</span><span>Commands and automation</span></div>
+  <div class="page with-toc">
+    <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
+<ol>
+<li><a href="#what-a-command-is">What a command is</a></li>
+<li><a href="#the-command-palette">The command palette</a></li>
+<li><a href="#keybinds">Keybinds</a></li>
+<li><a href="#user-commands-and-macros">User commands and macros</a></li>
+<li><a href="#pipelines">Pipelines</a></li>
+<li><a href="#workspace-state">Workspace state</a></li>
+<li><a href="#the-ai-agent">The AI agent</a></li>
+<li><a href="#next">Next</a></li>
+</ol>
+</details></aside>
+    <main id="content" class="prose">
+<h1 id="commands-and-automation">Commands and automation</h1>
+<p>Everything RIM does runs as a command: the command palette, keybinds, user commands, macros,
+pipelines, plugins and the AI agent all run them. This page is for the person using the app and
+goes deeper than <a href="getting-started.html">Getting started</a>. The contract behind it is rim-server&#39;s
+<a href="../command_model.html">command model</a>.</p>
+<h2 id="what-a-command-is">What a command is <a class="anchor" href="#what-a-command-is" aria-label="Link to this section">#</a></h2>
+<p>A command is one named action with a stable id, such as <code>chat.create_channel</code> or
+<code>workspace.open_search</code>. No surface has actions of its own: a keybind names a command, a macro
+is a list of commands, a pipeline runs commands when something happens. Commands come from
+three places:</p>
+<ul>
+<li><strong>Built in.</strong> Shipped with RIM. Most run on the server, such as posting a message or setting a
+slow mode; the ones that only move around the app, such as opening search, run in the app.</li>
+<li><strong>Your own.</strong> User commands and macros, each a sequence of other commands, kept on the server
+for your account.</li>
+<li><strong>Plugins.</strong> Each turned-on plugin adds commands that run on this device, inside the plugin
+(<a href="../../plugins/index.html">Plugins</a>).</li>
+</ul>
+<p><strong>Arguments and context.</strong> A command takes typed arguments, such as a conversation, a user or a
+piece of text. Context is where you are when it runs: the open workspace, the open conversation,
+a selected message. A command whose workspace or conversation argument is empty takes it from the
+context. The palette, keybinds and the composer&#39;s <code>/</code> list send the open workspace; a message&#39;s
+context menu adds the conversation and the message, and the AI agent the open conversation. A
+server command that needs a conversation therefore runs from a context menu, from the agent, or
+with the conversation&#39;s id in its arguments. A plugin command that needs a conversation gets the
+open one; with none open, the palette leaves it out and its keybind says &quot;Open a conversation
+first&quot;.</p>
+<p><strong>Sensitivity.</strong> Every command has one of four tiers, and the server decides from it whether a
+run waits for your confirmation:</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Tier</th>
+<th>What it covers</th>
+<th>You run it</th>
+<th>The agent or a pipeline runs it</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Safe</td>
+<td>Reads, searches and moving around the app</td>
+<td>Runs</td>
+<td>Runs</td>
+</tr>
+<tr>
+<td>Sensitive</td>
+<td>Low-impact changes the audit log records</td>
+<td>Runs</td>
+<td>Runs</td>
+</tr>
+<tr>
+<td>Mutating</td>
+<td>Posting, creating a channel, reacting, workspace state, notification settings</td>
+<td>Runs</td>
+<td>Needs your confirmation</td>
+</tr>
+<tr>
+<td>Restricted</td>
+<td>High-impact changes, such as deleting a message</td>
+<td>Asks, and you type its verb</td>
+<td>Needs your confirmation</td>
+</tr>
+</tbody></table></div>
+<p>A command can also be marked dangerous, such as kicking, banning or changing someone&#39;s role. It
+always asks first, whoever runs it, and the palette tags it <strong>dangerous</strong>. The confirmation
+dialog reads &quot;Confirm:&quot; and the command&#39;s title, lists the arguments, and offers <strong>Cancel</strong> and
+a button that follows the tier: <strong>Run anyway</strong> for a mutating command, <strong>I understand —
+execute</strong> for a restricted one, <strong>Confirm</strong> otherwise. A restricted command first asks you to
+type its verb, as in <code>Type &quot;delete&quot; to confirm</code>. A confirmation expires; the app then says
+&quot;Confirmation expired. Run the command again.&quot;</p>
+<p><strong>Capabilities.</strong> A command declares what it needs, such as <code>chat.write</code> or
+<code>admin.manage_members</code>, and the server lists only the commands your role in the workspace may
+run; a plugin&#39;s command acts only within the permissions you granted the plugin.</p>
+<h2 id="the-command-palette">The command palette <a class="anchor" href="#the-command-palette" aria-label="Link to this section">#</a></h2>
+<p><kbd>Ctrl+K</kbd> opens the palette, and so does <kbd>:</kbd> in Vim normal mode. &quot;Type a
+command...&quot; searches the title, description and category of every command, fuzzily, with the
+matched letters highlighted. The arrow keys move, <kbd>Enter</kbd> runs, <kbd>Esc</kbd> closes.</p>
+<p>The list is grouped by category, in alphabetical order: the built-in Admin, Chat, Notifications,
+State and Workspace; User, for your user commands; one per turned-on plugin, under its name, with
+an &quot;Open &lt;panel&gt;&quot; command for each panel of a running plugin; and Workspace plugins, the
+registry&#39;s plugins this device has not installed, as &quot;Install &lt;name&gt;&quot;
+(<a href="../../plugins/index.html#workspace-registry">Workspace registry</a>).</p>
+<p>Each row shows where the command comes from (built in, plugin or yours), its category and its
+keybind. Left out are a plugin command that needs arguments, which its plugin&#39;s panel runs, a
+plugin command that needs a conversation while none is open, and macros, which run from
+Settings → Macros or <code>/macro</code>. Running a command closes the palette at once; a toast gives its
+title on success or &quot;&lt;title&gt;: &lt;message&gt;&quot; on failure, and a plugin command answers in its words.</p>
+<p><strong>Pipes.</strong> Typing <kbd>|</kbd> locks the text before it as a stage: a command id, optionally
+followed by <code>key=value</code> arguments with no spaces in the values. Pick the last command from the
+list, or press <kbd>Enter</kbd> on an empty search to run the chain. Each stage&#39;s result is
+merged into the next stage&#39;s arguments. A chain has at most 10 stages, all of them commands the
+server runs. The palette then shows each stage&#39;s result, or &quot;Pipe failed at stage &lt;n&gt;: …&quot;.
+<kbd>Backspace</kbd> in an empty search reopens the last stage, and <kbd>Esc</kbd> clears the
+chain.</p>
+<h2 id="keybinds">Keybinds <a class="anchor" href="#keybinds" aria-label="Link to this section">#</a></h2>
+<p>A keybind runs one command, sometimes with fixed arguments. These are the default bindings of a
+new device:</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Keys</th>
+<th>Command</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><kbd>Ctrl+K</kbd></td>
+<td>Open the command palette</td>
+</tr>
+<tr>
+<td><kbd>Ctrl+Alt+S</kbd></td>
+<td>Open Settings</td>
+</tr>
+<tr>
+<td><kbd>Ctrl+F</kbd></td>
+<td>Search in this conversation</td>
+</tr>
+<tr>
+<td><kbd>Ctrl+Shift+F</kbd></td>
+<td>Search the workspace</td>
+</tr>
+<tr>
+<td><kbd>Ctrl+Shift+X</kbd></td>
+<td>Open the plugin marketplace</td>
+</tr>
+<tr>
+<td><kbd>Ctrl+Shift+A</kbd></td>
+<td>Open the AI agent</td>
+</tr>
+<tr>
+<td><kbd>Ctrl+Shift+C</kbd></td>
+<td>Create a channel</td>
+</tr>
+<tr>
+<td><kbd>Ctrl+Shift+G</kbd></td>
+<td>New message</td>
+</tr>
+<tr>
+<td><kbd>Ctrl+Shift+M</kbd></td>
+<td>Mark everything as read</td>
+</tr>
+<tr>
+<td><kbd>Ctrl+Shift+K</kbd></td>
+<td>Jump to a conversation; with none named, opens the palette</td>
+</tr>
+<tr>
+<td><kbd>Ctrl+Shift+T</kbd></td>
+<td>Reopen the last thread</td>
+</tr>
+<tr>
+<td><kbd>Ctrl+R</kbd></td>
+<td>Cycle recent activity: the next conversation, wrapping around</td>
+</tr>
+<tr>
+<td><kbd>Ctrl+B</kbd></td>
+<td>Toggle the sidebar</td>
+</tr>
+<tr>
+<td><kbd>Ctrl+E</kbd></td>
+<td>Focus the composer</td>
+</tr>
+<tr>
+<td><kbd>Ctrl+D</kbd></td>
+<td>Cycle display density</td>
+</tr>
+<tr>
+<td><kbd>Ctrl+L</kbd></td>
+<td>Cycle layout preset</td>
+</tr>
+<tr>
+<td><kbd>Ctrl+Shift+Z</kbd></td>
+<td>Toggle Zen mode</td>
+</tr>
+<tr>
+<td><kbd>Alt+ArrowUp</kbd>, <kbd>Alt+ArrowDown</kbd></td>
+<td>Previous or next conversation</td>
+</tr>
+<tr>
+<td><kbd>Shift+Alt+ArrowUp</kbd>, <kbd>Shift+Alt+ArrowDown</kbd></td>
+<td>Previous or next unread conversation</td>
+</tr>
+<tr>
+<td><kbd>Ctrl+ArrowLeft</kbd>, <kbd>Ctrl+ArrowRight</kbd></td>
+<td>Focus the pane to the left or right</td>
+</tr>
+<tr>
+<td><kbd>Escape</kbd></td>
+<td>Close the open plugin panel, thread or Settings page</td>
+</tr>
+<tr>
+<td><kbd>?</kbd>, <kbd>Ctrl+/</kbd></td>
+<td>Show keyboard shortcuts</td>
+</tr>
+</tbody></table></div>
+<p>On a Mac, <kbd>Cmd</kbd> works wherever <kbd>Ctrl</kbd> is written. The timeline&#39;s own message
+keys, such as <kbd>r</kbd> for a thread and <kbd>e</kbd> to edit, are in <a href="keyboard.html">Keyboard</a>.</p>
+<p><strong>Contexts.</strong> A binding belongs to a context: Global (everywhere), Composer, Message list,
+Thread view, Conversation view, Panel (the rails, the tool panel and plugin panels) or Command
+palette. It works where its context has focus; a global one works everywhere. In a text field,
+keys that type a character and the editing chords stay with the field, unless a binding is made
+for that very context.</p>
+<p><strong>Settings → Keybinds</strong> lists the server&#39;s defaults, your bindings and this device&#39;s, grouped
+into Navigation, Chat, Panels, Agent, Plugins and Other, with &quot;Search keybinds...&quot; above them.</p>
+<ul>
+<li><strong>Add keybind</strong> opens a form: press the keys in &quot;Press a key combination...&quot;, pick the
+command and the context, then <strong>Save</strong>.</li>
+<li>On a binding of your own, the pencil changes its command or context, clicking the keys records
+new ones, the switch turns it off, and the bin deletes it after &quot;Delete keybind?&quot;.</li>
+<li>The default rows cannot be edited or deleted here. A binding of yours on the same keys and
+context takes their place; a profile can free a key altogether.</li>
+<li>A second binding of yours on the same keys and context is refused with &quot;keybind already exists
+for this scope/context/keystroke&quot;. You can have up to 200.</li>
+<li>Bindings to plugin commands, to &quot;Open &lt;panel&gt;&quot; commands and to the app&#39;s own commands, such
+as Zen mode or the Vim switch, stay on this device and carry the <strong>This device</strong> tag. The rest
+are kept on the server and follow you to every device.</li>
+<li>On the desktop, <strong>Plugin Suggestions</strong> lists the keys turned-on plugins suggest that are not
+bound yet; <strong>Assign</strong> binds one on this device.</li>
+</ul>
+<p><strong>A shortcut to a place.</strong> Hover a conversation in the list or a workspace in the rail, press
+<kbd>Ctrl+Shift+B</kbd>, then the keys. The app binds them to jump there and says &quot;Shortcut
+&lt;keys&gt; assigned to &lt;name&gt;&quot;.</p>
+<p><strong>Layers.</strong> One key resolves through layers, highest first: this device&#39;s bindings, yours and the
+workspace&#39;s from the server, the active profile, then the server&#39;s defaults. A key a higher layer
+holds is gone from the layers below, even while that binding is off. Workspace bindings are set
+by the workspace&#39;s Owner through the API; Settings has no form for them.
+<a href="keyboard.html#where-a-key-goes">Where a key goes</a> has the details.</p>
+<p><strong>Profiles.</strong> Settings → Keyboard picks the device&#39;s profile: Minimal, the plain defaults a new
+device starts with; Vim, the same with Vim mode on; or Mouse-friendly, which leaves Ctrl+R, B, E,
+D, L, Ctrl+Shift+Z and the Ctrl arrows to the browser and the text field. <strong>Export profile</strong> and
+<strong>Import profile</strong> share one (<a href="keyboard.html#keybind-profiles">Keybind profiles</a>).</p>
+<p><strong>Vim mode.</strong> The <strong>Vim mode</strong> switch in Settings → Keyboard, or the &quot;Toggle Vim mode&quot; command,
+adds a modal layer: <kbd>h</kbd> <kbd>j</kbd> <kbd>k</kbd> <kbd>l</kbd> move in normal mode, and
+a text field is insert mode (<a href="keyboard.html#vim-mode">Vim mode</a>).</p>
+<p><strong>The shortcuts panel.</strong> <kbd>?</kbd> outside a text field, <kbd>Ctrl+/</kbd>, or <strong>Show
+shortcuts</strong> in Settings → Keyboard opens &quot;Keyboard shortcuts&quot;. It lists every binding in force,
+grouped by context, with &quot;Vim normal mode&quot; while Vim is on, and &quot;Filter shortcuts...&quot; narrows it.</p>
+<h2 id="user-commands-and-macros">User commands and macros <a class="anchor" href="#user-commands-and-macros" aria-label="Link to this section">#</a></h2>
+<p>Both run a sequence of commands as one, and both are yours alone: nobody else in the workspace
+sees or runs them.</p>
+<p><strong>User commands</strong> appear in the palette and can be bound to keys. Settings → Commands, <strong>New
+command</strong>, asks for a <strong>Command ID</strong> (saved as <code>user.&lt;id&gt;</code>), a <strong>Title</strong>, a <strong>Description</strong> and
+the <strong>Steps</strong>: <strong>+ Add step</strong> picks a command the server runs, and the arrows reorder. <strong>Create</strong>
+saves it. Its steps take no arguments here, so each one uses the context. A user command can be
+bound when all its steps can, is dangerous when one step is, and can include other user
+commands, eight levels deep at most. Editing one, with the pencil, asks for its steps again.</p>
+<p><strong>Macros</strong> carry arguments for each step. Settings → Macros, <strong>New Macro</strong>, opens &quot;Create
+Macro&quot;: a <strong>Name</strong>, a <strong>Description</strong> and up to 20 <strong>Steps</strong>. Each step has a command, found with
+&quot;Search commands...&quot;, and an arguments field that takes JSON, such as
+<code>{&quot;conversation_id&quot;: &quot;…&quot;, &quot;text&quot;: &quot;…&quot;}</code>. <strong>Save</strong> stores it. On the desktop, <strong>Build with AI</strong>
+turns a description into steps with the provider set in Settings → AI Agent: <strong>Generate</strong>, check
+the preview, then <strong>Use these steps</strong> opens them in the editor.</p>
+<p>A macro runs from the play button on its row (&quot;Run macro&quot;), or from the composer: send
+<code>/macro &lt;name&gt;</code> (&quot;Run Macro&quot;). It runs on the server, step by step, with the open workspace as
+its only context:</p>
+<ul>
+<li><strong>Steps do not pipe.</strong> Each step gets its own arguments; a step that needs a conversation names
+it with <code>conversation_id</code>. A command that only runs in the app fails as a step.</li>
+<li><strong>Confirmation.</strong> A macro with a restricted step asks once, before any step runs, in
+<code>Run macro &quot;&lt;name&gt;&quot;</code>: &quot;This macro includes commands marked as dangerous. They may delete data
+or make irreversible changes.&quot; A dangerous step below the restricted tier, such as kicking a
+member, cannot be confirmed inside a macro, and the macro stops there.</li>
+<li><strong>A failing step</strong> stops the macro. The steps before it stay done, and the toast says
+&quot;Macro failed: macro `&lt;name&gt;` failed on a step&quot;. A macro that finishes says
+<code>Macro &quot;&lt;name&gt;&quot; executed</code>.</li>
+<li><strong>Limits.</strong> A macro cannot contain another macro, and its name has at most 128 characters. You
+can keep 50 macros per workspace, and the page shows the server&#39;s own cap when it sets one.</li>
+</ul>
+<p>Two macros, as examples:</p>
+<ul>
+<li><strong>Standup.</strong> <code>chat.post_message</code> with <code>{&quot;conversation_id&quot;: &quot;&lt;#standup's id&gt;&quot;, &quot;text&quot;: &quot;Standup: yesterday, today, blockers?&quot;}</code>, then <code>state.incr</code> with <code>{&quot;key&quot;: &quot;standup.count&quot;}</code>, which
+counts the standups in workspace state.</li>
+<li><strong>Heads down.</strong> <code>notifications.mark_all_read</code> with no arguments, then <code>notifications.dnd</code> with
+<code>{&quot;mode&quot;: &quot;until&quot;, &quot;minutes&quot;: &quot;120&quot;}</code>, which pauses your notifications for two hours.</li>
+</ul>
+<h2 id="pipelines">Pipelines <a class="anchor" href="#pipelines" aria-label="Link to this section">#</a></h2>
+<p>A pipeline runs commands on the server when something happens in the workspace: a trigger, up
+to five filters that must all match, and up to ten actions, each a command with arguments. It
+runs them as the person who created it.</p>
+<ul>
+<li><strong>Triggers</strong>: New Message, Message Updated, Message Deleted, Reactions Updated, Member Joined
+and Workspace State Changed. &quot;Scope to conversation ID (optional)&quot; limits the first four to
+one conversation.</li>
+<li><strong>Filters</strong>: &quot;Message contains pattern&quot;, a case-sensitive text match; &quot;Message from user&quot;, by
+user id; &quot;In conversation&quot;, by conversation id. A text filter never matches a message in an
+end-to-end encrypted DM or group, which the server cannot read.</li>
+<li><strong>Actions</strong> get the workspace as context, and the conversation for message and reaction
+triggers. Each action runs even when an earlier one failed.</li>
+</ul>
+<p><strong>Where.</strong> Settings → Pipelines, which is not shown in Direct messages. <strong>New Pipeline</strong> opens
+&quot;Create Pipeline&quot; with <strong>Name</strong>, <strong>Description</strong>, <strong>Trigger</strong>, <strong>Filters</strong> (<strong>Add filter</strong>),
+<strong>Actions</strong> (<strong>Add action</strong>, a command and an optional JSON arguments field) and <strong>Cooldown
+(seconds, optional)</strong>, then <strong>Save</strong>. The list shows each pipeline as Active or Disabled, with
+its trigger, its number of actions and when it last fired. The power button enables or disables
+it, the pencil edits it, and the bin deletes it after a confirmation.</p>
+<p><strong>Who.</strong> Any member of the workspace can create a pipeline, and every member sees the list. Only
+its creator, an Owner or a Moderator can change, toggle or delete it.</p>
+<p><strong>What runs.</strong> Nobody is there to confirm, so the server skips any action that would need a
+confirmation: every mutating, restricted or dangerous command, which includes posting a message,
+reacting and writing workspace state. Safe and sensitive server commands run. On every firing,
+each member with the workspace open sees &quot;Pipeline &quot;&lt;name&gt;&quot; fired&quot;, with the number of actions
+that ran; skipped actions are not counted.</p>
+<p><strong>Limits.</strong> The cooldown stops a pipeline from firing again until it has passed. A pipeline that
+fires more than 10 times in 60 seconds is switched off, with &quot;Pipeline &quot;&lt;name&gt;&quot; suspended&quot;;
+the power button turns it back on. You can create 50 pipelines per workspace, and the page shows
+the server&#39;s own cap when it sets one.</p>
+<p><strong>Example.</strong> &quot;Deploy failed&quot;: trigger New Message, scoped to the id of #deploys, with the filter
+&quot;Message contains pattern&quot; <code>FAILED</code>, a cooldown of 300 and the action <code>chat.search_messages</code>
+with <code>{&quot;query&quot;: &quot;FAILED&quot;}</code>. Each failure posted to #deploys shows every member the firing, at
+most once in five minutes. The action&#39;s result is not shown anywhere, and an action such as
+<code>chat.post_message</code> would be skipped.</p>
+<h2 id="workspace-state">Workspace state <a class="anchor" href="#workspace-state" aria-label="Link to this section">#</a></h2>
+<p>Workspace state is a key-value store the server keeps for each workspace. Commands, macros and
+the agent use it through <code>state.get</code>, <code>state.list</code>, <code>state.set</code>, <code>state.incr</code> and <code>state.delete</code>,
+and a pipeline can react when it changes. Plugins have no access to it. An entry belongs to one
+of two scopes: the workspace&#39;s, which every member reads and writes, or your own, which only you
+see.</p>
+<p>Settings → State shows it, outside Direct messages. <strong>Server</strong> and <strong>User</strong> switch between the
+workspace&#39;s scope and yours, and &quot;Filter by prefix...&quot; narrows the list. <strong>New entry</strong> asks for a
+<strong>Key</strong>, a <strong>Value (JSON)</strong> and a <strong>TTL (minutes, optional)</strong>, then <strong>Create</strong>; each entry can be
+edited and deleted, and shows when it expires.</p>
+<ul>
+<li>A key starts with a lowercase letter, uses <code>a-z</code>, <code>0-9</code>, <code>.</code>, <code>_</code>, <code>:</code> and <code>-</code>, and ends with
+a letter or digit. Keys starting with <code>system.</code> belong to the server.</li>
+<li>A value has at most 64 KB and lives at most 30 days when it has a TTL. The workspace&#39;s scope
+holds 10,000 entries and yours 1,000.</li>
+<li>Anything that reads a scope sees its values, the AI agent and its model provider included. Do
+not keep secrets there.</li>
+</ul>
+<h2 id="the-ai-agent">The AI agent <a class="anchor" href="#the-ai-agent" aria-label="Link to this section">#</a></h2>
+<p>On the desktop, the AI agent (<kbd>Ctrl+Shift+A</kbd>, or <code>/agent</code> in the composer) works
+through the same commands and the same gates as you do. It sees only commands marked callable by
+an AI: a reviewed set of built-ins and the plugin commands you approved in Settings → Plugin AI,
+and no user command or macro made in Settings. A call that changes anything waits for you in the
+confirmation dialog, headed &quot;Agent wants to:&quot;, and the agent runs at most three such actions per
+run. Settings → AI Agent sets its provider and key, and
+<a href="../../plugins/index.html#using-a-plugin">Using a plugin</a> covers approving a plugin&#39;s commands for it. A
+server&#39;s operator can turn its access off.</p>
+<h2 id="next">Next <a class="anchor" href="#next" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><a href="keyboard.html">Keyboard</a>: how a key is resolved, the profile file and the Vim layer in full.</li>
+<li><a href="../../plugins/index.html">Plugins</a>: installing, trusting and using plugins and their commands.</li>
+<li><a href="../command_model.html">Command model</a>: rim-server&#39;s contract for commands,
+sensitivity, confirmations, macros and what the agent may call.</li>
+</ul>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/839c95eb7e80f1b52da231ecbf06668a6c018fd8/docs/commands-and-automation.md">rim-ui/docs/commands-and-automation.md</a> at <code>839c95e</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+<script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
+</body>
+</html>

@@ -64,9 +64,9 @@
 </details></aside>
     <main id="content" class="prose">
 <h1 id="server-to-server-v1">Server-to-server v1</h1>
-<p class="status"><span><b>Server-to-server v1</b></span><span>version 1</span><span>status: implemented, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/ef76e29d29862825129ccc6a6f6d7b081a6398b0/docs/specs/server-to-server-v1.md">rim-server/docs/specs/server-to-server-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/ef76e29d29862825129ccc6a6f6d7b081a6398b0">ef76e29</a></span></p>
-<p><em>Status: implemented, normative. Follows <a href="https://github.com/rim-platform/rim-server/blob/ef76e29d29862825129ccc6a6f6d7b081a6398b0/docs/decisions/decentralization-2026-10-08.md"><code>docs/decisions/decentralization-2026-10-08.md</code></a> and
-<a href="https://github.com/rim-platform/rim-server/blob/ef76e29d29862825129ccc6a6f6d7b081a6398b0/docs/decisions/relay-proxied-workspaces-2026-10-09.md"><code>docs/decisions/relay-proxied-workspaces-2026-10-09.md</code></a>. Read <a href="key-identity-v1.html"><code>key-identity-v1.md</code></a>,
+<p class="status"><span><b>Server-to-server v1</b></span><span>version 1</span><span>status: implemented, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/292d7d76bdc85aa388493c017f4f2a027a9c3e74/docs/specs/server-to-server-v1.md">rim-server/docs/specs/server-to-server-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/292d7d76bdc85aa388493c017f4f2a027a9c3e74">292d7d7</a></span></p>
+<p><em>Status: implemented, normative. Follows <a href="https://github.com/rim-platform/rim-server/blob/292d7d76bdc85aa388493c017f4f2a027a9c3e74/docs/decisions/decentralization-2026-10-08.md"><code>docs/decisions/decentralization-2026-10-08.md</code></a> and
+<a href="https://github.com/rim-platform/rim-server/blob/292d7d76bdc85aa388493c017f4f2a027a9c3e74/docs/decisions/relay-proxied-workspaces-2026-10-09.md"><code>docs/decisions/relay-proxied-workspaces-2026-10-09.md</code></a>. Read <a href="key-identity-v1.html"><code>key-identity-v1.md</code></a>,
 <a href="device-linking-v1.html"><code>device-linking-v1.md</code></a> and <a href="e2ee-mls-v1.html"><code>e2ee-mls-v1.md</code></a> first. This document is the contract between servers
 and between a server and its clients: server identity, the signed HTTP API between servers,
 relays, hosts, and what the client verifies. Labels of the form S5-n below name the change that
@@ -206,7 +206,7 @@ earlier server would refuse a descriptor that carried it.</p>
 </tr>
 <tr>
 <td><code>s2sVersions</code></td>
-<td><code>[1]</code>; a later version keeps serving the previous one (<a href="https://github.com/rim-platform/rim-server/blob/ef76e29d29862825129ccc6a6f6d7b081a6398b0/ROADMAP.md"><code>ROADMAP.md</code></a>, &quot;Releases and updates&quot;)</td>
+<td><code>[1]</code>; a later version keeps serving the previous one (<a href="https://github.com/rim-platform/rim-server/blob/292d7d76bdc85aa388493c017f4f2a027a9c3e74/ROADMAP.md"><code>ROADMAP.md</code></a>, &quot;Releases and updates&quot;)</td>
 </tr>
 <tr>
 <td><code>mlsCipherSuites</code></td>
@@ -1202,8 +1202,8 @@ yearly <code>server-key rotate</code> and <code>recover</code> on compromise, da
 drill, quotas and how to change them, monitoring (queue bytes, outbox depth per peer, deliver
 failures, <code>401</code>/<code>409</code>/<code>429</code> rates, PoW signups), incident response for spam waves, a hostile peer, a
 stolen server key and a database leak, and the abuse policy text.</p>
-<p><strong>Compose</strong> (<a href="https://github.com/rim-platform/rim-server/blob/ef76e29d29862825129ccc6a6f6d7b081a6398b0/deploy/compose.yml"><code>deploy/compose.yml</code></a> with the <a href="https://github.com/rim-platform/rim-server/blob/ef76e29d29862825129ccc6a6f6d7b081a6398b0/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a> override, and
-<a href="https://github.com/rim-platform/rim-server/blob/ef76e29d29862825129ccc6a6f6d7b081a6398b0/deploy/README.md"><code>deploy/README.md</code></a>): rim-server with <code>RIM_ROLE=relay</code>, <code>RIM_PUBLIC_BASE_URL=https://&lt;RIM_DOMAIN&gt;</code>,
+<p><strong>Compose</strong> (<a href="https://github.com/rim-platform/rim-server/blob/292d7d76bdc85aa388493c017f4f2a027a9c3e74/deploy/compose.yml"><code>deploy/compose.yml</code></a> with the <a href="https://github.com/rim-platform/rim-server/blob/292d7d76bdc85aa388493c017f4f2a027a9c3e74/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a> override, and
+<a href="https://github.com/rim-platform/rim-server/blob/292d7d76bdc85aa388493c017f4f2a027a9c3e74/deploy/README.md"><code>deploy/README.md</code></a>): rim-server with <code>RIM_ROLE=relay</code>, <code>RIM_PUBLIC_BASE_URL=https://&lt;RIM_DOMAIN&gt;</code>,
 <code>RIM_REGISTRATION_POW_BITS=24</code>, <code>RIM_RELAY_QUEUE_BYTES_PER_USER=67108864</code> and the other quotas
 above, <code>RIM_TRUST_FORWARDED_HEADERS=true</code>, <code>RIM_FORCE_SECURE_COOKIES=true</code>, <code>RIM_DATA_DIR=/data</code> on a
 volume (the audit log too); a migration step before it; Postgres 17 on its own volume, on a
@@ -1527,7 +1527,7 @@ device keys move to hybrid.</p>
 <td>S5-2</td>
 </tr>
 <tr>
-<td>Visibility rules live in <a href="https://github.com/rim-platform/rim-server/blob/ef76e29d29862825129ccc6a6f6d7b081a6398b0/rim_api/src/subscription.rs"><code>rim_api/src/subscription.rs</code></a></td>
+<td>Visibility rules live in <a href="https://github.com/rim-platform/rim-server/blob/292d7d76bdc85aa388493c017f4f2a027a9c3e74/rim_api/src/subscription.rs"><code>rim_api/src/subscription.rs</code></a></td>
 <td>Moved to <code>rim_services</code> for the outbox writer</td>
 <td>S5-2</td>
 </tr>
@@ -1569,13 +1569,13 @@ retention and overflow, the revocation schedule, the role table.</li>
 <li><strong>db-tests.</strong> One nonce inserted twice concurrently, one wins; per-stream <code>seq</code> under concurrency
 without gaps or repeats; outbox order per peer; <code>received_through</code> idempotency; items deleted only
 once every device acked; cascades; each migration up and down, and the refusing <code>down</code>s.</li>
-<li><strong>e2e with two servers</strong> (<a href="https://github.com/rim-platform/rim-server/blob/ef76e29d29862825129ccc6a6f6d7b081a6398b0/rim_api/tests/s2s_e2e.rs"><code>rim_api/tests/s2s_e2e.rs</code></a>, <code>e2e-tests</code>): two Actix servers in one
+<li><strong>e2e with two servers</strong> (<a href="https://github.com/rim-platform/rim-server/blob/292d7d76bdc85aa388493c017f4f2a027a9c3e74/rim_api/tests/s2s_e2e.rs"><code>rim_api/tests/s2s_e2e.rs</code></a>, <code>e2e-tests</code>): two Actix servers in one
 process with two databases, <code>RIM_S2S_ALLOW_HTTP</code> and <code>RIM_S2S_ALLOW_PRIVATE_ADDRESSES</code>. Flows:
 pinning and rotation; an encrypted DM across relays from creation to edit and read state
 (<code>rim_mls</code> fixtures); a DM request accepted, ignored, blocked; a remote join; channel traffic both
 ways with host events verified by a test client; a gap and its reconciliation; revocation with
 acknowledgement; the direct login; a relay switch; the allow-list; <code>relay</code> and <code>host</code> refusals;
-replayed and tampered requests. A two-server compose test in CI when CI is back (<a href="https://github.com/rim-platform/rim-server/blob/ef76e29d29862825129ccc6a6f6d7b081a6398b0/ROADMAP.md"><code>ROADMAP.md</code></a>).</li>
+replayed and tampered requests. A two-server compose test in CI when CI is back (<a href="https://github.com/rim-platform/rim-server/blob/292d7d76bdc85aa388493c017f4f2a027a9c3e74/ROADMAP.md"><code>ROADMAP.md</code></a>).</li>
 <li><strong>Clients (S5-3, S5-5).</strong> Appendix A in the Tauri module and Vitest; pinning from an invite
 (current key, rotated key, fork); event verification and gaps; contacts by link and QR; a DM
 across relays on two desktops; the request inbox; a remote join; the direct fallback and its
@@ -1697,7 +1697,7 @@ ed25519:waKbDNMuQ460M8gX_H1NKzAMDXF3x4P8hbHoJFPr-pSduvfvQSbXvOcRmK5VcF5F9-sICQmF
 <code>powBits</code> 16: the smallest working counter is 37283, nonce <code>AAAAAAAAkaM</code> (8 bytes big-endian), hash
 <code>00002f63d137749fda27201ccf9d282a4ed846287d49c55fea89a47617e78ed6</code>.</p>
 <h3 id="filled-by-s5-1">Filled by S5-1 <a class="anchor" href="#filled-by-s5-1" aria-label="Link to this section">#</a></h3>
-<p><strong>RFC 9421 appendix B.2.6</strong> through <code>rim_s2s</code> (<a href="https://github.com/rim-platform/rim-server/blob/ef76e29d29862825129ccc6a6f6d7b081a6398b0/rim_s2s/src/vectors.rs"><code>rim_s2s/src/vectors.rs</code></a>): the RFC&#39;s
+<p><strong>RFC 9421 appendix B.2.6</strong> through <code>rim_s2s</code> (<a href="https://github.com/rim-platform/rim-server/blob/292d7d76bdc85aa388493c017f4f2a027a9c3e74/rim_s2s/src/vectors.rs"><code>rim_s2s/src/vectors.rs</code></a>): the RFC&#39;s
 <code>test-key-ed25519</code> (seed: the last 32 bytes of its PKCS#8 key), the components <code>&quot;date&quot; &quot;@method&quot; &quot;@path&quot; &quot;@authority&quot; &quot;content-type&quot; &quot;content-length&quot;</code> with <code>created=1618884473</code> and
 <code>keyid=&quot;test-key-ed25519&quot;</code> serialize to the RFC&#39;s <code>Signature-Input</code>, the crate builds the RFC&#39;s
 signature base, and signing it gives the RFC&#39;s
@@ -1735,7 +1735,7 @@ A.1 to A.8 reproduces byte for byte in <code>rim_s2s</code>&#39;s tests; A.8&#39
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/ef76e29d29862825129ccc6a6f6d7b081a6398b0/docs/specs/server-to-server-v1.md">rim-server/docs/specs/server-to-server-v1.md</a> at <code>ef76e29</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/292d7d76bdc85aa388493c017f4f2a027a9c3e74/docs/specs/server-to-server-v1.md">rim-server/docs/specs/server-to-server-v1.md</a> at <code>292d7d7</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

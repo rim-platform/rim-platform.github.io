@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Getting started · RIM</title>
+<meta name="description" content="This page takes you from a fresh install to your first conversation: creating an account, finding a workspace, talking, finding your way around the app and keeping the account safe. It is for the person using the app; …">
+<link rel="icon" href="../../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../../index.html" aria-label="RIM home">
+      <picture><source srcset="../../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../../index.html#what">What RIM is</a>
+      <a href="../../index.html#how">How it works</a>
+      <a href="../self-hosting.html">Self-host</a>
+      <a href="../../configure/index.html">Configure</a>
+      <a href="../../plugins/index.html">Plugins</a>
+      <a href="../index.html" aria-current="page">Docs</a>
+      <a href="../../api/index.html">API</a>
+      <a href="../../specs/index.html">Specs</a>
+      <a href="../contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="../index.html">Docs</a><span aria-hidden="true">/</span><a href="../using-rim.html">Using RIM</a><span aria-hidden="true">/</span><span>Getting started</span></div>
+  <div class="page with-toc">
+    <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
+<ol>
+<li><a href="#before-you-start">Before you start</a></li>
+<li><a href="#create-your-account">Create your account</a></li>
+<li><a href="#where-you-land">Where you land</a></li>
+<li><a href="#join-or-create-a-workspace">Join or create a workspace</a></li>
+<li><a href="#talk">Talk</a></li>
+<li><a href="#find-your-way-around">Find your way around</a></li>
+<li><a href="#keep-your-account-safe">Keep your account safe</a></li>
+<li><a href="#next">Next</a></li>
+</ol>
+</details></aside>
+    <main id="content" class="prose">
+<h1 id="getting-started">Getting started</h1>
+<p>This page takes you from a fresh install to your first conversation: creating an account, finding
+a workspace, talking, finding your way around the app and keeping the account safe. It is for the
+person using the app; <a href="install.html">Install</a> covers getting the app itself.</p>
+<h2 id="before-you-start">Before you start <a class="anchor" href="#before-you-start" aria-label="Link to this section">#</a></h2>
+<p>You need the RIM desktop app (<a href="install.html">Install</a>) or a current browser open at a RIM server&#39;s
+web address, and a server to join. Every release of the desktop app signs in to the public relay
+<code>relay.rim-platform.org</code>; <strong>Use another server</strong> on the sign-in page moves it to your own or your
+team&#39;s server (<a href="install.html#use-another-server">Use another server</a>). The web app always uses the
+server that serves it. A server is open to anyone, invite-only, or, like the public relay, takes
+new accounts that prove they come from a real device. On an invite-only server you need an invite
+link from someone there: open it in a browser, and its page creates your account.</p>
+<h2 id="create-your-account">Create your account <a class="anchor" href="#create-your-account" aria-label="Link to this section">#</a></h2>
+<p>Choose <strong>Create account</strong> on the sign-in page, or open your invite link. A workspace invite says
+&quot;You&#39;re joining &lt;workspace&gt;&quot; and who invited you. Where the app can hold keys (the desktop app,
+and any browser with WebCrypto Ed25519 and IndexedDB) the form creates an account with a key: no
+password and no email. The device keeps a key that signs you in, and a recovery kit gets the
+account back if you lose it.</p>
+<ul>
+<li><strong>Username</strong>: 3 to 32 characters, letters, digits, <code>_</code> and <code>-</code>, free on this server. It cannot
+start with <code>r_</code> or <code>deleted-</code>.</li>
+<li><strong>Display name (optional)</strong>: at most 80 characters. Left blank, your username is shown.</li>
+<li><strong>Name of this device</strong>: up to 64 characters, filled in with the computer&#39;s name or, in a
+browser, a name such as &quot;Firefox on Linux&quot;. It names this device in your device list.</li>
+<li><strong>I accept the terms of use</strong>, with a link to the server&#39;s terms, only when the server has
+terms. The account is not created without it.</li>
+</ul>
+<p>Then choose <strong>Create account</strong>. In a browser the app first asks the browser to keep this site&#39;s
+data; if the browser refuses, the app says your keys could be cleared with it and goes on only
+after <strong>Continue anyway</strong>. On the public relay the app then proves it is a real device: &quot;Proving
+this is a real device…&quot; counts the seconds, with <strong>Cancel</strong>. It takes seconds in the desktop app
+and can take tens of seconds in a browser.</p>
+<p><strong>The recovery kit.</strong> Once the account exists, the form says &quot;Your account is ready.&quot; and shows
+<strong>Save your recovery kit</strong>: your account id (<code>rimp1_…</code>) and a recovery phrase of 12 numbered
+words. <strong>Copy kit</strong> copies both as text. Write the words down in order with the account id, or
+keep the kit in a password manager, somewhere that is not this device. If you lose every device,
+the kit is the only way back into the account, and anyone who has it can take the account over.</p>
+<ul>
+<li><strong>I saved it</strong> confirms. The device then deletes its copy, and RIM cannot show the kit again.</li>
+<li><strong>Later</strong> closes it. Until you confirm, the device keeps the kit and a bar across the top of the
+app says &quot;Save your recovery kit. Losing this device&#39;s data can permanently remove your ability
+to manage this account.&quot;, with <strong>Show recovery kit</strong>.</li>
+</ul>
+<p><strong>Where the keys live.</strong> The device that created the account holds two keys: the identity key,
+which adds and removes devices, and its device key, which signs in. The desktop app keeps them in
+its secret vault, an encrypted file whose key is in the operating system&#39;s credential store
+(<a href="install.html#where-the-app-keeps-its-data">Where the app keeps its data</a>). A browser keeps them
+in this site&#39;s IndexedDB storage, as keys that cannot be exported: clearing the site&#39;s data
+deletes them, and a private window may not keep them.</p>
+<p><strong>Password accounts.</strong> Servers take key signups only unless their operator allows passwords. On
+one that does, <strong>Create account with a password</strong> under the key form asks for a username, an
+email, a password of at least 8 characters and an optional display name. A password account can
+add a key later in Settings &gt; Security, and after signing in the app offers it in <strong>Set up
+encryption for this account</strong>. A browser that cannot create keys on a key-only server shows &quot;This
+server needs a key signup&quot; and points to the desktop app.</p>
+<h2 id="where-you-land">Where you land <a class="anchor" href="#where-you-land" aria-label="Link to this section">#</a></h2>
+<p>After signup the app opens one of these:</p>
+<ul>
+<li><strong>The invite&#39;s workspace</strong>, when you signed up with a workspace invite.</li>
+<li><strong>The server&#39;s default workspace</strong>, when its operator named one. Every new account joins it as
+a Member and is in its public channels from the start.</li>
+<li><strong>Welcome to RIM</strong> otherwise: &quot;You don&#39;t belong to any workspaces yet.&quot;, with
+<strong>+ Create workspace</strong>, <strong>Join with an invite code</strong>, and &quot;No invite yet? Ask a workspace&#39;s
+Owner for an invite link.&quot;</li>
+</ul>
+<p>A server can hold a new account back for a while. A bar then says &quot;New account: you can create
+workspaces and message strangers after &lt;time&gt;.&quot;</p>
+<p><strong>The direct space.</strong> On a server that relays between servers, as the public relay does,
+<strong>Direct messages</strong> at the top of the workspace rail opens your direct space. It holds the DMs and
+groups that belong to no workspace, with people on this server or, through it, on other servers.
+Its badge counts unread messages before you open it. The rail shows once a workspace is open.</p>
+<h2 id="join-or-create-a-workspace">Join or create a workspace <a class="anchor" href="#join-or-create-a-workspace" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>Join with an invite link.</strong> Opened in a browser while you are signed in, the link says &quot;You
+have been invited to join &lt;workspace&gt;&quot;; <strong>Join workspace</strong> joins it. In the app,
+<strong>Join with an invite code</strong> on the welcome screen, or <strong>Add workspace</strong> (the <strong>+</strong> at the bottom
+of the workspace rail) and then <strong>Join Existing</strong>, takes the invite code: the part of the link
+that starts with <code>rim_inv_</code>, or a whole <code>rim-invite:1:…</code> link for a workspace on another server.
+<strong>Join</strong> opens it.</li>
+<li><strong>Create one.</strong> <strong>+ Create workspace</strong> on the welcome screen, or <strong>Add workspace</strong>, then <strong>Create
+New</strong>, asks for a name. <strong>Create</strong> opens the new workspace with you as its Owner.</li>
+</ul>
+<p>Every workspace member has one role:</p>
+<ul>
+<li><strong>Owner</strong>: one per workspace, the person who created it. Can do everything, including inviting
+people and changing roles.</li>
+<li><strong>Moderator</strong>: removes, bans and times out members, deletes any message, sets slow mode, handles
+reports and archives channels.</li>
+<li><strong>Member</strong>: the role everyone who joins gets. Reads and writes in public channels, joins and
+creates channels, starts groups and adds people to conversations.</li>
+<li><strong>Guest</strong>: sees and writes only in the conversations someone adds them to.</li>
+</ul>
+<p>The Owner invites people with <strong>Invite member</strong> in a conversation&#39;s header: choose <strong>Member</strong> or
+<strong>Guest</strong> under <strong>Joins as</strong>, then <strong>Generate invite link</strong>, and send the link.</p>
+<p><strong>Creating a channel.</strong> <strong>New channel</strong> (the <strong>+</strong> beside Channels in the tool panel, or
+<kbd>Ctrl+Shift+C</kbd>) asks for a <strong>Channel name</strong>. The <strong>Private</strong> switch says &quot;Only invited
+members can see this channel. This cannot be changed later.&quot; <strong>Add members (optional)</strong> picks
+people to add, and <strong>Create</strong> opens the channel. <strong>Browse channels</strong>, the compass beside
+<strong>New channel</strong>, lists the public channels you can join.</p>
+<h2 id="talk">Talk <a class="anchor" href="#talk" aria-label="Link to this section">#</a></h2>
+<p><strong>Channels.</strong> A public channel is readable by every member of the workspace. The tool panel lists
+the channels you joined; one you have not joined shows <strong>Join channel</strong> above its timeline.</p>
+<p><strong>Threads.</strong> Replies live in threads. Hover a message and choose <strong>Open thread</strong>, choose <strong>Open
+Thread</strong> in its context menu (right-click), or select it and press <kbd>r</kbd> or <kbd>t</kbd>.
+The thread opens in a pane on the right; the message stays in the timeline and its replies stay in
+the thread.</p>
+<p><strong>DMs and groups.</strong> <strong>New message</strong> (the <strong>+</strong> at the top of the tool panel, or
+<kbd>Ctrl+Shift+G</kbd>) lists the workspace&#39;s members. Pick one person for a DM or several for a
+group. A DM opens as a draft and is created when you send its first message. In Direct messages
+the picker lists your contacts instead. Settings &gt; Contacts shows your contact link and adds
+someone from theirs; a workspace&#39;s member list has <strong>Add as contact</strong>.</p>
+<p><strong>DM requests.</strong> A first DM from someone can arrive as a request, which you see before the
+conversation joins your list. Settings &gt; Direct messages decides who reaches you how:</p>
+<ul>
+<li><strong>Outside your workspaces</strong>: <strong>Requests</strong> (the default) or <strong>Nobody</strong>. The server&#39;s operator or
+a workspace can turn requests from outside off for you.</li>
+<li><strong>Members of your workspaces</strong>: <strong>Direct</strong> (the default) or <strong>Requests</strong>, per workspace.</li>
+<li>Your contacts, and the Owner and Moderators of a workspace you share, always reach you directly.</li>
+</ul>
+<p>Requests sit at the top of Notifications, and the bell counts them. &quot;Requests (n)&quot; also heads the
+conversation list of the workspace they came from, or the Direct messages list for those from
+outside. Each request shows the sender&#39;s verified name and fingerprint, with <strong>Accept</strong>, <strong>Read
+first</strong>, <strong>Ignore</strong>, <strong>Block</strong> and <strong>Report</strong>. The sender sees &quot;Sent as a request; &lt;name&gt; has
+not accepted yet.&quot; above their composer. rim-server&#39;s
+<a href="../messaging.html#who-may-start-a-dm">Messaging</a> has the full rules.</p>
+<p><strong>Reactions.</strong> Hover a message and choose <strong>Add reaction</strong> to pick an emoji. Clicking a reaction
+under a message adds or removes yours.</p>
+<p><strong>Mentions.</strong> Type <code>@</code> and the start of a name, then pick the person from the list. They get a
+notification when they can read the conversation.</p>
+<p><strong>The composer.</strong> &quot;Write a message...&quot; takes Markdown. <kbd>Enter</kbd> sends and
+<kbd>Shift+Enter</kbd> starts a new line. <code>/</code> at the start lists commands, and <code>:</code> followed by the
+start of a name suggests emoji. <strong>Insert emoji</strong> and <strong>Attach file</strong> sit beside the field; a
+server can turn attachments off. <kbd>Escape</kbd> moves from the composer to the message list,
+where the arrow keys move between messages and <kbd>e</kbd> edits your own.</p>
+<p><strong>Inbox and notifications.</strong> <strong>Inbox</strong> on the side rail shows the conversation list in the tool
+panel, with the number of unread messages in the open workspace. The bell, <strong>Notifications</strong>,
+lists your mentions, DMs, thread replies, reactions and keyword matches in the open workspace,
+under any message requests; <strong>Mark all read</strong> clears them. Settings &gt; Notifications sets what
+notifies you in the workspace and how this device shows it.</p>
+<h2 id="find-your-way-around">Find your way around <a class="anchor" href="#find-your-way-around" aria-label="Link to this section">#</a></h2>
+<p>From left to right:</p>
+<ul>
+<li><strong>Workspace rail</strong>: <strong>Direct messages</strong>, one button per workspace with its unread count, and
+<strong>Add workspace</strong> at the bottom.</li>
+<li><strong>Side rail</strong>: <strong>Inbox</strong>, <strong>Plugins</strong>, <strong>Notifications</strong> and <strong>Search workspace</strong>, then
+<strong>Audit log</strong>, <strong>Settings</strong> and your avatar, whose menu has <strong>Set status...</strong>, <strong>Settings</strong> and
+<strong>Sign out</strong>.</li>
+<li><strong>Tool panel</strong>: Conversations, with Channels, archived channels and your DMs and groups, and
+<strong>Workspace members</strong> and <strong>New message</strong> at the top. Notifications and member lists take its
+place while open.</li>
+<li><strong>Main surface</strong>: the conversation&#39;s header, timeline and composer. Settings, message requests
+and some plugin panels take its place, and a thread opens in a pane to its right.</li>
+</ul>
+<p>The keys that matter on the first day, as a new device has them:</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Keys</th>
+<th>What they do</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><kbd>Ctrl+K</kbd></td>
+<td>Open the command palette</td>
+</tr>
+<tr>
+<td><kbd>Ctrl+Shift+F</kbd></td>
+<td>Search the workspace</td>
+</tr>
+<tr>
+<td><kbd>Ctrl+F</kbd></td>
+<td>Search in this conversation</td>
+</tr>
+<tr>
+<td><kbd>Ctrl+Shift+G</kbd></td>
+<td>New message</td>
+</tr>
+<tr>
+<td><kbd>Ctrl+Shift+C</kbd></td>
+<td>Create a channel</td>
+</tr>
+<tr>
+<td><kbd>Alt+ArrowUp</kbd>, <kbd>Alt+ArrowDown</kbd></td>
+<td>Previous or next conversation</td>
+</tr>
+<tr>
+<td><kbd>Ctrl+E</kbd></td>
+<td>Focus the composer</td>
+</tr>
+<tr>
+<td><kbd>Escape</kbd></td>
+<td>Close the open panel</td>
+</tr>
+<tr>
+<td><kbd>?</kbd> or <kbd>Ctrl+/</kbd></td>
+<td>Show the keyboard shortcuts</td>
+</tr>
+</tbody></table></div>
+<p>On a Mac, <kbd>Cmd</kbd> works wherever <kbd>Ctrl</kbd> is written. The command palette (&quot;Type a
+command...&quot;) lists every command you can run here, built in, from a plugin or your own, with its
+keybind. Search takes filters such as <code>from:@user</code>, <code>in:#channel</code>, <code>has:link</code> and
+<code>before:2026-01-01</code>. The shortcuts panel lists the bindings as they stand; Settings &gt; Keybinds and
+Settings &gt; Keyboard change them, and <a href="keyboard.html">Keyboard</a> explains profiles and the Vim layer.</p>
+<p><strong>Plugins</strong> on the side rail opens a menu of the panels of your running plugins, or <strong>Manage
+plugins</strong> when none has a panel. <a href="../../plugins/index.html">Plugins</a> covers installing and trusting one, and
+<a href="ui-shell.html">UI shell</a> describes the shell&#39;s design.</p>
+<h2 id="keep-your-account-safe">Keep your account safe <a class="anchor" href="#keep-your-account-safe" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>Save the recovery phrase.</strong> If you chose <strong>Later</strong>, <strong>Show recovery kit</strong> in the bar at the
+top of the app shows it again until you confirm.</li>
+<li><strong>Link a second device.</strong> A device that holds the identity key shows <strong>Link a device</strong> in
+Settings &gt; Security, with a QR code and a text code. On the new device&#39;s sign-in page, choose
+&quot;Have another device signed in? Link this device with its code&quot; (in a browser, &quot;Signed in on the
+desktop app? Link this browser with its code&quot;), paste the text code, name the device and choose
+<strong>Link this device</strong>. Check that the first device shows the same fingerprint, then choose
+<strong>Confirm</strong> there. The new device gets a key of its own and signs in with it; managing devices
+stays with the device that holds the identity key. <a href="device-linking-desktop.html">Device linking</a> and
+<a href="web-linked-device.html">The web app as a linked device</a> have the details.</li>
+<li><strong>Back up the identity key</strong> (desktop app). With the history archive set up in
+Settings &gt; History, the computer that holds the identity key keeps a sealed copy of it there,
+which Settings &gt; Security reports under <strong>Identity key backup</strong>. Another of your computers can
+then choose <strong>Take over the identity key...</strong> and type the recovery phrase
+(<a href="identity-key-backup.html">Identity key backup</a>). An identity key held by a browser is never
+backed up.</li>
+</ul>
+<p>When a device is lost:</p>
+<ol>
+<li><strong>You still have the device with the identity key.</strong> In Settings &gt; Security, under Devices,
+choose <strong>Remove</strong> beside the lost one, then <strong>Remove device</strong>. It is signed out at once and its
+key never signs in again.</li>
+<li><strong>You lost the device with the identity key, but another computer of yours has the backup.</strong>
+Take the identity key over there, then remove the lost device.</li>
+<li><strong>You lost every device.</strong> On the sign-in page, choose &quot;Lost your devices? Recover an account
+with its recovery kit&quot;. Paste the kit or type the phrase, check the account id, name the device
+and choose <strong>Recover account</strong>. The device becomes your account&#39;s new device with a new
+identity key, and every other device and session is signed out. Recovery gives back the
+account, not its encrypted messages: those come back only from the history archive.</li>
+</ol>
+<h2 id="next">Next <a class="anchor" href="#next" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><a href="../../plugins/index.html">Plugins</a>: the official plugins, and installing, using, trusting and removing one.</li>
+<li><a href="e2ee-desktop.html">End-to-end encrypted DMs and groups on the desktop</a>, and
+<a href="e2ee-web.html">in the web app</a>: channels are never end-to-end encrypted, DMs and groups can be.</li>
+<li><a href="../self-hosting.html">Self-hosting</a>: running your own server, including a
+default workspace for new accounts.</li>
+</ul>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/839c95eb7e80f1b52da231ecbf06668a6c018fd8/docs/getting-started.md">rim-ui/docs/getting-started.md</a> at <code>839c95e</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+<script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
+</body>
+</html>
