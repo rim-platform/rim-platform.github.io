@@ -40,7 +40,7 @@
 <li><a href="#product-requirements">Product Requirements</a></li>
 <li><a href="#command-identity">Command Identity</a></li>
 <li><a href="#command-kinds">Command Kinds</a><ol><li><a href="#built-in-commands">Built-in Commands</a></li><li><a href="#plugin-provided-commands">Plugin-Provided Commands</a></li><li><a href="#integration-provided-commands">Integration-Provided Commands</a></li><li><a href="#user-defined-commands">User-Defined Commands</a></li></ol></li>
-<li><a href="#macros">Macros</a></li>
+<li><a href="#user-commands-and-macros">User Commands And Macros</a></li>
 <li><a href="#command-contract">Command Contract</a><ol><li><a href="#required-fields">Required Fields</a></li><li><a href="#recommended-fields">Recommended Fields</a></li><li><a href="#confirmation-gate-h1">Confirmation gate (H1)</a></li><li><a href="#timeout-gate-t1">Timeout gate (T1)</a></li></ol></li>
 <li><a href="#arguments">Arguments</a></li>
 <li><a href="#context-model-for-commands">Context Model For Commands</a></li>
@@ -85,7 +85,7 @@
 <li>context actions invoke commands</li>
 <li>plugins register commands</li>
 <li>automations may invoke commands</li>
-<li>user-defined workflows are commands too</li>
+<li>user commands are commands too; a macro runs commands but is not one</li>
 </ul>
 <h2 id="current-backend-state">Current Backend State <a class="anchor" href="#current-backend-state" aria-label="Link to this section">#</a></h2>
 <p>The current backend/contracts implementation already provides:</p>
@@ -93,7 +93,7 @@
 <li>built-in command definitions</li>
 <li>command listing and single-command lookup</li>
 <li>backend command execution</li>
-<li>persisted user-defined commands/macros</li>
+<li>persisted user commands and macros</li>
 <li>user-defined command create/update/delete flows</li>
 <li>command context-aware filtering for palette/context-menu/keybind use cases</li>
 </ul>
@@ -441,16 +441,17 @@ in the order they run (each a <code>commandId</code> and its <code>args</code>) 
 again. It answers null for an id that is not one of the caller&#39;s user commands: a built-in id,
 another user&#39;s command and an unknown one alike. <code>userCommands</code> lists the caller&#39;s user
 commands in the same shape, enabled or not, sorted by id.</p>
-<h2 id="macros">Macros <a class="anchor" href="#macros" aria-label="Link to this section">#</a></h2>
+<h2 id="user-commands-and-macros">User Commands And Macros <a class="anchor" href="#user-commands-and-macros" aria-label="Link to this section">#</a></h2>
 <p>Two things compose commands, and only one of them is a command:</p>
 <ul>
 <li>a <strong>user command</strong> (<code>createUserCommand</code>, id <code>user.&lt;key&gt;</code>) is a command: it is listed with the
-others, so it shows in the palette and a keybind can name it, and its steps run in the context
-it runs in</li>
+others, so it shows in the palette and a keybind can name it; its steps run in order, each
+with its own arguments, in the context the user command runs in</li>
 <li>a <strong>macro</strong> (<code>createMacro</code>, <code>MacroDef</code>) is a list of up to 20 steps, each a command id with its
 own arguments; it is not in the command registry, so the palette does not list it and no
-keybind names it, and it runs through <code>executeMacro</code>. <code>commands</code> on the <code>AI</code> surface and
-<code>commandDiscover</code> offer an <code>ai_callable</code> macro to the agent as <code>macro.&lt;id&gt;</code></li>
+keybind names it. It runs through <code>executeMacro</code> (from Settings or <code>/macro</code> in the client),
+its steps in order, each with its own arguments, in the context of the run. <code>commands</code> on the
+<code>AI</code> surface and <code>commandDiscover</code> offer an <code>ai_callable</code> macro to the agent as <code>macro.&lt;id&gt;</code></li>
 </ul>
 <p>Neither pipes: each step&#39;s payload is collected under its command id in the result, and no step
 receives another step&#39;s result. Only <code>executeCommand</code> with <code>isPipe</code> (the palette&#39;s <code>|</code>) passes
@@ -530,7 +531,7 @@ anyway. Gate order: C1 capability → H1 confirmation → T1 timeout → R1 rate
 <ul>
 <li>command palette forms</li>
 <li>plugin-provided UIs</li>
-<li>macros/user-defined command composition</li>
+<li>the steps of user commands and macros</li>
 <li>API surfaces later</li>
 </ul>
 <h2 id="context-model-for-commands">Context Model For Commands <a class="anchor" href="#context-model-for-commands" aria-label="Link to this section">#</a></h2>
@@ -756,7 +757,7 @@ it later.</li>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/5bae5e7740c1550be76e2a74cd782f6089f63890/docs/command_model.md">rim-server/docs/command_model.md</a> at <code>5bae5e7</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/4f297387f6f03920fa75df3ab6c04e5c035102ec/docs/command_model.md">rim-server/docs/command_model.md</a> at <code>4f29738</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

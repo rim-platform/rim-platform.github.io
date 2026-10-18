@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Capability And Security Model · RIM</title>
-<meta name="description" content="This document defines the capability and security model for RIM.">
+<meta name="description" content="This page records the design direction for capabilities. Its example manifest and capability categories name capabilities the plugin host refuses, such as local.process, local.filesystem, http.outbound, action.invoke …">
 <link rel="icon" href="../favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
@@ -58,6 +58,11 @@
 </details></aside>
     <main id="content" class="prose">
 <h1 id="capability-and-security-model">Capability And Security Model</h1>
+<p>This page records the design direction for capabilities. Its example manifest and capability
+categories name capabilities the plugin host refuses, such as <code>local.process</code>, <code>local.filesystem</code>,
+<code>http.outbound</code>, <code>action.invoke</code> and <code>event.emit</code>. The names a manifest may declare are in
+<a href="../specs/plugin-protocol-v1.html#12-capabilities"><code>specs/plugin-protocol-v1.md</code>, section 12</a> and
+rim-ui&#39;s <a href="client/plugin-manifest.html">plugin manifest reference</a>.</p>
 <p>This document defines the capability and security model for RIM.</p>
 <p>RIM is a chat app on steroids, but plugins, commands, integrations, and local behaviors must not
 turn into a hidden privilege surface. Capabilities are the core language for controlling what
@@ -316,7 +321,7 @@ local behavior</li>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/5bae5e7740c1550be76e2a74cd782f6089f63890/docs/capability_security_model.md">rim-server/docs/capability_security_model.md</a> at <code>5bae5e7</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/4f297387f6f03920fa75df3ab6c04e5c035102ec/docs/capability_security_model.md">rim-server/docs/capability_security_model.md</a> at <code>4f29738</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>
