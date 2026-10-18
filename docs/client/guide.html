@@ -190,7 +190,7 @@ committed to this repository.</p>
 </tbody></table></div>
 <p>The <code>RIM_*</code> variables are read when the Rust side is compiled (<code>npm run tauri build</code>) and again
 at start-up, so a development run can set them in the shell before <code>npm run tauri dev</code>. The
-updater also needs its public key and endpoints in <a href="https://github.com/rim-platform/rim-ui/blob/2cfa451c1bb3e5aef042a31e86788e5fd1a5b6fd/src-tauri/updater.json"><code>src-tauri/updater.json</code></a>, which is committed
+updater also needs its public key and endpoints in <a href="https://github.com/rim-platform/rim-ui/blob/1f86d0926fd918bd6428717bb32284051579aa70/src-tauri/updater.json"><code>src-tauri/updater.json</code></a>, which is committed
 empty; <a href="updater.html"><code>docs/updater.md</code></a> explains the key pair and <code>latest.json</code>.</p>
 <h3 id="history-archive-in-google-drive-dropbox-or-onedrive">History archive in Google Drive, Dropbox or OneDrive <a class="anchor" href="#history-archive-in-google-drive-dropbox-or-onedrive" aria-label="Link to this section">#</a></h3>
 <p>Settings &gt; History can keep the encrypted history archive in the user&#39;s own Google Drive,
@@ -254,7 +254,7 @@ the endpoint, region, bucket, prefix and an access key. Give that key <code>s3:G
 setup check remove its probe), nothing more.</p>
 </li>
 <li><p><strong>Your own server</strong> keeps the archive on a service the user runs: one URL answering <code>GET</code> and
-<code>POST</code>, specified in <a href="../../specs/backup-endpoint-v1.html"><code>docs/specs/backup-endpoint-v1.md</code></a>. <a href="https://github.com/rim-platform/rim-ui/blob/2cfa451c1bb3e5aef042a31e86788e5fd1a5b6fd/docs/specs/backup-endpoint-reference.py"><code>docs/specs/backup-endpoint-reference.py</code></a>
+<code>POST</code>, specified in <a href="../../specs/backup-endpoint-v1.html"><code>docs/specs/backup-endpoint-v1.md</code></a>. <a href="https://github.com/rim-platform/rim-ui/blob/1f86d0926fd918bd6428717bb32284051579aa70/docs/specs/backup-endpoint-reference.py"><code>docs/specs/backup-endpoint-reference.py</code></a>
 is a complete service in one Python file (standard library only) that stores the files under
 a directory:</p>
 <pre><code class="language-sh">python3 docs/specs/backup-endpoint-reference.py --dir ~/rim-backup --bearer &lt;token&gt;</code></pre>
@@ -275,14 +275,14 @@ cargo test --workspace</code></pre>
 <p><code>npm run codegen</code> regenerates the GraphQL types from <code>schema.graphql</code>, which is exported from a
 running server. <code>npm run build:wasm</code> rebuilds the web app&#39;s MLS module after a change to the
 Rust MLS crates, and <code>npm run skew:check</code> lists the operations an older server would refuse
-(<a href="version-skew.html"><code>docs/version-skew.md</code></a>). <a href="https://github.com/rim-platform/rim-ui/blob/2cfa451c1bb3e5aef042a31e86788e5fd1a5b6fd/CLAUDE.md"><code>CLAUDE.md</code></a> has the architecture and the conventions;
-<a href="https://github.com/rim-platform/rim-ui/blob/2cfa451c1bb3e5aef042a31e86788e5fd1a5b6fd/CONTRIBUTING.md"><code>CONTRIBUTING.md</code></a> has the rules for a pull request.</p>
+(<a href="version-skew.html"><code>docs/version-skew.md</code></a>). <a href="https://github.com/rim-platform/rim-ui/blob/1f86d0926fd918bd6428717bb32284051579aa70/CLAUDE.md"><code>CLAUDE.md</code></a> has the architecture and the conventions;
+<a href="https://github.com/rim-platform/rim-ui/blob/1f86d0926fd918bd6428717bb32284051579aa70/CONTRIBUTING.md"><code>CONTRIBUTING.md</code></a> has the rules for a pull request.</p>
 <h2 id="plugins">Plugins <a class="anchor" href="#plugins" aria-label="Link to this section">#</a></h2>
-<p><a href="https://github.com/rim-platform/rim-ui/tree/2cfa451c1bb3e5aef042a31e86788e5fd1a5b6fd/sdk/plugin-sdk"><code>sdk/plugin-sdk</code></a> is the TypeScript SDK for plugin protocol v1, whose frozen wire contract is
-<a href="https://github.com/rim-platform/rim-ui/blob/2cfa451c1bb3e5aef042a31e86788e5fd1a5b6fd/protocol/plugin-protocol-v1.schema.json"><code>protocol/plugin-protocol-v1.schema.json</code></a>. <a href="https://github.com/rim-platform/rim-ui/tree/2cfa451c1bb3e5aef042a31e86788e5fd1a5b6fd/plugins"><code>plugins/</code></a> holds examples:</p>
+<p><a href="https://github.com/rim-platform/rim-ui/tree/1f86d0926fd918bd6428717bb32284051579aa70/sdk/plugin-sdk"><code>sdk/plugin-sdk</code></a> is the TypeScript SDK for plugin protocol v1, whose frozen wire contract is
+<a href="https://github.com/rim-platform/rim-ui/blob/1f86d0926fd918bd6428717bb32284051579aa70/protocol/plugin-protocol-v1.schema.json"><code>protocol/plugin-protocol-v1.schema.json</code></a>. <a href="https://github.com/rim-platform/rim-ui/tree/1f86d0926fd918bd6428717bb32284051579aa70/plugins"><code>plugins/</code></a> holds examples:</p>
 <ul>
-<li><a href="https://github.com/rim-platform/rim-ui/tree/2cfa451c1bb3e5aef042a31e86788e5fd1a5b6fd/plugins/hello-world"><code>plugins/hello-world</code></a>: the reference local process plugin, in Python with no dependencies.</li>
-<li><a href="https://github.com/rim-platform/rim-ui/tree/2cfa451c1bb3e5aef042a31e86788e5fd1a5b6fd/plugins/template-ts"><code>plugins/template-ts</code></a>: a starting point for a TypeScript plugin.</li>
+<li><a href="https://github.com/rim-platform/rim-ui/tree/1f86d0926fd918bd6428717bb32284051579aa70/plugins/hello-world"><code>plugins/hello-world</code></a>: the reference local process plugin, in Python with no dependencies.</li>
+<li><a href="https://github.com/rim-platform/rim-ui/tree/1f86d0926fd918bd6428717bb32284051579aa70/plugins/template-ts"><code>plugins/template-ts</code></a>: a starting point for a TypeScript plugin.</li>
 </ul>
 <p>Two plugins the project publishes live in repositories of their own, each with the built
 plugin at its root so the desktop installs it from its git URL:</p>
@@ -293,19 +293,19 @@ namespace&#39;s pods and restarts one after confirmation.</li>
 listing the open pull requests of public GitHub repositories.</li>
 </ul>
 <h2 id="documentation">Documentation <a class="anchor" href="#documentation" aria-label="Link to this section">#</a></h2>
-<p><a href="https://github.com/rim-platform/rim-ui/blob/2cfa451c1bb3e5aef042a31e86788e5fd1a5b6fd/docs/README.md"><code>docs/README.md</code></a> lists every document in <a href="https://github.com/rim-platform/rim-ui/tree/2cfa451c1bb3e5aef042a31e86788e5fd1a5b6fd/docs"><code>docs/</code></a>. The product contracts the client implements,
+<p><a href="https://github.com/rim-platform/rim-ui/blob/1f86d0926fd918bd6428717bb32284051579aa70/docs/README.md"><code>docs/README.md</code></a> lists every document in <a href="https://github.com/rim-platform/rim-ui/tree/1f86d0926fd918bd6428717bb32284051579aa70/docs"><code>docs/</code></a>. The product contracts the client implements,
 such as the command, keybind, context, plugin and capability models and the specifications for
-key identity, device linking, encryption and server-to-server, are in <code>rim-server</code>&#39;s <a href="https://github.com/rim-platform/rim-ui/tree/2cfa451c1bb3e5aef042a31e86788e5fd1a5b6fd/docs"><code>docs/</code></a>.</p>
+key identity, device linking, encryption and server-to-server, are in <code>rim-server</code>&#39;s <a href="https://github.com/rim-platform/rim-ui/tree/1f86d0926fd918bd6428717bb32284051579aa70/docs"><code>docs/</code></a>.</p>
 <h2 id="security">Security <a class="anchor" href="#security" aria-label="Link to this section">#</a></h2>
-<p>Report a vulnerability privately, as <a href="https://github.com/rim-platform/rim-ui/blob/2cfa451c1bb3e5aef042a31e86788e5fd1a5b6fd/SECURITY.md"><code>SECURITY.md</code></a> describes, never in a public issue.</p>
+<p>Report a vulnerability privately, as <a href="https://github.com/rim-platform/rim-ui/blob/1f86d0926fd918bd6428717bb32284051579aa70/SECURITY.md"><code>SECURITY.md</code></a> describes, never in a public issue.</p>
 <h2 id="license">License <a class="anchor" href="#license" aria-label="Link to this section">#</a></h2>
 <p>Apache License 2.0, see <code>LICENSE</code> and <code>NOTICE</code>. The license does not cover the RIM name, so
-forks should use a different name. To contribute, see <a href="https://github.com/rim-platform/rim-ui/blob/2cfa451c1bb3e5aef042a31e86788e5fd1a5b6fd/CONTRIBUTING.md"><code>CONTRIBUTING.md</code></a>.</p>
+forks should use a different name. To contribute, see <a href="https://github.com/rim-platform/rim-ui/blob/1f86d0926fd918bd6428717bb32284051579aa70/CONTRIBUTING.md"><code>CONTRIBUTING.md</code></a>.</p>
 
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/2cfa451c1bb3e5aef042a31e86788e5fd1a5b6fd/README.md">rim-ui/README.md</a> at <code>2cfa451</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/1f86d0926fd918bd6428717bb32284051579aa70/README.md">rim-ui/README.md</a> at <code>1f86d09</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

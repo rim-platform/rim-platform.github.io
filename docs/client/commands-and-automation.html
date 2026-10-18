@@ -67,10 +67,12 @@ for your account.</li>
 <p><strong>Arguments and context.</strong> A command takes typed arguments, such as a conversation, a user or a
 piece of text. Context is where you are when it runs: the open workspace, the open conversation,
 a selected message. A command whose workspace or conversation argument is empty takes it from the
-context. The palette, keybinds and the composer&#39;s <code>/</code> list send the open workspace; a message&#39;s
-context menu adds the conversation and the message, and the AI agent the open conversation. A
-server command that needs a conversation therefore runs from a context menu, from the agent, or
-with the conversation&#39;s id in its arguments. A plugin command that needs a conversation gets the
+context; one given in its arguments, such as a keybind&#39;s preset arguments, wins. The palette,
+keybinds, the composer&#39;s <code>/</code> list and the AI agent send the open workspace, the open conversation
+and the thread open beside it; a message&#39;s context menu sends the message&#39;s conversation, its
+thread and the message instead. A server command that needs a conversation, such as marking it
+read or setting its notification level, therefore acts on the open one, and with none open it
+needs the conversation&#39;s id in its arguments. A plugin command that needs a conversation gets the
 open one; with none open, the palette leaves it out and its keybind says &quot;Open a conversation
 first&quot;.</p>
 <p><strong>Sensitivity.</strong> Every command has one of four tiers, and the server decides from it whether a
@@ -401,7 +403,7 @@ sensitivity, confirmations, macros and what the agent may call.</li>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/2cfa451c1bb3e5aef042a31e86788e5fd1a5b6fd/docs/commands-and-automation.md">rim-ui/docs/commands-and-automation.md</a> at <code>2cfa451</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/1f86d0926fd918bd6428717bb32284051579aa70/docs/commands-and-automation.md">rim-ui/docs/commands-and-automation.md</a> at <code>1f86d09</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>
