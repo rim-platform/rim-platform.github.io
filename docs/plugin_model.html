@@ -23,6 +23,7 @@
       <a href="../index.html#how">How it works</a>
       <a href="self-hosting.html">Self-host</a>
       <a href="../configure/index.html">Configure</a>
+      <a href="../plugins/index.html">Plugins</a>
       <a href="index.html" aria-current="page">Docs</a>
       <a href="../api/index.html">API</a>
       <a href="../specs/index.html">Specs</a>
@@ -71,7 +72,7 @@ it links to, and when this page and a spec disagree, the spec wins.</p>
 <td>What a plugin may read and write in encrypted conversations</td>
 </tr>
 </tbody></table></div>
-<p><a href="https://github.com/rim-platform/rim-server/blob/ef76e29d29862825129ccc6a6f6d7b081a6398b0/docs/local_plugin_host.md"><code>local_plugin_host.md</code></a> describes how the desktop app installs, starts and hosts local-process
+<p><a href="local_plugin_host.html"><code>local_plugin_host.md</code></a> describes how the desktop app installs, starts and hosts local-process
 plugins.</p>
 <h2 id="what-a-plugin-is">What a plugin is <a class="anchor" href="#what-a-plugin-is" aria-label="Link to this section">#</a></h2>
 <p>A plugin is an extension of the client application, in the spirit of VS Code or Obsidian
@@ -155,7 +156,7 @@ never see keys, MLS state or ciphertext.</p>
 <ul>
 <li>Panel slots beyond what the manifest&#39;s <code>slot</code> names today, a plugin UI component kit, and a
 frozen panel bridge: the bridge between a panel and the host is not part of protocol v1, and
-<a href="https://github.com/rim-platform/rim-server/blob/ef76e29d29862825129ccc6a6f6d7b081a6398b0/docs/local_plugin_host.md"><code>local_plugin_host.md</code></a> lists which of its messages work.</li>
+<a href="local_plugin_host.html"><code>local_plugin_host.md</code></a> lists which of its messages work.</li>
 <li>Event subscriptions (<code>rim.events.subscribe</code>) and automations triggered by events.</li>
 <li>Lazy start on first use and an idle stop for local-process plugins.</li>
 <li>Enforcing required registry plugins, and per-workspace limits on what capabilities a plugin
