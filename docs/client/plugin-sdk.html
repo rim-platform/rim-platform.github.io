@@ -54,11 +54,11 @@
 app starts and talks to over stdio (<code>DesktopLocalProcess</code>), or a bundle that runs in a
 sandboxed frame of the app, on the desktop and on the web, and talks over a
 <code>MessagePort</code> (<code>WebSandboxed</code>). The SDK speaks
-<a href="https://github.com/rim-platform/rim-ui/blob/0a6d67f3ee309666679091c8ac119347a5fa0a7d/protocol/plugin-protocol-v1.schema.json">plugin protocol v1</a> for you over either
+<a href="https://github.com/rim-platform/rim-ui/blob/2cfa451c1bb3e5aef042a31e86788e5fd1a5b6fd/protocol/plugin-protocol-v1.schema.json">plugin protocol v1</a> for you over either
 transport: the handshake and version negotiation, heartbeats, the dangerous-command
 gate, errors and shutdown.</p>
 <p>The SDK is developed in rim-ui and published to npm from rim-ui&#39;s releases; it keeps a
-version of its own. Start from <a href="https://github.com/rim-platform/rim-ui/tree/0a6d67f3ee309666679091c8ac119347a5fa0a7d/plugins/template-ts"><code>plugins/template-ts</code></a>, which
+version of its own. Start from <a href="https://github.com/rim-platform/rim-ui/tree/2cfa451c1bb3e5aef042a31e86788e5fd1a5b6fd/plugins/template-ts"><code>plugins/template-ts</code></a>, which
 uses it.</p>
 <h2 id="install">Install <a class="anchor" href="#install" aria-label="Link to this section">#</a></h2>
 <pre><code class="language-sh">npm install --save-dev @rim-platform/plugin-sdk esbuild</code></pre>
@@ -294,6 +294,10 @@ your <code>node_modules</code>, so bundle it into one file first:</p>
 <pre><code class="language-sh">npx rim-plugin-bundle .                               # in the plugin's folder
 npm run plugin:bundle -- plugins/template-ts          # or, in rim-ui
 cp -r plugins/template-ts/dist/dev.example.template-ts ~/.rim/plugins/</code></pre>
+<p>A folder that already holds its build, a manifest whose <code>entrypoint</code> is <code>main.mjs</code> with that
+<code>main.mjs</code> beside it, is bundled as it is: the bundler copies <code>main.mjs</code> without building it
+again and prints <code>using the built main.mjs as it is</code>. <code>--entry &lt;file&gt;</code> builds from that source
+instead.</p>
 <p>The output folder is emptied first, so the bundler refuses a folder that holds the
 plugin or has other files in it. The bundle directory holds <code>rim-plugin.json</code> (with
 <code>entrypoint</code> set to <code>main.mjs</code>), <code>main.mjs</code> with the SDK inside, and the plugin&#39;s
@@ -330,20 +334,21 @@ two such repositories, with CI that runs <code>--check</code> and a release work
 <code>.rimbundle</code>.</p>
 <p>The build names no absolute path and no time, so the same sources and the same SDK
 version give the same bytes on every machine; commit the lockfile so CI builds with the
-SDK the committed <code>main.mjs</code> was built with. A release is a tag; its <code>.rimbundle</code>
-(<code>npx rim-plugin-bundle --entry src/main.ts .</code>, whose <code>main.mjs</code> is the committed one
-byte for byte) can go on the release for <strong>Install from link</strong>.</p>
+SDK the committed <code>main.mjs</code> was built with. A release is a tag; its <code>.rimbundle</code> can go on
+the release for <strong>Install from link</strong>. <code>npx rim-plugin-bundle .</code> packages the committed
+<code>main.mjs</code> as it is; once <code>--check</code> passes, that is byte for byte the bundle
+<code>npx rim-plugin-bundle --entry src/main.ts .</code> builds from the sources.</p>
 <p>For a WebSandboxed plugin the desktop takes <code>rim-plugin.json</code>, the entrypoint and
-<code>panels/</code> from the checkout and ignores the rest: the sources, <a href="https://github.com/rim-platform/rim-ui/blob/0a6d67f3ee309666679091c8ac119347a5fa0a7d/sdk/plugin-sdk/package.json"><code>package.json</code></a> and the
+<code>panels/</code> from the checkout and ignores the rest: the sources, <a href="https://github.com/rim-platform/rim-ui/blob/2cfa451c1bb3e5aef042a31e86788e5fd1a5b6fd/sdk/plugin-sdk/package.json"><code>package.json</code></a> and the
 README stay in the checkout and never reach the plugin&#39;s frame. Those three parts follow
 the bundle rules (names starting with <code>.</code> are skipped, and any other name under <code>panels/</code>
 must be a bundle path), and signing an installed web plugin gives the same bundle hash as
-its <code>.rimbundle</code>. A local-process plugin&#39;s <a href="https://github.com/rim-platform/rim-ui/blob/0a6d67f3ee309666679091c8ac119347a5fa0a7d/sdk/plugin-sdk/package.json"><code>package.json</code></a> asks for <code>npm install</code> only when
+its <code>.rimbundle</code>. A local-process plugin&#39;s <a href="https://github.com/rim-platform/rim-ui/blob/2cfa451c1bb3e5aef042a31e86788e5fd1a5b6fd/sdk/plugin-sdk/package.json"><code>package.json</code></a> asks for <code>npm install</code> only when
 it lists <code>dependencies</code>, <code>optionalDependencies</code> or <code>peerDependencies</code>; a committed,
 self-contained <code>main.mjs</code> with only <code>devDependencies</code> installs without that step.</p>
 <h2 id="working-on-the-sdk">Working on the SDK <a class="anchor" href="#working-on-the-sdk" aria-label="Link to this section">#</a></h2>
 <ul>
-<li><a href="https://github.com/rim-platform/rim-ui/blob/0a6d67f3ee309666679091c8ac119347a5fa0a7d/sdk/plugin-sdk/src/generated/protocol.ts"><code>src/generated/protocol.ts</code></a> is generated from the schema: run <code>npm run sdk:generate</code>
+<li><a href="https://github.com/rim-platform/rim-ui/blob/2cfa451c1bb3e5aef042a31e86788e5fd1a5b6fd/sdk/plugin-sdk/src/generated/protocol.ts"><code>src/generated/protocol.ts</code></a> is generated from the schema: run <code>npm run sdk:generate</code>
 after the schema changes. A test fails while it is stale.</li>
 <li><code>npm run sdk:build</code> builds the package into <code>dist/</code>: the JavaScript, the type
 declarations and the bundler. The plugins in rim-ui import <code>@rim-platform/plugin-sdk</code>
@@ -358,15 +363,15 @@ the copy there. <a href="release-sdk.html"><code>docs/release-sdk.md</code></a> 
 <li><code>npm test</code> runs the SDK tests, including the template over real stdio, both from
 source and bundled, and over a <code>MessageChannel</code>. The app&#39;s web host runs the
 template&#39;s browser build over a port in its own conformance test
-(<a href="https://github.com/rim-platform/rim-ui/blob/0a6d67f3ee309666679091c8ac119347a5fa0a7d/src/features/plugins/web/conformance.test.ts"><code>src/features/plugins/web/conformance.test.ts</code></a>). The Rust conformance tests
-(<a href="https://github.com/rim-platform/rim-ui/blob/0a6d67f3ee309666679091c8ac119347a5fa0a7d/src-tauri/src/plugin_host/protocol/conformance.rs"><code>src-tauri/src/plugin_host/protocol/conformance.rs</code></a>) run the template against the
+(<a href="https://github.com/rim-platform/rim-ui/blob/2cfa451c1bb3e5aef042a31e86788e5fd1a5b6fd/src/features/plugins/web/conformance.test.ts"><code>src/features/plugins/web/conformance.test.ts</code></a>). The Rust conformance tests
+(<a href="https://github.com/rim-platform/rim-ui/blob/2cfa451c1bb3e5aef042a31e86788e5fd1a5b6fd/src-tauri/src/plugin_host/protocol/conformance.rs"><code>src-tauri/src/plugin_host/protocol/conformance.rs</code></a>) run the template against the
 schema and through the host&#39;s own start-up and command path.</li>
 </ul>
 
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/0a6d67f3ee309666679091c8ac119347a5fa0a7d/sdk/plugin-sdk/README.md">rim-ui/sdk/plugin-sdk/README.md</a> at <code>0a6d67f</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/2cfa451c1bb3e5aef042a31e86788e5fd1a5b6fd/sdk/plugin-sdk/README.md">rim-ui/sdk/plugin-sdk/README.md</a> at <code>2cfa451</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

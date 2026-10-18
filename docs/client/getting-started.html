@@ -103,7 +103,9 @@ which adds and removes devices, and its device key, which signs in. The desktop 
 its secret vault, an encrypted file whose key is in the operating system&#39;s credential store
 (<a href="install.html#where-the-app-keeps-its-data">Where the app keeps its data</a>). A browser keeps them
 in this site&#39;s IndexedDB storage, as keys that cannot be exported: clearing the site&#39;s data
-deletes them, and a private window may not keep them.</p>
+deletes them, and a private window may not keep them. The encrypted messages a browser reads stay
+in that browser too, as <strong>Set up encryption for this account</strong> and Settings &gt; Security say there;
+the desktop app&#39;s history archive keeps a copy that lasts.</p>
 <p><strong>Password accounts.</strong> Servers take key signups only unless their operator allows passwords. On one
 that does, <strong>Create account with a password</strong> under the key form asks for a username, an email, a
 password of at least 8 characters and an optional display name, under the same <strong>Invite code</strong>
@@ -308,7 +310,7 @@ default workspace for new accounts.</li>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/0a6d67f3ee309666679091c8ac119347a5fa0a7d/docs/getting-started.md">rim-ui/docs/getting-started.md</a> at <code>0a6d67f</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/2cfa451c1bb3e5aef042a31e86788e5fd1a5b6fd/docs/getting-started.md">rim-ui/docs/getting-started.md</a> at <code>2cfa451</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

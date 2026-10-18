@@ -51,13 +51,13 @@
 </details></aside>
     <main id="content" class="prose">
 <h1 id="key-identity-v1">Key identity v1</h1>
-<p class="status"><span><b>Key identity v1</b></span><span>version 1</span><span>status: implemented, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/545874392ca2416d2c6c2307c985afec20c888ea/docs/specs/key-identity-v1.md">rim-server/docs/specs/key-identity-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/545874392ca2416d2c6c2307c985afec20c888ea">5458743</a></span></p>
-<p><em>Status: implemented, normative. Follows <a href="https://github.com/rim-platform/rim-server/blob/545874392ca2416d2c6c2307c985afec20c888ea/docs/decisions/decentralization-2026-10-08.md"><code>docs/decisions/decentralization-2026-10-08.md</code></a>:
+<p class="status"><span><b>Key identity v1</b></span><span>version 1</span><span>status: implemented, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/857db508230ad602aebbe8cb1ae1268ccd93bf80/docs/specs/key-identity-v1.md">rim-server/docs/specs/key-identity-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/857db508230ad602aebbe8cb1ae1268ccd93bf80">857db50</a></span></p>
+<p><em>Status: implemented, normative. Follows <a href="https://github.com/rim-platform/rim-server/blob/857db508230ad602aebbe8cb1ae1268ccd93bf80/docs/decisions/decentralization-2026-10-08.md"><code>docs/decisions/decentralization-2026-10-08.md</code></a>:
 a user is a key pair, the user id is stable with a signed key log, and servers are
 interchangeable relays. The web app may create and hold an identity, not only be a linked
 device (amended 2026-10-15, keys by default). This document is the contract between the
 server (<code>rim_identity</code>, <code>KeyAuthService</code>) and every client that signs statements.</em></p>
-<p><em>Algorithm agility (<a href="https://github.com/rim-platform/rim-server/blob/545874392ca2416d2c6c2307c985afec20c888ea/docs/decisions/post-quantum-hybrid-2026-10-09.md"><code>docs/decisions/post-quantum-hybrid-2026-10-09.md</code></a>): statement format
+<p><em>Algorithm agility (<a href="https://github.com/rim-platform/rim-server/blob/857db508230ad602aebbe8cb1ae1268ccd93bf80/docs/decisions/post-quantum-hybrid-2026-10-09.md"><code>docs/decisions/post-quantum-hybrid-2026-10-09.md</code></a>): statement format
 version 2 tags every key and signature with its algorithm, payload caps fit
 hybrid post-quantum keys, and the server indexes device keys by a hash. Version 1 statements
 stay valid. See &quot;Algorithms and statement versions&quot;.</em></p>
@@ -276,7 +276,7 @@ or by the revoked device&#39;s own key) and remember a device seen revoked, so a
 omits the revocation changes nothing on that client.</p>
 <h3 id="profile-card">Profile card <a class="anchor" href="#profile-card" aria-label="Link to this section">#</a></h3>
 <pre><code class="language-json">{&quot;v&quot;:2,&quot;type&quot;:&quot;profile-card&quot;,&quot;principalId&quot;:&quot;rimp1_…&quot;,&quot;version&quot;:3,&quot;keySeq&quot;:0,&quot;displayName&quot;:&quot;Ada&quot;,
- &quot;relays&quot;:[&quot;https://relay.rim.chat&quot;],&quot;devices&quot;:[{&quot;deviceId&quot;:&quot;&lt;uuid&gt;&quot;,&quot;deviceKey&quot;:&quot;ed25519:…&quot;}],&quot;issuedAt&quot;:&quot;…&quot;}</code></pre>
+ &quot;relays&quot;:[&quot;https://relay.example.org&quot;],&quot;devices&quot;:[{&quot;deviceId&quot;:&quot;&lt;uuid&gt;&quot;,&quot;deviceKey&quot;:&quot;ed25519:…&quot;}],&quot;issuedAt&quot;:&quot;…&quot;}</code></pre>
 <p>What a person publishes about themselves, portable between servers. Signed by the current
 identity key at the current <code>keySeq</code>. <code>version</code> is 1 to 2³¹−1 and a server stores a card only if
 its version is greater than the stored one. <code>displayName</code> 1 to 80 characters; at most 8 unique
@@ -707,7 +707,7 @@ identity stays in the browser that created it and is recovered only with its rec
 (<a href="server-to-server-v1.html"><code>server-to-server-v1.md</code></a>).</li>
 </ul>
 <h2 id="appendix-a-known-answer-vectors-version-1">Appendix A: known-answer vectors (version 1) <a class="anchor" href="#appendix-a-known-answer-vectors-version-1" aria-label="Link to this section">#</a></h2>
-<p>Checked by <a href="https://github.com/rim-platform/rim-server/blob/545874392ca2416d2c6c2307c985afec20c888ea/rim_identity/src/vectors.rs"><code>rim_identity/src/vectors.rs</code></a>. Keys are <code>SigningKey::from_bytes([seed; 32])</code>; never
+<p>Checked by <a href="https://github.com/rim-platform/rim-server/blob/857db508230ad602aebbe8cb1ae1268ccd93bf80/rim_identity/src/vectors.rs"><code>rim_identity/src/vectors.rs</code></a>. Keys are <code>SigningKey::from_bytes([seed; 32])</code>; never
 use these seeds for real keys.</p>
 <div class="tablewrap"><table>
 <thead>
@@ -748,7 +748,7 @@ tt6UNl3tRCwupWIYEfnWzqW9qVqDsJju2dA7d2CdNqdIZ0piVeP_Q6Y1lLfA4YN-26tsdaFea-rM_I8Q
 <pre><code>{&quot;v&quot;:1,&quot;type&quot;:&quot;login&quot;,&quot;challengeId&quot;:&quot;00000000-0000-0000-0000-000000000009&quot;,&quot;nonce&quot;:&quot;bm9uY2U&quot;,&quot;audience&quot;:&quot;localhost:8080&quot;,&quot;principalId&quot;:&quot;rimp1_nz1POml8JmCMcFDECrtu60ibohPKnywhcExmOPMvTUo&quot;,&quot;deviceId&quot;:&quot;00000000-0000-0000-0000-000000000001&quot;}
 jB_BFFAn7e-FMh8wCSWhnCcPzMjoe1fTKwlCoGfE0p1OYkhZWjV4J1c_AgeIhKpWOnLYyB0PqstAEYmaCITXBw</code></pre>
 <h2 id="appendix-b-known-answer-vectors-version-2">Appendix B: known-answer vectors (version 2) <a class="anchor" href="#appendix-b-known-answer-vectors-version-2" aria-label="Link to this section">#</a></h2>
-<p>Checked by <a href="https://github.com/rim-platform/rim-server/blob/545874392ca2416d2c6c2307c985afec20c888ea/rim_identity/src/vectors.rs"><code>rim_identity/src/vectors.rs</code></a>. Same keys and fields as appendix A, written as
+<p>Checked by <a href="https://github.com/rim-platform/rim-server/blob/857db508230ad602aebbe8cb1ae1268ccd93bf80/rim_identity/src/vectors.rs"><code>rim_identity/src/vectors.rs</code></a>. Same keys and fields as appendix A, written as
 version 2 statements. The principal id differs from appendix A because the inception payload
 differs.</p>
 <div class="tablewrap"><table>
@@ -789,7 +789,7 @@ ed25519:D2moo9U9OjVL9zed4lM0A5cHoGQOVEtUfgKfAmOn0P18x74NEbh4FL4f3PbulQzoVuGAGOEJ
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/545874392ca2416d2c6c2307c985afec20c888ea/docs/specs/key-identity-v1.md">rim-server/docs/specs/key-identity-v1.md</a> at <code>5458743</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/857db508230ad602aebbe8cb1ae1268ccd93bf80/docs/specs/key-identity-v1.md">rim-server/docs/specs/key-identity-v1.md</a> at <code>857db50</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>
