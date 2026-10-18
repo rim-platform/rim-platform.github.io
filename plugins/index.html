@@ -233,6 +233,27 @@ permissions and data, then install the new folder.</li>
 </ul>
 <h2 id="using-a-plugin">Using a plugin <a class="anchor" href="#using-a-plugin" aria-label="Link to this section">#</a></h2>
 <ul>
+<li><strong>Reading what it is.</strong> A plugin&#39;s row in Settings → Plugins shows the first two lines of its
+description. <strong>View details</strong> opens a dialog named after the plugin with the whole
+description under &quot;From the plugin author:&quot;, shown as the author wrote it, as plain text
+with no formatting or links; its id, version, author, kind, source (the git repository, the
+link with its SHA-256, the workspace registry, or a folder) and signature; each permission
+it asks for, marked Granted or Not granted; the sites <code>network.fetch</code> may reach; and its
+commands with their descriptions, a dangerous one marked Dangerous.</li>
+<li><strong>Settings.</strong> A plugin that declares settings has <strong>Settings</strong> on its row in Settings →
+Plugins, and while it is on, a row named after it with &quot;Settings&quot; in the side rail&#39;s
+<strong>Plugins</strong> menu. Both open <strong>&lt;plugin&gt; settings</strong>, a form with a field per setting: a text
+field, a number field, a switch or a list, each with its description under it. <strong>Save</strong>
+checks every changed field and names the one that is wrong, <strong>Cancel</strong> closes without saving,
+and <strong>Reset to defaults</strong> clears every saved value, secret ones included, after asking. A
+secret field says only &quot;Configured&quot; once saved, with <strong>Replace</strong> and <strong>Clear</strong>; the value is
+never shown again. In the web app a secret field says it is only available in the desktop
+app. Values are kept for your account on this device and never synced; emptying a field
+clears its saved value, so the plugin falls back to the setting&#39;s default. A running plugin
+gets the new values as soon as you save or reset them, and the values of whoever signs in
+next. It receives a secret setting&#39;s value too, in plain form, as it needs it to use the
+token; other plugins never do. A plugin&#39;s panel can open this form, for example from a
+&quot;Configure&quot; button, but never sees the values.</li>
 <li><strong>Turning it on.</strong> The switch on the plugin&#39;s row in Settings → Plugins starts it, and the row
 shows Running, Stopped, Crashed or Timed out. On the desktop a plugin left on starts again
 with the app. On the web, plugins are turned on per account in that browser: signing out
@@ -358,10 +379,11 @@ its permissions and data stay.</li>
 closed while starting it, is not started again, and Settings says so. Turning it off and on
 retries.</li>
 <li><strong>Uninstall</strong> with the bin icon on the row, then <strong>Uninstall</strong> in <strong>Uninstall &lt;name&gt;?</strong>. On
-the desktop the plugin is removed from this device with the permissions granted to it and the
-data it stored, and its folder leaves the plugins folder and is deleted. A folder the app did
-not install itself stays where it is. In the web app the plugin is removed from that browser
-for your account, with its permissions, data and files. To use it again, install it again.</li>
+the desktop the plugin is removed from this device with the permissions granted to it, the
+data it stored and its settings for every account, secret ones included, and its folder
+leaves the plugins folder and is deleted. A folder the app did not install itself stays where
+it is. In the web app the plugin is removed from that browser for your account, with its
+permissions, data, settings and files. To use it again, install it again.</li>
 </ul>
 <p>Where plugins live:</p>
 <div class="tablewrap"><table>
@@ -387,13 +409,18 @@ for your account, with its permissions, data and files. To use it again, install
 <td><code>plugin_storage/&lt;plugin_id&gt;/</code> in the app data folder</td>
 <td>The same database</td>
 </tr>
+<tr>
+<td>Settings</td>
+<td><code>plugin_settings/&lt;plugin_id&gt;/</code> in the app data folder; secret ones in the <a href="../docs/client/secret-vault.html">secret vault</a></td>
+<td>The same database; no secret settings</td>
+</tr>
 </tbody></table></div>
 <p><a href="../docs/client/install.html">Install</a> lists the app data folder of each operating system.</p>
 
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/00edda757d716d65f92267027502899a9adc260e/docs/plugins.md">rim-ui/docs/plugins.md</a> at <code>00edda7</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/f2cb7940bbdb26afbb51e6abf06c5a22ebf72f8c/docs/plugins.md">rim-ui/docs/plugins.md</a> at <code>f2cb794</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

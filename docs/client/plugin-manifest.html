@@ -51,8 +51,8 @@
 <h1 id="the-plugin-manifest">The plugin manifest</h1>
 <p>Every plugin carries <code>rim-plugin.json</code> at the root of its folder or bundle. This page lists each
 field the desktop parser accepts, in the order of <code>PluginManifest</code> in <code>manifest.rs</code>, with the
-install rules of <code>validation.rs</code>, both in <a href="https://github.com/rim-platform/rim-ui/tree/00edda757d716d65f92267027502899a9adc260e/src-tauri/src/plugin_host"><code>src-tauri/src/plugin_host/</code></a>. The web app installs by
-their port in the SDK, <code>manifestRules.ts</code>; both pass <a href="https://github.com/rim-platform/rim-ui/blob/00edda757d716d65f92267027502899a9adc260e/protocol/manifest-vectors.json"><code>protocol/manifest-vectors.json</code></a>, and a
+install rules of <code>validation.rs</code>, both in <a href="https://github.com/rim-platform/rim-ui/tree/f2cb7940bbdb26afbb51e6abf06c5a22ebf72f8c/src-tauri/src/plugin_host"><code>src-tauri/src/plugin_host/</code></a>. The web app installs by
+their port in the SDK, <code>manifestRules.ts</code>; both pass <a href="https://github.com/rim-platform/rim-ui/blob/f2cb7940bbdb26afbb51e6abf06c5a22ebf72f8c/protocol/manifest-vectors.json"><code>protocol/manifest-vectors.json</code></a>, and a
 plugin&#39;s tests run them with <code>validateManifest</code> (<a href="plugin-sdk.html">the SDK</a>).</p>
 <h2 id="reading-and-checking">Reading and checking <a class="anchor" href="#reading-and-checking" aria-label="Link to this section">#</a></h2>
 <ul>
@@ -224,19 +224,124 @@ the tool panel, next to the conversation; <code>&quot;main_area&quot;</code> tak
 conversation. Panels show while a conversation is the main surface. Other values fail to parse.</li>
 </ul>
 <h2 id="settings_schema"><code>settings_schema</code> <a class="anchor" href="#settings_schema" aria-label="Link to this section">#</a></h2>
-<p>A list, default <code>[]</code>, of <code>{ key, title, description, value_type, is_secret }</code>: <code>key</code>, <code>title</code> and
-<code>value_type</code> are required strings, <code>description</code> defaults to <code>&quot;&quot;</code>, <code>is_secret</code> to <code>false</code>. Nothing
-reads it yet: no settings page is built from it, and the panel bridge only logs <code>rim.settings.*</code>.</p>
+<p>A list, default <code>[]</code>, with one entry per setting the user fills in. A plugin with at least one
+gets a <strong>Settings</strong> button on its row in Settings → Plugins, which opens a form built from the
+list (<a href="../../plugins/index.html#using-a-plugin">Using a plugin</a>). An entry that breaks a rule below fails
+install with <code>INVALID_SETTINGS_SCHEMA</code>, <code>invalid settings_schema[&lt;index&gt;] \</code>&lt;key&gt;`: &lt;reason&gt;`.</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Rule</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>key</code></td>
+<td>string, required</td>
+<td>1 to 128 characters of <code>A-Z a-z 0-9 . _ -</code>, unique in the manifest: the setting&#39;s name in the values the plugin reads</td>
+</tr>
+<tr>
+<td><code>title</code></td>
+<td>string, required</td>
+<td>Not empty: the field&#39;s label</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>string, default <code>&quot;&quot;</code></td>
+<td>The help line under the field</td>
+</tr>
+<tr>
+<td><code>value_type</code></td>
+<td>string, required</td>
+<td><code>string</code>, <code>boolean</code>, <code>integer</code>, <code>path</code> or <code>enum</code></td>
+</tr>
+<tr>
+<td><code>is_secret</code></td>
+<td>boolean, default <code>false</code></td>
+<td>Only with <code>string</code>. The value goes in the desktop&#39;s <a href="secret-vault.html">secret vault</a> and is never shown again once saved</td>
+</tr>
+<tr>
+<td><code>default</code></td>
+<td>optional</td>
+<td>The value the plugin gets while the user has saved none: of the setting&#39;s type, within <code>min</code> and <code>max</code>, one of <code>options</code>. Not with <code>is_secret</code></td>
+</tr>
+<tr>
+<td><code>min</code>, <code>max</code></td>
+<td>integer, optional</td>
+<td><code>integer</code> only: inclusive bounds, <code>min</code> at most <code>max</code></td>
+</tr>
+<tr>
+<td><code>options</code></td>
+<td>list of strings, optional</td>
+<td>Required for <code>enum</code> and allowed only there: at least one, no duplicates</td>
+</tr>
+<tr>
+<td><code>placeholder</code></td>
+<td>string, optional</td>
+<td><code>string</code>, <code>path</code> and <code>integer</code> only: the hint an empty field shows</td>
+</tr>
+</tbody></table></div>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th><code>value_type</code></th>
+<th>The value</th>
+<th>The form shows</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>string</code></td>
+<td>A JSON string</td>
+<td>A text field; a masked one with <strong>Replace</strong> and <strong>Clear</strong> when <code>is_secret</code></td>
+</tr>
+<tr>
+<td><code>path</code></td>
+<td>A JSON string</td>
+<td>A text field for a path on the device, which the host neither opens nor checks</td>
+</tr>
+<tr>
+<td><code>integer</code></td>
+<td>A JSON integer from -(2^53 - 1) to 2^53 - 1, within <code>min</code> and <code>max</code>; the same bound holds for <code>min</code>, <code>max</code> and <code>default</code></td>
+<td>A number field</td>
+</tr>
+<tr>
+<td><code>boolean</code></td>
+<td><code>true</code> or <code>false</code></td>
+<td>A switch</td>
+</tr>
+<tr>
+<td><code>enum</code></td>
+<td>One of <code>options</code></td>
+<td>A list to pick from, with &quot;Not set&quot;</td>
+</tr>
+</tbody></table></div>
+<p>The values are kept on the device per plugin, signed-in account and device, never synced and
+deleted on uninstall; the web app keeps no secret settings and its form says they are only
+available in the desktop app. A save is checked against the schema and refused with the field
+that is wrong. An update that changes the schema leaves saved values as they are, so a plugin
+checks each value it uses and ignores keys it does not know. The plugin reads the values with
+<code>rim.settings.get</code> and hears every change in <code>rim.settings.changed</code>; with the SDK, that is
+<code>host.settings.get()</code> and <code>onSettingsChanged</code> (<a href="plugin-sdk.html">the SDK&#39;s README</a>).</p>
+<pre><code class="language-json">&quot;settings_schema&quot;: [
+  { &quot;key&quot;: &quot;context&quot;, &quot;title&quot;: &quot;Kubernetes context&quot;, &quot;description&quot;: &quot;The kubectl context to use. Empty for the current one.&quot;, &quot;value_type&quot;: &quot;string&quot;, &quot;placeholder&quot;: &quot;prod-eu&quot; },
+  { &quot;key&quot;: &quot;namespace&quot;, &quot;title&quot;: &quot;Default namespace&quot;, &quot;value_type&quot;: &quot;string&quot;, &quot;default&quot;: &quot;default&quot; },
+  { &quot;key&quot;: &quot;refresh_seconds&quot;, &quot;title&quot;: &quot;Refresh every (seconds)&quot;, &quot;value_type&quot;: &quot;integer&quot;, &quot;default&quot;: 30, &quot;min&quot;: 5, &quot;max&quot;: 3600 },
+  { &quot;key&quot;: &quot;output&quot;, &quot;title&quot;: &quot;Output&quot;, &quot;value_type&quot;: &quot;enum&quot;, &quot;options&quot;: [&quot;table&quot;, &quot;json&quot;], &quot;default&quot;: &quot;table&quot; },
+  { &quot;key&quot;: &quot;api_token&quot;, &quot;title&quot;: &quot;API server token&quot;, &quot;value_type&quot;: &quot;string&quot;, &quot;is_secret&quot;: true }
+]</code></pre>
 <h2 id="the-content-hash">The content hash <a class="anchor" href="#the-content-hash" aria-label="Link to this section">#</a></h2>
 <p>The desktop records a hash of the manifest at install and when the user approves AI commands: the
 SHA-256, in lowercase hex, of the parsed manifest serialized as compact JSON, with the fields in
 the order above, defaults filled in and unknown fields gone. Whitespace, key order and spelled-out
-defaults do not change it. <code>network_origins</code> and a panel&#39;s <code>slot</code> are left out when absent, so a
-manifest without them hashes as on a host without those fields; other absent options are <code>null</code>.</p>
+defaults do not change it. <code>network_origins</code>, a panel&#39;s <code>slot</code> and a setting&#39;s <code>default</code>, <code>min</code>,
+<code>max</code>, <code>options</code> and <code>placeholder</code> are left out when absent, so a manifest without them hashes as
+on a host without those fields; other absent options are <code>null</code>.</p>
 <p>It gates AI consent. When the hash differs from the recorded one and the manifest declares
 <code>ai_callable</code> commands, or the user approved some, the agent runs none of the plugin&#39;s commands
 until the user consents again (<code>manifest changed — re-consent required for AI commands</code>). Any
-change counts, since the old command set cannot be read from a hash.</p>
+change counts, since the old command set cannot be read from a hash: adding, removing or changing
+a <code>settings_schema</code> entry asks for AI consent again too.</p>
 <h2 id="example">Example <a class="anchor" href="#example" aria-label="Link to this section">#</a></h2>
 <p>The manifest of <a href="https://github.com/rim-platform/plugin-github-prs"><code>plugin-github-prs</code></a>, a web
 plugin with a network permission and a tool panel, verbatim:</p>
@@ -298,7 +403,7 @@ plugin with a network permission and a tool panel, verbatim:</p>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/00edda757d716d65f92267027502899a9adc260e/docs/plugin-manifest.md">rim-ui/docs/plugin-manifest.md</a> at <code>00edda7</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/f2cb7940bbdb26afbb51e6abf06c5a22ebf72f8c/docs/plugin-manifest.md">rim-ui/docs/plugin-manifest.md</a> at <code>f2cb794</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

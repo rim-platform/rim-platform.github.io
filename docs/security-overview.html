@@ -218,6 +218,12 @@ available to its author.</li>
 network and local credentials. Their permissions govern what the app does for them, not what
 the program can do. Install steps such as <code>npm install</code> run only after a dialog lists each
 command and warns that it runs the author&#39;s code (<a href="../plugins/index.html">plugins</a>).</li>
+<li><strong>Plugin settings</strong> stay on the device, scoped to the plugin, the account and the device, and
+never reach the server or another device. A setting the plugin marks secret is kept in the
+desktop&#39;s secret vault and never shown again once saved; the web app has no encrypted store
+for them and offers none. The plugin that declares a secret receives it in plain form, so it
+is kept from other plugins and web pages, not from that plugin or its author
+(<a href="../specs/plugin-protocol-v1.html#15-settings">protocol</a>).</li>
 <li><strong>The permission prompt</strong> lists each capability on its own line. Encrypted DMs and groups need
 <code>chat.read.encrypted</code> or <code>chat.write.encrypted</code> on top of the plain permission, and a plugin
 never gets keys, franking keys, attachment secrets or ciphertext. Revoking a permission stops
@@ -360,7 +366,7 @@ is still welcome, especially with an attack the brief does not describe.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/4f297387f6f03920fa75df3ab6c04e5c035102ec/docs/security-overview.md">rim-server/docs/security-overview.md</a> at <code>4f29738</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/71ff02d8c1c823c10f786421c0ffa2230c95c98d/docs/security-overview.md">rim-server/docs/security-overview.md</a> at <code>71ff02d</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

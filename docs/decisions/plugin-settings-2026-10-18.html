@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Plugin settings: declared in the manifest, kept on the device, read by the plugin · RIM</title>
+<meta name="description" content="Status: Accepted 2026-10-18 by Jakub. Implementation follows in rim-ui's plugin hosts and SDK. Do not edit once implementation lands — historical record. For changes, write a new ADR.">
+<link rel="icon" href="../../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../../index.html" aria-label="RIM home">
+      <picture><source srcset="../../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../../index.html#what">What RIM is</a>
+      <a href="../../index.html#how">How it works</a>
+      <a href="../self-hosting.html">Self-host</a>
+      <a href="../../configure/index.html">Configure</a>
+      <a href="../../plugins/index.html">Plugins</a>
+      <a href="../index.html" aria-current="page">Docs</a>
+      <a href="../../api/index.html">API</a>
+      <a href="../../specs/index.html">Specs</a>
+      <a href="../contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="../index.html">Docs</a><span aria-hidden="true">/</span><a href="../project.html">Project</a><span aria-hidden="true">/</span><a href="index.html">Decisions</a><span aria-hidden="true">/</span><span>Plugin settings: declared in the manifest, kept on the device, read by the plugin</span></div>
+  <div class="page with-toc">
+    <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
+<ol>
+<li><a href="#context">Context</a></li>
+<li><a href="#decision">Decision</a><ol><li><a href="#1-the-schema">1. The schema</a></li><li><a href="#2-storage">2. Storage</a></li><li><a href="#3-delivery">3. Delivery</a></li><li><a href="#4-secrets-reach-the-plugin-in-plain-form">4. Secrets reach the plugin in plain form</a></li><li><a href="#5-panels">5. Panels</a></li><li><a href="#6-no-settings-capability">6. No settings capability</a></li></ol></li>
+<li><a href="#rejected-alternatives">Rejected alternatives</a></li>
+<li><a href="#consequences">Consequences</a></li>
+</ol>
+</details></aside>
+    <main id="content" class="prose">
+<blockquote>
+<p><strong>Status:</strong> Accepted 2026-10-18 by Jakub. Implementation follows in rim-ui&#39;s plugin hosts and SDK.
+<strong>Do not edit</strong> once implementation lands — historical record. For changes, write a new ADR.</p>
+</blockquote>
+<h1 id="plugin-settings-declared-in-the-manifest-kept-on-the-device-read-by-the-plugin">Plugin settings: declared in the manifest, kept on the device, read by the plugin</h1>
+<p><strong>Date:</strong> 2026-10-18
+<strong>Decided by:</strong> Jakub
+<strong>Builds on:</strong> <a href="../../specs/plugin-protocol-v1.html"><code>docs/specs/plugin-protocol-v1.md</code></a>, <a href="../../specs/web-plugins-v1.html"><code>docs/specs/web-plugins-v1.md</code></a>,
+<a href="../../specs/workspace-plugins-v1.html"><code>docs/specs/workspace-plugins-v1.md</code></a>.</p>
+<h2 id="context">Context <a class="anchor" href="#context" aria-label="Link to this section">#</a></h2>
+<p>A plugin manifest could already declare <code>settings_schema</code>, a list of <code>{ key, title, description, value_type, is_secret }</code>, and the rim-ui hosts parsed it, but nothing read it: no form was built
+from it, <code>value_type</code> was any string, and the panel bridge only logged <code>rim.settings.get</code> and
+<code>rim.settings.set</code>. Protocol v1 listed both under &quot;Not implemented&quot;, the web plugin spec deferred
+<code>settings_schema</code> together with brokered secrets, and the capability model kept a &quot;potential
+later split&quot; into <code>settings.read</code> and <code>settings.write</code>.</p>
+<p>Plugins needed settings all the same. <code>plugin-github-prs</code> can show only public repositories
+because it has nowhere to take a token from, and <code>plugin-k8s-pods</code> picks its cluster context and
+namespace through a command of its own. Without settings each plugin invents such a command and
+keeps the result in its own files or in <code>rim.storage</code>, which is unencrypted and not meant for
+tokens.</p>
+<p>What constrains the answer:</p>
+<ul>
+<li>Plugins run in the client and the server stores nothing per user per plugin
+(<code>plugin_model.md</code>, &quot;Who owns what&quot;).</li>
+<li>The desktop has an encrypted secret vault; the web app has none, which is why AI provider keys
+are desktop-only.</li>
+<li>A local-process plugin runs as the user and can read whatever the user can, the vault file
+included (<code>plugin-protocol-v1.md</code>, section 12).</li>
+<li>Protocol v1 is frozen: a new method may be added within v1, but a new field in a frozen frame,
+such as the handshake, forces v2 (section 17).</li>
+</ul>
+<h2 id="decision">Decision <a class="anchor" href="#decision" aria-label="Link to this section">#</a></h2>
+<h3 id="1-the-schema">1. The schema <a class="anchor" href="#1-the-schema" aria-label="Link to this section">#</a></h3>
+<p>Each <code>settings_schema</code> entry has <code>key</code> (1 to 128 characters of <code>A-Z a-z 0-9 . _ -</code>, the alphabet
+of a <code>rim.storage</code> key, unique within the manifest), <code>title</code>, <code>description</code> (default <code>&quot;&quot;</code>),
+<code>value_type</code> (<code>string</code>, <code>boolean</code>, <code>integer</code>, <code>path</code> or <code>enum</code>) and <code>is_secret</code> (default <code>false</code>,
+allowed only with <code>string</code>), and optionally <code>default</code> (of the setting&#39;s type, not allowed on a
+secret), <code>min</code> and <code>max</code> (<code>integer</code> only), <code>options</code> (<code>enum</code> only, required there, a non-empty
+list of strings that holds the <code>default</code>) and <code>placeholder</code> (<code>string</code>, <code>path</code> and <code>integer</code>). A
+host refuses a manifest that breaks these rules at install.</p>
+<p>The optional fields an entry leaves out are left out of the manifest&#39;s content hash, so existing
+manifests keep their hash. Adding or changing an entry changes it, and for a plugin with
+<code>ai_callable</code> commands that asks for AI consent again, as any manifest change does.</p>
+<h3 id="2-storage">2. Storage <a class="anchor" href="#2-storage" aria-label="Link to this section">#</a></h3>
+<p>Values live only on the device, in the client&#39;s plugin host, scoped like <code>rim.storage</code> to
+(plugin id, signed-in account, device). They are never synced and never sent to the server, and
+uninstalling deletes them. A workspace registry entry carries the manifest, and so the schema,
+but never values. On the desktop non-secret values go in the host&#39;s per-plugin store and secret
+values in the secret vault. In the web app non-secret values go in browser storage, and secret
+settings are not available: the form says they need the desktop app. A saved secret is never
+shown again; the form says it is set and offers to replace or clear it.</p>
+<h3 id="3-delivery">3. Delivery <a class="anchor" href="#3-delivery" aria-label="Link to this section">#</a></h3>
+<p>Two methods are added within v1, served by both host kinds:</p>
+<ul>
+<li><code>rim.settings.get</code>, a plugin-to-host request without params, answered with
+<code>{ &quot;values&quot;: { &lt;key&gt;: &lt;value&gt; } }</code>: every declared setting that has a saved value or a
+default, secrets in plain form.</li>
+<li><code>rim.settings.changed</code>, a host-to-plugin notification with the same <code>{ &quot;values&quot; }</code>, the whole
+set, after the user saves.</li>
+</ul>
+<p>Neither needs a capability, and there is no method to write settings: the user is the only
+writer. The host takes the plugin&#39;s identity from the connection, never from a message field.
+Values are checked against the schema when the user saves; after an update a plugin can still
+receive values saved under an older schema and handles missing and unknown keys.</p>
+<h3 id="4-secrets-reach-the-plugin-in-plain-form">4. Secrets reach the plugin in plain form <a class="anchor" href="#4-secrets-reach-the-plugin-in-plain-form" aria-label="Link to this section">#</a></h3>
+<p>A web plugin receives its secret settings in plain form, and its policy limits where it can send
+them to its granted <code>network_origins</code>. A local-process plugin receives them in plain form too: it
+could read the vault anyway. Secret settings protect a value from other plugins, from web pages
+and from the screen, not from the plugin that declares it. Host-attached secrets for
+<code>network.fetch</code> stay deferred as a later, stronger option.</p>
+<h3 id="5-panels">5. Panels <a class="anchor" href="#5-panels" aria-label="Link to this section">#</a></h3>
+<p>Panels never receive setting values. The panel bridge gains <code>rim.settings.open</code>, which opens the
+owning plugin&#39;s settings in the plugin manager, in place of the logged <code>rim.settings.get</code> and
+<code>rim.settings.set</code>.</p>
+<h3 id="6-no-settings-capability">6. No settings capability <a class="anchor" href="#6-no-settings-capability" aria-label="Link to this section">#</a></h3>
+<p>There is no <code>settings.read</code> or <code>settings.write</code>. Settings are the plugin&#39;s own data, as
+<code>rim.storage</code> is, and the &quot;potential later split&quot; note is replaced by this reasoning.</p>
+<h2 id="rejected-alternatives">Rejected alternatives <a class="anchor" href="#rejected-alternatives" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>Brokered secrets now.</strong> The host would keep a secret and attach it to the plugin&#39;s
+<code>network.fetch</code> requests (for example as an <code>Authorization</code> header to one listed origin), so a
+web plugin never holds it. It is the stronger design for web plugins, but it needs a request
+path through the host instead of the plugin&#39;s own <code>fetch</code>, rules for which header goes to which
+origin, and a per-secret consent line; it gives a local-process plugin nothing, since that
+plugin can read the vault. Plain delivery serves both kinds today, and brokering can come later
+without changing the schema.</li>
+<li><strong>A <code>settings.read</code> / <code>settings.write</code> capability.</strong> A plugin reading its own settings exposes
+nothing the user has not typed in for that plugin, and a plugin cannot write them at all. A
+prompt line for it would guard nothing and teach people to approve lines without reading
+them.</li>
+<li><strong>Settings synced through the server.</strong> One value on every device would be convenient, but the
+server would hold per-user plugin data for the first time, secrets would need end-to-end
+encryption between a person&#39;s devices, and values such as a path or a cluster context are often
+different on each device anyway. Plugin sync across devices stays not built
+(<code>plugin_model.md</code>, &quot;Not built&quot;).</li>
+<li><strong>Secret settings in the web app.</strong> The browser has no store a token can sit in safely: the
+web app&#39;s IndexedDB is readable by any script in the app&#39;s origin, and wrapping the value under
+a non-extractable key protects it only against someone reading the disk. AI provider keys are
+desktop-only for the same reason. The form shows a secret field as needing the desktop app.</li>
+</ul>
+<h2 id="consequences">Consequences <a class="anchor" href="#consequences" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>rim-ui implements the schema rules in <code>validation.rs</code> and <code>manifestRules.ts</code>, with shared
+vectors in <code>protocol/manifest-vectors.json</code>, the two methods in both hosts and the protocol
+schema, the settings form in the plugin manager, <code>rim.settings.open</code> in the panel bridge, and
+the SDK&#39;s read side. Its manifest reference page describes the new fields.</li>
+<li>A manifest that declares a <code>value_type</code> outside the five, or breaks another rule, no longer
+installs. None of the official plugins declares a setting, so they are not affected.</li>
+<li><code>plugin-github-prs</code> can take a token for private repositories, which it then holds in plain
+form inside its sandbox, where its policy lets it connect only to the GitHub origins it lists.</li>
+<li>On the desktop a plugin&#39;s secret settings are as safe as the vault: a program running as the
+user can read them, as it can every other secret there.</li>
+<li>A web plugin with secret settings is only partly usable in the web app. Its manifest cannot
+say &quot;desktop only&quot;, so the plugin has to work, or explain itself, without them.</li>
+</ul>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/71ff02d8c1c823c10f786421c0ffa2230c95c98d/docs/decisions/plugin-settings-2026-10-18.md">rim-server/docs/decisions/plugin-settings-2026-10-18.md</a> at <code>71ff02d</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+<script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
+</body>
+</html>
