@@ -60,7 +60,7 @@ listener of its own. The API port never serves them.</p>
 <p>On a host, <code>127.0.0.1:9090</code> keeps the endpoint on the machine; run Prometheus there or scrape it
 through an SSH tunnel. In a container, <code>127.0.0.1</code> is the container itself, so bind
 <code>0.0.0.0:9090</code> and do not publish the port: Prometheus reaches it over the compose network.
-<a href="https://github.com/rim-platform/rim-server/blob/5bae5e7740c1550be76e2a74cd782f6089f63890/deploy/compose.yml"><code>deploy/compose.yml</code></a> has the line commented out in the <code>rim</code> service.</p>
+<a href="https://github.com/rim-platform/rim-server/blob/4f297387f6f03920fa75df3ab6c04e5c035102ec/deploy/compose.yml"><code>deploy/compose.yml</code></a> has the line commented out in the <code>rim</code> service.</p>
 <p>The endpoint has no authentication. Keep it on an internal network, and never route it through
 Caddy or any other public reverse proxy: it shows request rates, limiter names and queue sizes
 to whoever can read it.</p>
@@ -494,7 +494,7 @@ rim_db_pool_connections_in_use / rim_db_pool_max_connections &gt; 0.9</code></pr
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/5bae5e7740c1550be76e2a74cd782f6089f63890/docs/operations/metrics.md">rim-server/docs/operations/metrics.md</a> at <code>5bae5e7</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/4f297387f6f03920fa75df3ab6c04e5c035102ec/docs/operations/metrics.md">rim-server/docs/operations/metrics.md</a> at <code>4f29738</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>
