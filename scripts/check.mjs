@@ -7,7 +7,7 @@ import { pathToFileURL } from "node:url";
 
 import { SITE_ROOT } from "./lib/sources.mjs";
 
-export const OUTPUT_DIRS = ["docs", "specs", "configure", "api"];
+export const OUTPUT_DIRS = ["docs", "plugins", "specs", "configure", "api"];
 const MAX_BYTES = 1024 * 1024;
 const VOID = new Set(["area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "source", "track", "wbr"]);
 

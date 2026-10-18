@@ -12,10 +12,10 @@ The rest is rendered from the code repositories so the site never drifts from th
 | Self-host, operator docs, specs, API contract, contribute, security | Markdown in `rim-server/docs`, `CONTRIBUTING.md`, `SECURITY.md` |
 | Configure | `rim_server/src/config.rs` and the Dockerfile variable block |
 | API reference | the GraphQL schema the server publishes at `/api/sdl` (`rim-ui/schema.graphql` is the committed copy) |
-| Plugin and user guides | `rim-ui/docs` |
+| Plugins, plugin and user guides | `rim-ui/docs`, the example plugins' READMEs in `rim-ui/plugins` |
 
-The rendered pages are committed under `docs/`, `specs/`, `configure/`, `api/` and `404.html`,
-so Pages serves static files and nothing runs at publish time.
+The rendered pages are committed under `docs/`, `plugins/`, `specs/`, `configure/`, `api/` and
+`404.html`, so Pages serves static files and nothing runs at publish time.
 
 ## Building
 

@@ -1,5 +1,5 @@
-// Renders the RIM site from the rim-server and rim-ui repositories into docs/, specs/,
-// configure/, api/ and 404.html, then checks the result. `node scripts/build.mjs`, with
+// Renders the RIM site from the rim-server and rim-ui repositories into docs/, plugins/,
+// specs/, configure/, api/ and 404.html, then checks the result. `node scripts/build.mjs`, with
 // RIM_SERVER_DIR / RIM_UI_DIR naming the repositories and RIM_SERVER_REF / RIM_UI_REF the
 // refs (default origin/master).
 
@@ -57,7 +57,7 @@ copyFileSync(path.join(SITE_ROOT, "templates", "site.css"), path.join(SITE_ROOT,
 const count = (prefix) => pages.filter((p) => p.out.startsWith(prefix)).length;
 console.log(`rim-server ${sources.server.commit} (${sources.server.ref})`);
 console.log(`rim-ui     ${sources.ui.commit} (${sources.ui.ref})`);
-console.log(`docs ${count("docs/")}, specs ${count("specs/")}, configure ${count("configure/")}, api ${count("api/")}, plus 404.html`);
+console.log(`docs ${count("docs/")}, plugins ${count("plugins/")}, specs ${count("specs/")}, configure ${count("configure/")}, api ${count("api/")}, plus 404.html`);
 if (plan.unassigned.length) console.log(`rim-ui docs in no named group: ${plan.unassigned.join(", ")}`);
 const cr = configure.report;
 console.log(`configure: ${configure.count} variables; doc comment in config.rs for ${cr.fromConfig}`);
