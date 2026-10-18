@@ -61,31 +61,31 @@ contract is rim-server <code>docs/specs/e2ee-mls-v1.md</code>; the engine is the
 </tr>
 </thead>
 <tbody><tr>
-<td><a href="https://github.com/rim-platform/rim-ui/tree/b755bdc45172ff1e9c14e3bd439d8791b2f44578/src-tauri/crates/rim_mls"><code>src-tauri/crates/rim_mls</code></a></td>
+<td><a href="https://github.com/rim-platform/rim-ui/tree/b8e647d0123104fd732a2aafbeeb723040dfb0ea/src-tauri/crates/rim_mls"><code>src-tauri/crates/rim_mls</code></a></td>
 <td>MLS through OpenMLS: identity, key packages, groups, Commits, Welcomes, encrypt and decrypt once, content and authenticated-data rules, franking, attachments</td>
 </tr>
 <tr>
-<td><a href="https://github.com/rim-platform/rim-ui/tree/b755bdc45172ff1e9c14e3bd439d8791b2f44578/src-tauri/src/e2ee"><code>src-tauri/src/e2ee/</code></a></td>
+<td><a href="https://github.com/rim-platform/rim-ui/tree/b8e647d0123104fd732a2aafbeeb723040dfb0ea/src-tauri/src/e2ee"><code>src-tauri/src/e2ee/</code></a></td>
 <td>The app&#39;s side: Tauri commands, the change-feed handler that decrypts into the cache, leaf verification (<code>DeviceDirectory</code> over key logs and device certificates), sends with stored plaintext, attachments over raw IPC, sender-side link previews</td>
 </tr>
 <tr>
-<td><a href="https://github.com/rim-platform/rim-ui/tree/b755bdc45172ff1e9c14e3bd439d8791b2f44578/src-tauri/src/message_cache"><code>src-tauri/src/message_cache/</code></a></td>
+<td><a href="https://github.com/rim-platform/rim-ui/tree/b8e647d0123104fd732a2aafbeeb723040dfb0ea/src-tauri/src/message_cache"><code>src-tauri/src/message_cache/</code></a></td>
 <td>The SQLCipher cache: MLS state (<code>mls_storage</code>, schema v5), the e2ee tables (schema v6) and the pins (schema v7) live in the same file as the messages</td>
 </tr>
 <tr>
-<td><a href="https://github.com/rim-platform/rim-ui/tree/b755bdc45172ff1e9c14e3bd439d8791b2f44578/src-tauri/src/key_identity"><code>src-tauri/src/key_identity/</code></a></td>
+<td><a href="https://github.com/rim-platform/rim-ui/tree/b8e647d0123104fd732a2aafbeeb723040dfb0ea/src-tauri/src/key_identity"><code>src-tauri/src/key_identity/</code></a></td>
 <td>The device key; it signs <code>mls-key</code> statements and re-add requests (<code>sign_mls</code>) and nothing else for e2ee</td>
 </tr>
 <tr>
-<td><a href="https://github.com/rim-platform/rim-ui/tree/b755bdc45172ff1e9c14e3bd439d8791b2f44578/src/features/e2ee/api"><code>src/features/e2ee/api/</code></a></td>
+<td><a href="https://github.com/rim-platform/rim-ui/tree/b8e647d0123104fd732a2aafbeeb723040dfb0ea/src/features/e2ee/api"><code>src/features/e2ee/api/</code></a></td>
 <td><code>documents.ts</code> (every e2ee GraphQL document), <code>e2eeApi.ts</code> (server calls), <code>e2eeCommands.ts</code> (Tauri commands)</td>
 </tr>
 <tr>
-<td><a href="https://github.com/rim-platform/rim-ui/tree/b755bdc45172ff1e9c14e3bd439d8791b2f44578/src/features/e2ee/runtime"><code>src/features/e2ee/runtime/</code></a></td>
+<td><a href="https://github.com/rim-platform/rim-ui/tree/b8e647d0123104fd732a2aafbeeb723040dfb0ea/src/features/e2ee/runtime"><code>src/features/e2ee/runtime/</code></a></td>
 <td>The webview&#39;s driver: client loop inputs, groups (create, commit, settle, join, re-add, recovery), membership ranking, sending, events, the 12-hour key package refresh</td>
 </tr>
 <tr>
-<td><a href="https://github.com/rim-platform/rim-ui/tree/b755bdc45172ff1e9c14e3bd439d8791b2f44578/src/features/e2ee"><code>src/features/e2ee/</code></a> components, hooks, utils</td>
+<td><a href="https://github.com/rim-platform/rim-ui/tree/b8e647d0123104fd732a2aafbeeb723040dfb0ea/src/features/e2ee"><code>src/features/e2ee/</code></a> components, hooks, utils</td>
 <td>Timeline notices, composer notices, lock marks, encrypted attachments, mention and keyword rules</td>
 </tr>
 </tbody></table></div>
@@ -264,7 +264,7 @@ the conversation goes to the model provider; the switch is per conversation and 
 device (<code>useAgentEncryptedStore</code>). When it is on, <code>chat.get_recent_messages</code> and
 <code>chat.search_messages</code> read the cache instead of the server, and <code>chat.post_message</code> sends
 through the encrypted send path after the person confirms each post
-(<a href="https://github.com/rim-platform/rim-ui/tree/b755bdc45172ff1e9c14e3bd439d8791b2f44578/src/features/agent/encrypted"><code>src/features/agent/encrypted/</code></a>). A server-wide <code>chat.search_messages</code> adds this device&#39;s
+(<a href="https://github.com/rim-platform/rim-ui/tree/b8e647d0123104fd732a2aafbeeb723040dfb0ea/src/features/agent/encrypted"><code>src/features/agent/encrypted/</code></a>). A server-wide <code>chat.search_messages</code> adds this device&#39;s
 hits in the conversations the agent is on in. <code>chat.create_group</code> still creates a plaintext
 group on the server; this desktop then upgrades it as any plaintext group
 (<code>runtime/upgrade.ts</code>), once every member is ready.</li>
@@ -272,7 +272,7 @@ group on the server; this desktop then upgrades it as any plaintext group
 matches an encrypted message, and the editor says so under the pattern.</li>
 <li><strong>Lenses</strong> are applied on this device in an encrypted conversation, over the loaded pages:
 &quot;Text contains&quot; and &quot;Has links&quot; never match an encrypted message; author, attachments and
-pins match as usual (<a href="https://github.com/rim-platform/rim-ui/blob/b755bdc45172ff1e9c14e3bd439d8791b2f44578/src/features/lenses/utils/localLens.ts"><code>src/features/lenses/utils/localLens.ts</code></a>). The lens editor says so
+pins match as usual (<a href="https://github.com/rim-platform/rim-ui/blob/b8e647d0123104fd732a2aafbeeb723040dfb0ea/src/features/lenses/utils/localLens.ts"><code>src/features/lenses/utils/localLens.ts</code></a>). The lens editor says so
 under a text condition.</li>
 </ul>
 <h2 id="reporting-an-encrypted-message">Reporting an encrypted message <a class="anchor" href="#reporting-an-encrypted-message" aria-label="Link to this section">#</a></h2>
@@ -326,7 +326,7 @@ in-process server), <code>cargo test plugin_view</code>, <code>npx vitest run sr
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/b755bdc45172ff1e9c14e3bd439d8791b2f44578/docs/e2ee-desktop.md">rim-ui/docs/e2ee-desktop.md</a> at <code>b755bdc</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/b8e647d0123104fd732a2aafbeeb723040dfb0ea/docs/e2ee-desktop.md">rim-ui/docs/e2ee-desktop.md</a> at <code>b8e647d</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

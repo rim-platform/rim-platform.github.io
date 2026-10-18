@@ -62,13 +62,15 @@ const GROUPS = [
   {
     key: "plugin-authors",
     title: "Plugin authors",
-    lede: "Extending the client: what a plugin is, the capabilities it asks for, the TypeScript SDK and how it is published, web plugins in a sandboxed frame, the desktop host and its example plugins, and signed workspace plugins.",
+    lede: "Extending the client: what a plugin is, the capabilities it asks for, a first plugin step by step, the TypeScript SDK and how it is published, the rim-plugin.json manifest, web plugins in a sandboxed frame, the desktop host and its example plugins, and signed workspace plugins.",
     subs: [
       { title: "The model", items: [["server", "docs/plugin_model.md"], ["server", "docs/capability_security_model.md"]] },
       {
         title: "Building a plugin",
         items: [
+          ["ui", "docs/plugin-tutorial.md"],
           ["ui", "sdk/plugin-sdk/README.md"],
+          ["ui", "docs/plugin-manifest.md"],
           ["ui", "docs/web-plugins.md"],
           ["ui", "docs/workspace-plugins.md"],
           ["ui", "docs/plugin-chat-methods.md"],
