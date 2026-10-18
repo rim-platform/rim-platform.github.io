@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Operators · RIM</title>
-<meta name="description" content="Running a RIM server: installing it with Docker Compose, upgrading and backing it up, watching it, switching features off, and running a public relay.">
+<meta name="description" content="Running a RIM server: installing it with Docker Compose, upgrading and backing it up, watching it, switching features off, and deploying and running a public relay.">
 <link rel="icon" href="../favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
@@ -36,10 +36,11 @@
 
     <main id="content" class="prose">
 <h1>Operators</h1>
-<p class="lede">Running a RIM server: installing it with Docker Compose, upgrading and backing it up, watching it, switching features off, and running a public relay.</p>
+<p class="lede">Running a RIM server: installing it with Docker Compose, upgrading and backing it up, watching it, switching features off, and deploying and running a public relay.</p>
 <h2 id="install-and-run">Install and run</h2>
 <ul class="cards">
 <li><a href="self-hosting.html"><b>Self-hosting a RIM server</b><span>deploy/compose.yml runs one RIM server on one domain: rim-server with RIM_ROLE=both (it hosts workspaces and is its users' relay), PostgreSQL 17, the web client, and Caddy terminating TLS. Caddy sends /api (with …</span><span class="src">rim-server/docs/self-hosting.md</span></a></li>
+<li><a href="deploy/index.html"><b>Deploying a public relay</b><span>compose.relay.yml turns compose.yml into a public relay: rim-server with RIM_ROLE=relay, the public relay's quotas and proof-of-work signups, PostgreSQL 17 and Caddy terminating TLS, and no web client. The relay holds …</span><span class="src">rim-server/deploy/README.md</span></a></li>
 <li><a href="email.html"><b>Transactional Email</b><span>RIM sends transactional email for password resets, invites, and notification digests. This document covers the RIM_SMTP_* config matrix, TLS modes, the three wired flows, retry policy, and the &quot;unconfigured → log-only&quot; …</span><span class="src">rim-server/docs/email.md</span></a></li>
 </ul>
 <h2 id="operations">Operations</h2>

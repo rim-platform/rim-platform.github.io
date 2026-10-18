@@ -50,7 +50,7 @@
 <p>The public relay is the server anyone&#39;s app can use as its relay: accounts, devices, profile
 cards, the queue of what other servers send, the request inbox, and the forward path to the
 servers that host people&#39;s workspaces. It runs the stock image with <code>RIM_ROLE=relay</code> from
-<a href="https://github.com/rim-platform/rim-server/blob/857db508230ad602aebbe8cb1ae1268ccd93bf80/deploy/compose.yml"><code>deploy/compose.yml</code></a> with the <a href="https://github.com/rim-platform/rim-server/blob/857db508230ad602aebbe8cb1ae1268ccd93bf80/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a> override (<a href="https://github.com/rim-platform/rim-server/blob/857db508230ad602aebbe8cb1ae1268ccd93bf80/deploy/README.md"><code>deploy/README.md</code></a> brings it
+<a href="https://github.com/rim-platform/rim-server/blob/857db508230ad602aebbe8cb1ae1268ccd93bf80/deploy/compose.yml"><code>deploy/compose.yml</code></a> with the <a href="https://github.com/rim-platform/rim-server/blob/857db508230ad602aebbe8cb1ae1268ccd93bf80/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a> override (<a href="../deploy/index.html"><code>deploy/README.md</code></a> brings it
 up). The project&#39;s relay is <code>relay.rim-platform.org</code>; read it as &quot;the relay&#39;s domain&quot; wherever
 this page says it.</p>
 <p>Everything marked <strong>FILL</strong> is a decision or a fact the operator records here before the relay
@@ -120,7 +120,7 @@ alias rim-sql='docker compose exec -T postgres psql -U rim -d rim'</code></pre>
 <h3 id="the-server-recovery-key">The server recovery key <a class="anchor" href="#the-server-recovery-key" aria-label="Link to this section">#</a></h3>
 <p>The recovery key replaces a lost or stolen server key. Whoever holds it can make any key this
 server&#39;s, so it never stays on the host: the first start writes it to
-<code>/data/server-recovery-key.txt</code> and warns at every start until it is gone (<a href="https://github.com/rim-platform/rim-server/blob/857db508230ad602aebbe8cb1ae1268ccd93bf80/deploy/README.md"><code>deploy/README.md</code></a>,
+<code>/data/server-recovery-key.txt</code> and warns at every start until it is gone (<a href="../deploy/index.html"><code>deploy/README.md</code></a>,
 &quot;Start&quot;).</p>
 <div class="tablewrap"><table>
 <thead>

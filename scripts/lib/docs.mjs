@@ -9,6 +9,7 @@ import { renderMarkdown } from "./markdown.mjs";
 
 /** Where a rim-server file is rendered. */
 function serverOut(file) {
+  if (file === "deploy/README.md") return "docs/deploy/index.html";
   if (file.startsWith("docs/specs/")) return `specs/${path.posix.basename(file, ".md")}.html`;
   if (file.startsWith("docs/")) return file.replace(/\.md$/, ".html");
   return `docs/${path.posix.basename(file, ".md").toLowerCase().replace(/_/g, "-")}.html`;
@@ -33,9 +34,12 @@ const GROUPS = [
   {
     key: "operators",
     title: "Operators",
-    lede: "Running a RIM server: installing it with Docker Compose, upgrading and backing it up, watching it, switching features off, and running a public relay.",
+    lede: "Running a RIM server: installing it with Docker Compose, upgrading and backing it up, watching it, switching features off, and deploying and running a public relay.",
     subs: [
-      { title: "Install and run", items: [["server", "docs/self-hosting.md"], ["server", "docs/email.md"]] },
+      {
+        title: "Install and run",
+        items: [["server", "docs/self-hosting.md"], ["server", "deploy/README.md"], ["server", "docs/email.md"]],
+      },
       { title: "Operations", items: [["server", "glob:docs/operations"]] },
       { title: "Identity and federation", items: [["server", "docs/server-identity.md"], ["server", "docs/relay.md"]] },
     ],
@@ -95,7 +99,7 @@ const GROUPS = [
   {
     key: "using-rim",
     title: "Using RIM",
-    lede: "The desktop and web client: getting started from a fresh install to a first conversation, commands, keybinds, macros and pipelines, the AI agent, installing it and signing in, building it, the keyboard, plugins, keys and recovery, linking a device, encrypted conversations, relays and the local message cache.",
+    lede: "The desktop and web client: getting started from a fresh install to a first conversation, commands, keybinds, macros and pipelines, the AI agent, installing it and signing in, building it, the keyboard, plugins, keys and recovery, and linking a device.",
     subs: [
       {
         title: "Start here",
@@ -111,37 +115,32 @@ const GROUPS = [
         items: [
           ["ui", "README.md"],
           ["ui", "docs/keyboard.md"],
-          ["ui", "docs/search-ui.md"],
           ["ui", "docs/updater.md"],
           ["ui", "docs/version-skew.md"],
         ],
       },
       { title: "Plugins", items: [["ui", "docs/plugins.md"]] },
       {
-        title: "Keys, devices and encryption",
+        title: "Keys and devices",
         items: [
           ["ui", "docs/identity-key-backup.md"],
           ["ui", "docs/device-linking-desktop.md"],
           ["ui", "docs/web-linked-device.md"],
-          ["ui", "docs/e2ee-desktop.md"],
-          ["ui", "docs/e2ee-web.md"],
-          ["ui", "docs/secret-vault.md"],
-          ["ui", "docs/local-message-cache.md"],
         ],
       },
-      { title: "Relays", items: [["ui", "docs/relay-client.md"]] },
       { title: "More from the client", items: [], unassigned: true },
     ],
   },
   {
     key: "project",
     title: "Project",
-    lede: "Where RIM is heading and how it is built: the vision, the server architecture and the design models, how to contribute, security with its overview and threat model, and the client's internals and branding.",
+    lede: "Where RIM is heading and how it is built: the vision and the roadmap, the server architecture and the design models, how to contribute, security with its overview and threat model, and the client's internals: the shell, search, the message cache and secret vault, end-to-end encryption, relays and branding.",
     subs: [
       {
         title: "Direction and design",
         items: [
           ["server", "docs/vision.md"],
+          ["server", "ROADMAP.md"],
           ["server", "docs/architecture.md"],
           ["server", "docs/command_model.md"],
           ["server", "docs/keybind_model.md"],
@@ -165,9 +164,15 @@ const GROUPS = [
         title: "Client internals",
         items: [
           ["ui", "docs/ui-shell.md"],
+          ["ui", "docs/search-ui.md"],
+          ["ui", "docs/local-message-cache.md"],
+          ["ui", "docs/secret-vault.md"],
+          ["ui", "docs/e2ee-desktop.md"],
+          ["ui", "docs/e2ee-web.md"],
+          ["ui", "docs/rim-mls.md"],
+          ["ui", "docs/relay-client.md"],
           ["ui", "docs/error-boundaries.md"],
           ["ui", "docs/eslint-prettier.md"],
-          ["ui", "docs/rim-mls.md"],
           ["ui", "docs/branding.md"],
         ],
       },
@@ -178,6 +183,7 @@ const GROUPS = [
 /** Rendered docs that belong to their own nav section rather than "docs". */
 const SECTION_OF = {
   "docs/self-hosting.html": "selfhost",
+  "docs/deploy/index.html": "selfhost",
   "plugins/index.html": "plugins",
   "docs/contributing.html": "contribute",
 };

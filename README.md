@@ -1,7 +1,7 @@
 # rim-platform.github.io
 
-The RIM project site, published with GitHub Pages at `https://rim-platform.github.io`: what RIM
-is and where it is heading, how it works, self-hosting, the configuration reference, the HTTP
+The RIM project site, published with GitHub Pages at `https://rim-platform.org`: what RIM is and
+where it is heading, how it works, self-hosting, the configuration reference, the HTTP
 and GraphQL API, the specifications, how to contribute, security and the roadmap.
 
 Plain HTML and CSS, no framework, no analytics, no cookies. `index.html` is the landing page.
@@ -44,8 +44,12 @@ with the commits it names in each page's footer.
 
 `index.html` is written by hand and is not touched by the build; the checks cover its links.
 
-The repository stays private until the code repositories go public; the four flip together, and
-Pages is switched on then (source: branch `master`, folder `/`).
+## Publishing
+
+The repository is public and Pages serves it from branch `master`, folder `/`, at the custom
+domain in `CNAME`; `https://rim-platform.github.io` redirects there. A pull request merged to
+`master` is live once the Pages build finishes, so the rendered pages are rebuilt and checked on
+the branch before it merges.
 
 ## License
 

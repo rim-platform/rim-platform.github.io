@@ -56,7 +56,7 @@ hosts workspaces and is its users&#39; relay), PostgreSQL 17, the web client, an
 TLS. Caddy sends <code>/api</code> (with <code>/api/ws</code>), <code>/.well-known/…</code> and <code>/s2s/…</code> to rim-server and every
 other path to the web client, so the client and the API share one origin. The health probes
 stay inside the compose network.
-A public relay is the same file with <a href="https://github.com/rim-platform/rim-server/blob/857db508230ad602aebbe8cb1ae1268ccd93bf80/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a> on top; <a href="https://github.com/rim-platform/rim-server/blob/857db508230ad602aebbe8cb1ae1268ccd93bf80/deploy/README.md"><code>deploy/README.md</code></a>
+A public relay is the same file with <a href="https://github.com/rim-platform/rim-server/blob/857db508230ad602aebbe8cb1ae1268ccd93bf80/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a> on top; <a href="deploy/index.html"><code>deploy/README.md</code></a>
 covers it.</p>
 <p>Everything marked <strong>FILL</strong> is the operator&#39;s choice, recorded here once made.</p>
 <h2 id="before-the-first-start">Before the first start <a class="anchor" href="#before-the-first-start" aria-label="Link to this section">#</a></h2>
@@ -366,7 +366,7 @@ purge writes <code>account.purged</code> to the audit log. <code>dc exec rim /ap
 <li>sets <code>X-Forwarded-For</code> itself, replacing what the client sent;</li>
 <li>is the only way in.</li>
 </ul>
-<p><a href="https://github.com/rim-platform/rim-server/blob/857db508230ad602aebbe8cb1ae1268ccd93bf80/deploy/README.md"><code>deploy/README.md</code></a> has an nginx example for the relay&#39;s paths.</p>
+<p><a href="deploy/index.html"><code>deploy/README.md</code></a> has an nginx example for the relay&#39;s paths.</p>
 
     </main>
   </div>
