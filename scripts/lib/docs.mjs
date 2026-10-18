@@ -95,8 +95,15 @@ const GROUPS = [
   {
     key: "using-rim",
     title: "Using RIM",
-    lede: "The desktop and web client: installing it and signing in, building it, the keyboard, plugins, keys and recovery, linking a device, encrypted conversations, relays and the local message cache.",
+    lede: "The desktop and web client: getting started from a fresh install to a first conversation, commands, keybinds, macros and pipelines, installing it and signing in, building it, the keyboard, plugins, keys and recovery, linking a device, encrypted conversations, relays and the local message cache.",
     subs: [
+      {
+        title: "Start here",
+        items: [
+          ["ui", "docs/getting-started.md"],
+          ["ui", "docs/commands-and-automation.md"],
+        ],
+      },
       { title: "Install", items: [["ui", "docs/install.md"]] },
       {
         title: "The client",
@@ -128,7 +135,7 @@ const GROUPS = [
   {
     key: "project",
     title: "Project",
-    lede: "Where RIM is heading and how it is built: the vision, the server architecture and the design models, how to contribute, security, and the client's internals and branding.",
+    lede: "Where RIM is heading and how it is built: the vision, the server architecture and the design models, how to contribute, security with its overview and threat model, and the client's internals and branding.",
     subs: [
       {
         title: "Direction and design",
@@ -147,6 +154,7 @@ const GROUPS = [
       {
         title: "Security",
         items: [
+          ["server", "docs/security-overview.md"],
           ["server", "SECURITY.md"],
           ["server", "docs/security/crypto-review-brief-2026-10.md"],
           ["server", "docs/security/audit-access-matrix.md"],

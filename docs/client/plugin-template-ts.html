@@ -55,18 +55,18 @@ ever arrives unconfirmed.</li>
   tsconfig.json</code></pre>
 <h2 id="make-it-yours">Make it yours <a class="anchor" href="#make-it-yours" aria-label="Link to this section">#</a></h2>
 <ol>
-<li>Copy the folder and change <code>plugin_id</code> in <a href="https://github.com/rim-platform/rim-ui/blob/b8e647d0123104fd732a2aafbeeb723040dfb0ea/plugins/template-ts/rim-plugin.json"><code>rim-plugin.json</code></a> and <code>PLUGIN_ID</code> in
-<a href="https://github.com/rim-platform/rim-ui/blob/b8e647d0123104fd732a2aafbeeb723040dfb0ea/plugins/template-ts/plugin.ts"><code>plugin.ts</code></a> to your own reverse-domain id.</li>
+<li>Copy the folder and change <code>plugin_id</code> in <a href="https://github.com/rim-platform/rim-ui/blob/839c95eb7e80f1b52da231ecbf06668a6c018fd8/plugins/template-ts/rim-plugin.json"><code>rim-plugin.json</code></a> and <code>PLUGIN_ID</code> in
+<a href="https://github.com/rim-platform/rim-ui/blob/839c95eb7e80f1b52da231ecbf06668a6c018fd8/plugins/template-ts/plugin.ts"><code>plugin.ts</code></a> to your own reverse-domain id.</li>
 <li>Outside rim-ui, <code>npm install</code> installs <code>@rim-platform/plugin-sdk</code> from npm; the
 imports stay as they are. In rim-ui the npm workspace links the package to
-<a href="https://github.com/rim-platform/rim-ui/tree/b8e647d0123104fd732a2aafbeeb723040dfb0ea/sdk/plugin-sdk"><code>sdk/plugin-sdk</code></a> instead. The SDK&#39;s README says how a plugin repository commits its
+<a href="https://github.com/rim-platform/rim-ui/tree/839c95eb7e80f1b52da231ecbf06668a6c018fd8/sdk/plugin-sdk"><code>sdk/plugin-sdk</code></a> instead. The SDK&#39;s README says how a plugin repository commits its
 build.</li>
-<li>Add each command to the manifest and to <code>commands</code> in <a href="https://github.com/rim-platform/rim-ui/blob/b8e647d0123104fd732a2aafbeeb723040dfb0ea/plugins/template-ts/plugin.ts"><code>plugin.ts</code></a>. Mark anything
+<li>Add each command to the manifest and to <code>commands</code> in <a href="https://github.com/rim-platform/rim-ui/blob/839c95eb7e80f1b52da231ecbf06668a6c018fd8/plugins/template-ts/plugin.ts"><code>plugin.ts</code></a>. Mark anything
 that changes or deletes something <code>dangerous</code> in both places.</li>
 </ol>
 <h2 id="run-it">Run it <a class="anchor" href="#run-it" aria-label="Link to this section">#</a></h2>
 <ul>
-<li>Tests: <code>npm test</code> here or in rim-ui runs <a href="https://github.com/rim-platform/rim-ui/blob/b8e647d0123104fd732a2aafbeeb723040dfb0ea/plugins/template-ts/plugin.test.ts"><code>plugin.test.ts</code></a>, and in rim-ui the SDK&#39;s
+<li>Tests: <code>npm test</code> here or in rim-ui runs <a href="https://github.com/rim-platform/rim-ui/blob/839c95eb7e80f1b52da231ecbf06668a6c018fd8/plugins/template-ts/plugin.test.ts"><code>plugin.test.ts</code></a>, and in rim-ui the SDK&#39;s
 stdio test starts this plugin as a real process.</li>
 <li>In the app: <code>npm run plugin:bundle -- plugins/template-ts</code>, then
 <code>cp -r plugins/template-ts/dist/dev.example.template-ts ~/.rim/plugins/</code>, start
@@ -77,7 +77,7 @@ RIM, and enable &quot;TypeScript Template&quot; in <strong>Settings → Plugins<
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/b8e647d0123104fd732a2aafbeeb723040dfb0ea/plugins/template-ts/README.md">rim-ui/plugins/template-ts/README.md</a> at <code>b8e647d</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/839c95eb7e80f1b52da231ecbf06668a6c018fd8/plugins/template-ts/README.md">rim-ui/plugins/template-ts/README.md</a> at <code>839c95e</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>
