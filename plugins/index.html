@@ -286,12 +286,13 @@ revoking a plain chat permission takes its encrypted one with it.</li>
 <li><strong>Permission history</strong>, the latest 20 grants and revocations with their times.</li>
 </ul>
 <p><strong>A changed bundle</strong> (desktop). The app records a fingerprint of a plugin&#39;s folder when it
-installs it. When the files change afterwards, the row shows &quot;Plugin bundle has changed&quot; and the
-switch cannot turn the plugin on. <strong>Trust new version</strong> accepts the new files and keeps the
-approvals. <strong>Dismiss</strong> turns the plugin off and hides the warning on this device until the
-files change again; the <strong>Bundle changed</strong> badge beside the name stays, and clicking it brings
-the warning back. The web app hashes a plugin&#39;s bundle again at every start instead, and fetches
-it again from its link when it is missing or damaged.</p>
+installs it. When the files change afterwards, the row shows &quot;Plugin bundle has changed&quot;, the
+switch can turn the plugin off but not on, and the app does not start it at launch. <strong>Trust new
+version</strong> accepts the new files and keeps the approvals, and starts the plugin if it is on.
+<strong>Dismiss</strong> turns the plugin off and hides the warning on this device until the files change
+again; the <strong>Bundle changed</strong> badge beside the name stays, and clicking it brings the warning
+back. The web app hashes a plugin&#39;s bundle again at every start instead, and fetches it again
+from its link when it is missing or damaged.</p>
 <p><strong>Signed and unsigned.</strong> The row and the panel header say where a plugin came from:</p>
 <ul>
 <li><code>Unsigned · installed from a link (&lt;host&gt;)</code></li>
@@ -357,7 +358,7 @@ for your account, with its permissions, data and files. To use it again, install
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/82ba0e96c20cbce553dbf1bd1238fc14799c7b72/docs/plugins.md">rim-ui/docs/plugins.md</a> at <code>82ba0e9</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/f62e0903ea2bee787eb45026da02366fcf84eec4/docs/plugins.md">rim-ui/docs/plugins.md</a> at <code>f62e090</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>
