@@ -61,7 +61,7 @@
 </details></aside>
     <main id="content" class="prose">
 <h1 id="rim-plugin-protocol-v1">RIM plugin protocol v1</h1>
-<p class="status"><span><b>RIM plugin protocol v1</b></span><span>version 1</span><span>status: frozen, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/98d1883fa51947555c4ea37d5255692c80558fa9/docs/specs/plugin-protocol-v1.md">rim-server/docs/specs/plugin-protocol-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/98d1883fa51947555c4ea37d5255692c80558fa9">98d1883</a></span></p>
+<p class="status"><span><b>RIM plugin protocol v1</b></span><span>version 1</span><span>status: frozen, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/545874392ca2416d2c6c2307c985afec20c888ea/docs/specs/plugin-protocol-v1.md">rim-server/docs/specs/plugin-protocol-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/545874392ca2416d2c6c2307c985afec20c888ea">5458743</a></span></p>
 <p><strong>Status: frozen, normative.</strong> This is the contract between the RIM desktop host and a plugin
 process. It is written for someone building a plugin from scratch, in any language, without an
 SDK.</p>
@@ -116,9 +116,9 @@ both in the handshake and in <strong><code>rim.principal.changed</code></strong>
 in <a href="#17-method-reference-what-exists-and-what-does-not">section 17</a>.</p>
 <h2 id="2-process-and-transport">2. Process and transport <a class="anchor" href="#2-process-and-transport" aria-label="Link to this section">#</a></h2>
 <p>A plugin is a directory with a manifest (<code>rim-plugin.json</code>) and an <code>entrypoint</code> file. The manifest
-format is defined by the host (<code>rim-ui/src-tauri/src/plugin_host/manifest.rs</code>, and comment-header
-&quot;simple mode&quot; in <code>simple_manifest.rs</code>), not by this protocol; this document only refers to the
-manifest fields the protocol depends on. Section 19 shows a minimal manifest.</p>
+format is defined by the host (<code>rim-ui/src-tauri/src/plugin_host/manifest.rs</code>), not by this
+protocol; this document only refers to the manifest fields the protocol depends on. Section 19
+shows a minimal manifest.</p>
 <p>A plugin id (<code>plugin_id</code> in the manifest) is reverse-domain: at least three dot-separated
 segments of ASCII letters, digits and hyphens, such as <code>dev.example.hello-world</code>. Underscores are
 not allowed. Ids starting with <code>dev.rim.</code> or <code>com.rim.</code> are reserved.</p>
@@ -715,7 +715,8 @@ minute</strong> by default, counted per plugin; a call over the limit gets <code
 <code>rim.log</code> needs no capability and has no limit.</li>
 </ul>
 <h3 id="capability-names">Capability names <a class="anchor" href="#capability-names" aria-label="Link to this section">#</a></h3>
-<p>The protocol knows two kinds of capability name. Both are valid in <code>grantedCapabilities</code> in v1:</p>
+<p>The protocol knows two kinds of capability name. Both are valid in <code>grantedCapabilities</code> in v1,
+though the rim-ui host declares and grants built-in names only (see &quot;What the host enforces&quot;):</p>
 <ul>
 <li><strong>Plugin-scoped names</strong>, <code>plugin.&lt;pluginId&gt;.&lt;verb&gt;</code>, such as
 <code>plugin.dev.example.k8stools.restart_pod</code>. <code>required_capabilities</code> on a command can point at
@@ -773,32 +774,42 @@ them. The host guards no method of its own with them; it checks them only on com
 <p>None of the methods the built-in names guard is part of frozen v1 (section 17).</p>
 <h3 id="what-the-host-enforces">What the host enforces <a class="anchor" href="#what-the-host-enforces" aria-label="Link to this section">#</a></h3>
 <p>These are properties of the rim-ui host, not of the protocol, and a host may change them without
-a protocol change. They changed with the TypeScript SDK PR (rim-ui #16), so both are described;
-check <code>rim-ui/src-tauri/src/plugin_host/validation.rs</code> in the host version you target.</p>
+a protocol change. They changed with the TypeScript SDK PR (rim-ui #16), with rim-ui #44 and
+with rim-ui #190, so each version is described; check
+<code>rim-ui/src-tauri/src/plugin_host/validation.rs</code> in the host version you target.</p>
 <ul>
 <li><strong>Which names a manifest may declare.</strong> A manifest that declares any other name fails to
 install.<ul>
-<li>From rim-ui #44 onward: the built-in names <code>ui.panel</code>, <code>ui.notify</code>, <code>chat.read</code>,
-<code>chat.write</code>, <code>chat.read.encrypted</code> and <code>chat.write.encrypted</code>, and the plugin&#39;s own keys
+<li>From rim-ui #190 onward: only the built-in names <code>ui.panel</code>, <code>ui.notify</code>, <code>chat.read</code>,
+<code>chat.write</code>, <code>chat.read.encrypted</code> and <code>chat.write.encrypted</code>, and for a <code>WebSandboxed</code>
+plugin also <code>network.fetch</code> (<a href="web-plugins-v1.html"><code>web-plugins-v1.md</code></a>), in <code>capabilities</code> and in every command&#39;s
+<code>required_capabilities</code>. A plugin-scoped key <code>plugin.&lt;pluginId&gt;.&lt;verb&gt;</code> is refused, since
+the approval prompt lists only built-in names and could never approve one. An encrypted
+chat name declared without its plain one is rejected, and the other built-in names are
+rejected as from #44.</li>
+<li>From rim-ui #44 to #190: the same built-in names, and the plugin&#39;s own keys
 <code>plugin.&lt;pluginId&gt;.&lt;verb&gt;</code>, where the verb uses only <code>[a-z0-9_.]</code> and neither starts nor
 ends with <code>.</code> nor contains <code>..</code>. An encrypted chat name declared without its plain one is
 rejected. The other built-in names are rejected: <code>events.read</code> guards a call that nothing
 serves and that is not in v1, and <code>local.process</code>, <code>network</code>, <code>fs.read</code> and <code>fs.write</code> guard
-nothing at all. A <code>WebSandboxed</code> plugin may also declare <code>network.fetch</code>
-(<a href="web-plugins-v1.html"><code>web-plugins-v1.md</code></a>).</li>
+nothing at all. A <code>WebSandboxed</code> plugin may also declare <code>network.fetch</code>. The approval
+prompt lists only built-in names, so a plugin-scoped key was never approved, and a command
+whose <code>required_capabilities</code> named one was always refused.</li>
 <li>From rim-ui #16 to #44: the same rules with only <code>ui.panel</code> and <code>ui.notify</code> of the built-in
 names; <code>chat.read</code> and <code>chat.write</code> are rejected too.</li>
 <li>Before rim-ui #16: only <code>plugin.&lt;pluginId&gt;.&lt;verb&gt;</code> keys, with the <strong>whole</strong> key in
 <code>[a-z0-9_.]</code>. No plugin could hold a built-in name, so <code>rim.ui.update_panel</code> was always
 answered <code>CAPABILITY_DENIED</code>, and a plugin id with an uppercase letter or a hyphen could
 declare no capability at all.</li>
-<li>In both: a key is 4 to 128 bytes long and has no segment named <code>system</code>, <code>internal</code>,
-<code>admin</code> or <code>audit</code>.</li>
+<li>Before rim-ui #190: a key is 4 to 128 bytes long and has no segment named <code>system</code>,
+<code>internal</code>, <code>admin</code> or <code>audit</code>.</li>
 </ul>
 </li>
-<li><strong>Approving plugin-scoped names.</strong> The approval prompt lists only built-in names, so a
-<code>plugin.&lt;pluginId&gt;.&lt;verb&gt;</code> key a manifest declares is never approved, and a command whose
-<code>required_capabilities</code> names one is always refused.</li>
+<li><strong>Which names a command may require.</strong> From rim-ui #190 onward, every name in a command&#39;s
+<code>required_capabilities</code> must also be in the manifest&#39;s <code>capabilities</code>; otherwise install fails
+with <code>UNDECLARED_CAPABILITY</code>, naming the command and the key. Before rim-ui #190 the two lists
+were not compared at install, and a command requiring an undeclared name was refused when it
+ran.</li>
 <li><strong>Approving while the plugin runs.</strong> <code>grantedCapabilities</code> is the approved list when the
 connection started, and v1 has no notification for changes to it. A capability the user
 approves while the plugin runs reaches the command gate at once, but the plugin&#39;s own calls to
@@ -1034,7 +1045,7 @@ in the manifest; notifications are a panel-side feature, see <a href="../docs/lo
 <p>A plugin <code>dev.example.k8stools</code> with two commands, <code>list_pods</code> and <code>restart_pod</code> (dangerous).
 Arrows show direction; each line is one frame&#39;s JSON payload.</p>
 <pre><code class="language-text"># 1. The host starts the plugin and handshakes. The plugin logs before answering, which is allowed.
-host → plugin  {&quot;jsonrpc&quot;:&quot;2.0&quot;,&quot;id&quot;:1,&quot;method&quot;:&quot;rim.handshake&quot;,&quot;params&quot;:{&quot;protocolVersion&quot;:1,&quot;supportedVersions&quot;:[1],&quot;pluginId&quot;:&quot;dev.example.k8stools&quot;,&quot;hostVersion&quot;:&quot;0.1.0&quot;,&quot;grantedCapabilities&quot;:[&quot;plugin.dev.example.k8stools.restart_pod&quot;],&quot;principal&quot;:{&quot;principalId&quot;:&quot;rimp0_PWcag22GowE59KogGTaUReeoF_q4E5EVi28q83uaGBU&quot;,&quot;displayName&quot;:&quot;Jakub&quot;}}}
+host → plugin  {&quot;jsonrpc&quot;:&quot;2.0&quot;,&quot;id&quot;:1,&quot;method&quot;:&quot;rim.handshake&quot;,&quot;params&quot;:{&quot;protocolVersion&quot;:1,&quot;supportedVersions&quot;:[1],&quot;pluginId&quot;:&quot;dev.example.k8stools&quot;,&quot;hostVersion&quot;:&quot;0.1.0&quot;,&quot;grantedCapabilities&quot;:[&quot;ui.panel&quot;],&quot;principal&quot;:{&quot;principalId&quot;:&quot;rimp0_PWcag22GowE59KogGTaUReeoF_q4E5EVi28q83uaGBU&quot;,&quot;displayName&quot;:&quot;Jakub&quot;}}}
 plugin → host  {&quot;jsonrpc&quot;:&quot;2.0&quot;,&quot;method&quot;:&quot;rim.log&quot;,&quot;params&quot;:{&quot;level&quot;:&quot;info&quot;,&quot;message&quot;:&quot;k8stools starting&quot;}}
 plugin → host  {&quot;jsonrpc&quot;:&quot;2.0&quot;,&quot;id&quot;:1,&quot;result&quot;:{&quot;accepted&quot;:true,&quot;protocolVersion&quot;:1,&quot;pluginId&quot;:&quot;dev.example.k8stools&quot;}}
 
@@ -1222,7 +1233,7 @@ ignored.</li>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/98d1883fa51947555c4ea37d5255692c80558fa9/docs/specs/plugin-protocol-v1.md">rim-server/docs/specs/plugin-protocol-v1.md</a> at <code>98d1883</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/545874392ca2416d2c6c2307c985afec20c888ea/docs/specs/plugin-protocol-v1.md">rim-server/docs/specs/plugin-protocol-v1.md</a> at <code>5458743</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

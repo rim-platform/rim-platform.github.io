@@ -81,17 +81,15 @@ plugin that requests <code>network.fetch</code> may connect to</li>
 </ul>
 <p>rim-ui&#39;s <a href="client/plugin-manifest.html">plugin manifest reference</a> describes every field
 and the rules install checks.</p>
-<p>A plugin without <code>rim-plugin.json</code> can instead put its manifest in comment headers at the top of
-a <code>main.ts</code>, <code>main.js</code> or <code>main.py</code> entrypoint (&quot;simple mode&quot;, <code>simple_manifest.rs</code>):</p>
-<pre><code class="language-text"># rim-plugin: dev.example.my-tool
-# rim-name: My Tool
-# rim-version: 1.0.0
-# rim-description: Does useful things
-# rim-command: do_thing | Do Thing | Does a thing</code></pre>
+<p>Every plugin needs <code>rim-plugin.json</code> at its root: a folder or repository without one fails to
+install.</p>
 <p>Install-time validation rejects reserved plugin id prefixes (<code>dev.rim.</code>, <code>com.rim.</code>), capability
-names other than the plugin&#39;s own <code>plugin.&lt;plugin_id&gt;.&lt;verb&gt;</code> keys and the built-in names the host
-accepts, and <code>ai_callable</code> commands whose <code>output_schema</code> could leak a plugin install id. The
-protocol spec, section 12, lists which names each host version accepts.</p>
+names other than the built-in names the host accepts, in <code>capabilities</code> and in every command&#39;s
+<code>required_capabilities</code> (a plugin-scoped <code>plugin.&lt;plugin_id&gt;.&lt;verb&gt;</code> key is refused, since the
+approval prompt could never approve one), a command whose <code>required_capabilities</code> names a
+capability <code>capabilities</code> does not declare (<code>UNDECLARED_CAPABILITY</code>), and <code>ai_callable</code> commands
+whose <code>output_schema</code> could leak a plugin install id. The protocol spec, section 12, lists which
+names each host version accepts.</p>
 <h2 id="process-lifecycle">Process lifecycle <a class="anchor" href="#process-lifecycle" aria-label="Link to this section">#</a></h2>
 <p>A plugin process starts when the user enables the plugin, and at app start for every plugin that
 was enabled when the app last ran. The connection lifecycle, heartbeats and the shutdown sequence
@@ -219,7 +217,7 @@ Retry and Close buttons. Other plugins and the host UI are not affected.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/98d1883fa51947555c4ea37d5255692c80558fa9/docs/local_plugin_host.md">rim-server/docs/local_plugin_host.md</a> at <code>98d1883</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/545874392ca2416d2c6c2307c985afec20c888ea/docs/local_plugin_host.md">rim-server/docs/local_plugin_host.md</a> at <code>5458743</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>
