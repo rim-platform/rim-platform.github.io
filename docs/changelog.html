@@ -55,7 +55,7 @@ not.</li>
 <li>A change the operator has to act on (a new required setting, a migration that rewrites a
 large table, a contract migration, a changed default) starts with <strong>Upgrade:</strong> and says what
 to do. <a href="operations/upgrade.html"><code>docs/operations/upgrade.md</code></a> is how an upgrade runs.</li>
-<li>A change to the GraphQL schema or a spec in <a href="https://github.com/rim-platform/rim-server/tree/292d7d76bdc85aa388493c017f4f2a027a9c3e74/docs/specs"><code>docs/specs/</code></a> names the type, field or spec.</li>
+<li>A change to the GraphQL schema or a spec in <a href="https://github.com/rim-platform/rim-server/tree/98d1883fa51947555c4ea37d5255692c80558fa9/docs/specs"><code>docs/specs/</code></a> names the type, field or spec.</li>
 <li>At release time <code>Unreleased</code> becomes <code>## [&lt;version&gt;] - &lt;YYYY-MM-DD&gt;</code> and a new empty
 <code>Unreleased</code> starts above it (<a href="operations/release-checklist.html"><code>docs/operations/release-checklist.md</code></a>).</li>
 </ul>
@@ -195,6 +195,11 @@ does not exist here, or the direct space, stops the server at boot.</p>
 </ul>
 <h3 id="changed">Changed <a class="anchor" href="#changed" aria-label="Link to this section">#</a></h3>
 <ul>
+<li><p>A confirmation of a command now lasts 60 seconds, at most 300, instead of five, so a person
+has time to read the confirmation dialog and answer it before it lapses. A proof is still good
+once, for the same caller, command, arguments and context (&quot;Confirmation gate (H1)&quot; in
+<a href="command_model.html"><code>docs/command_model.md</code></a>).</p>
+</li>
 <li><p>Workspace members are no longer always delivered: a member&#39;s DM follows the recipient&#39;s choice
 for that workspace, <code>DIRECT</code> unless the workspace or the person set <code>REQUESTS</code>; Owners and
 Moderators are always delivered. With the defaults everything arrives as before.</p>
@@ -227,7 +232,7 @@ identity, sign up with a key and link other devices; a browser-held identity is 
 up, the recovery kit is shown after signup or enrollment and its entropy is kept until the
 person confirms they saved it.</p>
 </li>
-<li><p><strong>Upgrade:</strong> <a href="https://github.com/rim-platform/rim-server/blob/292d7d76bdc85aa388493c017f4f2a027a9c3e74/deploy/compose.yml"><code>deploy/compose.yml</code></a> runs the published images <code>ghcr.io/rim-platform/rim-server</code>
+<li><p><strong>Upgrade:</strong> <a href="https://github.com/rim-platform/rim-server/blob/98d1883fa51947555c4ea37d5255692c80558fa9/deploy/compose.yml"><code>deploy/compose.yml</code></a> runs the published images <code>ghcr.io/rim-platform/rim-server</code>
 and <code>ghcr.io/rim-platform/rim-web</code> at <code>RIM_VERSION</code> (default <code>latest</code>) instead of building
 them. Set <code>RIM_VERSION</code> in <code>deploy/.env</code> to the release you run, and run <code>pull</code> then <code>up -d</code>
 where you ran <code>up -d --build</code>. Operators who build locally add <code>-f deploy/compose.dev.yml</code> to
@@ -323,12 +328,19 @@ process or from the command line closes its connections within
 <li>A message on <code>/api/ws</code> is at most 256 KiB, whole or in fragments; a larger one closes the
 connection with code <code>1009</code> (&quot;message too large&quot;), refused at the frame header where it can
 be. Before, fragments were reassembled without a limit and queued for the server unbounded.</li>
+<li>Pipelines react only to events their creator may see: a message, edit, deletion or reaction
+in a private channel, DM or group the creator is not in (for a guest, any conversation they
+are not in) no longer fires their pipeline or counts towards its cooldown or suspension, and a
+creator who has left the workspace has no pipeline firing. Only the creator is told when a
+pipeline fires or is suspended, and <code>PipelineGql.lastFiredAt</code> reads null for everyone else.
+Before, any member could build a pipeline with a text or author filter and learn from its
+firing when a private conversation they were not in received a matching message.</li>
 </ul>
 
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/292d7d76bdc85aa388493c017f4f2a027a9c3e74/CHANGELOG.md">rim-server/CHANGELOG.md</a> at <code>292d7d7</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/98d1883fa51947555c4ea37d5255692c80558fa9/CHANGELOG.md">rim-server/CHANGELOG.md</a> at <code>98d1883</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

@@ -95,13 +95,14 @@ const GROUPS = [
   {
     key: "using-rim",
     title: "Using RIM",
-    lede: "The desktop and web client: getting started from a fresh install to a first conversation, commands, keybinds, macros and pipelines, installing it and signing in, building it, the keyboard, plugins, keys and recovery, linking a device, encrypted conversations, relays and the local message cache.",
+    lede: "The desktop and web client: getting started from a fresh install to a first conversation, commands, keybinds, macros and pipelines, the AI agent, installing it and signing in, building it, the keyboard, plugins, keys and recovery, linking a device, encrypted conversations, relays and the local message cache.",
     subs: [
       {
         title: "Start here",
         items: [
           ["ui", "docs/getting-started.md"],
           ["ui", "docs/commands-and-automation.md"],
+          ["ui", "docs/ai-agent.md"],
         ],
       },
       { title: "Install", items: [["ui", "docs/install.md"]] },

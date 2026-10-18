@@ -56,7 +56,7 @@
 </details></aside>
     <main id="content" class="prose">
 <h1 id="web-plugins-v1">Web plugins v1</h1>
-<p class="status"><span><b>Web plugins v1</b></span><span>version 1</span><span>status: implemented, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/292d7d76bdc85aa388493c017f4f2a027a9c3e74/docs/specs/web-plugins-v1.md">rim-server/docs/specs/web-plugins-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/292d7d76bdc85aa388493c017f4f2a027a9c3e74">292d7d7</a></span></p>
+<p class="status"><span><b>Web plugins v1</b></span><span>version 1</span><span>status: implemented, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/98d1883fa51947555c4ea37d5255692c80558fa9/docs/specs/web-plugins-v1.md">rim-server/docs/specs/web-plugins-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/98d1883fa51947555c4ea37d5255692c80558fa9">98d1883</a></span></p>
 <p><em>Status: implemented, normative. Extends <a href="plugin-protocol-v1.html"><code>docs/specs/plugin-protocol-v1.md</code></a> (read it first:
 the messages, the handshake, capabilities and the dangerous-command gate are defined there and do
 not change). This document is the contract between the RIM host, on the desktop and on the web,
@@ -80,9 +80,9 @@ confirmation gate are v1&#39;s, unchanged.</li>
 navigates itself, floods the host or misses two heartbeats is removed.</li>
 <li>The plugin reaches RIM only through host methods behind the same capability prompts. An opaque
 origin has no RIM cookies and cannot read the CSRF token, so it cannot call GraphQL.</li>
-<li><code>ui.panel</code>, <code>ui.notify</code> and <code>plugin.&lt;id&gt;.&lt;verb&gt;</code> are prompted as on the desktop. A new
-<code>network.fetch</code> lets the plugin reach the origins its manifest lists, enforced by CSP.
-<code>local.process</code>, <code>fs.*</code> and <code>network</code> are refused.</li>
+<li><code>ui.panel</code> and <code>ui.notify</code> are prompted as on the desktop; <code>plugin.&lt;id&gt;.&lt;verb&gt;</code> keys install
+but, as on the desktop, no prompt lists them. A new <code>network.fetch</code> lets the plugin reach the
+origins its manifest lists, enforced by CSP. <code>local.process</code>, <code>fs.*</code> and <code>network</code> are refused.</li>
 <li>New host methods <code>rim.storage.get</code> and <code>rim.storage.set</code> (not frozen) give 1 MiB per plugin and
 account, because an opaque origin has no <code>localStorage</code> or IndexedDB.</li>
 <li>The desktop installs web plugins like any plugin or from the workspace registry; the web app
@@ -111,7 +111,7 @@ repositories. The Kubernetes plugin stays desktop-only.</li>
 </tr>
 <tr>
 <td><code>network_origins</code></td>
-<td>New, optional. 1 to 16 origins of the form <code>https://host[:port]</code> or, for WebSockets, <code>wss://host[:port]</code>: lowercase, no path, query, fragment, userinfo or wildcard, no duplicates. Present exactly when <code>capabilities</code> lists <code>network.fetch</code> (<code>null</code> counts as absent, as for every optional field). No origin may share the host and port of the app&#39;s or the RIM API&#39;s origin.</td>
+<td>New, optional. 1 to 16 origins of the form <code>https://host[:port]</code> or, for WebSockets, <code>wss://host[:port]</code>: lowercase, no path, query, fragment, userinfo or wildcard, no duplicates. Present exactly when <code>capabilities</code> lists <code>network.fetch</code> (<code>null</code> counts as absent, as for the other optional fields that have no default, <code>author</code>, <code>output_schema</code>, <code>preset_args</code> and <code>slot</code>; a list field that defaults to empty, such as <code>capabilities</code>, refuses <code>null</code>). No origin may share the host and port of the app&#39;s or the RIM API&#39;s origin.</td>
 </tr>
 <tr>
 <td><code>capabilities</code></td>
@@ -124,24 +124,64 @@ repositories. The Kubernetes plugin stays desktop-only.</li>
 </tbody></table></div>
 <p><code>network_origins</code> and <code>network.fetch</code> are refused for <code>DesktopLocalProcess</code>. A host without web plugin
 support refuses a web plugin at install with <code>failed to parse manifest: unknown variant WebSandboxed</code>, because <code>RuntimeKind</code> is a closed enum; it never tries to execute the module.</p>
-<p>The showcase&#39;s manifest, as installed (its source names <code>main.ts</code>, which the bundler
-builds into <code>main.mjs</code>). A panel reaches its plugin only through commands, so adding and
+<p>The showcase&#39;s manifest, as installed (the bundler builds its source, <code>src/main.ts</code>, into the
+<code>main.mjs</code> it names). A panel reaches its plugin only through commands, so adding and
 removing repositories are commands too; they take an argument, so the palette leaves them
 to the panel:</p>
-<pre><code class="language-json">{ &quot;manifest_version&quot;: 1, &quot;plugin_id&quot;: &quot;chat.rim.github-prs&quot;, &quot;display_name&quot;: &quot;GitHub Pull Requests&quot;,
-  &quot;version&quot;: &quot;0.1.0&quot;, &quot;author&quot;: &quot;RIM team&quot;, &quot;runtime_kind&quot;: &quot;WebSandboxed&quot;, &quot;entrypoint&quot;: &quot;main.mjs&quot;,
+<pre><code class="language-json">{
+  &quot;manifest_version&quot;: 1,
+  &quot;plugin_id&quot;: &quot;chat.rim.github-prs&quot;,
+  &quot;display_name&quot;: &quot;GitHub Pull Requests&quot;,
+  &quot;version&quot;: &quot;0.0.1&quot;,
+  &quot;author&quot;: &quot;RIM team&quot;,
+  &quot;runtime_kind&quot;: &quot;WebSandboxed&quot;,
+  &quot;entrypoint&quot;: &quot;main.mjs&quot;,
   &quot;description&quot;: &quot;Lists the open pull requests of public GitHub repositories you choose. Talks only to GitHub, without a token.&quot;,
   &quot;capabilities&quot;: [&quot;ui.panel&quot;, &quot;network.fetch&quot;],
   &quot;network_origins&quot;: [&quot;https://api.github.com&quot;, &quot;https://avatars.githubusercontent.com&quot;],
-  &quot;commands&quot;: [{ &quot;id&quot;: &quot;refresh&quot;, &quot;title&quot;: &quot;Pull requests: Refresh&quot;,
-                 &quot;description&quot;: &quot;Fetches the open pull requests again.&quot;, &quot;keybind_capable&quot;: true },
-               { &quot;id&quot;: &quot;add_repo&quot;, &quot;title&quot;: &quot;Pull requests: Add repository&quot;,
-                 &quot;description&quot;: &quot;Adds a public GitHub repository to the list, at most 10.&quot;,
-                 &quot;arguments&quot;: [{ &quot;name&quot;: &quot;repo&quot;, &quot;type&quot;: &quot;string&quot;, &quot;required&quot;: true }] },
-               { &quot;id&quot;: &quot;remove_repo&quot;, &quot;title&quot;: &quot;Pull requests: Remove repository&quot;,
-                 &quot;description&quot;: &quot;Removes a repository from the list.&quot;,
-                 &quot;arguments&quot;: [{ &quot;name&quot;: &quot;repo&quot;, &quot;type&quot;: &quot;string&quot;, &quot;required&quot;: true }] }],
-  &quot;panels&quot;: [{ &quot;id&quot;: &quot;prs&quot;, &quot;title&quot;: &quot;Pull requests&quot;, &quot;slot&quot;: &quot;tool_panel&quot; }] }</code></pre>
+  &quot;commands&quot;: [
+    {
+      &quot;id&quot;: &quot;refresh&quot;,
+      &quot;title&quot;: &quot;Pull requests: Refresh&quot;,
+      &quot;description&quot;: &quot;Fetches the open pull requests again.&quot;,
+      &quot;keybind_capable&quot;: true
+    },
+    {
+      &quot;id&quot;: &quot;add_repo&quot;,
+      &quot;title&quot;: &quot;Pull requests: Add repository&quot;,
+      &quot;description&quot;: &quot;Adds a public GitHub repository to the list, at most 10.&quot;,
+      &quot;arguments&quot;: [
+        {
+          &quot;name&quot;: &quot;repo&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;required&quot;: true,
+          &quot;description&quot;: &quot;The repository as owner/name, such as rust-lang/rust.&quot;
+        }
+      ]
+    },
+    {
+      &quot;id&quot;: &quot;remove_repo&quot;,
+      &quot;title&quot;: &quot;Pull requests: Remove repository&quot;,
+      &quot;description&quot;: &quot;Removes a repository from the list.&quot;,
+      &quot;arguments&quot;: [
+        {
+          &quot;name&quot;: &quot;repo&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;required&quot;: true,
+          &quot;description&quot;: &quot;The repository as owner/name.&quot;
+        }
+      ]
+    }
+  ],
+  &quot;panels&quot;: [
+    {
+      &quot;id&quot;: &quot;prs&quot;,
+      &quot;title&quot;: &quot;Pull requests&quot;,
+      &quot;description&quot;: &quot;Open pull requests of the repositories on your list.&quot;,
+      &quot;slot&quot;: &quot;tool_panel&quot;
+    }
+  ]
+}</code></pre>
 <h2 id="bundles">Bundles <a class="anchor" href="#bundles" aria-label="Link to this section">#</a></h2>
 <p>A bundle is one UTF-8 JSON file, extension <code>.rimbundle</code>, media type
 <code>application/vnd.rim.plugin-bundle+json</code>:</p>
@@ -387,9 +427,14 @@ panels when the plugin stops). Focus and Escape work as for other panels.</p>
 </tr>
 </thead>
 <tbody><tr>
-<td><code>plugin.&lt;pluginId&gt;.&lt;verb&gt;</code>, <code>ui.panel</code></td>
+<td><code>ui.panel</code></td>
 <td>Prompted</td>
 <td>As on the desktop</td>
+</tr>
+<tr>
+<td><code>plugin.&lt;pluginId&gt;.&lt;verb&gt;</code></td>
+<td>Accepted at install, not prompted</td>
+<td>As on the desktop: the prompt lists only built-in names, so nothing approves one, and a command whose <code>required_capabilities</code> names one is always refused</td>
 </tr>
 <tr>
 <td><code>ui.notify</code></td>
@@ -556,13 +601,14 @@ both kinds it writes the directory as today plus <code>&lt;plugin_id&gt;-&lt;ver
 <li><strong>Testing.</strong> <code>startTestHost</code> gains <code>transport: &quot;port&quot;</code>: the plugin runs over a Node
 <code>MessageChannel</code> with the same assertions as over stdio.</li>
 </ul>
-<p><strong>Showcase: <code>plugins/github-prs/</code></strong> (<code>chat.rim.github-prs</code>, the manifest above), written with the
-SDK. Its panel lists the open pull requests (title, author, age, draft) of up to 10 public
-repositories the user adds, kept with <code>rim.storage</code>; <code>refresh</code> is keybind-capable. It calls the
-GitHub REST API without a token (60 requests an hour per IP address, so it refreshes at most every
-2 minutes and says when GitHub refuses). It exercises both frames, <code>network.fetch</code>, storage, the
-panel bridge and, on the web, a registry install. <code>plugins/k8s-pods/</code> stays <code>DesktopLocalProcess</code>:
-it runs <code>kubectl</code>.</p>
+<p><strong>Showcase: <code>plugin-github-prs</code></strong> (<code>chat.rim.github-prs</code>, the manifest above), written with the SDK
+in <a href="https://github.com/rim-platform/plugin-github-prs">its own repository</a>. Its panel lists the open
+pull requests (title, author, age, draft) of up to 10 public repositories the user adds, kept with
+<code>rim.storage</code>; <code>refresh</code> is keybind-capable. It calls the GitHub REST API without a token (60
+requests an hour per IP address, so it refreshes at most every 2 minutes and says when GitHub
+refuses). It exercises both frames, <code>network.fetch</code>, storage, the panel bridge and, on the web, a
+registry install. <a href="https://github.com/rim-platform/plugin-k8s-pods"><code>plugin-k8s-pods</code></a> stays
+<code>DesktopLocalProcess</code>: it runs <code>kubectl</code>.</p>
 <h2 id="a-web-plugin-without-the-sdk">A web plugin without the SDK <a class="anchor" href="#a-web-plugin-without-the-sdk" aria-label="Link to this section">#</a></h2>
 <p><code>rim-plugin.json</code>:</p>
 <pre><code class="language-json">{&quot;manifest_version&quot;:1,&quot;plugin_id&quot;:&quot;dev.example.hello-web&quot;,&quot;display_name&quot;:&quot;Hello Web&quot;,&quot;version&quot;:&quot;0.1.0&quot;,&quot;description&quot;:&quot;Says hello from a sandboxed frame.&quot;,&quot;runtime_kind&quot;:&quot;WebSandboxed&quot;,&quot;entrypoint&quot;:&quot;main.mjs&quot;,&quot;commands&quot;:[{&quot;id&quot;:&quot;greet&quot;,&quot;title&quot;:&quot;Hello Web: Greet&quot;,&quot;description&quot;:&quot;Greets the signed-in user.&quot;}]}</code></pre>
@@ -793,7 +839,7 @@ feed), as <code>JSON.stringify</code> does. <a href="workspace-plugins-v1.html">
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/292d7d76bdc85aa388493c017f4f2a027a9c3e74/docs/specs/web-plugins-v1.md">rim-server/docs/specs/web-plugins-v1.md</a> at <code>292d7d7</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/98d1883fa51947555c4ea37d5255692c80558fa9/docs/specs/web-plugins-v1.md">rim-server/docs/specs/web-plugins-v1.md</a> at <code>98d1883</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

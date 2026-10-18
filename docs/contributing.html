@@ -61,8 +61,8 @@ after it merges.</li>
 them.</li>
 <li><strong>How it was tested</strong>: the commands you ran and the tail of their output (see &quot;Gates&quot; below).
 If a suite could not run, say which and why.</li>
-<li><strong>Which spec or doc it changes</strong>: a change to a contract in <a href="https://github.com/rim-platform/rim-server/tree/292d7d76bdc85aa388493c017f4f2a027a9c3e74/docs/specs"><code>docs/specs/</code></a> or to a page in
-<a href="https://github.com/rim-platform/rim-server/tree/292d7d76bdc85aa388493c017f4f2a027a9c3e74/docs"><code>docs/</code></a> is part of the same pull request as the code.</li>
+<li><strong>Which spec or doc it changes</strong>: a change to a contract in <a href="https://github.com/rim-platform/rim-server/tree/98d1883fa51947555c4ea37d5255692c80558fa9/docs/specs"><code>docs/specs/</code></a> or to a page in
+<a href="https://github.com/rim-platform/rim-server/tree/98d1883fa51947555c4ea37d5255692c80558fa9/docs"><code>docs/</code></a> is part of the same pull request as the code.</li>
 </ul>
 <p>A change an operator, a user or a client author sees adds its line under <code>Unreleased</code> in
 <a href="changelog.html"><code>CHANGELOG.md</code></a>; the top of that file says how.</p>
@@ -75,7 +75,7 @@ macros, pipelines, plugins and the AI command surface. A feature for one kind of
 incident tracker, a game tool, a ticket workflow) is a vertical, and verticals are built as
 plugins, bots or pipelines on top of the core, not inside it. When a request can be met by a
 plugin, a bot, a pipeline or a macro, the core gains the primitive that makes it possible and
-the vertical stays outside. <a href="https://github.com/rim-platform/rim-server/blob/292d7d76bdc85aa388493c017f4f2a027a9c3e74/ROADMAP.md"><code>ROADMAP.md</code></a> (&quot;Principles for sequencing&quot;, &quot;Architecture
+the vertical stays outside. <a href="https://github.com/rim-platform/rim-server/blob/98d1883fa51947555c4ea37d5255692c80558fa9/ROADMAP.md"><code>ROADMAP.md</code></a> (&quot;Principles for sequencing&quot;, &quot;Architecture
 guardrails&quot;) has the reasoning; every new server feature also answers what it does in an
 encrypted conversation and with more than one server.</p>
 <h2 id="gates">Gates <a class="anchor" href="#gates" aria-label="Link to this section">#</a></h2>
@@ -86,10 +86,10 @@ cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace
 cargo audit --deny unsound</code></pre>
 <p><code>cargo audit --deny unsound</code> fails on a known vulnerability or an unsoundness advisory in
-<a href="https://github.com/rim-platform/rim-server/blob/292d7d76bdc85aa388493c017f4f2a027a9c3e74/Cargo.lock"><code>Cargo.lock</code></a>. An advisory that cannot be fixed yet goes in <code>.cargo/audit.toml</code> with why it does
+<a href="https://github.com/rim-platform/rim-server/blob/98d1883fa51947555c4ea37d5255692c80558fa9/Cargo.lock"><code>Cargo.lock</code></a>. An advisory that cannot be fixed yet goes in <code>.cargo/audit.toml</code> with why it does
 not apply and when the entry comes out.</p>
 <p><code>cargo test --workspace</code> includes <code>cargo test -p migration</code>, which checks that every migration
-file is registered in <a href="https://github.com/rim-platform/rim-server/blob/292d7d76bdc85aa388493c017f4f2a027a9c3e74/migration/src/lib.rs"><code>migration/src/lib.rs</code></a> and that every migration has a <code>down</code> that undoes
+file is registered in <a href="https://github.com/rim-platform/rim-server/blob/98d1883fa51947555c4ea37d5255692c80558fa9/migration/src/lib.rs"><code>migration/src/lib.rs</code></a> and that every migration has a <code>down</code> that undoes
 its <code>up</code>. <code>sea migrate generate</code> has dropped registrations when it rewrites that file, so run it
 after generating a migration.</p>
 <p>Three feature-gated suites need a running PostgreSQL 17 and <code>DATABASE_URL</code>. They fail loudly
@@ -98,19 +98,19 @@ when <code>DATABASE_URL</code> is unset; leave the feature flag off to skip them
 cargo test -p rim_api --features e2e-tests -- --test-threads=1
 cargo test -p rim_infra_services --features infra-db-tests -- --test-threads=1</code></pre>
 <p>The <code>rim_api</code> end-to-end suite also runs two servers in one process
-(<a href="https://github.com/rim-platform/rim-server/blob/292d7d76bdc85aa388493c017f4f2a027a9c3e74/rim_api/tests/s2s_e2e.rs"><code>rim_api/tests/s2s_e2e.rs</code></a>) to test server-to-server traffic over loopback. The second server
+(<a href="https://github.com/rim-platform/rim-server/blob/98d1883fa51947555c4ea37d5255692c80558fa9/rim_api/tests/s2s_e2e.rs"><code>rim_api/tests/s2s_e2e.rs</code></a>) to test server-to-server traffic over loopback. The second server
 uses a second database named like the one in <code>DATABASE_URL</code> with <code>b</code> appended
 (<code>rim_test</code> and <code>rim_testb</code>); the suite creates it when it is missing, so the database user
 needs the right to create databases.</p>
 <p>Run suites that share a database with <code>--test-threads=1</code>.</p>
 <h2 id="code-conventions">Code conventions <a class="anchor" href="#code-conventions" aria-label="Link to this section">#</a></h2>
-<p><a href="https://github.com/rim-platform/rim-server/blob/292d7d76bdc85aa388493c017f4f2a027a9c3e74/CLAUDE.md"><code>CLAUDE.md</code></a> describes the layering, the patterns and the conventions; the points reviewers check
+<p><a href="https://github.com/rim-platform/rim-server/blob/98d1883fa51947555c4ea37d5255692c80558fa9/CLAUDE.md"><code>CLAUDE.md</code></a> describes the layering, the patterns and the conventions; the points reviewers check
 most:</p>
 <ul>
 <li><strong>Layers.</strong> <code>rim_api</code> and the non-GraphQL transports in <code>rim_server</code> call service traits from
 <code>rim_services</code>, never their implementations, and only services reach repositories. The
-composition root in <a href="https://github.com/rim-platform/rim-server/blob/292d7d76bdc85aa388493c017f4f2a027a9c3e74/rim_server/src/app.rs"><code>rim_server/src/app.rs</code></a> is the one place that builds the implementations;
-<a href="https://github.com/rim-platform/rim-server/blob/292d7d76bdc85aa388493c017f4f2a027a9c3e74/CLAUDE.md"><code>CLAUDE.md</code></a> describes both exceptions to the layer chain.</li>
+composition root in <a href="https://github.com/rim-platform/rim-server/blob/98d1883fa51947555c4ea37d5255692c80558fa9/rim_server/src/app.rs"><code>rim_server/src/app.rs</code></a> is the one place that builds the implementations;
+<a href="https://github.com/rim-platform/rim-server/blob/98d1883fa51947555c4ea37d5255692c80558fa9/CLAUDE.md"><code>CLAUDE.md</code></a> describes both exceptions to the layer chain.</li>
 <li><strong>Errors.</strong> No <code>unwrap</code> or <code>expect</code> in library code; <code>ServiceResult</code> at service boundaries.</li>
 <li><strong>Imports.</strong> <code>std</code>, then external crates, then local modules, separated by blank lines.</li>
 <li><strong>Visibility.</strong> New modules are <code>pub(crate)</code> unless something outside the crate uses them.</li>
@@ -137,7 +137,7 @@ the server running locally:</p>
 cd ../rim-ui &amp;&amp; npm run codegen</code></pre>
 <p>Enum variants become <code>SCREAMING_SNAKE</code> and fields <code>camelCase</code> in the schema. New resolvers go
 into the last <code>QueryGroupN</code> or <code>MutationGroupN</code> (or into an existing domain object) so the field
-order of the existing schema does not change; <a href="https://github.com/rim-platform/rim-server/blob/292d7d76bdc85aa388493c017f4f2a027a9c3e74/CLAUDE.md"><code>CLAUDE.md</code></a> explains why.</p>
+order of the existing schema does not change; <a href="https://github.com/rim-platform/rim-server/blob/98d1883fa51947555c4ea37d5255692c80558fa9/CLAUDE.md"><code>CLAUDE.md</code></a> explains why.</p>
 <h2 id="who-can-merge-and-publish">Who can merge and publish <a class="anchor" href="#who-can-merge-and-publish" aria-label="Link to this section">#</a></h2>
 <ul>
 <li><p><strong>Every change is a pull request.</strong> Nobody pushes to <code>master</code> directly, the maintainer
@@ -198,7 +198,7 @@ Actions access&quot; only this repository, with the write role.</li>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/292d7d76bdc85aa388493c017f4f2a027a9c3e74/CONTRIBUTING.md">rim-server/CONTRIBUTING.md</a> at <code>292d7d7</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/98d1883fa51947555c4ea37d5255692c80558fa9/CONTRIBUTING.md">rim-server/CONTRIBUTING.md</a> at <code>98d1883</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>
