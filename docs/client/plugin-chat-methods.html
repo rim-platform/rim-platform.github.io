@@ -53,7 +53,7 @@ once the browser is set up as a linked device (<a href="e2ee-web.html"><code>e2e
 the conversation is. The contract is the &quot;Plugins and the client message service&quot; section
 of <code>../rim-server/docs/specs/e2ee-mls-v1.md</code>.</p>
 <p>These methods are <strong>routed, not frozen</strong>: both hosts serve them, the shapes below are
-listed under <code>x-notFrozen.definitions</code> in <a href="https://github.com/rim-platform/rim-ui/blob/f30a178460cb955412f59ce943a28474201c3cbe/protocol/plugin-protocol-v1.schema.json"><code>protocol/plugin-protocol-v1.schema.json</code></a>, and
+listed under <code>x-notFrozen.definitions</code> in <a href="https://github.com/rim-platform/rim-ui/blob/2e37373e231f8af4467ff3d074384ad781a534f2/protocol/plugin-protocol-v1.schema.json"><code>protocol/plugin-protocol-v1.schema.json</code></a>, and
 they may still change before they are frozen into protocol v1.</p>
 <h2 id="capabilities">Capabilities <a class="anchor" href="#capabilities" aria-label="Link to this section">#</a></h2>
 <div class="tablewrap"><table>
@@ -87,7 +87,7 @@ they may still change before they are frozen into protocol v1.</p>
 </tbody></table></div>
 <ul>
 <li>A manifest that asks for an encrypted capability without its plain one fails to install
-(<code>validation.rs</code>, <code>manifestRules.ts</code>, vectors in <a href="https://github.com/rim-platform/rim-ui/blob/f30a178460cb955412f59ce943a28474201c3cbe/protocol/manifest-vectors.json"><code>protocol/manifest-vectors.json</code></a>). In
+(<code>validation.rs</code>, <code>manifestRules.ts</code>, vectors in <a href="https://github.com/rim-platform/rim-ui/blob/2e37373e231f8af4467ff3d074384ad781a534f2/protocol/manifest-vectors.json"><code>protocol/manifest-vectors.json</code></a>). In
 the permission prompt, checking an encrypted capability checks its plain one and
 unchecking the plain one unchecks the encrypted one.</li>
 <li>The broker checks the plain capability for each method (<code>capability.rs</code>); a call
@@ -152,9 +152,9 @@ content bytes, MLS group state, epochs, ciphertext, or keys of any kind.</li>
 <li>Rows this device could not decrypt (placeholders), messages that could not be
 verified, tombstones, and this device&#39;s sends the server has not acknowledged yet.</li>
 </ul>
-<p>The projection is in Rust on the desktop (<a href="https://github.com/rim-platform/rim-ui/blob/f30a178460cb955412f59ce943a28474201c3cbe/src-tauri/src/message_cache/plugin_view.rs"><code>src-tauri/src/message_cache/plugin_view.rs</code></a>)
-and in TypeScript in the web app (<a href="https://github.com/rim-platform/rim-ui/blob/f30a178460cb955412f59ce943a28474201c3cbe/src/features/e2ee/web/pluginView.ts"><code>src/features/e2ee/web/pluginView.ts</code></a>); both are tested
-against the shared vector <a href="https://github.com/rim-platform/rim-ui/blob/f30a178460cb955412f59ce943a28474201c3cbe/protocol/plugin-chat-vectors.json"><code>protocol/plugin-chat-vectors.json</code></a>.</p>
+<p>The projection is in Rust on the desktop (<a href="https://github.com/rim-platform/rim-ui/blob/2e37373e231f8af4467ff3d074384ad781a534f2/src-tauri/src/message_cache/plugin_view.rs"><code>src-tauri/src/message_cache/plugin_view.rs</code></a>)
+and in TypeScript in the web app (<a href="https://github.com/rim-platform/rim-ui/blob/2e37373e231f8af4467ff3d074384ad781a534f2/src/features/e2ee/web/pluginView.ts"><code>src/features/e2ee/web/pluginView.ts</code></a>); both are tested
+against the shared vector <a href="https://github.com/rim-platform/rim-ui/blob/2e37373e231f8af4467ff3d074384ad781a534f2/protocol/plugin-chat-vectors.json"><code>protocol/plugin-chat-vectors.json</code></a>.</p>
 <h2 id="errors">Errors <a class="anchor" href="#errors" aria-label="Link to this section">#</a></h2>
 <div class="tablewrap"><table>
 <thead>
@@ -197,34 +197,34 @@ Grant events are capped at 200 and daily counts at 90 days.</p>
 </thead>
 <tbody><tr>
 <td>Service, param checks, encrypted gate, audit counting</td>
-<td><a href="https://github.com/rim-platform/rim-ui/blob/f30a178460cb955412f59ce943a28474201c3cbe/src/features/plugins/chat/messageService.ts"><code>src/features/plugins/chat/messageService.ts</code></a></td>
+<td><a href="https://github.com/rim-platform/rim-ui/blob/2e37373e231f8af4467ff3d074384ad781a534f2/src/features/plugins/chat/messageService.ts"><code>src/features/plugins/chat/messageService.ts</code></a></td>
 </tr>
 <tr>
 <td>Wiring to the cache, the send paths and the stores</td>
-<td><a href="https://github.com/rim-platform/rim-ui/blob/f30a178460cb955412f59ce943a28474201c3cbe/src/features/plugins/chat/appMessageService.ts"><code>src/features/plugins/chat/appMessageService.ts</code></a></td>
+<td><a href="https://github.com/rim-platform/rim-ui/blob/2e37373e231f8af4467ff3d074384ad781a534f2/src/features/plugins/chat/appMessageService.ts"><code>src/features/plugins/chat/appMessageService.ts</code></a></td>
 </tr>
 <tr>
 <td>The cache&#39;s plugin projection and its commands</td>
-<td><a href="https://github.com/rim-platform/rim-ui/blob/f30a178460cb955412f59ce943a28474201c3cbe/src-tauri/src/message_cache/plugin_view.rs"><code>src-tauri/src/message_cache/plugin_view.rs</code></a>, <code>commands.rs</code> (<code>message_cache_plugin_*</code>)</td>
+<td><a href="https://github.com/rim-platform/rim-ui/blob/2e37373e231f8af4467ff3d074384ad781a534f2/src-tauri/src/message_cache/plugin_view.rs"><code>src-tauri/src/message_cache/plugin_view.rs</code></a>, <code>commands.rs</code> (<code>message_cache_plugin_*</code>)</td>
 </tr>
 <tr>
 <td>Local-process relay</td>
-<td><a href="https://github.com/rim-platform/rim-ui/blob/f30a178460cb955412f59ce943a28474201c3cbe/src-tauri/src/plugin_host/chat_relay.rs"><code>src-tauri/src/plugin_host/chat_relay.rs</code></a>, <code>broker.rs</code> (<code>Routed::Chat</code>), <code>commands.rs</code> (<code>plugin_chat_respond</code>); the page side <a href="https://github.com/rim-platform/rim-ui/blob/f30a178460cb955412f59ce943a28474201c3cbe/src/features/plugins/chat/usePluginChatRelay.ts"><code>src/features/plugins/chat/usePluginChatRelay.ts</code></a></td>
+<td><a href="https://github.com/rim-platform/rim-ui/blob/2e37373e231f8af4467ff3d074384ad781a534f2/src-tauri/src/plugin_host/chat_relay.rs"><code>src-tauri/src/plugin_host/chat_relay.rs</code></a>, <code>broker.rs</code> (<code>Routed::Chat</code>), <code>commands.rs</code> (<code>plugin_chat_respond</code>); the page side <a href="https://github.com/rim-platform/rim-ui/blob/2e37373e231f8af4467ff3d074384ad781a534f2/src/features/plugins/chat/usePluginChatRelay.ts"><code>src/features/plugins/chat/usePluginChatRelay.ts</code></a></td>
 </tr>
 <tr>
 <td>Web host</td>
-<td><a href="https://github.com/rim-platform/rim-ui/blob/f30a178460cb955412f59ce943a28474201c3cbe/src/features/plugins/web/pluginSession.ts"><code>src/features/plugins/web/pluginSession.ts</code></a> (the <code>chat</code> hook), <code>webPluginHost.ts</code></td>
+<td><a href="https://github.com/rim-platform/rim-ui/blob/2e37373e231f8af4467ff3d074384ad781a534f2/src/features/plugins/web/pluginSession.ts"><code>src/features/plugins/web/pluginSession.ts</code></a> (the <code>chat</code> hook), <code>webPluginHost.ts</code></td>
 </tr>
 <tr>
 <td>SDK</td>
-<td><code>host.chat</code> in <a href="https://github.com/rim-platform/rim-ui/blob/f30a178460cb955412f59ce943a28474201c3cbe/sdk/plugin-sdk/src/plugin.ts"><code>sdk/plugin-sdk/src/plugin.ts</code></a></td>
+<td><code>host.chat</code> in <a href="https://github.com/rim-platform/rim-ui/blob/2e37373e231f8af4467ff3d074384ad781a534f2/sdk/plugin-sdk/src/plugin.ts"><code>sdk/plugin-sdk/src/plugin.ts</code></a></td>
 </tr>
 </tbody></table></div>
 
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/f30a178460cb955412f59ce943a28474201c3cbe/docs/plugin-chat-methods.md">rim-ui/docs/plugin-chat-methods.md</a> at <code>f30a178</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/2e37373e231f8af4467ff3d074384ad781a534f2/docs/plugin-chat-methods.md">rim-ui/docs/plugin-chat-methods.md</a> at <code>2e37373</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>
