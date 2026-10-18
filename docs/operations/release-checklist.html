@@ -65,7 +65,7 @@ numbered items already fixed.</li>
 <li><input disabled="" type="checkbox"> A public operating profile is chosen, set in the deployment&#39;s <code>deploy/.env</code> and tested with
 the packaged client, including how the client shows a refusal and retries. Each of these is
 off when unset or 0 (the message burst follows the per-minute rate), and
-<a href="https://github.com/rim-platform/rim-server/blob/ba1bd32b23c6311a60cab50769960332f7bcf04a/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a> sets none of them:
+<a href="https://github.com/rim-platform/rim-server/blob/ef76e29d29862825129ccc6a6f6d7b081a6398b0/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a> sets none of them:
 - API rates: <code>RIM_RATE_REQUESTS_PER_MIN_PER_IP</code>, <code>RIM_RATE_MUTATIONS_PER_MIN_PER_SESSION</code>,
   <code>RIM_RATE_MESSAGES_PER_MIN_PER_USER</code>, <code>RIM_RATE_MESSAGES_BURST</code>.
 - WebSocket and subscriptions: <code>RIM_RATE_WS_CONNECTIONS_PER_USER</code>,
@@ -78,13 +78,13 @@ off when unset or 0 (the message burst follows the per-minute rate), and
   <code>RIM_LIMIT_MESSAGE_BYTES</code>, <code>RIM_LIMIT_PENDING_INVITES_PER_USER</code>.
 - Probation: <code>RIM_PROBATION_HOURS</code>, <code>RIM_RATE_PROBATION_MESSAGES_PER_MIN</code>.
 
-<a href="https://github.com/rim-platform/rim-server/blob/ba1bd32b23c6311a60cab50769960332f7bcf04a/deploy/.env.example"><code>deploy/.env.example</code></a>, &quot;Request limits&quot; and &quot;Instance limits&quot;, says what each one limits.</li>
+<a href="https://github.com/rim-platform/rim-server/blob/ef76e29d29862825129ccc6a6f6d7b081a6398b0/deploy/.env.example"><code>deploy/.env.example</code></a>, &quot;Request limits&quot; and &quot;Instance limits&quot;, says what each one limits.</li>
 <li><input disabled="" type="checkbox"> <code>RIM_SIGNUP_REQUIRE_KEYS</code> stays on (the default) in the deployment&#39;s <code>deploy/.env</code>, and the
 packaged desktop client and the web client both sign up with a key against it. A
 deployment that sets it to <code>false</code> says why here.</li>
-<li><input disabled="" type="checkbox"> <a href="https://github.com/rim-platform/rim-server/blob/ba1bd32b23c6311a60cab50769960332f7bcf04a/docs/testing/manual-test-plan-2026-10-12.md"><code>docs/testing/manual-test-plan-2026-10-12.md</code></a> is run on the packaged client and the HTTPS
+<li><input disabled="" type="checkbox"> <a href="https://github.com/rim-platform/rim-server/blob/ef76e29d29862825129ccc6a6f6d7b081a6398b0/docs/testing/manual-test-plan-2026-10-12.md"><code>docs/testing/manual-test-plan-2026-10-12.md</code></a> is run on the packaged client and the HTTPS
 deployment being released, and the results are recorded: the &quot;Steps passed&quot; and &quot;Not run&quot;
-sections of <a href="https://github.com/rim-platform/rim-server/blob/ba1bd32b23c6311a60cab50769960332f7bcf04a/docs/testing/manual-test-findings-2026-10-12.md"><code>docs/testing/manual-test-findings-2026-10-12.md</code></a> are filled.</li>
+sections of <a href="https://github.com/rim-platform/rim-server/blob/ef76e29d29862825129ccc6a6f6d7b081a6398b0/docs/testing/manual-test-findings-2026-10-12.md"><code>docs/testing/manual-test-findings-2026-10-12.md</code></a> are filled.</li>
 <li><input disabled="" type="checkbox"> The upgrade, rollback and restore drill of section 4 ran for this release, with its date
 recorded there.</li>
 <li><input disabled="" type="checkbox"> Desktop distribution is in place as section 8 checks it. rim-ui&#39;s release workflow builds
@@ -108,7 +108,7 @@ builds of the desktop app start with.</li>
 <code>curl -s https://relay.rim-platform.org/.well-known/rim-server</code> answers with its descriptor.
 The apex <code>rim-platform.org</code> is the website and does not serve the API.</li>
 <li><input disabled="" type="checkbox"> The credentials the old <code>.env</code> exposed stay rotated: rewriting history does not revoke them
-(<a href="https://github.com/rim-platform/rim-server/blob/ba1bd32b23c6311a60cab50769960332f7bcf04a/docs/security/env-history-purge-runbook.md"><code>docs/security/env-history-purge-runbook.md</code></a>).</li>
+(<a href="https://github.com/rim-platform/rim-server/blob/ef76e29d29862825129ccc6a6f6d7b081a6398b0/docs/security/env-history-purge-runbook.md"><code>docs/security/env-history-purge-runbook.md</code></a>).</li>
 </ul>
 <h2 id="1-choose-the-version">1. Choose the version <a class="anchor" href="#1-choose-the-version" aria-label="Link to this section">#</a></h2>
 <ul>
@@ -116,7 +116,7 @@ The apex <code>rim-platform.org</code> is the website and does not serve the API
 line; <code>git log --oneline v&lt;previous&gt;..master</code> shows what may be missing.</li>
 <li><input disabled="" type="checkbox"> Pick the version by Semantic Versioning. While the version is <code>0.0.x</code>, every release raises
 the patch and any change may break, including the GraphQL schema, the server-to-server
-protocol and the specs in <a href="https://github.com/rim-platform/rim-server/tree/ba1bd32b23c6311a60cab50769960332f7bcf04a/docs/specs"><code>docs/specs/</code></a>; a breaking change still gets its <strong>Upgrade:</strong>
+protocol and the specs in <a href="https://github.com/rim-platform/rim-server/tree/ef76e29d29862825129ccc6a6f6d7b081a6398b0/docs/specs"><code>docs/specs/</code></a>; a breaking change still gets its <strong>Upgrade:</strong>
 line. <code>0.1.0</code> follows once the outside cryptographic review is signed off. From then, while
 the major version is 0, a breaking change raises the minor version and anything else
 raises the patch.</li>
@@ -124,7 +124,7 @@ raises the patch.</li>
 <li><input disabled="" type="checkbox"> rim-server and rim-ui release together. Both carry the same version and are tagged the
 same day, even when one of them has no changes.</li>
 <li><input disabled="" type="checkbox"> If a GraphQL field or argument was removed or changed meaning, <code>API_VERSION</code> in
-<a href="https://github.com/rim-platform/rim-server/blob/ba1bd32b23c6311a60cab50769960332f7bcf04a/rim_api/src/types/server_info.rs"><code>rim_api/src/types/server_info.rs</code></a> goes up by one.</li>
+<a href="https://github.com/rim-platform/rim-server/blob/ef76e29d29862825129ccc6a6f6d7b081a6398b0/rim_api/src/types/server_info.rs"><code>rim_api/src/types/server_info.rs</code></a> goes up by one.</li>
 </ul>
 <h2 id="2-check-the-migrations">2. Check the migrations <a class="anchor" href="#2-check-the-migrations" aria-label="Link to this section">#</a></h2>
 <ul>
@@ -154,16 +154,16 @@ docker build -t rim-server:release-check .</code></pre>
 </ul>
 <h2 id="4-test-the-upgrade-and-the-rollback">4. Test the upgrade and the rollback <a class="anchor" href="#4-test-the-upgrade-and-the-rollback" aria-label="Link to this section">#</a></h2>
 <p>On a scratch host or compose project, never the production one. The release is not published
-yet, so the new images are built from the release commits with <a href="https://github.com/rim-platform/rim-server/blob/ba1bd32b23c6311a60cab50769960332f7bcf04a/deploy/compose.dev.yml"><code>deploy/compose.dev.yml</code></a>:</p>
+yet, so the new images are built from the release commits with <a href="https://github.com/rim-platform/rim-server/blob/ef76e29d29862825129ccc6a6f6d7b081a6398b0/deploy/compose.dev.yml"><code>deploy/compose.dev.yml</code></a>:</p>
 <ul>
 <li><input disabled="" type="checkbox"> Start the previous release (<a href="../self-hosting.html"><code>docs/self-hosting.md</code></a>), sign up, write messages in a channel
-and an encrypted conversation, upload a file, and take a backup with <a href="https://github.com/rim-platform/rim-server/blob/ba1bd32b23c6311a60cab50769960332f7bcf04a/deploy/backup.sh"><code>deploy/backup.sh</code></a>.</li>
+and an encrypted conversation, upload a file, and take a backup with <a href="https://github.com/rim-platform/rim-server/blob/ef76e29d29862825129ccc6a6f6d7b081a6398b0/deploy/backup.sh"><code>deploy/backup.sh</code></a>.</li>
 <li><input disabled="" type="checkbox"> Upgrade to the release commit as <a href="upgrade.html"><code>docs/operations/upgrade.md</code></a> says. <code>/readyz</code> answers 200
 and the data is there.</li>
 <li><input disabled="" type="checkbox"> Roll the binary back to the previous release with <code>dc up -d --no-deps rim web</code>.
 <code>/readyz</code> answers 200 and the previous client still works.</li>
 <li><input disabled="" type="checkbox"> Upgrade again: <code>migrate</code> has nothing to run and the server starts.</li>
-<li><input disabled="" type="checkbox"> <a href="https://github.com/rim-platform/rim-server/blob/ba1bd32b23c6311a60cab50769960332f7bcf04a/deploy/restore-drill.sh"><code>deploy/restore-drill.sh</code></a> on the latest nightly backup of the public relay
+<li><input disabled="" type="checkbox"> <a href="https://github.com/rim-platform/rim-server/blob/ef76e29d29862825129ccc6a6f6d7b081a6398b0/deploy/restore-drill.sh"><code>deploy/restore-drill.sh</code></a> on the latest nightly backup of the public relay
 <code>relay.rim-platform.org</code>, with the image built from the release commit: the new image
 applies its migrations to real data and reaches <code>/readyz</code>. The backup is encrypted with
 <code>age</code>, and the identity that decrypts it is held offline by the maintainer, never on the
@@ -183,12 +183,12 @@ an <strong>Upgrade:</strong> line (servers before the client).</li>
 <h2 id="6-version-changelog-pull-request">6. Version, changelog, pull request <a class="anchor" href="#6-version-changelog-pull-request" aria-label="Link to this section">#</a></h2>
 <ul>
 <li><input disabled="" type="checkbox"> Run <code>scripts/release/set-version.sh &lt;version&gt;</code>. It sets <code>version</code> under
-<code>[workspace.package]</code> in the root <a href="https://github.com/rim-platform/rim-server/blob/ba1bd32b23c6311a60cab50769960332f7bcf04a/Cargo.toml"><code>Cargo.toml</code></a>, refreshes <a href="https://github.com/rim-platform/rim-server/blob/ba1bd32b23c6311a60cab50769960332f7bcf04a/Cargo.lock"><code>Cargo.lock</code></a> for the workspace
+<code>[workspace.package]</code> in the root <a href="https://github.com/rim-platform/rim-server/blob/ef76e29d29862825129ccc6a6f6d7b081a6398b0/Cargo.toml"><code>Cargo.toml</code></a>, refreshes <a href="https://github.com/rim-platform/rim-server/blob/ef76e29d29862825129ccc6a6f6d7b081a6398b0/Cargo.lock"><code>Cargo.lock</code></a> for the workspace
 crates only, and cuts <a href="../changelog.html"><code>CHANGELOG.md</code></a>: <code>Unreleased</code> becomes <code>[&lt;version&gt;] - &lt;YYYY-MM-DD&gt;</code>
 (today in UTC) under a new empty <code>Unreleased</code>, and the links at the bottom compare with the
 previous release (the first release links to <code>…/releases/tag/v&lt;version&gt;</code>). It refuses an
 invalid version, a version the changelog already has and an empty <code>Unreleased</code>, before it
-changes anything. <a href="https://github.com/rim-platform/rim-server/blob/ba1bd32b23c6311a60cab50769960332f7bcf04a/scripts/release/test-set-version.sh"><code>scripts/release/test-set-version.sh</code></a> tests it; CI&#39;s lint job runs that.</li>
+changes anything. <a href="https://github.com/rim-platform/rim-server/blob/ef76e29d29862825129ccc6a6f6d7b081a6398b0/scripts/release/test-set-version.sh"><code>scripts/release/test-set-version.sh</code></a> tests it; CI&#39;s lint job runs that.</li>
 <li><input disabled="" type="checkbox"> In rim-ui, run <code>npm run version:set -- &lt;version&gt;</code>. It sets the same version in
 <code>package.json</code>, <code>src-tauri/Cargo.toml</code> and the lockfiles and cuts rim-ui&#39;s <a href="../changelog.html"><code>CHANGELOG.md</code></a>
 the same way. The compose files run both images at one <code>RIM_VERSION</code>, and rim-ui&#39;s
@@ -206,18 +206,22 @@ git config --global user.signingkey ~/.ssh/id_ed25519.pub   # the key's public k
 git tag -s v&lt;version&gt; -m &quot;rim-server &lt;version&gt;&quot;
 git push origin v&lt;version&gt;</code></pre>
 <ul>
-<li><input disabled="" type="checkbox"> The tag points at the merged release commit, and <code>rim-server --version</code> built from it
-prints <code>&lt;version&gt;</code>. Only the maintainer can push a <code>v*</code> tag.</li>
-<li><input disabled="" type="checkbox"> The tag shows &quot;Verified&quot; on GitHub. <code>git tag -v</code> checks it locally once an allowed-signers
-file lists the key:
-
-<code>sh echo &quot;$(git config user.email) $(cat ~/.ssh/id_ed25519.pub)&quot; &gt;&gt; ~/.ssh/allowed_signers git config --global gpg.ssh.allowedSignersFile ~/.ssh/allowed_signers git tag -v v&lt;version&gt; </code></li>
-<li><input disabled="" type="checkbox"> rim-ui is tagged <code>v&lt;version&gt;</code> at its release commit the same way.</li>
+<li><p><input disabled="" type="checkbox"> The tag points at the merged release commit, and <code>rim-server --version</code> built from it
+prints <code>&lt;version&gt;</code>. Only the maintainer can push a <code>v*</code> tag.</p>
+</li>
+<li><p><input disabled="" type="checkbox"> The tag shows &quot;Verified&quot; on GitHub. <code>git tag -v</code> checks it locally once an allowed-signers
+file lists the key:</p>
+<pre><code class="language-sh">echo &quot;$(git config user.email) $(cat ~/.ssh/id_ed25519.pub)&quot; &gt;&gt; ~/.ssh/allowed_signers
+git config --global gpg.ssh.allowedSignersFile ~/.ssh/allowed_signers
+git tag -v v&lt;version&gt;</code></pre>
+</li>
+<li><p><input disabled="" type="checkbox"> rim-ui is tagged <code>v&lt;version&gt;</code> at its release commit the same way.</p>
+</li>
 </ul>
 <h2 id="8-publish">8. Publish <a class="anchor" href="#8-publish" aria-label="Link to this section">#</a></h2>
 <p>Pushing the tag starts <code>.github/workflows/release.yaml</code> in each repository. Its
 <code>build-and-publish</code> job waits in the <code>release</code> environment until the maintainer approves it. The
-job checks the tag against the version in <a href="https://github.com/rim-platform/rim-server/blob/ba1bd32b23c6311a60cab50769960332f7bcf04a/Cargo.toml"><code>Cargo.toml</code></a> (rim-ui: <code>package.json</code>) and the
+job checks the tag against the version in <a href="https://github.com/rim-platform/rim-server/blob/ef76e29d29862825129ccc6a6f6d7b081a6398b0/Cargo.toml"><code>Cargo.toml</code></a> (rim-ui: <code>package.json</code>) and the
 changelog&#39;s section for it, builds the image for <code>linux/amd64</code>, pushes the tags <code>&lt;version&gt;</code>,
 <code>&lt;major&gt;.&lt;minor&gt;</code>, <code>sha-&lt;short sha&gt;</code> and <code>latest</code>, signs the digest with cosign keyless and
 attests an SPDX SBOM to it. The next job creates the GitHub release with the changelog section
@@ -225,35 +229,54 @@ and the SBOM. rim-ui&#39;s workflow also builds the desktop installers, one leg 
 one for Windows x86_64, and attaches them to its release with <code>latest.json</code> for the updater,
 <code>SHA256SUMS</code> signed with cosign keyless and a build-provenance attestation for each bundle.</p>
 <ul>
-<li><input disabled="" type="checkbox"> Approve the run of both repositories on its page (&quot;Review deployments&quot;, environment
-<code>release</code>), after checking that it ran for the tag just pushed.</li>
-<li><input disabled="" type="checkbox"> Both runs pass. One that fails before &quot;Build and push&quot; published nothing: fix the cause,
+<li><p><input disabled="" type="checkbox"> Approve the run of both repositories on its page (&quot;Review deployments&quot;, environment
+<code>release</code>), after checking that it ran for the tag just pushed.</p>
+</li>
+<li><p><input disabled="" type="checkbox"> Both runs pass. One that fails before &quot;Build and push&quot; published nothing: fix the cause,
 delete the tag and push it again. Once an image is pushed the version is spent, and a fix
-goes out as the next patch.</li>
-<li><input disabled="" type="checkbox"> Verify the signatures. The certificate must name each repository&#39;s release workflow at
-the tag; any other identity fails:
-
-<code>sh v=&lt;version&gt; cosign verify ghcr.io/rim-platform/rim-server:$v \   --certificate-identity https://github.com/rim-platform/rim-server/.github/workflows/release.yaml@refs/tags/v$v \   --certificate-oidc-issuer https://token.actions.githubusercontent.com cosign verify ghcr.io/rim-platform/rim-web:$v \   --certificate-identity https://github.com/rim-platform/rim-ui/.github/workflows/release.yaml@refs/tags/v$v \   --certificate-oidc-issuer https://token.actions.githubusercontent.com </code>
-
-The digest cosign prints matches the one in the GitHub release notes, and
-<code>cosign verify-attestation --type spdxjson</code> with the same flags passes.</li>
-<li><input disabled="" type="checkbox"> The first release only: set both packages public (package settings on GitHub), as
-<a href="../contributing.html"><code>CONTRIBUTING.md</code></a>, &quot;Who can merge and publish&quot;, lists.</li>
-<li><input disabled="" type="checkbox"> Desktop builds: wait for both legs of rim-ui&#39;s run. The release is published only when
-every asset is attached; until then it is not the <code>latest</code> the updater reads.</li>
-<li><input disabled="" type="checkbox"> Install one Linux bundle and one Windows bundle from the release page, sign in and send a
-message. Build macOS from the tag once, as rim-ui&#39;s README says, and start it.</li>
-<li><input disabled="" type="checkbox"> <code>latest.json</code> is attached to the release, and
+goes out as the next patch.</p>
+</li>
+<li><p><input disabled="" type="checkbox"> Verify the signatures. The certificate must name each repository&#39;s release workflow at
+the tag; any other identity fails:</p>
+<pre><code class="language-sh">v=&lt;version&gt;
+cosign verify ghcr.io/rim-platform/rim-server:$v \
+  --certificate-identity https://github.com/rim-platform/rim-server/.github/workflows/release.yaml@refs/tags/v$v \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com
+cosign verify ghcr.io/rim-platform/rim-web:$v \
+  --certificate-identity https://github.com/rim-platform/rim-ui/.github/workflows/release.yaml@refs/tags/v$v \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com</code></pre>
+<pre><code>The digest cosign prints matches the one in the GitHub release notes, and
+`cosign verify-attestation --type spdxjson` with the same flags passes.</code></pre>
+</li>
+<li><p><input disabled="" type="checkbox"> The first release only: set both packages public (package settings on GitHub), as
+<a href="../contributing.html"><code>CONTRIBUTING.md</code></a>, &quot;Who can merge and publish&quot;, lists.</p>
+</li>
+<li><p><input disabled="" type="checkbox"> Desktop builds: wait for both legs of rim-ui&#39;s run. The release is published only when
+every asset is attached; until then it is not the <code>latest</code> the updater reads.</p>
+</li>
+<li><p><input disabled="" type="checkbox"> Install one Linux bundle and one Windows bundle from the release page, sign in and send a
+message. Build macOS from the tag once, as rim-ui&#39;s README says, and start it.</p>
+</li>
+<li><p><input disabled="" type="checkbox"> <code>latest.json</code> is attached to the release, and
 <code>https://github.com/rim-platform/rim-ui/releases/latest/download/latest.json</code> names
 <code>&lt;version&gt;</code>. From the second release on: Settings &gt; About in the previous version offers
-the new one, and installing it from there works.</li>
-<li><input disabled="" type="checkbox"> Verify the checksums and the provenance. The certificate must name rim-ui&#39;s release
-workflow at the tag:
-
-<code>sh v=&lt;version&gt; gh release download v$v --repo rim-platform/rim-ui --dir rim-ui-$v cd rim-ui-$v cosign verify-blob SHA256SUMS --bundle SHA256SUMS.sigstore.json \   --certificate-identity https://github.com/rim-platform/rim-ui/.github/workflows/release.yaml@refs/tags/v$v \   --certificate-oidc-issuer https://token.actions.githubusercontent.com sha256sum --check --ignore-missing SHA256SUMS gh attestation verify &lt;one bundle&gt; --repo rim-platform/rim-ui </code></li>
-<li><input disabled="" type="checkbox"> A broken desktop release is rolled back by marking its GitHub release as a pre-release,
+the new one, and installing it from there works.</p>
+</li>
+<li><p><input disabled="" type="checkbox"> Verify the checksums and the provenance. The certificate must name rim-ui&#39;s release
+workflow at the tag:</p>
+<pre><code class="language-sh">v=&lt;version&gt;
+gh release download v$v --repo rim-platform/rim-ui --dir rim-ui-$v
+cd rim-ui-$v
+cosign verify-blob SHA256SUMS --bundle SHA256SUMS.sigstore.json \
+  --certificate-identity https://github.com/rim-platform/rim-ui/.github/workflows/release.yaml@refs/tags/v$v \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com
+sha256sum --check --ignore-missing SHA256SUMS
+gh attestation verify &lt;one bundle&gt; --repo rim-platform/rim-ui</code></pre>
+</li>
+<li><p><input disabled="" type="checkbox"> A broken desktop release is rolled back by marking its GitHub release as a pre-release,
 which moves the updater&#39;s <code>latest</code> back to the previous release, or by deleting its
-assets. Its version and images are never reused: the fix goes out as the next patch.</li>
+assets. Its version and images are never reused: the fix goes out as the next patch.</p>
+</li>
 </ul>
 <h2 id="9-after">9. After <a class="anchor" href="#9-after" aria-label="Link to this section">#</a></h2>
 <ul>
@@ -269,7 +292,7 @@ request so the page shows the release.</li>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/ba1bd32b23c6311a60cab50769960332f7bcf04a/docs/operations/release-checklist.md">rim-server/docs/operations/release-checklist.md</a> at <code>ba1bd32</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/ef76e29d29862825129ccc6a6f6d7b081a6398b0/docs/operations/release-checklist.md">rim-server/docs/operations/release-checklist.md</a> at <code>ef76e29</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

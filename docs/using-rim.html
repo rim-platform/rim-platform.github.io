@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Using RIM · RIM</title>
-<meta name="description" content="The desktop and web client: building it, the keyboard, keys and recovery, linking a device, encrypted conversations, relays and the local message cache.">
+<meta name="description" content="The desktop and web client: installing it and signing in, building it, the keyboard, keys and recovery, linking a device, encrypted conversations, relays and the local message cache.">
 <link rel="icon" href="../favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
@@ -35,7 +35,11 @@
 
     <main id="content" class="prose">
 <h1>Using RIM</h1>
-<p class="lede">The desktop and web client: building it, the keyboard, keys and recovery, linking a device, encrypted conversations, relays and the local message cache.</p>
+<p class="lede">The desktop and web client: installing it and signing in, building it, the keyboard, keys and recovery, linking a device, encrypted conversations, relays and the local message cache.</p>
+<h2 id="install">Install</h2>
+<ul class="cards">
+<li><a href="client/install.html"><b>Installing RIM</b><span>The RIM desktop app is published for Linux and Windows on the releases page. On macOS it is built from source for now. Every release signs in to the public relay relay.rim-platform.org unless you choose another server …</span><span class="src">rim-ui/docs/install.md</span></a></li>
+</ul>
 <h2 id="the-client">The client</h2>
 <ul class="cards">
 <li><a href="client/guide.html"><b>RIM client</b><span>RIM is a programmable communication workspace. Chat is the medium; the product is what people build on top of it: a command palette over every action, keybinds for anything, macros that chain commands, pipelines that …</span><span class="src">rim-ui/README.md</span></a></li>
@@ -58,17 +62,11 @@
 <ul class="cards">
 <li><a href="client/relay-client.html"><b>Relays: the client</b><span>The app talks only to its own server, its relay. A DM or group homed on another relay (its creator's), and a workspace hosted elsewhere, is reached through the relay: requests are signed by this device and forwarded …</span><span class="src">rim-ui/docs/relay-client.md</span></a></li>
 </ul>
-<h2 id="more-from-the-client">More from the client</h2>
-<ul class="cards">
-<li><a href="client/branding.html"><b>Branding</b><span>The brand masters live in rim-server's assets/branding/, with a README that says what each file is for. They are the source of truth; this repository holds copies or renderings of them.</span><span class="src">rim-ui/docs/branding.md</span></a></li>
-<li><a href="client/install.html"><b>Installing RIM</b><span>The RIM desktop app is published for Linux and Windows on the releases page. On macOS it is built from source for now. Every release signs in to the public relay relay.rim-platform.org unless you choose another server …</span><span class="src">rim-ui/docs/install.md</span></a></li>
-<li><a href="client/release-sdk.html"><b>Publishing the plugin SDK</b><span>The plugin SDK in sdk/plugin-sdk is published to npm as @rim-platform/plugin-sdk. It keeps a version of its own, in sdk/plugin-sdk/package.json, apart from the app's.</span><span class="src">rim-ui/docs/release-sdk.md</span></a></li>
-</ul>
 
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/tree/ba1bd32b23c6311a60cab50769960332f7bcf04a">rim-server</a> <code>ba1bd32</code> and <a href="https://github.com/rim-platform/rim-ui/tree/30b3a192cc3db45598b64f15c76c847c25fd1862">rim-ui</a> <code>30b3a19</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/tree/ef76e29d29862825129ccc6a6f6d7b081a6398b0">rim-server</a> <code>ef76e29</code> and <a href="https://github.com/rim-platform/rim-ui/tree/c69ba17e84369a60d4313d78209c6b0ab4f71c13">rim-ui</a> <code>c69ba17</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>
