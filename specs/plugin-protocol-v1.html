@@ -62,7 +62,7 @@
 </details></aside>
     <main id="content" class="prose">
 <h1 id="rim-plugin-protocol-v1">RIM plugin protocol v1</h1>
-<p class="status"><span><b>RIM plugin protocol v1</b></span><span>version 1</span><span>status: frozen, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/71ff02d8c1c823c10f786421c0ffa2230c95c98d/docs/specs/plugin-protocol-v1.md">rim-server/docs/specs/plugin-protocol-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/71ff02d8c1c823c10f786421c0ffa2230c95c98d">71ff02d</a></span></p>
+<p class="status"><span><b>RIM plugin protocol v1</b></span><span>version 1</span><span>status: frozen, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/b5efadebef4d2b9551062488269d93956766a34d/docs/specs/plugin-protocol-v1.md">rim-server/docs/specs/plugin-protocol-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/b5efadebef4d2b9551062488269d93956766a34d">b5efade</a></span></p>
 <p><strong>Status: frozen, normative.</strong> This is the contract between the RIM desktop host and a plugin
 process. It is written for someone building a plugin from scratch, in any language, without an
 SDK.</p>
@@ -1096,8 +1096,8 @@ the plugin seeing them, are deferred.</li>
 so the plain value gives it nothing it could not reach.</li>
 </ul>
 <p>Panels never receive setting values. The panel bridge has no method that returns them, only
-<code>rim.settings.open</code>, which opens the plugin&#39;s settings in the plugin manager
-(<a href="../docs/local_plugin_host.html"><code>docs/local_plugin_host.md</code></a>, &quot;PostMessage Bridge&quot;).</p>
+<code>rim.settings.open</code>, which opens the plugin&#39;s settings form over the current view, leaving the
+panel in place (<a href="../docs/local_plugin_host.html"><code>docs/local_plugin_host.md</code></a>, &quot;PostMessage Bridge&quot;).</p>
 <h2 id="16-shutdown-and-app-quit">16. Shutdown and app quit <a class="anchor" href="#16-shutdown-and-app-quit" aria-label="Link to this section">#</a></h2>
 <p><code>rim.shutdown</code> is a notification from the host: <strong>exit now.</strong></p>
 <pre><code class="language-json">{ &quot;jsonrpc&quot;: &quot;2.0&quot;, &quot;method&quot;: &quot;rim.shutdown&quot; }</code></pre>
@@ -1483,7 +1483,7 @@ is ignored.</li>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/71ff02d8c1c823c10f786421c0ffa2230c95c98d/docs/specs/plugin-protocol-v1.md">rim-server/docs/specs/plugin-protocol-v1.md</a> at <code>71ff02d</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/b5efadebef4d2b9551062488269d93956766a34d/docs/specs/plugin-protocol-v1.md">rim-server/docs/specs/plugin-protocol-v1.md</a> at <code>b5efade</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

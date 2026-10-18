@@ -170,8 +170,10 @@ plugin folder; every plugin needs one at its root&quot;, or &quot;… at the roo
 capability <code>&lt;key&gt;</code>, which the manifest&#39;s capabilities do not declare&quot;.</li>
 </ul>
 <p>Every install ends in the <strong>Plugin Permissions</strong> dialog, described under
-<a href="#trust-and-permissions">Trust and permissions</a>. Then turn the plugin on with the switch on its
-row.</p>
+<a href="#trust-and-permissions">Trust and permissions</a>. After an install its button reads <strong>Approve and
+turn on</strong>: approving grants the checked permissions and starts the plugin. <strong>Cancel</strong> leaves it
+installed and turned off, to turn on later with the switch on its row. If the plugin does not
+start, the dialog says why and its permissions stay saved.</p>
 <h3 id="workspace-registry">Workspace registry <a class="anchor" href="#workspace-registry" aria-label="Link to this section">#</a></h3>
 <p>Each workspace keeps a registry of plugins it recommends or requires, managed by its Owners and
 Moderators. An entry pins one exact version through a statement its publisher signed with their
@@ -233,16 +235,23 @@ permissions and data, then install the new folder.</li>
 </ul>
 <h2 id="using-a-plugin">Using a plugin <a class="anchor" href="#using-a-plugin" aria-label="Link to this section">#</a></h2>
 <ul>
-<li><strong>Reading what it is.</strong> A plugin&#39;s row in Settings → Plugins shows the first two lines of its
-description. <strong>View details</strong> opens a dialog named after the plugin with the whole
+<li><strong>Reading what it is.</strong> A plugin&#39;s row in Settings → Plugins shows its name, version, author
+and state (Running, Stopped, Crashed or Timed out), the first two lines of its description,
+and chips for its kind, its signature and where it came from. Beside them are <strong>Update</strong> (a
+plugin from git), <strong>Settings</strong> (a plugin that declares settings), the switch, and <strong>⋯</strong>, a
+menu with <strong>Permissions</strong>, <strong>Activity</strong>, <strong>Sign and publish…</strong> (where offered) and
+<strong>Uninstall…</strong>. <strong>View details</strong> under the description opens a dialog named after the plugin with the whole
 description under &quot;From the plugin author:&quot;, shown as the author wrote it, as plain text
 with no formatting or links; its id, version, author, kind, source (the git repository, the
 link with its SHA-256, the workspace registry, or a folder) and signature; each permission
 it asks for, marked Granted or Not granted; the sites <code>network.fetch</code> may reach; and its
 commands with their descriptions, a dangerous one marked Dangerous.</li>
 <li><strong>Settings.</strong> A plugin that declares settings has <strong>Settings</strong> on its row in Settings →
-Plugins, and while it is on, a row named after it with &quot;Settings&quot; in the side rail&#39;s
-<strong>Plugins</strong> menu. Both open <strong>&lt;plugin&gt; settings</strong>, a form with a field per setting: a text
+Plugins, a settings button beside the close button in the header of each of its panels, and,
+while it is on, <strong>Plugin settings: &lt;plugin&gt;</strong> in the command palette, which a keybind can
+run too. The panel button and the palette open <strong>&lt;plugin&gt; settings</strong> over what you have
+open, so closing it leaves you in the plugin&#39;s panel; the row opens it over Settings. It is a
+form with a field per setting: a text
 field, a number field, a switch or a list, each with its description under it. <strong>Save</strong>
 checks every changed field and names the one that is wrong, <strong>Cancel</strong> closes without saving,
 and <strong>Reset to defaults</strong> clears every saved value, secret ones included, after asking. A
@@ -253,14 +262,16 @@ clears its saved value, so the plugin falls back to the setting&#39;s default. A
 gets the new values as soon as you save or reset them, and the values of whoever signs in
 next. It receives a secret setting&#39;s value too, in plain form, as it needs it to use the
 token; other plugins never do. A plugin&#39;s panel can open this form, for example from a
-&quot;Configure&quot; button, but never sees the values.</li>
+&quot;Configure&quot; button, which shows it over the panel in the same way, but never sees the values.</li>
 <li><strong>Turning it on.</strong> The switch on the plugin&#39;s row in Settings → Plugins starts it, and the row
 shows Running, Stopped, Crashed or Timed out. On the desktop a plugin left on starts again
 with the app. On the web, plugins are turned on per account in that browser: signing out
 stops them and signing in starts those the account turned on.</li>
 <li><strong>Panels.</strong> The side rail&#39;s <strong>Plugins</strong> entry opens a menu with one row per panel of every
-running plugin, showing the plugin&#39;s name and the panel&#39;s title. Choosing a row opens the
-panel; with no running plugin that has a panel, the menu offers <strong>Manage plugins</strong>. The entry
+running plugin, showing the plugin&#39;s name and the panel&#39;s title, and below them, set apart,
+<strong>Manage plugins…</strong>, which opens Settings → Plugins. Choosing a row opens the panel; with no
+running plugin that has a panel, the menu says so above <strong>Manage plugins…</strong>. A plugin&#39;s
+settings are not in this menu: they open from the places listed under <strong>Settings</strong>. The entry
 stays marked while a plugin panel is open. A panel opens next to the tool panel or, like the
 Pods panel, in place of the conversation. Its header shows the panel&#39;s title, the plugin&#39;s
 name, its kind and where it came from, and a close button. <a href="../docs/client/ui-shell.html">UI shell</a> describes
@@ -284,8 +295,8 @@ time. <strong>Revoke all</strong> on a plugin and <strong>Revoke all grants</str
 back.</li>
 </ul>
 <h2 id="trust-and-permissions">Trust and permissions <a class="anchor" href="#trust-and-permissions" aria-label="Link to this section">#</a></h2>
-<p>The <strong>Plugin Permissions</strong> dialog opens after every install and from <strong>Permissions</strong> on a
-plugin&#39;s row. It shows the plugin&#39;s name, version and author; its description under &quot;From the
+<p>The <strong>Plugin Permissions</strong> dialog opens after every install and from <strong>Permissions</strong> in a
+plugin&#39;s <strong>⋯</strong> menu. It shows the plugin&#39;s name, version and author; its description under &quot;From the
 plugin author:&quot;, which is the author&#39;s claim, not the app&#39;s; and what the kind of plugin means:</p>
 <ul>
 <li>Sandboxed: &quot;Runs sandboxed in this app. It cannot read your files, run programs, or use your
@@ -295,7 +306,8 @@ not sandboxed: it can read your files and use the network whatever you approve b
 it only if you trust its author.&quot;</li>
 </ul>
 <p>Each permission has a checkbox, checked at first. Unchecking one denies it, and <strong>Approve</strong>
-grants the rest. The prompt names them like this:</p>
+grants the rest; right after an install the button is <strong>Approve and turn on</strong>, which also starts
+the plugin. The prompt names them like this:</p>
 <div class="tablewrap"><table>
 <thead>
 <tr>
@@ -334,7 +346,7 @@ grants the rest. The prompt names them like this:</p>
 </tbody></table></div>
 <p>An encrypted chat permission needs its plain one: checking it checks the plain one, and
 unchecking the plain one unchecks it.</p>
-<p><strong>Activity</strong> on a plugin&#39;s row shows what it holds and did:</p>
+<p><strong>Activity</strong> in a plugin&#39;s <strong>⋯</strong> menu shows what it holds and did:</p>
 <ul>
 <li><strong>Approved permissions</strong>, each with <strong>Revoke</strong>. Revoking a permission stops the plugin, and
 revoking a plain chat permission takes its encrypted one with it.</li>
@@ -349,7 +361,7 @@ version</strong> accepts the new files and keeps the approvals, and starts the p
 again; the <strong>Bundle changed</strong> badge beside the name stays, and clicking it brings the warning
 back. The web app hashes a plugin&#39;s bundle again at every start instead, and fetches it again
 from its link when it is missing or damaged.</p>
-<p><strong>Signed and unsigned.</strong> The row and the panel header say where a plugin came from:</p>
+<p><strong>Signed and unsigned.</strong> The row&#39;s chips and the panel header say where a plugin came from:</p>
 <ul>
 <li><code>Unsigned · installed from a link (&lt;host&gt;)</code></li>
 <li><code>Unsigned · installed from git (&lt;host&gt;)</code></li>
@@ -367,7 +379,7 @@ it. If the publisher later recovers their key, the installed copy keeps running,
 &quot;The publisher recovered their key: ask for a re-signed version&quot;, and nothing new installs from
 that statement.</p>
 <p><strong>Signing and publishing.</strong> On a desktop that holds the account&#39;s identity key (Settings →
-Security shows it), each row has <strong>Sign and publish…</strong>. It signs the plugin as installed. An
+Security shows it), each row&#39;s <strong>⋯</strong> menu has <strong>Sign and publish…</strong>. It signs the plugin as installed. An
 Owner or Moderator of the open workspace then picks Recommended or Required and chooses
 <strong>Publish</strong>; anyone can <strong>Export…</strong> a <code>.rimsig.json</code> to send to one of them, who adds it in
 Workspace settings → Plugins with &quot;Add from files&quot;.</p>
@@ -378,7 +390,7 @@ its permissions and data stay.</li>
 <li><strong>A plugin that did not start.</strong> A sandboxed plugin whose start was cut short, because the app
 closed while starting it, is not started again, and Settings says so. Turning it off and on
 retries.</li>
-<li><strong>Uninstall</strong> with the bin icon on the row, then <strong>Uninstall</strong> in <strong>Uninstall &lt;name&gt;?</strong>. On
+<li><strong>Uninstall…</strong> in the row&#39;s <strong>⋯</strong> menu, then <strong>Uninstall</strong> in <strong>Uninstall &lt;name&gt;?</strong>. On
 the desktop the plugin is removed from this device with the permissions granted to it, the
 data it stored and its settings for every account, secret ones included, and its folder
 leaves the plugins folder and is deleted. A folder the app did not install itself stays where
@@ -420,7 +432,7 @@ permissions, data, settings and files. To use it again, install it again.</li>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/2e37373e231f8af4467ff3d074384ad781a534f2/docs/plugins.md">rim-ui/docs/plugins.md</a> at <code>2e37373</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/1c4b32b38d21013f0653c0ae603cc41ba2b6a113/docs/plugins.md">rim-ui/docs/plugins.md</a> at <code>1c4b32b</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>
