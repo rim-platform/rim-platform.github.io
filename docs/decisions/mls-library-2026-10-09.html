@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MLS library, providers and cipher suite for E2EE v1 · RIM</title>
+<meta name="description" content="Status: Accepted 2026-10-09 for Stage 4 (S4-0). Implementation followed the Stage 4 plan. Do not edit once implementation lands — historical record. For changes, write a new ADR.">
+<link rel="icon" href="../../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../../index.html" aria-label="RIM home">
+      <picture><source srcset="../../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../../index.html#what">What RIM is</a>
+      <a href="../../index.html#how">How it works</a>
+      <a href="../self-hosting.html">Self-host</a>
+      <a href="../../configure/index.html">Configure</a>
+      <a href="../../plugins/index.html">Plugins</a>
+      <a href="../index.html" aria-current="page">Docs</a>
+      <a href="../../api/index.html">API</a>
+      <a href="../../specs/index.html">Specs</a>
+      <a href="../contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="../index.html">Docs</a><span aria-hidden="true">/</span><a href="../project.html">Project</a><span aria-hidden="true">/</span><a href="index.html">Decisions</a><span aria-hidden="true">/</span><span>MLS library, providers and cipher suite for E2EE v1</span></div>
+  <div class="page with-toc">
+    <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
+<ol>
+<li><a href="#context">Context</a></li>
+<li><a href="#decision">Decision</a><ol><li><a href="#1-library-openmls-091-behind-one-seam">1. Library: OpenMLS 0.9.1, behind one seam</a></li><li><a href="#2-crypto-providers">2. Crypto providers</a></li><li><a href="#3-cipher-suite-0x004f-now-the-iana-code-point-later">3. Cipher suite: 0x004F now, the IANA code point later</a></li><li><a href="#4-credentials">4. Credentials</a></li><li><a href="#5-known-answer-tests">5. Known-answer tests</a></li></ol></li>
+<li><a href="#rejected-alternatives">Rejected alternatives</a></li>
+<li><a href="#consequences">Consequences</a></li>
+</ol>
+</details></aside>
+    <main id="content" class="prose">
+<blockquote>
+<p><strong>Status:</strong> Accepted 2026-10-09 for Stage 4 (S4-0). Implementation followed the Stage 4 plan.
+<strong>Do not edit</strong> once implementation lands — historical record. For changes, write a new ADR.</p>
+</blockquote>
+<h1 id="mls-library-providers-and-cipher-suite-for-e2ee-v1">MLS library, providers and cipher suite for E2EE v1</h1>
+<p><strong>Date:</strong> 2026-10-09
+<strong>Extends:</strong> <a href="decentralization-2026-10-08.html"><code>decentralization-2026-10-08.md</code></a> (MLS for DMs and private groups),
+<a href="post-quantum-hybrid-2026-10-09.html"><code>post-quantum-hybrid-2026-10-09.md</code></a> (X25519 + ML-KEM-768 key agreement, never post-quantum alone).
+<strong>Contract that uses it:</strong> <a href="../../specs/e2ee-mls-v1.html"><code>docs/specs/e2ee-mls-v1.md</code></a>.</p>
+<h2 id="context">Context <a class="anchor" href="#context" aria-label="Link to this section">#</a></h2>
+<p>Stage 4 needs an MLS (RFC 9420) implementation in Rust that runs in the Tauri app, compiles to
+WebAssembly for the web linked device, offers a hybrid X25519 + ML-KEM-768 cipher suite, and lets
+RIM&#39;s own device keys anchor the credentials. The server never holds group state but must decode
+MLS framing and validate key packages. Sources opened on 2026-10-09:</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Source</th>
+<th>What it says</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>crates.io <code>openmls</code></td>
+<td>0.9.0 on 2026-08-25, <strong>0.9.1 on 2026-10-07</strong> (with 0.8.2 the same day); 0.7.4 and 0.8.1 in February 2026</td>
+</tr>
+<tr>
+<td>crates.io <code>openmls_libcrux_crypto</code>, <code>openmls_rust_crypto</code></td>
+<td>0.4.0 and 0.6.0, both 2026-08-25 (released with openmls 0.9.0)</td>
+</tr>
+<tr>
+<td><code>openmls/CHANGELOG.md</code> (main)</td>
+<td>0.9.0: &quot;Added P-384, ML-DSA and additional PQ ciphersuites&quot; behind the <code>draft-ietf-mls-pq-ciphersuites</code> feature; <code>UnsupportedCiphersuite</code> fails early; time-based deletion of past epoch secrets; <code>OwnPrivateMessage</code> / <code>OwnPendingCommit</code>; the <code>openmls::wasm</code> module removed; fixes GHSA-rrmv-c79f-cf5r and a treemath bound (#2186). 0.8.1: provider updates for GHSA-435g-fcv3-8j26 and GHSA-g433-pq76-6cmf (libcrux, hpke-rs). 0.8.0: GHSA-8x3w-qj7j-gqhf; <code>libcrux-provider</code> + <code>js</code> are enough for wasm</td>
+</tr>
+<tr>
+<td>docs.rs <code>openmls</code> 0.9.1, <code>Ciphersuite</code></td>
+<td><code>MLS_128_MLKEM768X25519_AES128GCM_SHA256_Ed25519 = 79</code> (0x004F), <code>…_AES256GCM_SHA384_Ed25519 = 78</code> (0x004E), <code>MLS_256_XWING_CHACHA20POLY1305_SHA256_Ed25519 = 77</code> (0x004D), <code>…_CHACHA20POLY1305_SHA384_MLDSA44 = 82</code> and pure ML-KEM suites, all behind <code>draft-ietf-mls-pq-ciphersuites</code></td>
+</tr>
+<tr>
+<td><code>openmls/traits/src/types.rs</code> (main)</td>
+<td>All four X25519 + ML-KEM-768 suites map to <code>HpkeKemType::XWingKemDraft6 = 0x647a</code>, 0x004D included</td>
+</tr>
+<tr>
+<td><code>openmls/libcrux_crypto/src/crypto.rs</code>, <code>openmls_rust_crypto/src/provider.rs</code> (main)</td>
+<td>Both providers implement <code>XWingKemDraft6</code> behind the feature; <code>supports()</code> checks AEAD, signature and KEM separately; key package creation calls <code>supports()</code> (<code>openmls/src/key_packages/mod.rs</code>)</td>
+</tr>
+<tr>
+<td>crates.io <code>hpke-rs-rust-crypto</code> 0.7/0.8, <code>x-wing</code> 0.1.1 (2026-10-01), <code>ml-kem</code> 0.3.2 (2026-05-10), <code>libcrux-ml-kem</code> 0.0.11 (2026-10-07)</td>
+<td>The RustCrypto path implements X-Wing with RustCrypto <code>x-wing</code> (&quot;draft 06&quot;) and <code>ml-kem</code>; the libcrux path with libcrux&#39;s ML-KEM</td>
+</tr>
+<tr>
+<td>datatracker <code>draft-ietf-mls-pq-ciphersuites-06</code> (21 July 2026)</td>
+<td>In WG Last Call; eleven suites with code points <strong>TBD1 to TBD11</strong>; TBD1 <code>MLS_128_MLKEM768X25519_AES128GCM_SHA256_Ed25519</code> uses HPKE KEM 0x647a</td>
+</tr>
+<tr>
+<td>datatracker <code>draft-ietf-hpke-pq-05</code> (2026-07-06)</td>
+<td>0x647a is <code>MLKEM768-X25519</code> (Npk 1216, Nenc 1120, Nsk 32); asks IANA to replace the existing 0x647a entry</td>
+</tr>
+<tr>
+<td><code>draft-connolly-cfrg-xwing-kem-10</code> (March 2026)</td>
+<td>X-Wing, the X25519 + ML-KEM-768 combiner behind 0x647a</td>
+</tr>
+<tr>
+<td>book.openmls.tech, Introduction</td>
+<td>Tested targets: x86_64 Linux and Windows, aarch64 macOS and Linux; <strong><code>wasm32-unknown-unknown</code> built on CI but not tested</strong>; features <code>js</code>, <code>libcrux-provider</code>, <code>fork-resolution</code>, <code>sqlite-provider</code>; maintained by Phoenix R&amp;D and CE Labs</td>
+</tr>
+<tr>
+<td>crates.io/docs.rs <code>openmls_sqlite_storage</code> 0.3.0</td>
+<td>Depends on <code>rusqlite</code> 0.37 with <code>bundled</code></td>
+</tr>
+<tr>
+<td>crates.io <code>mls-rs-crypto-awslc</code></td>
+<td>0.25.0 on 2026-04-21, &quot;AWS-LC based CryptoProvider for mls-rs&quot;, with a <code>post-quantum</code> feature</td>
+</tr>
+<tr>
+<td>github.com/mlswg/mls-implementations <code>test-vectors.md</code>; <code>openmls/test_vectors/</code></td>
+<td>The IETF vector families (tree math, crypto basics, secret tree, message protection, key schedule, PSKs, transcript hashes, welcome, tree operations and validation, TreeKEM, messages, passive client); OpenMLS keeps them in its repo</td>
+</tr>
+</tbody></table></div>
+<h2 id="decision">Decision <a class="anchor" href="#decision" aria-label="Link to this section">#</a></h2>
+<h3 id="1-library-openmls-091-behind-one-seam">1. Library: OpenMLS 0.9.1, behind one seam <a class="anchor" href="#1-library-openmls-091-behind-one-seam" aria-label="Link to this section">#</a></h3>
+<ul>
+<li><strong><code>openmls = &quot;=0.9.1&quot;</code></strong> with feature <code>draft-ietf-mls-pq-ciphersuites</code>, and <code>openmls_traits</code> of the
+same release. Exact pins: a minor OpenMLS release has changed storage encodings before (0.9.0
+restored the 0.7.1 serde tags), and group state written by one version must load in the next, so
+every upgrade is its own PR that runs the storage-stability and our own state round-trip tests.</li>
+<li><strong>The seam.</strong> rim-ui&#39;s <code>rim_mls</code> crate (S4-2) is the only code that names OpenMLS types. It
+exposes RIM operations (create group, add/remove devices, encrypt, decrypt, process commit, join
+from Welcome) over bytes and RIM ids. The crypto provider and the storage provider are chosen
+inside it.</li>
+<li><strong>Storage.</strong> RIM implements <code>openmls_traits::storage::StorageProvider</code> itself: on the desktop
+over the SQLCipher cache database (so decrypting a message, storing its plaintext and advancing
+the ratchet commit in one transaction), on the web over an in-memory map written through to
+IndexedDB. <code>openmls_sqlite_storage</code> 0.3.0 cannot be used: it links <code>rusqlite</code> 0.37 with
+<code>bundled</code>, and rim-ui links <code>rusqlite</code> 0.40 with <code>bundled-sqlcipher</code>; two <code>libsqlite3-sys</code>
+versions cannot be linked into one binary.</li>
+</ul>
+<h3 id="2-crypto-providers">2. Crypto providers <a class="anchor" href="#2-crypto-providers" aria-label="Link to this section">#</a></h3>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Where</th>
+<th>Provider</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Clients (desktop, and the web in wasm)</td>
+<td><strong><code>openmls_libcrux_crypto</code> 0.4.0</strong> with <code>draft-ietf-mls-pq-ciphersuites</code> (and <code>js</code> in wasm), composed with RIM storage into one <code>OpenMlsProvider</code></td>
+<td>ML-KEM through libcrux, whose ML-KEM source carries hax proofs; it is the path OpenMLS&#39;s authors use for their PQ suites</td>
+</tr>
+<tr>
+<td>Server (key package validation, framing decode)</td>
+<td><strong><code>openmls_rust_crypto</code> 0.6.0</strong> with <code>draft-ietf-mls-pq-ciphersuites</code></td>
+<td>Pure Rust, no SIMD paths; the server only verifies Ed25519 signatures and hashes key packages, it never runs HPKE</td>
+</tr>
+</tbody></table></div>
+<p>The libcrux provider&#39;s <code>supported_ciphersuites()</code> list on main does not name 0x004F, although its
+<code>supports()</code> accepts every component of it (AES-128-GCM, Ed25519, <code>XWingKemDraft6</code>, SHA-256) and
+key package creation only calls <code>supports()</code>. S4-2&#39;s first test asserts that both providers
+create, join and decrypt a 0x004F group; if libcrux refuses the suite, the client uses
+<code>openmls_rust_crypto</code> 0.6.0 as well and a follow-up ADR records it. Either way S4-2 runs
+cross-provider tests: a group created and driven with one provider is joined and read with the
+other, so a divergence between two X-Wing and ML-KEM implementations fails a test.</p>
+<h3 id="3-cipher-suite-0x004f-now-the-iana-code-point-later">3. Cipher suite: 0x004F now, the IANA code point later <a class="anchor" href="#3-cipher-suite-0x004f-now-the-iana-code-point-later" aria-label="Link to this section">#</a></h3>
+<p><strong>RIM ships <code>MLS_128_MLKEM768X25519_AES128GCM_SHA256_Ed25519</code>, OpenMLS code point <code>0x004F</code> (79),
+in Stage 4&#39;s first PR.</strong> It is TBD1 of <code>draft-ietf-mls-pq-ciphersuites-06</code>: KEM 0x647a
+(MLKEM768-X25519, the X-Wing combiner of X25519 and ML-KEM-768), HKDF-SHA256, AES-128-GCM,
+SHA-256, Ed25519 signatures. This satisfies the hybrid rule for key agreement.</p>
+<ul>
+<li><strong>Not 0x004D</strong> (<code>MLS_256_XWING_CHACHA20POLY1305_SHA256_Ed25519</code>): an OpenMLS-only suite from the
+individual draft-mahy-mls-xwing that the working group draft does not carry, so it will never get
+an IANA code point. Its KEM is now the same X-Wing draft-06 as 0x004F, so it buys nothing.</li>
+<li><strong>Not 0x004E</strong> (the AES-256-GCM / SHA-384 variant, TBD2): 128-bit classical security matches
+Ed25519 signatures, and SHA-256 / AES-128 keep key schedule and message overhead at the MTI
+suite&#39;s level. Either is acceptable; one suite keeps the test matrix small.</li>
+<li><strong>Not 0x0052</strong> (TBD9, ML-DSA-44 signatures): it signs with ML-DSA-44 alone, which the hybrid rule
+forbids, and device keys are Ed25519 today.</li>
+<li><strong>Placeholder risk.</strong> 0x004F is OpenMLS&#39;s choice for TBD1, not an IANA value. Only RIM clients
+need to agree, and every client pins the same OpenMLS release.</li>
+</ul>
+<p><strong>Migration to the standardized suite.</strong> When IANA assigns TBD1 (or the KEM changes before
+publication), OpenMLS ships it under the new code point and RIM moves each conversation with a
+<strong>new group incarnation</strong> (<code>e2ee-mls-v1.md</code>, &quot;Incarnations&quot;): a member device creates a fresh MLS
+group under the new suite with every current device, the server retires the old group, and old
+messages stay readable from the local cache and the archive. The server lists the suites it
+accepts and the one it prefers; a client starts an incarnation only when every group device&#39;s key
+packages offer the preferred suite. RFC 9420&#39;s ReInit proposal (§12.1.5) does the same inside the
+protocol; RIM does not rely on it, because the new group still needs a Welcome for every device
+and the incarnation path is also RIM&#39;s recovery path, so one mechanism serves both.</p>
+<h3 id="4-credentials">4. Credentials <a class="anchor" href="#4-credentials" aria-label="Link to this section">#</a></h3>
+<ul>
+<li>MLS <strong>basic credentials</strong> (credential type 1). The <code>identity</code> bytes are an <code>mls-key</code> statement
+(<code>{&quot;payload&quot;: &quot;...&quot;, &quot;signature&quot;: &quot;...&quot;}</code>, the key-identity encoding) in which the device key
+certifies a separate per-device <strong>MLS signature key</strong>; the leaf&#39;s <code>signature_key</code> must equal it.</li>
+<li>Why not sign MLS messages with the device key itself: OpenMLS&#39;s <code>Signer</code> is synchronous, and the
+web client&#39;s device key is a non-extractable WebCrypto key whose <code>sign</code> is asynchronous, so the
+wasm build could not use it. A separate key also keeps the MLS signature algorithm (fixed by the
+suite) apart from the device key&#39;s algorithm (which becomes hybrid), and keeps the OS keyring
+out of every message send.</li>
+<li>Verification: replay <code>keyLog(principalId)</code> (<code>key-identity-v1.md</code>), check the device certificate at
+its <code>keySeq</code> and that the device is not revoked, check the <code>mls-key</code> statement under that device
+key and its principal and device ids, compare <code>mlsKey</code> with the leaf&#39;s signature key.</li>
+<li><strong>When identity and device keys go hybrid</strong> (<code>ed25519-mldsa44</code>), the device key signs <code>mls-key</code>
+statements with a hybrid signature; the MLS signature key stays Ed25519 because the suite says so.
+MLS message authenticity stays classical until an MLS suite with a composite Ed25519 + ML-DSA-44
+signature exists; no draft defines one today (<a href="post-quantum-hybrid-2026-10-09.html"><code>post-quantum-hybrid-2026-10-09.md</code></a>, row &quot;MLS
+credential signatures&quot;).</li>
+</ul>
+<h3 id="5-known-answer-tests">5. Known-answer tests <a class="anchor" href="#5-known-answer-tests" aria-label="Link to this section">#</a></h3>
+<p>The crate tests run against published vectors, on the exact versions linked:</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Primitive or layer</th>
+<th>Vectors</th>
+<th>Through</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>MLS protocol layers</td>
+<td>IETF <code>mls-implementations</code> vectors for suite 0x0001 (crypto basics, secret tree, message protection, key schedule, transcript hashes, welcome, tree validation, passive-client welcome and handling-commit): the IETF set has no PQ suite</td>
+<td>OpenMLS&#39;s test-vector readers, re-run in RIM&#39;s CI on the pinned version</td>
+</tr>
+<tr>
+<td>ML-KEM-768</td>
+<td>NIST ACVP FIPS 203 <code>ML-KEM-keyGen</code> and <code>ML-KEM-encapDecap</code> JSON (usnistgov/ACVP-Server)</td>
+<td><code>libcrux-ml-kem</code> and RustCrypto <code>ml-kem</code> as linked</td>
+</tr>
+<tr>
+<td>X-Wing / MLKEM768-X25519</td>
+<td>Appendix vectors of draft-connolly-cfrg-xwing-kem-10 and draft-ietf-hpke-pq-05</td>
+<td>Each provider&#39;s HPKE: deterministic decapsulation of the vector&#39;s ciphertext with the vector&#39;s secret key; where an API cannot take the vector&#39;s randomness, the test names the property it checks instead</td>
+</tr>
+<tr>
+<td>X25519</td>
+<td>RFC 7748 §5.2 and §6.1</td>
+<td>Provider HPKE <code>DhKem25519</code></td>
+</tr>
+<tr>
+<td>Ed25519</td>
+<td>RFC 8032 §7.1 tests 1 to 3</td>
+<td>Provider <code>verify_signature</code> / <code>sign</code></td>
+</tr>
+<tr>
+<td>HPKE base mode</td>
+<td>RFC 9180 Appendix A.1 (0x0020, 0x0001, 0x0001)</td>
+<td>Provider HPKE</td>
+</tr>
+<tr>
+<td>AES-128-GCM, AES-256-GCM</td>
+<td>Wycheproof <code>aes_gcm_test.json</code></td>
+<td>Provider AEAD; <code>aes-gcm</code> for attachments</td>
+</tr>
+<tr>
+<td>HKDF-SHA256, HMAC-SHA256</td>
+<td>RFC 5869 A.1 to A.3, RFC 4231</td>
+<td>Provider KDF; RIM franking and attachments</td>
+</tr>
+<tr>
+<td>RIM formats</td>
+<td><code>e2ee-mls-v1.md</code> Appendix A</td>
+<td><code>rim_mls</code>, <code>rim_identity</code>, the web client in Vitest</td>
+</tr>
+</tbody></table></div>
+<p>&quot;Nothing claimed secure without a test that would fail if it were not&quot;: each RIM-level rule in the
+spec (credential chain, AAD checks, franking, attachment hash) has a negative test.</p>
+<h2 id="rejected-alternatives">Rejected alternatives <a class="anchor" href="#rejected-alternatives" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>mls-rs (AWS Labs)</strong> with <code>mls-rs-crypto-awslc</code> (0.25.0, 2026-04-21, a <code>post-quantum</code>
+feature): an RFC 9420 implementation whose post-quantum path runs on AWS-LC, a C library behind
+the aws-lc-rs bindings. That adds a C toolchain to the wasm build and an FFI boundary to the
+desktop. OpenMLS is the library the decentralization decision named and has both PQ paths in
+pure Rust.</li>
+<li><strong>The RustCrypto provider on clients as the default</strong>: pure Rust and listing 0x004F explicitly,
+but RustCrypto <code>ml-kem</code> and <code>x-wing</code> are newer and unverified; kept as the server provider and the
+named fallback.</li>
+<li><strong>Classical suite 0x0001 first, hybrid later</strong>: recorded traffic would be exposed to
+harvest-now-decrypt-later from Stage 4&#39;s first day, which the hybrid decision rules out when the
+library has the suite. It does.</li>
+<li><strong>Signing MLS with the device key</strong>: see &quot;Credentials&quot;.</li>
+<li><strong><code>openmls_sqlite_storage</code></strong>: the <code>rusqlite</code> link conflict above.</li>
+</ul>
+<h2 id="consequences">Consequences <a class="anchor" href="#consequences" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>Sizes.</strong> A 0x004F key package is about 3.2 KB (two 1,216-byte X-Wing keys, a 382-byte
+credential, signatures); a parent node holds a 1,216-byte key, so a Welcome with the ratchet tree
+for 512 devices is under 2.5 MB. Limits in the spec follow from this.</li>
+<li><strong>wasm.</strong> OpenMLS builds <code>wasm32-unknown-unknown</code> on CI but does not test it. S4-6 runs the crate&#39;s
+test suite in a headless browser (wasm-bindgen-test) as one of its gates and records the
+compressed <code>.wasm</code> size in its PR; libcrux&#39;s portable (non-SIMD) code paths run there.</li>
+<li><strong>FFI risk</strong> is low: neither provider builds C for the primitives used; S4-2 confirms with
+<code>cargo tree -e build</code> and records the result. rim-ui already links SQLCipher&#39;s C.</li>
+<li><strong>The server depends on OpenMLS</strong> for decoding and key package validation only, in one module
+behind a <code>rim_services</code> trait; it never creates or loads a group.</li>
+<li><strong>Upgrades</strong> of OpenMLS or a provider are their own PRs, rerun every vector, and read the
+advisories listed for the release.</li>
+<li><strong>What an outside reviewer should look at first:</strong> the credential chain and the <code>mls-key</code>
+statement; the commit summary checks on both sides; the one-commit-per-epoch locking; atomic
+decrypt-and-store; re-add requests and incarnations (what a hostile server can force); franking
+and the attachment construction (<code>e2ee-mls-v1.md</code>); the provider and storage seam in <code>rim_mls</code>.</li>
+</ul>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/5bae5e7740c1550be76e2a74cd782f6089f63890/docs/decisions/mls-library-2026-10-09.md">rim-server/docs/decisions/mls-library-2026-10-09.md</a> at <code>5bae5e7</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+<script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
+</body>
+</html>

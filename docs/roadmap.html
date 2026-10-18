@@ -54,9 +54,9 @@
 that merges the plugin platform and decentralization into five stages; status updated
 2026-10-10 after the five stages shipped and the cleanup before going public. Supersedes the
 2026-07-08 roadmap (incident wedge). See <a href="vision.html"><code>docs/vision.md</code></a> for product principles,
-<a href="https://github.com/rim-platform/rim-server/blob/5bae5e7740c1550be76e2a74cd782f6089f63890/docs/decisions/decentralization-2026-10-08.md"><code>docs/decisions/decentralization-2026-10-08.md</code></a> for the key-identity decentralization
-decision, <a href="https://github.com/rim-platform/rim-server/blob/5bae5e7740c1550be76e2a74cd782f6089f63890/docs/decisions/post-quantum-hybrid-2026-10-09.md"><code>docs/decisions/post-quantum-hybrid-2026-10-09.md</code></a> for hybrid post-quantum crypto,
-<a href="https://github.com/rim-platform/rim-server/blob/5bae5e7740c1550be76e2a74cd782f6089f63890/docs/decisions/relay-proxied-workspaces-2026-10-09.md"><code>docs/decisions/relay-proxied-workspaces-2026-10-09.md</code></a> for workspace traffic through the
+<a href="decisions/decentralization-2026-10-08.html"><code>docs/decisions/decentralization-2026-10-08.md</code></a> for the key-identity decentralization
+decision, <a href="decisions/post-quantum-hybrid-2026-10-09.html"><code>docs/decisions/post-quantum-hybrid-2026-10-09.md</code></a> for hybrid post-quantum crypto,
+<a href="decisions/relay-proxied-workspaces-2026-10-09.html"><code>docs/decisions/relay-proxied-workspaces-2026-10-09.md</code></a> for workspace traffic through the
 user&#39;s relay, and &quot;Where We Are Now&quot; below for the state of both repositories.
 The shipped-state ledger is at the end.</em></p>
 <h2 id="strategic-thesis--2026-10-04">Strategic Thesis — 2026-10-04 <a class="anchor" href="#strategic-thesis--2026-10-04" aria-label="Link to this section">#</a></h2>
@@ -306,7 +306,7 @@ kept, what link previews fetch), documented in <a href="https://github.com/rim-p
 </ol>
 <h3 id="track-7--decentralization-xl-total-stages-1-to-5">Track 7 — Decentralization (XL total, Stages 1 to 5) <a class="anchor" href="#track-7--decentralization-xl-total-stages-1-to-5" aria-label="Link to this section">#</a></h3>
 <p>Rewritten 2026-10-08. The model is decided (see
-<a href="https://github.com/rim-platform/rim-server/blob/5bae5e7740c1550be76e2a74cd782f6089f63890/docs/decisions/decentralization-2026-10-08.md"><code>docs/decisions/decentralization-2026-10-08.md</code></a>), so the old research spike is dropped and the
+<a href="decisions/decentralization-2026-10-08.html"><code>docs/decisions/decentralization-2026-10-08.md</code></a>), so the old research spike is dropped and the
 track is renumbered 7.0 to 7.4 to match the stages. Local history and keys come first because
 both encryption and relays depend on them.</p>
 <ol start="0">
@@ -370,7 +370,7 @@ the only authority and sequencer. Hosts accept any relay by default, with an opt
 allow-list. A direct connection to a host is the fallback when the relay is unreachable.
 Stage 5 ships after Stage 4, so DMs and private groups are ciphertext on relays; plaintext
 channels are readable by the relay while queued. See
-<a href="https://github.com/rim-platform/rim-server/blob/5bae5e7740c1550be76e2a74cd782f6089f63890/docs/decisions/relay-proxied-workspaces-2026-10-09.md"><code>docs/decisions/relay-proxied-workspaces-2026-10-09.md</code></a>; the contract is
+<a href="decisions/relay-proxied-workspaces-2026-10-09.html"><code>docs/decisions/relay-proxied-workspaces-2026-10-09.md</code></a>; the contract is
 <a href="../specs/server-to-server-v1.html"><code>docs/specs/server-to-server-v1.md</code></a>.</p>
 </li>
 </ol>
@@ -484,7 +484,7 @@ Stage 5 puts the workspace plugin registry on the workspace host, next to roles 
 <tbody><tr>
 <td>1</td>
 <td>rim-server</td>
-<td>The master plan into this roadmap, plus <a href="https://github.com/rim-platform/rim-server/blob/5bae5e7740c1550be76e2a74cd782f6089f63890/docs/decisions/decentralization-2026-10-08.md"><code>docs/decisions/decentralization-2026-10-08.md</code></a></td>
+<td>The master plan into this roadmap, plus <a href="decisions/decentralization-2026-10-08.html"><code>docs/decisions/decentralization-2026-10-08.md</code></a></td>
 <td>all</td>
 <td>S</td>
 </tr>
@@ -602,7 +602,7 @@ and run it, which a decentralized product depends on more than a hosted one.</p>
 </tr>
 <tr>
 <td>Post-quantum (hybrid)</td>
-<td>Classical plus post-quantum together, never post-quantum alone: X25519 + ML-KEM-768 (FIPS 203) for MLS key agreement; Ed25519 + ML-DSA-44 (FIPS 204) for identity and device keys, profile cards, login proofs, MLS credentials and server-to-server signatures. Stage 3 formats carry an algorithm tag and room for multi-kilobyte keys and signatures. See <a href="https://github.com/rim-platform/rim-server/blob/5bae5e7740c1550be76e2a74cd782f6089f63890/docs/decisions/post-quantum-hybrid-2026-10-09.md"><code>docs/decisions/post-quantum-hybrid-2026-10-09.md</code></a></td>
+<td>Classical plus post-quantum together, never post-quantum alone: X25519 + ML-KEM-768 (FIPS 203) for MLS key agreement; Ed25519 + ML-DSA-44 (FIPS 204) for identity and device keys, profile cards, login proofs, MLS credentials and server-to-server signatures. Stage 3 formats carry an algorithm tag and room for multi-kilobyte keys and signatures. See <a href="decisions/post-quantum-hybrid-2026-10-09.html"><code>docs/decisions/post-quantum-hybrid-2026-10-09.md</code></a></td>
 <td>Formats in Stage 3, key agreement in Stage 4, signatures after Stage 4</td>
 </tr>
 <tr>
@@ -785,7 +785,7 @@ core module. Showcase plugins instead.</li>
 <li><strong>Marketplace monetization</strong> before there is a network of plugins.</li>
 <li><strong>Domain federation (<code>name@domain</code> as identity), Matrix-style room replication, or
 peer-to-peer.</strong> Rejected for the key-identity model; a domain may return later only as an
-optional alias on top of a key. See <a href="https://github.com/rim-platform/rim-server/blob/5bae5e7740c1550be76e2a74cd782f6089f63890/docs/decisions/decentralization-2026-10-08.md"><code>docs/decisions/decentralization-2026-10-08.md</code></a>.</li>
+optional alias on top of a key. See <a href="decisions/decentralization-2026-10-08.html"><code>docs/decisions/decentralization-2026-10-08.md</code></a>.</li>
 <li><strong>Encrypted channels.</strong> Channels stay plaintext so server search, pipelines and the agent
 keep working there; E2EE covers DMs and private groups.</li>
 </ul>

@@ -10,6 +10,7 @@ import { renderMarkdown } from "./markdown.mjs";
 /** Where a rim-server file is rendered. */
 function serverOut(file) {
   if (file === "deploy/README.md") return "docs/deploy/index.html";
+  if (file === "docs/decisions/README.md") return "docs/decisions/index.html";
   if (file.startsWith("docs/specs/")) return `specs/${path.posix.basename(file, ".md")}.html`;
   if (file.startsWith("docs/")) return file.replace(/\.md$/, ".html");
   return `docs/${path.posix.basename(file, ".md").toLowerCase().replace(/_/g, "-")}.html`;
@@ -29,6 +30,8 @@ function uiOut(file) {
 /**
  * The docs groups. Each item is `[repo, file]`; `"glob"` items expand to every Markdown file
  * of a directory, and rim-ui docs no group names land in the last subsection of "Using RIM".
+ * An item `[repo, file, { pages: dir }]` is an index page: every other Markdown file of `dir`
+ * is rendered as a page under it, reached from the index rather than listed in the group.
  */
 const GROUPS = [
   {
@@ -134,13 +137,14 @@ const GROUPS = [
   {
     key: "project",
     title: "Project",
-    lede: "Where RIM is heading and how it is built: the vision and the roadmap, the server architecture and the design models, how to contribute, security with its overview and threat model, and the client's internals: the shell, search, the message cache and secret vault, end-to-end encryption, relays and branding.",
+    lede: "Where RIM is heading and how it is built: the vision and the roadmap, the decision records, the server architecture and the design models, how to contribute, security with its overview and threat model, and the client's internals: the shell, search, the message cache and secret vault, end-to-end encryption, relays and branding.",
     subs: [
       {
         title: "Direction and design",
         items: [
           ["server", "docs/vision.md"],
           ["server", "ROADMAP.md"],
+          ["server", "docs/decisions/README.md", { pages: "docs/decisions" }],
           ["server", "docs/architecture.md"],
           ["server", "docs/command_model.md"],
           ["server", "docs/keybind_model.md"],
@@ -208,11 +212,15 @@ export function planDocs(sources, linker) {
   for (const group of GROUPS) {
     for (const sub of group.subs) {
       sub.entries = [];
-      for (const [repo, item] of sub.items) {
+      for (const [repo, item, opts] of sub.items) {
         if (item.startsWith("glob:")) {
           for (const f of sources[repo].list(item.slice(5))) sub.entries.push(add(repo, f, group, sub));
         } else {
-          sub.entries.push(add(repo, item, group, sub));
+          const index = add(repo, item, group, sub);
+          sub.entries.push(index);
+          for (const f of opts?.pages ? sources[repo].list(opts.pages) : []) {
+            if (f !== item) add(repo, f, group, sub).parent = index;
+          }
         }
         named.add(`${repo}:${item}`);
       }
@@ -252,6 +260,7 @@ export function renderDocs(plan, linker) {
       crumbs = [
         { href: "docs/index.html", text: "Docs" },
         { href: `docs/${entry.group.key}.html`, text: entry.group.title },
+        ...(entry.parent ? [{ href: entry.parent.out, text: entry.parent.title }] : []),
         { text: entry.title },
       ];
       section = SECTION_OF[entry.out] ?? "docs";
