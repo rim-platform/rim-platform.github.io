@@ -433,6 +433,14 @@ the notification and general builtins declare none.</p>
 <li>persisted user-defined commands may only compose backend-executable commands</li>
 <li>desktop-local command composition belongs to a later client/runtime slice</li>
 </ul>
+<p>A user command belongs to the user who created it and nobody else sees it. <code>commands</code> lists it
+as a <code>Command</code> while it is enabled, without its steps. <code>userCommand(id)</code> returns one of the
+caller&#39;s user commands as a <code>UserCommand</code>, enabled or not, with its title, description, steps
+in the order they run (each a <code>commandId</code> and its <code>args</code>) and <code>isEnabled</code>: the fields
+<code>updateUserCommand</code> takes, so an edit form loads the saved steps instead of asking for them
+again. It answers null for an id that is not one of the caller&#39;s user commands: a built-in id,
+another user&#39;s command and an unknown one alike. <code>userCommands</code> lists the caller&#39;s user
+commands in the same shape, enabled or not, sorted by id.</p>
 <h2 id="macros">Macros <a class="anchor" href="#macros" aria-label="Link to this section">#</a></h2>
 <p>Two things compose commands, and only one of them is a command:</p>
 <ul>
@@ -748,7 +756,7 @@ it later.</li>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/857db508230ad602aebbe8cb1ae1268ccd93bf80/docs/command_model.md">rim-server/docs/command_model.md</a> at <code>857db50</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/5bae5e7740c1550be76e2a74cd782f6089f63890/docs/command_model.md">rim-server/docs/command_model.md</a> at <code>5bae5e7</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

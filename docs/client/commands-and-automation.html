@@ -68,13 +68,13 @@ for your account.</li>
 piece of text. Context is where you are when it runs: the open workspace, the open conversation,
 a selected message. A command whose workspace or conversation argument is empty takes it from the
 context; one given in its arguments, such as a keybind&#39;s preset arguments, wins. The palette,
-keybinds, the composer&#39;s <code>/</code> list and the AI agent send the open workspace, the open conversation
-and the thread open beside it; a message&#39;s context menu sends the message&#39;s conversation, its
-thread and the message instead. A server command that needs a conversation, such as marking it
-read or setting its notification level, therefore acts on the open one, and with none open it
-needs the conversation&#39;s id in its arguments. A plugin command that needs a conversation gets the
-open one; with none open, the palette leaves it out and its keybind says &quot;Open a conversation
-first&quot;.</p>
+keybinds, the composer&#39;s <code>/</code> list, a macro run and the AI agent send the open workspace, the open
+conversation and the thread open beside it; a message&#39;s context menu sends the message&#39;s
+conversation, its thread and the message instead. A server command that needs a conversation,
+such as marking it read or setting its notification level, therefore acts on the open one, and
+with none open it needs the conversation&#39;s id in its arguments. A plugin command that needs a
+conversation gets the open one; with none open, the palette leaves it out and its keybind says
+&quot;Open a conversation first&quot;.</p>
 <p><strong>Sensitivity.</strong> Every command has one of four tiers, and the server decides from it whether a
 run waits for your confirmation:</p>
 <div class="tablewrap"><table>
@@ -293,9 +293,12 @@ command</strong>, asks for a <strong>Command ID</strong> (saved as <code>user.&l
 the <strong>Steps</strong>: <strong>+ Add step</strong> picks a command the server runs, and the arrows reorder. <strong>Create</strong>
 saves it. Its steps take no arguments here, so each one uses the context. A user command can be
 bound when all its steps can, is dangerous when one step is, and can include other user
-commands, eight levels deep at most. Editing one, with the pencil, asks for its steps again,
-since the saved ones cannot be loaded back into the form: <strong>Save</strong> stays off until a step is
-chosen, and the new steps replace the old.</p>
+commands, eight levels deep at most. The list shows each one&#39;s id and number of steps. The
+pencil loads the saved command into the form, its title, description and steps in order, with
+a step&#39;s arguments shown under it. Changing a step&#39;s command drops its arguments; <strong>Save</strong>
+stays off until a step is chosen, and the steps on the form replace the saved ones. A command
+deleted elsewhere closes the editor with &quot;&lt;title&gt; no longer exists for this account, so it
+cannot be edited.&quot;</p>
 <p><strong>Macros</strong> carry arguments for each step. Settings → Macros, <strong>New Macro</strong>, opens &quot;Create
 Macro&quot;: a <strong>Name</strong>, a <strong>Description</strong> and up to 20 <strong>Steps</strong>. Each step has a command, found with
 &quot;Search commands...&quot;, and an arguments field that takes JSON, such as
@@ -304,11 +307,12 @@ and a step typed as one is marked as failing. <strong>Save</strong> stores it. O
 AI</strong> turns a description into steps with the provider set in Settings → AI Agent: <strong>Generate</strong>,
 check the preview, then <strong>Use these steps</strong> opens them in the editor.</p>
 <p>A macro runs from the play button on its row (&quot;Run macro&quot;), or from the composer: send
-<code>/macro &lt;name&gt;</code> (&quot;Run Macro&quot;). It runs on the server, step by step, with the open workspace as
-its only context:</p>
+<code>/macro &lt;name&gt;</code> (&quot;Run Macro&quot;). It runs on the server, step by step, in the open workspace, the
+open conversation and the thread open beside it, read when the run starts:</p>
 <ul>
-<li><strong>Steps do not pipe.</strong> Each step gets its own arguments; a step that needs a conversation names
-it with <code>conversation_id</code>. A command that only runs in the app fails as a step.</li>
+<li><strong>Steps do not pipe.</strong> Each step gets its own arguments. A step that needs a conversation acts
+on the open one, or on the one its <code>conversation_id</code> names, which wins; with none open it needs
+<code>conversation_id</code>. A command that only runs in the app fails as a step.</li>
 <li><strong>Confirmation.</strong> A macro with a restricted step asks once, before any step runs, in
 <code>Run macro &quot;&lt;name&gt;&quot;</code>: &quot;This macro includes commands marked as dangerous. They may delete data
 or make irreversible changes.&quot; A dangerous step below the restricted tier, such as kicking a
@@ -403,7 +407,7 @@ sensitivity, confirmations, macros and what the agent may call.</li>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/1f86d0926fd918bd6428717bb32284051579aa70/docs/commands-and-automation.md">rim-ui/docs/commands-and-automation.md</a> at <code>1f86d09</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/67df74d7c8c7540dd2af1f51e937d9f4c13d833f/docs/commands-and-automation.md">rim-ui/docs/commands-and-automation.md</a> at <code>67df74d</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>
