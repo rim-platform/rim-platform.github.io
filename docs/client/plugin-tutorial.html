@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Your first plugin · RIM</title>
+<meta name="description" content="This walk-through builds a local-process plugin with the TypeScript SDK: a command in the palette, a panel beside the conversation, then a permission to read the open conversation. It ends with the plugin installed from …">
+<link rel="icon" href="../../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../../index.html" aria-label="RIM home">
+      <picture><source srcset="../../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../../index.html#what">What RIM is</a>
+      <a href="../../index.html#how">How it works</a>
+      <a href="../self-hosting.html">Self-host</a>
+      <a href="../../configure/index.html">Configure</a>
+      <a href="../../plugins/index.html">Plugins</a>
+      <a href="../index.html" aria-current="page">Docs</a>
+      <a href="../../api/index.html">API</a>
+      <a href="../../specs/index.html">Specs</a>
+      <a href="../contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="../index.html">Docs</a><span aria-hidden="true">/</span><a href="../plugin-authors.html">Plugin authors</a><span aria-hidden="true">/</span><span>Your first plugin</span></div>
+  <div class="page with-toc">
+    <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
+<ol>
+<li><a href="#1-copy-the-template">1. Copy the template</a></li>
+<li><a href="#2-the-manifest-rim-pluginjson">2. The manifest, rim-plugin.json</a></li>
+<li><a href="#3-the-command-plugints">3. The command, plugin.ts</a></li>
+<li><a href="#4-the-panel">4. The panel</a></li>
+<li><a href="#5-test-it-plugintestts">5. Test it, plugin.test.ts</a></li>
+<li><a href="#6-build-and-install">6. Build and install</a></li>
+<li><a href="#7-try-it">7. Try it</a></li>
+<li><a href="#8-ask-for-a-permission">8. Ask for a permission</a></li>
+<li><a href="#9-publish-from-git">9. Publish from git</a></li>
+<li><a href="#10-sign-and-publish-to-a-workspace">10. Sign and publish to a workspace</a></li>
+</ol>
+</details></aside>
+    <main id="content" class="prose">
+<h1 id="your-first-plugin">Your first plugin</h1>
+<p>This walk-through builds a local-process plugin with the TypeScript SDK: a command in the palette,
+a panel beside the conversation, then a permission to read the open conversation. It ends with the
+plugin installed from git and published to a workspace. It needs Node 22.18 or newer, git and the
+desktop app. <a href="plugin-manifest.html">The manifest reference</a> has every field, and
+<a href="plugin-sdk.html">the SDK&#39;s README</a> its API and a plugin in one file.</p>
+<h2 id="1-copy-the-template">1. Copy the template <a class="anchor" href="#1-copy-the-template" aria-label="Link to this section">#</a></h2>
+<pre><code class="language-sh">cp -r rim-ui/plugins/template-ts greeter &amp;&amp; cd greeter
+npm install    # the SDK from npm, esbuild, TypeScript and Vitest
+npm test       # the template's own tests, against the SDK's in-memory host</code></pre>
+<p><code>main.ts</code> is the entrypoint and stays as it is: it runs the plugin <code>plugin.ts</code> creates. The next
+steps replace <code>rim-plugin.json</code>, <code>plugin.ts</code> and <code>plugin.test.ts</code>, and add <code>panels/</code>.</p>
+<h2 id="2-the-manifest-rim-pluginjson">2. The manifest, <code>rim-plugin.json</code> <a class="anchor" href="#2-the-manifest-rim-pluginjson" aria-label="Link to this section">#</a></h2>
+<pre><code class="language-json">{
+  &quot;manifest_version&quot;: 1,
+  &quot;plugin_id&quot;: &quot;dev.example.greeter&quot;,
+  &quot;display_name&quot;: &quot;Greeter&quot;,
+  &quot;version&quot;: &quot;0.1.0&quot;,
+  &quot;description&quot;: &quot;Greets people and shows the last greeting in a panel.&quot;,
+  &quot;author&quot;: &quot;Ada Example&quot;,
+  &quot;runtime_kind&quot;: &quot;DesktopLocalProcess&quot;,
+  &quot;entrypoint&quot;: &quot;main.ts&quot;,
+  &quot;capabilities&quot;: [&quot;ui.panel&quot;],
+  &quot;commands&quot;: [
+    {
+      &quot;id&quot;: &quot;greet&quot;,
+      &quot;title&quot;: &quot;Greeter: Greet&quot;,
+      &quot;description&quot;: &quot;Greets someone and shows the greeting in the Greetings panel.&quot;,
+      &quot;keybind_capable&quot;: true,
+      &quot;arguments&quot;: [{ &quot;name&quot;: &quot;name&quot;, &quot;type&quot;: &quot;string&quot;, &quot;required&quot;: false }]
+    }
+  ],
+  &quot;panels&quot;: [{ &quot;id&quot;: &quot;greetings&quot;, &quot;title&quot;: &quot;Greetings&quot;, &quot;slot&quot;: &quot;tool_panel&quot; }]
+}</code></pre>
+<ul>
+<li><code>plugin_id</code> is a reverse-domain id of your own. Node runs <code>main.ts</code> as it is while you work, and
+the bundler sets <code>entrypoint</code> to <code>main.mjs</code>.</li>
+<li><code>ui.panel</code> lets the plugin set its panel&#39;s state. The palette runs commands without arguments,
+so it lists <code>greet</code> only because its one argument is not <code>required</code>.</li>
+</ul>
+<h2 id="3-the-command-plugints">3. The command, <code>plugin.ts</code> <a class="anchor" href="#3-the-command-plugints" aria-label="Link to this section">#</a></h2>
+<pre><code class="language-ts">import { definePlugin, ErrorCode, PluginError } from &quot;@rim-platform/plugin-sdk&quot;;
+
+export function createPlugin() {
+  let count = 0;
+  let last = &quot;&quot;;
+
+  return definePlugin({
+    id: &quot;dev.example.greeter&quot;,
+    commands: {
+      greet: {
+        async run({ args, invoker, host }) {
+          if (args.name !== undefined &amp;&amp; typeof args.name !== &quot;string&quot;) {
+            throw new PluginError(&quot;name must be a string&quot;, { code: ErrorCode.INVALID_PARAMS });
+          }
+          count += 1;
+          last = `Hello, ${args.name?.trim() || invoker?.displayName || &quot;world&quot;}!`;
+          await host.panels.set(&quot;greetings&quot;, { last, count });
+          return { payload: { last, count }, message: last };
+        },
+      },
+    },
+    async onReady(host) {
+      await host.panels.set(&quot;greetings&quot;, { last, count });
+    },
+  });
+}</code></pre>
+<p><code>host.panels.set</code> replaces the panel&#39;s state, which the host keeps and sends to the panel whenever
+it opens. Without an approved <code>ui.panel</code> it rejects with <code>CAPABILITY_DENIED</code> and the command fails.</p>
+<h2 id="4-the-panel">4. The panel <a class="anchor" href="#4-the-panel" aria-label="Link to this section">#</a></h2>
+<p>A panel is <code>panels/&lt;id&gt;/index.html</code> in a sandboxed frame. <code>panels/greetings/index.html</code>:</p>
+<pre><code class="language-html">&lt;!doctype html&gt;
+&lt;meta charset=&quot;UTF-8&quot; /&gt;
+&lt;style&gt;
+  body { background: var(--color-rim-void, #0d0d0f); color: var(--color-rim-text, #e0e0e6); }
+&lt;/style&gt;
+&lt;p id=&quot;last&quot;&gt;Waiting for the plugin…&lt;/p&gt;
+&lt;button id=&quot;greet&quot; type=&quot;button&quot;&gt;Greet&lt;/button&gt;
+&lt;script src=&quot;app.js&quot;&gt;&lt;/script&gt;</code></pre>
+<p><code>panels/greetings/app.js</code>:</p>
+<pre><code class="language-js">const last = document.getElementById(&quot;last&quot;);
+let nextRequest = 1;
+
+window.addEventListener(&quot;message&quot;, (event) =&gt; {
+  if (event.source !== window.parent || typeof event.data?.type !== &quot;string&quot;) return;
+  const message = event.data;
+  if (message.type === &quot;theme.changed&quot;) {
+    for (const [name, value] of Object.entries(message.variables ?? {})) {
+      document.documentElement.style.setProperty(name, value);
+    }
+  } else if (message.type === &quot;panel.state_update&quot;) {
+    const state = message.state;
+    last.textContent = state ? `${state.last || &quot;No greeting yet&quot;} (${state.count})` : &quot;Stopped&quot;;
+  } else if (message.type === &quot;rim.command.result&quot; &amp;&amp; !message.ok) {
+    last.textContent = message.message;
+  }
+});
+
+document.getElementById(&quot;greet&quot;).addEventListener(&quot;click&quot;, () =&gt; {
+  const commandId = &quot;plugin.dev.example.greeter.greet&quot;;
+  const requestId = `greet-${nextRequest++}`;
+  window.parent.postMessage({ type: &quot;rim.command.execute&quot;, commandId, args: {}, requestId }, &quot;*&quot;);
+});</code></pre>
+<p>A panel does not use the SDK: it speaks the panel bridge over <code>postMessage</code>, not frozen in
+protocol v1. The host sends <code>theme.changed</code> with the <code>--color-rim-*</code> tokens, <code>panel.state_update</code>
+on opening, after every <code>set</code> and as <code>null</code> once the plugin stops, and <code>rim.command.result</code> for a
+<code>requestId</code>. A panel runs only its own plugin&#39;s commands, never confirms a dangerous one, loads
+only the files <a href="https://github.com/rim-platform/rim-ui/blob/b8e647d0123104fd732a2aafbeeb723040dfb0ea/index.html"><code>index.html</code></a> names, runs no inline handlers, and has no network.</p>
+<h2 id="5-test-it-plugintestts">5. Test it, <code>plugin.test.ts</code> <a class="anchor" href="#5-test-it-plugintestts" aria-label="Link to this section">#</a></h2>
+<pre><code class="language-ts">import { readFileSync } from &quot;node:fs&quot;;
+import { expect, it } from &quot;vitest&quot;;
+import { startTestHost, validateManifest } from &quot;@rim-platform/plugin-sdk/testing&quot;;
+
+import { createPlugin } from &quot;./plugin.ts&quot;;
+
+const manifestPath = `${import.meta.dirname}/rim-plugin.json`;
+
+it(&quot;installs, greets and updates the panel&quot;, async () =&gt; {
+  expect(() =&gt; validateManifest(JSON.parse(readFileSync(manifestPath, &quot;utf8&quot;)))).not.toThrow();
+  const panels: unknown[] = [];
+  const host = startTestHost(createPlugin(), {
+    manifestPath,
+    grantedCapabilities: [&quot;ui.panel&quot;],
+    onRequest: (method, params) =&gt; {
+      if (method === &quot;rim.ui.update_panel&quot;) panels.push(params);
+      return {};
+    },
+  });
+  await host.handshake();
+  expect((await host.execute(&quot;greet&quot;, { name: &quot;RIM&quot; })).result?.message).toBe(&quot;Hello, RIM!&quot;);
+  expect(panels.at(-1)).toMatchObject({ panel_id: &quot;greetings&quot;, state: { count: 1 } });
+  await host.shutdown();
+});</code></pre>
+<p><code>npm test</code> runs it, <code>npm run typecheck</code> checks the types. Without <code>ui.panel</code> in
+<code>grantedCapabilities</code> the test host refuses <code>rim.ui.update_panel</code>, as the app does.</p>
+<h2 id="6-build-and-install">6. Build and install <a class="anchor" href="#6-build-and-install" aria-label="Link to this section">#</a></h2>
+<pre><code class="language-sh">npm run bundle</code></pre>
+<p>It writes <code>dist/dev.example.greeter</code> and <code>dist/dev.example.greeter-0.1.0.rimbundle</code> and prints
+<code>sha256 &lt;hash&gt;  size &lt;bytes&gt;</code>. The folder holds <code>rim-plugin.json</code>, an executable <code>main.mjs</code> with
+the SDK inside, and <code>panels/</code>. In the desktop app, choose that folder with Settings → Plugins →
+Install from local folder. The app copies it to <code>~/.rim/plugins/dev.example.greeter/</code> and opens
+Plugin Permissions: the name, version and author, the description under &quot;From the plugin
+author:&quot;, the warning that a local process runs with your account&#39;s access, and one checkbox,
+&quot;Render UI Panels&quot;. Approve, then turn the plugin on with its toggle.</p>
+<h2 id="7-try-it">7. Try it <a class="anchor" href="#7-try-it" aria-label="Link to this section">#</a></h2>
+<p>Open a conversation. The palette lists <strong>Greeter: Greet</strong> under Greeter; running it shows the toast
+&quot;Greeter: Greet: Hello, &lt;your name&gt;!&quot;. <strong>Open Greetings</strong> in the palette, or the side rail&#39;s
+Plugins menu, one row per running panel (&quot;Greeter&quot;, then &quot;Greetings&quot;), shows the panel beside the
+tool panel; its button runs the same command. <code>host.log</code> lines and stderr go to the app&#39;s log.</p>
+<h2 id="8-ask-for-a-permission">8. Ask for a permission <a class="anchor" href="#8-ask-for-a-permission" aria-label="Link to this section">#</a></h2>
+<p>Reading the open conversation takes <code>chat.read</code> and a command that requires the conversation. In
+<code>rim-plugin.json</code>, set <code>&quot;capabilities&quot;: [&quot;ui.panel&quot;, &quot;chat.read&quot;]</code> and add to <code>commands</code>:</p>
+<pre><code class="language-json">{
+  &quot;id&quot;: &quot;count_messages&quot;,
+  &quot;title&quot;: &quot;Greeter: Count messages&quot;,
+  &quot;description&quot;: &quot;Counts the latest messages of the open conversation.&quot;,
+  &quot;required_context&quot;: [&quot;conversation&quot;],
+  &quot;required_capabilities&quot;: [&quot;chat.read&quot;]
+}</code></pre>
+<p>In <code>plugin.ts</code>, next to <code>greet</code>:</p>
+<pre><code class="language-ts">count_messages: {
+  async run({ args, host }) {
+    const { messages, hasOlder } = await host.chat.listMessages(args.conversation_id as string, {
+      limit: 50,
+    });
+    const shown = `${messages.length}${hasOlder ? &quot;+&quot; : &quot;&quot;}`;
+    return { payload: messages.length, message: `${shown} messages` };
+  },
+},</code></pre>
+<p>The host adds <code>conversation_id</code> to <code>args</code> and lists the command only while a conversation is open.
+Run <code>npm run bundle</code>, uninstall the old copy in Settings → Plugins and install the folder again.
+The prompt now has a second checkbox, &quot;Read your conversations: this plugin sees the messages
+stored on this device, except those of encrypted DMs and groups.&quot; Unchecked, the command fails
+with <code>CAPABILITY_DENIED</code>. The Permissions button reopens the prompt; revoking any permission stops
+the plugin. Encrypted conversations also take <code>chat.read.encrypted</code> (<a href="plugin-chat-methods.html">how</a>).</p>
+<h2 id="9-publish-from-git">9. Publish from git <a class="anchor" href="#9-publish-from-git" aria-label="Link to this section">#</a></h2>
+<p>A plugin repository holds its build at the root, so <strong>Install from git URL</strong> finds a complete
+plugin. Set <code>&quot;entrypoint&quot;: &quot;main.mjs&quot;</code> in <code>rim-plugin.json</code> and the <code>bundle</code> script in
+<a href="https://github.com/rim-platform/rim-ui/blob/b8e647d0123104fd732a2aafbeeb723040dfb0ea/package.json"><code>package.json</code></a> to <code>rim-plugin-bundle --entry main.ts .</code>, then:</p>
+<pre><code class="language-sh">npx rim-plugin-bundle --in-place --entry main.ts .   # writes main.mjs beside the manifest
+npx rim-plugin-bundle --check --entry main.ts .      # exits 1 when main.mjs is stale; run it in CI
+printf 'node_modules/\ndist/\n' &gt; .gitignore
+git init &amp;&amp; git add . &amp;&amp; git commit -m &quot;Add the Greeter plugin&quot;</code></pre>
+<p>Push it to a host such as GitHub; others paste its <code>https://</code> URL into Settings → Plugins →
+Install from git URL. With only <code>devDependencies</code> nothing more runs; with <code>dependencies</code> the app
+shows the <code>npm install --production</code> it would run and asks first. A release can attach the
+<code>.rimbundle</code> of <code>npm run bundle</code>, served with <code>Access-Control-Allow-Origin: *</code>, for Install from
+link as <code>https://host/path/dev.example.greeter-0.1.0.rimbundle#sha256=&lt;hash&gt;</code>.</p>
+<h2 id="10-sign-and-publish-to-a-workspace">10. Sign and publish to a workspace <a class="anchor" href="#10-sign-and-publish-to-a-workspace" aria-label="Link to this section">#</a></h2>
+<p>On a desktop that holds your account&#39;s identity key (Settings → Security), Settings → Plugins
+shows <strong>Sign and publish…</strong> on each installed plugin. A plugin installed from git is signed as its
+checkout&#39;s <code>origin</code> URL, commit and tree hash; any other as a bundle of its installed folder. Give
+a publisher name and choose Sign. An Owner or Moderator of the workspace picks Recommended or
+Required and chooses Publish; anyone else chooses Export… and hands the <code>.rimsig.json</code> to one, who
+adds it in Workspace settings → Plugins → Add from files. Members find it in the palette&#39;s
+&quot;Workspace plugins&quot; (<a href="workspace-plugins.html">workspace plugins</a>).</p>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/b8e647d0123104fd732a2aafbeeb723040dfb0ea/docs/plugin-tutorial.md">rim-ui/docs/plugin-tutorial.md</a> at <code>b8e647d</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+<script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
+</body>
+</html>

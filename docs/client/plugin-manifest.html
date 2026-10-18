@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The plugin manifest · RIM</title>
+<meta name="description" content="Every plugin carries rim-plugin.json at the root of its folder or bundle. This page lists each field the desktop parser accepts, in the order of PluginManifest in manifest.rs, with the install rules of validation.rs, …">
+<link rel="icon" href="../../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../../index.html" aria-label="RIM home">
+      <picture><source srcset="../../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../../index.html#what">What RIM is</a>
+      <a href="../../index.html#how">How it works</a>
+      <a href="../self-hosting.html">Self-host</a>
+      <a href="../../configure/index.html">Configure</a>
+      <a href="../../plugins/index.html">Plugins</a>
+      <a href="../index.html" aria-current="page">Docs</a>
+      <a href="../../api/index.html">API</a>
+      <a href="../../specs/index.html">Specs</a>
+      <a href="../contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="../index.html">Docs</a><span aria-hidden="true">/</span><a href="../plugin-authors.html">Plugin authors</a><span aria-hidden="true">/</span><span>The plugin manifest</span></div>
+  <div class="page with-toc">
+    <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
+<ol>
+<li><a href="#reading-and-checking">Reading and checking</a></li>
+<li><a href="#identity-and-runtime">Identity and runtime</a></li>
+<li><a href="#capabilities">capabilities</a></li>
+<li><a href="#network_origins">network_origins</a></li>
+<li><a href="#commands">commands</a></li>
+<li><a href="#keybind_suggestions-and-context_actions">keybind_suggestions and context_actions</a></li>
+<li><a href="#panels">panels</a></li>
+<li><a href="#settings_schema">settings_schema</a></li>
+<li><a href="#the-content-hash">The content hash</a></li>
+<li><a href="#simple-mode">Simple mode</a></li>
+<li><a href="#example">Example</a></li>
+</ol>
+</details></aside>
+    <main id="content" class="prose">
+<h1 id="the-plugin-manifest">The plugin manifest</h1>
+<p>Every plugin carries <code>rim-plugin.json</code> at the root of its folder or bundle. This page lists each
+field the desktop parser accepts, in the order of <code>PluginManifest</code> in <code>manifest.rs</code>, with the
+install rules of <code>validation.rs</code>, both in <a href="https://github.com/rim-platform/rim-ui/tree/b8e647d0123104fd732a2aafbeeb723040dfb0ea/src-tauri/src/plugin_host"><code>src-tauri/src/plugin_host/</code></a>. The web app installs by
+their port in the SDK, <code>manifestRules.ts</code>; both pass <a href="https://github.com/rim-platform/rim-ui/blob/b8e647d0123104fd732a2aafbeeb723040dfb0ea/protocol/manifest-vectors.json"><code>protocol/manifest-vectors.json</code></a>, and a
+plugin&#39;s tests run them with <code>validateManifest</code> (<a href="plugin-sdk.html">the SDK</a>).</p>
+<h2 id="reading-and-checking">Reading and checking <a class="anchor" href="#reading-and-checking" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>The file is JSON with snake_case keys. Unknown fields are ignored and left out of the hash.</li>
+<li>A field with a default may be left out, but <code>null</code> is refused for it. <code>author</code>,
+<code>network_origins</code>, <code>output_schema</code>, <code>preset_args</code> and <code>slot</code> take <code>null</code> as absent.</li>
+<li>A missing field or a wrong type fails with <code>failed to parse manifest: &lt;reason&gt;</code>, the manifest&#39;s
+own checks with <code>validation error: &lt;reason&gt;</code>, the install checks with <code>invalid manifest: &lt;reason&gt;</code> and, in the UI, <code>{ kind: &quot;INVALID_MANIFEST&quot;, data }</code> with <code>data.kind</code> one of the tags
+below. The first failing check is reported. The desktop repeats the checks at every start.</li>
+</ul>
+<h2 id="identity-and-runtime">Identity and runtime <a class="anchor" href="#identity-and-runtime" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong><code>manifest_version</code></strong> (integer, required): <code>1</code>; anything else fails with
+<code>unsupported manifest_version: &lt;n&gt;</code>.</li>
+<li><strong><code>plugin_id</code></strong> (string, required): a reverse-domain id such as <code>dev.example.greeter</code>, at least
+three dot-separated segments of ASCII letters, digits and <code>-</code> (<code>plugin_id must have at least 3 segments</code>, <code>contains an empty segment</code>, <code>segment contains invalid characters</code>). Ids
+starting <code>dev.rim.</code> or <code>com.rim.</code> fail with <code>reserved plugin_id prefix: &lt;id&gt;</code>. The id names the
+install folder, <code>~/.rim/plugins/&lt;plugin_id&gt;/</code>, and every command, <code>plugin.&lt;plugin_id&gt;.&lt;id&gt;</code>.</li>
+<li><strong><code>display_name</code></strong> (string, required, not empty): the name in Settings, in the permission
+prompt, as the palette category of the plugin&#39;s commands and in the side rail&#39;s Plugins menu.</li>
+<li><strong><code>version</code></strong> (string, required, not empty): free-form. The bundler names its file
+<code>&lt;plugin_id&gt;-&lt;version&gt;.rimbundle</code>.</li>
+<li><strong><code>description</code></strong> (string, required, may be empty) and <strong><code>author</code></strong> (string or <code>null</code>, default
+<code>null</code>): the permission prompt quotes the first, cut at 600 characters, and says &quot;by &lt;author&gt;&quot;.</li>
+<li><strong><code>runtime_kind</code></strong> (string, required): another value fails with <code>unknown variant</code>.<ul>
+<li><code>&quot;DesktopLocalProcess&quot;</code>: a program the desktop app starts, speaking protocol v1 over stdio.
+It runs as the user; capabilities govern only what the host does for it.</li>
+<li><code>&quot;WebSandboxed&quot;</code>: one ES module in a sandboxed iframe, on the desktop and the web, reaching
+only what its capabilities and <code>network_origins</code> allow (<a href="web-plugins.html">web plugins</a>).</li>
+</ul>
+</li>
+<li><strong><code>entrypoint</code></strong> (string, required, not empty):<ul>
+<li><code>DesktopLocalProcess</code>: a file in the plugin folder that the host runs directly, with no
+arguments and the plugin folder as working directory, so it needs a <code>#!</code> line and the
+executable bit. A missing file fails at start with <code>entrypoint not found</code>.</li>
+<li><code>WebSandboxed</code>: a bundle path (<code>/</code>-separated segments of <code>A-Z a-z 0-9 . _ -</code>, none empty or
+starting with <code>.</code>, at most 255 bytes) ending in <code>.mjs</code> or <code>.js</code> and not under <code>panels/</code>.
+Otherwise <code>INVALID_ENTRYPOINT</code>: <code>invalid entrypoint `&lt;path&gt;`: &lt;reason&gt;</code>.</li>
+</ul>
+</li>
+</ul>
+<h2 id="capabilities"><code>capabilities</code> <a class="anchor" href="#capabilities" aria-label="Link to this section">#</a></h2>
+<p>A list of strings, default <code>[]</code>: the permissions the plugin asks for, in a prompt shown after
+install and from Settings → Plugins → Permissions. Revoking any capability stops the plugin.</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Kinds</th>
+<th>What it guards</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>ui.panel</code></td>
+<td>both</td>
+<td><code>rim.ui.update_panel</code>: the panel state <code>host.panels</code> sets</td>
+</tr>
+<tr>
+<td><code>ui.notify</code></td>
+<td>both</td>
+<td>Notifications a panel shows with <code>rim.ui.notification.show</code></td>
+</tr>
+<tr>
+<td><code>chat.read</code></td>
+<td>both</td>
+<td><code>rim.chat.list_messages</code>, <code>get_message</code>, <code>search_messages</code></td>
+</tr>
+<tr>
+<td><code>chat.write</code></td>
+<td>both</td>
+<td><code>rim.chat.post_message</code></td>
+</tr>
+<tr>
+<td><code>chat.read.encrypted</code></td>
+<td>both</td>
+<td>The reads in encrypted DMs and groups; needs <code>chat.read</code></td>
+</tr>
+<tr>
+<td><code>chat.write.encrypted</code></td>
+<td>both</td>
+<td>Posting in encrypted DMs and groups; needs <code>chat.write</code></td>
+</tr>
+<tr>
+<td><code>network.fetch</code></td>
+<td><code>WebSandboxed</code></td>
+<td>Connecting to the origins in <code>network_origins</code></td>
+</tr>
+</tbody></table></div>
+<p>A manifest may also declare keys of its own, <code>plugin.&lt;plugin_id&gt;.&lt;verb&gt;</code>, for a command&#39;s
+<code>required_capabilities</code> to name. The permission prompt lists only the names above, so the app
+offers no way to approve such a key, and a command that requires one is refused.</p>
+<p>A key fails with <code>INVALID_CAPABILITY_KEY</code> (<code>invalid capability key `&lt;key&gt;`: &lt;reason&gt;</code>) when:</p>
+<ul>
+<li>it is shorter than 4 or longer than 128 bytes, or <code>network.fetch</code> on a <code>DesktopLocalProcess</code>
+plugin, or <code>local.process</code>, <code>fs.read</code>, <code>fs.write</code> or <code>network</code> on a <code>WebSandboxed</code> one;</li>
+<li>it starts with a reserved namespace: <code>system.</code>, <code>internal.</code>, <code>admin.</code> or <code>audit.</code>;</li>
+<li>it is neither a name above nor starts with <code>plugin.&lt;plugin_id&gt;.</code>, which refuses <code>events.read</code>,
+<code>local.process</code>, <code>network</code> and <code>fs.*</code> on a local process too: nothing implements what they guard;</li>
+<li>its verb is empty, uses anything but <code>a-z 0-9 _ .</code>, starts or ends with <code>.</code> or contains <code>..</code>,
+or any segment of the key is <code>system</code>, <code>internal</code>, <code>admin</code> or <code>audit</code>;</li>
+<li>it is an encrypted chat name without its plain one (<code>chat.read.encrypted requires chat.read</code>).</li>
+</ul>
+<h2 id="network_origins"><code>network_origins</code> <a class="anchor" href="#network_origins" aria-label="Link to this section">#</a></h2>
+<p>A list of strings, absent by default, for <code>WebSandboxed</code> only: the origins the plugin&#39;s frame may
+connect to once <code>network.fetch</code> is approved. The prompt names each host. It fails with
+<code>INVALID_NETWORK_ORIGINS</code> (<code>invalid network_origins: &lt;reason&gt;</code>) when:</p>
+<ul>
+<li>it is present on a <code>DesktopLocalProcess</code> plugin or without <code>network.fetch</code>, absent while
+<code>network.fetch</code> is declared, lists fewer than 1 or more than 16 origins, or one twice;</li>
+<li>an entry is not <code>https://host[:port]</code> or <code>wss://host[:port]</code> with a lowercase host and no path,
+trailing slash, query, fragment, userinfo or wildcard, or its port is empty, starts with <code>0</code> or
+exceeds 65535;</li>
+<li>an entry has the host and port of the app&#39;s or the RIM API&#39;s own origin, default ports aside.</li>
+</ul>
+<h2 id="commands"><code>commands</code> <a class="anchor" href="#commands" aria-label="Link to this section">#</a></h2>
+<p>A list, default <code>[]</code>. Each entry joins the shared command registry as <code>plugin.&lt;plugin_id&gt;.&lt;id&gt;</code>:
+the palette, keybinds, macros and, when allowed, the AI agent.</p>
+<ul>
+<li><strong><code>id</code></strong>, <strong><code>title</code></strong>, <strong><code>description</code></strong> (strings, required): the key in the SDK&#39;s <code>commands</code>,
+the palette&#39;s line and its detail.</li>
+<li><strong><code>keybind_capable</code></strong> (bool, default <code>false</code>): offered when binding a key.</li>
+<li><strong><code>dangerous</code></strong> (bool, default <code>false</code>): the user confirms every run, the agent only proposes it.</li>
+<li><strong><code>required_context</code></strong> (strings, default <code>[]</code>): <code>&quot;conversation&quot;</code>, <code>&quot;message&quot;</code> or <code>&quot;workspace&quot;</code>.
+It runs only there, with <code>conversation_id</code> and <code>thread_id</code>, <code>message_id</code>, <code>conversation_id</code> and
+<code>thread_id</code>, or <code>workspace_id</code> added to <code>args</code>; an argument of one of those names fails with
+<code>RESERVED_ARGUMENT</code>. Other values are not checked.</li>
+<li><strong><code>required_capabilities</code></strong> (strings, default <code>[]</code>): capabilities approved before the command
+runs, or it fails with <code>CAPABILITY_DENIED</code>. They are not compared with <code>capabilities</code> at install.</li>
+<li><strong><code>arguments</code></strong> (list, default <code>[]</code>): by convention objects with <code>name</code>, <code>type</code>, <code>required</code> and
+<code>description</code>. The palette and keybinds pass no arguments, so they leave out a command with a
+<code>required</code> one. The agent&#39;s tool schema takes <code>description</code>, and <code>type</code> when it is <code>string</code>,
+<code>integer</code>, <code>number</code>, <code>boolean</code>, <code>object</code> or <code>array</code>.</li>
+<li><strong><code>ai_callable</code></strong> (bool, default <code>false</code>): offers the command to the agent once the user allows
+it in the plugin&#39;s AI access settings. The tool name <code>plugin__&lt;plugin_id, dots as _&gt;__&lt;id&gt;</code> must
+match <code>[A-Za-z0-9_-]{1,64}</code>, or the command is not offered.</li>
+<li><strong><code>output_schema</code></strong> (JSON or <code>null</code>, default <code>null</code>): the JSON Schema of the payload. An
+<code>ai_callable</code> command fails with <code>REQUIRES_MANUAL_REVIEW</code>, and does not install, without one or
+when its root is not <code>&quot;type&quot;: &quot;object&quot;</code>, sets <code>&quot;additionalProperties&quot;: true</code>, or has neither
+<code>properties</code> nor <code>oneOf</code>, <code>anyOf</code>, <code>allOf</code>, <code>$defs</code> or <code>items</code>. In <code>properties</code>, <code>items</code>, the
+combinators and <code>$defs</code>, a name whose letters and digits, lowercased, contain <code>installid</code> or
+<code>installationid</code> fails with <code>INSTALL_ID_LEAK</code>: a per-install id would let the model link one
+person across workspaces.</li>
+</ul>
+<h2 id="keybind_suggestions-and-context_actions"><code>keybind_suggestions</code> and <code>context_actions</code> <a class="anchor" href="#keybind_suggestions-and-context_actions" aria-label="Link to this section">#</a></h2>
+<p><code>keybind_suggestions</code> (default <code>[]</code>) are keys the desktop lists in the keybind settings until the
+command is bound; it binds nothing itself. Each has <code>keystroke</code> (such as <code>Ctrl+Alt+P</code>),
+<code>command_id</code> (a command of this manifest, unqualified) and <code>context</code> (<code>GLOBAL</code>, <code>COMPOSER</code>,
+<code>MESSAGE_LIST</code>, <code>THREAD_VIEW</code>, <code>CONVERSATION_VIEW</code>, <code>PANEL</code> or <code>COMMAND_PALETTE</code>; empty means
+<code>GLOBAL</code>), all required strings, and <code>preset_args</code> (optional JSON, unused by the app). An unknown
+command fails with <code>keybind_suggestion references undeclared command: '&lt;id&gt;'</code>.</p>
+<p><code>context_actions</code> (default <code>[]</code>) are entries of a message&#39;s context menu. Each has <code>id</code>, <code>title</code>
+(the label) and <code>command_id</code>, required strings, and <code>context_types</code> (default <code>[]</code>): empty shows
+the entry on every message, otherwise it shows when the list holds <code>&quot;message&quot;</code>. An unknown command
+fails with <code>context_action '&lt;id&gt;' references undeclared command: '&lt;command_id&gt;'</code>.</p>
+<h2 id="panels"><code>panels</code> <a class="anchor" href="#panels" aria-label="Link to this section">#</a></h2>
+<p>A list, default <code>[]</code>. A panel is the folder <code>panels/&lt;id&gt;/</code> with an <a href="https://github.com/rim-platform/rim-ui/blob/b8e647d0123104fd732a2aafbeeb723040dfb0ea/index.html"><code>index.html</code></a>, shown in a
+sandboxed frame while its plugin runs (<a href="web-plugins.html#how-a-plugin-runs">loading</a>).</p>
+<ul>
+<li><strong><code>id</code></strong> (string, required): the folder&#39;s name; for <code>WebSandboxed</code>, one bundle path segment,
+or <code>INVALID_PANEL</code>.</li>
+<li><strong><code>title</code></strong> (string, required) and <strong><code>description</code></strong> (string, default <code>&quot;&quot;</code>): the title names
+the panel&#39;s row in the side rail&#39;s Plugins menu, beside the plugin&#39;s name, and the palette
+command &quot;Open &lt;title&gt;&quot;.</li>
+<li><strong><code>slot</code></strong> (string or <code>null</code>, optional): <code>&quot;tool_panel&quot;</code>, the default, is a narrow column beside
+the tool panel, next to the conversation; <code>&quot;main_area&quot;</code> takes the main area in place of the
+conversation. Panels show while a conversation is the main surface. Other values fail to parse.</li>
+</ul>
+<h2 id="settings_schema"><code>settings_schema</code> <a class="anchor" href="#settings_schema" aria-label="Link to this section">#</a></h2>
+<p>A list, default <code>[]</code>, of <code>{ key, title, description, value_type, is_secret }</code>: <code>key</code>, <code>title</code> and
+<code>value_type</code> are required strings, <code>description</code> defaults to <code>&quot;&quot;</code>, <code>is_secret</code> to <code>false</code>. Nothing
+reads it yet: no settings page is built from it, and the panel bridge only logs <code>rim.settings.*</code>.</p>
+<h2 id="the-content-hash">The content hash <a class="anchor" href="#the-content-hash" aria-label="Link to this section">#</a></h2>
+<p>The desktop records a hash of the manifest at install and when the user approves AI commands: the
+SHA-256, in lowercase hex, of the parsed manifest serialized as compact JSON, with the fields in
+the order above, defaults filled in and unknown fields gone. Whitespace, key order and spelled-out
+defaults do not change it. <code>network_origins</code> and a panel&#39;s <code>slot</code> are left out when absent, so a
+manifest without them hashes as on a host without those fields; other absent options are <code>null</code>.</p>
+<p>It gates AI consent. When the hash differs from the recorded one and the manifest declares
+<code>ai_callable</code> commands, or the user approved some, the agent runs none of the plugin&#39;s commands
+until the user consents again (<code>manifest changed — re-consent required for AI commands</code>). Any
+change counts, since the old command set cannot be read from a hash.</p>
+<h2 id="simple-mode">Simple mode <a class="anchor" href="#simple-mode" aria-label="Link to this section">#</a></h2>
+<p>A folder without <code>rim-plugin.json</code> may declare its manifest in comments at the top of <code>main.ts</code>,
+<code>main.js</code> or <code>main.py</code>, the first that exists. <code>simple_manifest.rs</code> reads the <code>#</code> and <code>//</code> lines
+up to the first other non-empty line:</p>
+<pre><code class="language-text"># rim-plugin: dev.example.my-tool
+# rim-name: My Tool
+# rim-version: 1.0.0
+# rim-command: do_thing | Do Thing | Does a thing</code></pre>
+<ul>
+<li><code>rim-plugin</code> and <code>rim-name</code> are required, <code>rim-version</code> defaults to <code>0.1.0</code>, and
+<code>rim-description</code>, <code>rim-author</code> and a comma-separated <code>rim-capabilities</code> are optional.
+<code>rim-command</code> repeats and is <code>id | title [| description]</code>. An empty value, an unknown <code>rim-</code> key
+or a malformed <code>rim-command</code> fails with its line number.</li>
+<li>The result is a <code>DesktopLocalProcess</code> manifest without panels, keybind suggestions, context
+actions or settings, whose commands have every flag off.</li>
+<li>Its entrypoint is <code>npx tsx main.ts</code>, <code>node main.js</code> or <code>python main.py</code>. The host runs an
+entrypoint as a file path, so such a plugin installs but fails to start with
+<code>entrypoint not found</code>. A plugin that has to run uses <code>rim-plugin.json</code>.</li>
+</ul>
+<h2 id="example">Example <a class="anchor" href="#example" aria-label="Link to this section">#</a></h2>
+<p>The manifest of <a href="https://github.com/rim-platform/plugin-github-prs"><code>plugin-github-prs</code></a>, a web
+plugin with a network permission and a tool panel, verbatim:</p>
+<pre><code class="language-json">{
+  &quot;manifest_version&quot;: 1,
+  &quot;plugin_id&quot;: &quot;chat.rim.github-prs&quot;,
+  &quot;display_name&quot;: &quot;GitHub Pull Requests&quot;,
+  &quot;version&quot;: &quot;0.0.1&quot;,
+  &quot;author&quot;: &quot;RIM team&quot;,
+  &quot;runtime_kind&quot;: &quot;WebSandboxed&quot;,
+  &quot;entrypoint&quot;: &quot;main.mjs&quot;,
+  &quot;description&quot;: &quot;Lists the open pull requests of public GitHub repositories you choose. Talks only to GitHub, without a token.&quot;,
+  &quot;capabilities&quot;: [&quot;ui.panel&quot;, &quot;network.fetch&quot;],
+  &quot;network_origins&quot;: [&quot;https://api.github.com&quot;, &quot;https://avatars.githubusercontent.com&quot;],
+  &quot;commands&quot;: [
+    {
+      &quot;id&quot;: &quot;refresh&quot;,
+      &quot;title&quot;: &quot;Pull requests: Refresh&quot;,
+      &quot;description&quot;: &quot;Fetches the open pull requests again.&quot;,
+      &quot;keybind_capable&quot;: true
+    },
+    {
+      &quot;id&quot;: &quot;add_repo&quot;,
+      &quot;title&quot;: &quot;Pull requests: Add repository&quot;,
+      &quot;description&quot;: &quot;Adds a public GitHub repository to the list, at most 10.&quot;,
+      &quot;arguments&quot;: [
+        {
+          &quot;name&quot;: &quot;repo&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;required&quot;: true,
+          &quot;description&quot;: &quot;The repository as owner/name, such as rust-lang/rust.&quot;
+        }
+      ]
+    },
+    {
+      &quot;id&quot;: &quot;remove_repo&quot;,
+      &quot;title&quot;: &quot;Pull requests: Remove repository&quot;,
+      &quot;description&quot;: &quot;Removes a repository from the list.&quot;,
+      &quot;arguments&quot;: [
+        {
+          &quot;name&quot;: &quot;repo&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;required&quot;: true,
+          &quot;description&quot;: &quot;The repository as owner/name.&quot;
+        }
+      ]
+    }
+  ],
+  &quot;panels&quot;: [
+    {
+      &quot;id&quot;: &quot;prs&quot;,
+      &quot;title&quot;: &quot;Pull requests&quot;,
+      &quot;description&quot;: &quot;Open pull requests of the repositories on your list.&quot;,
+      &quot;slot&quot;: &quot;tool_panel&quot;
+    }
+  ]
+}</code></pre>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/b8e647d0123104fd732a2aafbeeb723040dfb0ea/docs/plugin-manifest.md">rim-ui/docs/plugin-manifest.md</a> at <code>b8e647d</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+<script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
+</body>
+</html>
