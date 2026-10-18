@@ -36,7 +36,7 @@
 
     <main id="content" class="prose">
 <h1>API</h1>
-<p class="lede">Everything a client does goes through one GraphQL endpoint, <code>POST /api</code>; subscriptions arrive over <code>/api/ws</code>. The server publishes its schema at <code>/api/sdl</code>. This reference is generated from it: 248 types, 61 queries, 120 mutations and 2 subscriptions.</p>
+<p class="lede">Everything a client does goes through one GraphQL endpoint, <code>POST /api</code>; subscriptions arrive over <code>/api/ws</code>. The server publishes its schema at <code>/api/sdl</code>. This reference is generated from it: 250 types, 63 queries, 120 mutations and 2 subscriptions.</p>
 <input id="filter" class="search" type="search" placeholder="Filter the whole schema by name" aria-label="Filter the whole schema by name" autocomplete="off">
 <p id="filter-none" class="muted" hidden>Nothing matches.</p>
 <div data-search-only><ul class="hits">
@@ -207,6 +207,8 @@
 <li data-name="relayInfo"><a href="query.html#relayInfo"><code>relayInfo</code></a><span class="kind">query</span></li>
 <li data-name="relayItems"><a href="query.html#relayItems"><code>relayItems</code></a><span class="kind">query</span></li>
 <li data-name="instanceReports"><a href="query.html#instanceReports"><code>instanceReports</code></a><span class="kind">query</span></li>
+<li data-name="userCommand"><a href="query.html#userCommand"><code>userCommand</code></a><span class="kind">query</span></li>
+<li data-name="userCommands"><a href="query.html#userCommands"><code>userCommands</code></a><span class="kind">query</span></li>
 <li data-name="thread"><a href="query.html#thread"><code>thread</code></a><span class="kind">query</span></li>
 <li data-name="me"><a href="query.html#me"><code>me</code></a><span class="kind">query</span></li>
 <li data-name="unreadCounts"><a href="query.html#unreadCounts"><code>unreadCounts</code></a><span class="kind">query</span></li>
@@ -332,6 +334,8 @@
 <li data-name="UnreadCount"><a href="objects.html#UnreadCount"><code>UnreadCount</code></a><span class="kind">object</span></li>
 <li data-name="UploadTicket"><a href="objects.html#UploadTicket"><code>UploadTicket</code></a><span class="kind">object</span></li>
 <li data-name="User"><a href="objects.html#User"><code>User</code></a><span class="kind">object</span></li>
+<li data-name="UserCommand"><a href="objects.html#UserCommand"><code>UserCommand</code></a><span class="kind">object</span></li>
+<li data-name="UserCommandStep"><a href="objects.html#UserCommandStep"><code>UserCommandStep</code></a><span class="kind">object</span></li>
 <li data-name="UserPresenceGql"><a href="objects.html#UserPresenceGql"><code>UserPresenceGql</code></a><span class="kind">object</span></li>
 <li data-name="WorkspaceDmPolicy"><a href="objects.html#WorkspaceDmPolicy"><code>WorkspaceDmPolicy</code></a><span class="kind">object</span></li>
 <li data-name="WorkspaceDmSetting"><a href="objects.html#WorkspaceDmSetting"><code>WorkspaceDmSetting</code></a><span class="kind">object</span></li>
@@ -482,10 +486,10 @@
 </ul></div>
 <ul class="cards">
 <li><a href="../docs/api.html"><b>Talking to a server</b><span>The endpoints, the session cookie and CSRF, origins, limits, error codes and pagination: the contract around the schema.</span></a></li>
-<li><a href="query.html"><b>Query</b><span>61 fields, grouped by domain.</span></a></li>
+<li><a href="query.html"><b>Query</b><span>63 fields, grouped by domain.</span></a></li>
 <li><a href="mutation.html"><b>Mutation</b><span>120 fields, grouped by domain.</span></a></li>
 <li><a href="subscription.html"><b>Subscription</b><span>2 fields, grouped by domain.</span></a></li>
-<li><a href="objects.html"><b>Objects</b><span>115 objects.</span></a></li>
+<li><a href="objects.html"><b>Objects</b><span>117 objects.</span></a></li>
 <li><a href="inputs.html"><b>Inputs</b><span>85 inputs.</span></a></li>
 <li><a href="enums.html"><b>Enums</b><span>46 enums.</span></a></li>
 <li><a href="scalars.html"><b>Scalars</b><span>7 scalars.</span></a></li>
@@ -495,7 +499,7 @@
     </main>
   </div>
   <footer class="site">
-    <span>Generated from <a href="https://github.com/rim-platform/rim-ui/blob/1f86d0926fd918bd6428717bb32284051579aa70/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>1f86d09</code></span>
+    <span>Generated from <a href="https://github.com/rim-platform/rim-ui/blob/67df74d7c8c7540dd2af1f51e937d9f4c13d833f/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>67df74d</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

@@ -38,6 +38,7 @@
 <li><a href="#what-a-plugin-is">What a plugin is</a></li>
 <li><a href="#the-official-plugins">The official plugins</a></li>
 <li><a href="#installing">Installing</a><ol><li><a href="#workspace-registry">Workspace registry</a></li></ol></li>
+<li><a href="#updating">Updating</a></li>
 <li><a href="#using-a-plugin">Using a plugin</a></li>
 <li><a href="#trust-and-permissions">Trust and permissions</a></li>
 <li><a href="#managing-and-removing">Managing and removing</a></li>
@@ -176,7 +177,10 @@ row.</p>
 Moderators. An entry pins one exact version through a statement its publisher signed with their
 identity key. Every client verifies that statement against the publisher&#39;s key log before it
 offers the plugin, so the server is not trusted for what the plugin is, and checks a bundle&#39;s
-size and SHA-256 before asking for any consent. An instance can switch the registry off.
+size and SHA-256 before asking for any consent. A bundle an entry keeps on another host, such
+as a GitHub release asset, is fetched by the desktop app itself, as <strong>Install from link</strong> does;
+the web app needs that host to allow cross-origin requests. An instance can switch the registry
+off.
 <a href="../docs/client/workspace-plugins.html">Workspace plugins</a> has the details.</p>
 <ul>
 <li><strong>The palette&#39;s &quot;Workspace plugins&quot; section</strong> lists the entries this device has not
@@ -205,6 +209,28 @@ dialog; <strong>Later</strong> keeps the installed version running. A failed upd
 <p>When an entry leaves the registry, its plugin is stopped and <strong>&lt;name&gt; was removed</strong> offers
 <strong>Remove</strong>, which uninstalls it and deletes its data, or <strong>Keep</strong>, which leaves it installed,
 turned off, as a local plugin that no longer gets updates.</p>
+<h2 id="updating">Updating <a class="anchor" href="#updating" aria-label="Link to this section">#</a></h2>
+<p>How a plugin gets a new version depends on where it came from, which its row in Settings →
+Plugins names.</p>
+<ul>
+<li><strong>From git</strong> (desktop). <strong>Update</strong> on the plugin&#39;s row fetches the repository it was installed
+from and moves the plugin to the newest commit of its branch. The new copy must keep the
+plugin id and pass the same manifest rules as an install, or the old copy stays. Install steps
+the new version needs open <strong>Run plugin install scripts?</strong> first, as at install, and
+<strong>Cancel</strong> changes nothing. The row then says &quot;Updated to v&lt;version&gt;&quot;, &quot;Already up to date
+(v&lt;version&gt;)&quot;, or why the update failed. A running plugin restarts on the new files.
+Approvals carry over for the permissions the new version still asks for and are dropped for
+those it no longer does; a new permission opens the <strong>Plugin Permissions</strong> dialog, and the
+plugin cannot use it until it is approved. A plugin with commands the AI agent can run asks
+for that consent again in Settings → Plugin AI.</li>
+<li><strong>From a link.</strong> A link names one bundle by its hash, so it cannot change, and the row says
+&quot;Installed from a link pinned to one bundle: install the new version&#39;s link to update it.&quot;
+Installing that link opens <strong>Replace &lt;name&gt;?</strong>, described under <a href="#installing">Installing</a>.</li>
+<li><strong>From a folder.</strong> There is no update in place: uninstall the plugin, which deletes its
+permissions and data, then install the new folder.</li>
+<li><strong>From the workspace registry.</strong> The registry updates the plugin as its entry changes, as
+<a href="#workspace-registry">Workspace registry</a> describes; the row has no <strong>Update</strong>.</li>
+</ul>
 <h2 id="using-a-plugin">Using a plugin <a class="anchor" href="#using-a-plugin" aria-label="Link to this section">#</a></h2>
 <ul>
 <li><strong>Turning it on.</strong> The switch on the plugin&#39;s row in Settings → Plugins starts it, and the row
@@ -367,7 +393,7 @@ for your account, with its permissions, data and files. To use it again, install
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/1f86d0926fd918bd6428717bb32284051579aa70/docs/plugins.md">rim-ui/docs/plugins.md</a> at <code>1f86d09</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/67df74d7c8c7540dd2af1f51e937d9f4c13d833f/docs/plugins.md">rim-ui/docs/plugins.md</a> at <code>67df74d</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

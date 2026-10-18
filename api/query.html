@@ -53,12 +53,13 @@
 <li><a href="#group-device">Device (4)</a></li>
 <li><a href="#group-relay">Relay (2)</a></li>
 <li><a href="#group-report">Report (1)</a></li>
+<li><a href="#group-user">User (2)</a></li>
 <li><a href="#group-other">Other (14)</a></li>
 </ol>
 </details></aside>
     <main id="content" class="prose">
 <h1>Query</h1>
-<p class="lede">61 queries, grouped by the domain their name starts with or names, in the order the schema lists them.</p>
+<p class="lede">63 queries, grouped by the domain their name starts with or names, in the order the schema lists them.</p>
 <input id="filter" class="search" type="search" placeholder="Filter fields by name" aria-label="Filter fields by name" autocomplete="off">
 <p id="filter-none" class="muted" hidden>Nothing matches.</p>
 <section data-group>
@@ -545,6 +546,25 @@ else gets <code>FORBIDDEN</code>.</p>
 </section>
 </section>
 <section data-group>
+<h2 id="group-user">User <span class="faint">2</span></h2>
+<section class="entry" id="userCommand" data-name="userCommand">
+<h3><code>userCommand</code></h3>
+<div class="sig">userCommand(id: <a href="scalars.html#String">String</a>!): <a href="objects.html#UserCommand">UserCommand</a></div>
+<div class="desc"><p>The caller&#39;s user command with this id (<code>user.&lt;key&gt;</code>), enabled or not, with its steps
+in the order they run. Null when the caller has no user command with that id: a
+built-in id, another user&#39;s command and an unknown one all answer null.</p>
+</div>
+
+</section>
+<section class="entry" id="userCommands" data-name="userCommands">
+<h3><code>userCommands</code></h3>
+<div class="sig">userCommands: [<a href="objects.html#UserCommand">UserCommand</a>!]!</div>
+<div class="desc"><p>The caller&#39;s user commands, enabled or not, with their steps, sorted by id.</p>
+</div>
+
+</section>
+</section>
+<section data-group>
 <h2 id="group-other">Other <span class="faint">14</span></h2>
 <section class="entry" id="thread" data-name="thread">
 <h3><code>thread</code></h3>
@@ -665,7 +685,7 @@ floors are taken in, with where a refusing floor comes from.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Generated from <a href="https://github.com/rim-platform/rim-ui/blob/1f86d0926fd918bd6428717bb32284051579aa70/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>1f86d09</code></span>
+    <span>Generated from <a href="https://github.com/rim-platform/rim-ui/blob/67df74d7c8c7540dd2af1f51e937d9f4c13d833f/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>67df74d</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>
