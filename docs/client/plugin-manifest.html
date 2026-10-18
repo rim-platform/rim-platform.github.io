@@ -51,8 +51,8 @@
 <h1 id="the-plugin-manifest">The plugin manifest</h1>
 <p>Every plugin carries <code>rim-plugin.json</code> at the root of its folder or bundle. This page lists each
 field the desktop parser accepts, in the order of <code>PluginManifest</code> in <code>manifest.rs</code>, with the
-install rules of <code>validation.rs</code>, both in <a href="https://github.com/rim-platform/rim-ui/tree/f30a178460cb955412f59ce943a28474201c3cbe/src-tauri/src/plugin_host"><code>src-tauri/src/plugin_host/</code></a>. The web app installs by
-their port in the SDK, <code>manifestRules.ts</code>; both pass <a href="https://github.com/rim-platform/rim-ui/blob/f30a178460cb955412f59ce943a28474201c3cbe/protocol/manifest-vectors.json"><code>protocol/manifest-vectors.json</code></a>, and a
+install rules of <code>validation.rs</code>, both in <a href="https://github.com/rim-platform/rim-ui/tree/2e37373e231f8af4467ff3d074384ad781a534f2/src-tauri/src/plugin_host"><code>src-tauri/src/plugin_host/</code></a>. The web app installs by
+their port in the SDK, <code>manifestRules.ts</code>; both pass <a href="https://github.com/rim-platform/rim-ui/blob/2e37373e231f8af4467ff3d074384ad781a534f2/protocol/manifest-vectors.json"><code>protocol/manifest-vectors.json</code></a>, and a
 plugin&#39;s tests run them with <code>validateManifest</code> (<a href="plugin-sdk.html">the SDK</a>).</p>
 <h2 id="reading-and-checking">Reading and checking <a class="anchor" href="#reading-and-checking" aria-label="Link to this section">#</a></h2>
 <ul>
@@ -344,7 +344,7 @@ change counts, since the old command set cannot be read from a hash: adding, rem
 a <code>settings_schema</code> entry asks for AI consent again too.</p>
 <h2 id="example">Example <a class="anchor" href="#example" aria-label="Link to this section">#</a></h2>
 <p>The manifest of <a href="https://github.com/rim-platform/plugin-github-prs"><code>plugin-github-prs</code></a>, a web
-plugin with a network permission and a tool panel, verbatim:</p>
+plugin with a network permission, a tool panel and a secret setting, verbatim:</p>
 <pre><code class="language-json">{
   &quot;manifest_version&quot;: 1,
   &quot;plugin_id&quot;: &quot;chat.rim.github-prs&quot;,
@@ -353,7 +353,7 @@ plugin with a network permission and a tool panel, verbatim:</p>
   &quot;author&quot;: &quot;RIM team&quot;,
   &quot;runtime_kind&quot;: &quot;WebSandboxed&quot;,
   &quot;entrypoint&quot;: &quot;main.mjs&quot;,
-  &quot;description&quot;: &quot;Lists the open pull requests of public GitHub repositories you choose. Talks only to GitHub, without a token.&quot;,
+  &quot;description&quot;: &quot;Lists the open pull requests of the GitHub repositories you choose. Talks only to GitHub, with your own token if you add one in its settings.&quot;,
   &quot;capabilities&quot;: [&quot;ui.panel&quot;, &quot;network.fetch&quot;],
   &quot;network_origins&quot;: [&quot;https://api.github.com&quot;, &quot;https://avatars.githubusercontent.com&quot;],
   &quot;commands&quot;: [
@@ -366,7 +366,7 @@ plugin with a network permission and a tool panel, verbatim:</p>
     {
       &quot;id&quot;: &quot;add_repo&quot;,
       &quot;title&quot;: &quot;Pull requests: Add repository&quot;,
-      &quot;description&quot;: &quot;Adds a public GitHub repository to the list, at most 10.&quot;,
+      &quot;description&quot;: &quot;Adds a GitHub repository to the list, at most 10.&quot;,
       &quot;arguments&quot;: [
         {
           &quot;name&quot;: &quot;repo&quot;,
@@ -397,13 +397,23 @@ plugin with a network permission and a tool panel, verbatim:</p>
       &quot;description&quot;: &quot;Open pull requests of the repositories on your list.&quot;,
       &quot;slot&quot;: &quot;tool_panel&quot;
     }
+  ],
+  &quot;settings_schema&quot;: [
+    {
+      &quot;key&quot;: &quot;github_token&quot;,
+      &quot;title&quot;: &quot;GitHub token&quot;,
+      &quot;description&quot;: &quot;Optional, desktop app only. A fine-grained personal access token with Public repositories (read-only) access and an expiry date raises GitHub's limit from 60 to 5,000 requests an hour. Kept in this device's encrypted secret vault, never synced, sent only to api.github.com.&quot;,
+      &quot;value_type&quot;: &quot;string&quot;,
+      &quot;is_secret&quot;: true,
+      &quot;placeholder&quot;: &quot;github_pat_…&quot;
+    }
   ]
 }</code></pre>
 
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/f30a178460cb955412f59ce943a28474201c3cbe/docs/plugin-manifest.md">rim-ui/docs/plugin-manifest.md</a> at <code>f30a178</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/2e37373e231f8af4467ff3d074384ad781a534f2/docs/plugin-manifest.md">rim-ui/docs/plugin-manifest.md</a> at <code>2e37373</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>
