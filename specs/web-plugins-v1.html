@@ -23,6 +23,7 @@
       <a href="../index.html#how">How it works</a>
       <a href="../docs/self-hosting.html">Self-host</a>
       <a href="../configure/index.html">Configure</a>
+      <a href="../plugins/index.html">Plugins</a>
       <a href="../docs/index.html">Docs</a>
       <a href="../api/index.html">API</a>
       <a href="index.html" aria-current="page">Specs</a>
@@ -183,7 +184,7 @@ a process. On the web, where installs belong to an account, signing out stops ev
 and signing in starts that account&#39;s; on the desktop it keeps running and gets
 <code>rim.principal.changed</code>, as a process does.</li>
 <li><strong>A panel frame</strong>, one per open panel, created when the panel is shown and removed when it
-closes, has no port. It speaks the existing panel bridge (<a href="https://github.com/rim-platform/rim-server/blob/ef76e29d29862825129ccc6a6f6d7b081a6398b0/docs/local_plugin_host.md"><code>docs/local_plugin_host.md</code></a>,
+closes, has no port. It speaks the existing panel bridge (<a href="../docs/local_plugin_host.html"><code>docs/local_plugin_host.md</code></a>,
 &quot;PostMessage Bridge&quot;) through <code>window.parent</code>, exactly as a local-process plugin&#39;s panel does.</li>
 </ul>
 <p>This is the split <code>panel_relay.rs</code> already makes: logic apart from views, the host relaying state

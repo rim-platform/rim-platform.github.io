@@ -23,6 +23,7 @@
       <a href="../../index.html#how">How it works</a>
       <a href="../self-hosting.html">Self-host</a>
       <a href="../../configure/index.html">Configure</a>
+      <a href="../../plugins/index.html">Plugins</a>
       <a href="../index.html" aria-current="page">Docs</a>
       <a href="../../api/index.html">API</a>
       <a href="../../specs/index.html">Specs</a>
@@ -43,7 +44,7 @@ that field.</p>
 <pre><code class="language-sh">npm run skew:check -- &lt;git ref&gt;   # e.g. v0.3.0, origin/release, HEAD~30
 npm run skew:check                # the most recent v* tag</code></pre>
 <p>It takes <code>schema.graphql</code> as committed at the ref (the SDL exported from the server that the
-client was built against then), collects every <code>gql</code> document under <a href="https://github.com/rim-platform/rim-ui/tree/c69ba17e84369a60d4313d78209c6b0ab4f71c13/src"><code>src/</code></a> with its fragments
+client was built against then), collects every <code>gql</code> document under <a href="https://github.com/rim-platform/rim-ui/tree/b755bdc45172ff1e9c14e3bd439d8791b2f44578/src"><code>src/</code></a> with its fragments
 resolved the way the client sends it, validates each against that schema with <code>graphql</code>&#39;s
 <code>validate</code>, and prints the operations that fail, grouped by file. It exits 1 when any would be
 refused, 0 when none would, and 2 when it cannot run (no such ref, no <code>schema.graphql</code> there).
@@ -68,7 +69,7 @@ not have at all: a bug today, not skew.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/c69ba17e84369a60d4313d78209c6b0ab4f71c13/docs/version-skew.md">rim-ui/docs/version-skew.md</a> at <code>c69ba17</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/b755bdc45172ff1e9c14e3bd439d8791b2f44578/docs/version-skew.md">rim-ui/docs/version-skew.md</a> at <code>b755bdc</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

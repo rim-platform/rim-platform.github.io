@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Using RIM · RIM</title>
-<meta name="description" content="The desktop and web client: installing it and signing in, building it, the keyboard, keys and recovery, linking a device, encrypted conversations, relays and the local message cache.">
+<meta name="description" content="The desktop and web client: installing it and signing in, building it, the keyboard, plugins, keys and recovery, linking a device, encrypted conversations, relays and the local message cache.">
 <link rel="icon" href="../favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
@@ -23,6 +23,7 @@
       <a href="../index.html#how">How it works</a>
       <a href="self-hosting.html">Self-host</a>
       <a href="../configure/index.html">Configure</a>
+      <a href="../plugins/index.html">Plugins</a>
       <a href="index.html" aria-current="page">Docs</a>
       <a href="../api/index.html">API</a>
       <a href="../specs/index.html">Specs</a>
@@ -35,7 +36,7 @@
 
     <main id="content" class="prose">
 <h1>Using RIM</h1>
-<p class="lede">The desktop and web client: installing it and signing in, building it, the keyboard, keys and recovery, linking a device, encrypted conversations, relays and the local message cache.</p>
+<p class="lede">The desktop and web client: installing it and signing in, building it, the keyboard, plugins, keys and recovery, linking a device, encrypted conversations, relays and the local message cache.</p>
 <h2 id="install">Install</h2>
 <ul class="cards">
 <li><a href="client/install.html"><b>Installing RIM</b><span>The RIM desktop app is published for Linux and Windows on the releases page. On macOS it is built from source for now. Every release signs in to the public relay relay.rim-platform.org unless you choose another server …</span><span class="src">rim-ui/docs/install.md</span></a></li>
@@ -47,6 +48,10 @@
 <li><a href="client/search-ui.html"><b>Search UI</b><span>Covers the frontend of full-text message search: the paginated useSearchMessages hook, the SearchOverlay flat-list UI, SearchSnippet's sanitization, and the operator-discovery affordance. Backend contract and operator …</span><span class="src">rim-ui/docs/search-ui.md</span></a></li>
 <li><a href="client/updater.html"><b>In-app updates</b><span>The desktop app can check for, download and install new versions of itself with Tauri's updater plugin. It ships dormant: src-tauri/updater.json is committed empty, and an app built from it never contacts an update …</span><span class="src">rim-ui/docs/updater.md</span></a></li>
 <li><a href="client/version-skew.html"><b>Version skew between client and server</b><span>A desktop client lives longer than the server it talks to: users update the app when they choose, and an operator updates the server when they choose. A client release that sends a field or a mutation an older server …</span><span class="src">rim-ui/docs/version-skew.md</span></a></li>
+</ul>
+<h2 id="plugins">Plugins</h2>
+<ul class="cards">
+<li><a href="../plugins/index.html"><b>Plugins</b><span>A plugin adds commands, panels and keybinds to RIM. This page is for the person using the app: what a plugin can do, the official plugins, and how to install, use, trust and remove one. How the client hosts plugins is …</span><span class="src">rim-ui/docs/plugins.md</span></a></li>
 </ul>
 <h2 id="keys-devices-and-encryption">Keys, devices and encryption</h2>
 <ul class="cards">
@@ -66,7 +71,7 @@
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/tree/ef76e29d29862825129ccc6a6f6d7b081a6398b0">rim-server</a> <code>ef76e29</code> and <a href="https://github.com/rim-platform/rim-ui/tree/c69ba17e84369a60d4313d78209c6b0ab4f71c13">rim-ui</a> <code>c69ba17</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/tree/ef76e29d29862825129ccc6a6f6d7b081a6398b0">rim-server</a> <code>ef76e29</code> and <a href="https://github.com/rim-platform/rim-ui/tree/b755bdc45172ff1e9c14e3bd439d8791b2f44578">rim-ui</a> <code>b755bdc</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

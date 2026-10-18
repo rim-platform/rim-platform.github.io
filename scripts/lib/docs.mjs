@@ -18,6 +18,9 @@ function serverOut(file) {
 function uiOut(file) {
   if (file === "README.md") return "docs/client/guide.html";
   if (file === "sdk/plugin-sdk/README.md") return "docs/client/plugin-sdk.html";
+  if (file === "docs/plugins.md") return "plugins/index.html";
+  const example = file.match(/^plugins\/([^/]+)\/README\.md$/);
+  if (example) return `docs/client/plugin-${example[1]}.html`;
   if (file.startsWith("docs/specs/")) return `specs/${path.posix.basename(file, ".md")}.html`;
   return `docs/client/${path.posix.basename(file, ".md")}.html`;
 }
@@ -59,7 +62,7 @@ const GROUPS = [
   {
     key: "plugin-authors",
     title: "Plugin authors",
-    lede: "Extending the client: what a plugin is, the capabilities it asks for, the TypeScript SDK and how it is published, web plugins in a sandboxed frame and signed workspace plugins.",
+    lede: "Extending the client: what a plugin is, the capabilities it asks for, the TypeScript SDK and how it is published, web plugins in a sandboxed frame, the desktop host and its example plugins, and signed workspace plugins.",
     subs: [
       { title: "The model", items: [["server", "docs/plugin_model.md"], ["server", "docs/capability_security_model.md"]] },
       {
@@ -69,6 +72,14 @@ const GROUPS = [
           ["ui", "docs/web-plugins.md"],
           ["ui", "docs/workspace-plugins.md"],
           ["ui", "docs/plugin-chat-methods.md"],
+        ],
+      },
+      {
+        title: "The desktop host and examples",
+        items: [
+          ["server", "docs/local_plugin_host.md"],
+          ["ui", "plugins/hello-world/README.md"],
+          ["ui", "plugins/template-ts/README.md"],
         ],
       },
       { title: "Publishing the SDK", items: [["ui", "docs/release-sdk.md"]] },
@@ -82,7 +93,7 @@ const GROUPS = [
   {
     key: "using-rim",
     title: "Using RIM",
-    lede: "The desktop and web client: installing it and signing in, building it, the keyboard, keys and recovery, linking a device, encrypted conversations, relays and the local message cache.",
+    lede: "The desktop and web client: installing it and signing in, building it, the keyboard, plugins, keys and recovery, linking a device, encrypted conversations, relays and the local message cache.",
     subs: [
       { title: "Install", items: [["ui", "docs/install.md"]] },
       {
@@ -95,6 +106,7 @@ const GROUPS = [
           ["ui", "docs/version-skew.md"],
         ],
       },
+      { title: "Plugins", items: [["ui", "docs/plugins.md"]] },
       {
         title: "Keys, devices and encryption",
         items: [
@@ -151,6 +163,13 @@ const GROUPS = [
     ],
   },
 ];
+
+/** Rendered docs that belong to their own nav section rather than "docs". */
+const SECTION_OF = {
+  "docs/self-hosting.html": "selfhost",
+  "plugins/index.html": "plugins",
+  "docs/contributing.html": "contribute",
+};
 
 /** Plans the docs and specs: every rendered file with its site path, registered in `linker`. */
 export function planDocs(sources, linker) {
@@ -218,7 +237,7 @@ export function renderDocs(plan, linker) {
         { href: `docs/${entry.group.key}.html`, text: entry.group.title },
         { text: entry.title },
       ];
-      section = entry.out === "docs/self-hosting.html" ? "selfhost" : entry.out === "docs/contributing.html" ? "contribute" : "docs";
+      section = SECTION_OF[entry.out] ?? "docs";
     } else {
       entry.version = (entry.file.match(/-v(\d+)\.md$/) ?? [])[1];
       entry.status = (md.match(/^\s*[*_]{1,2}Status:\s*([^.*_]+)/m) ?? [])[1]?.trim();

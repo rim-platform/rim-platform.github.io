@@ -14,6 +14,7 @@ const NAV = [
   { key: "how", text: "How it works", href: "index.html#how" },
   { key: "selfhost", text: "Self-host", href: "docs/self-hosting.html" },
   { key: "configure", text: "Configure", href: "configure/index.html" },
+  { key: "plugins", text: "Plugins", href: "plugins/index.html" },
   { key: "docs", text: "Docs", href: "docs/index.html" },
   { key: "api", text: "API", href: "api/index.html" },
   { key: "specs", text: "Specs", href: "specs/index.html" },

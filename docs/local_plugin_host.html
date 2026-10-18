@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Local Plugin Host · RIM</title>
+<meta name="description" content="This document describes how the RIM desktop app hosts DesktopLocalProcess plugins: where they live, how they are installed and started, and how their panels are hosted. plugin_model.md explains the plugin model as a …">
+<link rel="icon" href="../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../index.html" aria-label="RIM home">
+      <picture><source srcset="../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../index.html#what">What RIM is</a>
+      <a href="../index.html#how">How it works</a>
+      <a href="self-hosting.html">Self-host</a>
+      <a href="../configure/index.html">Configure</a>
+      <a href="../plugins/index.html">Plugins</a>
+      <a href="index.html" aria-current="page">Docs</a>
+      <a href="../api/index.html">API</a>
+      <a href="../specs/index.html">Specs</a>
+      <a href="contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="index.html">Docs</a><span aria-hidden="true">/</span><a href="plugin-authors.html">Plugin authors</a><span aria-hidden="true">/</span><span>Local Plugin Host</span></div>
+  <div class="page with-toc">
+    <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
+<ol>
+<li><a href="#manifest">Manifest</a></li>
+<li><a href="#process-lifecycle">Process lifecycle</a></li>
+<li><a href="#capabilities-and-trust">Capabilities and trust</a></li>
+<li><a href="#install-flow-git-installs">Install flow (git installs)</a></li>
+<li><a href="#plugin-ui-hosting">Plugin UI Hosting</a><ol><li><a href="#iframe-sandbox">Iframe Sandbox</a></li><li><a href="#postmessage-bridge">PostMessage Bridge</a></li><li><a href="#focus-management">Focus Management</a></li><li><a href="#theme-bridge">Theme Bridge</a></li><li><a href="#panel-load-failure">Panel Load Failure</a></li></ol></li>
+</ol>
+</details></aside>
+    <main id="content" class="prose">
+<h1 id="local-plugin-host">Local Plugin Host</h1>
+<p>This document describes how the RIM desktop app hosts <code>DesktopLocalProcess</code> plugins: where they
+live, how they are installed and started, and how their panels are hosted. <a href="plugin_model.html"><code>plugin_model.md</code></a>
+explains the plugin model as a whole. The process protocol is specified in
+<a href="../specs/plugin-protocol-v1.html"><code>specs/plugin-protocol-v1.md</code></a>, the document to read when writing a
+plugin; <code>WebSandboxed</code> plugins, which the desktop app hosts too, are specified in
+<a href="../specs/web-plugins-v1.html"><code>specs/web-plugins-v1.md</code></a>.</p>
+<p>The host lives in the desktop app (<code>rim-ui/src-tauri/src/plugin_host/</code>). It finds plugins in
+<code>~/.rim/plugins/</code>, installs, enables, disables and uninstalls them, validates manifests, asks the
+user to approve capabilities, starts plugin processes and speaks protocol v1 with them, gates
+every command and every plugin-to-host call, and hosts panels in sandboxed iframes. The server
+takes no part in any of this; it only keeps workspace plugin registries
+(<a href="../specs/workspace-plugins-v1.html"><code>specs/workspace-plugins-v1.md</code></a>).</p>
+<h2 id="manifest">Manifest <a class="anchor" href="#manifest" aria-label="Link to this section">#</a></h2>
+<p>Each plugin directory holds a manifest, <code>rim-plugin.json</code>. The manifest contract and its
+install-time validation live in the desktop plugin host, not in the backend:</p>
+<ul>
+<li><code>rim-ui/src-tauri/src/plugin_host/manifest.rs</code> and <code>validation.rs</code></li>
+<li>reference example: <code>rim-ui/plugins/hello-world/rim-plugin.json</code></li>
+</ul>
+<p>The manifest uses snake_case keys and describes:</p>
+<ul>
+<li>identity: <code>manifest_version</code> (always <code>1</code>), <code>plugin_id</code> (reverse-domain: at least three
+dot-separated segments of ASCII letters, digits and hyphens), <code>display_name</code>, <code>version</code>,
+<code>description</code>, <code>author</code></li>
+<li>runtime: <code>runtime_kind</code> (<code>&quot;DesktopLocalProcess&quot;</code> here; <code>&quot;WebSandboxed&quot;</code> is the web plugin
+kind) and <code>entrypoint</code></li>
+<li><code>capabilities</code> the plugin requests</li>
+<li><code>commands</code>, each with <code>id</code>, <code>title</code>, <code>description</code>, <code>arguments</code>, <code>dangerous</code>,
+<code>required_capabilities</code>, <code>ai_callable</code>, <code>output_schema</code> and <code>keybind_capable</code></li>
+<li><code>keybind_suggestions</code>, <code>context_actions</code> and <code>panels</code></li>
+<li><code>settings_schema</code></li>
+</ul>
+<p>A plugin without <code>rim-plugin.json</code> can instead put its manifest in comment headers at the top of
+a <code>main.ts</code>, <code>main.js</code> or <code>main.py</code> entrypoint (&quot;simple mode&quot;, <code>simple_manifest.rs</code>):</p>
+<pre><code class="language-text"># rim-plugin: dev.example.my-tool
+# rim-name: My Tool
+# rim-version: 1.0.0
+# rim-description: Does useful things
+# rim-command: do_thing | Do Thing | Does a thing</code></pre>
+<p>Install-time validation rejects reserved plugin id prefixes (<code>dev.rim.</code>, <code>com.rim.</code>), capability
+names other than the plugin&#39;s own <code>plugin.&lt;plugin_id&gt;.&lt;verb&gt;</code> keys and the built-in names the host
+accepts, and <code>ai_callable</code> commands whose <code>output_schema</code> could leak a plugin install id. The
+protocol spec, section 12, lists which names each host version accepts.</p>
+<h2 id="process-lifecycle">Process lifecycle <a class="anchor" href="#process-lifecycle" aria-label="Link to this section">#</a></h2>
+<p>A plugin process starts when the user enables the plugin, and at app start for every plugin that
+was enabled when the app last ran. The connection lifecycle, heartbeats and the shutdown sequence
+with its timeouts are protocol v1, sections 6, 13 and 15. Specific to this host:</p>
+<ul>
+<li>A plugin that exits on its own stays stopped; commands for it fail with <code>PLUGIN_NOT_RUNNING</code>
+until the user enables it again.</li>
+<li>A plugin marked unresponsive after a missed heartbeat is not shown as such in the UI yet.</li>
+<li>UI plugins and headless plugins (no <code>panels</code>) run the same way.</li>
+</ul>
+<h2 id="capabilities-and-trust">Capabilities and trust <a class="anchor" href="#capabilities-and-trust" aria-label="Link to this section">#</a></h2>
+<p>The user approves a plugin&#39;s capabilities before it is enabled; the host checks them before
+running a command whose manifest lists <code>required_capabilities</code> and on every plugin-to-host call
+(protocol v1, section 12). A local-process plugin runs as the user and can do anything the user
+can: capabilities govern what the host does for it, not what the process can do on the machine.
+Dangerous commands run only after the user confirms each run, and the AI agent can never confirm
+one (protocol v1, section 10).</p>
+<h2 id="install-flow-git-installs">Install flow (git installs) <a class="anchor" href="#install-flow-git-installs" aria-label="Link to this section">#</a></h2>
+<p>Installing a plugin is the moment untrusted code first reaches the machine, so the host treats
+every input to it as hostile:</p>
+<ol>
+<li><strong>URL and branch validation before git runs.</strong> Only <code>https://</code>, <code>ssh://</code> and scp-like
+<code>user@host:owner/repo</code> URLs are accepted. Remote-helper syntax (<code>ext::</code>, <code>fd::</code>, anything with
+<code>::</code>), <code>file://</code>, <code>git://</code>, a leading <code>-</code>, and non-printable characters are rejected with
+<code>INVALID_GIT_URL</code>; branch names use a conservative ref-name allowlist (<code>INVALID_GIT_BRANCH</code>).</li>
+<li><strong>Hardened git invocation.</strong> Every git child runs with <code>GIT_ALLOW_PROTOCOL=https:ssh</code> and
+<code>GIT_TERMINAL_PROMPT=0</code>, and every argv puts <code>--</code> before positional arguments. Updates use
+<code>fetch</code> plus <code>merge --ff-only -- @{upstream}</code> rather than <code>pull</code>.</li>
+<li><strong>Dependency installs need explicit consent.</strong> <code>npm install</code> / <code>pip install</code> execute code chosen
+by the plugin author with the user&#39;s full privileges, so they never run implicitly. Install and
+update first detect which steps would run; without <code>allowPostInstall: true</code> the operation stops
+with <code>POST_INSTALL_CONSENT_REQUIRED</code> carrying the exact commands and directories, nothing is
+moved into the plugins directory or executed, and a declined update leaves the installed copy
+untouched. The client shows the commands verbatim and retries only on confirm.</li>
+<li><strong>Capability approval</strong> follows before the plugin is enabled.</li>
+</ol>
+<p>The implementation lives in <code>rim-ui/src-tauri/src/plugin_host/</code> (<code>git_source.rs</code>,
+<code>post_install.rs</code>, <code>git_install.rs</code>).</p>
+<h2 id="plugin-ui-hosting">Plugin UI Hosting <a class="anchor" href="#plugin-ui-hosting" aria-label="Link to this section">#</a></h2>
+<h3 id="iframe-sandbox">Iframe Sandbox <a class="anchor" href="#iframe-sandbox" aria-label="Link to this section">#</a></h3>
+<p>Plugin UI panels are hosted in sandboxed iframes that load the frame shell web plugins use
+(see <a href="../specs/web-plugins-v1.html"><code>docs/specs/web-plugins-v1.md</code></a>), at <code>rim-plugin://shell/v1/local-panel.html</code>. The desktop
+host reads the panel folder <code>panels/{panel_id}/</code> of an enabled plugin that declares that panel
+(the <code>plugin_panel_files</code> command) and hands the files to the shell, which runs them as <code>blob:</code>
+URLs; the scheme serves no plugin file itself. <code>local-panel.html</code> is sent with a policy header
+that closes the network (<code>connect-src 'none'</code>, images, fonts and media only from <code>blob:</code>/<code>data:</code>):
+a local panel reaches the network only through its plugin&#39;s process. Only the files <code>index.html</code>
+names are mapped to the panel&#39;s own files; inline event handlers do not run.</p>
+<p>Sandbox attributes: <code>allow-scripts</code> only. No <code>allow-same-origin</code>, no <code>allow-top-navigation</code>,
+no <code>allow-popups</code>.</p>
+<h3 id="postmessage-bridge">PostMessage Bridge <a class="anchor" href="#postmessage-bridge" aria-label="Link to this section">#</a></h3>
+<p>The panel bridge is separate from the process protocol: it is a <code>postMessage</code> channel between the
+panel iframe and the host UI (<code>rim-ui/src/features/plugins/runtime/pluginBridge.ts</code>). It is not
+frozen and not part of plugin protocol v1. The host accepts a message only when its origin is
+<code>&quot;null&quot;</code> (the opaque origin of a sandboxed iframe) and its <code>event.source</code> is that plugin&#39;s own
+iframe, so the plugin id comes from the iframe, never from the message.</p>
+<p>Panel → host messages, with what each does today:</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Message</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>rim.command.execute</code></td>
+<td>Works. Runs one of the plugin&#39;s <strong>own</strong> commands (<code>plugin.&lt;plugin_id&gt;.</code> prefix, checked again in the Rust host). A panel cannot confirm a dangerous command.</td>
+</tr>
+<tr>
+<td><code>rim.ui.notification.show</code></td>
+<td>Gated on <code>ui.notify</code>; only logged.</td>
+</tr>
+<tr>
+<td><code>rim.ui.dialog.confirm</code></td>
+<td>Only logged.</td>
+</tr>
+<tr>
+<td><code>rim.settings.get</code> / <code>rim.settings.set</code></td>
+<td>Only logged.</td>
+</tr>
+<tr>
+<td><code>rim.plugin.ui_event</code></td>
+<td>Not wired: the host queues the event but never delivers it to the plugin process.</td>
+</tr>
+</tbody></table></div>
+<p>Host → panel messages:</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Message</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>theme.changed</code></td>
+<td>Sent on mount and on every theme change.</td>
+</tr>
+<tr>
+<td><code>panel.state_update</code></td>
+<td>Sent on mount with the panel state the plugin last stored.</td>
+</tr>
+<tr>
+<td><code>panel.state_patch</code>, <code>panel.visibility</code>, <code>panel.focus</code>, <code>panel.blur</code>, <code>conversation.changed</code></td>
+<td>Declared in the bridge&#39;s types, never sent.</td>
+</tr>
+</tbody></table></div>
+<h3 id="focus-management">Focus Management <a class="anchor" href="#focus-management" aria-label="Link to this section">#</a></h3>
+<ul>
+<li>While a panel has focus, its iframe receives the keystrokes; Escape returns focus to the host
+(<code>rim-ui/src/features/plugins/runtime/pluginFocusManager.ts</code>)</li>
+<li>Focus state is tracked in <code>focusedSurface</code> in the shell store (<code>useShellStore</code>)</li>
+</ul>
+<h3 id="theme-bridge">Theme Bridge <a class="anchor" href="#theme-bridge" aria-label="Link to this section">#</a></h3>
+<p>The host sends the <code>--color-rim-*</code> design tokens (<code>--color-rim-void</code>, <code>--color-rim-panel</code>,
+<code>--color-rim-accent</code>, <code>--color-rim-text</code>, and the rest of the palette) to the panel iframe on mount
+and whenever the theme changes, so a panel can match the host.</p>
+<h3 id="panel-load-failure">Panel Load Failure <a class="anchor" href="#panel-load-failure" aria-label="Link to this section">#</a></h3>
+<p>If a panel&#39;s page fails to load, the host replaces it with a &quot;Failed to load plugin&quot; state with
+Retry and Close buttons. Other plugins and the host UI are not affected.</p>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/ef76e29d29862825129ccc6a6f6d7b081a6398b0/docs/local_plugin_host.md">rim-server/docs/local_plugin_host.md</a> at <code>ef76e29</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+<script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
+</body>
+</html>
