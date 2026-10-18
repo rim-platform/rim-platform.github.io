@@ -30,6 +30,7 @@ export class Linker {
     this.sources = sources;
     this.byRepo = { "rim-server": sources.server, "rim-ui": sources.ui };
     this.rendered = new Map();
+    this.names = new Map();
     this.warnings = [];
   }
 
@@ -40,6 +41,19 @@ export class Linker {
 
   page(source, file) {
     return this.rendered.get(`${source.key}:${file}`);
+  }
+
+  /** How many files of `source` are named `name`, in any directory. */
+  nameCount(source, name) {
+    if (!this.names.has(source.key)) {
+      const counts = new Map();
+      for (const f of source.files) {
+        const base = path.posix.basename(f);
+        counts.set(base, (counts.get(base) ?? 0) + 1);
+      }
+      this.names.set(source.key, counts);
+    }
+    return this.names.get(source.key).get(name) ?? 0;
   }
 
   /** The URL a Markdown link to `href` from `ctx` (source, srcPath, out) points at. */
@@ -79,12 +93,21 @@ export class Linker {
     return `https://github.com/${source.name}/blob/${source.commit}/${target}${fragment}`;
   }
 
-  /** A URL for a code span that names a file or directory of the repository, else null. */
+  /**
+   * A URL for a code span that names a file or directory of the repository, else null. A path
+   * with a `/` is tried from the repository root, then from the source file's directory. A bare
+   * name such as `package.json` is tried in the source file's directory, then at the repository
+   * root only when no other file in the repository has that name, so a guide that names a
+   * plugin's own `package.json` never links to the repository's file of that name.
+   */
   codePath(text, ctx) {
     if (!/^[\w.\-/]+$/.test(text) || text.startsWith("/") || text.startsWith(".")) return null;
     if (!text.includes("/") && !/\.[a-z]{1,5}$/i.test(text)) return null;
     const clean = text.replace(/\/$/, "");
-    const candidates = [clean, path.posix.normalize(path.posix.join(path.posix.dirname(ctx.srcPath), clean))];
+    const local = path.posix.normalize(path.posix.join(path.posix.dirname(ctx.srcPath), clean));
+    const candidates = text.includes("/")
+      ? [clean, local]
+      : [local, ...(local !== clean && this.nameCount(ctx.source, clean) === 1 ? [clean] : [])];
     for (const candidate of candidates) {
       const out = this.page(ctx.source, candidate);
       if (out) return rel(ctx.out, out);

@@ -334,11 +334,11 @@ SDK the committed <code>main.mjs</code> was built with. A release is a tag; its 
 (<code>npx rim-plugin-bundle --entry src/main.ts .</code>, whose <code>main.mjs</code> is the committed one
 byte for byte) can go on the release for <strong>Install from link</strong>.</p>
 <p>For a WebSandboxed plugin the desktop takes <code>rim-plugin.json</code>, the entrypoint and
-<code>panels/</code> from the checkout and ignores the rest: the sources, <a href="https://github.com/rim-platform/rim-ui/blob/839c95eb7e80f1b52da231ecbf06668a6c018fd8/package.json"><code>package.json</code></a> and the
+<code>panels/</code> from the checkout and ignores the rest: the sources, <a href="https://github.com/rim-platform/rim-ui/blob/839c95eb7e80f1b52da231ecbf06668a6c018fd8/sdk/plugin-sdk/package.json"><code>package.json</code></a> and the
 README stay in the checkout and never reach the plugin&#39;s frame. Those three parts follow
 the bundle rules (names starting with <code>.</code> are skipped, and any other name under <code>panels/</code>
 must be a bundle path), and signing an installed web plugin gives the same bundle hash as
-its <code>.rimbundle</code>. A local-process plugin&#39;s <a href="https://github.com/rim-platform/rim-ui/blob/839c95eb7e80f1b52da231ecbf06668a6c018fd8/package.json"><code>package.json</code></a> asks for <code>npm install</code> only when
+its <code>.rimbundle</code>. A local-process plugin&#39;s <a href="https://github.com/rim-platform/rim-ui/blob/839c95eb7e80f1b52da231ecbf06668a6c018fd8/sdk/plugin-sdk/package.json"><code>package.json</code></a> asks for <code>npm install</code> only when
 it lists <code>dependencies</code>, <code>optionalDependencies</code> or <code>peerDependencies</code>; a committed,
 self-contained <code>main.mjs</code> with only <code>devDependencies</code> installs without that step.</p>
 <h2 id="working-on-the-sdk">Working on the SDK <a class="anchor" href="#working-on-the-sdk" aria-label="Link to this section">#</a></h2>

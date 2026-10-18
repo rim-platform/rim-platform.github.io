@@ -145,7 +145,7 @@ source is checked by the desktop right after its checkout, before any post-insta
 <code>origin</code> URL (<code>https://</code> or <code>ssh://</code>), <code>HEAD</code> and its tree hash. Anything else is bundled
 from its installed folder with the SDK bundler&#39;s rules. For a web plugin that bundle is
 <code>rim-plugin.json</code>, the entrypoint and <code>panels/</code>, and the rest of a checkout it came from
-(sources, <a href="https://github.com/rim-platform/rim-ui/blob/839c95eb7e80f1b52da231ecbf06668a6c018fd8/package.json"><code>package.json</code></a>, a README) is ignored, so it hashes as the plugin&#39;s <code>.rimbundle</code>
+(sources, <code>package.json</code>, a README) is ignored, so it hashes as the plugin&#39;s <code>.rimbundle</code>
 does. A bundle past 256 files or 8 MiB is refused, and &quot;Sign another .rimbundle…&quot; signs a bundle built with
 <code>npm run plugin:bundle -- &lt;dir&gt;</code> instead. The dialog shows the plugin id, version, kind,
 SHA-256 and size, to compare with what <code>rim-plugin-bundle</code> printed.</li>

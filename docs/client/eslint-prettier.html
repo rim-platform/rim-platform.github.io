@@ -58,7 +58,7 @@ npm run format:check   # prettier --check . — CI-safe, no writes</code></pre>
 <li><code>js.configs.recommended</code> — core ESLint correctness rules.</li>
 <li><code>tseslint.configs.recommended</code> (typescript-eslint v8) — <strong>not</strong>
 <code>recommendedTypeChecked</code>. Type-aware linting needs <code>parserOptions.project</code>
-wiring, and <a href="https://github.com/rim-platform/rim-ui/blob/839c95eb7e80f1b52da231ecbf06668a6c018fd8/tsconfig.json"><code>tsconfig.json</code></a> excludes test files (<a href="https://github.com/rim-platform/rim-ui/blob/839c95eb7e80f1b52da231ecbf06668a6c018fd8/tsconfig.json"><code>tsconfig.json</code></a> → <code>exclude</code>),
+wiring, and <code>tsconfig.json</code> excludes test files (<code>tsconfig.json</code> → <code>exclude</code>),
 which would break typed linting on the test suite. This config is fast and needs
 no project wiring — pragmatic for standing up the gate today. See &quot;Future
 upgrade&quot; below.</li>
@@ -110,11 +110,11 @@ project-wide would remove a real correctness check for accidental control chars
 elsewhere.</p>
 <h2 id="no-type-aware-linting-yet">No type-aware linting yet <a class="anchor" href="#no-type-aware-linting-yet" aria-label="Link to this section">#</a></h2>
 <p><code>tseslint.configs.recommendedTypeChecked</code> would catch more (e.g. unsafe <code>any</code> flows,
-floating promises) but requires <code>parserOptions.project</code> pointing at a <a href="https://github.com/rim-platform/rim-ui/blob/839c95eb7e80f1b52da231ecbf06668a6c018fd8/tsconfig.json"><code>tsconfig.json</code></a>
+floating promises) but requires <code>parserOptions.project</code> pointing at a <code>tsconfig.json</code>
 that includes the files being linted — including tests, which the current
-<a href="https://github.com/rim-platform/rim-ui/blob/839c95eb7e80f1b52da231ecbf06668a6c018fd8/tsconfig.json"><code>tsconfig.json</code></a> excludes. To upgrade:</p>
+<code>tsconfig.json</code> excludes. To upgrade:</p>
 <ol>
-<li>Either widen <a href="https://github.com/rim-platform/rim-ui/blob/839c95eb7e80f1b52da231ecbf06668a6c018fd8/tsconfig.json"><code>tsconfig.json</code></a>&#39;s <code>include</code>/remove the test exclusions, or add a
+<li>Either widen <code>tsconfig.json</code>&#39;s <code>include</code>/remove the test exclusions, or add a
 second tsconfig (e.g. <code>tsconfig.eslint.json</code>) that includes tests, referenced only
 from <a href="https://github.com/rim-platform/rim-ui/blob/839c95eb7e80f1b52da231ecbf06668a6c018fd8/eslint.config.js"><code>eslint.config.js</code></a>.</li>
 <li>Swap <code>tseslint.configs.recommended</code> for <code>tseslint.configs.recommendedTypeChecked</code>
