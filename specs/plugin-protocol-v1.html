@@ -61,7 +61,7 @@
 </details></aside>
     <main id="content" class="prose">
 <h1 id="rim-plugin-protocol-v1">RIM plugin protocol v1</h1>
-<p class="status"><span><b>RIM plugin protocol v1</b></span><span>version 1</span><span>status: frozen, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/292d7d76bdc85aa388493c017f4f2a027a9c3e74/docs/specs/plugin-protocol-v1.md">rim-server/docs/specs/plugin-protocol-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/292d7d76bdc85aa388493c017f4f2a027a9c3e74">292d7d7</a></span></p>
+<p class="status"><span><b>RIM plugin protocol v1</b></span><span>version 1</span><span>status: frozen, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/98d1883fa51947555c4ea37d5255692c80558fa9/docs/specs/plugin-protocol-v1.md">rim-server/docs/specs/plugin-protocol-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/98d1883fa51947555c4ea37d5255692c80558fa9">98d1883</a></span></p>
 <p><strong>Status: frozen, normative.</strong> This is the contract between the RIM desktop host and a plugin
 process. It is written for someone building a plugin from scratch, in any language, without an
 SDK.</p>
@@ -718,8 +718,7 @@ minute</strong> by default, counted per plugin; a call over the limit gets <code
 <p>The protocol knows two kinds of capability name. Both are valid in <code>grantedCapabilities</code> in v1:</p>
 <ul>
 <li><strong>Plugin-scoped names</strong>, <code>plugin.&lt;pluginId&gt;.&lt;verb&gt;</code>, such as
-<code>plugin.dev.example.k8stools.restart_pod</code>. They exist so the user can approve, say, &quot;restart
-pods&quot; separately from &quot;list pods&quot;, and so <code>required_capabilities</code> on a command can point at
+<code>plugin.dev.example.k8stools.restart_pod</code>. <code>required_capabilities</code> on a command can point at
 them. The host guards no method of its own with them; it checks them only on commands.</li>
 <li><strong>Built-in names</strong>, which guard things the host does for the plugin:</li>
 </ul>
@@ -732,11 +731,19 @@ them. The host guards no method of its own with them; it checks them only on com
 </thead>
 <tbody><tr>
 <td><code>chat.read</code></td>
-<td><code>rim.chat.get_messages</code>, <code>rim.chat.search_messages</code></td>
+<td><code>rim.chat.list_messages</code>, <code>rim.chat.get_message</code>, <code>rim.chat.search_messages</code>, in plaintext conversations</td>
 </tr>
 <tr>
 <td><code>chat.write</code></td>
-<td><code>rim.chat.send_message</code> (and the unimplemented edit and delete calls)</td>
+<td><code>rim.chat.post_message</code>, in plaintext conversations</td>
+</tr>
+<tr>
+<td><code>chat.read.encrypted</code></td>
+<td>The <code>chat.read</code> methods in end-to-end encrypted conversations too; declared only with <code>chat.read</code></td>
+</tr>
+<tr>
+<td><code>chat.write.encrypted</code></td>
+<td><code>rim.chat.post_message</code> in end-to-end encrypted conversations too; declared only with <code>chat.write</code></td>
 </tr>
 <tr>
 <td><code>events.read</code></td>
@@ -771,11 +778,16 @@ check <code>rim-ui/src-tauri/src/plugin_host/validation.rs</code> in the host ve
 <ul>
 <li><strong>Which names a manifest may declare.</strong> A manifest that declares any other name fails to
 install.<ul>
-<li>From rim-ui #16 onward: the built-in names <code>ui.panel</code> and <code>ui.notify</code>, and the plugin&#39;s own
-keys <code>plugin.&lt;pluginId&gt;.&lt;verb&gt;</code>, where the verb uses only <code>[a-z0-9_.]</code> and neither starts
-nor ends with <code>.</code> nor contains <code>..</code>. The other built-in names are rejected: <code>chat.read</code>,
-<code>chat.write</code> and <code>events.read</code> guard calls that nothing serves yet and that are not in v1,
-and <code>local.process</code>, <code>network</code>, <code>fs.read</code> and <code>fs.write</code> guard nothing at all.</li>
+<li>From rim-ui #44 onward: the built-in names <code>ui.panel</code>, <code>ui.notify</code>, <code>chat.read</code>,
+<code>chat.write</code>, <code>chat.read.encrypted</code> and <code>chat.write.encrypted</code>, and the plugin&#39;s own keys
+<code>plugin.&lt;pluginId&gt;.&lt;verb&gt;</code>, where the verb uses only <code>[a-z0-9_.]</code> and neither starts nor
+ends with <code>.</code> nor contains <code>..</code>. An encrypted chat name declared without its plain one is
+rejected. The other built-in names are rejected: <code>events.read</code> guards a call that nothing
+serves and that is not in v1, and <code>local.process</code>, <code>network</code>, <code>fs.read</code> and <code>fs.write</code> guard
+nothing at all. A <code>WebSandboxed</code> plugin may also declare <code>network.fetch</code>
+(<a href="web-plugins-v1.html"><code>web-plugins-v1.md</code></a>).</li>
+<li>From rim-ui #16 to #44: the same rules with only <code>ui.panel</code> and <code>ui.notify</code> of the built-in
+names; <code>chat.read</code> and <code>chat.write</code> are rejected too.</li>
 <li>Before rim-ui #16: only <code>plugin.&lt;pluginId&gt;.&lt;verb&gt;</code> keys, with the <strong>whole</strong> key in
 <code>[a-z0-9_.]</code>. No plugin could hold a built-in name, so <code>rim.ui.update_panel</code> was always
 answered <code>CAPABILITY_DENIED</code>, and a plugin id with an uppercase letter or a hyphen could
@@ -784,6 +796,9 @@ declare no capability at all.</li>
 <code>admin</code> or <code>audit</code>.</li>
 </ul>
 </li>
+<li><strong>Approving plugin-scoped names.</strong> The approval prompt lists only built-in names, so a
+<code>plugin.&lt;pluginId&gt;.&lt;verb&gt;</code> key a manifest declares is never approved, and a command whose
+<code>required_capabilities</code> names one is always refused.</li>
 <li><strong>Approving while the plugin runs.</strong> <code>grantedCapabilities</code> is the approved list when the
 connection started, and v1 has no notification for changes to it. A capability the user
 approves while the plugin runs reaches the command gate at once, but the plugin&#39;s own calls to
@@ -954,9 +969,9 @@ section 7, and the user sees why.</li>
 </tr>
 </tbody></table></div>
 <h3 id="routed-by-the-host-but-not-part-of-v1">Routed by the host but not part of v1 <a class="anchor" href="#routed-by-the-host-but-not-part-of-v1" aria-label="Link to this section">#</a></h3>
-<p>The host&#39;s broker recognises these names, but their shapes are <strong>not frozen</strong> and will change
-(to camelCase, with a <code>Principal</code> for every person) when they are wired end to end. Do not build
-on them.</p>
+<p>The host&#39;s broker recognises these names, but their shapes are <strong>not frozen</strong>. The chat methods
+may still change before they are frozen; the others will change (to camelCase, with a
+<code>Principal</code> for every person) when they are wired end to end, so do not build on them.</p>
 <div class="tablewrap"><table>
 <thead>
 <tr>
@@ -967,28 +982,22 @@ on them.</p>
 </tr>
 </thead>
 <tbody><tr>
-<td><code>rim.chat.send_message</code></td>
+<td><code>rim.chat.list_messages</code>, <code>rim.chat.get_message</code>, <code>rim.chat.search_messages</code></td>
 <td>plugin → host</td>
-<td><code>chat.write</code></td>
-<td>Answered <code>CAPABILITY_DENIED</code>, since no host lets a manifest request <code>chat.write</code> (section 12). Behind the gate it is not wired either.</td>
+<td><code>chat.read</code>, and <code>chat.read.encrypted</code> in an encrypted conversation</td>
+<td>Served by the client message service.</td>
 </tr>
 <tr>
-<td><code>rim.chat.get_messages</code></td>
+<td><code>rim.chat.post_message</code></td>
 <td>plugin → host</td>
-<td><code>chat.read</code></td>
-<td>As above, with <code>chat.read</code>.</td>
-</tr>
-<tr>
-<td><code>rim.chat.search_messages</code></td>
-<td>plugin → host</td>
-<td><code>chat.read</code></td>
-<td>As above, with <code>chat.read</code>.</td>
+<td><code>chat.write</code>, and <code>chat.write.encrypted</code> in an encrypted conversation</td>
+<td>Served by the client message service.</td>
 </tr>
 <tr>
 <td><code>rim.events.subscribe</code></td>
 <td>plugin → host</td>
 <td><code>events.read</code></td>
-<td>As above, with <code>events.read</code>.</td>
+<td>Answered <code>CAPABILITY_DENIED</code>, since no host lets a manifest request <code>events.read</code> (section 12). Behind the gate it is not wired either.</td>
 </tr>
 <tr>
 <td><code>rim.event.&lt;type&gt;</code></td>
@@ -1000,16 +1009,13 @@ on them.</p>
 <td><code>rim.ui.update_panel</code></td>
 <td>plugin → host</td>
 <td><code>ui.panel</code></td>
-<td>Wired to the panel state store. Hosts before rim-ui #16 cannot grant <code>ui.panel</code> (section 12) and answer <code>CAPABILITY_DENIED</code>. The panel page does not receive the stored state yet.</td>
+<td>Wired to the panel state store. Hosts before rim-ui #16 cannot grant <code>ui.panel</code> (section 12) and answer <code>CAPABILITY_DENIED</code>. The panel page receives the stored state as <code>panel.state_update</code> (<a href="../docs/local_plugin_host.html"><code>docs/local_plugin_host.md</code></a>).</td>
 </tr>
 </tbody></table></div>
-<p>The chat read and send calls are deliberately <strong>not in v1</strong>: they will go through the client&#39;s
-single message service, so that a plugin sees exactly what the user sees, before their shapes are
-frozen.</p>
-<p>The client message service now serves them as <code>rim.chat.list_messages</code>, <code>rim.chat.get_message</code>,
-<code>rim.chat.search_messages</code> and <code>rim.chat.post_message</code>, still routed and not frozen, with the
-capabilities <code>chat.read</code>, <code>chat.write</code>, <code>chat.read.encrypted</code> and <code>chat.write.encrypted</code>: see
-<a href="e2ee-mls-v1.html"><code>e2ee-mls-v1.md</code></a>, &quot;Plugins and the client message service&quot;.</p>
+<p>The chat calls are deliberately <strong>not in v1</strong>: they go through the client&#39;s single message
+service, so that a plugin sees exactly what the user sees, and their shapes are not frozen yet.
+<a href="e2ee-mls-v1.html"><code>e2ee-mls-v1.md</code></a>, &quot;Plugins and the client message service&quot;, defines what they return and what
+the encrypted capabilities add.</p>
 <h3 id="not-implemented">Not implemented <a class="anchor" href="#not-implemented" aria-label="Link to this section">#</a></h3>
 <p>Earlier RIM documents listed methods that the host has never implemented. They do not exist:</p>
 <ul>
@@ -1216,7 +1222,7 @@ ignored.</li>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/292d7d76bdc85aa388493c017f4f2a027a9c3e74/docs/specs/plugin-protocol-v1.md">rim-server/docs/specs/plugin-protocol-v1.md</a> at <code>292d7d7</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/98d1883fa51947555c4ea37d5255692c80558fa9/docs/specs/plugin-protocol-v1.md">rim-server/docs/specs/plugin-protocol-v1.md</a> at <code>98d1883</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

@@ -337,24 +337,25 @@ triggers. Each action runs even when an earlier one failed.</li>
 &quot;Create Pipeline&quot; with <strong>Name</strong>, <strong>Description</strong>, <strong>Trigger</strong>, <strong>Filters</strong> (<strong>Add filter</strong>),
 <strong>Actions</strong> (<strong>Add action</strong>, a command and an optional JSON arguments field) and <strong>Cooldown
 (seconds, optional)</strong>, then <strong>Save</strong>. The list shows each pipeline as Active or Disabled, with
-its trigger, its number of actions and when it last fired. The power button enables or disables
-it, the pencil edits it, and the bin deletes it after a confirmation.</p>
+its trigger, its number of actions and, to its creator, when it last fired. The power button
+enables or disables it, the pencil edits it, and the bin deletes it after a confirmation.</p>
 <p><strong>Who.</strong> Any member of the workspace can create a pipeline, and every member sees the list. Only
 its creator, an Owner or a Moderator can change, toggle or delete it.</p>
 <p><strong>What runs.</strong> Nobody is there to confirm, so the server skips any action that would need a
 confirmation: every mutating, restricted or dangerous command, which includes posting a message,
-reacting and writing workspace state. Safe and sensitive server commands run. On every firing,
-each member with the workspace open sees &quot;Pipeline &quot;&lt;name&gt;&quot; fired&quot;, with the number of actions
-that ran; skipped actions are not counted.</p>
+reacting and writing workspace state. Safe and sensitive server commands run. A pipeline reacts
+only to events its creator may see: a message in a private channel its creator is not in fires
+nothing. On every firing, its creator, with the workspace open, sees &quot;Pipeline &quot;&lt;name&gt;&quot;
+fired&quot;, with the number of actions that ran; skipped actions are not counted.</p>
 <p><strong>Limits.</strong> The cooldown stops a pipeline from firing again until it has passed. A pipeline that
 fires more than 10 times in 60 seconds is switched off, with &quot;Pipeline &quot;&lt;name&gt;&quot; suspended&quot;;
 the power button turns it back on. You can create 50 pipelines per workspace, and the page shows
 the server&#39;s own cap when it sets one.</p>
 <p><strong>Example.</strong> &quot;Deploy failed&quot;: trigger New Message, scoped to the id of #deploys, with the filter
 &quot;Message contains pattern&quot; <code>FAILED</code>, a cooldown of 300 and the action <code>chat.search_messages</code>
-with <code>{&quot;query&quot;: &quot;FAILED&quot;}</code>. Each failure posted to #deploys shows every member the firing, at
-most once in five minutes. The action&#39;s result is not shown anywhere, and an action such as
-<code>chat.post_message</code> would be skipped.</p>
+with <code>{&quot;query&quot;: &quot;FAILED&quot;}</code>. Each failure posted to #deploys shows the pipeline&#39;s creator the
+firing, at most once in five minutes. The action&#39;s result is not shown anywhere, and an action
+such as <code>chat.post_message</code> would be skipped.</p>
 <h2 id="workspace-state">Workspace state <a class="anchor" href="#workspace-state" aria-label="Link to this section">#</a></h2>
 <p>Workspace state is a key-value store the server keeps for each workspace. Commands, macros and
 the agent use it through <code>state.get</code>, <code>state.list</code>, <code>state.set</code>, <code>state.incr</code> and <code>state.delete</code>,
@@ -393,7 +394,7 @@ sensitivity, confirmations, macros and what the agent may call.</li>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/839c95eb7e80f1b52da231ecbf06668a6c018fd8/docs/commands-and-automation.md">rim-ui/docs/commands-and-automation.md</a> at <code>839c95e</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/82ba0e96c20cbce553dbf1bd1238fc14799c7b72/docs/commands-and-automation.md">rim-ui/docs/commands-and-automation.md</a> at <code>82ba0e9</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

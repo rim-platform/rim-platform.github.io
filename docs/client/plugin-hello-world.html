@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Hello World Plugin · RIM</title>
-<meta name="description" content="Reference in-tree plugin for the RIM plugin host. Exercises the full Phase 1 spawn → broker → capability-gate cycle.">
+<meta name="description" content="Reference in-tree plugin for the RIM plugin host: the smallest working local process plugin, with one command and a panel that talks to the host through the raw postMessage bridge instead of the plugin SDK. It exercises …">
 <link rel="icon" href="../../favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
@@ -45,11 +45,13 @@
 </details></aside>
     <main id="content" class="prose">
 <h1 id="hello-world-plugin">Hello World Plugin</h1>
-<p>Reference in-tree plugin for the RIM plugin host. Exercises the full
-Phase 1 spawn → broker → capability-gate cycle.</p>
+<p>Reference in-tree plugin for the RIM plugin host: the smallest working local
+process plugin, with one command and a panel that talks to the host through the
+raw postMessage bridge instead of the plugin SDK. It exercises the whole cycle
+of spawn, broker and capability gate.</p>
 <p>It speaks plugin protocol v1, frozen in
-<a href="https://github.com/rim-platform/rim-ui/blob/839c95eb7e80f1b52da231ecbf06668a6c018fd8/protocol/plugin-protocol-v1.schema.json"><code>protocol/plugin-protocol-v1.schema.json</code></a>.
-The host&#39;s conformance tests (<a href="https://github.com/rim-platform/rim-ui/blob/839c95eb7e80f1b52da231ecbf06668a6c018fd8/src-tauri/src/plugin_host/protocol/conformance.rs"><code>src-tauri/src/plugin_host/protocol/conformance.rs</code></a>)
+<a href="https://github.com/rim-platform/rim-ui/blob/82ba0e96c20cbce553dbf1bd1238fc14799c7b72/protocol/plugin-protocol-v1.schema.json"><code>protocol/plugin-protocol-v1.schema.json</code></a>.
+The host&#39;s conformance tests (<a href="https://github.com/rim-platform/rim-ui/blob/82ba0e96c20cbce553dbf1bd1238fc14799c7b72/src-tauri/src/plugin_host/protocol/conformance.rs"><code>src-tauri/src/plugin_host/protocol/conformance.rs</code></a>)
 drive this script through every v1 message, so keep it conforming when you
 change it.</p>
 <h2 id="file-layout">File layout <a class="anchor" href="#file-layout" aria-label="Link to this section">#</a></h2>
@@ -63,7 +65,7 @@ change it.</p>
   README.md                # This file</code></pre>
 <h2 id="prerequisites">Prerequisites <a class="anchor" href="#prerequisites" aria-label="Link to this section">#</a></h2>
 <ul>
-<li>Python 3.8+ on <code>$PATH</code> (the entrypoint is <a href="https://github.com/rim-platform/rim-ui/blob/839c95eb7e80f1b52da231ecbf06668a6c018fd8/plugins/hello-world/main.py"><code>main.py</code></a> — the OS executes it
+<li>Python 3.8+ on <code>$PATH</code> (the entrypoint is <a href="https://github.com/rim-platform/rim-ui/blob/82ba0e96c20cbce553dbf1bd1238fc14799c7b72/plugins/hello-world/main.py"><code>main.py</code></a> — the OS executes it
 directly via its shebang <code>#!/usr/bin/env python3</code>).</li>
 <li>RIM desktop app built and running (<code>npm run tauri dev</code>).</li>
 </ul>
@@ -98,17 +100,25 @@ and the plugin answers <code>&quot;Hello, world!&quot;</code>, shown in the succ
 toast.</p>
 <h3 id="after-clicking-say-hello-in-the-panel">After clicking &quot;Say Hello&quot; in the panel <a class="anchor" href="#after-clicking-say-hello-in-the-panel" aria-label="Link to this section">#</a></h3>
 <p>The panel sends <code>rim.ui.notification.show</code> via <code>window.parent.postMessage</code>.
-In Phase 1 this is logged by the bridge (<code>pluginBridge.ts</code> logs at <code>debug</code>
-level).  The real toast notification is wired in Phase 2.</p>
-<p>To see the log, open the Tauri devtools console and filter for
-<code>[RIM:PluginBridge]</code>.</p>
+The bridge (<code>pluginBridge.ts</code>) shows it only to a plugin approved for
+<code>ui.notify</code>, which this manifest does not declare, so it drops the message and
+logs a warning. To see it, open the Tauri devtools console and filter for
+<code>[RIM:PluginBridge]</code>:</p>
+<pre><code>[RIM:PluginBridge] dev.example.hello-world denied: requires ui.notify for rim.ui.notification.show</code></pre>
+<p>With <code>&quot;ui.notify&quot;</code> added to <code>capabilities</code> in <a href="https://github.com/rim-platform/rim-ui/blob/82ba0e96c20cbce553dbf1bd1238fc14799c7b72/plugins/hello-world/rim-plugin.json"><code>rim-plugin.json</code></a> before you
+copy the folder, enabling the plugin asks for that capability, and once it is
+approved the bridge shows the notification as a toast that names the plugin
+(and as a desktop notification while the window is in the background and
+notifications are allowed).</p>
 <h2 id="capability-model">Capability model <a class="anchor" href="#capability-model" aria-label="Link to this section">#</a></h2>
 <p>The manifest declares no capabilities. A manifest may declare the built-in
-names <code>ui.panel</code> and <code>ui.notify</code>, and its own keys of the form <code>plugin.&lt;plugin_id&gt;.&lt;verb&gt;</code> with the verb in
-<code>[a-z0-9_.]</code> (validated at install time by <code>validation.rs</code>). <code>greet</code> needs
-none: it only answers the host.</p>
-<p>The <code>ui.notify</code> capability gate is exercised by the panel&#39;s postMessage
-handler in <code>pluginBridge.ts</code> (front-end side only in Phase 1).</p>
+names <code>ui.panel</code>, <code>ui.notify</code>, <code>chat.read</code>, <code>chat.write</code>, <code>chat.read.encrypted</code>
+and <code>chat.write.encrypted</code> (each encrypted one only with its plain one), and its
+own keys of the form <code>plugin.&lt;plugin_id&gt;.&lt;verb&gt;</code> with the verb in <code>[a-z0-9_.]</code>
+(validated at install time by <code>validation.rs</code>). <code>greet</code> needs none: it only
+answers the host.</p>
+<p>The panel&#39;s notification exercises the <code>ui.notify</code> gate in the bridge&#39;s
+postMessage handler (<code>pluginBridge.ts</code>).</p>
 <h2 id="manual-smoke-test-recipe">Manual smoke-test recipe <a class="anchor" href="#manual-smoke-test-recipe" aria-label="Link to this section">#</a></h2>
 <p>Run this after building and starting <code>npm run tauri dev</code>:</p>
 <ol>
@@ -133,7 +143,7 @@ cp -r /path/to/rim-ui/plugins/hello-world ~/.rim/plugins/</code></pre>
 </li>
 <li><p>In the tool panel or main surface (if the plugin panel is rendered), click
 <strong>Say Hello</strong> and observe the browser devtools console for:
-<code>[RIM:PluginBridge] dev.example.hello-world notification: Hello World</code></p>
+<code>[RIM:PluginBridge] dev.example.hello-world denied: requires ui.notify for rim.ui.notification.show</code></p>
 </li>
 <li><p>Open the command palette, run <strong>Hello: Greet</strong>, and observe a success
 toast containing <code>Hello, world!</code>.</p>
@@ -143,12 +153,13 @@ toast containing <code>Hello, world!</code>.</p>
 <li><p>Observe: <code>[plugin_host] plugin dev.example.hello-world stopped</code></p>
 </li>
 </ol>
-<p>All ten steps passing = Phase 1 proof-of-life confirmed.</p>
+<p>All ten steps passing confirm that the host starts the plugin, routes its
+command, gates its panel and stops it.</p>
 
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/839c95eb7e80f1b52da231ecbf06668a6c018fd8/plugins/hello-world/README.md">rim-ui/plugins/hello-world/README.md</a> at <code>839c95e</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/82ba0e96c20cbce553dbf1bd1238fc14799c7b72/plugins/hello-world/README.md">rim-ui/plugins/hello-world/README.md</a> at <code>82ba0e9</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

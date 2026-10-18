@@ -51,13 +51,13 @@
 </details></aside>
     <main id="content" class="prose">
 <h1 id="key-identity-v1">Key identity v1</h1>
-<p class="status"><span><b>Key identity v1</b></span><span>version 1</span><span>status: implemented, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/292d7d76bdc85aa388493c017f4f2a027a9c3e74/docs/specs/key-identity-v1.md">rim-server/docs/specs/key-identity-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/292d7d76bdc85aa388493c017f4f2a027a9c3e74">292d7d7</a></span></p>
-<p><em>Status: implemented, normative. Follows <a href="https://github.com/rim-platform/rim-server/blob/292d7d76bdc85aa388493c017f4f2a027a9c3e74/docs/decisions/decentralization-2026-10-08.md"><code>docs/decisions/decentralization-2026-10-08.md</code></a>:
+<p class="status"><span><b>Key identity v1</b></span><span>version 1</span><span>status: implemented, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/98d1883fa51947555c4ea37d5255692c80558fa9/docs/specs/key-identity-v1.md">rim-server/docs/specs/key-identity-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/98d1883fa51947555c4ea37d5255692c80558fa9">98d1883</a></span></p>
+<p><em>Status: implemented, normative. Follows <a href="https://github.com/rim-platform/rim-server/blob/98d1883fa51947555c4ea37d5255692c80558fa9/docs/decisions/decentralization-2026-10-08.md"><code>docs/decisions/decentralization-2026-10-08.md</code></a>:
 a user is a key pair, the user id is stable with a signed key log, and servers are
 interchangeable relays. The web app may create and hold an identity, not only be a linked
 device (amended 2026-10-15, keys by default). This document is the contract between the
 server (<code>rim_identity</code>, <code>KeyAuthService</code>) and every client that signs statements.</em></p>
-<p><em>Algorithm agility (<a href="https://github.com/rim-platform/rim-server/blob/292d7d76bdc85aa388493c017f4f2a027a9c3e74/docs/decisions/post-quantum-hybrid-2026-10-09.md"><code>docs/decisions/post-quantum-hybrid-2026-10-09.md</code></a>): statement format
+<p><em>Algorithm agility (<a href="https://github.com/rim-platform/rim-server/blob/98d1883fa51947555c4ea37d5255692c80558fa9/docs/decisions/post-quantum-hybrid-2026-10-09.md"><code>docs/decisions/post-quantum-hybrid-2026-10-09.md</code></a>): statement format
 version 2 tags every key and signature with its algorithm, payload caps fit
 hybrid post-quantum keys, and the server indexes device keys by a hash. Version 1 statements
 stay valid. See &quot;Algorithms and statement versions&quot;.</em></p>
@@ -544,8 +544,8 @@ enrolled account without its keys; keys whose principal the server never accepte
 removed. The recovery key itself is never stored. After the enrollment the app shows the
 recovery kit (&quot;Recovery kit&quot;) and publishes a profile card (display name, this server&#39;s URL,
 the active devices). The server has ended every other session of the account.</li>
-<li><strong>Key-only signup</strong> (the join pages, next to the password form, with the page&#39;s token if it
-has one): the person picks a username, an optional display name and this device&#39;s name; the
+<li><strong>Key-only signup</strong> (the join pages, where it is the form shown first, with the page&#39;s token if
+it has one): the person picks a username, an optional display name and this device&#39;s name; the
 app creates the keys as for enrollment and writes them, with the kit&#39;s entropy, to the
 keyring <strong>before</strong> <code>signupWithKey</code> is sent; it shows the recovery kit once the signup
 succeeds. When it fails, the app reads <code>keyLog</code> for the new principal: an empty log
@@ -559,7 +559,7 @@ app opens the account as after a password signup (a workspace invite whose answe
 opens the workspace its preview named). Unconfirmed keys whose principal has no key log on the
 server (a signup or enrollment that never reached it) are removed when signing in with them
 fails. Where the server allows password signup (<code>serverInfo.signupRequiresKeys</code> false), the
-password form stays as a fallback.</li>
+password form is a fallback behind &quot;Create account with a password&quot;.</li>
 <li><strong>Other sessions.</strong> Enrollment ends the account&#39;s other sessions itself (&quot;Enrollment&quot;, rule 4).
 Account settings offers &quot;Sign out other sessions&quot; (<code>logoutOtherSessions</code>) for every account,
 on the desktop and the web.</li>
@@ -707,7 +707,7 @@ identity stays in the browser that created it and is recovered only with its rec
 (<a href="server-to-server-v1.html"><code>server-to-server-v1.md</code></a>).</li>
 </ul>
 <h2 id="appendix-a-known-answer-vectors-version-1">Appendix A: known-answer vectors (version 1) <a class="anchor" href="#appendix-a-known-answer-vectors-version-1" aria-label="Link to this section">#</a></h2>
-<p>Checked by <a href="https://github.com/rim-platform/rim-server/blob/292d7d76bdc85aa388493c017f4f2a027a9c3e74/rim_identity/src/vectors.rs"><code>rim_identity/src/vectors.rs</code></a>. Keys are <code>SigningKey::from_bytes([seed; 32])</code>; never
+<p>Checked by <a href="https://github.com/rim-platform/rim-server/blob/98d1883fa51947555c4ea37d5255692c80558fa9/rim_identity/src/vectors.rs"><code>rim_identity/src/vectors.rs</code></a>. Keys are <code>SigningKey::from_bytes([seed; 32])</code>; never
 use these seeds for real keys.</p>
 <div class="tablewrap"><table>
 <thead>
@@ -748,7 +748,7 @@ tt6UNl3tRCwupWIYEfnWzqW9qVqDsJju2dA7d2CdNqdIZ0piVeP_Q6Y1lLfA4YN-26tsdaFea-rM_I8Q
 <pre><code>{&quot;v&quot;:1,&quot;type&quot;:&quot;login&quot;,&quot;challengeId&quot;:&quot;00000000-0000-0000-0000-000000000009&quot;,&quot;nonce&quot;:&quot;bm9uY2U&quot;,&quot;audience&quot;:&quot;localhost:8080&quot;,&quot;principalId&quot;:&quot;rimp1_nz1POml8JmCMcFDECrtu60ibohPKnywhcExmOPMvTUo&quot;,&quot;deviceId&quot;:&quot;00000000-0000-0000-0000-000000000001&quot;}
 jB_BFFAn7e-FMh8wCSWhnCcPzMjoe1fTKwlCoGfE0p1OYkhZWjV4J1c_AgeIhKpWOnLYyB0PqstAEYmaCITXBw</code></pre>
 <h2 id="appendix-b-known-answer-vectors-version-2">Appendix B: known-answer vectors (version 2) <a class="anchor" href="#appendix-b-known-answer-vectors-version-2" aria-label="Link to this section">#</a></h2>
-<p>Checked by <a href="https://github.com/rim-platform/rim-server/blob/292d7d76bdc85aa388493c017f4f2a027a9c3e74/rim_identity/src/vectors.rs"><code>rim_identity/src/vectors.rs</code></a>. Same keys and fields as appendix A, written as
+<p>Checked by <a href="https://github.com/rim-platform/rim-server/blob/98d1883fa51947555c4ea37d5255692c80558fa9/rim_identity/src/vectors.rs"><code>rim_identity/src/vectors.rs</code></a>. Same keys and fields as appendix A, written as
 version 2 statements. The principal id differs from appendix A because the inception payload
 differs.</p>
 <div class="tablewrap"><table>
@@ -789,7 +789,7 @@ ed25519:D2moo9U9OjVL9zed4lM0A5cHoGQOVEtUfgKfAmOn0P18x74NEbh4FL4f3PbulQzoVuGAGOEJ
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/292d7d76bdc85aa388493c017f4f2a027a9c3e74/docs/specs/key-identity-v1.md">rim-server/docs/specs/key-identity-v1.md</a> at <code>292d7d7</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/98d1883fa51947555c4ea37d5255692c80558fa9/docs/specs/key-identity-v1.md">rim-server/docs/specs/key-identity-v1.md</a> at <code>98d1883</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

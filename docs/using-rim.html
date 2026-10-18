@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Using RIM · RIM</title>
-<meta name="description" content="The desktop and web client: getting started from a fresh install to a first conversation, commands, keybinds, macros and pipelines, installing it and signing in, building it, the keyboard, plugins, keys and recovery, linking a device, encrypted conversations, relays and the local message cache.">
+<meta name="description" content="The desktop and web client: getting started from a fresh install to a first conversation, commands, keybinds, macros and pipelines, the AI agent, installing it and signing in, building it, the keyboard, plugins, keys and recovery, linking a device, encrypted conversations, relays and the local message cache.">
 <link rel="icon" href="../favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
@@ -36,11 +36,12 @@
 
     <main id="content" class="prose">
 <h1>Using RIM</h1>
-<p class="lede">The desktop and web client: getting started from a fresh install to a first conversation, commands, keybinds, macros and pipelines, installing it and signing in, building it, the keyboard, plugins, keys and recovery, linking a device, encrypted conversations, relays and the local message cache.</p>
+<p class="lede">The desktop and web client: getting started from a fresh install to a first conversation, commands, keybinds, macros and pipelines, the AI agent, installing it and signing in, building it, the keyboard, plugins, keys and recovery, linking a device, encrypted conversations, relays and the local message cache.</p>
 <h2 id="start-here">Start here</h2>
 <ul class="cards">
 <li><a href="client/getting-started.html"><b>Getting started</b><span>This page takes you from a fresh install to your first conversation: creating an account, finding a workspace, talking, finding your way around the app and keeping the account safe. It is for the person using the app; …</span><span class="src">rim-ui/docs/getting-started.md</span></a></li>
 <li><a href="client/commands-and-automation.html"><b>Commands and automation</b><span>Everything RIM does runs as a command: the command palette, keybinds, user commands, macros, pipelines, plugins and the AI agent all run them. This page is for the person using the app and goes deeper than Getting …</span><span class="src">rim-ui/docs/commands-and-automation.md</span></a></li>
+<li><a href="client/ai-agent.html"><b>The AI agent</b><span>The AI agent is a chat window in the desktop app that operates RIM for you: ask it a question or give it a task, and it reads and acts through the same commands you run from the palette. This page is for the person …</span><span class="src">rim-ui/docs/ai-agent.md</span></a></li>
 </ul>
 <h2 id="install">Install</h2>
 <ul class="cards">
@@ -62,7 +63,7 @@
 <ul class="cards">
 <li><a href="client/identity-key-backup.html"><b>Identity key backup (desktop)</b><span>The identity key adds and removes devices, replaces itself and signs the profile card. Without a backup it lives only on the computer that enrolled the account (or recovered it), and losing that computer leaves the …</span><span class="src">rim-ui/docs/identity-key-backup.md</span></a></li>
 <li><a href="client/device-linking-desktop.html"><b>Device linking (desktop)</b><span>A computer that holds the account's identity key shows a code; another computer pastes it and gets a device key of its own, certified by the identity key, and signs in with it. The contract, with the code format, the …</span><span class="src">rim-ui/docs/device-linking-desktop.md</span></a></li>
-<li><a href="client/web-linked-device.html"><b>The web app as a linked device</b><span>The web app never holds an identity key. It gets a device key of its own by pasting a link code shown on the desktop app (Settings &gt; Security &gt; Link a device), and signs in with that key. It does not enroll, sign up …</span><span class="src">rim-ui/docs/web-linked-device.md</span></a></li>
+<li><a href="client/web-linked-device.html"><b>The web app as a linked device</b><span>As a linked device, the web app holds no identity key. It gets a device key of its own by pasting a link code shown on the desktop app (Settings &gt; Security &gt; Link a device), and signs in with that key; linking other …</span><span class="src">rim-ui/docs/web-linked-device.md</span></a></li>
 <li><a href="client/e2ee-desktop.html"><b>End-to-end encrypted DMs and groups on the desktop</b><span>DMs and groups are end-to-end encrypted with MLS (RFC 9420); channels stay plaintext. The contract is rim-server docs/specs/e2ee-mls-v1.md; the engine is the rim_mls crate (docs/rim-mls.md). This page is how the desktop …</span><span class="src">rim-ui/docs/e2ee-desktop.md</span></a></li>
 <li><a href="client/e2ee-web.html"><b>End-to-end encrypted DMs and groups in the web app</b><span>A browser set up as a linked device (web-linked-device.md) reads and sends in encrypted DMs and groups like the desktop app. It runs the same rim_mls crate (docs/rim-mls.md) compiled to WebAssembly, keeps its MLS state …</span><span class="src">rim-ui/docs/e2ee-web.md</span></a></li>
 <li><a href="client/secret-vault.html"><b>Secret vault</b><span>The desktop app keeps its secrets in one encrypted file: the message cache key, the history archive keys and cloud refresh tokens, the offline session record, the key identity records and pending device links, and the …</span><span class="src">rim-ui/docs/secret-vault.md</span></a></li>
@@ -76,7 +77,7 @@
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/tree/292d7d76bdc85aa388493c017f4f2a027a9c3e74">rim-server</a> <code>292d7d7</code> and <a href="https://github.com/rim-platform/rim-ui/tree/839c95eb7e80f1b52da231ecbf06668a6c018fd8">rim-ui</a> <code>839c95e</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/tree/98d1883fa51947555c4ea37d5255692c80558fa9">rim-server</a> <code>98d1883</code> and <a href="https://github.com/rim-platform/rim-ui/tree/82ba0e96c20cbce553dbf1bd1238fc14799c7b72">rim-ui</a> <code>82ba0e9</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

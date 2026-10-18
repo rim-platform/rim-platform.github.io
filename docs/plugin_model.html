@@ -85,10 +85,15 @@ extensions. It is a package with a manifest (<code>rim-plugin.json</code>) that 
 <li>panels, rendered in sandboxed iframes inside the shell;</li>
 <li>settings.</li>
 </ul>
-<p>A plugin with no panels is headless: it contributes commands only. The canonical examples live in
-rim-ui&#39;s <code>plugins/</code> directory: <code>k8s-pods</code> lists the pods of the user&#39;s Kubernetes cluster and
-restarts one through a dangerous command, <code>github-prs</code> lists pull requests of public GitHub
-repositories, <code>hello-world</code> and <code>template-ts</code> are starting points.</p>
+<p>A plugin with no panels is headless: it contributes commands only. The four official plugins
+each have their own repository under <a href="https://github.com/rim-platform">github.com/rim-platform</a>:
+<a href="https://github.com/rim-platform/plugin-k8s-pods"><code>plugin-k8s-pods</code></a> lists the pods of the user&#39;s
+Kubernetes cluster and restarts one through a dangerous command,
+<a href="https://github.com/rim-platform/plugin-github-prs"><code>plugin-github-prs</code></a> lists pull requests of
+public GitHub repositories, <a href="https://github.com/rim-platform/plugin-releases"><code>plugin-releases</code></a>
+posts the latest GitHub releases of chosen repositories into the open conversation, and
+<a href="https://github.com/rim-platform/plugin-poll"><code>plugin-poll</code></a> runs a poll whose votes are messages.
+rim-ui&#39;s <code>plugins/</code> directory holds the starting points, <code>hello-world</code> and <code>template-ts</code>.</p>
 <h2 id="two-kinds">Two kinds <a class="anchor" href="#two-kinds" aria-label="Link to this section">#</a></h2>
 <div class="tablewrap"><table>
 <thead>
@@ -167,7 +172,7 @@ may be granted.</li>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/292d7d76bdc85aa388493c017f4f2a027a9c3e74/docs/plugin_model.md">rim-server/docs/plugin_model.md</a> at <code>292d7d7</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/98d1883fa51947555c4ea37d5255692c80558fa9/docs/plugin_model.md">rim-server/docs/plugin_model.md</a> at <code>98d1883</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

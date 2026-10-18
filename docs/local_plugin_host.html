@@ -70,12 +70,17 @@ dot-separated segments of ASCII letters, digits and hyphens), <code>display_name
 <code>description</code>, <code>author</code></li>
 <li>runtime: <code>runtime_kind</code> (<code>&quot;DesktopLocalProcess&quot;</code> here; <code>&quot;WebSandboxed&quot;</code> is the web plugin
 kind) and <code>entrypoint</code></li>
-<li><code>capabilities</code> the plugin requests</li>
+<li><code>capabilities</code> the plugin requests, and <code>network_origins</code>, the origins a <code>WebSandboxed</code>
+plugin that requests <code>network.fetch</code> may connect to</li>
 <li><code>commands</code>, each with <code>id</code>, <code>title</code>, <code>description</code>, <code>arguments</code>, <code>dangerous</code>,
-<code>required_capabilities</code>, <code>ai_callable</code>, <code>output_schema</code> and <code>keybind_capable</code></li>
-<li><code>keybind_suggestions</code>, <code>context_actions</code> and <code>panels</code></li>
+<code>required_context</code>, <code>required_capabilities</code>, <code>ai_callable</code>, <code>output_schema</code> and
+<code>keybind_capable</code></li>
+<li><code>keybind_suggestions</code>, <code>context_actions</code> and <code>panels</code>, each panel with <code>id</code>, <code>title</code>,
+<code>description</code> and an optional <code>slot</code></li>
 <li><code>settings_schema</code></li>
 </ul>
+<p>rim-ui&#39;s <a href="client/plugin-manifest.html">plugin manifest reference</a> describes every field
+and the rules install checks.</p>
 <p>A plugin without <code>rim-plugin.json</code> can instead put its manifest in comment headers at the top of
 a <code>main.ts</code>, <code>main.js</code> or <code>main.py</code> entrypoint (&quot;simple mode&quot;, <code>simple_manifest.rs</code>):</p>
 <pre><code class="language-text"># rim-plugin: dev.example.my-tool
@@ -157,7 +162,7 @@ iframe, so the plugin id comes from the iframe, never from the message.</p>
 </tr>
 <tr>
 <td><code>rim.ui.notification.show</code></td>
-<td>Gated on <code>ui.notify</code>; only logged.</td>
+<td>Gated on <code>ui.notify</code>. Shows a toast headed with the plugin&#39;s name, and a desktop notification while the window is in the background and the user already allows them.</td>
 </tr>
 <tr>
 <td><code>rim.ui.dialog.confirm</code></td>
@@ -186,7 +191,11 @@ iframe, so the plugin id comes from the iframe, never from the message.</p>
 </tr>
 <tr>
 <td><code>panel.state_update</code></td>
-<td>Sent on mount with the panel state the plugin last stored.</td>
+<td>Sent on mount with the panel state the plugin last stored, then on every change the plugin makes, and with <code>state: null</code> when the plugin stops.</td>
+</tr>
+<tr>
+<td><code>rim.command.result</code></td>
+<td>The answer to a panel&#39;s <code>rim.command.execute</code> that carried a <code>requestId</code>: <code>requestId</code>, <code>ok</code>, <code>message</code>, <code>payload</code>, and <code>cancelled: true</code> when the user declined to confirm a dangerous command.</td>
 </tr>
 <tr>
 <td><code>panel.state_patch</code>, <code>panel.visibility</code>, <code>panel.focus</code>, <code>panel.blur</code>, <code>conversation.changed</code></td>
@@ -210,7 +219,7 @@ Retry and Close buttons. Other plugins and the host UI are not affected.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/292d7d76bdc85aa388493c017f4f2a027a9c3e74/docs/local_plugin_host.md">rim-server/docs/local_plugin_host.md</a> at <code>292d7d7</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/98d1883fa51947555c4ea37d5255692c80558fa9/docs/local_plugin_host.md">rim-server/docs/local_plugin_host.md</a> at <code>98d1883</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

@@ -41,7 +41,7 @@
 <li><a href="#command-identity">Command Identity</a></li>
 <li><a href="#command-kinds">Command Kinds</a><ol><li><a href="#built-in-commands">Built-in Commands</a></li><li><a href="#plugin-provided-commands">Plugin-Provided Commands</a></li><li><a href="#integration-provided-commands">Integration-Provided Commands</a></li><li><a href="#user-defined-commands">User-Defined Commands</a></li></ol></li>
 <li><a href="#macros">Macros</a></li>
-<li><a href="#command-contract">Command Contract</a><ol><li><a href="#required-fields">Required Fields</a></li><li><a href="#recommended-fields">Recommended Fields</a></li><li><a href="#timeout-gate-t1">Timeout gate (T1)</a></li></ol></li>
+<li><a href="#command-contract">Command Contract</a><ol><li><a href="#required-fields">Required Fields</a></li><li><a href="#recommended-fields">Recommended Fields</a></li><li><a href="#confirmation-gate-h1">Confirmation gate (H1)</a></li><li><a href="#timeout-gate-t1">Timeout gate (T1)</a></li></ol></li>
 <li><a href="#arguments">Arguments</a></li>
 <li><a href="#context-model-for-commands">Context Model For Commands</a></li>
 <li><a href="#invocation-sources">Invocation Sources</a><ol><li><a href="#command-palette">Command Palette</a></li><li><a href="#keybinds">Keybinds</a></li><li><a href="#context-actions">Context Actions</a></li><li><a href="#plugin-ui">Plugin UI</a></li><li><a href="#automations">Automations</a></li></ol></li>
@@ -434,17 +434,19 @@ the notification and general builtins declare none.</p>
 <li>desktop-local command composition belongs to a later client/runtime slice</li>
 </ul>
 <h2 id="macros">Macros <a class="anchor" href="#macros" aria-label="Link to this section">#</a></h2>
-<p>Macros are not a separate root command type.</p>
-<p>Decision:</p>
+<p>Two things compose commands, and only one of them is a command:</p>
 <ul>
-<li>a macro is a user-defined command composed from other commands</li>
+<li>a <strong>user command</strong> (<code>createUserCommand</code>, id <code>user.&lt;key&gt;</code>) is a command: it is listed with the
+others, so it shows in the palette and a keybind can name it, and its steps run in the context
+it runs in</li>
+<li>a <strong>macro</strong> (<code>createMacro</code>, <code>MacroDef</code>) is a list of up to 20 steps, each a command id with its
+own arguments; it is not in the command registry, so the palette does not list it and no
+keybind names it, and it runs through <code>executeMacro</code>. <code>commands</code> on the <code>AI</code> surface and
+<code>commandDiscover</code> offer an <code>ai_callable</code> macro to the agent as <code>macro.&lt;id&gt;</code></li>
 </ul>
-<p>This keeps the model simpler:</p>
-<ul>
-<li>one command abstraction</li>
-<li>one invocation system</li>
-<li>one keybind target model</li>
-</ul>
+<p>Neither pipes: each step&#39;s payload is collected under its command id in the result, and no step
+receives another step&#39;s result. Only <code>executeCommand</code> with <code>isPipe</code> (the palette&#39;s <code>|</code>) passes
+one command&#39;s result to the next stage.</p>
 <h2 id="command-contract">Command Contract <a class="anchor" href="#command-contract" aria-label="Link to this section">#</a></h2>
 <p>Each command should expose the following metadata.</p>
 <h3 id="required-fields">Required Fields <a class="anchor" href="#required-fields" aria-label="Link to this section">#</a></h3>
@@ -467,6 +469,14 @@ the notification and general builtins declare none.</p>
 <li><code>supports_preview</code></li>
 <li><code>supports_dry_run</code></li>
 </ul>
+<h3 id="confirmation-gate-h1">Confirmation gate (H1) <a class="anchor" href="#confirmation-gate-h1" aria-label="Link to this section">#</a></h3>
+<p>A call needs a confirmation when the command is dangerous or <code>Restricted</code>, or when it is
+<code>Mutating</code> and the agent or a plugin started it. Without a proof, <code>executeCommand</code> answers with
+status <code>CONFIRMATION_REQUIRED</code> and the challenge <code>confirmationRequired { token, argsHash, expiresAt }</code>. The client asks the person to confirm and calls again with
+<code>confirmation: { inBandToken: { token, argsHash } }</code> before <code>expiresAt</code>, which is 60 seconds
+after the challenge was issued. The proof is good once, for the same caller, command, arguments
+and context; one that expired or was used answers <code>CONFIRMATION_STALE</code>, and one made for
+something else <code>CONFIRMATION_FAILED</code>.</p>
 <h3 id="timeout-gate-t1">Timeout gate (T1) <a class="anchor" href="#timeout-gate-t1" aria-label="Link to this section">#</a></h3>
 <p>After the capability and confirmation gates, <code>execute_command</code> refuses any command whose <code>sensitivity</code> is <code>Mutating</code> or
 <code>Restricted</code> with <code>ServiceError::TimedOut { until }</code> (GraphQL <code>TIMED_OUT</code>, extension <code>until</code>)
@@ -704,8 +714,8 @@ timeout in force.</p>
 <h2 id="non-goals">Non-Goals <a class="anchor" href="#non-goals" aria-label="Link to this section">#</a></h2>
 <p>The command model does not define:</p>
 <ul>
-<li>a scripting language: macros pipe one command&#39;s result into the next step, and anything
-beyond that belongs in a plugin</li>
+<li>a scripting language: a pipe passes one command&#39;s result to the next stage, macros and user
+commands run fixed steps, and anything beyond that belongs in a plugin</li>
 <li>dataflow beyond a linear pipe</li>
 <li>distributed workflow execution</li>
 <li>a typed payload schema per command result: results share one envelope</li>
@@ -717,7 +727,7 @@ beyond that belongs in a plugin</li>
 automations.</li>
 <li>Command ids are namespaced.</li>
 <li>User-defined commands may compose other commands.</li>
-<li>Macros are user-defined composed commands, not a separate root type.</li>
+<li>User commands are composed commands; macros are lists of steps with arguments, not commands.</li>
 <li>Commands use typed arguments.</li>
 <li>Commands declare required context.</li>
 <li>Commands declare execution target.</li>
@@ -731,7 +741,7 @@ it later.</li>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/292d7d76bdc85aa388493c017f4f2a027a9c3e74/docs/command_model.md">rim-server/docs/command_model.md</a> at <code>292d7d7</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/98d1883fa51947555c4ea37d5255692c80558fa9/docs/command_model.md">rim-server/docs/command_model.md</a> at <code>98d1883</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>
