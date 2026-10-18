@@ -50,7 +50,7 @@
 <p>The public relay is the server anyone&#39;s app can use as its relay: accounts, devices, profile
 cards, the queue of what other servers send, the request inbox, and the forward path to the
 servers that host people&#39;s workspaces. It runs the stock image with <code>RIM_ROLE=relay</code> from
-<a href="https://github.com/rim-platform/rim-server/blob/71ff02d8c1c823c10f786421c0ffa2230c95c98d/deploy/compose.yml"><code>deploy/compose.yml</code></a> with the <a href="https://github.com/rim-platform/rim-server/blob/71ff02d8c1c823c10f786421c0ffa2230c95c98d/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a> override (<a href="../deploy/index.html"><code>deploy/README.md</code></a> brings it
+<a href="https://github.com/rim-platform/rim-server/blob/b5efadebef4d2b9551062488269d93956766a34d/deploy/compose.yml"><code>deploy/compose.yml</code></a> with the <a href="https://github.com/rim-platform/rim-server/blob/b5efadebef4d2b9551062488269d93956766a34d/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a> override (<a href="../deploy/index.html"><code>deploy/README.md</code></a> brings it
 up). The project&#39;s relay is <code>relay.rim-platform.org</code>; read it as &quot;the relay&#39;s domain&quot; wherever
 this page says it.</p>
 <p>Everything marked <strong>FILL</strong> is a decision or a fact the operator records here before the relay
@@ -72,7 +72,7 @@ alias rim-sql='docker compose exec -T postgres psql -U rim -d rim'</code></pre>
 </thead>
 <tbody><tr>
 <td>Configuration</td>
-<td><code>deploy/.env</code> on the host (secrets), <a href="https://github.com/rim-platform/rim-server/blob/71ff02d8c1c823c10f786421c0ffa2230c95c98d/deploy/compose.yml"><code>deploy/compose.yml</code></a> and <a href="https://github.com/rim-platform/rim-server/blob/71ff02d8c1c823c10f786421c0ffa2230c95c98d/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a></td>
+<td><code>deploy/.env</code> on the host (secrets), <a href="https://github.com/rim-platform/rim-server/blob/b5efadebef4d2b9551062488269d93956766a34d/deploy/compose.yml"><code>deploy/compose.yml</code></a> and <a href="https://github.com/rim-platform/rim-server/blob/b5efadebef4d2b9551062488269d93956766a34d/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a></td>
 <td><code>.env</code> in every backup; the compose files are in Git</td>
 </tr>
 <tr>
@@ -175,7 +175,7 @@ rim-relay franking-key rotate</code></pre>
 <p>Rotate when <code>/data</code> may have leaked. Losing the file loses the ability to verify reports of
 messages sent before: back it up with everything else in <code>/data</code>.</p>
 <h2 id="backups">Backups <a class="anchor" href="#backups" aria-label="Link to this section">#</a></h2>
-<p><a href="https://github.com/rim-platform/rim-server/blob/71ff02d8c1c823c10f786421c0ffa2230c95c98d/deploy/backup.sh"><code>deploy/backup.sh</code></a> writes one archive of the database dump, the <code>/data</code> volume and <code>deploy/.env</code>;
+<p><a href="https://github.com/rim-platform/rim-server/blob/b5efadebef4d2b9551062488269d93956766a34d/deploy/backup.sh"><code>deploy/backup.sh</code></a> writes one archive of the database dump, the <code>/data</code> volume and <code>deploy/.env</code>;
 <a href="../self-hosting.html"><code>docs/self-hosting.md</code></a>, &quot;Backups&quot;, says what is in it. It never includes the recovery key file.</p>
 <p>Nightly (<strong>FILL</strong>: the time and the cron or timer that runs it), before every update and right
 after every key rotation; encrypted with <code>age</code> to <strong>FILL</strong>: the recipient, whose identity is held
@@ -372,7 +372,7 @@ ORDER BY rows DESC;
 SQL</code></pre>
 <p>Per-status counts of every client request come from the proxy. Caddy keeps no access log by
 default, since it would hold users&#39; IP addresses; during an incident add <code>log</code> to the site block
-of <a href="https://github.com/rim-platform/rim-server/blob/71ff02d8c1c823c10f786421c0ffa2230c95c98d/deploy/Caddyfile.relay"><code>deploy/Caddyfile.relay</code></a>, <code>dc restart caddy</code>, and remove it afterwards.</p>
+of <a href="https://github.com/rim-platform/rim-server/blob/b5efadebef4d2b9551062488269d93956766a34d/deploy/Caddyfile.relay"><code>deploy/Caddyfile.relay</code></a>, <code>dc restart caddy</code>, and remove it afterwards.</p>
 <h2 id="incidents">Incidents <a class="anchor" href="#incidents" aria-label="Link to this section">#</a></h2>
 <p>Record each incident: start, what was seen, what was done, end (<strong>FILL</strong>: where the record
 goes).</p>
@@ -504,7 +504,7 @@ export files and the logrotate setup for <code>/data/audit.log</code> are in
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/71ff02d8c1c823c10f786421c0ffa2230c95c98d/docs/operations/relay-public.md">rim-server/docs/operations/relay-public.md</a> at <code>71ff02d</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/b5efadebef4d2b9551062488269d93956766a34d/docs/operations/relay-public.md">rim-server/docs/operations/relay-public.md</a> at <code>b5efade</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>
