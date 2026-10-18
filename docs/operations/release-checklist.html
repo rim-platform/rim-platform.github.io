@@ -184,7 +184,7 @@ an <strong>Upgrade:</strong> line (servers before the client).</li>
 <h2 id="6-version-changelog-pull-request">6. Version, changelog, pull request <a class="anchor" href="#6-version-changelog-pull-request" aria-label="Link to this section">#</a></h2>
 <ul>
 <li><input disabled="" type="checkbox"> Run <code>scripts/release/set-version.sh &lt;version&gt;</code>. It sets <code>version</code> under
-<code>[workspace.package]</code> in the root <a href="https://github.com/rim-platform/rim-server/blob/292d7d76bdc85aa388493c017f4f2a027a9c3e74/Cargo.toml"><code>Cargo.toml</code></a>, refreshes <a href="https://github.com/rim-platform/rim-server/blob/292d7d76bdc85aa388493c017f4f2a027a9c3e74/Cargo.lock"><code>Cargo.lock</code></a> for the workspace
+<code>[workspace.package]</code> in the root <code>Cargo.toml</code>, refreshes <a href="https://github.com/rim-platform/rim-server/blob/292d7d76bdc85aa388493c017f4f2a027a9c3e74/Cargo.lock"><code>Cargo.lock</code></a> for the workspace
 crates only, and cuts <a href="../changelog.html"><code>CHANGELOG.md</code></a>: <code>Unreleased</code> becomes <code>[&lt;version&gt;] - &lt;YYYY-MM-DD&gt;</code>
 (today in UTC) under a new empty <code>Unreleased</code>, and the links at the bottom compare with the
 previous release (the first release links to <code>…/releases/tag/v&lt;version&gt;</code>). It refuses an
@@ -222,7 +222,7 @@ git tag -v v&lt;version&gt;</code></pre>
 <h2 id="8-publish">8. Publish <a class="anchor" href="#8-publish" aria-label="Link to this section">#</a></h2>
 <p>Pushing the tag starts <code>.github/workflows/release.yaml</code> in each repository. Its
 <code>build-and-publish</code> job waits in the <code>release</code> environment until the maintainer approves it. The
-job checks the tag against the version in <a href="https://github.com/rim-platform/rim-server/blob/292d7d76bdc85aa388493c017f4f2a027a9c3e74/Cargo.toml"><code>Cargo.toml</code></a> (rim-ui: <code>package.json</code>) and the
+job checks the tag against the version in <code>Cargo.toml</code> (rim-ui: <code>package.json</code>) and the
 changelog&#39;s section for it, builds the image for <code>linux/amd64</code>, pushes the tags <code>&lt;version&gt;</code>,
 <code>&lt;major&gt;.&lt;minor&gt;</code>, <code>sha-&lt;short sha&gt;</code> and <code>latest</code>, signs the digest with cosign keyless and
 attests an SPDX SBOM to it. The next job creates the GitHub release with the changelog section

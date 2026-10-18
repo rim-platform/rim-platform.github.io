@@ -137,7 +137,7 @@ principal notices. Stopping sends <code>rim.shutdown</code>, answers the plugin 
 second, then removes the frame.</li>
 </ol>
 <p>A panel frame loads the same shell with <code>kind: &quot;panel&quot;</code> and the files under
-<code>panels/&lt;id&gt;/</code>; the shell renders <a href="https://github.com/rim-platform/rim-ui/blob/839c95eb7e80f1b52da231ecbf06668a6c018fd8/index.html"><code>index.html</code></a>, then posts <code>rim.frame.ready</code> so the host
+<code>panels/&lt;id&gt;/</code>; the shell renders <code>index.html</code>, then posts <code>rim.frame.ready</code> so the host
 sends the theme and the stored panel state. From then on it speaks the existing panel
 bridge. A local-process plugin&#39;s panel loads the same way: the desktop host reads
 <code>~/.rim/plugins/&lt;id&gt;/panels/&lt;panel&gt;/</code> of an enabled plugin that declares the panel
@@ -146,7 +146,7 @@ hands the files to the shell, loaded as <code>rim-plugin://shell/v1/local-panel.
 page, sent with a policy header (<code>LOCAL_PANEL_POLICY</code>) that allows no network, no workers
 and no WebAssembly, since such a panel reaches the network only through its plugin&#39;s
 process. Panel frames get their files after the shell&#39;s <code>rim.frame.hello</code>, once per frame. Only files
-<a href="https://github.com/rim-platform/rim-ui/blob/839c95eb7e80f1b52da231ecbf06668a6c018fd8/index.html"><code>index.html</code></a> names (scripts, stylesheets, icons, images, media) are mapped to the panel&#39;s
+<code>index.html</code> names (scripts, stylesheets, icons, images, media) are mapped to the panel&#39;s
 own files; a URL a script builds at run time, a stylesheet&#39;s <code>url()</code> or <code>@import</code>, or a
 module&#39;s relative <code>import</code> does not reach them.</p>
 <p>Before starting a plugin the host sets a <code>starting</code> marker and clears it after the
