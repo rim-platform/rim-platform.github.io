@@ -206,7 +206,7 @@ earlier server would refuse a descriptor that carried it.</p>
 </tr>
 <tr>
 <td><code>s2sVersions</code></td>
-<td><code>[1]</code>; a later version keeps serving the previous one (<a href="https://github.com/rim-platform/rim-server/blob/857db508230ad602aebbe8cb1ae1268ccd93bf80/ROADMAP.md"><code>ROADMAP.md</code></a>, &quot;Releases and updates&quot;)</td>
+<td><code>[1]</code>; a later version keeps serving the previous one (<a href="../docs/roadmap.html"><code>ROADMAP.md</code></a>, &quot;Releases and updates&quot;)</td>
 </tr>
 <tr>
 <td><code>mlsCipherSuites</code></td>
@@ -1202,7 +1202,7 @@ drill, quotas and how to change them, monitoring (queue bytes, outbox depth per 
 failures, <code>401</code>/<code>409</code>/<code>429</code> rates, PoW signups), incident response for spam waves, a hostile peer, a
 stolen server key and a database leak, and the abuse policy text.</p>
 <p><strong>Compose</strong> (<a href="https://github.com/rim-platform/rim-server/blob/857db508230ad602aebbe8cb1ae1268ccd93bf80/deploy/compose.yml"><code>deploy/compose.yml</code></a> with the <a href="https://github.com/rim-platform/rim-server/blob/857db508230ad602aebbe8cb1ae1268ccd93bf80/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a> override, and
-<a href="https://github.com/rim-platform/rim-server/blob/857db508230ad602aebbe8cb1ae1268ccd93bf80/deploy/README.md"><code>deploy/README.md</code></a>): rim-server with <code>RIM_ROLE=relay</code>, <code>RIM_PUBLIC_BASE_URL=https://&lt;RIM_DOMAIN&gt;</code>,
+<a href="../docs/deploy/index.html"><code>deploy/README.md</code></a>): rim-server with <code>RIM_ROLE=relay</code>, <code>RIM_PUBLIC_BASE_URL=https://&lt;RIM_DOMAIN&gt;</code>,
 <code>RIM_REGISTRATION_POW_BITS=24</code>, <code>RIM_RELAY_QUEUE_BYTES_PER_USER=67108864</code> and the other quotas
 above, <code>RIM_TRUST_FORWARDED_HEADERS=true</code>, <code>RIM_FORCE_SECURE_COOKIES=true</code>, <code>RIM_DATA_DIR=/data</code> on a
 volume (the audit log too); a migration step before it; Postgres 17 on its own volume, on a
@@ -1574,7 +1574,7 @@ pinning and rotation; an encrypted DM across relays from creation to edit and re
 (<code>rim_mls</code> fixtures); a DM request accepted, ignored, blocked; a remote join; channel traffic both
 ways with host events verified by a test client; a gap and its reconciliation; revocation with
 acknowledgement; the direct login; a relay switch; the allow-list; <code>relay</code> and <code>host</code> refusals;
-replayed and tampered requests. A two-server compose test in CI when CI is back (<a href="https://github.com/rim-platform/rim-server/blob/857db508230ad602aebbe8cb1ae1268ccd93bf80/ROADMAP.md"><code>ROADMAP.md</code></a>).</li>
+replayed and tampered requests. A two-server compose test in CI when CI is back (<a href="../docs/roadmap.html"><code>ROADMAP.md</code></a>).</li>
 <li><strong>Clients (S5-3, S5-5).</strong> Appendix A in the Tauri module and Vitest; pinning from an invite
 (current key, rotated key, fork); event verification and gaps; contacts by link and QR; a DM
 across relays on two desktops; the request inbox; a remote join; the direct fallback and its

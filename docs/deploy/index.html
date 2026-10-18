@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deploying a public relay · RIM</title>
+<meta name="description" content="compose.relay.yml turns compose.yml into a public relay: rim-server with RIM_ROLE=relay, the public relay's quotas and proof-of-work signups, PostgreSQL 17 and Caddy terminating TLS, and no web client. The relay holds …">
+<link rel="icon" href="../../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../../index.html" aria-label="RIM home">
+      <picture><source srcset="../../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../../index.html#what">What RIM is</a>
+      <a href="../../index.html#how">How it works</a>
+      <a href="../self-hosting.html" aria-current="page">Self-host</a>
+      <a href="../../configure/index.html">Configure</a>
+      <a href="../../plugins/index.html">Plugins</a>
+      <a href="../index.html">Docs</a>
+      <a href="../../api/index.html">API</a>
+      <a href="../../specs/index.html">Specs</a>
+      <a href="../contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="../index.html">Docs</a><span aria-hidden="true">/</span><a href="../operators.html">Operators</a><span aria-hidden="true">/</span><span>Deploying a public relay</span></div>
+  <div class="page with-toc">
+    <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
+<ol>
+<li><a href="#before-the-first-start">Before the first start</a></li>
+<li><a href="#start">Start</a></li>
+<li><a href="#health-updates-and-operation">Health, updates and operation</a></li>
+<li><a href="#another-proxy">Another proxy</a></li>
+</ol>
+</details></aside>
+    <main id="content" class="prose">
+<h1 id="deploying-a-public-relay">Deploying a public relay</h1>
+<p><a href="https://github.com/rim-platform/rim-server/blob/857db508230ad602aebbe8cb1ae1268ccd93bf80/deploy/compose.relay.yml"><code>compose.relay.yml</code></a> turns <a href="https://github.com/rim-platform/rim-server/blob/857db508230ad602aebbe8cb1ae1268ccd93bf80/deploy/compose.yml"><code>compose.yml</code></a> into a public relay: rim-server with <code>RIM_ROLE=relay</code>,
+the public relay&#39;s quotas and proof-of-work signups, PostgreSQL 17 and Caddy terminating TLS,
+and no web client. The relay holds its users&#39; accounts, devices and cards, queues what other
+servers send them and forwards their requests; it hosts no workspaces. This page brings a relay up for the first time. The operator&#39;s runbook
+(<a href="../operations/relay-public.html"><code>docs/operations/relay-public.md</code></a>) covers running it: keys, backups, quotas, monitoring,
+incidents, the abuse policy and every command. <a href="../relay.html"><code>docs/relay.md</code></a> explains what a relay does, and
+<a href="../../specs/server-to-server-v1.html"><code>docs/specs/server-to-server-v1.md</code></a> is the protocol.</p>
+<p>A server that hosts workspaces uses <a href="https://github.com/rim-platform/rim-server/blob/857db508230ad602aebbe8cb1ae1268ccd93bf80/deploy/compose.yml"><code>compose.yml</code></a> alone: <a href="../self-hosting.html"><code>docs/self-hosting.md</code></a> covers it, and
+its sections on updates, backups and monitoring apply to the relay too.</p>
+<p>The project&#39;s public relay is <code>relay.rim-platform.org</code>; yours uses your own domain. <code>RIM_DOMAIN</code>
+is the relay&#39;s host name, such as a <code>relay.</code> subdomain: Caddy answers for that name only, so the
+apex of the domain can serve a website from elsewhere.</p>
+<h2 id="before-the-first-start">Before the first start <a class="anchor" href="#before-the-first-start" aria-label="Link to this section">#</a></h2>
+<ol>
+<li><p>A host with Docker (Compose v2.20 or later), ports 80 and 443 open, and DNS <code>A</code>/<code>AAAA</code>
+records of your domain pointing at it. Caddy gets the certificate from Let&#39;s Encrypt on the
+first request.</p>
+</li>
+<li><p>Create <code>deploy/.env</code> (Git ignores it; <a href="https://github.com/rim-platform/rim-server/blob/857db508230ad602aebbe8cb1ae1268ccd93bf80/deploy/.env.example"><code>deploy/.env.example</code></a> lists every setting):</p>
+<pre><code class="language-sh">cat &gt; deploy/.env &lt;&lt;EOF
+POSTGRES_PASSWORD=$(openssl rand -base64 32 | tr -d '/+=')
+RIM_DOMAIN=relay.example.org
+RIM_VERSION=0.0.1
+EOF
+chmod 600 deploy/.env</code></pre>
+<p><code>RIM_VERSION</code> is the release you run, the tag this checkout is at without its <code>v</code>.
+<code>RIM_PUBLIC_BASE_URL</code> follows <code>RIM_DOMAIN</code>. Every other setting has the public relay&#39;s value
+in the compose files; set it in <code>.env</code> to change it (the quotas are listed in the runbook).
+Without <code>POSTGRES_PASSWORD</code> or <code>RIM_DOMAIN</code> every compose command stops and names it.</p>
+</li>
+<li><p>Check the configuration. The commands on this page and in the runbook use this alias, from
+the repository root:</p>
+<pre><code class="language-sh">alias dc='docker compose -f deploy/compose.yml -f deploy/compose.relay.yml'
+dc config --services          # postgres, migrate, rim, caddy: no web client</code></pre>
+<p>The relay runs only <code>ghcr.io/rim-platform/rim-server:&lt;RIM_VERSION&gt;</code> (or
+<code>RIM_SERVER_IMAGE</code>). Verify it as <a href="../self-hosting.html"><code>docs/self-hosting.md</code></a>, &quot;Verify the images&quot;, says. To
+build it from this checkout instead, add <code>-f deploy/compose.dev.yml</code> to the alias and use
+<code>up --build</code>; the relay needs no rim-ui checkout either way.</p>
+</li>
+</ol>
+<h2 id="start">Start <a class="anchor" href="#start" aria-label="Link to this section">#</a></h2>
+<pre><code class="language-sh">dc up -d
+dc logs -f rim</code></pre>
+<p>The <code>migrate</code> service applies the migrations and exits; the server starts after it. On its
+first start the server creates its key, writes <code>/data/server-recovery-key.txt</code> and logs a
+warning about it at every start until the file is gone. Move it offline now, as the runbook&#39;s
+&quot;The server recovery key&quot; says:</p>
+<pre><code class="language-sh">dc exec rim cat /data/server-recovery-key.txt
+# copy the line to the offline places the runbook names, then:
+dc exec rim rm /data/server-recovery-key.txt</code></pre>
+<p>Check it answers:</p>
+<pre><code class="language-sh">curl -s https://relay.example.org/.well-known/rim-server | head -c 300; echo
+dc exec rim /app/rim-server server-key show</code></pre>
+<p>The descriptor in the discovery document says <code>&quot;registration&quot;:{&quot;mode&quot;:&quot;pow&quot;,&quot;powBits&quot;:24}</code>.</p>
+<h2 id="health-updates-and-operation">Health, updates and operation <a class="anchor" href="#health-updates-and-operation" aria-label="Link to this section">#</a></h2>
+<p>The probes (<code>/healthz</code>, <code>/readyz</code>) and their checks are the same as on any server:
+<a href="../self-hosting.html"><code>docs/self-hosting.md</code></a>, &quot;Monitoring&quot;. Caddy does not proxy them, so they are reachable from
+inside the compose network only:</p>
+<pre><code class="language-sh">dc ps rim          # healthy once /readyz passes
+dc exec rim curl -s http://localhost:8080/readyz</code></pre>
+<p>Update as <a href="../self-hosting.html"><code>docs/self-hosting.md</code></a>, &quot;Updates&quot;, says, with the relay&#39;s files named for the backup:</p>
+<pre><code class="language-sh">COMPOSE_FILE=deploy/compose.yml:deploy/compose.relay.yml deploy/backup.sh
+git fetch --tags &amp;&amp; git checkout v&lt;version&gt;
+$EDITOR deploy/.env          # RIM_VERSION=&lt;version&gt;
+dc pull &amp;&amp; dc up -d</code></pre>
+<p>The operator&#39;s commands (<code>/app/rim-server</code> inside the <code>rim</code> container: invites that skip the
+proof-of-work, principal and peer blocks, abuse reports, key rotation) are listed in the runbook,
+&quot;Command reference&quot;.</p>
+<h2 id="another-proxy">Another proxy <a class="anchor" href="#another-proxy" aria-label="Link to this section">#</a></h2>
+<p>Caddy is an example. Any TLS proxy works if it:</p>
+<ul>
+<li>passes <code>/api</code> (with <code>/api/ws</code> as a WebSocket upgrade, and <code>/api/remote/…</code>), <code>/s2s/v1/…</code> and
+<code>/.well-known/rim-server</code> to <code>rim:8080</code> unchanged: no path rewriting, no compression, no body
+changes, since server-to-server requests and answers are signed over method, URL and body;</li>
+<li>accepts request bodies up to 32 MiB;</li>
+<li>sets <code>X-Forwarded-For</code> to the client&#39;s address itself, replacing what the client sent, because
+the server trusts it (<code>RIM_TRUST_FORWARDED_HEADERS=true</code>) for its per-IP limits, signups
+included; and sets <code>X-Forwarded-Proto</code>;</li>
+<li>is the only way in: port 8080 is never published.</li>
+</ul>
+<p>With nginx:</p>
+<pre><code class="language-nginx">server {
+    listen 443 ssl;
+    http2 on;
+    server_name relay.example.org;
+    client_max_body_size 32m;
+    gzip off;
+
+    location ~ ^/(api(/|$)|s2s/v1/|\.well-known/rim-server$) {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $connection_upgrade;
+        proxy_set_header X-Forwarded-For $remote_addr;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_read_timeout 1h;
+    }
+}</code></pre>
+<p>(<code>$connection_upgrade</code> is the usual <code>map $http_upgrade $connection_upgrade { default upgrade; '' close; }</code> in the <code>http</code> block.)</p>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/857db508230ad602aebbe8cb1ae1268ccd93bf80/deploy/README.md">rim-server/deploy/README.md</a> at <code>857db50</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+<script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
+</body>
+</html>

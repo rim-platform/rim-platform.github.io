@@ -9,6 +9,7 @@ import { renderMarkdown } from "./markdown.mjs";
 
 /** Where a rim-server file is rendered. */
 function serverOut(file) {
+  if (file === "deploy/README.md") return "docs/deploy/index.html";
   if (file.startsWith("docs/specs/")) return `specs/${path.posix.basename(file, ".md")}.html`;
   if (file.startsWith("docs/")) return file.replace(/\.md$/, ".html");
   return `docs/${path.posix.basename(file, ".md").toLowerCase().replace(/_/g, "-")}.html`;
@@ -33,9 +34,12 @@ const GROUPS = [
   {
     key: "operators",
     title: "Operators",
-    lede: "Running a RIM server: installing it with Docker Compose, upgrading and backing it up, watching it, switching features off, and running a public relay.",
+    lede: "Running a RIM server: installing it with Docker Compose, upgrading and backing it up, watching it, switching features off, and deploying and running a public relay.",
     subs: [
-      { title: "Install and run", items: [["server", "docs/self-hosting.md"], ["server", "docs/email.md"]] },
+      {
+        title: "Install and run",
+        items: [["server", "docs/self-hosting.md"], ["server", "deploy/README.md"], ["server", "docs/email.md"]],
+      },
       { title: "Operations", items: [["server", "glob:docs/operations"]] },
       { title: "Identity and federation", items: [["server", "docs/server-identity.md"], ["server", "docs/relay.md"]] },
     ],
@@ -136,12 +140,13 @@ const GROUPS = [
   {
     key: "project",
     title: "Project",
-    lede: "Where RIM is heading and how it is built: the vision, the server architecture and the design models, how to contribute, security with its overview and threat model, and the client's internals and branding.",
+    lede: "Where RIM is heading and how it is built: the vision and the roadmap, the server architecture and the design models, how to contribute, security with its overview and threat model, and the client's internals and branding.",
     subs: [
       {
         title: "Direction and design",
         items: [
           ["server", "docs/vision.md"],
+          ["server", "ROADMAP.md"],
           ["server", "docs/architecture.md"],
           ["server", "docs/command_model.md"],
           ["server", "docs/keybind_model.md"],
@@ -178,6 +183,7 @@ const GROUPS = [
 /** Rendered docs that belong to their own nav section rather than "docs". */
 const SECTION_OF = {
   "docs/self-hosting.html": "selfhost",
+  "docs/deploy/index.html": "selfhost",
   "plugins/index.html": "plugins",
   "docs/contributing.html": "contribute",
 };
