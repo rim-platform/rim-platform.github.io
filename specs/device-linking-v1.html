@@ -52,7 +52,7 @@
 </details></aside>
     <main id="content" class="prose">
 <h1 id="device-linking-v1">Device linking v1</h1>
-<p class="status"><span><b>Device linking v1</b></span><span>version 1</span><span>status: implemented, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/545874392ca2416d2c6c2307c985afec20c888ea/docs/specs/device-linking-v1.md">rim-server/docs/specs/device-linking-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/545874392ca2416d2c6c2307c985afec20c888ea">5458743</a></span></p>
+<p class="status"><span><b>Device linking v1</b></span><span>version 1</span><span>status: implemented, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/857db508230ad602aebbe8cb1ae1268ccd93bf80/docs/specs/device-linking-v1.md">rim-server/docs/specs/device-linking-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/857db508230ad602aebbe8cb1ae1268ccd93bf80">857db50</a></span></p>
 <p><em>Status: implemented, normative. Extends <a href="key-identity-v1.html"><code>docs/specs/key-identity-v1.md</code></a>
 (read it first: keys, tagged encodings, device certificates and challenge login are defined
 there). This document is the contract between the server (<code>DeviceLinkService</code>), the desktop
@@ -650,7 +650,7 @@ errors tables, idempotent repeats, expiry at the boundary, answer resetting expi
 <li><code>rim_infra_db</code> (<code>db-tests</code>): two concurrent offers on one link, exactly one wins; transitions
 refuse expired rows; cleanup deletes only rows past one hour; terminal states clear sealed
 columns; the partial unique index; cascade on user delete; migration up and down.</li>
-<li><a href="https://github.com/rim-platform/rim-server/blob/545874392ca2416d2c6c2307c985afec20c888ea/rim_api/tests/device_link_e2e.rs"><code>rim_api/tests/device_link_e2e.rs</code></a> (<code>e2e-tests</code>), with real sealed messages from
+<li><a href="https://github.com/rim-platform/rim-server/blob/857db508230ad602aebbe8cb1ae1268ccd93bf80/rim_api/tests/device_link_e2e.rs"><code>rim_api/tests/device_link_e2e.rs</code></a> (<code>e2e-tests</code>), with real sealed messages from
 <code>rim_identity::device_link</code>: the whole flow from <code>startDeviceLink</code> to <code>loginWithKey</code> with the
 linked device and <code>CONSUMED</code> on the old side; anonymous calls on unknown, malformed, expired,
 cancelled and consumed links all <code>UNAUTHENTICATED</code> with identical bodies; another user&#39;s link
@@ -735,7 +735,7 @@ these bytes reproducible; readers do not depend on field order.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/545874392ca2416d2c6c2307c985afec20c888ea/docs/specs/device-linking-v1.md">rim-server/docs/specs/device-linking-v1.md</a> at <code>5458743</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/857db508230ad602aebbe8cb1ae1268ccd93bf80/docs/specs/device-linking-v1.md">rim-server/docs/specs/device-linking-v1.md</a> at <code>857db50</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

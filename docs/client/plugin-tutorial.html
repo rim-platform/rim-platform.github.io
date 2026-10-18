@@ -235,7 +235,9 @@ git init &amp;&amp; git add . &amp;&amp; git commit -m &quot;Add the Greeter plu
 Install from git URL. With only <code>devDependencies</code> nothing more runs; with <code>dependencies</code> the app
 shows the <code>npm install --production</code> it would run and asks first. A release can attach the
 <code>.rimbundle</code> of <code>npm run bundle</code>, served with <code>Access-Control-Allow-Origin: *</code>, for Install from
-link as <code>https://host/path/dev.example.greeter-0.1.0.rimbundle#sha256=&lt;hash&gt;</code>.</p>
+link as <code>https://host/path/dev.example.greeter-0.1.0.rimbundle#sha256=&lt;hash&gt;</code>. Without <code>--entry</code>,
+<code>npx rim-plugin-bundle .</code> takes the committed <code>main.mjs</code> as it is instead of building it; once
+<code>--check</code> passes, both give the same <code>.rimbundle</code>.</p>
 <h2 id="10-sign-and-publish-to-a-workspace">10. Sign and publish to a workspace <a class="anchor" href="#10-sign-and-publish-to-a-workspace" aria-label="Link to this section">#</a></h2>
 <p>On a desktop that holds your account&#39;s identity key (Settings → Security), Settings → Plugins
 shows <strong>Sign and publish…</strong> on each installed plugin. A plugin installed from git is signed as its
@@ -248,7 +250,7 @@ adds it in Workspace settings → Plugins → Add from files. Members find it in
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/0a6d67f3ee309666679091c8ac119347a5fa0a7d/docs/plugin-tutorial.md">rim-ui/docs/plugin-tutorial.md</a> at <code>0a6d67f</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/2cfa451c1bb3e5aef042a31e86788e5fd1a5b6fd/docs/plugin-tutorial.md">rim-ui/docs/plugin-tutorial.md</a> at <code>2cfa451</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>
