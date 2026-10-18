@@ -99,7 +99,7 @@ const GROUPS = [
   {
     key: "using-rim",
     title: "Using RIM",
-    lede: "The desktop and web client: getting started from a fresh install to a first conversation, commands, keybinds, macros and pipelines, the AI agent, installing it and signing in, building it, the keyboard, plugins, keys and recovery, linking a device, encrypted conversations, relays and the local message cache.",
+    lede: "The desktop and web client: getting started from a fresh install to a first conversation, commands, keybinds, macros and pipelines, the AI agent, installing it and signing in, building it, the keyboard, plugins, keys and recovery, and linking a device.",
     subs: [
       {
         title: "Start here",
@@ -115,32 +115,26 @@ const GROUPS = [
         items: [
           ["ui", "README.md"],
           ["ui", "docs/keyboard.md"],
-          ["ui", "docs/search-ui.md"],
           ["ui", "docs/updater.md"],
           ["ui", "docs/version-skew.md"],
         ],
       },
       { title: "Plugins", items: [["ui", "docs/plugins.md"]] },
       {
-        title: "Keys, devices and encryption",
+        title: "Keys and devices",
         items: [
           ["ui", "docs/identity-key-backup.md"],
           ["ui", "docs/device-linking-desktop.md"],
           ["ui", "docs/web-linked-device.md"],
-          ["ui", "docs/e2ee-desktop.md"],
-          ["ui", "docs/e2ee-web.md"],
-          ["ui", "docs/secret-vault.md"],
-          ["ui", "docs/local-message-cache.md"],
         ],
       },
-      { title: "Relays", items: [["ui", "docs/relay-client.md"]] },
       { title: "More from the client", items: [], unassigned: true },
     ],
   },
   {
     key: "project",
     title: "Project",
-    lede: "Where RIM is heading and how it is built: the vision and the roadmap, the server architecture and the design models, how to contribute, security with its overview and threat model, and the client's internals and branding.",
+    lede: "Where RIM is heading and how it is built: the vision and the roadmap, the server architecture and the design models, how to contribute, security with its overview and threat model, and the client's internals: the shell, search, the message cache and secret vault, end-to-end encryption, relays and branding.",
     subs: [
       {
         title: "Direction and design",
@@ -170,9 +164,15 @@ const GROUPS = [
         title: "Client internals",
         items: [
           ["ui", "docs/ui-shell.md"],
+          ["ui", "docs/search-ui.md"],
+          ["ui", "docs/local-message-cache.md"],
+          ["ui", "docs/secret-vault.md"],
+          ["ui", "docs/e2ee-desktop.md"],
+          ["ui", "docs/e2ee-web.md"],
+          ["ui", "docs/rim-mls.md"],
+          ["ui", "docs/relay-client.md"],
           ["ui", "docs/error-boundaries.md"],
           ["ui", "docs/eslint-prettier.md"],
-          ["ui", "docs/rim-mls.md"],
           ["ui", "docs/branding.md"],
         ],
       },

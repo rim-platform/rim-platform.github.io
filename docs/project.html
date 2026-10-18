@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Project · RIM</title>
-<meta name="description" content="Where RIM is heading and how it is built: the vision and the roadmap, the server architecture and the design models, how to contribute, security with its overview and threat model, and the client's internals and branding.">
+<meta name="description" content="Where RIM is heading and how it is built: the vision and the roadmap, the server architecture and the design models, how to contribute, security with its overview and threat model, and the client's internals: the shell, search, the message cache and secret vault, end-to-end encryption, relays and branding.">
 <link rel="icon" href="../favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
@@ -36,7 +36,7 @@
 
     <main id="content" class="prose">
 <h1>Project</h1>
-<p class="lede">Where RIM is heading and how it is built: the vision and the roadmap, the server architecture and the design models, how to contribute, security with its overview and threat model, and the client's internals and branding.</p>
+<p class="lede">Where RIM is heading and how it is built: the vision and the roadmap, the server architecture and the design models, how to contribute, security with its overview and threat model, and the client's internals: the shell, search, the message cache and secret vault, end-to-end encryption, relays and branding.</p>
 <h2 id="direction-and-design">Direction and design</h2>
 <ul class="cards">
 <li><a href="vision.html"><b>RIM — Product Vision</b><span>The roadmap (ROADMAP.md) owns sequencing; this document owns the product principles.</span><span class="src">rim-server/docs/vision.md</span></a></li>
@@ -62,9 +62,15 @@
 <h2 id="client-internals">Client internals</h2>
 <ul class="cards">
 <li><a href="client/ui-shell.html"><b>RIM Desktop UI Shell</b><span>This document defines the intended desktop shell for the RIM UI client; the shell as built, which differs from it in places, is described in getting-started.md.</span><span class="src">rim-ui/docs/ui-shell.md</span></a></li>
+<li><a href="client/search-ui.html"><b>Search UI</b><span>Covers the frontend of full-text message search: the paginated useSearchMessages hook, the SearchOverlay flat-list UI, SearchSnippet's sanitization, and the operator-discovery affordance. Backend contract and operator …</span><span class="src">rim-ui/docs/search-ui.md</span></a></li>
+<li><a href="client/local-message-cache.html"><b>Local message cache</b><span>The desktop app keeps the messages of the conversations you open in an encrypted database on this device. The timeline shows the cached copy first and falls back to it when the server cannot be reached. The web app has …</span><span class="src">rim-ui/docs/local-message-cache.md</span></a></li>
+<li><a href="client/secret-vault.html"><b>Secret vault</b><span>The desktop app keeps its secrets in one encrypted file: the message cache key, the history archive keys and cloud refresh tokens, the offline session record, the key identity records and pending device links, and the …</span><span class="src">rim-ui/docs/secret-vault.md</span></a></li>
+<li><a href="client/e2ee-desktop.html"><b>End-to-end encrypted DMs and groups on the desktop</b><span>DMs and groups are end-to-end encrypted with MLS (RFC 9420); channels stay plaintext. The contract is rim-server docs/specs/e2ee-mls-v1.md; the engine is the rim_mls crate (docs/rim-mls.md). This page is how the desktop …</span><span class="src">rim-ui/docs/e2ee-desktop.md</span></a></li>
+<li><a href="client/e2ee-web.html"><b>End-to-end encrypted DMs and groups in the web app</b><span>A browser set up as a linked device (web-linked-device.md) reads and sends in encrypted DMs and groups like the desktop app. It runs the same rim_mls crate (docs/rim-mls.md) compiled to WebAssembly, keeps its MLS state …</span><span class="src">rim-ui/docs/e2ee-web.md</span></a></li>
+<li><a href="client/rim-mls.html"><b>rim_mls</b><span>src-tauri/crates/rim_mls is the end-to-end encryption engine of encrypted DMs and groups: MLS (RFC 9420) through OpenMLS, behind RIM's own types. It is the only code that names OpenMLS types; the app passes conversation …</span><span class="src">rim-ui/docs/rim-mls.md</span></a></li>
+<li><a href="client/relay-client.html"><b>Relays: the client</b><span>The app talks only to its own server, its relay. A DM or group homed on another relay (its creator's), and a workspace hosted elsewhere, is reached through the relay: requests are signed by this device and forwarded …</span><span class="src">rim-ui/docs/relay-client.md</span></a></li>
 <li><a href="client/error-boundaries.html"><b>Error boundaries</b><span>RIM's shell has two tiers of React error boundary. Pick the right one when adding a new surface, and always wire resetKeys correctly — a boundary without the right resetKeys can leave a pane permanently stuck in its …</span><span class="src">rim-ui/docs/error-boundaries.md</span></a></li>
 <li><a href="client/eslint-prettier.html"><b>ESLint + Prettier</b><span>The frontend has a lint/format gate: npm run lint, npm run lint:fix, npm run format, npm run format:check. npm run build (TypeScript check + Vite build) and npm test remain the other two gates. All four should pass …</span><span class="src">rim-ui/docs/eslint-prettier.md</span></a></li>
-<li><a href="client/rim-mls.html"><b>rim_mls</b><span>src-tauri/crates/rim_mls is the end-to-end encryption engine of encrypted DMs and groups: MLS (RFC 9420) through OpenMLS, behind RIM's own types. It is the only code that names OpenMLS types; the app passes conversation …</span><span class="src">rim-ui/docs/rim-mls.md</span></a></li>
 <li><a href="client/branding.html"><b>Branding</b><span>The brand masters live in rim-server's assets/branding/, with a README that says what each file is for. They are the source of truth; this repository holds copies or renderings of them.</span><span class="src">rim-ui/docs/branding.md</span></a></li>
 </ul>
 
