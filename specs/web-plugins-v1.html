@@ -56,7 +56,7 @@
 </details></aside>
     <main id="content" class="prose">
 <h1 id="web-plugins-v1">Web plugins v1</h1>
-<p class="status"><span><b>Web plugins v1</b></span><span>version 1</span><span>status: implemented, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/4f297387f6f03920fa75df3ab6c04e5c035102ec/docs/specs/web-plugins-v1.md">rim-server/docs/specs/web-plugins-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/4f297387f6f03920fa75df3ab6c04e5c035102ec">4f29738</a></span></p>
+<p class="status"><span><b>Web plugins v1</b></span><span>version 1</span><span>status: implemented, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/71ff02d8c1c823c10f786421c0ffa2230c95c98d/docs/specs/web-plugins-v1.md">rim-server/docs/specs/web-plugins-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/71ff02d8c1c823c10f786421c0ffa2230c95c98d">71ff02d</a></span></p>
 <p><em>Status: implemented, normative. Extends <a href="plugin-protocol-v1.html"><code>docs/specs/plugin-protocol-v1.md</code></a> (read it first:
 the messages, the handshake, capabilities and the dangerous-command gate are defined there and do
 not change). This document is the contract between the RIM host, on the desktop and on the web,
@@ -84,7 +84,9 @@ origin has no RIM cookies and cannot read the CSRF token, so it cannot call Grap
 refused at install, as on the desktop. A new <code>network.fetch</code> lets the plugin reach the
 origins its manifest lists, enforced by CSP. <code>local.process</code>, <code>fs.*</code> and <code>network</code> are refused.</li>
 <li>New host methods <code>rim.storage.get</code> and <code>rim.storage.set</code> (not frozen) give 1 MiB per plugin and
-account, because an opaque origin has no <code>localStorage</code> or IndexedDB.</li>
+account, because an opaque origin has no <code>localStorage</code> or IndexedDB. The settings the user
+saves arrive as for a local process, through v1&#39;s <code>rim.settings.get</code> and
+<code>rim.settings.changed</code>; secret settings only on the desktop.</li>
 <li>The desktop installs web plugins like any plugin or from the workspace registry; the web app
 only from a registry entry (signed, <a href="workspace-plugins-v1.html"><code>workspace-plugins-v1.md</code></a>) or a pasted link carrying the bundle&#39;s SHA-256. A
 bundle is one JSON file, hashed again at every start.</li>
@@ -324,11 +326,11 @@ object: the same text as v1&#39;s frame payloads, checked against the same schem
 <code>Map</code>, <code>ArrayBuffer</code> or <code>undefined</code> that JSON lacks, and a size both sides can compute.</li>
 <li>At most <strong>4 MiB</strong> of UTF-8 per message, both ways; a larger one ends the connection (the frame
 is removed). A message that is not a string, not JSON, or not JSON-RPC is logged and dropped.</li>
-<li>Sections 4 to 14 and 16 of protocol v1 apply unchanged (envelope, ids, handshake and
+<li>Sections 4 to 15 and 17 of protocol v1 apply unchanged (envelope, ids, handshake and
 negotiation, errors, commands, the confirmation gate, principals, capabilities, heartbeats,
-logging, versioning). This section replaces v1&#39;s sections 2 and 3, and Shutdown below replaces
-section 15. <code>hostVersion</code> is the app&#39;s version. The 10-second handshake timeout counts from the
-init message, so it includes loading the module.</li>
+logging, settings, versioning). This section replaces v1&#39;s sections 2 and 3, and Shutdown below
+replaces section 16. <code>hostVersion</code> is the app&#39;s version. The 10-second handshake timeout counts
+from the init message, so it includes loading the module.</li>
 <li><strong>Heartbeats</strong> stay as in v1 (every 30 s, 5 s to answer): where the browser gives the frame its
 own process, a hung plugin does not hang the host, and the heartbeat is how the host notices.
 Two misses in a row remove the frame (&quot;not responding&quot;); a frame is cheap to remove, unlike a
@@ -367,6 +369,11 @@ changes.</p>
 <td>New, not frozen; below</td>
 </tr>
 <tr>
+<td><code>rim.settings.get</code>, and <code>rim.settings.changed</code> from the host</td>
+<td>none</td>
+<td>As v1 section 15. In the web app a secret setting never has a value; below</td>
+</tr>
+<tr>
 <td><code>rim.chat.*</code></td>
 <td><code>chat.*</code></td>
 <td>The client message service, as for a local process (routed, not frozen; <a href="e2ee-mls-v1.html"><code>e2ee-mls-v1.md</code></a>, &quot;Plugins and the client message service&quot;). Reads need a local message store; until the web app&#39;s service reads the browser&#39;s encrypted store, it answers them <code>INTERNAL_ERROR</code> with <code>data.reason: &quot;noCache&quot;</code></td>
@@ -374,7 +381,7 @@ changes.</p>
 <tr>
 <td><code>rim.events.subscribe</code></td>
 <td><code>events.read</code></td>
-<td><code>CAPABILITY_DENIED</code>, as v1 section 17</td>
+<td><code>CAPABILITY_DENIED</code>, as v1 section 18</td>
 </tr>
 <tr>
 <td><code>rim.process.*</code>, <code>rim.fs.*</code>, <code>rim.network.*</code></td>
@@ -397,6 +404,47 @@ keeps it unencrypted (IndexedDB on the web, the app data directory on the deskto
 must not keep tokens in it.</li>
 <li>A local-process host answers both with <code>METHOD_NOT_FOUND</code>: a process has its own files.</li>
 </ul>
+<p><strong>Settings and storage.</strong> Settings (protocol v1, section 15) are scoped and kept like a store: per
+(plugin id, signed-in account, device), never synced, deleted on uninstall. What differs:</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th></th>
+<th><code>rim.storage</code></th>
+<th>Settings</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Who writes</td>
+<td>The plugin, with <code>rim.storage.set</code></td>
+<td>Only the user, in the settings form; the plugin has no method to write</td>
+</tr>
+<tr>
+<td>Shape</td>
+<td>Any key the plugin picks, any JSON</td>
+<td>The keys and types of the manifest&#39;s <code>settings_schema</code>, checked when the user saves</td>
+</tr>
+<tr>
+<td>How the plugin reads</td>
+<td>One key per <code>rim.storage.get</code></td>
+<td>All of them in one <code>rim.settings.get</code>, and again in <code>rim.settings.changed</code> after every save</td>
+</tr>
+<tr>
+<td>Secrets</td>
+<td>Never: kept unencrypted, so no tokens</td>
+<td><code>is_secret</code> settings, on the desktop only, in the secret vault; the web app has no encrypted store for them, so its form shows them as needing the desktop app</td>
+</tr>
+<tr>
+<td>Local-process plugins</td>
+<td><code>METHOD_NOT_FOUND</code></td>
+<td>Served the same way</td>
+</tr>
+</tbody></table></div>
+<p>A web plugin running on the desktop gets its secret settings in plain form, like any plugin. Its
+policy limits where it can send them to its granted <code>network_origins</code>, and the channels in
+<a href="#security">Security</a> that the policy does not close remain. Host-attached secrets, which the
+host would add to the plugin&#39;s requests without the plugin seeing them, are
+<a href="#deferred">deferred</a>.</p>
 <h2 id="panels">Panels <a class="anchor" href="#panels" aria-label="Link to this section">#</a></h2>
 <p>The shell renders a panel&#39;s <code>index.html</code>: it parses it with <code>DOMParser</code>; replaces every relative
 URL in <code>script[src]</code>, <code>link[rel~=stylesheet]</code>, <code>link[rel~=icon]</code>, <code>img</code>, <code>source</code>, <code>audio</code> and
@@ -467,7 +515,8 @@ panels when the plugin stops). Focus and Escape work as for other panels.</p>
 <td>Names host-brokered requests for local processes</td>
 </tr>
 </tbody></table></div>
-<p><code>rim.log</code> and <code>rim.storage.*</code> need no capability; nothing else is granted without a prompt.
+<p><code>rim.log</code>, <code>rim.storage.*</code> and <code>rim.settings.get</code> need no capability, since each reaches only the
+plugin&#39;s own data; nothing else is granted without a prompt.
 <code>network.fetch</code> is a new name rather than <code>network</code> because the enforcement differs (a browser
 policy on the plugin&#39;s own requests, not a host method), and per-origin rather than broad because
 the policy can enforce origins and a prompt that names hosts is one a person can judge. It is one
@@ -671,7 +720,7 @@ the module loaded is not lost.</p>
 <tr>
 <td>Reading another plugin&#39;s data</td>
 <td>Yes</td>
-<td>Each frame has its own opaque origin; the host scopes panel state and storage by the plugin id it takes from the iframe, never from a message.</td>
+<td>Each frame has its own opaque origin; the host scopes panel state, storage and settings by the plugin id it takes from the iframe or the port, never from a message.</td>
 </tr>
 <tr>
 <td>Drawing over the host, clickjacking host controls</td>
@@ -692,6 +741,11 @@ the module loaded is not lost.</p>
 <td>Leaking data by other channels</td>
 <td>No</td>
 <td>A frame can navigate itself to any URL (the load rule removes it after the request left); DNS prefetch, WebRTC ICE and timing are outside CSP. Anything shown to a web plugin should be treated as available to its author, which the <code>network.fetch</code> description says.</td>
+</tr>
+<tr>
+<td>Passing on its own secret settings</td>
+<td>No</td>
+<td>The plugin that declares a secret setting receives it in plain form (on the desktop; the web app keeps none) and can send it to its listed origins and by the channels above. A secret setting is kept from other plugins and web pages, not from the plugin that owns it. Host-attached secrets are deferred.</td>
 </tr>
 <tr>
 <td>Using the user&#39;s cookies on a listed site</td>
@@ -789,8 +843,10 @@ API&#39;s origin), run by <code>validation.rs</code> and <code>manifestRules.ts<
 against <code>plugin-protocol-v1.schema.json</code>; handshake timeout from init; <code>rim.frame.error</code>; a second
 <code>load</code>; a non-string message; 4 MiB plus one byte; capability denial and limits; two missed
 heartbeats; none while hidden; shutdown grace; the gates in order; storage quota and scoping;
-safe start. <strong>Conformance:</strong> the template&#39;s browser build over <code>portTransport</code> against the host&#39;s
-session code in Node, through every v1 message, as the stdio conformance tests do.</li>
+<code>rim.settings.get</code> returning saved values and defaults, <code>rim.settings.changed</code> after a save,
+no secret value in the web app; safe start. <strong>Conformance:</strong> the template&#39;s browser build over
+<code>portTransport</code> against the host&#39;s session code in Node, through every v1 message, as the stdio
+conformance tests do.</li>
 <li><strong>Shell</strong> (jsdom): the policy <code>&lt;meta&gt;</code> precedes the entry import; panel rendering rewrites
 relative URLs, runs scripts in order, dispatches the load events; messages not from
 <code>window.parent</code> are ignored. <strong>Consent:</strong> each kind&#39;s line; <code>network.fetch</code> lists the hosts.</li>
@@ -800,7 +856,10 @@ frame that sets <code>location</code> is removed; a panel&#39;s <code>alert</cod
 </ul>
 <h2 id="deferred">Deferred <a class="anchor" href="#deferred" aria-label="Link to this section">#</a></h2>
 <ul>
-<li>Brokered secrets (a GitHub token for private repositories) and <code>settings_schema</code>.</li>
+<li>Brokered secrets: the host attaching a secret setting to a <code>network.fetch</code> request (a GitHub
+token for private repositories) so that the plugin never holds it. Until then the plugin
+receives its secret settings in plain form.</li>
+<li>Secret settings in the web app, which needs an encrypted store for them first.</li>
 <li>Wildcard origins and an &quot;any origin&quot; grant.</li>
 <li><code>rim.ui.show_notification</code> from the plugin frame; today only panels notify.</li>
 <li>Installing a <code>.rimbundle</code> file on the web, and live reload for developers.</li>
@@ -839,7 +898,7 @@ feed), as <code>JSON.stringify</code> does. <a href="workspace-plugins-v1.html">
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/4f297387f6f03920fa75df3ab6c04e5c035102ec/docs/specs/web-plugins-v1.md">rim-server/docs/specs/web-plugins-v1.md</a> at <code>4f29738</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/71ff02d8c1c823c10f786421c0ffa2230c95c98d/docs/specs/web-plugins-v1.md">rim-server/docs/specs/web-plugins-v1.md</a> at <code>71ff02d</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

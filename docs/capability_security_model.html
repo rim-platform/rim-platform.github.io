@@ -153,12 +153,13 @@ security layer.</p>
 <li><code>http.outbound</code></li>
 </ul>
 <h3 id="settings">Settings <a class="anchor" href="#settings" aria-label="Link to this section">#</a></h3>
-<p>Potential later split:</p>
-<ul>
-<li><code>settings.read</code></li>
-<li><code>settings.write</code></li>
-</ul>
-<p>These can be added once the settings model becomes more active.</p>
+<p>There is no <code>settings.*</code> capability. A plugin&#39;s settings are its own data, like its <code>rim.log</code>
+lines and its <code>rim.storage</code> store: the host gives a plugin only the settings its manifest
+declares, picks the plugin from the connection rather than from the message, and only the user
+writes them, so there is nothing for a grant to guard. A capability would add a prompt line that
+protects nothing. The contract is
+<a href="../specs/plugin-protocol-v1.html#15-settings"><code>specs/plugin-protocol-v1.md</code>, section 15</a>, and
+<a href="decisions/plugin-settings-2026-10-18.html"><code>decisions/plugin-settings-2026-10-18.md</code></a> records why.</p>
 <h2 id="decisions">Decisions <a class="anchor" href="#decisions" aria-label="Link to this section">#</a></h2>
 <ul>
 <li><code>http.outbound</code> starts as one broad capability.</li>
@@ -316,12 +317,13 @@ local behavior</li>
 <li>partial grant is desirable, but full-set approval is acceptable for the first version</li>
 <li>admin restriction of dangerous capabilities is expected later</li>
 <li>trust boundaries must be visible to users</li>
+<li>plugin settings need no capability: a plugin reads only its own, and only the user writes them</li>
 </ul>
 
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/4f297387f6f03920fa75df3ab6c04e5c035102ec/docs/capability_security_model.md">rim-server/docs/capability_security_model.md</a> at <code>4f29738</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/71ff02d8c1c823c10f786421c0ffa2230c95c98d/docs/capability_security_model.md">rim-server/docs/capability_security_model.md</a> at <code>71ff02d</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

@@ -52,7 +52,7 @@
 </details></aside>
     <main id="content" class="prose">
 <h1 id="history-archive-format-version-1">History archive format, version 1</h1>
-<p class="status"><span><b>History archive format, version 1</b></span><span>version 1</span><span><a href="https://github.com/rim-platform/rim-ui/blob/00edda757d716d65f92267027502899a9adc260e/docs/specs/history-archive-v1.md">rim-ui/docs/specs/history-archive-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-ui/commit/00edda757d716d65f92267027502899a9adc260e">00edda7</a></span></p>
+<p class="status"><span><b>History archive format, version 1</b></span><span>version 1</span><span><a href="https://github.com/rim-platform/rim-ui/blob/f2cb7940bbdb26afbb51e6abf06c5a22ebf72f8c/docs/specs/history-archive-v1.md">rim-ui/docs/specs/history-archive-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-ui/commit/f2cb7940bbdb26afbb51e6abf06c5a22ebf72f8c">f2cb794</a></span></p>
 <p>The desktop app writes the user&#39;s message history to a folder the user picks, encrypted, and
 reads it back on another device. There is no RIM server in this picture:
 the folder is the user&#39;s own (a local disk, a USB drive, a folder that Dropbox, Google Drive,
@@ -60,7 +60,7 @@ OneDrive, iCloud Drive or Syncthing keeps in sync, the app&#39;s own folder in t
 Drive, Dropbox or OneDrive, reached through their APIs, a bucket of S3-compatible storage, or a
 backup endpoint the user runs), and only someone with the passphrase can read it.</p>
 <p>This document is the format. Anyone may write a reader or writer from it. The implementation is
-<a href="https://github.com/rim-platform/rim-ui/tree/00edda757d716d65f92267027502899a9adc260e/src-tauri/src/history_archive"><code>src-tauri/src/history_archive/</code></a>; the cache it is written from is <a href="../docs/client/local-message-cache.html"><code>docs/local-message-cache.md</code></a>.</p>
+<a href="https://github.com/rim-platform/rim-ui/tree/f2cb7940bbdb26afbb51e6abf06c5a22ebf72f8c/src-tauri/src/history_archive"><code>src-tauri/src/history_archive/</code></a>; the cache it is written from is <a href="../docs/client/local-message-cache.html"><code>docs/local-message-cache.md</code></a>.</p>
 <h2 id="goals">Goals <a class="anchor" href="#goals" aria-label="Link to this section">#</a></h2>
 <ul>
 <li>A new device with nothing but the folder and the passphrase gets the history back, and shows
@@ -541,7 +541,7 @@ release until the archive&#39;s manifest says otherwise.</li>
 whole (replacing it), create a file only if its name is free, list the directories in a
 directory, and check that the place can be written. Nothing appends or renames, so any storage
 with whole-file uploads can hold an archive. The implementation is
-<a href="https://github.com/rim-platform/rim-ui/blob/00edda757d716d65f92267027502899a9adc260e/src-tauri/src/history_archive/provider.rs"><code>src-tauri/src/history_archive/provider.rs</code></a> and <code>cloud/</code>.</p>
+<a href="https://github.com/rim-platform/rim-ui/blob/f2cb7940bbdb26afbb51e6abf06c5a22ebf72f8c/src-tauri/src/history_archive/provider.rs"><code>src-tauri/src/history_archive/provider.rs</code></a> and <code>cloud/</code>.</p>
 <h3 id="local-folder">Local folder <a class="anchor" href="#local-folder" aria-label="Link to this section">#</a></h3>
 <p>Archive paths are paths under the folder. A write goes to a hidden temporary file
 (<code>.&lt;name&gt;.&lt;random&gt;.tmp</code>) and is renamed over the target; a create is a hard link of the
@@ -704,7 +704,7 @@ can have its archived copies of a reset conversation skipped. They are the serve
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/00edda757d716d65f92267027502899a9adc260e/docs/specs/history-archive-v1.md">rim-ui/docs/specs/history-archive-v1.md</a> at <code>00edda7</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/f2cb7940bbdb26afbb51e6abf06c5a22ebf72f8c/docs/specs/history-archive-v1.md">rim-ui/docs/specs/history-archive-v1.md</a> at <code>f2cb794</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

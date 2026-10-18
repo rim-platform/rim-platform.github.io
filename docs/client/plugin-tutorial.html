@@ -43,8 +43,9 @@
 <li><a href="#6-build-and-install">6. Build and install</a></li>
 <li><a href="#7-try-it">7. Try it</a></li>
 <li><a href="#8-ask-for-a-permission">8. Ask for a permission</a></li>
-<li><a href="#9-publish-from-git">9. Publish from git</a></li>
-<li><a href="#10-sign-and-publish-to-a-workspace">10. Sign and publish to a workspace</a></li>
+<li><a href="#9-add-a-setting">9. Add a setting</a></li>
+<li><a href="#10-publish-from-git">10. Publish from git</a></li>
+<li><a href="#11-sign-and-publish-to-a-workspace">11. Sign and publish to a workspace</a></li>
 </ol>
 </details></aside>
     <main id="content" class="prose">
@@ -223,7 +224,32 @@ The prompt now has a second checkbox, &quot;Read your conversations: this plugin
 stored on this device, except those of encrypted DMs and groups.&quot; Unchecked, the command fails
 with <code>CAPABILITY_DENIED</code>. The Permissions button reopens the prompt; revoking any permission stops
 the plugin. Encrypted conversations also take <code>chat.read.encrypted</code> (<a href="plugin-chat-methods.html">how</a>).</p>
-<h2 id="9-publish-from-git">9. Publish from git <a class="anchor" href="#9-publish-from-git" aria-label="Link to this section">#</a></h2>
+<h2 id="9-add-a-setting">9. Add a setting <a class="anchor" href="#9-add-a-setting" aria-label="Link to this section">#</a></h2>
+<p>A setting is a value the user fills in once in the plugin manager, such as the greeting&#39;s
+first word. In <code>rim-plugin.json</code>, add:</p>
+<pre><code class="language-json">&quot;settings_schema&quot;: [
+  { &quot;key&quot;: &quot;greeting&quot;, &quot;title&quot;: &quot;Greeting&quot;, &quot;value_type&quot;: &quot;string&quot;, &quot;default&quot;: &quot;Hello&quot; }
+]</code></pre>
+<p>In <code>plugin.ts</code>, keep the current greeting and use it in <code>greet</code> (<code>`${greeting}, ${name}!`</code>):</p>
+<pre><code class="language-ts">let greeting = &quot;Hello&quot;;
+const apply = (values: Readonly&lt;Record&lt;string, unknown&gt;&gt;) =&gt; {
+  greeting = typeof values.greeting === &quot;string&quot; &amp;&amp; values.greeting ? values.greeting : &quot;Hello&quot;;
+};</code></pre>
+<p>and read it when the plugin starts, then follow every change:</p>
+<pre><code class="language-ts">async onReady(host) {
+  apply(await host.settings.get());
+  await host.panels.set(&quot;greetings&quot;, { last, count });
+},
+onSettingsChanged: (values) =&gt; apply(values),</code></pre>
+<p><code>host.settings.get()</code> answers every setting that has a saved value or a <code>default</code>;
+<code>onSettingsChanged</code> gets the whole set again after each save, and after a sign-in or sign-out,
+since the values belong to the signed-in account. Reading them needs no permission. The plugin&#39;s
+row in Settings → Plugins now has <strong>Settings</strong>, a form with one text field; a panel can open it
+with <code>window.parent.postMessage({ type: &quot;rim.settings.open&quot; }, &quot;*&quot;)</code>, and never sees the values.
+A setting with <code>&quot;is_secret&quot;: true</code>, such as a token, is kept in the desktop&#39;s secret vault and
+reaches the plugin in plain form. In the test, <code>startTestHost(createPlugin(), { settings: { greeting: &quot;Hi&quot; } })</code> answers the read, and <code>host.changeSettings({ greeting: &quot;Howdy&quot; })</code> sends a
+change. The SDK&#39;s README has what an older app without settings answers.</p>
+<h2 id="10-publish-from-git">10. Publish from git <a class="anchor" href="#10-publish-from-git" aria-label="Link to this section">#</a></h2>
 <p>A plugin repository holds its build at the root, so <strong>Install from git URL</strong> finds a complete
 plugin. Set <code>&quot;entrypoint&quot;: &quot;main.mjs&quot;</code> in <code>rim-plugin.json</code> and the <code>bundle</code> script in
 <code>package.json</code> to <code>rim-plugin-bundle --entry main.ts .</code>, then:</p>
@@ -238,7 +264,7 @@ shows the <code>npm install --production</code> it would run and asks first. A r
 link as <code>https://host/path/dev.example.greeter-0.1.0.rimbundle#sha256=&lt;hash&gt;</code>. Without <code>--entry</code>,
 <code>npx rim-plugin-bundle .</code> takes the committed <code>main.mjs</code> as it is instead of building it; once
 <code>--check</code> passes, both give the same <code>.rimbundle</code>.</p>
-<h2 id="10-sign-and-publish-to-a-workspace">10. Sign and publish to a workspace <a class="anchor" href="#10-sign-and-publish-to-a-workspace" aria-label="Link to this section">#</a></h2>
+<h2 id="11-sign-and-publish-to-a-workspace">11. Sign and publish to a workspace <a class="anchor" href="#11-sign-and-publish-to-a-workspace" aria-label="Link to this section">#</a></h2>
 <p>On a desktop that holds your account&#39;s identity key (Settings → Security), Settings → Plugins
 shows <strong>Sign and publish…</strong> on each installed plugin. A plugin installed from git is signed as its
 checkout&#39;s <code>origin</code> URL, commit and tree hash; any other as a bundle of its installed folder. Give
@@ -250,7 +276,7 @@ adds it in Workspace settings → Plugins → Add from files. Members find it in
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/00edda757d716d65f92267027502899a9adc260e/docs/plugin-tutorial.md">rim-ui/docs/plugin-tutorial.md</a> at <code>00edda7</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/f2cb7940bbdb26afbb51e6abf06c5a22ebf72f8c/docs/plugin-tutorial.md">rim-ui/docs/plugin-tutorial.md</a> at <code>f2cb794</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>
