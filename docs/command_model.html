@@ -447,6 +447,13 @@ keybind names it, and it runs through <code>executeMacro</code>. <code>commands<
 <p>Neither pipes: each step&#39;s payload is collected under its command id in the result, and no step
 receives another step&#39;s result. Only <code>executeCommand</code> with <code>isPipe</code> (the palette&#39;s <code>|</code>) passes
 one command&#39;s result to the next stage.</p>
+<p>A macro run asks for one confirmation up front when the macro&#39;s own <code>sensitivity</code> is
+<code>Restricted</code> or when any step needs one under the confirmation gate below, judged with the
+run&#39;s initiator: a dangerous step, a <code>Restricted</code> one, or a <code>Mutating</code> one the agent or a plugin
+started. Without a proof <code>executeMacro</code> runs no step and answers <code>CONFIRMATION_REQUIRED</code> with a
+challenge for the macro, and its <code>message</code> names the reason: the sensitivity tier, the steps,
+or both. The call made again with that proof runs the steps, and the one confirmation covers
+every step of the run that needs one. A macro with no such step runs without a confirmation.</p>
 <h2 id="command-contract">Command Contract <a class="anchor" href="#command-contract" aria-label="Link to this section">#</a></h2>
 <p>Each command should expose the following metadata.</p>
 <h3 id="required-fields">Required Fields <a class="anchor" href="#required-fields" aria-label="Link to this section">#</a></h3>
@@ -741,7 +748,7 @@ it later.</li>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/98d1883fa51947555c4ea37d5255692c80558fa9/docs/command_model.md">rim-server/docs/command_model.md</a> at <code>98d1883</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/545874392ca2416d2c6c2307c985afec20c888ea/docs/command_model.md">rim-server/docs/command_model.md</a> at <code>5458743</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

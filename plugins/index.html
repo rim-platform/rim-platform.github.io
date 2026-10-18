@@ -155,6 +155,17 @@ to a GitHub release asset does not install this way. A link to a plugin already 
 opens <strong>Replace &lt;name&gt;?</strong>, which shows the version change and the permissions added or
 dropped; the permissions are approved again afterwards.</li>
 </ul>
+<p>Each way installs only what passes the manifest rules (<a href="../docs/client/plugin-manifest.html">the plugin manifest</a>),
+and the error names what failed:</p>
+<ul>
+<li>A folder or repository without <code>rim-plugin.json</code> at its root: &quot;no rim-plugin.json found in the
+plugin folder; every plugin needs one at its root&quot;, or &quot;… at the root of the repository&quot;.</li>
+<li>A capability that is not one of the names in the table under
+<a href="#trust-and-permissions">Trust and permissions</a>, such as a plugin-scoped
+<code>plugin.&lt;plugin_id&gt;.&lt;verb&gt;</code> key: &quot;invalid capability key <code>&lt;key&gt;</code>: …&quot;.</li>
+<li>A command that requires a capability the manifest does not ask for: &quot;command <code>&lt;id&gt;</code> requires
+capability <code>&lt;key&gt;</code>, which the manifest&#39;s capabilities do not declare&quot;.</li>
+</ul>
 <p>Every install ends in the <strong>Plugin Permissions</strong> dialog, described under
 <a href="#trust-and-permissions">Trust and permissions</a>. Then turn the plugin on with the switch on its
 row.</p>
@@ -271,10 +282,6 @@ grants the rest. The prompt names them like this:</p>
 <td><code>chat.write.encrypted</code></td>
 <td>Post as you in your encrypted DMs and groups</td>
 </tr>
-<tr>
-<td><code>events.read</code>, <code>local.process</code>, <code>network</code>, <code>fs.read</code>, <code>fs.write</code></td>
-<td>Receive Workspace Events, Run Local Processes, Network Access, Read Files, Write Files; no sandboxed plugin can hold them</td>
-</tr>
 </tbody></table></div>
 <p>An encrypted chat permission needs its plain one: checking it checks the plain one, and
 unchecking the plain one unchecks it.</p>
@@ -358,7 +365,7 @@ for your account, with its permissions, data and files. To use it again, install
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/f0033ee1852783baaea74099d25e3e9979045e79/docs/plugins.md">rim-ui/docs/plugins.md</a> at <code>f0033ee</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/0a6d67f3ee309666679091c8ac119347a5fa0a7d/docs/plugins.md">rim-ui/docs/plugins.md</a> at <code>0a6d67f</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

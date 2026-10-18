@@ -44,7 +44,6 @@
 <li><a href="#panels">panels</a></li>
 <li><a href="#settings_schema">settings_schema</a></li>
 <li><a href="#the-content-hash">The content hash</a></li>
-<li><a href="#simple-mode">Simple mode</a></li>
 <li><a href="#example">Example</a></li>
 </ol>
 </details></aside>
@@ -52,17 +51,20 @@
 <h1 id="the-plugin-manifest">The plugin manifest</h1>
 <p>Every plugin carries <code>rim-plugin.json</code> at the root of its folder or bundle. This page lists each
 field the desktop parser accepts, in the order of <code>PluginManifest</code> in <code>manifest.rs</code>, with the
-install rules of <code>validation.rs</code>, both in <a href="https://github.com/rim-platform/rim-ui/tree/f0033ee1852783baaea74099d25e3e9979045e79/src-tauri/src/plugin_host"><code>src-tauri/src/plugin_host/</code></a>. The web app installs by
-their port in the SDK, <code>manifestRules.ts</code>; both pass <a href="https://github.com/rim-platform/rim-ui/blob/f0033ee1852783baaea74099d25e3e9979045e79/protocol/manifest-vectors.json"><code>protocol/manifest-vectors.json</code></a>, and a
+install rules of <code>validation.rs</code>, both in <a href="https://github.com/rim-platform/rim-ui/tree/0a6d67f3ee309666679091c8ac119347a5fa0a7d/src-tauri/src/plugin_host"><code>src-tauri/src/plugin_host/</code></a>. The web app installs by
+their port in the SDK, <code>manifestRules.ts</code>; both pass <a href="https://github.com/rim-platform/rim-ui/blob/0a6d67f3ee309666679091c8ac119347a5fa0a7d/protocol/manifest-vectors.json"><code>protocol/manifest-vectors.json</code></a>, and a
 plugin&#39;s tests run them with <code>validateManifest</code> (<a href="plugin-sdk.html">the SDK</a>).</p>
 <h2 id="reading-and-checking">Reading and checking <a class="anchor" href="#reading-and-checking" aria-label="Link to this section">#</a></h2>
 <ul>
 <li>The file is JSON with snake_case keys. Unknown fields are ignored and left out of the hash.</li>
 <li>A field with a default may be left out, but <code>null</code> is refused for it. <code>author</code>,
 <code>network_origins</code>, <code>output_schema</code>, <code>preset_args</code> and <code>slot</code> take <code>null</code> as absent.</li>
+<li>A folder or repository without <code>rim-plugin.json</code> at its root fails to install with <code>no rim-plugin.json found in the plugin folder; every plugin needs one at its root</code> (local folder)
+or <code>no rim-plugin.json found at the root of the repository; every plugin needs one</code> (git).</li>
 <li>A missing field or a wrong type fails with <code>failed to parse manifest: &lt;reason&gt;</code>, the manifest&#39;s
-own checks with <code>validation error: &lt;reason&gt;</code>, the install checks with <code>invalid manifest: &lt;reason&gt;</code> and, in the UI, <code>{ kind: &quot;INVALID_MANIFEST&quot;, data }</code> with <code>data.kind</code> one of the tags
-below. The first failing check is reported. The desktop repeats the checks at every start.</li>
+own checks with <code>validation error: &lt;reason&gt;</code>, the install checks with <code>invalid manifest: &lt;reason&gt;</code> and, in the UI, <code>{ kind: &quot;INVALID_MANIFEST&quot;, message, data }</code> with <code>data.kind</code> one of
+the tags below. The first failing check is reported. The desktop repeats the checks at every
+start and skips a plugin that fails them.</li>
 </ul>
 <h2 id="identity-and-runtime">Identity and runtime <a class="anchor" href="#identity-and-runtime" aria-label="Link to this section">#</a></h2>
 <ul>
@@ -142,20 +144,18 @@ install and from Settings → Plugins → Permissions. Revoking any capability s
 <td>Connecting to the origins in <code>network_origins</code></td>
 </tr>
 </tbody></table></div>
-<p>A manifest may also declare keys of its own, <code>plugin.&lt;plugin_id&gt;.&lt;verb&gt;</code>, for a command&#39;s
-<code>required_capabilities</code> to name. The permission prompt lists only the names above, so the app
-offers no way to approve such a key, and a command that requires one is refused.</p>
-<p>A key fails with <code>INVALID_CAPABILITY_KEY</code> (<code>invalid capability key `&lt;key&gt;`: &lt;reason&gt;</code>) when:</p>
+<p>These are the only names. A key fails with <code>INVALID_CAPABILITY_KEY</code> (<code>invalid capability key `&lt;key&gt;`: &lt;reason&gt;</code>) when:</p>
 <ul>
-<li>it is shorter than 4 or longer than 128 bytes, or <code>network.fetch</code> on a <code>DesktopLocalProcess</code>
-plugin, or <code>local.process</code>, <code>fs.read</code>, <code>fs.write</code> or <code>network</code> on a <code>WebSandboxed</code> one;</li>
-<li>it starts with a reserved namespace: <code>system.</code>, <code>internal.</code>, <code>admin.</code> or <code>audit.</code>;</li>
-<li>it is neither a name above nor starts with <code>plugin.&lt;plugin_id&gt;.</code>, which refuses <code>events.read</code>,
-<code>local.process</code>, <code>network</code> and <code>fs.*</code> on a local process too: nothing implements what they guard;</li>
-<li>its verb is empty, uses anything but <code>a-z 0-9 _ .</code>, starts or ends with <code>.</code> or contains <code>..</code>,
-or any segment of the key is <code>system</code>, <code>internal</code>, <code>admin</code> or <code>audit</code>;</li>
+<li>it is <code>network.fetch</code> on a <code>DesktopLocalProcess</code> plugin, or <code>local.process</code>, <code>fs.read</code>,
+<code>fs.write</code> or <code>network</code> on a <code>WebSandboxed</code> one, with the reason the kind cannot hold it;</li>
+<li>it starts with <code>plugin.</code>: plugin-scoped keys such as <code>plugin.&lt;plugin_id&gt;.&lt;verb&gt;</code> are refused,
+since the permission prompt lists only the names above and could never approve one
+(<code>plugin-scoped capability keys are not supported, since the permission prompt cannot approve them; a manifest names only built-in capabilities: &lt;names&gt;</code>);</li>
+<li>it is any other name not in the table, such as <code>events.read</code>, <code>local.process</code>, <code>network</code> and
+<code>fs.*</code> on a local process, which guard nothing the host implements (<code>not a built-in capability; a manifest names only built-in capabilities: &lt;names&gt;</code>);</li>
 <li>it is an encrypted chat name without its plain one (<code>chat.read.encrypted requires chat.read</code>).</li>
 </ul>
+<p><code>&lt;names&gt;</code> lists the table&#39;s names the plugin&#39;s kind may hold.</p>
 <h2 id="network_origins"><code>network_origins</code> <a class="anchor" href="#network_origins" aria-label="Link to this section">#</a></h2>
 <p>A list of strings, absent by default, for <code>WebSandboxed</code> only: the origins the plugin&#39;s frame may
 connect to once <code>network.fetch</code> is approved. The prompt names each host. It fails with
@@ -181,7 +181,9 @@ It runs only there, with <code>conversation_id</code> and <code>thread_id</code>
 <code>thread_id</code>, or <code>workspace_id</code> added to <code>args</code>; an argument of one of those names fails with
 <code>RESERVED_ARGUMENT</code>. Other values are not checked.</li>
 <li><strong><code>required_capabilities</code></strong> (strings, default <code>[]</code>): capabilities approved before the command
-runs, or it fails with <code>CAPABILITY_DENIED</code>. They are not compared with <code>capabilities</code> at install.</li>
+runs, or it fails with <code>CAPABILITY_DENIED</code>. Each must be a name <code>capabilities</code> may hold, or
+<code>INVALID_CAPABILITY_KEY</code> with <code>required by command `&lt;id&gt;`: </code> before the reason, and one
+<code>capabilities</code> declares, or <code>UNDECLARED_CAPABILITY</code>: <code>command `&lt;id&gt;` requires capability `&lt;key&gt;`, which the manifest's capabilities do not declare</code>.</li>
 <li><strong><code>arguments</code></strong> (list, default <code>[]</code>): by convention objects with <code>name</code>, <code>type</code>, <code>required</code> and
 <code>description</code>. The palette and keybinds pass no arguments, so they leave out a command with a
 <code>required</code> one. The agent&#39;s tool schema takes <code>description</code>, and <code>type</code> when it is <code>string</code>,
@@ -235,25 +237,6 @@ manifest without them hashes as on a host without those fields; other absent opt
 <code>ai_callable</code> commands, or the user approved some, the agent runs none of the plugin&#39;s commands
 until the user consents again (<code>manifest changed — re-consent required for AI commands</code>). Any
 change counts, since the old command set cannot be read from a hash.</p>
-<h2 id="simple-mode">Simple mode <a class="anchor" href="#simple-mode" aria-label="Link to this section">#</a></h2>
-<p>A folder without <code>rim-plugin.json</code> may declare its manifest in comments at the top of <code>main.ts</code>,
-<code>main.js</code> or <code>main.py</code>, the first that exists. <code>simple_manifest.rs</code> reads the <code>#</code> and <code>//</code> lines
-up to the first other non-empty line:</p>
-<pre><code class="language-text"># rim-plugin: dev.example.my-tool
-# rim-name: My Tool
-# rim-version: 1.0.0
-# rim-command: do_thing | Do Thing | Does a thing</code></pre>
-<ul>
-<li><code>rim-plugin</code> and <code>rim-name</code> are required, <code>rim-version</code> defaults to <code>0.1.0</code>, and
-<code>rim-description</code>, <code>rim-author</code> and a comma-separated <code>rim-capabilities</code> are optional.
-<code>rim-command</code> repeats and is <code>id | title [| description]</code>. An empty value, an unknown <code>rim-</code> key
-or a malformed <code>rim-command</code> fails with its line number.</li>
-<li>The result is a <code>DesktopLocalProcess</code> manifest without panels, keybind suggestions, context
-actions or settings, whose commands have every flag off.</li>
-<li>Its entrypoint is <code>npx tsx main.ts</code>, <code>node main.js</code> or <code>python main.py</code>. The host runs an
-entrypoint as a file path, so such a plugin installs but fails to start with
-<code>entrypoint not found</code>. A plugin that has to run uses <code>rim-plugin.json</code>.</li>
-</ul>
 <h2 id="example">Example <a class="anchor" href="#example" aria-label="Link to this section">#</a></h2>
 <p>The manifest of <a href="https://github.com/rim-platform/plugin-github-prs"><code>plugin-github-prs</code></a>, a web
 plugin with a network permission and a tool panel, verbatim:</p>
@@ -315,7 +298,7 @@ plugin with a network permission and a tool panel, verbatim:</p>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/f0033ee1852783baaea74099d25e3e9979045e79/docs/plugin-manifest.md">rim-ui/docs/plugin-manifest.md</a> at <code>f0033ee</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/0a6d67f3ee309666679091c8ac119347a5fa0a7d/docs/plugin-manifest.md">rim-ui/docs/plugin-manifest.md</a> at <code>0a6d67f</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

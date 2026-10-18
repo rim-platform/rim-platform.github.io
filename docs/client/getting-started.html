@@ -57,14 +57,23 @@ web address, and a server to join. Every release of the desktop app signs in to 
 team&#39;s server (<a href="install.html#use-another-server">Use another server</a>). The web app always uses the
 server that serves it. A server is open to anyone, invite-only, or, like the public relay, takes
 new accounts that prove they come from a real device. On an invite-only server you need an invite
-link from someone there: open it in a browser, and its page creates your account.</p>
+from someone there: open its link in a browser, whose page creates your account, or give the link
+or its code to <strong>Create account</strong> in the app.</p>
 <h2 id="create-your-account">Create your account <a class="anchor" href="#create-your-account" aria-label="Link to this section">#</a></h2>
 <p>Choose <strong>Create account</strong> on the sign-in page, or open your invite link. A workspace invite says
-&quot;You&#39;re joining &lt;workspace&gt;&quot; and who invited you. Where the app can hold keys (the desktop app,
-and any browser with WebCrypto Ed25519 and IndexedDB) the form creates an account with a key: no
-password and no email. The device keeps a key that signs you in, and a recovery kit gets the
+&quot;You&#39;re joining &lt;workspace&gt;&quot; and who invited you. On an invite-only server the sign-in page says
+that creating an account takes an invite code or link. Where the app can hold keys (the desktop
+app, and any browser with WebCrypto Ed25519 and IndexedDB) the form creates an account with a key:
+no password and no email. The device keeps a key that signs you in, and a recovery kit gets the
 account back if you lose it.</p>
 <ul>
+<li><strong>Invite code</strong>, only when you did not open an invite link: the code you were given, or the
+whole invite link, which the app reads the code from. An invite-only server needs it; elsewhere
+it says &quot;(optional)&quot;. Under it the form says what the code does: &quot;Invite to &lt;workspace&gt; from
+&lt;name&gt;. The new account joins it.&quot; for a workspace invite, &quot;Invite to this server.&quot; for a
+server invite, or the server&#39;s reason when it refuses the code, such as an expired one. An
+invite to a workspace on another server (<code>rim-invite:1:…</code>) is joined after the account exists,
+with <strong>Join with an invite code</strong>.</li>
 <li><strong>Username</strong>: 3 to 32 characters, letters, digits, <code>_</code> and <code>-</code>, free on this server. It cannot
 start with <code>r_</code> or <code>deleted-</code>.</li>
 <li><strong>Display name (optional)</strong>: at most 80 characters. Left blank, your username is shown.</li>
@@ -75,9 +84,9 @@ terms. The account is not created without it.</li>
 </ul>
 <p>Then choose <strong>Create account</strong>. In a browser the app first asks the browser to keep this site&#39;s
 data; if the browser refuses, the app says your keys could be cleared with it and goes on only
-after <strong>Continue anyway</strong>. On the public relay the app then proves it is a real device: &quot;Proving
-this is a real device…&quot; counts the seconds, with <strong>Cancel</strong>. It takes seconds in the desktop app
-and can take tens of seconds in a browser.</p>
+after <strong>Continue anyway</strong>. On the public relay, without an invite code, the app then proves it is a
+real device: &quot;Proving this is a real device…&quot; counts the seconds, with <strong>Cancel</strong>. It takes seconds
+in the desktop app and can take tens of seconds in a browser.</p>
 <p><strong>The recovery kit.</strong> Once the account exists, the form says &quot;Your account is ready.&quot; and shows
 <strong>Save your recovery kit</strong>: your account id (<code>rimp1_…</code>) and a recovery phrase of 12 numbered
 words. <strong>Copy kit</strong> copies both as text. Write the words down in order with the account id, or
@@ -95,16 +104,19 @@ its secret vault, an encrypted file whose key is in the operating system&#39;s c
 (<a href="install.html#where-the-app-keeps-its-data">Where the app keeps its data</a>). A browser keeps them
 in this site&#39;s IndexedDB storage, as keys that cannot be exported: clearing the site&#39;s data
 deletes them, and a private window may not keep them.</p>
-<p><strong>Password accounts.</strong> Servers take key signups only unless their operator allows passwords. On
-one that does, <strong>Create account with a password</strong> under the key form asks for a username, an
-email, a password of at least 8 characters and an optional display name. A password account can
-add a key later in Settings &gt; Security, and after signing in the app offers it in <strong>Set up
-encryption for this account</strong>. A browser that cannot create keys on a key-only server shows &quot;This
-server needs a key signup&quot; and points to the desktop app.</p>
+<p><strong>Password accounts.</strong> Servers take key signups only unless their operator allows passwords. On one
+that does, <strong>Create account with a password</strong> under the key form asks for a username, an email, a
+password of at least 8 characters and an optional display name, under the same <strong>Invite code</strong>
+field. A password account can add a key later in Settings &gt; Security, and after signing in the app
+offers it in <strong>Set up encryption for this account</strong>. A browser that cannot create keys on a
+key-only server shows &quot;This server needs a key signup&quot; and points to the desktop app.</p>
 <h2 id="where-you-land">Where you land <a class="anchor" href="#where-you-land" aria-label="Link to this section">#</a></h2>
 <p>After signup the app opens one of these:</p>
 <ul>
-<li><strong>The invite&#39;s workspace</strong>, when you signed up with a workspace invite.</li>
+<li><strong>The invite&#39;s workspace</strong>, when you signed up with a workspace invite. A server open to anyone
+takes no invite at signup, so there the app joins the workspace right after creating the
+account. If that fails, the form says &quot;Your account is ready&quot; and why it could not join, and
+<strong>Continue</strong> opens the app, where <strong>Join with an invite code</strong> takes the code again.</li>
 <li><strong>The server&#39;s default workspace</strong>, when its operator named one. Every new account joins it as
 a Member and is in its public channels from the start.</li>
 <li><strong>Welcome to RIM</strong> otherwise: &quot;You don&#39;t belong to any workspaces yet.&quot;, with
@@ -122,9 +134,9 @@ Its badge counts unread messages before you open it. The rail shows once a works
 <li><strong>Join with an invite link.</strong> Opened in a browser while you are signed in, the link says &quot;You
 have been invited to join &lt;workspace&gt;&quot;; <strong>Join workspace</strong> joins it. In the app,
 <strong>Join with an invite code</strong> on the welcome screen, or <strong>Add workspace</strong> (the <strong>+</strong> at the bottom
-of the workspace rail) and then <strong>Join Existing</strong>, takes the invite code: the part of the link
-that starts with <code>rim_inv_</code>, or a whole <code>rim-invite:1:…</code> link for a workspace on another server.
-<strong>Join</strong> opens it.</li>
+of the workspace rail) and then <strong>Join Existing</strong>, takes the invite code: the whole invite link,
+the part of it that starts with <code>rim_inv_</code>, or a whole <code>rim-invite:1:…</code> link for a workspace on
+another server. <strong>Join</strong> opens it.</li>
 <li><strong>Create one.</strong> <strong>+ Create workspace</strong> on the welcome screen, or <strong>Add workspace</strong>, then <strong>Create
 New</strong>, asks for a name. <strong>Create</strong> opens the new workspace with you as its Owner.</li>
 </ul>
@@ -296,7 +308,7 @@ default workspace for new accounts.</li>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/f0033ee1852783baaea74099d25e3e9979045e79/docs/getting-started.md">rim-ui/docs/getting-started.md</a> at <code>f0033ee</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/0a6d67f3ee309666679091c8ac119347a5fa0a7d/docs/getting-started.md">rim-ui/docs/getting-started.md</a> at <code>0a6d67f</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>
