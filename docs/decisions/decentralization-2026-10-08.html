@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Decentralization: key identity, interchangeable relays, hosted workspaces · RIM</title>
+<meta name="description" content="Status: Accepted 2026-10-08 by Jakub. Implementation follows Stages 1 to 5 in ROADMAP.md. Do not edit once implementation lands — historical record. For changes, write a new ADR. Amended 2026-10-09 by …">
+<link rel="icon" href="../../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../../index.html" aria-label="RIM home">
+      <picture><source srcset="../../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../../index.html#what">What RIM is</a>
+      <a href="../../index.html#how">How it works</a>
+      <a href="../self-hosting.html">Self-host</a>
+      <a href="../../configure/index.html">Configure</a>
+      <a href="../../plugins/index.html">Plugins</a>
+      <a href="../index.html" aria-current="page">Docs</a>
+      <a href="../../api/index.html">API</a>
+      <a href="../../specs/index.html">Specs</a>
+      <a href="../contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="../index.html">Docs</a><span aria-hidden="true">/</span><a href="../project.html">Project</a><span aria-hidden="true">/</span><a href="index.html">Decisions</a><span aria-hidden="true">/</span><span>Decentralization: key identity, interchangeable relays, hosted workspaces</span></div>
+  <div class="page with-toc">
+    <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
+<ol>
+<li><a href="#context">Context</a></li>
+<li><a href="#decision">Decision</a></li>
+<li><a href="#confirmed-answers">Confirmed answers</a></li>
+<li><a href="#rejected-alternatives">Rejected alternatives</a></li>
+<li><a href="#consequences">Consequences</a></li>
+<li><a href="#open-decisions">Open decisions</a></li>
+</ol>
+</details></aside>
+    <main id="content" class="prose">
+<blockquote>
+<p><strong>Status:</strong> Accepted 2026-10-08 by Jakub. Implementation follows Stages 1 to 5 in <a href="../roadmap.html"><code>ROADMAP.md</code></a>.
+<strong>Do not edit</strong> once implementation lands — historical record. For changes, write a new ADR.
+<strong>Amended</strong> 2026-10-09 by <a href="relay-proxied-workspaces-2026-10-09.html"><code>relay-proxied-workspaces-2026-10-09.md</code></a>: workspace traffic now goes through the user&#39;s relay; hosts accept any relay.</p>
+</blockquote>
+<h1 id="decentralization-key-identity-interchangeable-relays-hosted-workspaces">Decentralization: key identity, interchangeable relays, hosted workspaces</h1>
+<p><strong>Date:</strong> 2026-10-08
+<strong>Decided by:</strong> Jakub
+<strong>Supersedes:</strong> ROADMAP Track 7.1/7.4 &quot;decide the model after a research spike&quot; and the
+2026-10-04 lean toward server-to-server federation with portable identities.</p>
+<h2 id="context">Context <a class="anchor" href="#context" aria-label="Link to this section">#</a></h2>
+<p>RIM&#39;s second pillar is decentralization. Jakub&#39;s hard requirements (2026-10-08):</p>
+<ul>
+<li>A user can run RIM on another device and get their chat history back.</li>
+<li>History is saved on the user&#39;s own drive (Google Drive, Dropbox, a folder, S3).</li>
+<li>No central RIM server anyone depends on.</li>
+<li>No domain or home server required per user.</li>
+</ul>
+<p>Today identity is a username and password per server, <code>Principal</code> is an in-memory struct with
+no table, and the client keeps no history on disk.</p>
+<h2 id="decision">Decision <a class="anchor" href="#decision" aria-label="Link to this section">#</a></h2>
+<p><strong>A person is a key pair; servers are interchangeable relays running the same rim-server; each
+workspace is hosted on one server that enforces its roles, bans and private channels.</strong></p>
+<ul>
+<li><strong>Identity.</strong> The app creates an inception key and device keys with a signed rotation log.
+A signed profile card lists the person&#39;s relay URLs. Devices link by QR code; a 12-word
+recovery phrase and the recovery key in the rotation log restore identity. The identity key
+stays off day-to-day devices, which hold only device keys it signed.</li>
+<li><strong>History.</strong> An encrypted local store on each device plus an encrypted archive on the
+user&#39;s own drive, written as per-device segments under one archive key.</li>
+<li><strong>Relays.</strong> Any rim-server can run in relay mode and is swappable with no data loss.</li>
+<li><strong>Workspace hosts.</strong> One server hosts each workspace and is the authority for its
+membership, roles, bans and private channels, and its plugin registry.</li>
+<li><strong>Encryption.</strong> MLS (OpenMLS, on the Tauri side) for DMs and private groups. Channels stay
+plaintext so server search, pipelines and the agent keep working there.</li>
+<li><strong>Contracts.</strong> GraphQL stays the client contract. Server-to-server traffic is a small signed
+HTTP API (HTTP Message Signatures with replay protection and rotatable server keys), a
+non-GraphQL transport following the <code>file_handlers.rs</code> pattern, not GraphQL.</li>
+</ul>
+<h2 id="confirmed-answers">Confirmed answers <a class="anchor" href="#confirmed-answers" aria-label="Link to this section">#</a></h2>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Question</th>
+<th>Answer</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Does the project run a public relay?</td>
+<td>Yes: <code>relay.rim-platform.org</code>, stock rim-server in relay mode, with a runbook and abuse policy; registering a key needs proof-of-work or an invite</td>
+</tr>
+<tr>
+<td>DMs from strangers?</td>
+<td>Go to a request inbox first. Workspace members and invited contacts are never strangers</td>
+</tr>
+<tr>
+<td>What is a user id?</td>
+<td>A stable user id (<code>principalId</code>, opaque to plugins) with a signed key log, stable across key changes; it is the hash of an inception key</td>
+</tr>
+<tr>
+<td>How does the web app get keys?</td>
+<td>It is a linked device of the desktop app (non-extractable WebCrypto keys in IndexedDB; the UI says this is weaker than desktop)</td>
+</tr>
+<tr>
+<td>What goes through relays?</td>
+<td>Apps connect to each workspace host directly for workspace traffic. Relays carry only DMs, the request inbox, profile cards and MLS key packages, never channel messages</td>
+</tr>
+</tbody></table></div>
+<h2 id="rejected-alternatives">Rejected alternatives <a class="anchor" href="#rejected-alternatives" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>Stay single-server:</strong> no federation and export only as an admin tool, so history is not the user&#39;s and a server going away takes the community with it.</li>
+<li><strong>Domain federation (<code>name@domain</code>, home servers):</strong> identity is tied to a domain, so only people who own one are fully independent; it may return later as an optional alias on top of a key.</li>
+<li><strong>Fully replicated federation (Matrix):</strong> every server keeps the whole room and votes on its state, at the price of state resolution, heavy storage and complex moderation.</li>
+<li><strong>Pure relay network (Nostr):</strong> identity is fully portable, but roles, bans and private channels are weak because no server is authoritative. Its key identity and relays are kept.</li>
+<li><strong>Peer-to-peer:</strong> delivery needs both sides online, NAT pushes traffic through a relay anyway, and search, roles and history for new members become research problems.</li>
+</ul>
+<h2 id="consequences">Consequences <a class="anchor" href="#consequences" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>The plugin protocol v1 identity shape is <code>{ principalId, displayName }</code> before the SDK
+freezes (Track 7.0, Stage 1). Ids minted before Stage 3 are provisional and migrate via
+<code>rim.principal.migrated</code>.</li>
+<li>Keys arrive as nullable columns on the existing <code>user</code> row with a kind of local or remote,
+so the dozens of tables that reference the user id do not move. Bots, ingest tokens and the
+CLI keep host-local credentials and host-scoped ids.</li>
+<li>Track 6.1 (TOTP, passkeys) folds into key login (Track 7.2).</li>
+<li>Drive providers are built-in Rust modules behind one trait in the Tauri app, not SDK plugins.</li>
+<li>The server needs a message change feed (Stage 2) so edits and deletes reach client caches.</li>
+<li>Every server feature that reads message text needs a client replacement in encrypted
+conversations; the Stage 2 local index is the first.</li>
+</ul>
+<h2 id="open-decisions">Open decisions <a class="anchor" href="#open-decisions" aria-label="Link to this section">#</a></h2>
+<p>Proceeding on the recommended answer until Jakub says otherwise.</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Question</th>
+<th>Recommended</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Readable names for keys in Stage 5: contact lists, alias or directory?</td>
+<td>Contact lists</td>
+</tr>
+<tr>
+<td>May plugins read decrypted DMs with a per-plugin grant?</td>
+<td>Grant</td>
+</tr>
+<tr>
+<td>First drive providers after the local folder: Google Drive, Dropbox or both?</td>
+<td>Google Drive</td>
+</tr>
+<tr>
+<td>Mobile: PWA after Stage 3, or native later?</td>
+<td>PWA</td>
+</tr>
+</tbody></table></div>
+<p>Not blocking before Stage 5:</p>
+<ul>
+<li>Do relays delete messages once the drive has them?</li>
+<li>Does a workspace host accept any relay, or only approved ones?</li>
+<li>Matrix interop (bridge or none)?</li>
+<li>Is losing the phrase, the drive and every device together an acceptable total loss? (The plan assumes yes.)</li>
+</ul>
+<p>The full list of open product decisions is in <a href="../roadmap.html"><code>ROADMAP.md</code></a> under <strong>Open Decisions</strong>.</p>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/5bae5e7740c1550be76e2a74cd782f6089f63890/docs/decisions/decentralization-2026-10-08.md">rim-server/docs/decisions/decentralization-2026-10-08.md</a> at <code>5bae5e7</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+<script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
+</body>
+</html>

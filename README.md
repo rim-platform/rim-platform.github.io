@@ -33,6 +33,11 @@ RIM_SERVER_DIR=~/src/rim-server RIM_UI_DIR=~/src/rim-ui \
 RIM_SERVER_REF=origin/master RIM_UI_REF=origin/master npm run build
 ```
 
+The sibling lookup is relative to the site checkout, so a build from a git worktree of this
+repository looks for `rim-server` and `rim-ui` next to the worktree and fails when they are not
+there. Set `RIM_SERVER_DIR` and `RIM_UI_DIR` to the two checkouts, and fetch `origin` in both
+first so `origin/master` is current.
+
 `scripts/build.mjs` renders the pages with one layout (`templates/layout.html`,
 `templates/site.css`, copied to `assets/site.css`). `scripts/lib/docs.mjs` lists the Markdown
 files and the docs groups, `scripts/lib/configure.mjs` reads `rim_server/src/config.rs` and the
