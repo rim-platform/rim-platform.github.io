@@ -59,7 +59,7 @@ const GROUPS = [
   {
     key: "plugin-authors",
     title: "Plugin authors",
-    lede: "Extending the client: what a plugin is, the capabilities it asks for, the TypeScript SDK, web plugins in a sandboxed frame and signed workspace plugins.",
+    lede: "Extending the client: what a plugin is, the capabilities it asks for, the TypeScript SDK and how it is published, web plugins in a sandboxed frame and signed workspace plugins.",
     subs: [
       { title: "The model", items: [["server", "docs/plugin_model.md"], ["server", "docs/capability_security_model.md"]] },
       {
@@ -71,6 +71,7 @@ const GROUPS = [
           ["ui", "docs/plugin-chat-methods.md"],
         ],
       },
+      { title: "Publishing the SDK", items: [["ui", "docs/release-sdk.md"]] },
     ],
     extra: [
       { href: "specs/plugin-protocol-v1.html", title: "Plugin protocol v1", text: "The specification of the plugin protocol." },
@@ -81,8 +82,9 @@ const GROUPS = [
   {
     key: "using-rim",
     title: "Using RIM",
-    lede: "The desktop and web client: building it, the keyboard, keys and recovery, linking a device, encrypted conversations, relays and the local message cache.",
+    lede: "The desktop and web client: installing it and signing in, building it, the keyboard, keys and recovery, linking a device, encrypted conversations, relays and the local message cache.",
     subs: [
+      { title: "Install", items: [["ui", "docs/install.md"]] },
       {
         title: "The client",
         items: [
@@ -112,7 +114,7 @@ const GROUPS = [
   {
     key: "project",
     title: "Project",
-    lede: "Where RIM is heading and how it is built: the vision, the server architecture and the design models, how to contribute, and security.",
+    lede: "Where RIM is heading and how it is built: the vision, the server architecture and the design models, how to contribute, security, and the client's internals and branding.",
     subs: [
       {
         title: "Direction and design",
@@ -143,6 +145,7 @@ const GROUPS = [
           ["ui", "docs/error-boundaries.md"],
           ["ui", "docs/eslint-prettier.md"],
           ["ui", "docs/rim-mls.md"],
+          ["ui", "docs/branding.md"],
         ],
       },
     ],
