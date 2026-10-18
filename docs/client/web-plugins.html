@@ -49,7 +49,7 @@
 optional panels) that runs in a sandboxed iframe of the app instead of a local process.
 The same bundle runs in the web app and in the desktop app. The contract is
 <code>../rim-server/docs/specs/web-plugins-v1.md</code>; the messages are protocol v1&#39;s
-(<a href="https://github.com/rim-platform/rim-ui/blob/82ba0e96c20cbce553dbf1bd1238fc14799c7b72/protocol/plugin-protocol-v1.schema.json"><code>protocol/plugin-protocol-v1.schema.json</code></a>), carried as JSON text over a <code>MessagePort</code>.</p>
+(<a href="https://github.com/rim-platform/rim-ui/blob/f62e0903ea2bee787eb45026da02366fcf84eec4/protocol/plugin-protocol-v1.schema.json"><code>protocol/plugin-protocol-v1.schema.json</code></a>), carried as JSON text over a <code>MessagePort</code>.</p>
 <h2 id="what-lives-where">What lives where <a class="anchor" href="#what-lives-where" aria-label="Link to this section">#</a></h2>
 <div class="tablewrap"><table>
 <thead>
@@ -60,27 +60,27 @@ The same bundle runs in the web app and in the desktop app. The contract is
 </thead>
 <tbody><tr>
 <td>Frame shell: the static page every plugin frame and panel frame loads, its baseline policy, the per-plugin policy, the entry import, panel rendering</td>
-<td><a href="https://github.com/rim-platform/rim-ui/blob/82ba0e96c20cbce553dbf1bd1238fc14799c7b72/public/plugin-frame/v1/index.html"><code>public/plugin-frame/v1/index.html</code></a>, <code>shell.js</code></td>
+<td><a href="https://github.com/rim-platform/rim-ui/blob/f62e0903ea2bee787eb45026da02366fcf84eec4/public/plugin-frame/v1/index.html"><code>public/plugin-frame/v1/index.html</code></a>, <code>shell.js</code></td>
 </tr>
 <tr>
 <td>Serving the shell</td>
-<td>the web app&#39;s own origin at <code>/plugin-frame/v1/</code>; the desktop at <code>rim-plugin://shell/v1/</code> (<a href="https://github.com/rim-platform/rim-ui/blob/82ba0e96c20cbce553dbf1bd1238fc14799c7b72/src-tauri/src/plugin_host/plugin_protocol.rs"><code>src-tauri/src/plugin_host/plugin_protocol.rs</code></a>, <a href="https://github.com/rim-platform/rim-ui/blob/82ba0e96c20cbce553dbf1bd1238fc14799c7b72/src-tauri/src/lib.rs"><code>src-tauri/src/lib.rs</code></a>); nginx in the <code>Dockerfile</code> sends the shell&#39;s baseline policy for <code>/plugin-frame/</code> instead of the app&#39;s. Frames load <code>shell.js</code> as a CORS request (<code>crossorigin</code>), so nginx and the Vite servers (<a href="https://github.com/rim-platform/rim-ui/blob/82ba0e96c20cbce553dbf1bd1238fc14799c7b72/vite.config.ts"><code>vite.config.ts</code></a>) send <code>Access-Control-Allow-Origin: *</code> for <code>/plugin-frame/</code>, and the desktop scheme for <code>shell.js</code> alone; the baseline lists <code>rim-plugin://shell</code> in <code>script-src</code> because WebKit does not match a sandboxed frame&#39;s custom-scheme origin to <code>'self'</code></td>
+<td>the web app&#39;s own origin at <code>/plugin-frame/v1/</code>; the desktop at <code>rim-plugin://shell/v1/</code> (<a href="https://github.com/rim-platform/rim-ui/blob/f62e0903ea2bee787eb45026da02366fcf84eec4/src-tauri/src/plugin_host/plugin_protocol.rs"><code>src-tauri/src/plugin_host/plugin_protocol.rs</code></a>, <a href="https://github.com/rim-platform/rim-ui/blob/f62e0903ea2bee787eb45026da02366fcf84eec4/src-tauri/src/lib.rs"><code>src-tauri/src/lib.rs</code></a>); nginx in the <code>Dockerfile</code> sends the shell&#39;s baseline policy for <code>/plugin-frame/</code> instead of the app&#39;s. Frames load <code>shell.js</code> as a CORS request (<code>crossorigin</code>), so nginx and the Vite servers (<a href="https://github.com/rim-platform/rim-ui/blob/f62e0903ea2bee787eb45026da02366fcf84eec4/vite.config.ts"><code>vite.config.ts</code></a>) send <code>Access-Control-Allow-Origin: *</code> for <code>/plugin-frame/</code>, and the desktop scheme for <code>shell.js</code> alone; the baseline lists <code>rim-plugin://shell</code> in <code>script-src</code> because WebKit does not match a sandboxed frame&#39;s custom-scheme origin to <code>'self'</code></td>
 </tr>
 <tr>
 <td>Manifest rules</td>
-<td><a href="https://github.com/rim-platform/rim-ui/blob/82ba0e96c20cbce553dbf1bd1238fc14799c7b72/src-tauri/src/plugin_host/manifest.rs"><code>src-tauri/src/plugin_host/manifest.rs</code></a>, <code>validation.rs</code>; the TypeScript port in the SDK, <a href="https://github.com/rim-platform/rim-ui/blob/82ba0e96c20cbce553dbf1bd1238fc14799c7b72/sdk/plugin-sdk/src/manifestRules.ts"><code>sdk/plugin-sdk/src/manifestRules.ts</code></a>, which the web app imports; shared vectors <a href="https://github.com/rim-platform/rim-ui/blob/82ba0e96c20cbce553dbf1bd1238fc14799c7b72/protocol/manifest-vectors.json"><code>protocol/manifest-vectors.json</code></a></td>
+<td><a href="https://github.com/rim-platform/rim-ui/blob/f62e0903ea2bee787eb45026da02366fcf84eec4/src-tauri/src/plugin_host/manifest.rs"><code>src-tauri/src/plugin_host/manifest.rs</code></a>, <code>validation.rs</code>; the TypeScript port in the SDK, <a href="https://github.com/rim-platform/rim-ui/blob/f62e0903ea2bee787eb45026da02366fcf84eec4/sdk/plugin-sdk/src/manifestRules.ts"><code>sdk/plugin-sdk/src/manifestRules.ts</code></a>, which the web app imports; shared vectors <a href="https://github.com/rim-platform/rim-ui/blob/f62e0903ea2bee787eb45026da02366fcf84eec4/protocol/manifest-vectors.json"><code>protocol/manifest-vectors.json</code></a></td>
 </tr>
 <tr>
 <td><code>.rimbundle</code> reading, writing, unpacking</td>
-<td><a href="https://github.com/rim-platform/rim-ui/blob/82ba0e96c20cbce553dbf1bd1238fc14799c7b72/src-tauri/src/plugin_host/bundle.rs"><code>src-tauri/src/plugin_host/bundle.rs</code></a>; <a href="https://github.com/rim-platform/rim-ui/blob/82ba0e96c20cbce553dbf1bd1238fc14799c7b72/src/features/plugins/web/bundle.ts"><code>src/features/plugins/web/bundle.ts</code></a>; the SDK&#39;s writer <a href="https://github.com/rim-platform/rim-ui/blob/82ba0e96c20cbce553dbf1bd1238fc14799c7b72/sdk/plugin-sdk/src/bundle.ts"><code>sdk/plugin-sdk/src/bundle.ts</code></a></td>
+<td><a href="https://github.com/rim-platform/rim-ui/blob/f62e0903ea2bee787eb45026da02366fcf84eec4/src-tauri/src/plugin_host/bundle.rs"><code>src-tauri/src/plugin_host/bundle.rs</code></a>; <a href="https://github.com/rim-platform/rim-ui/blob/f62e0903ea2bee787eb45026da02366fcf84eec4/src/features/plugins/web/bundle.ts"><code>src/features/plugins/web/bundle.ts</code></a>; the SDK&#39;s writer <a href="https://github.com/rim-platform/rim-ui/blob/f62e0903ea2bee787eb45026da02366fcf84eec4/sdk/plugin-sdk/src/bundle.ts"><code>sdk/plugin-sdk/src/bundle.ts</code></a></td>
 </tr>
 <tr>
 <td>The host: frames, the JSON-RPC session, gates, limits, heartbeats, safe start</td>
-<td><a href="https://github.com/rim-platform/rim-ui/blob/82ba0e96c20cbce553dbf1bd1238fc14799c7b72/src/features/plugins/web/webPluginHost.ts"><code>src/features/plugins/web/webPluginHost.ts</code></a>, <code>pluginSession.ts</code>, <code>rpc.ts</code>, <code>webPluginEnvironment.ts</code> (the DOM side)</td>
+<td><a href="https://github.com/rim-platform/rim-ui/blob/f62e0903ea2bee787eb45026da02366fcf84eec4/src/features/plugins/web/webPluginHost.ts"><code>src/features/plugins/web/webPluginHost.ts</code></a>, <code>pluginSession.ts</code>, <code>rpc.ts</code>, <code>webPluginEnvironment.ts</code> (the DOM side)</td>
 </tr>
 <tr>
 <td>Panel state</td>
-<td><a href="https://github.com/rim-platform/rim-ui/blob/82ba0e96c20cbce553dbf1bd1238fc14799c7b72/src/features/plugins/web/webPanelRelay.ts"><code>src/features/plugins/web/webPanelRelay.ts</code></a>; panels render in <code>components/PluginFrame.tsx</code> (through <code>WebPluginPanel.tsx</code>) and use the panel bridge in <code>runtime/pluginBridge.ts</code></td>
+<td><a href="https://github.com/rim-platform/rim-ui/blob/f62e0903ea2bee787eb45026da02366fcf84eec4/src/features/plugins/web/webPanelRelay.ts"><code>src/features/plugins/web/webPanelRelay.ts</code></a>; panels render in <code>components/PluginFrame.tsx</code> (through <code>WebPluginPanel.tsx</code>) and use the panel bridge in <code>runtime/pluginBridge.ts</code></td>
 </tr>
 <tr>
 <td>Installs</td>
@@ -88,11 +88,11 @@ The same bundle runs in the web app and in the desktop app. The contract is
 </tr>
 <tr>
 <td><code>rim.storage.*</code></td>
-<td>desktop: <a href="https://github.com/rim-platform/rim-ui/blob/82ba0e96c20cbce553dbf1bd1238fc14799c7b72/src-tauri/src/plugin_host/storage.rs"><code>src-tauri/src/plugin_host/storage.rs</code></a> (app data directory); web: the <code>storage</code> store of <code>rim-plugins</code></td>
+<td>desktop: <a href="https://github.com/rim-platform/rim-ui/blob/f62e0903ea2bee787eb45026da02366fcf84eec4/src-tauri/src/plugin_host/storage.rs"><code>src-tauri/src/plugin_host/storage.rs</code></a> (app data directory); web: the <code>storage</code> store of <code>rim-plugins</code></td>
 </tr>
 <tr>
 <td><code>rim.chat.*</code>, the client message service</td>
-<td><a href="https://github.com/rim-platform/rim-ui/tree/82ba0e96c20cbce553dbf1bd1238fc14799c7b72/src/features/plugins/chat"><code>src/features/plugins/chat/</code></a>, shared with local processes, which the Rust broker relays to it; see <a href="plugin-chat-methods.html"><code>docs/plugin-chat-methods.md</code></a></td>
+<td><a href="https://github.com/rim-platform/rim-ui/tree/f62e0903ea2bee787eb45026da02366fcf84eec4/src/features/plugins/chat"><code>src/features/plugins/chat/</code></a>, shared with local processes, which the Rust broker relays to it; see <a href="plugin-chat-methods.html"><code>docs/plugin-chat-methods.md</code></a></td>
 </tr>
 <tr>
 <td>Grant history and encrypted reads</td>
@@ -108,7 +108,7 @@ The same bundle runs in the web app and in the desktop app. The contract is
 </tr>
 <tr>
 <td>SDK transports and browser build</td>
-<td><a href="https://github.com/rim-platform/rim-ui/blob/82ba0e96c20cbce553dbf1bd1238fc14799c7b72/sdk/plugin-sdk/src/transport.ts"><code>sdk/plugin-sdk/src/transport.ts</code></a>, <code>index.browser.ts</code>, <code>scripts/bundle-plugin.mjs</code>, <code>scripts/browser-build.mjs</code>; the npm package <code>@rim-platform/plugin-sdk</code> ships them built</td>
+<td><a href="https://github.com/rim-platform/rim-ui/blob/f62e0903ea2bee787eb45026da02366fcf84eec4/sdk/plugin-sdk/src/transport.ts"><code>sdk/plugin-sdk/src/transport.ts</code></a>, <code>index.browser.ts</code>, <code>scripts/bundle-plugin.mjs</code>, <code>scripts/browser-build.mjs</code>; the npm package <code>@rim-platform/plugin-sdk</code> ships them built</td>
 </tr>
 <tr>
 <td>Showcase</td>
@@ -257,7 +257,7 @@ minute per panel frame; 16 <code>network_origins</code>.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/82ba0e96c20cbce553dbf1bd1238fc14799c7b72/docs/web-plugins.md">rim-ui/docs/web-plugins.md</a> at <code>82ba0e9</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/f62e0903ea2bee787eb45026da02366fcf84eec4/docs/web-plugins.md">rim-ui/docs/web-plugins.md</a> at <code>f62e090</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>
