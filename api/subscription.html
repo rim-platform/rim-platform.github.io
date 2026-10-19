@@ -51,6 +51,11 @@
 <div class="sig">workspaceEvents(workspaceId: <a href="scalars.html#ID">ID</a>!): <a href="scalars.html#String">String</a>!</div>
 <div class="desc"><p>Subscribe to all real-time events for a workspace.
 Returns events as JSON strings — the client parses the <code>type</code> field to determine the event kind.</p>
+<p>The subscriber&#39;s membership is checked when the subscription starts. Afterwards their
+guest status follows their <code>MemberRoleChanged</code> events, and the stream ends after their
+<code>MemberLeft</code>. When the subscriber falls behind and events are dropped, their membership
+and role are loaded again before any further event is delivered; the stream ends when
+that load fails, including when they are no longer a member.</p>
 </div>
 
 </section>
@@ -73,7 +78,7 @@ the hosts of the user&#39;s workspaces see them online.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Generated from <a href="https://github.com/rim-platform/rim-ui/blob/aff6aa1a3fe0fa2908c64b69522472d3b18364b4/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>aff6aa1</code></span>
+    <span>Generated from <a href="https://github.com/rim-platform/rim-ui/blob/5f5245a76a53b439df6beceb63f49e55f84d406e/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>5f5245a</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

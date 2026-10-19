@@ -44,14 +44,14 @@
 </details></aside>
     <main id="content" class="prose">
 <h1 id="deploying-a-public-relay">Deploying a public relay</h1>
-<p><a href="https://github.com/rim-platform/rim-server/blob/6a55ebf3c053ea83f1cf37d81748d31f3975b00b/deploy/compose.relay.yml"><code>compose.relay.yml</code></a> turns <a href="https://github.com/rim-platform/rim-server/blob/6a55ebf3c053ea83f1cf37d81748d31f3975b00b/deploy/compose.yml"><code>compose.yml</code></a> into a public relay: rim-server with <code>RIM_ROLE=relay</code>,
+<p><a href="https://github.com/rim-platform/rim-server/blob/553bf5ddfc87d056e4c3e11acd3cc0eaa966b647/deploy/compose.relay.yml"><code>compose.relay.yml</code></a> turns <a href="https://github.com/rim-platform/rim-server/blob/553bf5ddfc87d056e4c3e11acd3cc0eaa966b647/deploy/compose.yml"><code>compose.yml</code></a> into a public relay: rim-server with <code>RIM_ROLE=relay</code>,
 the public relay&#39;s quotas and proof-of-work signups, PostgreSQL 17 and Caddy terminating TLS,
 and no web client. The relay holds its users&#39; accounts, devices and cards, queues what other
 servers send them and forwards their requests; it hosts no workspaces. This page brings a relay up for the first time. The operator&#39;s runbook
 (<a href="../operations/relay-public.html"><code>docs/operations/relay-public.md</code></a>) covers running it: keys, backups, quotas, monitoring,
 incidents, the abuse policy and every command. <a href="../relay.html"><code>docs/relay.md</code></a> explains what a relay does, and
 <a href="../../specs/server-to-server-v1.html"><code>docs/specs/server-to-server-v1.md</code></a> is the protocol.</p>
-<p>A server that hosts workspaces uses <a href="https://github.com/rim-platform/rim-server/blob/6a55ebf3c053ea83f1cf37d81748d31f3975b00b/deploy/compose.yml"><code>compose.yml</code></a> alone: <a href="../self-hosting.html"><code>docs/self-hosting.md</code></a> covers it, and
+<p>A server that hosts workspaces uses <a href="https://github.com/rim-platform/rim-server/blob/553bf5ddfc87d056e4c3e11acd3cc0eaa966b647/deploy/compose.yml"><code>compose.yml</code></a> alone: <a href="../self-hosting.html"><code>docs/self-hosting.md</code></a> covers it, and
 its sections on updates, backups and monitoring apply to the relay too.</p>
 <p>The project&#39;s public relay is <code>relay.rim-platform.org</code>; yours uses your own domain. <code>RIM_DOMAIN</code>
 is the relay&#39;s host name, such as a <code>relay.</code> subdomain: Caddy answers for that name only, so the
@@ -62,7 +62,7 @@ apex of the domain can serve a website from elsewhere.</p>
 records of your domain pointing at it. Caddy gets the certificate from Let&#39;s Encrypt on the
 first request.</p>
 </li>
-<li><p>Create <code>deploy/.env</code> (Git ignores it; <a href="https://github.com/rim-platform/rim-server/blob/6a55ebf3c053ea83f1cf37d81748d31f3975b00b/deploy/.env.example"><code>deploy/.env.example</code></a> lists every setting):</p>
+<li><p>Create <code>deploy/.env</code> (Git ignores it; <a href="https://github.com/rim-platform/rim-server/blob/553bf5ddfc87d056e4c3e11acd3cc0eaa966b647/deploy/.env.example"><code>deploy/.env.example</code></a> lists every setting):</p>
 <pre><code class="language-sh">cat &gt; deploy/.env &lt;&lt;EOF
 POSTGRES_PASSWORD=$(openssl rand -base64 32 | tr -d '/+=')
 RIM_DOMAIN=relay.example.org
@@ -113,15 +113,26 @@ dc pull &amp;&amp; dc up -d</code></pre>
 proof-of-work, principal and peer blocks, abuse reports, key rotation) are listed in the runbook,
 &quot;Command reference&quot;.</p>
 <h2 id="metrics-to-grafana-cloud">Metrics to Grafana Cloud <a class="anchor" href="#metrics-to-grafana-cloud" aria-label="Link to this section">#</a></h2>
-<p><a href="https://github.com/rim-platform/rim-server/blob/6a55ebf3c053ea83f1cf37d81748d31f3975b00b/deploy/compose.monitoring.yml"><code>compose.monitoring.yml</code></a> on top turns on the server&#39;s metrics listener and adds a Grafana Alloy
-collector (<a href="https://github.com/rim-platform/rim-server/blob/6a55ebf3c053ea83f1cf37d81748d31f3975b00b/deploy/monitoring.alloy"><code>monitoring.alloy</code></a>): every 15 seconds it scrapes the server&#39;s metrics (job <code>rim</code>),
+<p><a href="https://github.com/rim-platform/rim-server/blob/553bf5ddfc87d056e4c3e11acd3cc0eaa966b647/deploy/compose.monitoring.yml"><code>compose.monitoring.yml</code></a> on top turns on the server&#39;s metrics listener and adds a Grafana Alloy
+collector (<a href="https://github.com/rim-platform/rim-server/blob/553bf5ddfc87d056e4c3e11acd3cc0eaa966b647/deploy/monitoring.alloy"><code>monitoring.alloy</code></a>): every 15 seconds it scrapes the server&#39;s metrics (job <code>rim</code>),
 probes <code>/readyz</code> (job <code>rim-readyz</code>) and reads the host&#39;s CPU, memory and filesystems (job
 <code>node</code>), and remote-writes them to Grafana Cloud. Nothing new is published; the collector only
-connects out. Add the three settings <a href="https://github.com/rim-platform/rim-server/blob/6a55ebf3c053ea83f1cf37d81748d31f3975b00b/deploy/.env.example"><code>deploy/.env.example</code></a> describes under &quot;Monitoring&quot; to
+connects out. Add the three settings <a href="https://github.com/rim-platform/rim-server/blob/553bf5ddfc87d056e4c3e11acd3cc0eaa966b647/deploy/.env.example"><code>deploy/.env.example</code></a> describes under &quot;Monitoring&quot; to
 <code>deploy/.env</code>, then put the overlay in the alias:</p>
 <pre><code class="language-sh">alias dc='docker compose -f deploy/compose.yml -f deploy/compose.relay.yml -f deploy/compose.monitoring.yml'
 dc up -d
 dc logs alloy          # no &quot;level=error&quot; once it scrapes and sends</code></pre>
+<p>Each compose service&#39;s CPU and memory use (job <code>cadvisor</code>) comes from a second overlay,
+<a href="https://github.com/rim-platform/rim-server/blob/553bf5ddfc87d056e4c3e11acd3cc0eaa966b647/deploy/compose.monitoring-containers.yml"><code>compose.monitoring-containers.yml</code></a>, on rootful Docker on Linux. It runs cAdvisor behind a
+Docker socket proxy and a containerd socket proxy that let it make only read-only calls;
+<a href="../operations/metrics.html"><code>docs/operations/metrics.md</code></a>, &quot;Container metrics&quot;, says which and what they still expose. It
+covers the containerd image store, the default of a new Docker 29 install; on the older
+<code>overlay2</code> storage driver (<code>docker info --format '{{.Driver}}'</code>) add
+<a href="https://github.com/rim-platform/rim-server/blob/553bf5ddfc87d056e4c3e11acd3cc0eaa966b647/deploy/compose.monitoring-containers-overlay2.yml"><code>compose.monitoring-containers-overlay2.yml</code></a> after it. Set <code>DOCKER_GID</code> in <code>deploy/.env</code> and
+add the overlay after <a href="https://github.com/rim-platform/rim-server/blob/553bf5ddfc87d056e4c3e11acd3cc0eaa966b647/deploy/compose.monitoring.yml"><code>compose.monitoring.yml</code></a>:</p>
+<pre><code class="language-sh">echo &quot;DOCKER_GID=$(stat -c %g /var/run/docker.sock)&quot; &gt;&gt; deploy/.env
+alias dc='docker compose -f deploy/compose.yml -f deploy/compose.relay.yml -f deploy/compose.monitoring.yml -f deploy/compose.monitoring-containers.yml'
+dc up -d</code></pre>
 <p>The dashboards and alert rules that read these series are in the
 <a href="https://github.com/rim-platform/rim-monitoring">rim-monitoring</a> repository;
 <a href="../operations/metrics.html"><code>docs/operations/metrics.md</code></a> lists the metrics.</p>
@@ -161,7 +172,7 @@ included; and sets <code>X-Forwarded-Proto</code>;</li>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/6a55ebf3c053ea83f1cf37d81748d31f3975b00b/deploy/README.md">rim-server/deploy/README.md</a> at <code>6a55ebf</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/553bf5ddfc87d056e4c3e11acd3cc0eaa966b647/deploy/README.md">rim-server/deploy/README.md</a> at <code>553bf5d</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

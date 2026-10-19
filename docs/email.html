@@ -162,6 +162,13 @@ exists and never fail because of an SMTP hiccup.</p>
 <li>The address is validated server-side (same format check used for signup emails) <strong>before</strong>
 the invite is persisted — a malformed address returns a validation error immediately, rather
 than silently dropping the invite email after the invite is already created.</li>
+<li>The email counts against <code>RIM_LIMIT_INVITES_PER_USER_PER_DAY</code> (default 50, 0 turns it
+off), which caps the invite emails one user sends in 24 hours as well as the invites they
+create, so an account cannot use the server to mail arbitrary addresses in bulk. Emails are
+counted apart from the invites, so deleting a workspace, which deletes its invites, does not
+give the count back; the count is held in memory and starts over when the server restarts.
+Past the cap the whole <code>createInvite</code> is refused (<code>VALIDATION</code>, &quot;this instance allows 50
+invite emails per user per day&quot;) and no invite is created.</li>
 <li>After the invite is created, the invite link is built and
 <code>templates::invite(to, link)</code> is sent. <strong>Send failure is non-fatal</strong> — the invite is still
 created and the raw token is still returned in the response either way (the copy-paste flow
@@ -169,11 +176,14 @@ keeps working even if email delivery fails).</li>
 </ol>
 <p>If <code>recipientEmail</code> is omitted, no email is sent and the raw token is the only way to share the
 invite.</p>
+<p><code>recipientEmail</code> only says where to send the link. It does not bind the invite to that address:
+whoever holds the link can use it, whatever their address, until it is used up, expires or is
+revoked.</p>
 <h3 id="notification-digest">Notification digest <a class="anchor" href="#notification-digest" aria-label="Link to this section">#</a></h3>
 <p>A user can ask for unread notifications by email: <code>digest</code> in their workspace notification
 settings is <code>OFF</code> (default), <code>HOURLY</code> or <code>DAILY</code> (<a href="messaging.html"><code>docs/messaging.md</code></a>, Notification rules). A
 periodic job (<code>rim_infra_services::notification::DefaultNotificationJobs</code>, driven from
-<a href="https://github.com/rim-platform/rim-server/blob/6a55ebf3c053ea83f1cf37d81748d31f3975b00b/rim_server/src/app.rs"><code>rim_server/src/app.rs</code></a>, every <code>RIM_NOTIFICATION_DIGEST_INTERVAL_SECS</code> seconds, default 900, minimum 60) sends one email per user per workspace when all of these hold:</p>
+<a href="https://github.com/rim-platform/rim-server/blob/553bf5ddfc87d056e4c3e11acd3cc0eaa966b647/rim_server/src/app.rs"><code>rim_server/src/app.rs</code></a>, every <code>RIM_NOTIFICATION_DIGEST_INTERVAL_SECS</code> seconds, default 900, minimum 60) sends one email per user per workspace when all of these hold:</p>
 <ul>
 <li>the oldest unread, un-emailed notification is at least one interval old (hourly: 60 minutes,
 daily: 24 hours);</li>
@@ -222,7 +232,7 @@ would be the path if one is wanted.</li>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/6a55ebf3c053ea83f1cf37d81748d31f3975b00b/docs/email.md">rim-server/docs/email.md</a> at <code>6a55ebf</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/553bf5ddfc87d056e4c3e11acd3cc0eaa966b647/docs/email.md">rim-server/docs/email.md</a> at <code>553bf5d</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

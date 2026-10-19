@@ -35,7 +35,7 @@
   <div class="page with-toc">
     <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
 <ol>
-<li><a href="#group-invite">Invite (2)</a></li>
+<li><a href="#group-invite">Invite (3)</a></li>
 <li><a href="#group-server">Server (2)</a></li>
 <li><a href="#group-message">Message (9)</a></li>
 <li><a href="#group-conversation">Conversation (11)</a></li>
@@ -58,11 +58,11 @@
 </details></aside>
     <main id="content" class="prose">
 <h1>Mutation</h1>
-<p class="lede">120 mutations, grouped by the domain their name starts with or names, in the order the schema lists them.</p>
+<p class="lede">121 mutations, grouped by the domain their name starts with or names, in the order the schema lists them.</p>
 <input id="filter" class="search" type="search" placeholder="Filter fields by name" aria-label="Filter fields by name" autocomplete="off">
 <p id="filter-none" class="muted" hidden>Nothing matches.</p>
 <section data-group>
-<h2 id="group-invite">Invite <span class="faint">2</span></h2>
+<h2 id="group-invite">Invite <span class="faint">3</span></h2>
 <section class="entry" id="createInvite" data-name="createInvite">
 <h3><code>createInvite</code></h3>
 <div class="sig">createInvite(input: <a href="inputs.html#CreateInviteInput">CreateInviteInput</a>!): <a href="objects.html#CreateInvitePayload">CreateInvitePayload</a>!</div>
@@ -79,6 +79,16 @@ In open mode, all token fields must be absent.
 Refused with <code>FORBIDDEN</code> when <code>serverInfo.signupRequiresKeys</code> is true: new accounts then
 sign up with <a href="mutation.html#signupWithKey"><code>signupWithKey</code></a>.</p>
 <p>On success, sets session and CSRF cookies via <code>AuthIntent</code>.</p>
+</div>
+
+</section>
+<section class="entry" id="revokeInvite" data-name="revokeInvite">
+<h3><code>revokeInvite</code></h3>
+<div class="sig">revokeInvite(inviteId: <a href="scalars.html#ID">ID</a>!): <a href="objects.html#WorkspaceInvite">WorkspaceInvite</a>!</div>
+<div class="desc"><p>Revoke a workspace invite: from now on it admits nobody, and members who joined with it
+stay. Owner of the invite&#39;s workspace only (<code>FORBIDDEN</code> for its other members);
+<code>NOT_FOUND</code> for an unknown invite or one of a workspace the caller is not in. Revoking a
+revoked invite returns it unchanged.</p>
 </div>
 
 </section>
@@ -1136,7 +1146,7 @@ seconds. Instance operators only; anyone else gets <code>FORBIDDEN</code>.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Generated from <a href="https://github.com/rim-platform/rim-ui/blob/aff6aa1a3fe0fa2908c64b69522472d3b18364b4/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>aff6aa1</code></span>
+    <span>Generated from <a href="https://github.com/rim-platform/rim-ui/blob/5f5245a76a53b439df6beceb63f49e55f84d406e/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>5f5245a</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

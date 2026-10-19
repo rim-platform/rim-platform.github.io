@@ -42,7 +42,7 @@
 <li><a href="#group-message">Message (8)</a></li>
 <li><a href="#group-search">Search (1)</a></li>
 <li><a href="#group-server">Server (6)</a></li>
-<li><a href="#group-workspace">Workspace (4)</a></li>
+<li><a href="#group-workspace">Workspace (5)</a></li>
 <li><a href="#group-emoji">Emoji (1)</a></li>
 <li><a href="#group-macro">Macro (2)</a></li>
 <li><a href="#group-pipeline">Pipeline (1)</a></li>
@@ -59,7 +59,7 @@
 </details></aside>
     <main id="content" class="prose">
 <h1>Query</h1>
-<p class="lede">63 queries, grouped by the domain their name starts with or names, in the order the schema lists them.</p>
+<p class="lede">64 queries, grouped by the domain their name starts with or names, in the order the schema lists them.</p>
 <input id="filter" class="search" type="search" placeholder="Filter fields by name" aria-label="Filter fields by name" autocomplete="off">
 <p id="filter-none" class="muted" hidden>Nothing matches.</p>
 <section data-group>
@@ -323,7 +323,7 @@ terms URL, limits and DM settings. Readable without a session.</p>
 </section>
 </section>
 <section data-group>
-<h2 id="group-workspace">Workspace <span class="faint">4</span></h2>
+<h2 id="group-workspace">Workspace <span class="faint">5</span></h2>
 <section class="entry" id="workspacePresence" data-name="workspacePresence">
 <h3><code>workspacePresence</code></h3>
 <div class="sig">workspacePresence(workspaceId: <a href="scalars.html#ID">ID</a>!): [<a href="objects.html#UserPresenceGql">UserPresenceGql</a>!]!</div>
@@ -357,6 +357,21 @@ they share a conversation with, as in the member directory.</p>
 <h3><code>workspacePlugins</code></h3>
 <div class="sig">workspacePlugins(serverId: <a href="scalars.html#ID">ID</a>!): [<a href="objects.html#WorkspacePlugin">WorkspacePlugin</a>!]!</div>
 <div class="desc"><p>The workspace&#39;s plugin registry, ordered by plugin id. Any member, guests included.</p>
+</div>
+
+</section>
+<section class="entry" id="workspaceInvites" data-name="workspaceInvites">
+<h3><code>workspaceInvites</code></h3>
+<div class="sig">workspaceInvites(
+  serverId: <a href="scalars.html#ID">ID</a>!
+  dir: <a href="enums.html#PageDir">PageDir</a>
+  cursor: <a href="inputs.html#WorkspaceInviteCursorInput">WorkspaceInviteCursorInput</a>
+  limit: <a href="scalars.html#Int">Int</a>
+): <a href="objects.html#WorkspaceInvitePage">WorkspaceInvitePage</a>!</div>
+<div class="desc"><p>The workspace&#39;s invites, newest first (<code>createdAt DESC, id DESC</code>), revoked, expired and
+used-up ones included. <code>AFTER</code> pages go to older invites. Defaults: <code>dir</code> <code>AFTER</code>,
+<code>limit</code> 50 (clamped to 1..=100). Owner only: anyone else gets <code>FORBIDDEN</code>. An invite&#39;s
+token is never listed.</p>
 </div>
 
 </section>
@@ -685,7 +700,7 @@ floors are taken in, with where a refusing floor comes from.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Generated from <a href="https://github.com/rim-platform/rim-ui/blob/aff6aa1a3fe0fa2908c64b69522472d3b18364b4/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>aff6aa1</code></span>
+    <span>Generated from <a href="https://github.com/rim-platform/rim-ui/blob/5f5245a76a53b439df6beceb63f49e55f84d406e/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>5f5245a</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>
