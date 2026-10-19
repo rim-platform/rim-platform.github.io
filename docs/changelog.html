@@ -55,13 +55,19 @@ not.</li>
 <li>A change the operator has to act on (a new required setting, a migration that rewrites a
 large table, a contract migration, a changed default) starts with <strong>Upgrade:</strong> and says what
 to do. <a href="operations/upgrade.html"><code>docs/operations/upgrade.md</code></a> is how an upgrade runs.</li>
-<li>A change to the GraphQL schema or a spec in <a href="https://github.com/rim-platform/rim-server/tree/b5efadebef4d2b9551062488269d93956766a34d/docs/specs"><code>docs/specs/</code></a> names the type, field or spec.</li>
+<li>A change to the GraphQL schema or a spec in <a href="https://github.com/rim-platform/rim-server/tree/926e2affb3ad930e06e13135845a6a5ddd1c11c4/docs/specs"><code>docs/specs/</code></a> names the type, field or spec.</li>
 <li>At release time <code>Unreleased</code> becomes <code>## [&lt;version&gt;] - &lt;YYYY-MM-DD&gt;</code> and a new empty
 <code>Unreleased</code> starts above it (<a href="operations/release-checklist.html"><code>docs/operations/release-checklist.md</code></a>).</li>
 </ul>
 <h2 id="unreleased"><a href="https://github.com/rim-platform/rim-server/commits/master">Unreleased</a> <a class="anchor" href="#unreleased" aria-label="Link to this section">#</a></h2>
 <h3 id="added">Added <a class="anchor" href="#added" aria-label="Link to this section">#</a></h3>
 <ul>
+<li><p>Production monitoring metrics for local accounts and activity, committed plaintext and
+encrypted messages, GraphQL operations, WebSocket connections and pending device delivery.
+Relay delivery metrics distinguish device acknowledgements from human read receipts and
+stored queue rows. Adds <code>user_activity</code> for persistent, throttled activity tracking.
+<a href="operations/metrics.html"><code>docs/operations/metrics.md</code></a> describes their scope and sampling.</p>
+</li>
 <li><p>Who may start a DM, in three layers where each only tightens the one above (&quot;Who May Start A
 DM&quot; in <a href="messaging.html"><code>docs/messaging.md</code></a>). The operator sets <code>RIM_DM_INBOUND</code> (<code>open</code>, <code>requests</code> by default,
 <code>partners</code>, <code>none</code>), <code>RIM_DM_OUTBOUND</code> (<code>allowed</code> by default, <code>partners</code>, <code>none</code>) and
@@ -209,6 +215,14 @@ now 16 to 21. <a href="decisions/plugin-settings-2026-10-18.html"><code>docs/dec
 </ul>
 <h3 id="changed">Changed <a class="anchor" href="#changed" aria-label="Link to this section">#</a></h3>
 <ul>
+<li><p><strong>Upgrade:</strong> usernames are stored lowercase and compared without regard to case. A signup
+stores <code>Alice</code> as <code>alice</code> and refuses <code>aLiCe</code> once <code>alice</code> exists (<code>CONFLICT</code>); <code>login</code>,
+<code>requestPasswordReset</code>, <code>requestAccountDeletion</code>, <code>from:@name</code> in message search and the
+<code>rim_server operator</code> commands accept a username in any case. A migration adds a unique index
+on the lowercased username and fails while two accounts have usernames that differ only in
+case: find them with <code>SELECT lower(username) FROM &quot;user&quot; GROUP BY 1 HAVING count(*) &gt; 1</code> and
+rename one of each pair before upgrading.</p>
+</li>
 <li><p>A confirmation of a command now lasts 60 seconds, at most 300, instead of five, so a person
 has time to read the confirmation dialog and answer it before it lapses. A proof is still good
 once, for the same caller, command, arguments and context (&quot;Confirmation gate (H1)&quot; in
@@ -246,7 +260,7 @@ identity, sign up with a key and link other devices; a browser-held identity is 
 up, the recovery kit is shown after signup or enrollment and its entropy is kept until the
 person confirms they saved it.</p>
 </li>
-<li><p><strong>Upgrade:</strong> <a href="https://github.com/rim-platform/rim-server/blob/b5efadebef4d2b9551062488269d93956766a34d/deploy/compose.yml"><code>deploy/compose.yml</code></a> runs the published images <code>ghcr.io/rim-platform/rim-server</code>
+<li><p><strong>Upgrade:</strong> <a href="https://github.com/rim-platform/rim-server/blob/926e2affb3ad930e06e13135845a6a5ddd1c11c4/deploy/compose.yml"><code>deploy/compose.yml</code></a> runs the published images <code>ghcr.io/rim-platform/rim-server</code>
 and <code>ghcr.io/rim-platform/rim-web</code> at <code>RIM_VERSION</code> (default <code>latest</code>) instead of building
 them. Set <code>RIM_VERSION</code> in <code>deploy/.env</code> to the release you run, and run <code>pull</code> then <code>up -d</code>
 where you ran <code>up -d --build</code>. Operators who build locally add <code>-f deploy/compose.dev.yml</code> to
@@ -354,12 +368,61 @@ creator who has left the workspace has no pipeline firing. Only the creator is t
 pipeline fires or is suspended, and <code>PipelineGql.lastFiredAt</code> reads null for everyone else.
 Before, any member could build a pipeline with a text or author filter and learn from its
 firing when a private conversation they were not in received a matching message.</li>
+<li>A password sign-in that finishes while the account&#39;s password is reset, a key is enrolled or
+an operator bans the account no longer leaves a working session behind: its session either
+ends with the others or is never created, the sign-in refused like a wrong password
+(<code>UNAUTHENTICATED</code>) after a reset or an enrollment and with <code>FORBIDDEN</code> after a ban. Before,
+a sign-in with the old password that was already being checked could create a session after
+the reset or enrollment had ended all the others.</li>
+<li>GraphQL a relay forwards for one of its users keeps this server&#39;s <code>RIM_API_MAX_BATCH</code> and
+<code>RIM_RATE_MUTATIONS_PER_MIN_PER_SESSION</code>, the mutation budget counted per device of the remote
+user, with the same refusals as <code>/api</code>. Before, a forwarded batch ran with no batch cap and
+no mutation budget.</li>
+<li>A workspace state key with non-ASCII characters, given to <code>setWorkspaceState</code> or to the
+<code>state.incr</code> command, is refused with a <code>VALIDATION</code> error. Before, a key with a non-ASCII
+character across its 64th byte made the request fail instead.</li>
+<li>A message&#39;s reactions, <code>reactedByMe</code> included, are read for the user who asked. Before, when
+several users&#39; requests loaded reactions at the same moment, one of them could be shown
+another user&#39;s reaction state.</li>
+<li>A <code>workspaceEvents</code> subscription that falls behind and misses events checks the subscriber&#39;s
+membership and role again before it delivers the next event, and ends when they are no
+longer a member of the workspace. Before, a member whose removal or demotion to guest was
+among the missed events went on receiving the workspace&#39;s events as before.</li>
+<li>An identity recovered with the recovery phrase reaches other servers again. The identity
+document a relay serves and pushes (<code>GET /s2s/v1/principals/&lt;id&gt;</code>) leaves out the devices
+the recovery revoked, so hosts accept it, apply the recovery and revoke those devices; before,
+hosts refused the whole document and kept trusting the old devices, and the person could not
+be looked up or join a workspace on another server. A receiver ignores such a device instead
+of refusing the document, and a document past 64 devices keeps the current ones. Identity key
+rotations and recoveries are now pushed to hosts like device and card changes
+(<code>server-to-server-v1.md</code> &quot;Profile cards and contacts&quot;, <code>key-identity-v1.md</code> &quot;Rotation and
+recovery&quot;).</li>
+<li>A host applies an identity pushed for someone from another server (<code>POST /s2s/v1/identity</code>)
+only from a relay that speaks for them: one their profile card lists (or a newer pushed card
+lists), their home relay while they have no card, or one holding a delegation of one of
+their devices. Any other server gets <code>403 not_delegated</code> and nothing changes. Before, any
+peer could push a copy of someone&#39;s public identity and switch their devices&#39; encryption
+activity on or off or become the relay the host refreshed them from. The relay a local user
+names, or one presenting a delegation or revocation for an unknown device, likewise only
+updates a known person when it speaks for them; refreshes go to the relays the person&#39;s card
+lists and then their home relay. <code>RIM_HOST_ALLOWED_RELAYS</code> now covers identity pushes too.
+<a href="../specs/server-to-server-v1.html"><code>docs/specs/server-to-server-v1.md</code></a> (&quot;Profile cards and contacts (7.4a)&quot;, &quot;Remote users on a
+host&quot;, the threat model) states the rule.</li>
+<li>User commands have limits: at most 20 steps each, at most 100 per user, at most eight nested,
+and at most 100 built-in steps in one run, nested user commands and pipe stages included.
+<code>createUserCommand</code> and <code>updateUserCommand</code> refuse a command over a limit with a <code>VALIDATION</code>
+error naming it. A stored user command nested deeper than eight or expanding past 100 built-in
+steps is refused when it runs, before any step runs, and <code>commands</code> leaves out a user command
+that does not resolve instead of failing. A disabled user command no longer runs
+(<code>NOT_FOUND</code>). Before, a few small user commands naming each other many times made one lookup
+or run do work that grew exponentially (&quot;User Commands And Macros&quot; in
+<a href="command_model.html"><code>docs/command_model.md</code></a>).</li>
 </ul>
 
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/b5efadebef4d2b9551062488269d93956766a34d/CHANGELOG.md">rim-server/CHANGELOG.md</a> at <code>b5efade</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/926e2affb3ad930e06e13135845a6a5ddd1c11c4/CHANGELOG.md">rim-server/CHANGELOG.md</a> at <code>926e2af</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

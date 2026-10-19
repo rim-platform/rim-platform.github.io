@@ -49,6 +49,10 @@ with the commits it names in each page's footer.
 
 `index.html` is written by hand and is not touched by the build; the checks cover its links.
 
+Pull requests and pushes to `master` check the committed pages in CI using Node 22.
+Rebuild locally from the intended source commits before submitting generated changes; CI
+checks the HTML that Pages will serve without fetching newer application sources.
+
 ## Publishing
 
 The repository is public and Pages serves it from branch `master`, folder `/`, at the custom

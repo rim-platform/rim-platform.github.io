@@ -456,6 +456,24 @@ its steps in order, each with its own arguments, in the context of the run. <cod
 <p>Neither pipes: each step&#39;s payload is collected under its command id in the result, and no step
 receives another step&#39;s result. Only <code>executeCommand</code> with <code>isPipe</code> (the palette&#39;s <code>|</code>) passes
 one command&#39;s result to the next stage.</p>
+<p>A user command has limits that keep one run, and one lookup of its definition, bounded:</p>
+<ul>
+<li>it lists at most 20 steps, and a user keeps at most 100 user commands</li>
+<li>a chain of user commands naming user commands holds at most eight</li>
+<li>one run performs at most 100 built-in steps: a nested user command counts its own steps each
+time a step names it, and the stages of a pipe count together</li>
+</ul>
+<p><code>createUserCommand</code> and <code>updateUserCommand</code> refuse a command over a limit with a <code>VALIDATION</code>
+error that names it: &quot;a user command may have at most 20 steps&quot;, &quot;a user may have at most 100
+user commands&quot;, &quot;user command recursion depth exceeded&quot; or &quot;a user command expands to more
+than 100 steps&quot;. An update is refused the same way when it would take a stored command that
+names the updated one past 100 steps. A stored user command that nests deeper than eight or
+expands past 100 steps, saved before these limits, is refused when it runs, before any of its
+steps runs; a pipe over 100 steps is refused with &quot;a pipe expands to more than 100 steps&quot;.
+<code>commands</code> leaves out a user command whose definition cannot be resolved (one past 100 steps,
+or with a step naming an unknown or disabled command, or a cycle) and lists the rest. A
+disabled user command does not run: <code>executeCommand</code> answers <code>NOT_FOUND</code> for it, as for an id
+that names no command.</p>
 <p>A macro run asks for one confirmation up front when the macro&#39;s own <code>sensitivity</code> is
 <code>Restricted</code> or when any step needs one under the confirmation gate below, judged with the
 run&#39;s initiator: a dangerous step, a <code>Restricted</code> one, or a <code>Mutating</code> one the agent or a plugin
@@ -757,7 +775,7 @@ it later.</li>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/b5efadebef4d2b9551062488269d93956766a34d/docs/command_model.md">rim-server/docs/command_model.md</a> at <code>b5efade</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/926e2affb3ad930e06e13135845a6a5ddd1c11c4/docs/command_model.md">rim-server/docs/command_model.md</a> at <code>926e2af</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

@@ -93,9 +93,9 @@ purges are idempotent, so a second run finds nothing left to do.</p>
 </tr>
 <tr>
 <td>Metrics sampler</td>
-<td>30 seconds</td>
+<td>30 seconds, first at boot</td>
 <td>runs when <code>RIM_METRICS_ADDR</code> is set</td>
-<td>Reads the relay queue, the database pool and pending migrations into gauges (<a href="metrics.html"><code>docs/operations/metrics.md</code></a>).</td>
+<td>Reads local account/activity totals, stored relay rows, pending device delivery and pending migrations into gauges. Tracks success, failures and last-success time separately for each sample; the database pool is read on each scrape (<a href="metrics.html"><code>docs/operations/metrics.md</code></a>).</td>
 </tr>
 <tr>
 <td>Audit retention</td>
@@ -144,7 +144,7 @@ purges are idempotent, so a second run finds nothing left to do.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/b5efadebef4d2b9551062488269d93956766a34d/docs/operations/background-jobs.md">rim-server/docs/operations/background-jobs.md</a> at <code>b5efade</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/926e2affb3ad930e06e13135845a6a5ddd1c11c4/docs/operations/background-jobs.md">rim-server/docs/operations/background-jobs.md</a> at <code>926e2af</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

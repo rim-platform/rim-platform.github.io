@@ -36,7 +36,7 @@
     <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
 <ol>
 <li><a href="#turning-them-on">Turning them on</a></li>
-<li><a href="#the-metrics">The metrics</a><ol><li><a href="#requests">Requests</a></li><li><a href="#refusals">Refusals</a></li><li><a href="#state">State</a></li><li><a href="#audit-retention">Audit retention</a></li><li><a href="#scheduled-purges">Scheduled purges</a></li></ol></li>
+<li><a href="#the-metrics">The metrics</a><ol><li><a href="#accounts-and-activity">Accounts and activity</a></li><li><a href="#messages">Messages</a></li><li><a href="#requests">Requests</a></li><li><a href="#graphql-and-connected-clients">GraphQL and connected clients</a></li><li><a href="#server-to-server-and-forwarded-requests">Server-to-server and forwarded requests</a></li><li><a href="#refusals">Refusals</a></li><li><a href="#state">State</a></li><li><a href="#pending-device-delivery">Pending device delivery</a></li><li><a href="#database-sampling-health">Database sampling health</a></li><li><a href="#scope-and-history">Scope and history</a></li><li><a href="#audit-retention">Audit retention</a></li><li><a href="#scheduled-purges">Scheduled purges</a></li></ol></li>
 <li><a href="#example-alert-rules">Example alert rules</a></li>
 </ol>
 </details></aside>
@@ -60,7 +60,7 @@ listener of its own. The API port never serves them.</p>
 <p>On a host, <code>127.0.0.1:9090</code> keeps the endpoint on the machine; run Prometheus there or scrape it
 through an SSH tunnel. In a container, <code>127.0.0.1</code> is the container itself, so bind
 <code>0.0.0.0:9090</code> and do not publish the port: Prometheus reaches it over the compose network.
-<a href="https://github.com/rim-platform/rim-server/blob/b5efadebef4d2b9551062488269d93956766a34d/deploy/compose.yml"><code>deploy/compose.yml</code></a> has the line commented out in the <code>rim</code> service.</p>
+<a href="https://github.com/rim-platform/rim-server/blob/926e2affb3ad930e06e13135845a6a5ddd1c11c4/deploy/compose.yml"><code>deploy/compose.yml</code></a> has the line commented out in the <code>rim</code> service.</p>
 <p>The endpoint has no authentication. Keep it on an internal network, and never route it through
 Caddy or any other public reverse proxy: it shows request rates, limiter names and queue sizes
 to whoever can read it.</p>
@@ -72,6 +72,64 @@ to whoever can read it.</p>
 <h2 id="the-metrics">The metrics <a class="anchor" href="#the-metrics" aria-label="Link to this section">#</a></h2>
 <p>Names start with <code>rim_</code>; counters end in <code>_total</code>, and the unit is part of the name
 (<code>_seconds</code>, <code>_bytes</code>, <code>_connections</code>, <code>_items</code>).</p>
+<p>Labels describe a fixed set of categories. They never contain user or device ids, conversation
+ids, message contents, raw paths, GraphQL aliases or client-chosen operation names.</p>
+<h3 id="accounts-and-activity">Accounts and activity <a class="anchor" href="#accounts-and-activity" aria-label="Link to this section">#</a></h3>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Type</th>
+<th>Labels</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>rim_registered_accounts</code></td>
+<td>gauge</td>
+<td></td>
+<td>Current local accounts, excluding remote identities and deleted accounts.</td>
+</tr>
+<tr>
+<td><code>rim_registrations_total</code></td>
+<td>counter</td>
+<td></td>
+<td>Successful local registrations since this process started.</td>
+</tr>
+<tr>
+<td><code>rim_active_users</code></td>
+<td>gauge</td>
+<td><code>window</code></td>
+<td>Distinct local accounts with authenticated application activity in the last <code>24h</code> or <code>7d</code>.</td>
+</tr>
+</tbody></table></div>
+<p>Registered accounts are accounts, not verified individual people. Activity means a successfully
+authenticated session request; it can include background synchronization and does not prove
+that a person is reading. Heartbeats on an already-open socket do not refresh this value by
+themselves. A persistent last-activity timestamp survives session removal and process restarts;
+writes are throttled to once per five minutes per user, so window boundaries can lag by that
+much. The gauge is sampled from the database rather than summing session or per-process counts.</p>
+<h3 id="messages">Messages <a class="anchor" href="#messages" aria-label="Link to this section">#</a></h3>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Type</th>
+<th>Labels</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>rim_messages_created_total</code></td>
+<td>counter</td>
+<td><code>encryption</code></td>
+<td>New committed messages, including replies and forwards; <code>plaintext</code> or <code>encrypted</code>.</td>
+</tr>
+</tbody></table></div>
+<p>Edits and retries returning an existing encrypted message do not create another count. A message
+is counted once where its creation commits, regardless of the number of recipients, devices or
+relays. Encrypted message contents are never inspected for monitoring. This measures server
+acceptance, not delivery or a human read receipt.</p>
 <h3 id="requests">Requests <a class="anchor" href="#requests" aria-label="Link to this section">#</a></h3>
 <div class="tablewrap"><table>
 <thead>
@@ -145,6 +203,78 @@ to whoever can read it.</p>
 </tr>
 </tbody></table></div>
 <p><code>status</code> is the status class: <code>1xx</code>, <code>2xx</code>, <code>3xx</code>, <code>4xx</code> or <code>5xx</code>.</p>
+<h3 id="graphql-and-connected-clients">GraphQL and connected clients <a class="anchor" href="#graphql-and-connected-clients" aria-label="Link to this section">#</a></h3>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Type</th>
+<th>Labels</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>rim_graphql_operations_total</code></td>
+<td>counter</td>
+<td><code>operation_type</code>, <code>field</code>, <code>outcome</code></td>
+<td>Executed GraphQL requests, including errors returned with HTTP 200.</td>
+</tr>
+<tr>
+<td><code>rim_graphql_operation_duration_seconds</code></td>
+<td>histogram</td>
+<td><code>operation_type</code>, <code>field</code>, <code>outcome</code></td>
+<td>GraphQL request duration, separate from subscription lifetimes.</td>
+</tr>
+<tr>
+<td><code>rim_graphql_failed_operations_total</code></td>
+<td>counter</td>
+<td><code>kind</code></td>
+<td>Failed requests classified as <code>internal</code>, <code>unknown</code> or <code>client</code>, counted once per request.</td>
+</tr>
+<tr>
+<td><code>rim_websocket_connections</code></td>
+<td>gauge</td>
+<td></td>
+<td>Open authenticated GraphQL WebSocket connections.</td>
+</tr>
+<tr>
+<td><code>rim_graphql_subscriptions</code></td>
+<td>gauge</td>
+<td></td>
+<td>Active GraphQL subscription streams.</td>
+</tr>
+<tr>
+<td><code>rim_graphql_subscription_responses_total</code></td>
+<td>counter</td>
+<td><code>outcome</code></td>
+<td>Responses yielded by subscription streams.</td>
+</tr>
+<tr>
+<td><code>rim_graphql_subscription_duration_seconds</code></td>
+<td>histogram</td>
+<td></td>
+<td>Subscription stream lifetime, including cancellation.</td>
+</tr>
+</tbody></table></div>
+<p><code>outcome</code> is <code>success</code> or <code>error</code>. <code>operation_type</code> is <code>query</code>, <code>mutation</code>, <code>subscription</code> or
+<code>unknown</code>. <code>field</code> names the selected root field only for <code>sendMessage</code>, <code>replyToMessage</code>,
+<code>forwardMessage</code>, <code>sendEncryptedMessage</code>, <code>messages</code>, <code>threadMessages</code> and <code>messageChanges</code>;
+other fields use <code>other</code>, several selected fields use <code>multiple</code>, and unclassifiable requests
+use <code>unknown</code>. Aliases and fragments do not introduce client-chosen labels. A request selecting
+several fields still counts once; this is a request rate rather than a count of resolver calls.</p>
+<p>A failed request containing an internal error is classified as <code>internal</code>; an unrecognized or
+missing error code is <code>unknown</code>; known authentication, authorization, validation and business
+errors are <code>client</code>. Parsing and schema validation failures are also <code>client</code>, even without an
+error code. Internal takes precedence over unknown, then client. Alert on internal
+and unknown failures separately from expected client refusals. Subscription response errors are
+counted on the stream metrics instead of treating the socket&#39;s successful HTTP upgrade as proof
+that all its operations succeed.</p>
+<p>These metrics observe requests that reach the GraphQL schema. Transport refusals before schema
+execution, such as CSRF checks or edge rate limiting, appear in HTTP and refusal metrics.</p>
+<p>Connections are not people: one account may have several tabs or devices, and one connection
+may have several subscriptions. Connection and subscription gauges return to zero when their
+last live connection or stream ends, including timeout, cancellation and session revocation.</p>
+<h3 id="server-to-server-and-forwarded-requests">Server-to-server and forwarded requests <a class="anchor" href="#server-to-server-and-forwarded-requests" aria-label="Link to this section">#</a></h3>
 <p><code>rim_s2s_requests_total{outcome}</code>:</p>
 <div class="tablewrap"><table>
 <thead>
@@ -328,7 +458,7 @@ server as a host running a forwarded request at <code>/s2s/v1/forward/…</code>
 </tr>
 <tr>
 <td><code>api_mutations</code></td>
-<td>Mutation fields per session, or per address without one (<code>RIM_RATE_MUTATIONS_PER_MIN_PER_SESSION</code>).</td>
+<td>Mutation fields per session, per device for requests forwarded by another server, or per address otherwise (<code>RIM_RATE_MUTATIONS_PER_MIN_PER_SESSION</code>).</td>
 </tr>
 <tr>
 <td><code>messages</code></td>
@@ -397,10 +527,138 @@ server as a host running a forwarded request at <code>/s2s/v1/forward/…</code>
 <td>Always <code>1</code>; <code>version</code> is the server version.</td>
 </tr>
 </tbody></table></div>
-<p><code>state</code> is <code>queued</code> for items waiting for devices to read them, <code>held</code> for items behind a DM
-request the recipient has not answered. The relay queue and the pending migrations are read from
-the database when the listener starts and every 30 seconds after; a read that fails or takes over
-5 seconds leaves the last value in place and logs a warning.</p>
+<p><code>state</code> is <code>queued</code> for stored items eligible for delivery, <code>held</code> for items behind a DM request
+the recipient has not answered. These gauges count stored rows: acknowledged or expired rows
+can remain until cleanup runs. They are not exact counts of pending delivery or unread messages.
+Queue byte gauges sum the bytes charged to each recipient item. Several items may share one
+stored envelope, so these gauges are not physical PostgreSQL or filesystem usage.</p>
+<h3 id="pending-device-delivery">Pending device delivery <a class="anchor" href="#pending-device-delivery" aria-label="Link to this section">#</a></h3>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Type</th>
+<th>Labels</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>rim_relay_pending_items</code></td>
+<td>gauge</td>
+<td></td>
+<td>Recipient queue rows awaiting acknowledgement by at least one eligible device.</td>
+</tr>
+<tr>
+<td><code>rim_relay_pending_bytes</code></td>
+<td>gauge</td>
+<td></td>
+<td>Bytes of those recipient rows, counted once per row.</td>
+</tr>
+<tr>
+<td><code>rim_relay_pending_device_items</code></td>
+<td>gauge</td>
+<td></td>
+<td>Pending item/device pairs; one row waiting for two devices counts twice.</td>
+</tr>
+<tr>
+<td><code>rim_relay_pending_users</code></td>
+<td>gauge</td>
+<td></td>
+<td>Users with at least one pending delivery.</td>
+</tr>
+<tr>
+<td><code>rim_relay_pending_devices</code></td>
+<td>gauge</td>
+<td></td>
+<td>Non-revoked devices with at least one pending delivery.</td>
+</tr>
+<tr>
+<td><code>rim_relay_oldest_pending_age_seconds</code></td>
+<td>gauge</td>
+<td></td>
+<td>Age of the oldest pending recipient row; zero when there is no pending delivery.</td>
+</tr>
+<tr>
+<td><code>rim_relay_enqueued_items_total</code></td>
+<td>counter</td>
+<td></td>
+<td>Recipient queue rows inserted by committed deliveries, including held items.</td>
+</tr>
+<tr>
+<td><code>rim_relay_ack_requests_total</code></td>
+<td>counter</td>
+<td></td>
+<td>Successful device acknowledgement requests, including repeated cursors.</td>
+</tr>
+<tr>
+<td><code>rim_relay_removed_items_total</code></td>
+<td>counter</td>
+<td><code>reason</code></td>
+<td>Actual queue rows removed as <code>acknowledged</code>, <code>expired</code> or <code>overflow</code>.</td>
+</tr>
+</tbody></table></div>
+<p>Pending delivery uses each eligible device&#39;s acknowledgement cursor. Held DM requests, expired
+items, revoked devices and items a newly added device is not eligible to receive do not count.
+A device-specific item only counts against its target device. One disconnected device can keep
+an item pending even after another device has acknowledged it.</p>
+<p>Relay items include message events and other events, such as membership or notification changes.
+Label these panels as relay items rather than messages. Acknowledgement means the client device
+has processed an item, not that its user has read a message. Items remain subject to the relay&#39;s
+retention period and byte cap; see <a href="../relay.html">Relay delivery</a>.</p>
+<p>For conversations hosted here, accepted local members fetch persisted conversation history
+when they reconnect. Their messages do not become relay queue rows merely because a local
+device is offline. Pending relay delivery therefore does not count every message an offline
+client could fetch, nor the messages its user has not read.</p>
+<p>The acknowledgement request rate is not a delivered-item rate: one request can acknowledge
+many items or repeat a previous cursor. A row removed as acknowledged has completed delivery
+to all its eligible devices. Cleanup and overflow counters describe rows actually removed,
+not the number of affected conversations. Other deletion paths, such as rejecting a DM request
+or deleting an account, are not included in those removal counters.</p>
+<h3 id="database-sampling-health">Database sampling health <a class="anchor" href="#database-sampling-health" aria-label="Link to this section">#</a></h3>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Type</th>
+<th>Labels</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>rim_database_sample_success</code></td>
+<td>gauge</td>
+<td><code>sample</code></td>
+<td><code>1</code> when the most recent sample succeeded, <code>0</code> when it failed or timed out.</td>
+</tr>
+<tr>
+<td><code>rim_database_sample_last_success_timestamp_seconds</code></td>
+<td>gauge</td>
+<td><code>sample</code></td>
+<td>Unix time of the last successful sample; zero until the first success.</td>
+</tr>
+<tr>
+<td><code>rim_database_sample_failures_total</code></td>
+<td>counter</td>
+<td><code>sample</code></td>
+<td>Failed or timed-out samples.</td>
+</tr>
+</tbody></table></div>
+<p><code>sample</code> is <code>usage</code>, <code>delivery</code>, <code>relay</code> (stored queue rows) or <code>migrations</code>.</p>
+<p>Database-backed gauges are read when the metrics listener starts and every 30 seconds after.
+A read that fails or takes over five seconds leaves its last successful values in place. Check
+sampler freshness alongside these values instead of treating an unchanged gauge as proof that
+collection is healthy.</p>
+<h3 id="scope-and-history">Scope and history <a class="anchor" href="#scope-and-history" aria-label="Link to this section">#</a></h3>
+<p>Metrics describe the deployment being scraped. A relay measures its local accounts and delivery
+queue; message creation is measured by the workspace host that commits the message. A relay
+does not learn how many messages another server has stored or whether another server&#39;s users
+have read them.</p>
+<p>Counters reset when a process restarts; use <code>rate()</code> or <code>increase()</code> over the desired interval.
+Prometheus only has history from when collection started, and events between the last scrape
+and a crash can be lost. These counters are operational measurements, not an accounting ledger.
+Do not interpret missing metrics or stale samples as zero. Database-backed gauges describe a
+shared database: scraping multiple processes using that database does not create additional
+users or queue items, so do not sum their identical gauges.</p>
 <h3 id="audit-retention">Audit retention <a class="anchor" href="#audit-retention" aria-label="Link to this section">#</a></h3>
 <div class="tablewrap"><table>
 <thead>
@@ -494,7 +752,7 @@ rim_db_pool_connections_in_use / rim_db_pool_max_connections &gt; 0.9</code></pr
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/b5efadebef4d2b9551062488269d93956766a34d/docs/operations/metrics.md">rim-server/docs/operations/metrics.md</a> at <code>b5efade</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/926e2affb3ad930e06e13135845a6a5ddd1c11c4/docs/operations/metrics.md">rim-server/docs/operations/metrics.md</a> at <code>926e2af</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>
