@@ -36,6 +36,7 @@
     <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
 <ol>
 <li><a href="#turning-them-on">Turning them on</a></li>
+<li><a href="#collecting-them-with-grafana-alloy">Collecting them with Grafana Alloy</a></li>
 <li><a href="#the-metrics">The metrics</a><ol><li><a href="#accounts-and-activity">Accounts and activity</a></li><li><a href="#messages">Messages</a></li><li><a href="#requests">Requests</a></li><li><a href="#graphql-and-connected-clients">GraphQL and connected clients</a></li><li><a href="#server-to-server-and-forwarded-requests">Server-to-server and forwarded requests</a></li><li><a href="#refusals">Refusals</a></li><li><a href="#state">State</a></li><li><a href="#pending-device-delivery">Pending device delivery</a></li><li><a href="#database-sampling-health">Database sampling health</a></li><li><a href="#scope-and-history">Scope and history</a></li><li><a href="#audit-retention">Audit retention</a></li><li><a href="#scheduled-purges">Scheduled purges</a></li></ol></li>
 <li><a href="#example-alert-rules">Example alert rules</a></li>
 </ol>
@@ -60,7 +61,8 @@ listener of its own. The API port never serves them.</p>
 <p>On a host, <code>127.0.0.1:9090</code> keeps the endpoint on the machine; run Prometheus there or scrape it
 through an SSH tunnel. In a container, <code>127.0.0.1</code> is the container itself, so bind
 <code>0.0.0.0:9090</code> and do not publish the port: Prometheus reaches it over the compose network.
-<a href="https://github.com/rim-platform/rim-server/blob/926e2affb3ad930e06e13135845a6a5ddd1c11c4/deploy/compose.yml"><code>deploy/compose.yml</code></a> has the line commented out in the <code>rim</code> service.</p>
+<a href="https://github.com/rim-platform/rim-server/blob/6a55ebf3c053ea83f1cf37d81748d31f3975b00b/deploy/compose.yml"><code>deploy/compose.yml</code></a> has the line commented out in the <code>rim</code> service;
+<a href="https://github.com/rim-platform/rim-server/blob/6a55ebf3c053ea83f1cf37d81748d31f3975b00b/deploy/compose.monitoring.yml"><code>deploy/compose.monitoring.yml</code></a> sets it (below).</p>
 <p>The endpoint has no authentication. Keep it on an internal network, and never route it through
 Caddy or any other public reverse proxy: it shows request rates, limiter names and queue sizes
 to whoever can read it.</p>
@@ -69,6 +71,41 @@ to whoever can read it.</p>
   - job_name: rim
     static_configs:
       - targets: [&quot;rim:9090&quot;]</code></pre>
+<h2 id="collecting-them-with-grafana-alloy">Collecting them with Grafana Alloy <a class="anchor" href="#collecting-them-with-grafana-alloy" aria-label="Link to this section">#</a></h2>
+<p><a href="https://github.com/rim-platform/rim-server/blob/6a55ebf3c053ea83f1cf37d81748d31f3975b00b/deploy/compose.monitoring.yml"><code>deploy/compose.monitoring.yml</code></a>, on top of <a href="https://github.com/rim-platform/rim-server/blob/6a55ebf3c053ea83f1cf37d81748d31f3975b00b/deploy/compose.yml"><code>deploy/compose.yml</code></a> (and <code>compose.relay.yml</code> for a
+relay), sets <code>RIM_METRICS_ADDR=0.0.0.0:9090</code> and adds a Grafana Alloy collector configured by
+<a href="https://github.com/rim-platform/rim-server/blob/6a55ebf3c053ea83f1cf37d81748d31f3975b00b/deploy/monitoring.alloy"><code>deploy/monitoring.alloy</code></a>. Alloy sits on the internal network next to rim-server, publishes no
+port, and every 15 seconds collects:</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Job</th>
+<th>What</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>rim</code></td>
+<td>rim-server&#39;s <code>/metrics</code> on <code>rim:9090</code>, with <code>up</code>.</td>
+</tr>
+<tr>
+<td><code>rim-readyz</code></td>
+<td><code>probe_success</code> of a GET of <code>http://rim:8080/readyz</code>: a <code>200</code> passes, a redirect fails. <code>instance</code> is that URL.</td>
+</tr>
+<tr>
+<td><code>node</code></td>
+<td>The host&#39;s CPU, memory, filesystem and network metrics (<code>node_*</code>), read from <code>/proc</code>, <code>/sys</code> and <code>/</code> mounted read-only. <code>instance</code> is <code>RIM_DOMAIN</code>.</td>
+</tr>
+<tr>
+<td><code>alloy</code></td>
+<td>The collector&#39;s own metrics, such as its remote-write queue.</td>
+</tr>
+</tbody></table></div>
+<p>It remote-writes them to <code>GRAFANA_CLOUD_METRICS_URL</code> with <code>GRAFANA_CLOUD_METRICS_USER</code> and
+<code>GRAFANA_CLOUD_METRICS_TOKEN</code> from <code>deploy/.env</code> (<a href="https://github.com/rim-platform/rim-server/blob/6a55ebf3c053ea83f1cf37d81748d31f3975b00b/deploy/.env.example"><code>deploy/.env.example</code></a> says where Grafana Cloud
+shows them); any Prometheus remote-write endpoint with basic authentication works the same way.
+Samples the endpoint does not accept are kept in Alloy&#39;s volume and retried for up to two
+hours. The dashboards and alert rules that read these series are in the
+<a href="https://github.com/rim-platform/rim-monitoring">rim-monitoring</a> repository.</p>
 <h2 id="the-metrics">The metrics <a class="anchor" href="#the-metrics" aria-label="Link to this section">#</a></h2>
 <p>Names start with <code>rim_</code>; counters end in <code>_total</code>, and the unit is part of the name
 (<code>_seconds</code>, <code>_bytes</code>, <code>_connections</code>, <code>_items</code>).</p>
@@ -752,7 +789,7 @@ rim_db_pool_connections_in_use / rim_db_pool_max_connections &gt; 0.9</code></pr
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/926e2affb3ad930e06e13135845a6a5ddd1c11c4/docs/operations/metrics.md">rim-server/docs/operations/metrics.md</a> at <code>926e2af</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/6a55ebf3c053ea83f1cf37d81748d31f3975b00b/docs/operations/metrics.md">rim-server/docs/operations/metrics.md</a> at <code>6a55ebf</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

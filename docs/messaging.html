@@ -40,7 +40,7 @@
 <li><a href="#channel-visibility-and-membership">Channel Visibility And Membership</a></li>
 <li><a href="#who-may-start-a-dm">Who May Start A DM</a></li>
 <li><a href="#archived-channels">Archived Channels</a></li>
-<li><a href="#roles-and-moderation">Roles And Moderation</a><ol><li><a href="#roles">Roles</a></li><li><a href="#guest-restrictions-enforced-in-the-services">Guest restrictions (enforced in the services)</a></li><li><a href="#kick-ban-timeout">Kick, ban, timeout</a></li><li><a href="#slow-mode">Slow mode</a></li><li><a href="#deleting-messages">Deleting messages</a></li><li><a href="#reports">Reports</a></li><li><a href="#audit">Audit</a></li><li><a href="#realtime-events">Realtime events</a></li></ol></li>
+<li><a href="#roles-and-moderation">Roles And Moderation</a><ol><li><a href="#roles">Roles</a></li><li><a href="#workspace-invites">Workspace invites</a></li><li><a href="#guest-restrictions-enforced-in-the-services">Guest restrictions (enforced in the services)</a></li><li><a href="#kick-ban-timeout">Kick, ban, timeout</a></li><li><a href="#slow-mode">Slow mode</a></li><li><a href="#deleting-messages">Deleting messages</a></li><li><a href="#reports">Reports</a></li><li><a href="#audit">Audit</a></li><li><a href="#realtime-events">Realtime events</a></li></ol></li>
 <li><a href="#notification-rules">Notification Rules</a><ol><li><a href="#settings">Settings</a></li><li><a href="#the-decision-per-member-except-the-author">The decision, per member except the author</a></li><li><a href="#reactions">Reactions</a></li><li><a href="#inbox">Inbox</a></li><li><a href="#notificationdue-event">NotificationDue event</a></li></ol></li>
 <li><a href="#titles">Titles</a></li>
 <li><a href="#timeline-and-threads">Timeline And Threads</a></li>
@@ -161,6 +161,16 @@ server; with <code>PARTNERS</code> it goes to the listed servers only.</li>
 <li><strong>Refused here.</strong> A DM in the direct space that a recipient here refuses answers <code>FORBIDDEN</code>
 when it is started (<code>createConversation</code>, <code>addConversationMembers</code>). A refused DM from another
 server is answered as for a block, so its server stops addressing the recipient.</li>
+<li><strong>Request limits.</strong> A conversation that would file a DM request with someone here meets the
+request inbox&#39;s limits when it is started (<code>createConversation</code>, <code>addConversationMembers</code>, in
+the direct space and for a workspace&#39;s DMs): <code>FORBIDDEN</code> (&quot;their request inbox is full&quot;) while
+the recipient holds 100 pending requests, and <code>RATE_LIMITED</code> with <code>retryAfterSeconds</code> (until
+the sender&#39;s oldest request of the last 24 hours leaves the window) once the sender would file
+more than <code>RIM_RELAY_DM_REQUESTS_PER_DAY</code> (20) requests in 24 hours on this server; a group
+counts each request it files. A DM delivered directly (from a contact, an Owner or Moderator,
+or a member the recipient takes DMs from directly) files no request and meets no limit, and
+reopening an existing DM files none. A conversation the request inbox still refuses for a
+recipient here is kept from them as an ignored request is, with no notification.</li>
 <li><strong>Workspace DMs.</strong> In a workspace hosted here, a DM a member whose relay is this server takes
 as a request is held in their request inbox like a DM from outside: until they accept it, it stays out of their
 <code>inboxConversations</code> and <code>workspaceEvents</code>, and its notifications and unread counts out of
@@ -226,6 +236,31 @@ unchanged. <code>ServerMember.timeoutUntil</code> is set while the member is tim
 <li><code>setMemberRole(serverId, userId, role)</code>: the Owner may set <code>MODERATOR</code>, <code>MEMBER</code> or <code>GUEST</code> on
 anyone but themselves; a Moderator may move a <code>MEMBER</code> to <code>GUEST</code> and back; everyone else gets
 <code>FORBIDDEN</code>. Changing your own role is <code>VALIDATION</code>. Emits <code>MemberRoleChanged</code>.</li>
+</ul>
+<h3 id="workspace-invites">Workspace invites <a class="anchor" href="#workspace-invites" aria-label="Link to this section">#</a></h3>
+<ul>
+<li><code>createInvite</code> is owner-only (<code>FORBIDDEN</code> for everyone else). <code>expiresAt</code> defaults to seven
+days from now and must be in the future and at most 30 days away, else <code>VALIDATION</code>; the
+same bounds as instance invites. <code>maxUses</code> defaults to 1 and is capped by
+<code>RIM_LIMIT_INVITE_MAX_USES</code> when the operator sets it. The token is returned once and never shown again.</li>
+<li><code>workspaceInvites(serverId, dir, cursor, limit)</code> lists the workspace&#39;s invites for its Owner
+(<code>FORBIDDEN</code> for everyone else): every invite, revoked, expired and used-up ones included,
+ordered <code>createdAt DESC, id DESC</code> with the standard cursor rules (<code>dir</code> defaults to <code>AFTER</code>,
+towards older invites; <code>limit</code> defaults to 50, at most 100). Each <code>WorkspaceInvite</code> has its
+role, <code>useCount</code>, <code>maxUses</code>, <code>expiresAt</code>, <code>createdAt</code>, <code>createdBy</code>, <code>revokedAt</code> and <code>state</code>:
+<code>REVOKED</code> when revoked, else <code>EXPIRED</code> once <code>expiresAt</code> has passed, else <code>USED_UP</code> once
+<code>useCount</code> reached <code>maxUses</code>, else <code>ACTIVE</code>. Neither the token nor its hash is listed.</li>
+<li><code>revokeInvite(inviteId)</code> ends an invite: it admits nobody from then on, and members who joined
+with it stay. Owner-only: another member of the invite&#39;s workspace gets <code>FORBIDDEN</code>; an
+unknown invite, or one of a workspace the caller is not a member of, is <code>NOT_FOUND</code>. Revoking
+a revoked invite answers it unchanged. The revocation is audit-logged
+(<code>workspace_invite_revoked</code>), as the creation is (<code>workspace_invite_created</code>).</li>
+<li>An invite stored without an expiry, by a server from before invites had to expire, keeps
+admitting until it is used up or revoked.</li>
+<li>Redeeming an invite (<code>joinServerByInvite</code>, <code>signupWithInvite</code>, <code>signupWithKey</code>, a join through
+another server) checks the revocation, the expiry and the uses in the same update that counts
+the use. A revoked, expired or used-up invite is <code>FORBIDDEN</code> for <code>joinServerByInvite</code>; a signup
+gets <code>INVALID_TOKEN</code> for a revoked or used-up invite and <code>EXPIRED_TOKEN</code> for an expired one.</li>
 </ul>
 <h3 id="guest-restrictions-enforced-in-the-services">Guest restrictions (enforced in the services) <a class="anchor" href="#guest-restrictions-enforced-in-the-services" aria-label="Link to this section">#</a></h3>
 <ul>
@@ -483,7 +518,7 @@ requires <code>blobSha256</code>, a fixed file name and type, and the upload is 
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/926e2affb3ad930e06e13135845a6a5ddd1c11c4/docs/messaging.md">rim-server/docs/messaging.md</a> at <code>926e2af</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/6a55ebf3c053ea83f1cf37d81748d31f3975b00b/docs/messaging.md">rim-server/docs/messaging.md</a> at <code>6a55ebf</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

@@ -64,7 +64,7 @@
 </details></aside>
     <main id="content" class="prose">
 <h1 id="server-to-server-v1">Server-to-server v1</h1>
-<p class="status"><span><b>Server-to-server v1</b></span><span>version 1</span><span>status: implemented, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/926e2affb3ad930e06e13135845a6a5ddd1c11c4/docs/specs/server-to-server-v1.md">rim-server/docs/specs/server-to-server-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/926e2affb3ad930e06e13135845a6a5ddd1c11c4">926e2af</a></span></p>
+<p class="status"><span><b>Server-to-server v1</b></span><span>version 1</span><span>status: implemented, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/6a55ebf3c053ea83f1cf37d81748d31f3975b00b/docs/specs/server-to-server-v1.md">rim-server/docs/specs/server-to-server-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/6a55ebf3c053ea83f1cf37d81748d31f3975b00b">6a55ebf</a></span></p>
 <p><em>Status: implemented, normative. Follows <a href="../docs/decisions/decentralization-2026-10-08.html"><code>docs/decisions/decentralization-2026-10-08.md</code></a> and
 <a href="../docs/decisions/relay-proxied-workspaces-2026-10-09.html"><code>docs/decisions/relay-proxied-workspaces-2026-10-09.md</code></a>. Read <a href="key-identity-v1.html"><code>key-identity-v1.md</code></a>,
 <a href="device-linking-v1.html"><code>device-linking-v1.md</code></a> and <a href="e2ee-mls-v1.html"><code>e2ee-mls-v1.md</code></a> first. This document is the contract between servers
@@ -779,10 +779,10 @@ the peer, so redelivery is idempotent. It refuses items for non-local principals
 (<code>unknown_principal</code>), items of a conversation it holds no invite or request for and workspace
 items without an active subscription (<code>not_subscribed</code>), invites from a principal the recipient
 blocked (<code>blocked</code>) or past the request limits (<code>limited</code>), a device-targeted item for an unknown
-device (<code>unknown_device</code>), and envelopes that do not verify under the delivering host&#39;s key or
-name another host (<code>invalid_envelope</code>). A refusal for one recipient carries <code>principalId</code>. The
-host skips a (relay, principal) for 24 hours after <code>unknown_principal</code> only; the other refusals
-are about one conversation or item.</li>
+device (<code>unknown_device</code>), and envelopes over 512 KiB, that do not verify under the delivering
+host&#39;s key or that name another host (<code>invalid_envelope</code>). A refusal for one recipient carries
+<code>principalId</code>. The host skips a (relay, principal) for 24 hours after <code>unknown_principal</code> only;
+the other refusals are about one conversation or item.</li>
 <li>Failures back off from 1 s doubling to 5 minutes. Outbox rows live 7 days; a relay down longer
 gets nothing and its clients catch up from the change feed. A relay may pull what it missed:
 <code>GET /s2s/v1/outbox?after=&lt;id&gt;&amp;limit=256</code> → <code>{&quot;items&quot;:[…],&quot;hasMore&quot;:false}</code>.</li>
@@ -802,10 +802,11 @@ cursor. A newly linked device starts at the newest item and reads history from t
 and the archive.</li>
 <li><strong>Retention</strong>: an item goes once every non-revoked device of its user acked it, and after
 <code>RIM_RELAY_RETENTION_DAYS</code> (30) regardless. Over the per-user byte cap the oldest go first and a
-<code>QueueOverflow</code> notice names the affected spaces. The notice is pushed to the devices online and
-not queued (a queued item is a host-signed envelope); a device offline then sees the gap in the
-streams&#39; <code>seq</code>. Plaintext channel events are readable by the relay
-while queued, as the relay decision accepts.</li>
+<code>QueueOverflow</code> notice names the affected spaces. Items held by a DM request are neither counted
+toward that cap nor dropped for it; their own caps bound them (see &quot;The request inbox&quot;). The
+notice is pushed to the devices online and not queued (a queued item is a host-signed
+envelope); a device offline then sees the gap in the streams&#39; <code>seq</code>. Plaintext channel events
+are readable by the relay while queued, as the relay decision accepts.</li>
 </ul>
 <h3 id="what-the-client-checks">What the client checks <a class="anchor" href="#what-the-client-checks" aria-label="Link to this section">#</a></h3>
 <p>For every <code>RelayItem</code>: the signature under the pinned key at <code>keySeq</code> (refetching on a newer seq);
@@ -836,7 +837,11 @@ unrevoked devices, then the most recently revoked. <code>POST /s2s/v1/identity</
 JSON; the receiver applies it only for principals it holds as remote: a log extending its
 copy, new devices with valid certificates, revocations, a card of higher version. A receiver
 ignores a listed device whose certificate a recovery voided, after checking its signature like
-any other; a recovery entry new to the receiver revokes every device it held for the person.
+any other; a recovery entry new to the receiver revokes every device it held for the person
+and ends all of the person&#39;s direct sessions and the delegations of those devices, and a
+revocation new to it ends that device&#39;s delegations and direct sessions, as
+<code>/s2s/v1/revocations</code> does. Live connections of the ended sessions close. The same applies to
+a document the receiver fetches.
 It applies it only from a relay that speaks for the principal: their newest stored card lists
 the relay&#39;s origin; the pushed card, verifying against the pushed log&#39;s head and of a higher
 version than the stored one, lists it; it is their <code>home_relay</code> and no card is stored; or it
@@ -955,14 +960,16 @@ or a principal Bob accepted before is delivered, and otherwise the strictest of 
 floor (<code>none</code> refuses senders on R_B too), the workspaces&#39; floors and Bob&#39;s choice makes it a
 request or a refusal (<code>blocked</code>). A <strong>contact</strong> is someone Bob added, accepted, or messaged first:
 the home records each other member of a DM as its creator&#39;s contact.</p>
-<p>A request is a <code>relay_dm_request</code> row: the sender&#39;s card, the conversation, and up to 3 held items of it,
-the <code>DmInvite</code> first (later ones dropped until accepted; the app reads them from the host). The
-app verifies the held <code>DmInvite</code> like any relay item to bind the conversation&#39;s space to its home
-before it reads or leaves it; ignoring or blocking keeps it with the request until the row
-expires. Only <code>DmRequestReceived</code> is pushed. An invite from a contact or a principal accepted
-before is recorded as a row accepted at once (<code>decided_at = created_at</code>), not listed by
-<code>dmRequests</code> and not counted by the limits, so every conversation R_B delivers for has a row and
-items of any other conversation are refused.</p>
+<p>A request is a <code>relay_dm_request</code> row: the sender&#39;s card, the conversation, and up to 3 held items
+of it in at most 1 MiB, the <code>DmInvite</code> first (later ones dropped until accepted; the app reads them
+from the host). The app verifies the held <code>DmInvite</code> like any relay item to bind the
+conversation&#39;s space to its home before it reads or leaves it; ignoring or blocking keeps it with
+the request until the row expires. Everything held for a recipient, pending requests&#39; items and
+the invites ignored requests keep, takes at most 16 MiB: past it a new <code>DmInvite</code> is refused
+(<code>limited</code>) and a later item dropped. Only <code>DmRequestReceived</code> is pushed. An invite from a
+contact or a principal accepted before is recorded as a row accepted at once
+(<code>decided_at = created_at</code>), not listed by <code>dmRequests</code> and not counted by the limits, so every
+conversation R_B delivers for has a row and items of any other conversation are refused.</p>
 <p>When the home and the recipient&#39;s relay are one server (Bob&#39;s relay hosts the conversation, and
 its creator is someone else, from another relay or not), the home files its own <code>DmInvite</code> for
 Bob through the same rule instead of delivering it; the creator&#39;s server is the home, or the home
@@ -1005,9 +1012,9 @@ messages before deciding. It may accept on its own a request from someone the pe
 for a shared workspace deliver directly (<code>myDmSettings</code>, checked on host-signed member lists),
 such as a member of a workspace hosted on another server, which R_B cannot see.
 Limits: 100 pending per recipient, 20 per sender principal per day per relay
-(<code>RIM_RELAY_DM_REQUESTS_PER_DAY</code>); <code>reportDmRequest(id, reason)</code> reports abuse: it files a
-<code>relay_abuse_report</code> row naming the reporter, the sender, the host and the request (audit
-<code>relay.dm_request_reported</code>), and a pending request is ignored.</p>
+(<code>RIM_RELAY_DM_REQUESTS_PER_DAY</code>), 16 MiB held per recipient; <code>reportDmRequest(id, reason)</code>
+reports abuse: it files a <code>relay_abuse_report</code> row naming the reporter, the sender, the host and
+the request (audit <code>relay.dm_request_reported</code>), and a pending request is ignored.</p>
 <p>Under <code>RIM_DM_INBOUND=partners</code> R_B answers <code>GET /s2s/v1/principals/&lt;id&gt;</code> only to the servers
 <code>RIM_DM_PARTNERS</code> lists (the S2S signature names the caller), under <code>none</code> to no server: <code>404</code>
 as for an unknown principal. <code>POST /s2s/v1/key-packages/claim</code> from those servers is refused with
@@ -1026,18 +1033,25 @@ relayStream                  ◄─── POST /s2s/v1/deliver         (events)<
 <ol>
 <li>The invite link is read like a device-link code: whitespace removed, at most 400 characters,
 split at the first four <code>:</code> after the scheme (the origin keeps its colons). The app pins H.</li>
-<li>The challenge is today&#39;s <code>keyLoginChallenge</code> (120 s, single use) over S2S:
+<li>The challenge has <code>keyLoginChallenge</code>&#39;s shape (120 s, single use) and comes over S2S:
 <code>POST /s2s/v1/join/challenge {&quot;inviteToken&quot;}</code> → <code>{&quot;challengeId&quot;,&quot;nonce&quot;,&quot;expiresAt&quot;,&quot;workspaceId&quot;}</code>.
+It is a join challenge, bound to the relay that asked for it: H consumes it only in that
+relay&#39;s <code>POST /s2s/v1/join</code>, and <code>loginWithKey</code>, <code>signupWithKey</code> and <code>enrollIdentityKey</code> refuse
+it, as the join refuses a challenge from <code>keyLoginChallenge</code> or one issued to another relay.
+So the relay cannot redeem the person&#39;s proof as a session at H.
 The invite link carries no workspace id, and the delegation must name one, so H answers the
 workspace the invite names, checked as <code>previewInviteToken</code> checks it and not used
 (<code>404 not_found</code> for an unknown invite, <code>403 forbidden</code> for one revoked, used up or expired);
 <code>workspaceId</code> is null without an invite. The device signs a <code>login</code> statement with
 <code>audience</code> = H&#39;s server id, so the proof is good only at H and the relay never vouches for the
-person.</li>
+person. The proof keeps the <code>login</code> format, so what it may be used for lives with the
+challenge H issued; a distinct join statement naming the relay would harden this further and
+is not part of v1.</li>
 <li>The device signs a delegation. R sends H <code>{&quot;inviteToken&quot;,&quot;keyLog&quot;:[…],&quot;devices&quot;:[{&quot;certificate&quot;,&quot;revocation&quot;}],&quot;card&quot;,&quot;proof&quot;,&quot;delegation&quot;}</code>.</li>
-<li>H verifies log, certificates, proof (claiming the challenge) and invite token (the rules of
-<code>joinServerByInvite</code>, bans included), creates or updates the remote user, adds the membership
-with the invite&#39;s role, stores devices and card, accepts the delegation, and answers
+<li>H verifies log, certificates, proof (claiming the join challenge it issued to R) and invite
+token (the rules of <code>joinServerByInvite</code>, bans included), creates or updates the remote user,
+adds the membership with the invite&#39;s role, stores devices and card, accepts the delegation,
+and answers
 <code>{&quot;workspaceId&quot;,&quot;userId&quot;,&quot;role&quot;,&quot;streamHeads&quot;:{&quot;w&quot;:17,&quot;u:rimp1_…&quot;:0}}</code>. R records the
 subscription; the app loads the space through the forward path. The join carries no
 <code>mlsActive</code>, so H marks devices it did not know inactive for encryption; R pushes the full
@@ -1130,8 +1144,11 @@ once per host (&quot;Connect directly to &lt;host&gt;? It will see your IP addre
 <li><strong>How.</strong> It fetches the host&#39;s discovery document directly and checks it against the pin, then
 calls <code>keyLoginChallenge</code> and <code>loginWithKey</code> on the host with <code>audience</code> = the host&#39;s server id.
 The host finds the remote user and device (refreshing its copy from the person&#39;s relays first,
-carrying on if they are down) and issues a device-bound session valid <strong>24 hours</strong> for a remote
-user (the host waits up to 10 seconds for the relays). The app then uses the host&#39;s <code>/api</code> and
+carrying on with the stored copy if none answers within 10 seconds) and issues a device-bound
+session valid <strong>24 hours</strong> for a remote user. When a relay answers with a document the host
+refuses (it does not verify, or its key log does not extend the stored one) and no relay&#39;s is
+stored, the sign-in is <code>UNAUTHENTICATED</code>: the stored copy may predate a recovery or revocation
+the relay could not deliver. The app then uses the host&#39;s <code>/api</code> and
 <code>/api/ws</code> as a local client would, under a banner &quot;Connected directly to &lt;host&gt;&quot;. The account
 mutations a remote user may not run are refused on that session too (<code>FORBIDDEN</code>).</li>
 <li><strong>Meanwhile.</strong> Events from the host&#39;s <code>workspaceEvents</code> carry no <code>seq</code>, so the app holds the
@@ -1220,7 +1237,7 @@ yearly <code>server-key rotate</code> and <code>recover</code> on compromise, da
 drill, quotas and how to change them, monitoring (queue bytes, outbox depth per peer, deliver
 failures, <code>401</code>/<code>409</code>/<code>429</code> rates, PoW signups), incident response for spam waves, a hostile peer, a
 stolen server key and a database leak, and the abuse policy text.</p>
-<p><strong>Compose</strong> (<a href="https://github.com/rim-platform/rim-server/blob/926e2affb3ad930e06e13135845a6a5ddd1c11c4/deploy/compose.yml"><code>deploy/compose.yml</code></a> with the <a href="https://github.com/rim-platform/rim-server/blob/926e2affb3ad930e06e13135845a6a5ddd1c11c4/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a> override, and
+<p><strong>Compose</strong> (<a href="https://github.com/rim-platform/rim-server/blob/6a55ebf3c053ea83f1cf37d81748d31f3975b00b/deploy/compose.yml"><code>deploy/compose.yml</code></a> with the <a href="https://github.com/rim-platform/rim-server/blob/6a55ebf3c053ea83f1cf37d81748d31f3975b00b/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a> override, and
 <a href="../docs/deploy/index.html"><code>deploy/README.md</code></a>): rim-server with <code>RIM_ROLE=relay</code>, <code>RIM_PUBLIC_BASE_URL=https://&lt;RIM_DOMAIN&gt;</code>,
 <code>RIM_REGISTRATION_POW_BITS=24</code>, <code>RIM_RELAY_QUEUE_BYTES_PER_USER=67108864</code> and the other quotas
 above, <code>RIM_TRUST_FORWARDED_HEADERS=true</code>, <code>RIM_FORCE_SECURE_COOKIES=true</code>, <code>RIM_DATA_DIR=/data</code> on a
@@ -1440,7 +1457,7 @@ null and <code>origin</code> carries that origin. A peer&#39;s S2S error keeps i
 </tr>
 <tr>
 <td>DM requests</td>
-<td>100 pending per recipient; 20 per sender per day; 3 held items; 30 days</td>
+<td>100 pending per recipient; 20 per sender per day; 3 held items and 1 MiB per request; 16 MiB held per recipient (kept invites included), apart from the queue&#39;s cap; 30 days</td>
 </tr>
 <tr>
 <td>Stranger claims</td>
@@ -1459,6 +1476,7 @@ null and <code>origin</code> carries that origin. A peer&#39;s S2S error keeps i
 database, so correctness never depends on one node. Audit (ids only):
 <code>s2s.peer_pinned</code>, <code>s2s.peer_rotated</code>, <code>s2s.peer_forked</code>, <code>s2s.peer_blocked</code>,
 <code>s2s.peer_unblocked</code>, <code>host.remote_join</code>, <code>host.delegation_accepted</code>, <code>host.revocation_applied</code>,
+<code>host.recovery_applied</code>, <code>host.identity_revocations_applied</code>,
 <code>relay.principal_blocked</code> (<code>scope</code> <code>user</code> for <code>blockPrincipal</code>, <code>server</code> for the operator&#39;s),
 <code>relay.principal_unblocked</code>, <code>relay.blocked_principal_refused</code>, <code>relay.dm_request_reported</code>,
 <code>relay.abuse_report_filed</code>, <code>relay.abuse_report_resolved</code>, <code>relay.registration_pow</code>,
@@ -1545,7 +1563,7 @@ device keys move to hybrid.</p>
 <td>S5-2</td>
 </tr>
 <tr>
-<td>Visibility rules live in <a href="https://github.com/rim-platform/rim-server/blob/926e2affb3ad930e06e13135845a6a5ddd1c11c4/rim_api/src/subscription.rs"><code>rim_api/src/subscription.rs</code></a></td>
+<td>Visibility rules live in <a href="https://github.com/rim-platform/rim-server/blob/6a55ebf3c053ea83f1cf37d81748d31f3975b00b/rim_api/src/subscription.rs"><code>rim_api/src/subscription.rs</code></a></td>
 <td>Moved to <code>rim_services</code> for the outbox writer</td>
 <td>S5-2</td>
 </tr>
@@ -1587,7 +1605,7 @@ retention and overflow, the revocation schedule, the role table.</li>
 <li><strong>db-tests.</strong> One nonce inserted twice concurrently, one wins; per-stream <code>seq</code> under concurrency
 without gaps or repeats; outbox order per peer; <code>received_through</code> idempotency; items deleted only
 once every device acked; cascades; each migration up and down, and the refusing <code>down</code>s.</li>
-<li><strong>e2e with two servers</strong> (<a href="https://github.com/rim-platform/rim-server/blob/926e2affb3ad930e06e13135845a6a5ddd1c11c4/rim_api/tests/s2s_e2e.rs"><code>rim_api/tests/s2s_e2e.rs</code></a>, <code>e2e-tests</code>): two Actix servers in one
+<li><strong>e2e with two servers</strong> (<a href="https://github.com/rim-platform/rim-server/blob/6a55ebf3c053ea83f1cf37d81748d31f3975b00b/rim_api/tests/s2s_e2e.rs"><code>rim_api/tests/s2s_e2e.rs</code></a>, <code>e2e-tests</code>): two Actix servers in one
 process with two databases, <code>RIM_S2S_ALLOW_HTTP</code> and <code>RIM_S2S_ALLOW_PRIVATE_ADDRESSES</code>. Flows:
 pinning and rotation; an encrypted DM across relays from creation to edit and read state
 (<code>rim_mls</code> fixtures); a DM request accepted, ignored, blocked; a remote join; channel traffic both
@@ -1715,7 +1733,7 @@ ed25519:waKbDNMuQ460M8gX_H1NKzAMDXF3x4P8hbHoJFPr-pSduvfvQSbXvOcRmK5VcF5F9-sICQmF
 <code>powBits</code> 16: the smallest working counter is 37283, nonce <code>AAAAAAAAkaM</code> (8 bytes big-endian), hash
 <code>00002f63d137749fda27201ccf9d282a4ed846287d49c55fea89a47617e78ed6</code>.</p>
 <h3 id="filled-by-s5-1">Filled by S5-1 <a class="anchor" href="#filled-by-s5-1" aria-label="Link to this section">#</a></h3>
-<p><strong>RFC 9421 appendix B.2.6</strong> through <code>rim_s2s</code> (<a href="https://github.com/rim-platform/rim-server/blob/926e2affb3ad930e06e13135845a6a5ddd1c11c4/rim_s2s/src/vectors.rs"><code>rim_s2s/src/vectors.rs</code></a>): the RFC&#39;s
+<p><strong>RFC 9421 appendix B.2.6</strong> through <code>rim_s2s</code> (<a href="https://github.com/rim-platform/rim-server/blob/6a55ebf3c053ea83f1cf37d81748d31f3975b00b/rim_s2s/src/vectors.rs"><code>rim_s2s/src/vectors.rs</code></a>): the RFC&#39;s
 <code>test-key-ed25519</code> (seed: the last 32 bytes of its PKCS#8 key), the components <code>&quot;date&quot; &quot;@method&quot; &quot;@path&quot; &quot;@authority&quot; &quot;content-type&quot; &quot;content-length&quot;</code> with <code>created=1618884473</code> and
 <code>keyid=&quot;test-key-ed25519&quot;</code> serialize to the RFC&#39;s <code>Signature-Input</code>, the crate builds the RFC&#39;s
 signature base, and signing it gives the RFC&#39;s
@@ -1753,7 +1771,7 @@ A.1 to A.8 reproduces byte for byte in <code>rim_s2s</code>&#39;s tests; A.8&#39
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/926e2affb3ad930e06e13135845a6a5ddd1c11c4/docs/specs/server-to-server-v1.md">rim-server/docs/specs/server-to-server-v1.md</a> at <code>926e2af</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/6a55ebf3c053ea83f1cf37d81748d31f3975b00b/docs/specs/server-to-server-v1.md">rim-server/docs/specs/server-to-server-v1.md</a> at <code>6a55ebf</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

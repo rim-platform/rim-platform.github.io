@@ -51,7 +51,7 @@
 </details></aside>
     <main id="content" class="prose">
 <h1 id="key-identity-v1">Key identity v1</h1>
-<p class="status"><span><b>Key identity v1</b></span><span>version 1</span><span>status: implemented, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/926e2affb3ad930e06e13135845a6a5ddd1c11c4/docs/specs/key-identity-v1.md">rim-server/docs/specs/key-identity-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/926e2affb3ad930e06e13135845a6a5ddd1c11c4">926e2af</a></span></p>
+<p class="status"><span><b>Key identity v1</b></span><span>version 1</span><span>status: implemented, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/6a55ebf3c053ea83f1cf37d81748d31f3975b00b/docs/specs/key-identity-v1.md">rim-server/docs/specs/key-identity-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/6a55ebf3c053ea83f1cf37d81748d31f3975b00b">6a55ebf</a></span></p>
 <p><em>Status: implemented, normative. Follows <a href="../docs/decisions/decentralization-2026-10-08.html"><code>docs/decisions/decentralization-2026-10-08.md</code></a>:
 a user is a key pair, the user id is stable with a signed key log, and servers are
 interchangeable relays. The web app may create and hold an identity, not only be a linked
@@ -288,6 +288,11 @@ certificate.</p>
 <p>Signed by the device key. <code>challengeId</code> and <code>nonce</code> come from <code>keyLoginChallenge</code>. <code>audience</code> is
 the <code>host[:port]</code> the client connects to (lowercase is safest; servers compare it
 case-insensitively), so a server that receives a proof cannot relay it to another server.</p>
+<p>Each challenge serves one purpose. One from <code>keyLoginChallenge</code> is a login challenge, consumed by
+<code>loginWithKey</code>, <code>signupWithKey</code> or <code>enrollIdentityKey</code>. One a host issues for joining a workspace
+through a relay (<a href="server-to-server-v1.html"><code>server-to-server-v1.md</code></a> §Joining) is a join challenge, bound to that relay and
+consumed only by its join; the three mutations refuse it, although the proof over it has the
+same format, so a relay never turns a person&#39;s join proof into a session.</p>
 <h2 id="server-rules">Server rules <a class="anchor" href="#server-rules" aria-label="Link to this section">#</a></h2>
 <h3 id="enrollment">Enrollment <a class="anchor" href="#enrollment" aria-label="Link to this section">#</a></h3>
 <p><code>enrollIdentityKey(input: { keyLog, device, proof })</code>, signed in with a password session:</p>
@@ -361,7 +366,7 @@ valid for <strong>120 seconds</strong>, single use. At most 60 challenges per IP
 <li>The client signs a login proof with its device key and calls <code>loginWithKey(proof)</code>.</li>
 <li>The server finds the account by <code>principalId</code> and the device by <code>deviceId</code>, verifies the
 signature with that device&#39;s key, checks the audience against its accepted audiences, and
-claims the challenge atomically (unused, unexpired, same nonce).</li>
+claims the challenge atomically (a login challenge, unused, unexpired, same nonce).</li>
 <li>On success it locks the user row, reads the device again (a revocation that committed in the
 meantime refuses the login), creates a session bound to the device, records the device&#39;s
 <code>lastUsedAt</code>, and sets the same session and CSRF cookies as <code>login</code>.</li>
@@ -414,7 +419,8 @@ second one sees the new head and fails the same way; fetch <code>myKeyIdentity</
 holds the person as a remote user, as it does after a device or card change
 (<a href="server-to-server-v1.html"><code>server-to-server-v1.md</code></a>, &quot;Profile cards and contacts&quot;). The document leaves out the devices
 a recovery revoked: their certificates are void, and a host revokes them when it applies the
-recovery entry.</li>
+recovery entry, ending the person&#39;s direct sessions there and the delegations of those
+devices.</li>
 </ul>
 <p>Every write that depends on the log (enroll, add, revoke, rotate, publish) runs in one
 transaction with the user row locked (<code>SELECT … FOR UPDATE</code>), so two of them for one account
@@ -457,7 +463,7 @@ never interleave.</p>
 </tr>
 <tr>
 <td><code>key_challenge</code></td>
-<td>Nonce, expiry, <code>used_at</code>; expired rows are deleted when new challenges are issued</td>
+<td>Nonce, expiry, <code>used_at</code>, <code>purpose</code> (<code>login</code>, or <code>join</code> with the relay&#39;s server id in <code>relay_server_id</code>); expired rows are deleted when new challenges are issued</td>
 </tr>
 <tr>
 <td><code>session.device_key_id</code></td>
@@ -714,7 +720,7 @@ identity stays in the browser that created it and is recovered only with its rec
 (<a href="server-to-server-v1.html"><code>server-to-server-v1.md</code></a>).</li>
 </ul>
 <h2 id="appendix-a-known-answer-vectors-version-1">Appendix A: known-answer vectors (version 1) <a class="anchor" href="#appendix-a-known-answer-vectors-version-1" aria-label="Link to this section">#</a></h2>
-<p>Checked by <a href="https://github.com/rim-platform/rim-server/blob/926e2affb3ad930e06e13135845a6a5ddd1c11c4/rim_identity/src/vectors.rs"><code>rim_identity/src/vectors.rs</code></a>. Keys are <code>SigningKey::from_bytes([seed; 32])</code>; never
+<p>Checked by <a href="https://github.com/rim-platform/rim-server/blob/6a55ebf3c053ea83f1cf37d81748d31f3975b00b/rim_identity/src/vectors.rs"><code>rim_identity/src/vectors.rs</code></a>. Keys are <code>SigningKey::from_bytes([seed; 32])</code>; never
 use these seeds for real keys.</p>
 <div class="tablewrap"><table>
 <thead>
@@ -755,7 +761,7 @@ tt6UNl3tRCwupWIYEfnWzqW9qVqDsJju2dA7d2CdNqdIZ0piVeP_Q6Y1lLfA4YN-26tsdaFea-rM_I8Q
 <pre><code>{&quot;v&quot;:1,&quot;type&quot;:&quot;login&quot;,&quot;challengeId&quot;:&quot;00000000-0000-0000-0000-000000000009&quot;,&quot;nonce&quot;:&quot;bm9uY2U&quot;,&quot;audience&quot;:&quot;localhost:8080&quot;,&quot;principalId&quot;:&quot;rimp1_nz1POml8JmCMcFDECrtu60ibohPKnywhcExmOPMvTUo&quot;,&quot;deviceId&quot;:&quot;00000000-0000-0000-0000-000000000001&quot;}
 jB_BFFAn7e-FMh8wCSWhnCcPzMjoe1fTKwlCoGfE0p1OYkhZWjV4J1c_AgeIhKpWOnLYyB0PqstAEYmaCITXBw</code></pre>
 <h2 id="appendix-b-known-answer-vectors-version-2">Appendix B: known-answer vectors (version 2) <a class="anchor" href="#appendix-b-known-answer-vectors-version-2" aria-label="Link to this section">#</a></h2>
-<p>Checked by <a href="https://github.com/rim-platform/rim-server/blob/926e2affb3ad930e06e13135845a6a5ddd1c11c4/rim_identity/src/vectors.rs"><code>rim_identity/src/vectors.rs</code></a>. Same keys and fields as appendix A, written as
+<p>Checked by <a href="https://github.com/rim-platform/rim-server/blob/6a55ebf3c053ea83f1cf37d81748d31f3975b00b/rim_identity/src/vectors.rs"><code>rim_identity/src/vectors.rs</code></a>. Same keys and fields as appendix A, written as
 version 2 statements. The principal id differs from appendix A because the inception payload
 differs.</p>
 <div class="tablewrap"><table>
@@ -796,7 +802,7 @@ ed25519:D2moo9U9OjVL9zed4lM0A5cHoGQOVEtUfgKfAmOn0P18x74NEbh4FL4f3PbulQzoVuGAGOEJ
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/926e2affb3ad930e06e13135845a6a5ddd1c11c4/docs/specs/key-identity-v1.md">rim-server/docs/specs/key-identity-v1.md</a> at <code>926e2af</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/6a55ebf3c053ea83f1cf37d81748d31f3975b00b/docs/specs/key-identity-v1.md">rim-server/docs/specs/key-identity-v1.md</a> at <code>6a55ebf</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

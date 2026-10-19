@@ -165,9 +165,11 @@ forgets it, and with several nodes each node learns it from the relay on its own
 above its cursor; a device added later starts at the newest item queued before it. An item is
 deleted once every non-revoked device of its user has acknowledged it, and after the retention
 period regardless. Over the per-user byte cap the oldest items go first and the devices online get
-a <code>QueueOverflow</code> notice; a device offline at the time sees the gap in the stream&#39;s <code>seq</code>. A relay
-pulls what a host still holds for it (<code>GET /s2s/v1/outbox</code>) every minute, so a delivery missed
-while the relay was down arrives on the next pull.</p>
+a <code>QueueOverflow</code> notice; a device offline at the time sees the gap in the stream&#39;s <code>seq</code>. Items a
+DM request holds are not counted toward that cap and are never dropped for it; the request
+inbox&#39;s own limits bound them. A relay pulls what a host still holds for it
+(<code>GET /s2s/v1/outbox</code>) every minute, so a delivery missed while the relay was down arrives on the
+next pull.</p>
 <h3 id="the-request-inbox">The request inbox <a class="anchor" href="#the-request-inbox" aria-label="Link to this section">#</a></h3>
 <p>A relay files a conversation&#39;s invite (<code>DmInvite</code>) by the recipient&#39;s effective DM setting, the
 three layers of <a href="messaging.html"><code>docs/messaging.md</code></a> (&quot;Who May Start A DM&quot;): the operator&#39;s <code>RIM_DM_INBOUND</code>, then
@@ -176,9 +178,9 @@ workspace hosted here judged by the recipient&#39;s choice for that workspace (o
 delivered when they are its Owner or a Moderator. What the setting delivers is recorded as
 accepted at once; what it takes as a request is filed as a DM request; what it refuses is
 answered <code>blocked</code>. A request keeps the sender&#39;s card and holds up to three items of the
-conversation; later ones are dropped until it is accepted. Items of a conversation the relay has
-no invite for are refused (<code>not_subscribed</code>), so a host cannot skip the inbox. A decided
-conversation keeps its decision when the settings change later.</p>
+conversation in at most 1 MiB; later ones are dropped until it is accepted. Items of a
+conversation the relay has no invite for are refused (<code>not_subscribed</code>), so a host cannot skip
+the inbox. A decided conversation keeps its decision when the settings change later.</p>
 <p>The same rule covers conversations of this server&#39;s own direct space whose creator is someone
 else (a person from another relay creating a DM with a local user through the forward path, or a
 local user), and DMs between members of a workspace this server hosts. The server files its own
@@ -218,9 +220,16 @@ once.</p>
 </tr>
 </tbody></table></div>
 <p>Limits: 100 pending requests per recipient and <code>RIM_RELAY_DM_REQUESTS_PER_DAY</code> (20) per sender
-principal per day on this relay; past them invites are refused as <code>limited</code>. A claim of a local user&#39;s key packages by a stranger
-(not a contact, never accepted, sharing no workspace here) gets last-resort packages only, at
-most 20 claims per stranger per day.</p>
+principal per day on this relay, and 16 MiB of held items per recipient, the invites ignored
+requests keep included; past them invites are refused as <code>limited</code>, and an item past the held
+bytes is dropped. A conversation started on this server (by a local user, or through the forward
+path) that would file a request past the pending or daily limit is refused when it is started:
+<code>FORBIDDEN</code> for a full inbox, <code>RATE_LIMITED</code> with <code>retryAfterSeconds</code> for the sender&#39;s daily limit
+(<a href="messaging.html"><code>docs/messaging.md</code></a>, &quot;Who May Start A DM&quot;). An own invite still refused for a local member
+(<code>limited</code> or <code>blocked</code>) is kept as an ignored request that is never listed or counted and expires
+after 30 days, so its conversation stays out of their view and raises no notification. A claim of
+a local user&#39;s key packages by a stranger (not a contact, never accepted, sharing no workspace
+here) gets last-resort packages only, at most 20 claims per stranger per day.</p>
 <p>With <code>RIM_DM_INBOUND=partners</code> the identity endpoint (<code>GET /s2s/v1/principals/&lt;id&gt;</code>) answers
 only the servers <code>RIM_DM_PARTNERS</code> lists, and with <code>none</code> no server; everyone else gets <code>404</code> as
 for an unknown principal, so a leaked directory reaches nobody. Key package claims from those
@@ -286,11 +295,13 @@ subscriptions lapsed. Every 5 seconds it sends revocations due for another attem
 (target <code>audit</code>, ids only): <code>relay.principal_blocked</code> (<code>scope</code> <code>user</code> for a user&#39;s block,
 <code>server</code> for an operator&#39;s), <code>relay.principal_unblocked</code>, <code>relay.blocked_principal_refused</code>,
 <code>relay.dm_request_reported</code>, <code>relay.abuse_report_filed</code>, <code>relay.abuse_report_resolved</code>,
-<code>blocked_email_refused</code> (<code>action</code> <code>signup</code> or <code>login</code>), <code>relay.registration_pow</code>, <code>relay.left</code>, <code>key_identity_adopted</code> and <code>host.revocation_applied</code>; <code>host.remote_join</code> and
+<code>blocked_email_refused</code> (<code>action</code> <code>signup</code> or <code>login</code>), <code>relay.registration_pow</code>, <code>relay.left</code>, <code>key_identity_adopted</code>, <code>host.revocation_applied</code>,
+<code>host.recovery_applied</code> and <code>host.identity_revocations_applied</code> (a recovery or revocations
+applied from a person&#39;s identity, with the sessions and delegations they ended); <code>host.remote_join</code> and
 <code>host.delegation_accepted</code> are also written to <code>command_audit_log</code> (initiator <code>s2s</code>).</p>
 <h3 id="the-public-relay">The public relay <a class="anchor" href="#the-public-relay" aria-label="Link to this section">#</a></h3>
 <p>A relay anyone may sign up on runs <code>RIM_ROLE=relay</code> with the settings of
-<a href="https://github.com/rim-platform/rim-server/blob/926e2affb3ad930e06e13135845a6a5ddd1c11c4/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a> on top of <a href="https://github.com/rim-platform/rim-server/blob/926e2affb3ad930e06e13135845a6a5ddd1c11c4/deploy/compose.yml"><code>deploy/compose.yml</code></a>. This section says how its
+<a href="https://github.com/rim-platform/rim-server/blob/6a55ebf3c053ea83f1cf37d81748d31f3975b00b/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a> on top of <a href="https://github.com/rim-platform/rim-server/blob/6a55ebf3c053ea83f1cf37d81748d31f3975b00b/deploy/compose.yml"><code>deploy/compose.yml</code></a>. This section says how its
 registration and blocks behave; <a href="operations/relay-public.html"><code>docs/operations/relay-public.md</code></a> has its quotas, the operator&#39;s
 commands and the abuse policy.</p>
 <p><strong>Registration.</strong> <code>RIM_REGISTRATION_POW_BITS</code> (1 to 40; 24 on the public relay) turns on <code>pow</code>
@@ -428,7 +439,7 @@ mutations are refused on it (<code>FORBIDDEN</code>), as through the relay.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/926e2affb3ad930e06e13135845a6a5ddd1c11c4/docs/relay.md">rim-server/docs/relay.md</a> at <code>926e2af</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/6a55ebf3c053ea83f1cf37d81748d31f3975b00b/docs/relay.md">rim-server/docs/relay.md</a> at <code>6a55ebf</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>
