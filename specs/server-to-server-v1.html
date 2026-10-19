@@ -64,7 +64,7 @@
 </details></aside>
     <main id="content" class="prose">
 <h1 id="server-to-server-v1">Server-to-server v1</h1>
-<p class="status"><span><b>Server-to-server v1</b></span><span>version 1</span><span>status: implemented, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/5d7513623fccedabfd1f34922fbdfdda550d2198/docs/specs/server-to-server-v1.md">rim-server/docs/specs/server-to-server-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/5d7513623fccedabfd1f34922fbdfdda550d2198">5d75136</a></span></p>
+<p class="status"><span><b>Server-to-server v1</b></span><span>version 1</span><span>status: implemented, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/926e2affb3ad930e06e13135845a6a5ddd1c11c4/docs/specs/server-to-server-v1.md">rim-server/docs/specs/server-to-server-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/926e2affb3ad930e06e13135845a6a5ddd1c11c4">926e2af</a></span></p>
 <p><em>Status: implemented, normative. Follows <a href="../docs/decisions/decentralization-2026-10-08.html"><code>docs/decisions/decentralization-2026-10-08.md</code></a> and
 <a href="../docs/decisions/relay-proxied-workspaces-2026-10-09.html"><code>docs/decisions/relay-proxied-workspaces-2026-10-09.md</code></a>. Read <a href="key-identity-v1.html"><code>key-identity-v1.md</code></a>,
 <a href="device-linking-v1.html"><code>device-linking-v1.md</code></a> and <a href="e2ee-mls-v1.html"><code>e2ee-mls-v1.md</code></a> first. This document is the contract between servers
@@ -463,7 +463,7 @@ Actix&#39;s request types.</p>
 <tr>
 <td><code>RIM_HOST_ALLOWED_RELAYS</code></td>
 <td>empty = any</td>
-<td>Server ids allowed on host endpoints (<code>join</code>, <code>subscriptions</code>, <code>forward</code>, <code>revocations</code>, <code>presence</code>)</td>
+<td>Server ids allowed on host endpoints (<code>identity</code>, <code>join</code>, <code>subscriptions</code>, <code>forward</code>, <code>revocations</code>, <code>presence</code>)</td>
 </tr>
 <tr>
 <td><code>RIM_S2S_DENIED_PEERS</code></td>
@@ -577,7 +577,7 @@ delegation):</p>
 </tr>
 <tr>
 <td><code>home_relay</code></td>
-<td>Server id of the relay that most recently presented a valid delegation for the user, else the first relay of their newest card that pins, else the relay that served their identity; null for local users</td>
+<td>Server id of the relay that most recently presented a valid delegation for the user, else the first relay of their newest card that pins, else the relay that served their identity: one that speaks for them (7.4a) or one the host fetched it from. Null for local users</td>
 </tr>
 </tbody></table></div>
 <p>Key log, devices (with certificates and revocations) and card live in the existing
@@ -836,12 +836,23 @@ unrevoked devices, then the most recently revoked. <code>POST /s2s/v1/identity</
 JSON; the receiver applies it only for principals it holds as remote: a log extending its
 copy, new devices with valid certificates, revocations, a card of higher version. A receiver
 ignores a listed device whose certificate a recovery voided, after checking its signature like
-any other; a recovery entry new to the receiver revokes every device it held for the person.</li>
+any other; a recovery entry new to the receiver revokes every device it held for the person.
+It applies it only from a relay that speaks for the principal: their newest stored card lists
+the relay&#39;s origin; the pushed card, verifying against the pushed log&#39;s head and of a higher
+version than the stored one, lists it; it is their <code>home_relay</code> and no card is stored; or it
+holds an active delegation of one of their devices. Any other peer gets <code>403 not_delegated</code>
+and nothing is stored. <code>mlsActive</code> is outside every signed statement, the relay&#39;s own
+observation: a host takes it only from a relay that speaks for the principal, from one it
+chose to fetch from (below), or from the relay a local user named for a principal the host
+did not hold yet; a relay that presents a delegation or revocation for a device the host does
+not know is fetched from only when it speaks for the principal.</li>
 <li><strong>Fetching.</strong> <code>remoteIdentity(principalId, relayUrl)</code> answers local principals directly and
 otherwise fetches from <code>relayUrl</code> (pinning it), cached 24 hours. The app verifies the log against
 the principal id, each certificate against the log and the card against the head, as
 <a href="e2ee-mls-v1.html"><code>e2ee-mls-v1.md</code></a> requires for leaves. <code>principalDevices</code> answers remote users from the stored
-copy, refreshed from their relay when older than an hour.</li>
+copy, refreshed when older than an hour from the relays their newest card lists that are
+pinned, then their <code>home_relay</code>. The relay that last served or pushed the copy (<code>servedBy</code>)
+is informational and never chooses where it is refreshed from.</li>
 <li><strong>Contacts.</strong> A contact link is <code>rim-contact:1:&lt;principalId&gt;:&lt;relayUrl&gt;</code> (relay URL rules as a
 device-link endpoint: 1 to 256 bytes of printable ASCII, no <code>?</code>, <code>#</code>, <code>@</code>), shown as a byte-mode
 QR code. The principal id authenticates everything fetched with it. Rejected: the card in the link
@@ -1209,7 +1220,7 @@ yearly <code>server-key rotate</code> and <code>recover</code> on compromise, da
 drill, quotas and how to change them, monitoring (queue bytes, outbox depth per peer, deliver
 failures, <code>401</code>/<code>409</code>/<code>429</code> rates, PoW signups), incident response for spam waves, a hostile peer, a
 stolen server key and a database leak, and the abuse policy text.</p>
-<p><strong>Compose</strong> (<a href="https://github.com/rim-platform/rim-server/blob/5d7513623fccedabfd1f34922fbdfdda550d2198/deploy/compose.yml"><code>deploy/compose.yml</code></a> with the <a href="https://github.com/rim-platform/rim-server/blob/5d7513623fccedabfd1f34922fbdfdda550d2198/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a> override, and
+<p><strong>Compose</strong> (<a href="https://github.com/rim-platform/rim-server/blob/926e2affb3ad930e06e13135845a6a5ddd1c11c4/deploy/compose.yml"><code>deploy/compose.yml</code></a> with the <a href="https://github.com/rim-platform/rim-server/blob/926e2affb3ad930e06e13135845a6a5ddd1c11c4/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a> override, and
 <a href="../docs/deploy/index.html"><code>deploy/README.md</code></a>): rim-server with <code>RIM_ROLE=relay</code>, <code>RIM_PUBLIC_BASE_URL=https://&lt;RIM_DOMAIN&gt;</code>,
 <code>RIM_REGISTRATION_POW_BITS=24</code>, <code>RIM_RELAY_QUEUE_BYTES_PER_USER=67108864</code> and the other quotas
 above, <code>RIM_TRUST_FORWARDED_HEADERS=true</code>, <code>RIM_FORCE_SECURE_COOKIES=true</code>, <code>RIM_DATA_DIR=/data</code> on a
@@ -1477,7 +1488,7 @@ queue bytes, S2S responses by status, signature failures by reason.</p>
 <tr>
 <td>Hostile peer</td>
 <td>Send signed junk up to its limits; claim last-resort packages and send DM requests as a stranger</td>
-<td>Impersonate another server (self-certifying id); replay; push events for spaces it does not host (envelopes name their host; relays accept only subscribed spaces); pass an allow-list</td>
+<td>Impersonate another server (self-certifying id); replay; push events for spaces it does not host (envelopes name their host; relays accept only subscribed spaces); change another principal&#39;s devices, device activity or relays at a host (it does not speak for them, 7.4a); pass an allow-list</td>
 </tr>
 <tr>
 <td>Stolen server key</td>
@@ -1534,7 +1545,7 @@ device keys move to hybrid.</p>
 <td>S5-2</td>
 </tr>
 <tr>
-<td>Visibility rules live in <a href="https://github.com/rim-platform/rim-server/blob/5d7513623fccedabfd1f34922fbdfdda550d2198/rim_api/src/subscription.rs"><code>rim_api/src/subscription.rs</code></a></td>
+<td>Visibility rules live in <a href="https://github.com/rim-platform/rim-server/blob/926e2affb3ad930e06e13135845a6a5ddd1c11c4/rim_api/src/subscription.rs"><code>rim_api/src/subscription.rs</code></a></td>
 <td>Moved to <code>rim_services</code> for the outbox writer</td>
 <td>S5-2</td>
 </tr>
@@ -1576,7 +1587,7 @@ retention and overflow, the revocation schedule, the role table.</li>
 <li><strong>db-tests.</strong> One nonce inserted twice concurrently, one wins; per-stream <code>seq</code> under concurrency
 without gaps or repeats; outbox order per peer; <code>received_through</code> idempotency; items deleted only
 once every device acked; cascades; each migration up and down, and the refusing <code>down</code>s.</li>
-<li><strong>e2e with two servers</strong> (<a href="https://github.com/rim-platform/rim-server/blob/5d7513623fccedabfd1f34922fbdfdda550d2198/rim_api/tests/s2s_e2e.rs"><code>rim_api/tests/s2s_e2e.rs</code></a>, <code>e2e-tests</code>): two Actix servers in one
+<li><strong>e2e with two servers</strong> (<a href="https://github.com/rim-platform/rim-server/blob/926e2affb3ad930e06e13135845a6a5ddd1c11c4/rim_api/tests/s2s_e2e.rs"><code>rim_api/tests/s2s_e2e.rs</code></a>, <code>e2e-tests</code>): two Actix servers in one
 process with two databases, <code>RIM_S2S_ALLOW_HTTP</code> and <code>RIM_S2S_ALLOW_PRIVATE_ADDRESSES</code>. Flows:
 pinning and rotation; an encrypted DM across relays from creation to edit and read state
 (<code>rim_mls</code> fixtures); a DM request accepted, ignored, blocked; a remote join; channel traffic both
@@ -1704,7 +1715,7 @@ ed25519:waKbDNMuQ460M8gX_H1NKzAMDXF3x4P8hbHoJFPr-pSduvfvQSbXvOcRmK5VcF5F9-sICQmF
 <code>powBits</code> 16: the smallest working counter is 37283, nonce <code>AAAAAAAAkaM</code> (8 bytes big-endian), hash
 <code>00002f63d137749fda27201ccf9d282a4ed846287d49c55fea89a47617e78ed6</code>.</p>
 <h3 id="filled-by-s5-1">Filled by S5-1 <a class="anchor" href="#filled-by-s5-1" aria-label="Link to this section">#</a></h3>
-<p><strong>RFC 9421 appendix B.2.6</strong> through <code>rim_s2s</code> (<a href="https://github.com/rim-platform/rim-server/blob/5d7513623fccedabfd1f34922fbdfdda550d2198/rim_s2s/src/vectors.rs"><code>rim_s2s/src/vectors.rs</code></a>): the RFC&#39;s
+<p><strong>RFC 9421 appendix B.2.6</strong> through <code>rim_s2s</code> (<a href="https://github.com/rim-platform/rim-server/blob/926e2affb3ad930e06e13135845a6a5ddd1c11c4/rim_s2s/src/vectors.rs"><code>rim_s2s/src/vectors.rs</code></a>): the RFC&#39;s
 <code>test-key-ed25519</code> (seed: the last 32 bytes of its PKCS#8 key), the components <code>&quot;date&quot; &quot;@method&quot; &quot;@path&quot; &quot;@authority&quot; &quot;content-type&quot; &quot;content-length&quot;</code> with <code>created=1618884473</code> and
 <code>keyid=&quot;test-key-ed25519&quot;</code> serialize to the RFC&#39;s <code>Signature-Input</code>, the crate builds the RFC&#39;s
 signature base, and signing it gives the RFC&#39;s
@@ -1742,7 +1753,7 @@ A.1 to A.8 reproduces byte for byte in <code>rim_s2s</code>&#39;s tests; A.8&#39
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/5d7513623fccedabfd1f34922fbdfdda550d2198/docs/specs/server-to-server-v1.md">rim-server/docs/specs/server-to-server-v1.md</a> at <code>5d75136</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/926e2affb3ad930e06e13135845a6a5ddd1c11c4/docs/specs/server-to-server-v1.md">rim-server/docs/specs/server-to-server-v1.md</a> at <code>926e2af</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

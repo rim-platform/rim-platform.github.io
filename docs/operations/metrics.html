@@ -60,7 +60,7 @@ listener of its own. The API port never serves them.</p>
 <p>On a host, <code>127.0.0.1:9090</code> keeps the endpoint on the machine; run Prometheus there or scrape it
 through an SSH tunnel. In a container, <code>127.0.0.1</code> is the container itself, so bind
 <code>0.0.0.0:9090</code> and do not publish the port: Prometheus reaches it over the compose network.
-<a href="https://github.com/rim-platform/rim-server/blob/5d7513623fccedabfd1f34922fbdfdda550d2198/deploy/compose.yml"><code>deploy/compose.yml</code></a> has the line commented out in the <code>rim</code> service.</p>
+<a href="https://github.com/rim-platform/rim-server/blob/926e2affb3ad930e06e13135845a6a5ddd1c11c4/deploy/compose.yml"><code>deploy/compose.yml</code></a> has the line commented out in the <code>rim</code> service.</p>
 <p>The endpoint has no authentication. Keep it on an internal network, and never route it through
 Caddy or any other public reverse proxy: it shows request rates, limiter names and queue sizes
 to whoever can read it.</p>
@@ -529,7 +529,9 @@ server as a host running a forwarded request at <code>/s2s/v1/forward/…</code>
 </tbody></table></div>
 <p><code>state</code> is <code>queued</code> for stored items eligible for delivery, <code>held</code> for items behind a DM request
 the recipient has not answered. These gauges count stored rows: acknowledged or expired rows
-can remain until cleanup runs. They are not exact counts of pending delivery or unread messages.</p>
+can remain until cleanup runs. They are not exact counts of pending delivery or unread messages.
+Queue byte gauges sum the bytes charged to each recipient item. Several items may share one
+stored envelope, so these gauges are not physical PostgreSQL or filesystem usage.</p>
 <h3 id="pending-device-delivery">Pending device delivery <a class="anchor" href="#pending-device-delivery" aria-label="Link to this section">#</a></h3>
 <div class="tablewrap"><table>
 <thead>
@@ -750,7 +752,7 @@ rim_db_pool_connections_in_use / rim_db_pool_max_connections &gt; 0.9</code></pr
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/5d7513623fccedabfd1f34922fbdfdda550d2198/docs/operations/metrics.md">rim-server/docs/operations/metrics.md</a> at <code>5d75136</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/926e2affb3ad930e06e13135845a6a5ddd1c11c4/docs/operations/metrics.md">rim-server/docs/operations/metrics.md</a> at <code>926e2af</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

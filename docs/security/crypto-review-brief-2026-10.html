@@ -128,24 +128,24 @@ rim-server, &quot;ui&quot; means rim-ui, and &quot;ui/tauri&quot; means <code>ri
 <thead>
 <tr>
 <th>Area</th>
-<th>Specs and decisions (server <a href="https://github.com/rim-platform/rim-server/tree/5d7513623fccedabfd1f34922fbdfdda550d2198/docs"><code>docs/</code></a>)</th>
+<th>Specs and decisions (server <a href="https://github.com/rim-platform/rim-server/tree/926e2affb3ad930e06e13135845a6a5ddd1c11c4/docs"><code>docs/</code></a>)</th>
 <th>Code</th>
 </tr>
 </thead>
 <tbody><tr>
 <td>Signed statements, key log, certificates, profile cards, login proofs</td>
 <td><code>specs/key-identity-v1.md</code></td>
-<td>server <code>rim_identity/src/{statement,encoding,key_log,device,login,profile_card}.rs</code>, <a href="https://github.com/rim-platform/rim-server/blob/5d7513623fccedabfd1f34922fbdfdda550d2198/rim_infra_services/src/key_auth.rs"><code>rim_infra_services/src/key_auth.rs</code></a>; ui/tauri <code>src/key_identity/{statement,mod,store,commands}.rs</code>; ui <code>src/features/key-identity/browser/statements.ts</code></td>
+<td>server <code>rim_identity/src/{statement,encoding,key_log,device,login,profile_card}.rs</code>, <a href="https://github.com/rim-platform/rim-server/blob/926e2affb3ad930e06e13135845a6a5ddd1c11c4/rim_infra_services/src/key_auth.rs"><code>rim_infra_services/src/key_auth.rs</code></a>; ui/tauri <code>src/key_identity/{statement,mod,store,commands}.rs</code>; ui <code>src/features/key-identity/browser/statements.ts</code></td>
 </tr>
 <tr>
 <td>Plugin manifest signatures</td>
 <td><code>specs/workspace-plugins-v1.md</code>, <code>specs/web-plugins-v1.md</code></td>
-<td>server <a href="https://github.com/rim-platform/rim-server/blob/5d7513623fccedabfd1f34922fbdfdda550d2198/rim_identity/src/plugin_manifest.rs"><code>rim_identity/src/plugin_manifest.rs</code></a>; ui/tauri <code>src/key_identity/plugin_manifest.rs</code>; ui <code>src/features/key-identity/browser/pluginManifest.ts</code></td>
+<td>server <a href="https://github.com/rim-platform/rim-server/blob/926e2affb3ad930e06e13135845a6a5ddd1c11c4/rim_identity/src/plugin_manifest.rs"><code>rim_identity/src/plugin_manifest.rs</code></a>; ui/tauri <code>src/key_identity/plugin_manifest.rs</code>; ui <code>src/features/key-identity/browser/pluginManifest.ts</code></td>
 </tr>
 <tr>
 <td>Device linking</td>
 <td><code>specs/device-linking-v1.md</code></td>
-<td>server <a href="https://github.com/rim-platform/rim-server/blob/5d7513623fccedabfd1f34922fbdfdda550d2198/rim_identity/src/device_link.rs"><code>rim_identity/src/device_link.rs</code></a> (reference implementation), <a href="https://github.com/rim-platform/rim-server/blob/5d7513623fccedabfd1f34922fbdfdda550d2198/rim_infra_services/src/device_link.rs"><code>rim_infra_services/src/device_link.rs</code></a> (courier); ui/tauri <code>src/key_identity/device_link.rs</code>; ui <code>src/features/key-identity/browser/{channel,browserKeyBackend,keyStore}.ts</code></td>
+<td>server <a href="https://github.com/rim-platform/rim-server/blob/926e2affb3ad930e06e13135845a6a5ddd1c11c4/rim_identity/src/device_link.rs"><code>rim_identity/src/device_link.rs</code></a> (reference implementation), <a href="https://github.com/rim-platform/rim-server/blob/926e2affb3ad930e06e13135845a6a5ddd1c11c4/rim_infra_services/src/device_link.rs"><code>rim_infra_services/src/device_link.rs</code></a> (courier); ui/tauri <code>src/key_identity/device_link.rs</code>; ui <code>src/features/key-identity/browser/{channel,browserKeyBackend,keyStore}.ts</code></td>
 </tr>
 <tr>
 <td>Recovery phrase, identity-key backup, archive key wraps</td>
@@ -165,7 +165,7 @@ rim-server, &quot;ui&quot; means rim-ui, and &quot;ui/tauri&quot; means <code>ri
 <tr>
 <td>MLS end to end encryption</td>
 <td><code>specs/e2ee-mls-v1.md</code>, <code>decisions/mls-library-2026-10-09.md</code>, <code>decisions/post-quantum-hybrid-2026-10-09.md</code></td>
-<td>server <a href="https://github.com/rim-platform/rim-server/blob/5d7513623fccedabfd1f34922fbdfdda550d2198/rim_identity/src/mls.rs"><code>rim_identity/src/mls.rs</code></a>, <code>rim_infra_services/src/e2ee/{mod,aad,franking,openmls_wire}.rs</code>, <a href="https://github.com/rim-platform/rim-server/blob/5d7513623fccedabfd1f34922fbdfdda550d2198/rim_infra_services/src/message.rs"><code>rim_infra_services/src/message.rs</code></a> (encrypted send and edit), <a href="https://github.com/rim-platform/rim-server/blob/5d7513623fccedabfd1f34922fbdfdda550d2198/rim_api/src/mutation/e2ee.rs"><code>rim_api/src/mutation/e2ee.rs</code></a>, <a href="https://github.com/rim-platform/rim-server/blob/5d7513623fccedabfd1f34922fbdfdda550d2198/rim_services/src/e2ee.rs"><code>rim_services/src/e2ee.rs</code></a>; ui/tauri <code>crates/rim_mls/</code>, <code>crates/rim_mls_wasm/</code>, <code>src/e2ee/</code>; ui <code>src/features/e2ee/{runtime,web,hooks}/</code></td>
+<td>server <a href="https://github.com/rim-platform/rim-server/blob/926e2affb3ad930e06e13135845a6a5ddd1c11c4/rim_identity/src/mls.rs"><code>rim_identity/src/mls.rs</code></a>, <code>rim_infra_services/src/e2ee/{mod,aad,franking,openmls_wire}.rs</code>, <a href="https://github.com/rim-platform/rim-server/blob/926e2affb3ad930e06e13135845a6a5ddd1c11c4/rim_infra_services/src/message.rs"><code>rim_infra_services/src/message.rs</code></a> (encrypted send and edit), <a href="https://github.com/rim-platform/rim-server/blob/926e2affb3ad930e06e13135845a6a5ddd1c11c4/rim_api/src/mutation/e2ee.rs"><code>rim_api/src/mutation/e2ee.rs</code></a>, <a href="https://github.com/rim-platform/rim-server/blob/926e2affb3ad930e06e13135845a6a5ddd1c11c4/rim_services/src/e2ee.rs"><code>rim_services/src/e2ee.rs</code></a>; ui/tauri <code>crates/rim_mls/</code>, <code>crates/rim_mls_wasm/</code>, <code>src/e2ee/</code>; ui <code>src/features/e2ee/{runtime,web,hooks}/</code></td>
 </tr>
 <tr>
 <td>Plugins&#39; access to decrypted content</td>
@@ -1004,7 +1004,7 @@ RFC 5869, RFC 4231, Wycheproof AES-GCM, NIST ACVP ML-KEM-768, X-Wing draft vecto
 <code>crates/rim_mls/src/tests/vectors.rs</code>; <code>e2ee-mls-v1.md</code> appendix A in <code>tests/formats.rs</code>;
 cross-provider tests <code>tests/providers.rs</code>; multi-device simulations against an in-process
 sequencer <code>tests/simulation.rs</code>, <code>tests/sequencer.rs</code>; tampering <code>tests/tampering.rs</code>; server
-races in <code>rim_infra_db</code> <code>db-tests</code> and the e2e <a href="https://github.com/rim-platform/rim-server/blob/5d7513623fccedabfd1f34922fbdfdda550d2198/rim_api/tests/e2ee_e2e.rs"><code>rim_api/tests/e2ee_e2e.rs</code></a>. The IETF
+races in <code>rim_infra_db</code> <code>db-tests</code> and the e2e <a href="https://github.com/rim-platform/rim-server/blob/926e2affb3ad930e06e13135845a6a5ddd1c11c4/rim_api/tests/e2ee_e2e.rs"><code>rim_api/tests/e2ee_e2e.rs</code></a>. The IETF
 <code>mls-implementations</code> vectors named in the decision for suite 0x0001 are not re-run in RIM&#39;s
 tree (<code>tests/vectors.rs</code> covers primitives only).</p>
 <p><strong>Questions.</strong></p>
@@ -1184,7 +1184,7 @@ test). Should both use local state only?</li>
 <td>Identity, recovery, device keys and every statement</td>
 <td>Ed25519, version 2 tags</td>
 <td><code>&lt;algorithm&gt;:</code> tags; caps sized for ML-DSA-87; <code>key_hash</code> index; <code>#[non_exhaustive] Algorithm</code></td>
-<td>Add <code>ed25519-mldsa44</code> in <a href="https://github.com/rim-platform/rim-server/blob/5d7513623fccedabfd1f34922fbdfdda550d2198/rim_identity/src/encoding.rs"><code>rim_identity/src/encoding.rs</code></a> and each client&#39;s verifier; rotate each log with an Ed25519-signed rotation</td>
+<td>Add <code>ed25519-mldsa44</code> in <a href="https://github.com/rim-platform/rim-server/blob/926e2affb3ad930e06e13135845a6a5ddd1c11c4/rim_identity/src/encoding.rs"><code>rim_identity/src/encoding.rs</code></a> and each client&#39;s verifier; rotate each log with an Ed25519-signed rotation</td>
 </tr>
 <tr>
 <td>Principal id, <code>prev</code>, key hashes</td>
@@ -1307,8 +1307,8 @@ row.</p>
 </tbody></table></div>
 <h2 id="5-how-to-run-everything">5. How to run everything <a class="anchor" href="#5-how-to-run-everything" aria-label="Link to this section">#</a></h2>
 <p>CI on GitHub Actions is over its quota since 2026-10-09; every result in the PRs comes from local
-runs of the commands below. Rust 2024 toolchain as pinned in <a href="https://github.com/rim-platform/rim-server/blob/5d7513623fccedabfd1f34922fbdfdda550d2198/rust-toolchain.toml"><code>rust-toolchain.toml</code></a> (server);
-rim-ui&#39;s <code>src-tauri</code> workspace builds with its own <a href="https://github.com/rim-platform/rim-server/blob/5d7513623fccedabfd1f34922fbdfdda550d2198/Cargo.lock"><code>Cargo.lock</code></a>.</p>
+runs of the commands below. Rust 2024 toolchain as pinned in <a href="https://github.com/rim-platform/rim-server/blob/926e2affb3ad930e06e13135845a6a5ddd1c11c4/rust-toolchain.toml"><code>rust-toolchain.toml</code></a> (server);
+rim-ui&#39;s <code>src-tauri</code> workspace builds with its own <a href="https://github.com/rim-platform/rim-server/blob/926e2affb3ad930e06e13135845a6a5ddd1c11c4/Cargo.lock"><code>Cargo.lock</code></a>.</p>
 <h3 id="51-server-rim-server">5.1 Server (rim-server) <a class="anchor" href="#51-server-rim-server" aria-label="Link to this section">#</a></h3>
 <pre><code class="language-sh">cargo fmt --all --check
 cargo clippy --workspace --all-targets -- -D warnings
@@ -1340,7 +1340,7 @@ npm run test:wasm                        # rim_mls and rim_mls_wasm in headless 
 npx vitest run src/features/key-identity src/features/e2ee src/features/plugins/chat
 npm run build:wasm                       # rebuilds the committed module; wasmArtifact.test.ts checks its sources</code></pre>
 <h3 id="53-a-server-and-two-desktops-by-hand">5.3 A server and two desktops by hand <a class="anchor" href="#53-a-server-and-two-desktops-by-hand" aria-label="Link to this section">#</a></h3>
-<p><a href="https://github.com/rim-platform/rim-server/blob/5d7513623fccedabfd1f34922fbdfdda550d2198/docs/testing/manual-test-plan-2026-10-10.md"><code>docs/testing/manual-test-plan-2026-10-10.md</code></a> in rim-server, section 0, sets up the server
+<p><a href="https://github.com/rim-platform/rim-server/blob/926e2affb3ad930e06e13135845a6a5ddd1c11c4/docs/testing/manual-test-plan-2026-10-10.md"><code>docs/testing/manual-test-plan-2026-10-10.md</code></a> in rim-server, section 0, sets up the server
 (<code>RIM_KEY_LOGIN_AUDIENCES=localhost:8080,127.0.0.1:8080</code>), two desktop instances as two OS users
 (each needs its own vault and credential store entry) and the web app. Sections 1 and 3 walk
 key-only signup, linking, recovery, the identity-key backup, encrypted DMs and groups,
@@ -1696,7 +1696,7 @@ for principals outside the caller&#39;s workspaces. Ask: anything here worth clo
 <code>application_messages_whose_authenticated_data_lies_are_invalid</code>,
 <code>commits_whose_summary_lies_are_flagged</code>, <code>the_server_refuses_a_summary_it_cannot_match</code>.</p>
 <h2 id="appendix-b-cryptographic-dependencies-as-locked">Appendix B: cryptographic dependencies as locked <a class="anchor" href="#appendix-b-cryptographic-dependencies-as-locked" aria-label="Link to this section">#</a></h2>
-<p>From <a href="https://github.com/rim-platform/rim-server/blob/5d7513623fccedabfd1f34922fbdfdda550d2198/Cargo.lock"><code>Cargo.lock</code></a> at the commits in 1.1 (rim-server root; rim-ui <code>src-tauri/Cargo.lock</code>). Where
+<p>From <a href="https://github.com/rim-platform/rim-server/blob/926e2affb3ad930e06e13135845a6a5ddd1c11c4/Cargo.lock"><code>Cargo.lock</code></a> at the commits in 1.1 (rim-server root; rim-ui <code>src-tauri/Cargo.lock</code>). Where
 two versions of a crate are locked, both appear; the second is pulled transitively. The web app
 uses the browser&#39;s WebCrypto for Ed25519, HKDF, AES-GCM and SHA-256 and has no JavaScript crypto
 library.</p>
@@ -1906,7 +1906,7 @@ library.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/5d7513623fccedabfd1f34922fbdfdda550d2198/docs/security/crypto-review-brief-2026-10.md">rim-server/docs/security/crypto-review-brief-2026-10.md</a> at <code>5d75136</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/926e2affb3ad930e06e13135845a6a5ddd1c11c4/docs/security/crypto-review-brief-2026-10.md">rim-server/docs/security/crypto-review-brief-2026-10.md</a> at <code>926e2af</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

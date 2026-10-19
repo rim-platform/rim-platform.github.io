@@ -51,7 +51,7 @@
 </details></aside>
     <main id="content" class="prose">
 <h1 id="workspace-plugins-v1">Workspace plugins v1</h1>
-<p class="status"><span><b>Workspace plugins v1</b></span><span>version 1</span><span>status: implemented, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/5d7513623fccedabfd1f34922fbdfdda550d2198/docs/specs/workspace-plugins-v1.md">rim-server/docs/specs/workspace-plugins-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/5d7513623fccedabfd1f34922fbdfdda550d2198">5d75136</a></span></p>
+<p class="status"><span><b>Workspace plugins v1</b></span><span>version 1</span><span>status: implemented, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/926e2affb3ad930e06e13135845a6a5ddd1c11c4/docs/specs/workspace-plugins-v1.md">rim-server/docs/specs/workspace-plugins-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/926e2affb3ad930e06e13135845a6a5ddd1c11c4">926e2af</a></span></p>
 <p><em>Status: implemented, normative. Extends <a href="key-identity-v1.html"><code>docs/specs/key-identity-v1.md</code></a> (signed statements,
 version 2 tagged keys, the public <code>keyLog</code>) and <a href="web-plugins-v1.html"><code>docs/specs/web-plugins-v1.md</code></a> (the <code>WebSandboxed</code>
 kind and the bundle format). This document is the contract between the server
@@ -665,7 +665,7 @@ log, the default URL needing an uploaded bundle of that size, the approval colum
 event per change.</li>
 <li><strong><code>db-tests</code>:</strong> unique and check constraints; cascade on workspace delete; <code>approved_by</code> set null
 on user delete; cleanup deleting only unnamed bundles over 24 hours old; migration up and down.</li>
-<li><strong>e2e</strong> (<a href="https://github.com/rim-platform/rim-server/blob/5d7513623fccedabfd1f34922fbdfdda550d2198/rim_api/tests/workspace_plugin_e2e.rs"><code>rim_api/tests/workspace_plugin_e2e.rs</code></a>): upload web-plugins-v1 appendix A&#39;s bundle
+<li><strong>e2e</strong> (<a href="https://github.com/rim-platform/rim-server/blob/926e2affb3ad930e06e13135845a6a5ddd1c11c4/rim_api/tests/workspace_plugin_e2e.rs"><code>rim_api/tests/workspace_plugin_e2e.rs</code></a>): upload web-plugins-v1 appendix A&#39;s bundle
 (<code>201</code>, then <code>200</code>); add appendix A&#39;s statement as an Owner with the inception as
 <code>publisherKeyLog</code> (<code>VALID</code>); read as a Member and a Guest; download as a member (<code>200</code>) and a
 non-member (<code>404</code>); a Member&#39;s add <code>FORBIDDEN</code>; a tampered signature <code>VALIDATION</code>; a status update
@@ -707,7 +707,7 @@ use these keys for real statements.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/5d7513623fccedabfd1f34922fbdfdda550d2198/docs/specs/workspace-plugins-v1.md">rim-server/docs/specs/workspace-plugins-v1.md</a> at <code>5d75136</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/926e2affb3ad930e06e13135845a6a5ddd1c11c4/docs/specs/workspace-plugins-v1.md">rim-server/docs/specs/workspace-plugins-v1.md</a> at <code>926e2af</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>
