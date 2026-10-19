@@ -55,13 +55,20 @@ not.</li>
 <li>A change the operator has to act on (a new required setting, a migration that rewrites a
 large table, a contract migration, a changed default) starts with <strong>Upgrade:</strong> and says what
 to do. <a href="operations/upgrade.html"><code>docs/operations/upgrade.md</code></a> is how an upgrade runs.</li>
-<li>A change to the GraphQL schema or a spec in <a href="https://github.com/rim-platform/rim-server/tree/926e2affb3ad930e06e13135845a6a5ddd1c11c4/docs/specs"><code>docs/specs/</code></a> names the type, field or spec.</li>
+<li>A change to the GraphQL schema or a spec in <a href="https://github.com/rim-platform/rim-server/tree/6a55ebf3c053ea83f1cf37d81748d31f3975b00b/docs/specs"><code>docs/specs/</code></a> names the type, field or spec.</li>
 <li>At release time <code>Unreleased</code> becomes <code>## [&lt;version&gt;] - &lt;YYYY-MM-DD&gt;</code> and a new empty
 <code>Unreleased</code> starts above it (<a href="operations/release-checklist.html"><code>docs/operations/release-checklist.md</code></a>).</li>
 </ul>
 <h2 id="unreleased"><a href="https://github.com/rim-platform/rim-server/commits/master">Unreleased</a> <a class="anchor" href="#unreleased" aria-label="Link to this section">#</a></h2>
 <h3 id="added">Added <a class="anchor" href="#added" aria-label="Link to this section">#</a></h3>
 <ul>
+<li><p><a href="https://github.com/rim-platform/rim-server/blob/6a55ebf3c053ea83f1cf37d81748d31f3975b00b/deploy/compose.monitoring.yml"><code>deploy/compose.monitoring.yml</code></a>, an opt-in overlay that turns on the metrics listener and
+adds a Grafana Alloy collector: every 15 seconds it scrapes rim-server&#39;s metrics, probes
+<code>/readyz</code> and reads the host&#39;s metrics, and remote-writes them to Grafana Cloud with the new
+<code>GRAFANA_CLOUD_METRICS_URL</code>, <code>GRAFANA_CLOUD_METRICS_USER</code> and <code>GRAFANA_CLOUD_METRICS_TOKEN</code>
+in <code>deploy/.env</code>. &quot;Collecting them with Grafana Alloy&quot; in <a href="operations/metrics.html"><code>docs/operations/metrics.md</code></a>
+describes what it sends.</p>
+</li>
 <li><p>Production monitoring metrics for local accounts and activity, committed plaintext and
 encrypted messages, GraphQL operations, WebSocket connections and pending device delivery.
 Relay delivery metrics distinguish device acknowledgements from human read receipts and
@@ -212,6 +219,13 @@ settings form over the current view, leaving the panel in place. Values stay on 
 and never reach the server, so the server does not change. Sections 15 to 20 of that spec are
 now 16 to 21. <a href="decisions/plugin-settings-2026-10-18.html"><code>docs/decisions/plugin-settings-2026-10-18.md</code></a> records why.</p>
 </li>
+<li><p>Workspace invites can be listed and revoked. The new <code>workspaceInvites(serverId, dir, cursor, limit)</code> gives a workspace&#39;s Owner its invites newest first as a <code>WorkspaceInvitePage</code> of
+<code>WorkspaceInvite</code> (role, uses, expiry, creator, revocation and a <code>WorkspaceInviteState</code> of
+<code>ACTIVE</code>, <code>EXPIRED</code>, <code>USED_UP</code> or <code>REVOKED</code>), paged with <code>WorkspaceInviteCursorInput</code> and
+<code>WorkspaceInviteCursorOutput</code>, never with their tokens; the new <code>revokeInvite(inviteId)</code>
+stops an invite admitting anyone, while members who joined with it stay (&quot;Workspace invites&quot;
+in <a href="messaging.html"><code>docs/messaging.md</code></a>).</p>
+</li>
 </ul>
 <h3 id="changed">Changed <a class="anchor" href="#changed" aria-label="Link to this section">#</a></h3>
 <ul>
@@ -260,7 +274,7 @@ identity, sign up with a key and link other devices; a browser-held identity is 
 up, the recovery kit is shown after signup or enrollment and its entropy is kept until the
 person confirms they saved it.</p>
 </li>
-<li><p><strong>Upgrade:</strong> <a href="https://github.com/rim-platform/rim-server/blob/926e2affb3ad930e06e13135845a6a5ddd1c11c4/deploy/compose.yml"><code>deploy/compose.yml</code></a> runs the published images <code>ghcr.io/rim-platform/rim-server</code>
+<li><p><strong>Upgrade:</strong> <a href="https://github.com/rim-platform/rim-server/blob/6a55ebf3c053ea83f1cf37d81748d31f3975b00b/deploy/compose.yml"><code>deploy/compose.yml</code></a> runs the published images <code>ghcr.io/rim-platform/rim-server</code>
 and <code>ghcr.io/rim-platform/rim-web</code> at <code>RIM_VERSION</code> (default <code>latest</code>) instead of building
 them. Set <code>RIM_VERSION</code> in <code>deploy/.env</code> to the release you run, and run <code>pull</code> then <code>up -d</code>
 where you ran <code>up -d --build</code>. Operators who build locally add <code>-f deploy/compose.dev.yml</code> to
@@ -417,12 +431,47 @@ that does not resolve instead of failing. A disabled user command no longer runs
 (<code>NOT_FOUND</code>). Before, a few small user commands naming each other many times made one lookup
 or run do work that grew exponentially (&quot;User Commands And Macros&quot; in
 <a href="command_model.html"><code>docs/command_model.md</code></a>).</li>
+<li>When a host applies a recovery or a device revocation that arrives in someone&#39;s identity
+(pushed by their relay or fetched from it), it ends their direct sign-in sessions and the
+delegations of the revoked devices, as it does for a revocation sent to
+<code>/s2s/v1/revocations</code>, and closes those sessions&#39; live connections. Before, a device lost and
+recovered from kept its direct session at the host and stayed listed as delegated there. A
+direct sign-in of someone from another server is now refused (<code>UNAUTHENTICATED</code>) when their
+relay answers with an identity the host refuses; it still falls back to the stored copy when
+no relay answers (<code>server-to-server-v1.md</code> &quot;Profile cards and contacts&quot;, &quot;Direct
+connection&quot;).</li>
+<li>A relay bounds the items DM requests hold apart from each user&#39;s queue: at most 1 MiB per
+request and 16 MiB per user, the invites of ignored requests included, past which a new
+invite is refused <code>limited</code> and a later item is dropped. Held items no longer count toward
+<code>RIM_RELAY_QUEUE_BYTES_PER_USER</code>. Before, they counted toward it but could not be dropped,
+so requests from strangers could make the relay drop every item queued for that user&#39;s
+devices (<code>server-to-server-v1.md</code> &quot;Relay queues&quot;, &quot;The request inbox&quot;, &quot;Limits and audit&quot;).</li>
+<li>A host keeps the challenges it issues for joining a workspace apart from login challenges.
+A join challenge is bound to the relay that asked for it and is accepted only by that relay&#39;s
+join; <code>loginWithKey</code>, <code>signupWithKey</code> and <code>enrollIdentityKey</code> refuse it, and the join refuses a
+login challenge. Before, a relay could present the proof a person&#39;s device signed for joining
+to the host&#39;s <code>loginWithKey</code> and get a session there as that person. Clients and relays change
+nothing: the proof keeps its format (<code>server-to-server-v1.md</code> §Joining, <code>key-identity-v1.md</code>).</li>
+<li>Workspace invites expire: <code>createInvite</code> without <code>expiresAt</code> gives an invite that expires in
+seven days, and <code>CreateInviteInput.expiresAt</code> must be in the future and at most 30 days away
+(<code>VALIDATION</code> otherwise), as for instance invites. Invites created before keep their expiry,
+or none; <code>revokeInvite</code> ends them. Redeeming a workspace invite now checks its revocation and
+expiry in the same update that counts the use, so an invite revoked or expiring while a join
+or signup runs admits nobody.</li>
+<li>The request inbox&#39;s limits hold for DMs started on this server. A conversation that would
+file a DM request past them is refused when it is started (<code>createConversation</code>,
+<code>addConversationMembers</code>): <code>RATE_LIMITED</code> with <code>retryAfterSeconds</code> once the sender would file
+more than <code>RIM_RELAY_DM_REQUESTS_PER_DAY</code> requests in 24 hours, <code>FORBIDDEN</code> (&quot;their request
+inbox is full&quot;) while the recipient holds 100 pending requests. Before, a DM past either
+limit from someone on this server, or from someone elsewhere through the forward path,
+skipped the request inbox and reached the recipient&#39;s conversations and notifications
+directly. Workspace DMs a member takes as requests meet the same limits.</li>
 </ul>
 
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/926e2affb3ad930e06e13135845a6a5ddd1c11c4/CHANGELOG.md">rim-server/CHANGELOG.md</a> at <code>926e2af</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/6a55ebf3c053ea83f1cf37d81748d31f3975b00b/CHANGELOG.md">rim-server/CHANGELOG.md</a> at <code>6a55ebf</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>
