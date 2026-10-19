@@ -243,6 +243,11 @@ anyone but themselves; a Moderator may move a <code>MEMBER</code> to <code>GUEST
 days from now and must be in the future and at most 30 days away, else <code>VALIDATION</code>; the
 same bounds as instance invites. <code>maxUses</code> defaults to 1 and is capped by
 <code>RIM_LIMIT_INVITE_MAX_USES</code> when the operator sets it. The token is returned once and never shown again.</li>
+<li><code>recipientEmail</code> emails the link to that address, and nothing more: the invite is not bound to
+it, and whoever holds the link can use it. One user creates at most
+<code>RIM_LIMIT_INVITES_PER_USER_PER_DAY</code> invites (default 50, 0 turns it off) and sends at most as
+many invite emails in 24 hours; past either a <code>createInvite</code> is <code>VALIDATION</code> and creates
+nothing.</li>
 <li><code>workspaceInvites(serverId, dir, cursor, limit)</code> lists the workspace&#39;s invites for its Owner
 (<code>FORBIDDEN</code> for everyone else): every invite, revoked, expired and used-up ones included,
 ordered <code>createdAt DESC, id DESC</code> with the standard cursor rules (<code>dir</code> defaults to <code>AFTER</code>,
@@ -518,7 +523,7 @@ requires <code>blobSha256</code>, a fixed file name and type, and the upload is 
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/6a55ebf3c053ea83f1cf37d81748d31f3975b00b/docs/messaging.md">rim-server/docs/messaging.md</a> at <code>6a55ebf</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/553bf5ddfc87d056e4c3e11acd3cc0eaa966b647/docs/messaging.md">rim-server/docs/messaging.md</a> at <code>553bf5d</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

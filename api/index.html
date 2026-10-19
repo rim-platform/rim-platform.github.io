@@ -36,12 +36,13 @@
 
     <main id="content" class="prose">
 <h1>API</h1>
-<p class="lede">Everything a client does goes through one GraphQL endpoint, <code>POST /api</code>; subscriptions arrive over <code>/api/ws</code>. The server publishes its schema at <code>/api/sdl</code>. This reference is generated from it: 250 types, 63 queries, 120 mutations and 2 subscriptions.</p>
+<p class="lede">Everything a client does goes through one GraphQL endpoint, <code>POST /api</code>; subscriptions arrive over <code>/api/ws</code>. The server publishes its schema at <code>/api/sdl</code>. This reference is generated from it: 255 types, 64 queries, 121 mutations and 2 subscriptions.</p>
 <input id="filter" class="search" type="search" placeholder="Filter the whole schema by name" aria-label="Filter the whole schema by name" autocomplete="off">
 <p id="filter-none" class="muted" hidden>Nothing matches.</p>
 <div data-search-only><ul class="hits">
 <li data-name="createInvite"><a href="mutation.html#createInvite"><code>createInvite</code></a><span class="kind">mutation</span></li>
 <li data-name="signupWithInvite"><a href="mutation.html#signupWithInvite"><code>signupWithInvite</code></a><span class="kind">mutation</span></li>
+<li data-name="revokeInvite"><a href="mutation.html#revokeInvite"><code>revokeInvite</code></a><span class="kind">mutation</span></li>
 <li data-name="joinServerByInvite"><a href="mutation.html#joinServerByInvite"><code>joinServerByInvite</code></a><span class="kind">mutation</span></li>
 <li data-name="createServer"><a href="mutation.html#createServer"><code>createServer</code></a><span class="kind">mutation</span></li>
 <li data-name="sendMessage"><a href="mutation.html#sendMessage"><code>sendMessage</code></a><span class="kind">mutation</span></li>
@@ -188,6 +189,7 @@
 <li data-name="workspaceState"><a href="query.html#workspaceState"><code>workspaceState</code></a><span class="kind">query</span></li>
 <li data-name="workspaceStateList"><a href="query.html#workspaceStateList"><code>workspaceStateList</code></a><span class="kind">query</span></li>
 <li data-name="workspacePlugins"><a href="query.html#workspacePlugins"><code>workspacePlugins</code></a><span class="kind">query</span></li>
+<li data-name="workspaceInvites"><a href="query.html#workspaceInvites"><code>workspaceInvites</code></a><span class="kind">query</span></li>
 <li data-name="customEmojis"><a href="query.html#customEmojis"><code>customEmojis</code></a><span class="kind">query</span></li>
 <li data-name="myMacros"><a href="query.html#myMacros"><code>myMacros</code></a><span class="kind">query</span></li>
 <li data-name="macroByName"><a href="query.html#macroByName"><code>macroByName</code></a><span class="kind">query</span></li>
@@ -339,6 +341,9 @@
 <li data-name="UserPresenceGql"><a href="objects.html#UserPresenceGql"><code>UserPresenceGql</code></a><span class="kind">object</span></li>
 <li data-name="WorkspaceDmPolicy"><a href="objects.html#WorkspaceDmPolicy"><code>WorkspaceDmPolicy</code></a><span class="kind">object</span></li>
 <li data-name="WorkspaceDmSetting"><a href="objects.html#WorkspaceDmSetting"><code>WorkspaceDmSetting</code></a><span class="kind">object</span></li>
+<li data-name="WorkspaceInvite"><a href="objects.html#WorkspaceInvite"><code>WorkspaceInvite</code></a><span class="kind">object</span></li>
+<li data-name="WorkspaceInviteCursorOutput"><a href="objects.html#WorkspaceInviteCursorOutput"><code>WorkspaceInviteCursorOutput</code></a><span class="kind">object</span></li>
+<li data-name="WorkspaceInvitePage"><a href="objects.html#WorkspaceInvitePage"><code>WorkspaceInvitePage</code></a><span class="kind">object</span></li>
 <li data-name="WorkspaceInvitePreviewGql"><a href="objects.html#WorkspaceInvitePreviewGql"><code>WorkspaceInvitePreviewGql</code></a><span class="kind">object</span></li>
 <li data-name="WorkspacePlugin"><a href="objects.html#WorkspacePlugin"><code>WorkspacePlugin</code></a><span class="kind">object</span></li>
 <li data-name="WorkspaceStateEntryGql"><a href="objects.html#WorkspaceStateEntryGql"><code>WorkspaceStateEntryGql</code></a><span class="kind">object</span></li>
@@ -427,6 +432,7 @@
 <li data-name="UpdateUserCommandInput"><a href="inputs.html#UpdateUserCommandInput"><code>UpdateUserCommandInput</code></a><span class="kind">input</span></li>
 <li data-name="UpdateWorkspacePluginInput"><a href="inputs.html#UpdateWorkspacePluginInput"><code>UpdateWorkspacePluginInput</code></a><span class="kind">input</span></li>
 <li data-name="UserCommandStepInput"><a href="inputs.html#UserCommandStepInput"><code>UserCommandStepInput</code></a><span class="kind">input</span></li>
+<li data-name="WorkspaceInviteCursorInput"><a href="inputs.html#WorkspaceInviteCursorInput"><code>WorkspaceInviteCursorInput</code></a><span class="kind">input</span></li>
 <li data-name="AttachmentStatusEnum"><a href="enums.html#AttachmentStatusEnum"><code>AttachmentStatusEnum</code></a><span class="kind">enum</span></li>
 <li data-name="AuditOutcomeGql"><a href="enums.html#AuditOutcomeGql"><code>AuditOutcomeGql</code></a><span class="kind">enum</span></li>
 <li data-name="CommandArgumentType"><a href="enums.html#CommandArgumentType"><code>CommandArgumentType</code></a><span class="kind">enum</span></li>
@@ -471,6 +477,7 @@
 <li data-name="ServerFeatureState"><a href="enums.html#ServerFeatureState"><code>ServerFeatureState</code></a><span class="kind">enum</span></li>
 <li data-name="ServerMemberRoleGql"><a href="enums.html#ServerMemberRoleGql"><code>ServerMemberRoleGql</code></a><span class="kind">enum</span></li>
 <li data-name="TypedVerbGql"><a href="enums.html#TypedVerbGql"><code>TypedVerbGql</code></a><span class="kind">enum</span></li>
+<li data-name="WorkspaceInviteState"><a href="enums.html#WorkspaceInviteState"><code>WorkspaceInviteState</code></a><span class="kind">enum</span></li>
 <li data-name="WorkspacePluginStatus"><a href="enums.html#WorkspacePluginStatus"><code>WorkspacePluginStatus</code></a><span class="kind">enum</span></li>
 <li data-name="WorkspaceStateScopeGql"><a href="enums.html#WorkspaceStateScopeGql"><code>WorkspaceStateScopeGql</code></a><span class="kind">enum</span></li>
 <li data-name="DateTime"><a href="scalars.html#DateTime"><code>DateTime</code></a><span class="kind">scalar</span></li>
@@ -486,12 +493,12 @@
 </ul></div>
 <ul class="cards">
 <li><a href="../docs/api.html"><b>Talking to a server</b><span>The endpoints, the session cookie and CSRF, origins, limits, error codes and pagination: the contract around the schema.</span></a></li>
-<li><a href="query.html"><b>Query</b><span>63 fields, grouped by domain.</span></a></li>
-<li><a href="mutation.html"><b>Mutation</b><span>120 fields, grouped by domain.</span></a></li>
+<li><a href="query.html"><b>Query</b><span>64 fields, grouped by domain.</span></a></li>
+<li><a href="mutation.html"><b>Mutation</b><span>121 fields, grouped by domain.</span></a></li>
 <li><a href="subscription.html"><b>Subscription</b><span>2 fields, grouped by domain.</span></a></li>
-<li><a href="objects.html"><b>Objects</b><span>117 objects.</span></a></li>
-<li><a href="inputs.html"><b>Inputs</b><span>85 inputs.</span></a></li>
-<li><a href="enums.html"><b>Enums</b><span>46 enums.</span></a></li>
+<li><a href="objects.html"><b>Objects</b><span>120 objects.</span></a></li>
+<li><a href="inputs.html"><b>Inputs</b><span>86 inputs.</span></a></li>
+<li><a href="enums.html"><b>Enums</b><span>47 enums.</span></a></li>
 <li><a href="scalars.html"><b>Scalars</b><span>7 scalars.</span></a></li>
 <li><a href="directives.html"><b>Directives</b><span>3 directives.</span></a></li>
 </ul>
@@ -499,7 +506,7 @@
     </main>
   </div>
   <footer class="site">
-    <span>Generated from <a href="https://github.com/rim-platform/rim-ui/blob/aff6aa1a3fe0fa2908c64b69522472d3b18364b4/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>aff6aa1</code></span>
+    <span>Generated from <a href="https://github.com/rim-platform/rim-ui/blob/5f5245a76a53b439df6beceb63f49e55f84d406e/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>5f5245a</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>
