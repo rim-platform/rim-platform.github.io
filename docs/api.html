@@ -320,13 +320,16 @@ statement, the audiences and the limits.</li>
 <li><strong>Key-only signup.</strong> <code>signupWithKey</code> creates the account and signs it in. An instance invite
 bound to an email address gives the account that address (<code>EMAIL_TAKEN</code> when another account
 has it); otherwise the account has no email.</li>
-<li><strong>Password login.</strong> <code>login(input: { username, password })</code>. An account without a password,
-such as a key-only account or one that enrolled an identity key, cannot sign in this way.</li>
+<li><strong>Password login.</strong> <code>login(input: { username, password })</code>. The username is matched without
+regard to case, since usernames are stored lowercase. An account without a password, such as a
+key-only account or one that enrolled an identity key, cannot sign in this way.</li>
 <li><strong>Invite signup.</strong> <code>signupWithInvite</code> creates a password account and signs it in. It is
 refused with <code>FORBIDDEN</code> while <code>serverInfo.signupRequiresKeys</code> is true, which is the default
 (<code>RIM_SIGNUP_REQUIRE_KEYS</code>); new accounts then sign up with <code>signupWithKey</code>. Password login of
 existing accounts works either way.</li>
 </ul>
+<p>Both signups store the username trimmed and in lowercase, so <code>Alice</code> signs up as <code>alice</code>, and a
+username that differs from an existing account&#39;s only in case answers <code>CONFLICT</code>.</p>
 <p>When the server has terms of service (<code>serverInfo.termsUrl</code> is set), both signups must accept
 them: <code>acceptedTermsUrl</code> in the input carries that URL unchanged. A signup without it, or with
 another URL, answers <code>VALIDATION</code>. The server records the acceptance and its time on the
@@ -358,8 +361,9 @@ for the workspace ends; the workspace then answers like one they never joined. T
 can be neither handed over nor deleted (<code>VALIDATION</code>).</p>
 <h3 id="deleting-an-account">Deleting an account <a class="anchor" href="#deleting-an-account" aria-label="Link to this section">#</a></h3>
 <p><code>requestAccountDeletion(input: { confirmUsername })</code> schedules the signed-in account for
-deletion and answers <code>{ scheduledFor }</code>. The caller types their username again; a different one
-answers <code>VALIDATION</code>, and so does a request from the owner of a workspace that has other
+deletion and answers <code>{ scheduledFor }</code>. The caller types their username again, matched
+without regard to case since usernames are stored lowercase; a different one answers
+<code>VALIDATION</code>, and so does a request from the owner of a workspace that has other
 members, who hands it over or deletes it first (previous section; a workspace where the account
 is the only member is deleted with the account). A request while one is pending answers <code>CONFLICT</code>, and a person from
 another server, who deletes their account at their relay, gets <code>FORBIDDEN</code>. The request ends
@@ -443,7 +447,7 @@ a number above 0, so a private server limits nothing but the batch size.</p>
 </tr>
 <tr>
 <td><code>RIM_RATE_MUTATIONS_PER_MIN_PER_SESSION</code></td>
-<td>Mutation fields per session per minute, each field, alias and fragment expansion counted, a fragment spread twice counting twice; a request without a session counts against its address.</td>
+<td>Mutation fields per session per minute, each field, alias and fragment expansion counted, a fragment spread twice counting twice; a request another server forwards for one of its users counts against that user&#39;s device, any other request without a session against its address.</td>
 <td><code>RATE_LIMITED</code> with <code>retryAfterSeconds</code>; nothing in the request runs</td>
 </tr>
 <tr>
@@ -463,7 +467,7 @@ a number above 0, so a private server limits nothing but the batch size.</p>
 </tr>
 <tr>
 <td><code>RIM_API_MAX_BATCH</code></td>
-<td>GraphQL requests in one batch, default 20.</td>
+<td>GraphQL requests in one batch, default 20, whether sent here or forwarded by another server.</td>
 <td>HTTP 400 and <code>{&quot;error&quot;:&quot;batch_too_large&quot;}</code></td>
 </tr>
 </tbody></table></div>
@@ -860,13 +864,13 @@ types from it:</p>
 <pre><code class="language-sh">curl -s http://localhost:8080/api/sdl &gt; ../rim-ui/schema.graphql
 cd ../rim-ui &amp;&amp; npm run codegen</code></pre>
 <p>Enum values appear in <code>SCREAMING_SNAKE</code> and fields in <code>camelCase</code>. The models in <a href="messaging.html"><code>messaging.md</code></a>,
-<a href="search.html"><code>search.md</code></a>, <a href="message-change-feed.html"><code>message-change-feed.md</code></a>, <a href="command_model.html"><code>command_model.md</code></a> and the specs in <a href="https://github.com/rim-platform/rim-server/tree/b5efadebef4d2b9551062488269d93956766a34d/docs/specs"><code>specs/</code></a> explain what
+<a href="search.html"><code>search.md</code></a>, <a href="message-change-feed.html"><code>message-change-feed.md</code></a>, <a href="command_model.html"><code>command_model.md</code></a> and the specs in <a href="https://github.com/rim-platform/rim-server/tree/5d7513623fccedabfd1f34922fbdfdda550d2198/docs/specs"><code>specs/</code></a> explain what
 the fields mean.</p>
 
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/b5efadebef4d2b9551062488269d93956766a34d/docs/api.md">rim-server/docs/api.md</a> at <code>b5efade</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/5d7513623fccedabfd1f34922fbdfdda550d2198/docs/api.md">rim-server/docs/api.md</a> at <code>5d75136</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

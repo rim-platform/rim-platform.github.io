@@ -51,7 +51,7 @@
 </details></aside>
     <main id="content" class="prose">
 <h1 id="key-identity-v1">Key identity v1</h1>
-<p class="status"><span><b>Key identity v1</b></span><span>version 1</span><span>status: implemented, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/b5efadebef4d2b9551062488269d93956766a34d/docs/specs/key-identity-v1.md">rim-server/docs/specs/key-identity-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/b5efadebef4d2b9551062488269d93956766a34d">b5efade</a></span></p>
+<p class="status"><span><b>Key identity v1</b></span><span>version 1</span><span>status: implemented, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/5d7513623fccedabfd1f34922fbdfdda550d2198/docs/specs/key-identity-v1.md">rim-server/docs/specs/key-identity-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/5d7513623fccedabfd1f34922fbdfdda550d2198">5d75136</a></span></p>
 <p><em>Status: implemented, normative. Follows <a href="../docs/decisions/decentralization-2026-10-08.html"><code>docs/decisions/decentralization-2026-10-08.md</code></a>:
 a user is a key pair, the user id is stable with a signed key log, and servers are
 interchangeable relays. The web app may create and hold an identity, not only be a linked
@@ -308,7 +308,9 @@ sessions&#39; live connections. None of them is bound to a device at that moment
 password they signed in with no longer signs in (rule 5).</li>
 <li>From then on the password no longer signs in (<code>login</code> answers <code>UNAUTHENTICATED</code>, with the
 same timing as a wrong password), <code>requestPasswordReset</code> sends nothing, and an outstanding
-reset link is refused with <code>FORBIDDEN</code>.</li>
+reset link is refused with <code>FORBIDDEN</code>. A <code>login</code> still checking the password while the
+enrollment commits is refused the same way: it creates its session under the user row lock
+the enrollment holds, after reading the account again.</li>
 </ol>
 <p><code>logoutOtherSessions</code> stays for every account: it ends every session of the account but the
 caller&#39;s and answers how many.</p>
@@ -408,6 +410,11 @@ visible to signed-in users.</li>
 <li>A rotation that does not extend the current head (wrong <code>seq</code> or <code>prev</code>) is a <code>VALIDATION</code>
 error. Two rotations racing for the same <code>seq</code> are serialized by the row lock below, so the
 second one sees the new head and fails the same way; fetch <code>myKeyIdentity</code> and sign again.</li>
+<li>After either rotation, the server pushes the account&#39;s identity document to every host that
+holds the person as a remote user, as it does after a device or card change
+(<a href="server-to-server-v1.html"><code>server-to-server-v1.md</code></a>, &quot;Profile cards and contacts&quot;). The document leaves out the devices
+a recovery revoked: their certificates are void, and a host revokes them when it applies the
+recovery entry.</li>
 </ul>
 <p>Every write that depends on the log (enroll, add, revoke, rotate, publish) runs in one
 transaction with the user row locked (<code>SELECT … FOR UPDATE</code>), so two of them for one account
@@ -707,7 +714,7 @@ identity stays in the browser that created it and is recovered only with its rec
 (<a href="server-to-server-v1.html"><code>server-to-server-v1.md</code></a>).</li>
 </ul>
 <h2 id="appendix-a-known-answer-vectors-version-1">Appendix A: known-answer vectors (version 1) <a class="anchor" href="#appendix-a-known-answer-vectors-version-1" aria-label="Link to this section">#</a></h2>
-<p>Checked by <a href="https://github.com/rim-platform/rim-server/blob/b5efadebef4d2b9551062488269d93956766a34d/rim_identity/src/vectors.rs"><code>rim_identity/src/vectors.rs</code></a>. Keys are <code>SigningKey::from_bytes([seed; 32])</code>; never
+<p>Checked by <a href="https://github.com/rim-platform/rim-server/blob/5d7513623fccedabfd1f34922fbdfdda550d2198/rim_identity/src/vectors.rs"><code>rim_identity/src/vectors.rs</code></a>. Keys are <code>SigningKey::from_bytes([seed; 32])</code>; never
 use these seeds for real keys.</p>
 <div class="tablewrap"><table>
 <thead>
@@ -748,7 +755,7 @@ tt6UNl3tRCwupWIYEfnWzqW9qVqDsJju2dA7d2CdNqdIZ0piVeP_Q6Y1lLfA4YN-26tsdaFea-rM_I8Q
 <pre><code>{&quot;v&quot;:1,&quot;type&quot;:&quot;login&quot;,&quot;challengeId&quot;:&quot;00000000-0000-0000-0000-000000000009&quot;,&quot;nonce&quot;:&quot;bm9uY2U&quot;,&quot;audience&quot;:&quot;localhost:8080&quot;,&quot;principalId&quot;:&quot;rimp1_nz1POml8JmCMcFDECrtu60ibohPKnywhcExmOPMvTUo&quot;,&quot;deviceId&quot;:&quot;00000000-0000-0000-0000-000000000001&quot;}
 jB_BFFAn7e-FMh8wCSWhnCcPzMjoe1fTKwlCoGfE0p1OYkhZWjV4J1c_AgeIhKpWOnLYyB0PqstAEYmaCITXBw</code></pre>
 <h2 id="appendix-b-known-answer-vectors-version-2">Appendix B: known-answer vectors (version 2) <a class="anchor" href="#appendix-b-known-answer-vectors-version-2" aria-label="Link to this section">#</a></h2>
-<p>Checked by <a href="https://github.com/rim-platform/rim-server/blob/b5efadebef4d2b9551062488269d93956766a34d/rim_identity/src/vectors.rs"><code>rim_identity/src/vectors.rs</code></a>. Same keys and fields as appendix A, written as
+<p>Checked by <a href="https://github.com/rim-platform/rim-server/blob/5d7513623fccedabfd1f34922fbdfdda550d2198/rim_identity/src/vectors.rs"><code>rim_identity/src/vectors.rs</code></a>. Same keys and fields as appendix A, written as
 version 2 statements. The principal id differs from appendix A because the inception payload
 differs.</p>
 <div class="tablewrap"><table>
@@ -789,7 +796,7 @@ ed25519:D2moo9U9OjVL9zed4lM0A5cHoGQOVEtUfgKfAmOn0P18x74NEbh4FL4f3PbulQzoVuGAGOEJ
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/b5efadebef4d2b9551062488269d93956766a34d/docs/specs/key-identity-v1.md">rim-server/docs/specs/key-identity-v1.md</a> at <code>b5efade</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/5d7513623fccedabfd1f34922fbdfdda550d2198/docs/specs/key-identity-v1.md">rim-server/docs/specs/key-identity-v1.md</a> at <code>5d75136</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

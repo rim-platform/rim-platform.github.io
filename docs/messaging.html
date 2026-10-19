@@ -308,6 +308,9 @@ subscription then ends.</li>
 is <code>owner</code>, <code>moderator</code>, <code>member</code> or <code>guest</code>. Same visibility as <code>MemberLeft</code>. A subscriber whose
 own role changes to or from <code>guest</code> gets the matching visibility from the next event on.</li>
 </ul>
+<p>A subscription that falls behind loses events, possibly these two. Before it delivers another
+event it reads the subscriber&#39;s membership and role again: it ends when they are no longer a
+member (or the read fails), and otherwise goes on with the visibility of their current role.</p>
 <h2 id="notification-rules">Notification Rules <a class="anchor" href="#notification-rules" aria-label="Link to this section">#</a></h2>
 <p>The server decides, once per message, who is told about it, and tells a message&#39;s author when
 someone reacts to it.
@@ -480,7 +483,7 @@ requires <code>blobSha256</code>, a fixed file name and type, and the upload is 
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/b5efadebef4d2b9551062488269d93956766a34d/docs/messaging.md">rim-server/docs/messaging.md</a> at <code>b5efade</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/5d7513623fccedabfd1f34922fbdfdda550d2198/docs/messaging.md">rim-server/docs/messaging.md</a> at <code>5d75136</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>
