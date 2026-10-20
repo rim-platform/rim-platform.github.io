@@ -87,6 +87,11 @@ Before that, a server is the relay and host of its own users only, as it always 
 <td>Active delegations one relay may hold on this host; past it new delegations are refused as <code>limited</code>, while renewals of active ones still go through</td>
 </tr>
 <tr>
+<td><code>RIM_S2S_PEER_DEAD_AFTER_HOURS</code></td>
+<td>24</td>
+<td>Hours every delivery to a relay may fail before it is dead: no new outbox rows are written for it until a delivery succeeds again (1 to 168)</td>
+</tr>
+<tr>
 <td><code>RIM_HOST_ALLOWED_RELAYS</code></td>
 <td>empty = any</td>
 <td>Server ids of the relays allowed to push identities, join, subscribe, forward, report presence and bring revocations here</td>
@@ -99,7 +104,7 @@ Before that, a server is the relay and host of its own users only, as it always 
 <tr>
 <td><code>RIM_RELAY_DM_REQUESTS_PER_DAY</code></td>
 <td>20</td>
-<td>DM requests one sender principal files here per day, and invites a local user sends per day to people on other servers who are not their contacts</td>
+<td>DM requests one sender principal files here per day, and invites a local user sends per day to people on other servers they do not know (a contact who lists them too, or someone either accepted a DM request from here)</td>
 </tr>
 <tr>
 <td><code>RIM_RELAY_CARD_MAX_BYTES</code></td>
@@ -158,9 +163,26 @@ counts from 1 without gaps; <code>e</code> has none. The host appends one outbox
 get the event (for a workspace, the relays holding an active delegation of the person; for the
 direct space, the relays the person&#39;s newest card lists, else the relay that served their
 identity) and a sender delivers each relay&#39;s rows in order (<code>POST /s2s/v1/deliver</code>), backing off
-from 1 second to 5 minutes. Outbox rows are kept 7 days. A relay that refuses a person as unknown
-is not sent their events for 24 hours. Each server process keeps that refusal in memory: a restart
-forgets it, and with several nodes each node learns it from the relay on its own.</p>
+from 1 second to 5 minutes. Outbox rows are kept 7 days, delivered or not. A relay that refuses a
+person as unknown is not sent their events for 24 hours. Each server process keeps that refusal in
+memory: a restart forgets it, and with several nodes each node learns it from the relay on its own.</p>
+<p>The rows a relay has not acknowledged are capped at 100,000 rows and 2 GiB per relay; delivered
+rows do not count. Past either cap, and while the relay is dead (every delivery to it has failed
+for <code>RIM_S2S_PEER_DEAD_AFTER_HOURS</code>), new events get no row for that relay: they are counted in
+<code>rim_outbox_not_queued_rows_total</code> and logged at warn (&quot;host events for a relay are not queued&quot;)
+at most once a minute per relay. The message or change itself is saved here, and other relays
+and local members get it as usual. A dead relay is tried once every 5 minutes, with an empty
+delivery when nothing is left for it; the first success ends its failures and queueing resumes
+within 10 seconds. The events it did not get still took their streams&#39; <code>seq</code>, so its people&#39;s
+apps see the gap and reconcile from this host, as for any gap.</p>
+<p>A relay queues an item that names no conversation (a <code>w</code> event, presence on <code>e</code>, a person&#39;s
+directory events on their <code>u:</code> stream) for a recipient who holds an active subscription to its
+workspace. A host&#39;s direct space sends such items too, presence and the recipient&#39;s own directory
+events: those are queued for a recipient who accepted a conversation that host homes. Anything
+else naming no conversation is refused (<code>not_subscribed</code>). Items queued from
+one host take at most 2 GiB a day across all recipients, those of workspaces the recipient
+subscribed to not counted; past it the host&#39;s items are refused (<code>limited</code>) until its day ends.
+The count is in memory, per node.</p>
 <p>A relay stores each envelope once and one item per recipient. Each device reads its user&#39;s items
 above its cursor; a device added later starts at the newest item queued before it. An item is
 deleted once every non-revoked device of its user has acknowledged it, and after the retention
@@ -190,6 +212,20 @@ card and holds up to three items of the conversation in at most 1 MiB; later one
 until it is accepted. Items of a conversation the relay has no invite for are refused
 (<code>not_subscribed</code>), so a host cannot skip the inbox. A decided conversation keeps its decision
 when the settings change later.</p>
+<p>A conversation accepted as it arrives keeps no card. A recipient holds at most 5,000 accepted
+conversations per host; past them an invite their settings deliver is refused as <code>limited</code>, while
+accepting a request is never refused. An accepted conversation&#39;s row expires 400 days after the
+last item delivered for it. The next item of such a conversation is refused <code>not_subscribed</code>;
+its host, when it is a RIM server still holding the person as a member, sends the conversation&#39;s
+invite again (at most once a day per conversation and person, as this server does for its own
+direct space), and the invite is filed like any other: at once for a contact or someone accepted
+before, as a request otherwise. The same repairs a conversation whose invite this relay never
+got, written while its host held no deliveries for it after a day of failures. A conversation
+whose host is gone simply stops reaching the queue. The row goes at once when its user leaves the conversation or is removed
+from it: here when this server hosts it, and for a conversation hosted elsewhere when the host&#39;s
+<code>MemberRemovedFromConversation</code> names the user, which the relay recognizes once an event of that
+host on the user&#39;s own stream (a Welcome, a read state, a notification) told it the host&#39;s id
+for them.</p>
 <p>The same rule covers conversations of this server&#39;s own direct space whose creator is someone
 else (a person from another relay creating a DM with a local user through the forward path, or a
 local user), and DMs between members of a workspace this server hosts. The server files its own
@@ -299,7 +335,7 @@ identity from their relays, waiting up to 10 seconds, and issues a session of 24
 mutations stay refused on it.</p>
 <h3 id="cleanup-and-audit">Cleanup and audit <a class="anchor" href="#cleanup-and-audit" aria-label="Link to this section">#</a></h3>
 <p>Every minute the server deletes acknowledged and expired items, envelopes no item uses, expired
-requests, outbox rows over 7 days and accepted <code>seq</code> values out of the window, ends expired
+requests, outbox rows over 7 days (delivered or not) and accepted <code>seq</code> values out of the window, ends expired
 delegations and those of revoked devices or departed members, and marks this relay&#39;s expired
 subscriptions lapsed. Every 5 seconds it sends revocations due for another attempt. Audit events
 (target <code>audit</code>, ids only): <code>relay.principal_blocked</code> (<code>scope</code> <code>user</code> for a user&#39;s block,
@@ -311,7 +347,7 @@ applied from a person&#39;s identity, with the sessions and delegations they end
 <code>host.delegation_accepted</code> are also written to <code>command_audit_log</code> (initiator <code>s2s</code>).</p>
 <h3 id="the-public-relay">The public relay <a class="anchor" href="#the-public-relay" aria-label="Link to this section">#</a></h3>
 <p>A relay anyone may sign up on runs <code>RIM_ROLE=relay</code> with the settings of
-<a href="https://github.com/rim-platform/rim-server/blob/553bf5ddfc87d056e4c3e11acd3cc0eaa966b647/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a> on top of <a href="https://github.com/rim-platform/rim-server/blob/553bf5ddfc87d056e4c3e11acd3cc0eaa966b647/deploy/compose.yml"><code>deploy/compose.yml</code></a>. This section says how its
+<a href="https://github.com/rim-platform/rim-server/blob/aec6be3bdfb01032632340b92c79a0e83a66d34f/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a> on top of <a href="https://github.com/rim-platform/rim-server/blob/aec6be3bdfb01032632340b92c79a0e83a66d34f/deploy/compose.yml"><code>deploy/compose.yml</code></a>. This section says how its
 registration and blocks behave; <a href="operations/relay-public.html"><code>docs/operations/relay-public.md</code></a> has its quotas, the operator&#39;s
 commands and the abuse policy.</p>
 <p><strong>Registration.</strong> <code>RIM_REGISTRATION_POW_BITS</code> (1 to 40; 24 on the public relay) turns on <code>pow</code>
@@ -348,20 +384,32 @@ lifts the principal&#39;s block and its email&#39;s, not the sessions or invites
 <code>403 peer_not_allowed</code> and nothing is sent to it. <code>peer unblock</code> makes it <code>active</code> again. A
 forked peer stays forked; a peer never pinned is refused with <code>RIM_S2S_DENIED_PEERS</code> instead.
 Audited as <code>s2s.peer_blocked</code> and <code>s2s.peer_unblocked</code>.</p>
+<p><strong>Idle pins and cached identities.</strong> An hourly job forgets the pin of a server that was neither
+fetched nor sent a request for 90 days when nothing here refers to it and the configuration does
+not name it, keeping its key-log head: its next contact pins it again only with a log that
+extends that head (<a href="../specs/server-to-server-v1.html"><code>docs/specs/server-to-server-v1.md</code></a>, &quot;Pinning a peer&quot;). Forked and blocked
+pins stay. The same job deletes cached identities of people on other servers 30 days after they
+were fetched, except those of remote users held here. One origin holds at most 4 pins.</p>
 <p><strong>Abuse reports.</strong> <code>reportDmRequest</code> in the app and reports that come by mail (<code>rim_server abuse-reports add</code>) both end in <code>relay_abuse_report</code>, which <code>abuse-reports list</code> and
 <code>abuse-reports resolve</code> work through.</p>
 <h2 id="for-clients">For clients <a class="anchor" href="#for-clients" aria-label="Link to this section">#</a></h2>
 <ul>
 <li><code>relayInfo { serverId roles directSpaceId }</code> (no session needed) names the direct space.</li>
 <li><code>remoteServer(origin)</code> pins another server through the relay and returns its discovery
-document to verify and pin in the app.</li>
+document to verify and pin in the app. It fails <code>CONFLICT</code> when 4 other servers are pinned at
+that origin.</li>
 <li><code>remoteIdentity(principalId, relayUrl)</code> returns a principal&#39;s key log, devices and card, from
-this server or fetched from <code>relayUrl</code> and cached for 24 hours. Verify the log against the
+this server or fetched from <code>relayUrl</code> and cached for 24 hours. Without <code>relayUrl</code> it refetches
+from the relay that served the cached copy, which is deleted 30 days after the fetch (kept for
+remote users held here); after that <code>relayUrl</code> is needed again. Verify the log against the
 principal id, each certificate against the log and the card against the head.</li>
 <li><code>contacts</code>, <code>addContact(principalId, relayUrls)</code>, <code>removeContact(principalId)</code>: the contact list
 the request inbox filters by. Relay URLs are 1 to 8 of 1 to 256 bytes of printable ASCII
 without <code>?</code>, <code>#</code> or <code>@</code>. The caller&#39;s own principal is refused (<code>VALIDATION</code>, &quot;cannot add
-yourself as a contact&quot;).</li>
+yourself as a contact&quot;), and so is someone new once the caller holds 1,000 contacts
+(<code>VALIDATION</code>, &quot;a user holds at most 1000 contacts; remove one first&quot;). A contact added on one
+side only does not exempt its holder from the daily invites to other servers or from
+probation; one who lists the holder too does.</li>
 <li><code>createConversation(input: { serverId: &lt;directSpaceId&gt;, remoteMembers: [{ principalId, relayUrls }], encrypted })</code> starts a DM (one remote member, no <code>otherUserId</code> or <code>memberIds</code>) or a
 group with people on other servers; people on this relay may be named the same way. A
 conversation with someone on another relay must be <code>encrypted</code> (otherwise <code>VALIDATION</code>,
@@ -449,7 +497,7 @@ mutations are refused on it (<code>FORBIDDEN</code>), as through the relay.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/553bf5ddfc87d056e4c3e11acd3cc0eaa966b647/docs/relay.md">rim-server/docs/relay.md</a> at <code>553bf5d</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/aec6be3bdfb01032632340b92c79a0e83a66d34f/docs/relay.md">rim-server/docs/relay.md</a> at <code>aec6be3</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

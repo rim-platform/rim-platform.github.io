@@ -55,14 +55,14 @@ not.</li>
 <li>A change the operator has to act on (a new required setting, a migration that rewrites a
 large table, a contract migration, a changed default) starts with <strong>Upgrade:</strong> and says what
 to do. <a href="operations/upgrade.html"><code>docs/operations/upgrade.md</code></a> is how an upgrade runs.</li>
-<li>A change to the GraphQL schema or a spec in <a href="https://github.com/rim-platform/rim-server/tree/553bf5ddfc87d056e4c3e11acd3cc0eaa966b647/docs/specs"><code>docs/specs/</code></a> names the type, field or spec.</li>
+<li>A change to the GraphQL schema or a spec in <a href="https://github.com/rim-platform/rim-server/tree/aec6be3bdfb01032632340b92c79a0e83a66d34f/docs/specs"><code>docs/specs/</code></a> names the type, field or spec.</li>
 <li>At release time <code>Unreleased</code> becomes <code>## [&lt;version&gt;] - &lt;YYYY-MM-DD&gt;</code> and a new empty
 <code>Unreleased</code> starts above it (<a href="operations/release-checklist.html"><code>docs/operations/release-checklist.md</code></a>).</li>
 </ul>
 <h2 id="unreleased"><a href="https://github.com/rim-platform/rim-server/commits/master">Unreleased</a> <a class="anchor" href="#unreleased" aria-label="Link to this section">#</a></h2>
 <h3 id="added">Added <a class="anchor" href="#added" aria-label="Link to this section">#</a></h3>
 <ul>
-<li><p><a href="https://github.com/rim-platform/rim-server/blob/553bf5ddfc87d056e4c3e11acd3cc0eaa966b647/deploy/compose.monitoring-containers.yml"><code>deploy/compose.monitoring-containers.yml</code></a>, an opt-in overlay on top of
+<li><p><a href="https://github.com/rim-platform/rim-server/blob/aec6be3bdfb01032632340b92c79a0e83a66d34f/deploy/compose.monitoring-containers.yml"><code>deploy/compose.monitoring-containers.yml</code></a>, an opt-in overlay on top of
 <code>compose.monitoring.yml</code> that adds cAdvisor, so Alloy also sends each compose service&#39;s CPU
 and memory use (job <code>cadvisor</code>). cAdvisor reaches the Docker and containerd sockets only
 through proxies that allow it read-only calls alone; it needs the new <code>DOCKER_GID</code> in
@@ -70,7 +70,7 @@ through proxies that allow it read-only calls alone; it needs the new <code>DOCK
 <code>compose.monitoring-containers-overlay2.yml</code>. &quot;Container metrics&quot; in
 <a href="operations/metrics.html"><code>docs/operations/metrics.md</code></a> describes it.</p>
 </li>
-<li><p><a href="https://github.com/rim-platform/rim-server/blob/553bf5ddfc87d056e4c3e11acd3cc0eaa966b647/deploy/compose.monitoring.yml"><code>deploy/compose.monitoring.yml</code></a>, an opt-in overlay that turns on the metrics listener and
+<li><p><a href="https://github.com/rim-platform/rim-server/blob/aec6be3bdfb01032632340b92c79a0e83a66d34f/deploy/compose.monitoring.yml"><code>deploy/compose.monitoring.yml</code></a>, an opt-in overlay that turns on the metrics listener and
 adds a Grafana Alloy collector: every 15 seconds it scrapes rim-server&#39;s metrics, probes
 <code>/readyz</code> and reads the host&#39;s metrics, and remote-writes them to Grafana Cloud with the new
 <code>GRAFANA_CLOUD_METRICS_URL</code>, <code>GRAFANA_CLOUD_METRICS_USER</code> and <code>GRAFANA_CLOUD_METRICS_TOKEN</code>
@@ -282,7 +282,7 @@ identity, sign up with a key and link other devices; a browser-held identity is 
 up, the recovery kit is shown after signup or enrollment and its entropy is kept until the
 person confirms they saved it.</p>
 </li>
-<li><p><strong>Upgrade:</strong> <a href="https://github.com/rim-platform/rim-server/blob/553bf5ddfc87d056e4c3e11acd3cc0eaa966b647/deploy/compose.yml"><code>deploy/compose.yml</code></a> runs the published images <code>ghcr.io/rim-platform/rim-server</code>
+<li><p><strong>Upgrade:</strong> <a href="https://github.com/rim-platform/rim-server/blob/aec6be3bdfb01032632340b92c79a0e83a66d34f/deploy/compose.yml"><code>deploy/compose.yml</code></a> runs the published images <code>ghcr.io/rim-platform/rim-server</code>
 and <code>ghcr.io/rim-platform/rim-web</code> at <code>RIM_VERSION</code> (default <code>latest</code>) instead of building
 them. Set <code>RIM_VERSION</code> in <code>deploy/.env</code> to the release you run, and run <code>pull</code> then <code>up -d</code>
 where you ran <code>up -d --build</code>. Operators who build locally add <code>-f deploy/compose.dev.yml</code> to
@@ -337,9 +337,27 @@ confirmation gate: a dangerous step such as <code>admin.kick</code>, <code>admin
 <code>chat.remove_conversation_member</code>, a <code>Restricted</code> one, or for an agent a <code>Mutating</code> one. That
 confirmation covers every step of the run, so such a macro no longer fails at the step; the
 <code>message</code> of the <code>CONFIRMATION_REQUIRED</code> answer names those steps.</li>
+<li><code>MlsPendingDevice.hasKeyPackage</code> is false for a device whose pending MLS Welcomes leave no
+room for one more, the devices <code>claimMlsKeyPackages</code> leaves out, so a client no longer waits
+to add a device that no claim serves (<a href="../specs/e2ee-mls-v1.html"><code>docs/specs/e2ee-mls-v1.md</code></a>, &quot;Key packages&quot;).</li>
 </ul>
 <h3 id="security">Security <a class="anchor" href="#security" aria-label="Link to this section">#</a></h3>
 <ul>
+<li>Adding someone as a contact no longer lets a user skip their own limits on DMs to strangers.
+The daily invites to people on other servers (<code>RIM_RELAY_DM_REQUESTS_PER_DAY</code>) and a new
+account&#39;s probation (<code>RIM_PROBATION_HOURS</code>) now pass only for people the user knows: a contact
+who lists the user as a contact too, or someone either of them accepted a DM request from on
+this server. A user holds at most 1,000 contacts; <code>addContact</code> for someone new past that
+answers <code>VALIDATION</code>. &quot;Who May Start A DM&quot; in <a href="messaging.html"><code>docs/messaging.md</code></a> and &quot;Public relay&quot; in
+<a href="../specs/server-to-server-v1.html"><code>docs/specs/server-to-server-v1.md</code></a> describe both.</li>
+<li>A device holds at most 256 pending MLS Welcomes and 64 MiB of them. A Commit whose Welcome
+would take an added device past either is refused (<code>VALIDATION</code>), and <code>claimMlsKeyPackages</code>
+leaves out a device without room for one more, so clients do not add it until it has read and
+acknowledged its Welcomes. Before, Welcomes for one device piled up for 30 days without limit.
+<code>myMlsWelcomes</code> answers a page at a time: the new optional <code>after: MlsWelcomeCursorInput</code> and
+<code>limit</code> (1 to 100, 100 by default) arguments, and the new <code>MlsWelcome.createdAt</code> that with
+<code>id</code> makes the cursor. A client that asks with no arguments gets the oldest 100
+(<a href="../specs/e2ee-mls-v1.html"><code>docs/specs/e2ee-mls-v1.md</code></a>, &quot;Welcome delivery and joining&quot;).</li>
 <li><strong>Upgrade:</strong> <code>RIM_LIMIT_INVITES_PER_USER_PER_DAY</code> is on by default, at 50, and also caps the
 invite emails (<code>createInvite</code> with <code>recipientEmail</code>) one user sends in 24 hours. Emails are
 counted apart from the invites, so deleting a workspace does not give them back. Past either
@@ -349,6 +367,17 @@ number if your owners invite more people a day, or 0 to turn the cap off (<a hre
 <li>Accepting, ignoring or reporting a DM request whose expiry has passed is <code>NOT_FOUND</code>, as for
 an unknown request; the decision checks the expiry in the same update that records it.
 Before, an expired request not yet purged could still be accepted.</li>
+<li>The outbox a host keeps for each relay is bounded: at most 100,000 rows and 2 GiB that the
+relay has not acknowledged. Past either, new events are not queued for that relay; they are
+counted in <code>rim_outbox_not_queued_rows_total</code> and logged at warn once a minute. A relay every
+delivery to has failed for <code>RIM_S2S_PEER_DEAD_AFTER_HOURS</code> (default 24) is dead: nothing new
+is queued for it, it is tried once every 5 minutes, and its first success resumes queueing.
+The write itself and every other recipient are unaffected, and the relay&#39;s apps reconcile
+what they missed from the host&#39;s streams. Before, rows for an unreachable relay piled up for 7
+days at whatever rate events were written. New gauges <code>rim_outbox_pending_rows</code>,
+<code>rim_outbox_pending_bytes</code>, <code>rim_outbox_peer_max_pending_rows</code>,
+<code>rim_outbox_peer_max_pending_bytes</code> and <code>rim_outbox_dead_peers</code>
+(<a href="../specs/server-to-server-v1.html"><code>docs/specs/server-to-server-v1.md</code></a>, &quot;Outbox and <code>deliver</code>&quot;; <a href="operations/metrics.html"><code>docs/operations/metrics.md</code></a>).</li>
 <li>A relay files a DM invite another server delivers only when that server speaks for the
 sender it names: the sender&#39;s card must be signed by their key, and their newest card must
 list the delivering server (or the sender is a local user subscribed there). Anything else is
@@ -492,12 +521,48 @@ inbox is full&quot;) while the recipient holds 100 pending requests. Before, a D
 limit from someone on this server, or from someone elsewhere through the forward path,
 skipped the request inbox and reached the recipient&#39;s conversations and notifications
 directly. Workspace DMs a member takes as requests meet the same limits.</li>
+<li>Cached identities of people on other servers, stored by <code>remoteIdentity</code> and by a host
+refreshing its remote members, are deleted 30 days after they were fetched unless the person
+is a remote user here. A pin of another server is forgotten after 90 days without a fetch or
+a request when nothing here refers to it and the configuration does not name it; its key-log
+head is kept, so its next contact pins it again only with a log that extends the one seen
+before (another history is pinned <code>forked</code>, a shorter one is not pinned). One origin holds at
+most 4 pins: a fifth server id there is refused until <code>rim_server peer reset</code> removes one.
+Before, any signed-in user could grow both tables without bound by looking up principals and
+servers. The hourly job, its <code>s2s.peer_forgotten</code> audit line and the
+<code>rim_remote_identities_purged_total</code> and <code>rim_peer_pins_forgotten_total</code> counters are in
+<a href="operations/background-jobs.html"><code>docs/operations/background-jobs.md</code></a> (<a href="../specs/server-to-server-v1.html"><code>docs/specs/server-to-server-v1.md</code></a>, &quot;Pinning a peer&quot;).</li>
+<li>A relay queues a host&#39;s items that name no conversation (workspace events, presence,
+directory events) only for recipients subscribed to that workspace, or, for presence and a
+recipient&#39;s own directory events from a host&#39;s direct space, for recipients who accepted a
+conversation that host homes; it refuses the rest <code>not_subscribed</code>. It also queues at most
+2 GiB of items from one host a day across all its users, items of subscribed workspaces not
+counted, and refuses that host&#39;s further items <code>limited</code> (metric limiter
+<code>relay_peer_bytes</code>). Before, any server could queue such items for every user of the relay,
+for any workspace, up to each user&#39;s queue cap, and keep them there for the retention period
+(<code>server-to-server-v1.md</code> &quot;Outbox and deliver&quot;, &quot;Limits and audit&quot;).</li>
+<li>A relay no longer keeps a person&#39;s accepted conversations forever. The record of an accepted</li>
+<li><strong>Upgrade:</strong> the migration shortens the expiry of every accepted conversation a relay holds
+to 400 days from the upgrade, and drops the stored sender card of conversations accepted on
+arrival; nothing is to be done, and the previous release keeps working on the result. A relay
+no longer keeps a person&#39;s accepted conversations forever. The record of an accepted
+conversation is deleted when they leave it or are removed from it, and otherwise expires 400
+days after the last item delivered for it; a person holds at most 5,000 from one host, past
+which a new conversation their settings would deliver is refused <code>limited</code>. A conversation
+accepted as it arrived no longer stores its sender&#39;s card. When a relay refuses an item of a
+direct-space conversation <code>not_subscribed</code> for someone still in it, the host sends them its
+invite again, at most once a day, so a conversation that wakes up after its record expired,
+or whose invite was written while that relay was unreachable for a day and never delivered,
+is filed again. Before, each accepted conversation was kept for a hundred years with a card of up
+to 128 KiB, so a host could fill a relay&#39;s database by inventing conversations
+(<code>server-to-server-v1.md</code> &quot;Outbox and <code>deliver</code>&quot;, &quot;The request inbox&quot;, &quot;Storage&quot;, &quot;Limits and
+audit&quot;).</li>
 </ul>
 
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/553bf5ddfc87d056e4c3e11acd3cc0eaa966b647/CHANGELOG.md">rim-server/CHANGELOG.md</a> at <code>553bf5d</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/aec6be3bdfb01032632340b92c79a0e83a66d34f/CHANGELOG.md">rim-server/CHANGELOG.md</a> at <code>aec6be3</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

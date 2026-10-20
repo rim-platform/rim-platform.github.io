@@ -152,12 +152,27 @@ between a request and a refusal. <code>OPEN</code> sets no floor; with the choic
 works as <code>REQUESTS</code>.</li>
 <li><strong>A contact</strong> is someone the recipient added (<code>addContact</code>), accepted, or messaged first:
 creating a DM records the other person as the creator&#39;s contact, so their DM back is never a
-request.</li>
+request. A user holds at most 1,000 contacts: <code>addContact</code> for someone new past that answers
+<code>VALIDATION</code> (&quot;a user holds at most 1000 contacts; remove one first&quot;), and a DM records no
+further contact for its creator.</li>
+<li><strong>Who the sender knows.</strong> The sender&#39;s own limits on DMs to strangers, the daily invites to
+people on other servers and a new account&#39;s probation (below), skip only people the sender
+knows: a contact who lists the sender as a contact too (only people on this server have a list
+here), or someone either of the two accepted a DM request from on this server (an invite
+delivered directly from a contact is recorded as accepted). A contact the sender added on their
+own, or that a DM they started recorded, counts as a stranger. These limits are the sender&#39;s;
+the recipient&#39;s request inbox still applies its own rules.</li>
 <li><strong>Outbound.</strong> A DM with someone on another server needs <code>RIM_DM_OUTBOUND</code> to admit their
 relay: <code>createConversation</code> with <code>remoteMembers</code> answers <code>FORBIDDEN</code> (&quot;this server starts no
 direct messages with that server&quot;) otherwise, before their relay is asked anything, and so do
 key package claims for their devices. With <code>NONE</code> nothing of the direct space reaches another
-server; with <code>PARTNERS</code> it goes to the listed servers only.</li>
+server; with <code>PARTNERS</code> it goes to the listed servers only. A conversation that invites someone
+on another server the sender does not know counts against the sender&#39;s daily invites
+(<code>RIM_RELAY_DM_REQUESTS_PER_DAY</code>, 20): past them it answers <code>RATE_LIMITED</code> with
+<code>retryAfterSeconds</code>.</li>
+<li><strong>Probation.</strong> During <code>RIM_PROBATION_HOURS</code> a new account sends no DM request to a stranger,
+someone it does not know (above) who is in none of its workspaces here: <code>VALIDATION</code> saying when
+it can (<a href="api.html"><code>docs/api.md</code></a>).</li>
 <li><strong>Refused here.</strong> A DM in the direct space that a recipient here refuses answers <code>FORBIDDEN</code>
 when it is started (<code>createConversation</code>, <code>addConversationMembers</code>). A refused DM from another
 server is answered as for a block, so its server stops addressing the recipient.</li>
@@ -523,7 +538,7 @@ requires <code>blobSha256</code>, a fixed file name and type, and the upload is 
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/553bf5ddfc87d056e4c3e11acd3cc0eaa966b647/docs/messaging.md">rim-server/docs/messaging.md</a> at <code>553bf5d</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/aec6be3bdfb01032632340b92c79a0e83a66d34f/docs/messaging.md">rim-server/docs/messaging.md</a> at <code>aec6be3</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>
