@@ -55,14 +55,14 @@ not.</li>
 <li>A change the operator has to act on (a new required setting, a migration that rewrites a
 large table, a contract migration, a changed default) starts with <strong>Upgrade:</strong> and says what
 to do. <a href="operations/upgrade.html"><code>docs/operations/upgrade.md</code></a> is how an upgrade runs.</li>
-<li>A change to the GraphQL schema or a spec in <a href="https://github.com/rim-platform/rim-server/tree/aec6be3bdfb01032632340b92c79a0e83a66d34f/docs/specs"><code>docs/specs/</code></a> names the type, field or spec.</li>
+<li>A change to the GraphQL schema or a spec in <a href="https://github.com/rim-platform/rim-server/tree/fd4cfda821c7e11b248267958493b19503c3e153/docs/specs"><code>docs/specs/</code></a> names the type, field or spec.</li>
 <li>At release time <code>Unreleased</code> becomes <code>## [&lt;version&gt;] - &lt;YYYY-MM-DD&gt;</code> and a new empty
 <code>Unreleased</code> starts above it (<a href="operations/release-checklist.html"><code>docs/operations/release-checklist.md</code></a>).</li>
 </ul>
 <h2 id="unreleased"><a href="https://github.com/rim-platform/rim-server/commits/master">Unreleased</a> <a class="anchor" href="#unreleased" aria-label="Link to this section">#</a></h2>
 <h3 id="added">Added <a class="anchor" href="#added" aria-label="Link to this section">#</a></h3>
 <ul>
-<li><p><a href="https://github.com/rim-platform/rim-server/blob/aec6be3bdfb01032632340b92c79a0e83a66d34f/deploy/compose.monitoring-containers.yml"><code>deploy/compose.monitoring-containers.yml</code></a>, an opt-in overlay on top of
+<li><p><a href="https://github.com/rim-platform/rim-server/blob/fd4cfda821c7e11b248267958493b19503c3e153/deploy/compose.monitoring-containers.yml"><code>deploy/compose.monitoring-containers.yml</code></a>, an opt-in overlay on top of
 <code>compose.monitoring.yml</code> that adds cAdvisor, so Alloy also sends each compose service&#39;s CPU
 and memory use (job <code>cadvisor</code>). cAdvisor reaches the Docker and containerd sockets only
 through proxies that allow it read-only calls alone; it needs the new <code>DOCKER_GID</code> in
@@ -70,7 +70,7 @@ through proxies that allow it read-only calls alone; it needs the new <code>DOCK
 <code>compose.monitoring-containers-overlay2.yml</code>. &quot;Container metrics&quot; in
 <a href="operations/metrics.html"><code>docs/operations/metrics.md</code></a> describes it.</p>
 </li>
-<li><p><a href="https://github.com/rim-platform/rim-server/blob/aec6be3bdfb01032632340b92c79a0e83a66d34f/deploy/compose.monitoring.yml"><code>deploy/compose.monitoring.yml</code></a>, an opt-in overlay that turns on the metrics listener and
+<li><p><a href="https://github.com/rim-platform/rim-server/blob/fd4cfda821c7e11b248267958493b19503c3e153/deploy/compose.monitoring.yml"><code>deploy/compose.monitoring.yml</code></a>, an opt-in overlay that turns on the metrics listener and
 adds a Grafana Alloy collector: every 15 seconds it scrapes rim-server&#39;s metrics, probes
 <code>/readyz</code> and reads the host&#39;s metrics, and remote-writes them to Grafana Cloud with the new
 <code>GRAFANA_CLOUD_METRICS_URL</code>, <code>GRAFANA_CLOUD_METRICS_USER</code> and <code>GRAFANA_CLOUD_METRICS_TOKEN</code>
@@ -282,7 +282,7 @@ identity, sign up with a key and link other devices; a browser-held identity is 
 up, the recovery kit is shown after signup or enrollment and its entropy is kept until the
 person confirms they saved it.</p>
 </li>
-<li><p><strong>Upgrade:</strong> <a href="https://github.com/rim-platform/rim-server/blob/aec6be3bdfb01032632340b92c79a0e83a66d34f/deploy/compose.yml"><code>deploy/compose.yml</code></a> runs the published images <code>ghcr.io/rim-platform/rim-server</code>
+<li><p><strong>Upgrade:</strong> <a href="https://github.com/rim-platform/rim-server/blob/fd4cfda821c7e11b248267958493b19503c3e153/deploy/compose.yml"><code>deploy/compose.yml</code></a> runs the published images <code>ghcr.io/rim-platform/rim-server</code>
 and <code>ghcr.io/rim-platform/rim-web</code> at <code>RIM_VERSION</code> (default <code>latest</code>) instead of building
 them. Set <code>RIM_VERSION</code> in <code>deploy/.env</code> to the release you run, and run <code>pull</code> then <code>up -d</code>
 where you ran <code>up -d --build</code>. Operators who build locally add <code>-f deploy/compose.dev.yml</code> to
@@ -557,12 +557,19 @@ is filed again. Before, each accepted conversation was kept for a hundred years 
 to 128 KiB, so a host could fill a relay&#39;s database by inventing conversations
 (<code>server-to-server-v1.md</code> &quot;Outbox and <code>deliver</code>&quot;, &quot;The request inbox&quot;, &quot;Storage&quot;, &quot;Limits and
 audit&quot;).</li>
+<li>Every service of <a href="https://github.com/rim-platform/rim-server/blob/fd4cfda821c7e11b248267958493b19503c3e153/deploy/compose.yml"><code>deploy/compose.yml</code></a> drops its capabilities, cannot gain privileges and has
+a read-only root filesystem, as the monitoring overlays&#39; services already did. PostgreSQL runs
+as <code>postgres</code> from the start, and Caddy, the only container on the public ports, as <code>nobody</code>
+instead of root, keeping only <code>NET_BIND_SERVICE</code>, which its binary needs to start. A new
+one-shot service, <code>caddy-init</code>, gives Caddy&#39;s volumes to that user before each start, so
+volumes a root Caddy wrote keep working. <code>docker compose cp</code> into a container now fails;
+<a href="self-hosting.html"><code>docs/self-hosting.md</code></a> shows how to pass a file in instead.</li>
 </ul>
 
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/aec6be3bdfb01032632340b92c79a0e83a66d34f/CHANGELOG.md">rim-server/CHANGELOG.md</a> at <code>aec6be3</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/fd4cfda821c7e11b248267958493b19503c3e153/CHANGELOG.md">rim-server/CHANGELOG.md</a> at <code>fd4cfda</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>
