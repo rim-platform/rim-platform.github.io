@@ -70,91 +70,91 @@ account without a principal id (no key sign-in yet), runs exactly as before.</p>
 </tr>
 </thead>
 <tbody><tr>
-<td><a href="https://github.com/rim-platform/rim-ui/blob/b71a117a9aa3f23a97e4edcfcebe7e5c1787778d/src/features/relay/api/documents.ts"><code>src/features/relay/api/documents.ts</code></a></td>
+<td><a href="https://github.com/rim-platform/rim-ui/blob/328524daa76e8e0689d674f025f19a15be9d4ede/src/features/relay/api/documents.ts"><code>src/features/relay/api/documents.ts</code></a></td>
 <td>Every GraphQL document of the relay (<code>relayInfo</code>, <code>remoteServer</code>, <code>remoteIdentity</code>, contacts, <code>dmRequests</code> and its mutations, <code>relayItems</code>, <code>ackRelayItems</code>, <code>streamHeads</code>, the <code>relayStream</code> subscription, a conversation&#39;s predecessor)</td>
 </tr>
 <tr>
-<td><a href="https://github.com/rim-platform/rim-ui/blob/b71a117a9aa3f23a97e4edcfcebe7e5c1787778d/src/features/relay/crypto/serverStatements.ts"><code>src/features/relay/crypto/serverStatements.ts</code></a></td>
+<td><a href="https://github.com/rim-platform/rim-ui/blob/328524daa76e8e0689d674f025f19a15be9d4ede/src/features/relay/crypto/serverStatements.ts"><code>src/features/relay/crypto/serverStatements.ts</code></a></td>
 <td>The statements in the browser: server key log replay, descriptor, discovery document, device request, host response, host event</td>
 </tr>
 <tr>
-<td><a href="https://github.com/rim-platform/rim-ui/blob/b71a117a9aa3f23a97e4edcfcebe7e5c1787778d/src/features/relay/crypto/relayCrypto.ts"><code>src/features/relay/crypto/relayCrypto.ts</code></a></td>
+<td><a href="https://github.com/rim-platform/rim-ui/blob/328524daa76e8e0689d674f025f19a15be9d4ede/src/features/relay/crypto/relayCrypto.ts"><code>src/features/relay/crypto/relayCrypto.ts</code></a></td>
 <td>The same work per platform: the Tauri <code>relay_*</code> commands and <code>key_identity_sign_device_request</code> on the desktop, WebCrypto and the browser&#39;s device key in the web app</td>
 </tr>
 <tr>
-<td><a href="https://github.com/rim-platform/rim-ui/tree/b71a117a9aa3f23a97e4edcfcebe7e5c1787778d/src-tauri/src/relay"><code>src-tauri/src/relay/</code></a></td>
+<td><a href="https://github.com/rim-platform/rim-ui/tree/328524daa76e8e0689d674f025f19a15be9d4ede/src-tauri/src/relay"><code>src-tauri/src/relay/</code></a></td>
 <td>The desktop&#39;s checks of server statements (<code>server.rs</code>) and their commands</td>
 </tr>
 <tr>
-<td><a href="https://github.com/rim-platform/rim-ui/blob/b71a117a9aa3f23a97e4edcfcebe7e5c1787778d/src-tauri/src/key_identity/statement.rs"><code>src-tauri/src/key_identity/statement.rs</code></a></td>
+<td><a href="https://github.com/rim-platform/rim-ui/blob/328524daa76e8e0689d674f025f19a15be9d4ede/src-tauri/src/key_identity/statement.rs"><code>src-tauri/src/key_identity/statement.rs</code></a></td>
 <td><code>device_request</code>: the payload in the spec&#39;s field order, signed by the device key; <code>verified_card</code></td>
 </tr>
 <tr>
-<td><a href="https://github.com/rim-platform/rim-ui/tree/b71a117a9aa3f23a97e4edcfcebe7e5c1787778d/src/features/relay/state"><code>src/features/relay/state/</code></a></td>
+<td><a href="https://github.com/rim-platform/rim-ui/tree/328524daa76e8e0689d674f025f19a15be9d4ede/src/features/relay/state"><code>src/features/relay/state/</code></a></td>
 <td><code>relayDb.ts</code> (IndexedDB <code>rim-relay</code>), <code>serverPins.ts</code>, <code>spaces.ts</code> (which space lives on which host), <code>useRelayStore.ts</code></td>
 </tr>
 <tr>
-<td><a href="https://github.com/rim-platform/rim-ui/tree/b71a117a9aa3f23a97e4edcfcebe7e5c1787778d/src/features/relay/transport"><code>src/features/relay/transport/</code></a></td>
+<td><a href="https://github.com/rim-platform/rim-ui/tree/328524daa76e8e0689d674f025f19a15be9d4ede/src/features/relay/transport"><code>src/features/relay/transport/</code></a></td>
 <td><code>remoteFetch.ts</code> (signed requests, verified answers), <code>requestSeq.ts</code>, <code>relayHealth.ts</code></td>
 </tr>
 <tr>
-<td><a href="https://github.com/rim-platform/rim-ui/tree/b71a117a9aa3f23a97e4edcfcebe7e5c1787778d/src/features/relay/stream"><code>src/features/relay/stream/</code></a></td>
+<td><a href="https://github.com/rim-platform/rim-ui/tree/328524daa76e8e0689d674f025f19a15be9d4ede/src/features/relay/stream"><code>src/features/relay/stream/</code></a></td>
 <td><code>relayStream.ts</code> (the queue on the WebSocket), <code>sequencer.ts</code>, <code>streamRules.ts</code></td>
 </tr>
 <tr>
-<td><a href="https://github.com/rim-platform/rim-ui/tree/b71a117a9aa3f23a97e4edcfcebe7e5c1787778d/src/features/relay/contacts"><code>src/features/relay/contacts/</code></a></td>
+<td><a href="https://github.com/rim-platform/rim-ui/tree/328524daa76e8e0689d674f025f19a15be9d4ede/src/features/relay/contacts"><code>src/features/relay/contacts/</code></a></td>
 <td>Contact links, fingerprints, verified identities, aliases, relays seen in invites</td>
 </tr>
 <tr>
-<td><a href="https://github.com/rim-platform/rim-ui/blob/b71a117a9aa3f23a97e4edcfcebe7e5c1787778d/src/features/relay/inbox/autoAccept.ts"><code>src/features/relay/inbox/autoAccept.ts</code></a>, <code>inbox/requestWorkspace.ts</code>, <code>components/DmRequestInbox.tsx</code>, <code>components/DmRequestsPage.tsx</code>, <code>components/DmRequestsRow.tsx</code></td>
+<td><a href="https://github.com/rim-platform/rim-ui/blob/328524daa76e8e0689d674f025f19a15be9d4ede/src/features/relay/inbox/autoAccept.ts"><code>src/features/relay/inbox/autoAccept.ts</code></a>, <code>inbox/requestWorkspace.ts</code>, <code>components/DmRequestInbox.tsx</code>, <code>components/DmRequestsPage.tsx</code>, <code>components/DmRequestsRow.tsx</code></td>
 <td>Message requests</td>
 </tr>
 <tr>
-<td><a href="https://github.com/rim-platform/rim-ui/tree/b71a117a9aa3f23a97e4edcfcebe7e5c1787778d/src/features/dm-policy"><code>src/features/dm-policy/</code></a></td>
+<td><a href="https://github.com/rim-platform/rim-ui/tree/328524daa76e8e0689d674f025f19a15be9d4ede/src/features/dm-policy"><code>src/features/dm-policy/</code></a></td>
 <td>Who may start a DM: the person&#39;s settings, a workspace&#39;s policy, the operator&#39;s settings in About</td>
 </tr>
 <tr>
-<td><a href="https://github.com/rim-platform/rim-ui/tree/b71a117a9aa3f23a97e4edcfcebe7e5c1787778d/src/features/relay/conversations"><code>src/features/relay/conversations/</code></a></td>
+<td><a href="https://github.com/rim-platform/rim-ui/tree/328524daa76e8e0689d674f025f19a15be9d4ede/src/features/relay/conversations"><code>src/features/relay/conversations/</code></a></td>
 <td>New DMs and groups in the direct space, successors</td>
 </tr>
 <tr>
-<td><a href="https://github.com/rim-platform/rim-ui/blob/b71a117a9aa3f23a97e4edcfcebe7e5c1787778d/src/features/relay/runtime/relayRuntime.ts"><code>src/features/relay/runtime/relayRuntime.ts</code></a></td>
+<td><a href="https://github.com/rim-platform/rim-ui/blob/328524daa76e8e0689d674f025f19a15be9d4ede/src/features/relay/runtime/relayRuntime.ts"><code>src/features/relay/runtime/relayRuntime.ts</code></a></td>
 <td>Start-up and wiring (<code>useRelayRuntime</code>, mounted in <code>AppShell</code>)</td>
 </tr>
 <tr>
-<td><a href="https://github.com/rim-platform/rim-ui/blob/b71a117a9aa3f23a97e4edcfcebe7e5c1787778d/src/features/relay/runtime/useDirectSpaceRuntime.ts"><code>src/features/relay/runtime/useDirectSpaceRuntime.ts</code></a></td>
+<td><a href="https://github.com/rim-platform/rim-ui/blob/328524daa76e8e0689d674f025f19a15be9d4ede/src/features/relay/runtime/useDirectSpaceRuntime.ts"><code>src/features/relay/runtime/useDirectSpaceRuntime.ts</code></a></td>
 <td>This relay&#39;s direct space from sign-in (<code>useDirectSpaceRuntime</code>, mounted in <code>AppShell</code>)</td>
 </tr>
 <tr>
-<td><a href="https://github.com/rim-platform/rim-ui/tree/b71a117a9aa3f23a97e4edcfcebe7e5c1787778d/src/features/relay/remote"><code>src/features/relay/remote/</code></a></td>
+<td><a href="https://github.com/rim-platform/rim-ui/tree/328524daa76e8e0689d674f025f19a15be9d4ede/src/features/relay/remote"><code>src/features/relay/remote/</code></a></td>
 <td>Workspaces on other servers: invite links, joining, delegations and their renewal, the relay&#39;s own key, a revocation&#39;s fan-out, switching relays</td>
 </tr>
 <tr>
-<td><a href="https://github.com/rim-platform/rim-ui/tree/b71a117a9aa3f23a97e4edcfcebe7e5c1787778d/src/features/relay/direct"><code>src/features/relay/direct/</code></a></td>
+<td><a href="https://github.com/rim-platform/rim-ui/tree/328524daa76e8e0689d674f025f19a15be9d4ede/src/features/relay/direct"><code>src/features/relay/direct/</code></a></td>
 <td>Talking to a server directly: the transport (<code>directTransport.ts</code>), GraphQL over it, the socket shim for <code>graphql-ws</code>, the direct connection and its runtime, one-off calls</td>
 </tr>
 <tr>
-<td><a href="https://github.com/rim-platform/rim-ui/blob/b71a117a9aa3f23a97e4edcfcebe7e5c1787778d/src-tauri/src/relay/direct.rs"><code>src-tauri/src/relay/direct.rs</code></a></td>
+<td><a href="https://github.com/rim-platform/rim-ui/blob/328524daa76e8e0689d674f025f19a15be9d4ede/src-tauri/src/relay/direct.rs"><code>src-tauri/src/relay/direct.rs</code></a></td>
 <td>The desktop&#39;s direct sessions: discovery fetches, GraphQL with each server&#39;s own cookie jar, WebSockets with that cookie</td>
 </tr>
 <tr>
-<td><a href="https://github.com/rim-platform/rim-ui/tree/b71a117a9aa3f23a97e4edcfcebe7e5c1787778d/src/features/relay/pow"><code>src/features/relay/pow/</code></a>, <a href="https://github.com/rim-platform/rim-ui/blob/b71a117a9aa3f23a97e4edcfcebe7e5c1787778d/src-tauri/src/relay/pow.rs"><code>src-tauri/src/relay/pow.rs</code></a></td>
+<td><a href="https://github.com/rim-platform/rim-ui/tree/328524daa76e8e0689d674f025f19a15be9d4ede/src/features/relay/pow"><code>src/features/relay/pow/</code></a>, <a href="https://github.com/rim-platform/rim-ui/blob/328524daa76e8e0689d674f025f19a15be9d4ede/src-tauri/src/relay/pow.rs"><code>src-tauri/src/relay/pow.rs</code></a></td>
 <td>The signup proof-of-work: reading a relay&#39;s registration mode, the search in a web worker and on the desktop&#39;s cores</td>
 </tr>
 <tr>
-<td><a href="https://github.com/rim-platform/rim-ui/blob/b71a117a9aa3f23a97e4edcfcebe7e5c1787778d/src/core/graphql/client.ts"><code>src/core/graphql/client.ts</code></a></td>
+<td><a href="https://github.com/rim-platform/rim-ui/blob/328524daa76e8e0689d674f025f19a15be9d4ede/src/core/graphql/client.ts"><code>src/core/graphql/client.ts</code></a></td>
 <td><code>setSpaceRouter</code>: the GraphQL client&#39;s <code>fetch</code> sends a request about a space elsewhere to its host</td>
 </tr>
 <tr>
-<td><a href="https://github.com/rim-platform/rim-ui/blob/b71a117a9aa3f23a97e4edcfcebe7e5c1787778d/src/core/graphql/config.ts"><code>src/core/graphql/config.ts</code></a></td>
+<td><a href="https://github.com/rim-platform/rim-ui/blob/328524daa76e8e0689d674f025f19a15be9d4ede/src/core/graphql/config.ts"><code>src/core/graphql/config.ts</code></a></td>
 <td><code>setRelayEndpoint</code>: the relay the desktop moved to after a switch</td>
 </tr>
 <tr>
-<td><a href="https://github.com/rim-platform/rim-ui/blob/b71a117a9aa3f23a97e4edcfcebe7e5c1787778d/protocol/relay-vectors.json"><code>protocol/relay-vectors.json</code></a></td>
+<td><a href="https://github.com/rim-platform/rim-ui/blob/328524daa76e8e0689d674f025f19a15be9d4ede/protocol/relay-vectors.json"><code>protocol/relay-vectors.json</code></a></td>
 <td>Known answers both platforms reproduce, including the delegation and the revocation acknowledgement and their conformance cases</td>
 </tr>
 <tr>
-<td><a href="https://github.com/rim-platform/rim-ui/blob/b71a117a9aa3f23a97e4edcfcebe7e5c1787778d/protocol/pow-vectors.json"><code>protocol/pow-vectors.json</code></a></td>
+<td><a href="https://github.com/rim-platform/rim-ui/blob/328524daa76e8e0689d674f025f19a15be9d4ede/protocol/pow-vectors.json"><code>protocol/pow-vectors.json</code></a></td>
 <td>Proof-of-work known answers both platforms find, and a relay descriptor in <code>pow</code> mode</td>
 </tr>
 </tbody></table></div>
@@ -368,7 +368,7 @@ it knows there, takes them as the baseline, runs the held relay items (those at 
 head are dropped, so nothing applied directly is applied again), and closes the session and
 its sockets.</li>
 </ul>
-<p>The Tauri side (<a href="https://github.com/rim-platform/rim-ui/blob/b71a117a9aa3f23a97e4edcfcebe7e5c1787778d/src-tauri/src/relay/direct.rs"><code>src-tauri/src/relay/direct.rs</code></a>) keeps one cookie jar per server, adds the
+<p>The Tauri side (<a href="https://github.com/rim-platform/rim-ui/blob/328524daa76e8e0689d674f025f19a15be9d4ede/src-tauri/src/relay/direct.rs"><code>src-tauri/src/relay/direct.rs</code></a>) keeps one cookie jar per server, adds the
 <code>X-CSRF-Token</code> header from that server&#39;s <code>rim_csrf</code> cookie, and lets a session point only at
 <code>/api</code> and <code>/api/ws</code> of an origin whose discovery document it fetched. The webview never sees
 those cookies, and its own session stays with its relay.</p>
@@ -423,7 +423,7 @@ The nonce is kept per draft, so a retry after another refusal sends it again; a 
 proof itself (<code>VALIDATION</code> or <code>FORBIDDEN</code> naming it) drops it and the next try searches again.
 A relay switch to a relay in <code>pow</code> mode does the same with the account&#39;s inception.</li>
 <li><strong>The search.</strong> Both platforms find the smallest counter that meets the difficulty, as an 8-byte
-big-endian nonce, so they send the same nonce; <a href="https://github.com/rim-platform/rim-ui/blob/b71a117a9aa3f23a97e4edcfcebe7e5c1787778d/protocol/pow-vectors.json"><code>protocol/pow-vectors.json</code></a> holds known answers
+big-endian nonce, so they send the same nonce; <a href="https://github.com/rim-platform/rim-ui/blob/328524daa76e8e0689d674f025f19a15be9d4ede/protocol/pow-vectors.json"><code>protocol/pow-vectors.json</code></a> holds known answers
 both reproduce (the server&#39;s own vector among them). The desktop runs it on every core
 (<code>relay_solve_pow</code>, cancelled with <code>relay_cancel_pow</code>); the web app in a dedicated worker
 (<code>pow/pow.worker.ts</code>) with a SHA-256 that hashes everything before the nonce once, terminated to
@@ -458,7 +458,7 @@ throughout, then restarting on the new relay.</li>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/b71a117a9aa3f23a97e4edcfcebe7e5c1787778d/docs/relay-client.md">rim-ui/docs/relay-client.md</a> at <code>b71a117</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/328524daa76e8e0689d674f025f19a15be9d4ede/docs/relay-client.md">rim-ui/docs/relay-client.md</a> at <code>328524d</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

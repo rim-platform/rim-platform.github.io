@@ -61,7 +61,7 @@ offers the plugin; the server is never trusted for the signature. The contract i
 </thead>
 <tbody><tr>
 <td>Statement rules and verification</td>
-<td>desktop: <a href="https://github.com/rim-platform/rim-ui/blob/b71a117a9aa3f23a97e4edcfcebe7e5c1787778d/src-tauri/src/key_identity/plugin_manifest.rs"><code>src-tauri/src/key_identity/plugin_manifest.rs</code></a> (<code>key_identity_verify_plugin_manifest</code>); web: <a href="https://github.com/rim-platform/rim-ui/blob/b71a117a9aa3f23a97e4edcfcebe7e5c1787778d/src/features/key-identity/browser/pluginManifest.ts"><code>src/features/key-identity/browser/pluginManifest.ts</code></a>; both behind <code>verifyPluginManifest</code> in <code>key-identity/api/keyBackend.ts</code></td>
+<td>desktop: <a href="https://github.com/rim-platform/rim-ui/blob/328524daa76e8e0689d674f025f19a15be9d4ede/src-tauri/src/key_identity/plugin_manifest.rs"><code>src-tauri/src/key_identity/plugin_manifest.rs</code></a> (<code>key_identity_verify_plugin_manifest</code>); web: <a href="https://github.com/rim-platform/rim-ui/blob/328524daa76e8e0689d674f025f19a15be9d4ede/src/features/key-identity/browser/pluginManifest.ts"><code>src/features/key-identity/browser/pluginManifest.ts</code></a>; both behind <code>verifyPluginManifest</code> in <code>key-identity/api/keyBackend.ts</code></td>
 </tr>
 <tr>
 <td>Signing (desktop only, the key never reaches the webview)</td>
@@ -69,7 +69,7 @@ offers the plugin; the server is never trusted for the signature. The contract i
 </tr>
 <tr>
 <td>What a publisher signs: a git checkout&#39;s origin, <code>HEAD</code> and tree hash, or a bundle of the installed folder, or a picked <code>.rimbundle</code>; writing a <code>.rimsig.json</code></td>
-<td><a href="https://github.com/rim-platform/rim-ui/blob/b71a117a9aa3f23a97e4edcfcebe7e5c1787778d/src-tauri/src/plugin_host/registry.rs"><code>src-tauri/src/plugin_host/registry.rs</code></a> (<code>plugin_signing_source</code>, <code>plugin_pick_signing_bundle</code>, <code>plugin_export_signature</code>)</td>
+<td><a href="https://github.com/rim-platform/rim-ui/blob/328524daa76e8e0689d674f025f19a15be9d4ede/src-tauri/src/plugin_host/registry.rs"><code>src-tauri/src/plugin_host/registry.rs</code></a> (<code>plugin_signing_source</code>, <code>plugin_pick_signing_bundle</code>, <code>plugin_export_signature</code>)</td>
 </tr>
 <tr>
 <td>Installing a git source at its commit, after checking the tree hash and the manifest</td>
@@ -81,7 +81,7 @@ offers the plugin; the server is never trusted for the signature. The contract i
 </tr>
 <tr>
 <td>The registry API: <code>workspacePlugins</code>, the three mutations, bundle uploads</td>
-<td><a href="https://github.com/rim-platform/rim-ui/blob/b71a117a9aa3f23a97e4edcfcebe7e5c1787778d/src/features/plugins/registry/api.ts"><code>src/features/plugins/registry/api.ts</code></a></td>
+<td><a href="https://github.com/rim-platform/rim-ui/blob/328524daa76e8e0689d674f025f19a15be9d4ede/src/features/plugins/registry/api.ts"><code>src/features/plugins/registry/api.ts</code></a></td>
 </tr>
 <tr>
 <td>Verifying an entry (steps 1 to 5)</td>
@@ -113,7 +113,7 @@ offers the plugin; the server is never trusted for the signature. The contract i
 </tr>
 <tr>
 <td>Refetching</td>
-<td><code>WorkspacePluginChanged</code> in <a href="https://github.com/rim-platform/rim-ui/blob/b71a117a9aa3f23a97e4edcfcebe7e5c1787778d/src/core/events/useWorkspaceEvents.ts"><code>src/core/events/useWorkspaceEvents.ts</code></a></td>
+<td><code>WorkspacePluginChanged</code> in <a href="https://github.com/rim-platform/rim-ui/blob/328524daa76e8e0689d674f025f19a15be9d4ede/src/core/events/useWorkspaceEvents.ts"><code>src/core/events/useWorkspaceEvents.ts</code></a></td>
 </tr>
 </tbody></table></div>
 <h2 id="verification">Verification <a class="anchor" href="#verification" aria-label="Link to this section">#</a></h2>
@@ -210,7 +210,7 @@ moderator, so the dialog exports a <code>.rimsig.json</code>, which A adds with 
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/b71a117a9aa3f23a97e4edcfcebe7e5c1787778d/docs/workspace-plugins.md">rim-ui/docs/workspace-plugins.md</a> at <code>b71a117</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/328524daa76e8e0689d674f025f19a15be9d4ede/docs/workspace-plugins.md">rim-ui/docs/workspace-plugins.md</a> at <code>328524d</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>
