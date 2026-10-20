@@ -64,7 +64,7 @@
 </details></aside>
     <main id="content" class="prose">
 <h1 id="server-to-server-v1">Server-to-server v1</h1>
-<p class="status"><span><b>Server-to-server v1</b></span><span>version 1</span><span>status: implemented, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/553bf5ddfc87d056e4c3e11acd3cc0eaa966b647/docs/specs/server-to-server-v1.md">rim-server/docs/specs/server-to-server-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/553bf5ddfc87d056e4c3e11acd3cc0eaa966b647">553bf5d</a></span></p>
+<p class="status"><span><b>Server-to-server v1</b></span><span>version 1</span><span>status: implemented, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/aec6be3bdfb01032632340b92c79a0e83a66d34f/docs/specs/server-to-server-v1.md">rim-server/docs/specs/server-to-server-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/aec6be3bdfb01032632340b92c79a0e83a66d34f">aec6be3</a></span></p>
 <p><em>Status: implemented, normative. Follows <a href="../docs/decisions/decentralization-2026-10-08.html"><code>docs/decisions/decentralization-2026-10-08.md</code></a> and
 <a href="../docs/decisions/relay-proxied-workspaces-2026-10-09.html"><code>docs/decisions/relay-proxied-workspaces-2026-10-09.md</code></a>. Read <a href="key-identity-v1.html"><code>key-identity-v1.md</code></a>,
 <a href="device-linking-v1.html"><code>device-linking-v1.md</code></a> and <a href="e2ee-mls-v1.html"><code>e2ee-mls-v1.md</code></a> first. This document is the contract between servers
@@ -260,6 +260,26 @@ peer stays forked; a server never pinned is refused with <code>RIM_S2S_DENIED_PE
 <p>A first pin keeps the key before the head but gives it no grace: the grace counts from an
 extension this server saw. A refetch whose inception hashes to another id (the origin now serves
 another server) fails and keeps the pin; only a log from the same inception can fork it.</p>
+<p><strong>Idle pins.</strong> An hourly job forgets an <code>active</code> pin that was neither fetched nor sent a request
+for 90 days, that nothing here refers to (a remote user&#39;s home relay, a remote user&#39;s card
+listing its origin, a delegation, a subscription, an outbox row, an inbound cursor, a queued
+envelope, a DM request, a revocation fan-out, a conversation&#39;s predecessor, a cached identity it
+served) and that <code>RIM_S2S_DENIED_PEERS</code>, <code>RIM_HOST_ALLOWED_RELAYS</code> and <code>RIM_DM_PARTNERS</code> do not
+name. Its row and log are deleted and its head stays in <code>peer_server_forgotten</code>: the seq and the
+exact payload of the head entry. The next pin of that id must hold that entry at that seq; each
+entry names the hash of the one before it, so such a log extends the forgotten one. A log that
+holds another entry there is pinned <code>forked</code> (ERROR log, audit <code>s2s.peer_forked</code>), and one that
+stops short of it is not pinned and the head stays, as a refetch keeps a pin for a prefix.
+Deleting the head as well would let the next contact pin any history from the same inception,
+such as one a server key stolen before a <code>signer: recovery</code> rotation can sign. <code>forked</code> and
+<code>blocked</code> pins are never forgotten, and <code>rim_server peer reset</code> deletes a pin and a forgotten head
+alike. Audit <code>s2s.peer_forgotten</code>.</p>
+<p><strong>Pins per origin.</strong> One origin may hold pins of several server ids: when its operator starts
+over with a new identity (server key and recovery key lost, or the key file moved away), the
+origin serves a new id and the earlier id&#39;s pin stays, since a refetch that finds another id
+keeps it. An origin holds at most 4 pins, whatever their status. A fifth id there is not pinned
+(<code>CONFLICT</code> from <code>remoteServer</code>, an unknown peer to a request) until <code>rim_server peer reset</code> or
+the idle purge removes one. A lookup by origin takes the <code>active</code> pin fetched last.</p>
 <h3 id="host-keys-in-clients">Host keys in clients <a class="anchor" href="#host-keys-in-clients" aria-label="Link to this section">#</a></h3>
 <ul>
 <li><strong>From an invite</strong> (<code>rim-invite:1:&lt;hostServerId&gt;:&lt;hostKeyHash&gt;:&lt;inviteToken&gt;:&lt;hostOrigin&gt;</code>): the
@@ -496,6 +516,11 @@ Actix&#39;s request types.</p>
 <td>Active delegations per relay on a host</td>
 </tr>
 <tr>
+<td><code>RIM_S2S_PEER_DEAD_AFTER_HOURS</code></td>
+<td>24</td>
+<td>Hours every delivery to a relay may fail before it is dead and gets no new outbox rows (1 to 168)</td>
+</tr>
+<tr>
 <td><code>RIM_S2S_DEVICE_RATE_PER_MIN</code></td>
 <td>120</td>
 <td>Forwarded requests per device</td>
@@ -543,7 +568,7 @@ Actix&#39;s request types.</p>
 <tr>
 <td><code>RIM_RELAY_DM_REQUESTS_PER_DAY</code></td>
 <td>20</td>
-<td>DM requests per sender principal per day on this relay, and invites per local user per day to people on other servers who are not their contacts</td>
+<td>DM requests per sender principal per day on this relay, and invites per local user per day to people on other servers they do not know (see &quot;Public relay&quot;)</td>
 </tr>
 </tbody></table></div>
 <p>The existing <code>config</code> loader (<code>Environment::with_prefix(&quot;RIM&quot;)</code>) maps <code>RIM_ROLE</code> to the field
@@ -776,17 +801,49 @@ A task per peer sends them in id order:</p>
 <code>deviceId</code> targets one device (<code>MlsWelcomeAvailable</code>).</li>
 <li>The relay stores items before answering and ignores ids at or below its <code>received_through</code> for
 the peer, so redelivery is idempotent. It refuses items for non-local principals
-(<code>unknown_principal</code>), items of a conversation it holds no invite or request for and workspace
-items without an active subscription (<code>not_subscribed</code>), invites from a principal the recipient
-blocked (<code>blocked</code>) or past the request limits (<code>limited</code>), invites whose sender the host does
-not speak for (<code>invalid_invite</code>, see &quot;The request inbox&quot;), a device-targeted item for an unknown
-device (<code>unknown_device</code>), and envelopes over 512 KiB, that do not verify under the delivering
-host&#39;s key or that name another host (<code>invalid_envelope</code>). A refusal for one recipient carries
-<code>principalId</code>. The host skips a (relay, principal) for 24 hours after <code>unknown_principal</code> only;
-the other refusals are about one conversation or item.</li>
-<li>Failures back off from 1 s doubling to 5 minutes. Outbox rows live 7 days; a relay down longer
-gets nothing and its clients catch up from the change feed. A relay may pull what it missed:
-<code>GET /s2s/v1/outbox?after=&lt;id&gt;&amp;limit=256</code> → <code>{&quot;items&quot;:[…],&quot;hasMore&quot;:false}</code>.</li>
+(<code>unknown_principal</code>); items of a conversation it holds no invite or request for, and items
+naming no conversation of a workspace the recipient holds no active subscription to
+(<code>not_subscribed</code>); invites from a principal the recipient blocked (<code>blocked</code>) or past the
+request limits (<code>limited</code>); invites whose sender the host does not speak for
+(<code>invalid_invite</code>, see &quot;The request inbox&quot;); a device-targeted item for an unknown device
+(<code>unknown_device</code>); envelopes over 512 KiB, that do not verify under the delivering host&#39;s key
+or that name another host (<code>invalid_envelope</code>); and, past 2 GiB of items queued from the
+delivering host in a day across all recipients, any further item the relay would queue
+(<code>limited</code>; items of a workspace the recipient subscribed to are not counted). A direct space
+sends items naming no conversation only on <code>e</code> (<code>PresenceChanged</code>) and on the recipient&#39;s own
+<code>u:</code> stream (<code>MemberJoined</code>, <code>MemberLeft</code>, <code>MemberRoleChanged</code> about them): the relay queues
+those for a recipient who holds an accepted request for a conversation that host homes, and
+refuses everything else naming no conversation (<code>w</code>, another person&#39;s <code>u:</code>) without a
+subscription. A refusal for one recipient carries <code>principalId</code>. The host skips a (relay,
+principal) for 24 hours after <code>unknown_principal</code> only; the other refusals are about one
+conversation or item. After <code>not_subscribed</code> for an item of a conversation of its direct space
+that the principal is still a member of, the host sends that member the conversation&#39;s
+<code>DmInvite</code> again, as when they were added, at most once a day per conversation and principal,
+whatever the relay lost it to: a row that expired after a long silence, or an invite written
+while the relay was dead and never delivered. The refused item itself is not sent again.</li>
+<li>Failures back off from 1 s doubling to 5 minutes. Outbox rows live 7 days, delivered or not; a
+relay down longer gets nothing and its clients catch up from the change feed. A relay may pull
+what it missed: <code>GET /s2s/v1/outbox?after=&lt;id&gt;&amp;limit=256</code> → <code>{&quot;items&quot;:[…],&quot;hasMore&quot;:false}</code>.</li>
+<li><strong>Per-relay caps.</strong> A relay&#39;s backlog, its rows above what it acknowledged, holds at most
+100,000 rows and 2 GiB. Delivered rows kept for the 7 days do not count. While the backlog is at
+either cap, an event&#39;s row for that relay is not written: the event is dropped for that relay
+only, counted (<code>rim_outbox_not_queued_rows_total{reason=&quot;peer_cap&quot;}</code>) and logged at warn at most
+once a minute per relay. The write that caused the event succeeds, the host&#39;s database has it,
+and other relays and local members get it as usual. The writer reads each relay&#39;s backlog at
+most every 10 seconds and counts its own rows in between, so with several nodes a backlog can
+pass a cap by what the other nodes write in that time.</li>
+<li><strong>Dead relays.</strong> A relay every delivery to has failed for <code>RIM_S2S_PEER_DEAD_AFTER_HOURS</code>
+(24) since the first failure after its last success (<code>s2s_peer_delivery.failing_since</code>) is dead.
+Its backlog is kept, within the caps and the 7 days, and no new rows are written for it
+(<code>reason=&quot;dead_peer&quot;</code>). The sender tries a dead relay once every 5 minutes, the longest backoff:
+with its next batch, or with an empty <code>deliver</code> (<code>{&quot;items&quot;:[]}</code>) when nothing is left, which a
+relay answers like any other. The first <code>200</code> ends the failures, and rows are written for it
+again within 10 seconds.</li>
+<li>An event a relay does not get still takes its stream&#39;s <code>seq</code>. When the relay is back, the next
+event on each stream arrives with <code>seq &gt; last + 1</code>, and the app reconciles from the host as for
+any gap (&quot;What the client checks&quot;): change feed, pins, reactions, members and <code>streamHeads</code>,
+through the forward path. Not recovered: <code>e</code> events (no <code>seq</code>). A <code>DmInvite</code> written in that
+window is sent again once the relay refuses a later item of its conversation (<code>not_subscribed</code>).</li>
 </ul>
 <h3 id="relay-queues">Relay queues <a class="anchor" href="#relay-queues" aria-label="Link to this section">#</a></h3>
 <p>The relay stores each envelope once (<code>relay_envelope</code>), one <code>relay_item</code> per recipient user, and a
@@ -866,7 +923,9 @@ QR code. The principal id authenticates everything fetched with it. Rejected: th
 workspace member&#39;s card with <code>remoteIdentity(principalId)</code> (the relay answers its own principals
 directly) to offer &quot;Add as contact&quot;. The contact list answers open decision 9 (readable names):
 the app shows the card&#39;s name or the person&#39;s alias for it; aliases stay on the device. The relay
-keeps the list (<code>relay_contact</code>) because it filters DM requests by it.</li>
+keeps the list (<code>relay_contact</code>, at most 1,000 per user) because it filters DM requests by it.
+Adding someone does not let the user skip their own limits on DMs to strangers; only a contact
+who lists them too does (&quot;Public relay&quot;).</li>
 </ul>
 <h2 id="the-direct-space">The direct space <a class="anchor" href="#the-direct-space" aria-label="Link to this section">#</a></h2>
 <p>Each relay has one <code>server</code> row with <code>kind = 'direct'</code>, created at start if missing, named &quot;Direct
@@ -988,8 +1047,22 @@ the request until the row expires. Everything held for a recipient, pending requ
 the invites ignored requests keep, takes at most 16 MiB: past it a new <code>DmInvite</code> is refused
 (<code>limited</code>) and a later item dropped. Only <code>DmRequestReceived</code> is pushed. An invite from a
 contact or a principal accepted before is recorded as a row accepted at once
-(<code>decided_at = created_at</code>), not listed by <code>dmRequests</code> and not counted by the limits, so every
-conversation R_B delivers for has a row and items of any other conversation are refused.</p>
+(<code>decided_at = created_at</code>), keeping no card, not listed by <code>dmRequests</code> and not counted by the
+request limits, so every conversation R_B delivers for has a row and items of any other
+conversation are refused. Bob holds at most 5,000 accepted rows per host: past them such an invite
+is refused (<code>limited</code>). Accepting a request is never refused, and no row is evicted to make room.</p>
+<p>An accepted row expires 400 days after the last item R_B delivered for its conversation (the
+expiry moves at most once a day): over a year, so a conversation whose members write once a year
+stays open, while one gone silent, or whose home is gone, is let go. The next item of a
+conversation let go is refused (<code>not_subscribed</code>), and the home sends its <code>DmInvite</code> again (see
+&quot;Outbox and <code>deliver</code>&quot;), which R_B files like any invite: accepted at once for a contact or a
+principal accepted before, a request otherwise. The row is deleted when Bob
+leaves the conversation or is removed from it. A home that is also Bob&#39;s relay deletes it when it
+removes him. Another relay deletes it on the home&#39;s <code>MemberRemovedFromConversation</code> naming the id
+the home gives Bob, which it learns from the first event of the home on Bob&#39;s own <code>u:</code> stream that
+carries <code>user_id</code> and the conversation (<code>MlsWelcomeAvailable</code>, <code>ReadStateUpdated</code>,
+<code>NotificationDue</code>); the event itself still reaches Bob. Until R_B learns that id the expiry alone
+bounds the row.</p>
 <p>When the home and the recipient&#39;s relay are one server (Bob&#39;s relay hosts the conversation, and
 its creator is someone else, from another relay or not), the home files its own <code>DmInvite</code> for
 Bob through the same rule instead of delivering it; the creator&#39;s server is the home, or the home
@@ -1241,13 +1314,23 @@ WebCrypto support).</p>
 <td>20 per sender principal per day</td>
 <td><code>RIM_RELAY_DM_REQUESTS_PER_DAY</code></td>
 </tr>
+<tr>
+<td>Contacts</td>
+<td>1,000 per user</td>
+<td>fixed</td>
+</tr>
 </tbody></table></div>
 <p>Each is enforced where it applies: the card at <code>publishProfileCard</code>, key packages at
-<code>uploadMlsKeyPackages</code>, devices at <code>addDeviceKey</code> (all <code>VALIDATION</code>), forwarded requests at
+<code>uploadMlsKeyPackages</code>, devices at <code>addDeviceKey</code>, contacts at <code>addContact</code> (all <code>VALIDATION</code>;
+a DM records no further contact for a creator who holds 1,000), forwarded requests at
 <code>/api/remote/…</code> (<code>429</code>). The DM request limit counts on both sides: the relay of the recipients
 refuses a sender principal&#39;s invites past it (<code>limited</code>), and the sender&#39;s relay refuses a local
-user&#39;s invites past it to people on other servers who are not their contacts (<code>RATE_LIMITED</code>).
-Counters are in memory, per node.</p>
+user&#39;s invites past it to people on other servers they do not know (<code>RATE_LIMITED</code>). Two people
+know each other when each lists the other as a contact (only the relay&#39;s own users have a list
+there) or when one accepted a DM request from the other on the relay, an invite recorded as
+accepted at once included; a contact added on one side only does not count. The same rule says
+who is a stranger to an account in probation (<code>RIM_PROBATION_HOURS</code>), which also knows the
+members of its workspaces. Counters are in memory, per node.</p>
 <p><strong>Abuse hooks</strong> (S5-6), each audited: <code>rim_server principal block &lt;principalId&gt; --reason …</code>,
 <code>principal unblock</code>, <code>principal list</code> (<code>relay_principal_block</code>): the account&#39;s sessions are ended
 and its pending DM requests ignored for every recipient; its logins, signups and enrollments are
@@ -1262,7 +1345,7 @@ yearly <code>server-key rotate</code> and <code>recover</code> on compromise, da
 drill, quotas and how to change them, monitoring (queue bytes, outbox depth per peer, deliver
 failures, <code>401</code>/<code>409</code>/<code>429</code> rates, PoW signups), incident response for spam waves, a hostile peer, a
 stolen server key and a database leak, and the abuse policy text.</p>
-<p><strong>Compose</strong> (<a href="https://github.com/rim-platform/rim-server/blob/553bf5ddfc87d056e4c3e11acd3cc0eaa966b647/deploy/compose.yml"><code>deploy/compose.yml</code></a> with the <a href="https://github.com/rim-platform/rim-server/blob/553bf5ddfc87d056e4c3e11acd3cc0eaa966b647/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a> override, and
+<p><strong>Compose</strong> (<a href="https://github.com/rim-platform/rim-server/blob/aec6be3bdfb01032632340b92c79a0e83a66d34f/deploy/compose.yml"><code>deploy/compose.yml</code></a> with the <a href="https://github.com/rim-platform/rim-server/blob/aec6be3bdfb01032632340b92c79a0e83a66d34f/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a> override, and
 <a href="../docs/deploy/index.html"><code>deploy/README.md</code></a>): rim-server with <code>RIM_ROLE=relay</code>, <code>RIM_PUBLIC_BASE_URL=https://&lt;RIM_DOMAIN&gt;</code>,
 <code>RIM_REGISTRATION_POW_BITS=24</code>, <code>RIM_RELAY_QUEUE_BYTES_PER_USER=67108864</code> and the other quotas
 above, <code>RIM_TRUST_FORWARDED_HEADERS=true</code>, <code>RIM_FORCE_SECURE_COOKIES=true</code>, <code>RIM_DATA_DIR=/data</code> on a
@@ -1367,6 +1450,10 @@ CREATE TABLE relay_revocation_fanout (device_key_id uuid NOT NULL REFERENCES dev
     attempts integer NOT NULL DEFAULT 0, next_attempt_at timestamptz NOT NULL,
     ack_payload text NULL, ack_signature text NULL, PRIMARY KEY (device_key_id, host_server_id));
 
+-- add_relay_dm_request_host_user; also bounds accepted rows to 400 days and drops the card of
+-- rows accepted as they were filed
+ALTER TABLE relay_dm_request ADD COLUMN host_user_id uuid NULL;     -- the home's id for the user
+
 -- S5-6 add_relay_abuse; down refuses while either table has rows
 CREATE TABLE relay_principal_block (principal_id text PRIMARY KEY, reason text NOT NULL,
     created_at timestamptz NOT NULL DEFAULT now());
@@ -1374,10 +1461,19 @@ CREATE TABLE relay_abuse_report (id uuid PRIMARY KEY,
     reporter_user_id uuid NULL REFERENCES &quot;user&quot; ON DELETE SET NULL,
     subject_principal_id text NULL, subject_server_id text NULL,
     request_id uuid NULL REFERENCES relay_dm_request ON DELETE SET NULL, reason text NOT NULL,
-    created_at timestamptz NOT NULL DEFAULT now(), resolved_at timestamptz NULL);</code></pre>
+    created_at timestamptz NOT NULL DEFAULT now(), resolved_at timestamptz NULL);
+
+-- add_peer_delivery_failing_since: when a relay's run of failed deliveries began
+ALTER TABLE s2s_peer_delivery ADD COLUMN failing_since timestamptz NULL;
+-- add_peer_pin_forgotten
+CREATE TABLE peer_server_forgotten (server_id text PRIMARY KEY, origin text NOT NULL,
+    head_seq integer NOT NULL CHECK (head_seq &gt;= 0), head_payload text NOT NULL,
+    forgotten_at timestamptz NOT NULL DEFAULT now());
+CREATE INDEX idx_remote_identity_cache_fetched ON remote_identity_cache (fetched_at);</code></pre>
 <p>A per-minute cleanup (like the key challenge cleanup) deletes expired nonces, <code>device_request_seen</code>
 rows, relay items and orphaned envelopes, expired requests and outbox rows older than 7 days, and
-ends expired delegations. Code follows the layers: repository traits in <code>rim_core</code> (<code>s2s</code>, <code>relay</code>),
+ends expired delegations. An hourly purge deletes cached identities fetched more than 30 days ago,
+except those of remote users held here, and forgets idle pins (&quot;Pinning a peer&quot;). Code follows the layers: repository traits in <code>rim_core</code> (<code>s2s</code>, <code>relay</code>),
 <code>S2sService</code>, <code>RelayService</code> and <code>HostService</code> traits in <code>rim_services</code>, implementations in
 <code>rim_infra_services</code>, handlers in <code>rim_server</code> (the <code>s2s</code> module and <code>remote_handlers.rs</code>), wired in
 <code>app.rs</code>.</p>
@@ -1466,11 +1562,11 @@ null and <code>origin</code> carries that origin. A peer&#39;s S2S error keeps i
 </tr>
 <tr>
 <td>Deliver; outbox</td>
-<td>256 items and 8 MiB per request; 7 days</td>
+<td>256 items and 8 MiB per request; 7 days, delivered or not; per relay 100,000 rows and 2 GiB not yet acknowledged; a relay failing every delivery for 24 hours gets no new rows</td>
 </tr>
 <tr>
 <td>Relay queue</td>
-<td>30 days; 256 MiB per user (64 MiB on the public relay)</td>
+<td>30 days; 256 MiB per user (64 MiB on the public relay); 2 GiB of items per delivering host per day, across all recipients, those of subscribed workspaces not counted</td>
 </tr>
 <tr>
 <td>Delegations</td>
@@ -1485,12 +1581,24 @@ null and <code>origin</code> carries that origin. A peer&#39;s S2S error keeps i
 <td>100 pending per recipient; 20 per sender and 1,000 per delivering host per day; 3 held items and 1 MiB per request; 16 MiB held per recipient (kept invites included), apart from the queue&#39;s cap; 30 days</td>
 </tr>
 <tr>
+<td>Accepted conversations</td>
+<td>5,000 per recipient and host; 400 days after the last item delivered</td>
+</tr>
+<tr>
 <td>Stranger claims</td>
 <td>Last-resort packages only; 20 per claimer per day</td>
 </tr>
 <tr>
+<td>Contacts</td>
+<td>1,000 per user</td>
+</tr>
+<tr>
 <td>Remote identity</td>
-<td>Log ≤ 256 entries; card 128 KiB; cache 24 h</td>
+<td>Log ≤ 256 entries; card 128 KiB; cache 24 h, rows kept 30 days (a remote user&#39;s while the user exists)</td>
+</tr>
+<tr>
+<td>Peer pins</td>
+<td>4 per origin; an unreferenced <code>active</code> pin forgotten after 90 idle days, its head kept</td>
 </tr>
 <tr>
 <td>Remote user&#39;s direct session</td>
@@ -1505,9 +1613,10 @@ database, so correctness never depends on one node. Audit (ids only):
 <code>relay.principal_blocked</code> (<code>scope</code> <code>user</code> for <code>blockPrincipal</code>, <code>server</code> for the operator&#39;s),
 <code>relay.principal_unblocked</code>, <code>relay.blocked_principal_refused</code>, <code>relay.dm_request_reported</code>,
 <code>relay.abuse_report_filed</code>, <code>relay.abuse_report_resolved</code>, <code>relay.registration_pow</code>,
-<code>server_key.created</code>, <code>server_key.rotated</code>, <code>server_key.recovered</code>, <code>s2s.peer_reset</code>. Events with an acting user and workspace go to <code>command_audit_log</code>; the server
+<code>server_key.created</code>, <code>server_key.rotated</code>, <code>server_key.recovered</code>, <code>s2s.peer_reset</code>,
+<code>s2s.peer_forgotten</code>. Events with an acting user and workspace go to <code>command_audit_log</code>; the server
 key and peer events have neither (its columns are <code>NOT NULL</code>), so they go to the audit log stream
-(<code>target = &quot;audit&quot;</code>, as key logins do). Logs carry server, principal and row ids, never payloads. Metrics: outbox depth and oldest age per peer, deliver failures, relay
+(<code>target = &quot;audit&quot;</code>, as key logins do). Logs carry server, principal and row ids, never payloads. Metrics: outbox rows and bytes not yet acknowledged, in all and for the relay with the most, dead relays, rows not queued by reason, deliver failures, relay
 queue bytes, S2S responses by status, signature failures by reason.</p>
 <h2 id="threat-model">Threat model <a class="anchor" href="#threat-model" aria-label="Link to this section">#</a></h2>
 <div class="tablewrap"><table>
@@ -1588,7 +1697,7 @@ device keys move to hybrid.</p>
 <td>S5-2</td>
 </tr>
 <tr>
-<td>Visibility rules live in <a href="https://github.com/rim-platform/rim-server/blob/553bf5ddfc87d056e4c3e11acd3cc0eaa966b647/rim_api/src/subscription.rs"><code>rim_api/src/subscription.rs</code></a></td>
+<td>Visibility rules live in <a href="https://github.com/rim-platform/rim-server/blob/aec6be3bdfb01032632340b92c79a0e83a66d34f/rim_api/src/subscription.rs"><code>rim_api/src/subscription.rs</code></a></td>
 <td>Moved to <code>rim_services</code> for the outbox writer</td>
 <td>S5-2</td>
 </tr>
@@ -1628,9 +1737,11 @@ the new statements&#39; vectors and refusals (v1 form, unknown fields, delegatio
 recovery, grace), the <code>seq</code> window, delegation rules, stranger rules, request transitions, queue
 retention and overflow, the revocation schedule, the role table.</li>
 <li><strong>db-tests.</strong> One nonce inserted twice concurrently, one wins; per-stream <code>seq</code> under concurrency
-without gaps or repeats; outbox order per peer; <code>received_through</code> idempotency; items deleted only
-once every device acked; cascades; each migration up and down, and the refusing <code>down</code>s.</li>
-<li><strong>e2e with two servers</strong> (<a href="https://github.com/rim-platform/rim-server/blob/553bf5ddfc87d056e4c3e11acd3cc0eaa966b647/rim_api/tests/s2s_e2e.rs"><code>rim_api/tests/s2s_e2e.rs</code></a>, <code>e2e-tests</code>): two Actix servers in one
+without gaps or repeats; outbox order per peer; a relay&#39;s backlog counts only rows above its
+acknowledgement, and a run of failures starts once and ends with a success; <code>received_through</code>
+idempotency; items deleted only once every device acked; cascades; each migration up and down,
+and the refusing <code>down</code>s.</li>
+<li><strong>e2e with two servers</strong> (<a href="https://github.com/rim-platform/rim-server/blob/aec6be3bdfb01032632340b92c79a0e83a66d34f/rim_api/tests/s2s_e2e.rs"><code>rim_api/tests/s2s_e2e.rs</code></a>, <code>e2e-tests</code>): two Actix servers in one
 process with two databases, <code>RIM_S2S_ALLOW_HTTP</code> and <code>RIM_S2S_ALLOW_PRIVATE_ADDRESSES</code>. Flows:
 pinning and rotation; an encrypted DM across relays from creation to edit and read state
 (<code>rim_mls</code> fixtures); a DM request accepted, ignored, blocked; a remote join; channel traffic both
@@ -1758,7 +1869,7 @@ ed25519:waKbDNMuQ460M8gX_H1NKzAMDXF3x4P8hbHoJFPr-pSduvfvQSbXvOcRmK5VcF5F9-sICQmF
 <code>powBits</code> 16: the smallest working counter is 37283, nonce <code>AAAAAAAAkaM</code> (8 bytes big-endian), hash
 <code>00002f63d137749fda27201ccf9d282a4ed846287d49c55fea89a47617e78ed6</code>.</p>
 <h3 id="filled-by-s5-1">Filled by S5-1 <a class="anchor" href="#filled-by-s5-1" aria-label="Link to this section">#</a></h3>
-<p><strong>RFC 9421 appendix B.2.6</strong> through <code>rim_s2s</code> (<a href="https://github.com/rim-platform/rim-server/blob/553bf5ddfc87d056e4c3e11acd3cc0eaa966b647/rim_s2s/src/vectors.rs"><code>rim_s2s/src/vectors.rs</code></a>): the RFC&#39;s
+<p><strong>RFC 9421 appendix B.2.6</strong> through <code>rim_s2s</code> (<a href="https://github.com/rim-platform/rim-server/blob/aec6be3bdfb01032632340b92c79a0e83a66d34f/rim_s2s/src/vectors.rs"><code>rim_s2s/src/vectors.rs</code></a>): the RFC&#39;s
 <code>test-key-ed25519</code> (seed: the last 32 bytes of its PKCS#8 key), the components <code>&quot;date&quot; &quot;@method&quot; &quot;@path&quot; &quot;@authority&quot; &quot;content-type&quot; &quot;content-length&quot;</code> with <code>created=1618884473</code> and
 <code>keyid=&quot;test-key-ed25519&quot;</code> serialize to the RFC&#39;s <code>Signature-Input</code>, the crate builds the RFC&#39;s
 signature base, and signing it gives the RFC&#39;s
@@ -1796,7 +1907,7 @@ A.1 to A.8 reproduces byte for byte in <code>rim_s2s</code>&#39;s tests; A.8&#39
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/553bf5ddfc87d056e4c3e11acd3cc0eaa966b647/docs/specs/server-to-server-v1.md">rim-server/docs/specs/server-to-server-v1.md</a> at <code>553bf5d</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/aec6be3bdfb01032632340b92c79a0e83a66d34f/docs/specs/server-to-server-v1.md">rim-server/docs/specs/server-to-server-v1.md</a> at <code>aec6be3</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

@@ -88,14 +88,14 @@ purges are idempotent, so a second run finds nothing left to do.</p>
 <tr>
 <td>Outbox writer and sender</td>
 <td>on every event</td>
-<td>runs while server-to-server traffic is on</td>
-<td>Turns events into signed envelopes and delivers each relay&#39;s outbox in order.</td>
+<td>runs while server-to-server traffic is on; <code>RIM_S2S_PEER_DEAD_AFTER_HOURS</code> (default 24)</td>
+<td>Turns events into signed envelopes and delivers each relay&#39;s outbox in order. Writes no row for a relay whose unacknowledged rows are at 100,000 or 2 GiB, or that is dead; tries a dead relay every 5 minutes.</td>
 </tr>
 <tr>
 <td>Metrics sampler</td>
 <td>30 seconds, first at boot</td>
 <td>runs when <code>RIM_METRICS_ADDR</code> is set</td>
-<td>Reads local account/activity totals, stored relay rows, pending device delivery and pending migrations into gauges. Tracks success, failures and last-success time separately for each sample; the database pool is read on each scrape (<a href="metrics.html"><code>docs/operations/metrics.md</code></a>).</td>
+<td>Reads local account/activity totals, stored relay rows, the outbox, pending device delivery and pending migrations into gauges. Tracks success, failures and last-success time separately for each sample; the database pool is read on each scrape (<a href="metrics.html"><code>docs/operations/metrics.md</code></a>).</td>
 </tr>
 <tr>
 <td>Audit retention</td>
@@ -128,6 +128,12 @@ purges are idempotent, so a second run finds nothing left to do.</p>
 <td>Deletes pending invitations to encrypted conversations not accepted within 30 days. Logs the count and adds it to <code>rim_conversation_invites_expired_total</code>.</td>
 </tr>
 <tr>
+<td>Remote identity and peer pin purge</td>
+<td>hourly, first 5 minutes after boot</td>
+<td>none; the peers named in <code>RIM_S2S_DENIED_PEERS</code>, <code>RIM_HOST_ALLOWED_RELAYS</code> and <code>RIM_DM_PARTNERS</code> are kept</td>
+<td>Deletes cached identities of people on other servers fetched more than 30 days ago, except those of remote users held here, and adds the count to <code>rim_remote_identities_purged_total</code>. Forgets the <code>active</code> pins of other servers neither fetched nor sent a request for 90 days that nothing here refers to (a remote user&#39;s home relay or card, a delegation, a subscription, an outbox row, an inbound cursor, a queued envelope, a DM request, a revocation fan-out, a conversation&#39;s predecessor, a cached identity), keeping each one&#39;s key-log head so its next pin must extend it; writes an <code>s2s.peer_forgotten</code> audit line per server and adds the count to <code>rim_peer_pins_forgotten_total</code>. Forked and blocked pins stay.</td>
+</tr>
+<tr>
 <td>WebSocket session recheck</td>
 <td><code>RIM_WS_SESSION_RECHECK_SECS</code> (default 30), first one interval after boot</td>
 <td><code>RIM_WS_SESSION_RECHECK_SECS</code>; 0 turns it off</td>
@@ -144,7 +150,7 @@ purges are idempotent, so a second run finds nothing left to do.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/553bf5ddfc87d056e4c3e11acd3cc0eaa966b647/docs/operations/background-jobs.md">rim-server/docs/operations/background-jobs.md</a> at <code>553bf5d</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/aec6be3bdfb01032632340b92c79a0e83a66d34f/docs/operations/background-jobs.md">rim-server/docs/operations/background-jobs.md</a> at <code>aec6be3</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

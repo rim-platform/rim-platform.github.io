@@ -53,13 +53,13 @@ with the code format, the channel cryptography and the known-answer vectors, is
 it.</p>
 <h2 id="what-lives-where">What lives where <a class="anchor" href="#what-lives-where" aria-label="Link to this section">#</a></h2>
 <ul>
-<li><a href="https://github.com/rim-platform/rim-ui/blob/5f5245a76a53b439df6beceb63f49e55f84d406e/src-tauri/src/key_identity/device_link.rs"><code>src-tauri/src/key_identity/device_link.rs</code></a>: everything secret. The link code (format and the
+<li><a href="https://github.com/rim-platform/rim-ui/blob/b71a117a9aa3f23a97e4edcfcebe7e5c1787778d/src-tauri/src/key_identity/device_link.rs"><code>src-tauri/src/key_identity/device_link.rs</code></a>: everything secret. The link code (format and the
 spec&#39;s reader rules), HKDF-SHA256 per direction, AES-256-GCM seal and open with the AAD rule,
 the fingerprint, the offer and answer plaintexts (<code>serde</code> with <code>deny_unknown_fields</code>; serde&#39;s
 derive refuses a field named twice), and the <code>KeyIdentityState</code> methods behind the
 <code>key_identity_link_*</code> commands. Its tests check appendix A byte for byte; the two-device flow
 tests are in <code>key_identity/tests.rs</code>.</li>
-<li><a href="https://github.com/rim-platform/rim-ui/blob/5f5245a76a53b439df6beceb63f49e55f84d406e/src/features/key-identity/api/deviceLink.ts"><code>src/features/key-identity/api/deviceLink.ts</code></a>: the GraphQL documents, the command wrappers, and
+<li><a href="https://github.com/rim-platform/rim-ui/blob/b71a117a9aa3f23a97e4edcfcebe7e5c1787778d/src/features/key-identity/api/deviceLink.ts"><code>src/features/key-identity/api/deviceLink.ts</code></a>: the GraphQL documents, the command wrappers, and
 the two flows. <code>linkNewDevice</code> is the new device from the code to the session.
 <code>startLinkingDevice</code>, <code>waitForOffer</code>, <code>confirmLink</code> and <code>cancelLink</code> are the old device, driven
 by the settings panel; <code>resumePendingDeviceLinks</code> finishes links an earlier run left open.
@@ -153,7 +153,7 @@ non-extractable key in IndexedDB and signs in with it, through the same <code>li
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/5f5245a76a53b439df6beceb63f49e55f84d406e/docs/device-linking-desktop.md">rim-ui/docs/device-linking-desktop.md</a> at <code>5f5245a</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/b71a117a9aa3f23a97e4edcfcebe7e5c1787778d/docs/device-linking-desktop.md">rim-ui/docs/device-linking-desktop.md</a> at <code>b71a117</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

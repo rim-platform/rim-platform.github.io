@@ -67,7 +67,7 @@ in <a href="operations/relay-public.html"><code>docs/operations/relay-public.md<
 </tr>
 <tr>
 <td>Key log, descriptor, pinned peers</td>
-<td>The database (<code>server_key_log_entry</code>, <code>server_descriptor</code>, <code>peer_server</code>)</td>
+<td>The database (<code>server_key_log_entry</code>, <code>server_descriptor</code>, <code>peer_server</code>, and <code>peer_server_forgotten</code> for the heads of pins forgotten after 90 idle days)</td>
 </tr>
 <tr>
 <td>Recovery key, after first start</td>
@@ -119,7 +119,9 @@ recovery key; peers stop accepting the previous key at once. Works without the k
 offline again.</li>
 <li><strong>Peer reset</strong> forgets a peer this server refuses because its key log forked (its history was
 rewritten: a restored backup, a stolen key, or an attack). Check with the peer&#39;s operator first,
-out of band; its next request pins it afresh.</li>
+out of band; its next request pins it afresh. It also deletes the key-log head kept for a peer
+whose idle pin was forgotten, and frees a place at an origin that holds the most pins allowed
+(4).</li>
 <li><strong>Peer block</strong> refuses a pinned peer both ways from its next request, without a restart: its
 requests get <code>403 peer_not_allowed</code> and nothing is sent to it. <strong>Peer unblock</strong> lifts it. A
 peer never pinned cannot be blocked this way; list it in <code>RIM_S2S_DENIED_PEERS</code>.</li>
@@ -262,7 +264,7 @@ until its operator resets the pin. Each peer appears in the log as <code>s2s.pee
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/553bf5ddfc87d056e4c3e11acd3cc0eaa966b647/docs/server-identity.md">rim-server/docs/server-identity.md</a> at <code>553bf5d</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/aec6be3bdfb01032632340b92c79a0e83a66d34f/docs/server-identity.md">rim-server/docs/server-identity.md</a> at <code>aec6be3</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

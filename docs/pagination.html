@@ -122,12 +122,18 @@ that sort key.</li>
 <li>cursor: <code>(created_at, invite_id)</code></li>
 </ul>
 </li>
+<li>Pending MLS Welcomes of the session device (<code>myMlsWelcomes</code>):<ul>
+<li><code>ORDER BY created_at ASC, id ASC</code> (oldest first), forward only: <code>after</code> is exclusive</li>
+<li>cursor: <code>(created_at, welcome_id)</code>, the <code>createdAt</code> and <code>id</code> of the previous page&#39;s last Welcome</li>
+<li>the answer is a plain list; a page shorter than <code>limit</code> is the last</li>
+</ul>
+</li>
 </ul>
 
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/553bf5ddfc87d056e4c3e11acd3cc0eaa966b647/docs/pagination.md">rim-server/docs/pagination.md</a> at <code>553bf5d</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/aec6be3bdfb01032632340b92c79a0e83a66d34f/docs/pagination.md">rim-server/docs/pagination.md</a> at <code>aec6be3</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

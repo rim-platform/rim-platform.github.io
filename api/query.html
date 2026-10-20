@@ -614,8 +614,9 @@ No authentication required — this is public configuration metadata.</p>
 </section>
 <section class="entry" id="myMlsWelcomes" data-name="myMlsWelcomes">
 <h3><code>myMlsWelcomes</code></h3>
-<div class="sig">myMlsWelcomes: [<a href="objects.html#MlsWelcome">MlsWelcome</a>!]!</div>
-<div class="desc"><p>The session device&#39;s unacknowledged Welcomes, oldest first.</p>
+<div class="sig">myMlsWelcomes(after: <a href="inputs.html#MlsWelcomeCursorInput">MlsWelcomeCursorInput</a>, limit: <a href="scalars.html#Int">Int</a>): [<a href="objects.html#MlsWelcome">MlsWelcome</a>!]!</div>
+<div class="desc"><p>The session device&#39;s unacknowledged Welcomes, oldest first, after <code>after</code> (exclusive;
+from the oldest when null). <code>limit</code> is 1 to 100, 100 by default.</p>
 </div>
 
 </section>
@@ -700,7 +701,7 @@ floors are taken in, with where a refusing floor comes from.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Generated from <a href="https://github.com/rim-platform/rim-ui/blob/5f5245a76a53b439df6beceb63f49e55f84d406e/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>5f5245a</code></span>
+    <span>Generated from <a href="https://github.com/rim-platform/rim-ui/blob/b71a117a9aa3f23a97e4edcfcebe7e5c1787778d/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>b71a117</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>
