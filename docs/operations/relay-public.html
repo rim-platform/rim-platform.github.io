@@ -38,7 +38,7 @@
 <li><a href="#run-your-own-server-first">Run your own server first</a></li>
 <li><a href="#a-first-test-run">A first test run</a></li>
 <li><a href="#if-the-relay-shuts-down">If the relay shuts down</a></li>
-<li><a href="#what-lives-where">What lives where</a></li>
+<li><a href="#what-lives-where">What lives where</a><ol><li><a href="#how-long-personal-data-and-logs-are-kept">How long personal data and logs are kept</a></li></ol></li>
 <li><a href="#keys">Keys</a><ol><li><a href="#the-server-recovery-key">The server recovery key</a></li><li><a href="#yearly-rotation">Yearly rotation</a></li><li><a href="#compromise-recover">Compromise: recover</a></li><li><a href="#the-franking-key-file">The franking key file</a></li></ol></li>
 <li><a href="#the-default-workspace">The default workspace</a></li>
 <li><a href="#backups">Backups</a><ol><li><a href="#restore">Restore</a></li><li><a href="#restore-drill">Restore drill</a></li></ol></li>
@@ -54,8 +54,8 @@
 <h1 id="public-relay-runbook">Public relay runbook</h1>
 <p>The public relay is the server anyone&#39;s app can use as its relay: accounts, devices, profile
 cards, the queue of what other servers send, the request inbox, and the forward path to the
-servers that host people&#39;s workspaces. It runs the stock image from <a href="https://github.com/rim-platform/rim-server/blob/b928b46587390d75bec693993f3006251271ecb4/deploy/compose.yml"><code>deploy/compose.yml</code></a> with the
-<a href="https://github.com/rim-platform/rim-server/blob/b928b46587390d75bec693993f3006251271ecb4/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a> override (<a href="../deploy/index.html"><code>deploy/README.md</code></a> brings it up), with <code>RIM_ROLE=relay</code>, or
+servers that host people&#39;s workspaces. It runs the stock image from <a href="https://github.com/rim-platform/rim-server/blob/009ad9d81f0977df2419f9e4e136867a95ea5a17/deploy/compose.yml"><code>deploy/compose.yml</code></a> with the
+<a href="https://github.com/rim-platform/rim-server/blob/009ad9d81f0977df2419f9e4e136867a95ea5a17/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a> override (<a href="../deploy/index.html"><code>deploy/README.md</code></a> brings it up), with <code>RIM_ROLE=relay</code>, or
 <code>both</code> to host workspaces too. The project&#39;s relay is <code>relay.rim-platform.org</code>; read it as &quot;the
 relay&#39;s domain&quot; wherever this page says it. It runs <code>both</code>: it also hosts the RIM community
 workspace, the server&#39;s default workspace, which every new account joins, and serves the web
@@ -71,6 +71,9 @@ alias rim-sql='sudo -E docker compose exec -T postgres psql -U rim -d rim'</code
 operator&#39;s account is in no group that reaches Docker, so every command runs through <code>sudo</code>;
 <code>-E</code> keeps <code>COMPOSE_FILE</code>. The backup and restore scripts call Docker too: run them as
 <code>sudo -E deploy/backup.sh</code> and so on.</p>
+<p>On <code>relay.rim-platform.org</code> the files of <a href="https://github.com/rim-platform/rim-server/tree/009ad9d81f0977df2419f9e4e136867a95ea5a17/deploy"><code>deploy/</code></a> sit flat in <code>/srv/rim-server</code> (&quot;Deploys&quot;),
+and its <code>.env</code> sets <code>COMPOSE_FILE=compose.yml:compose.relay.yml</code>: there, <code>cd /srv/rim-server</code>
+and read <a href="https://github.com/rim-platform/rim-server/blob/009ad9d81f0977df2419f9e4e136867a95ea5a17/deploy/backup.sh"><code>deploy/backup.sh</code></a> as <code>./backup.sh</code> and <code>deploy/.env</code> as <code>.env</code>.</p>
 <h2 id="run-your-own-server-first">Run your own server first <a class="anchor" href="#run-your-own-server-first" aria-label="Link to this section">#</a></h2>
 <p>This relay is for people who cannot run a server yet. A server of your own, or one your team,
 project or community runs, is the better home: you choose its limits, its terms and who may
@@ -80,7 +83,7 @@ and keep its account id (&quot;If the relay shuts down&quot; says how).</p>
 <h2 id="a-first-test-run">A first test run <a class="anchor" href="#a-first-test-run" aria-label="Link to this section">#</a></h2>
 <p>The public relay is a test run of the project, provided as is: there is no guarantee that it
 stays up, and none against data loss. Accounts and what the relay holds may be reset or deleted
-at any time, and the relay may end. Its terms (<a href="https://github.com/rim-platform/rim-server/blob/b928b46587390d75bec693993f3006251271ecb4/deploy/terms.md"><code>deploy/terms.md</code></a>) say the same to everyone who
+at any time, and the relay may end. Its terms (<a href="https://github.com/rim-platform/rim-server/blob/009ad9d81f0977df2419f9e4e136867a95ea5a17/deploy/terms.md"><code>deploy/terms.md</code></a>) say the same to everyone who
 signs up. Questions go to the project&#39;s GitHub issues
 (<code>https://github.com/rim-platform/rim-server/issues</code>), which are public; reports about content
 or a person go through the app&#39;s report function, which reaches the relay&#39;s moderators.</p>
@@ -119,12 +122,12 @@ relay still answers.</p>
 </thead>
 <tbody><tr>
 <td>Configuration</td>
-<td><code>deploy/.env</code> on the host (secrets), <a href="https://github.com/rim-platform/rim-server/blob/b928b46587390d75bec693993f3006251271ecb4/deploy/compose.yml"><code>deploy/compose.yml</code></a>, <a href="https://github.com/rim-platform/rim-server/blob/b928b46587390d75bec693993f3006251271ecb4/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a> and the Caddyfile <code>RIM_CADDYFILE</code> names</td>
+<td><code>deploy/.env</code> on the host (secrets), <a href="https://github.com/rim-platform/rim-server/blob/009ad9d81f0977df2419f9e4e136867a95ea5a17/deploy/compose.yml"><code>deploy/compose.yml</code></a>, <a href="https://github.com/rim-platform/rim-server/blob/009ad9d81f0977df2419f9e4e136867a95ea5a17/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a> and the Caddyfile <code>RIM_CADDYFILE</code> names</td>
 <td><code>.env</code> in every backup; the compose files and Caddyfiles are in Git</td>
 </tr>
 <tr>
 <td>Default workspace</td>
-<td><a href="https://github.com/rim-platform/rim-server/blob/b928b46587390d75bec693993f3006251271ecb4/deploy/default-workspace.json"><code>deploy/default-workspace.json</code></a>, mounted at <code>/config/default-workspace.json</code>; until claimed, the owner claim link in <code>/data/owner-claim.txt</code></td>
+<td><a href="https://github.com/rim-platform/rim-server/blob/009ad9d81f0977df2419f9e4e136867a95ea5a17/deploy/default-workspace.json"><code>deploy/default-workspace.json</code></a>, mounted at <code>/config/default-workspace.json</code>; until claimed, the owner claim link in <code>/data/owner-claim.txt</code></td>
 <td>the file is in Git; the link is in a backup taken before the claim, so a restart, which revokes it, follows a leaked backup</td>
 </tr>
 <tr>
@@ -158,19 +161,94 @@ relay still answers.</p>
 <td>with every dump</td>
 </tr>
 <tr>
-<td>Audit log</td>
-<td><code>/data/audit.log</code>, and every audit event on stdout too; rotated by logrotate (<a href="audit-retention.html"><code>docs/operations/audit-retention.md</code></a>)</td>
+<td>Audit files</td>
+<td><code>/data/audit.&lt;YYYY-MM-DD&gt;.log</code>, one per day, and every audit event on stdout too (<a href="audit-retention.html"><code>docs/operations/audit-retention.md</code></a>)</td>
 <td>with every dump</td>
 </tr>
 <tr>
 <td>Audit exports</td>
-<td><code>/data/audit-exports/</code>, command audit rows past <code>RIM_AUDIT_RETENTION_DAYS</code></td>
+<td><code>/data/audit-exports/</code>, command audit rows past <code>RIM_AUDIT_RETENTION_DAYS</code>, deleted after <code>RIM_AUDIT_EXPORT_RETENTION_DAYS</code></td>
 <td>with every dump</td>
 </tr>
 <tr>
 <td>TLS certificates</td>
 <td>volume <code>rim-relay_caddy_data</code></td>
 <td>not needed: Caddy gets new ones</td>
+</tr>
+</tbody></table></div>
+<h3 id="how-long-personal-data-and-logs-are-kept">How long personal data and logs are kept <a class="anchor" href="#how-long-personal-data-and-logs-are-kept" aria-label="Link to this section">#</a></h3>
+<p>The terms tell people that the addresses they connect from appear in the server&#39;s logs, which
+are kept only as long as needed to run the service and fight abuse. These are the places that
+hold addresses or logs, how long each keeps them and what deletes them. Nothing here sends logs
+off the host: Alloy sends metrics only.</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>What</th>
+<th>IP addresses</th>
+<th>Kept</th>
+<th>Deleted by</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Container logs (<code>dc logs</code>)</td>
+<td>the server&#39;s audit events for signups, logins and refusals carry <code>remote_ip</code>; the web client&#39;s nginx logs each request with the address Caddy forwards; Caddy logs the request, address included, of a request it could not serve</td>
+<td>about 100 MB per service (five files of 20 MB), and never longer than the container</td>
+<td>Docker, when the newest file fills (the <code>logging</code> options in the compose files); a deploy that replaces a container&#39;s image starts its log afresh</td>
+</tr>
+<tr>
+<td>Audit files, <code>/data/audit.&lt;YYYY-MM-DD&gt;.log</code></td>
+<td>the same audit events as on stdout</td>
+<td>90 days (<code>RIM_AUDIT_LOG_RETENTION_DAYS</code>, default 90)</td>
+<td>the server, daily</td>
+</tr>
+<tr>
+<td>Command audit rows, the <code>command_audit_log</code> table</td>
+<td>none</td>
+<td>90 days (<code>RIM_AUDIT_RETENTION_DAYS</code>, 90 in <a href="https://github.com/rim-platform/rim-server/blob/009ad9d81f0977df2419f9e4e136867a95ea5a17/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a>)</td>
+<td>the server, daily, after it exported them to <code>/data/audit-exports/</code></td>
+</tr>
+<tr>
+<td>Audit exports, <code>/data/audit-exports/</code></td>
+<td>none: user and workspace ids, redacted arguments</td>
+<td>90 days after the export (<code>RIM_AUDIT_EXPORT_RETENTION_DAYS</code>, 90 in <a href="https://github.com/rim-platform/rim-server/blob/009ad9d81f0977df2419f9e4e136867a95ea5a17/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a>), so a command audit row is gone completely after about 180 days</td>
+<td>the server, daily</td>
+</tr>
+<tr>
+<td>Sessions, the <code>session</code> table</td>
+<td>none: its <code>ip</code> column is never filled</td>
+<td>until revoked (sign-out, a revoked device, a block) or expired, 30 days after sign-in (<code>RIM_SESSION_TTL_DAYS</code>); use does not extend it</td>
+<td>the server, within an hour</td>
+</tr>
+<tr>
+<td>Rate limits and the known sign-in addresses</td>
+<td>the addresses themselves, in memory</td>
+<td>minutes for the rate windows; a known sign-in address counts for 30 days; none outlives a restart</td>
+<td>the server; every restart clears them</td>
+</tr>
+<tr>
+<td>IP blocks, the <code>ip_block</code> table</td>
+<td>the blocked ranges</td>
+<td>until the block&#39;s expiry, or until <code>rim-relay ip unblock</code> for one without</td>
+<td>the server, within 30 seconds of the expiry</td>
+</tr>
+<tr>
+<td>Caddy access log</td>
+<td>every request&#39;s address</td>
+<td>off; switched on only during an incident (&quot;Monitoring&quot;), and then part of Caddy&#39;s container log above</td>
+<td>the operator, by removing <code>log</code> again</td>
+</tr>
+<tr>
+<td>Backups</td>
+<td>those in the audit files of the backed-up <code>/data</code></td>
+<td>30 days (<code>RIM_BACKUP_KEEP_DAYS=30</code> in <code>/srv/rim-server/.env</code>)</td>
+<td><a href="https://github.com/rim-platform/rim-server/blob/009ad9d81f0977df2419f9e4e136867a95ea5a17/deploy/backup.sh"><code>deploy/backup.sh</code></a>, after each backup that succeeded; there is no other copy</td>
+</tr>
+<tr>
+<td>The host&#39;s own logs (journald: SSH, fail2ban, the firewall)</td>
+<td>addresses that connect to the host itself</td>
+<td>at most 500 MB and 30 days (<code>SystemMaxUse=500M</code>, <code>MaxRetentionSec=30day</code> in <code>/etc/systemd/journald.conf.d/rim.conf</code>)</td>
+<td>journald</td>
 </tr>
 </tbody></table></div>
 <h2 id="keys">Keys <a class="anchor" href="#keys" aria-label="Link to this section">#</a></h2>
@@ -188,7 +266,7 @@ server&#39;s, so it never stays on the host: the first start writes it to
 </thead>
 <tbody><tr>
 <td>Holders</td>
-<td><strong>FILL</strong>: two named people, so one absence never blocks a recovery</td>
+<td>the maintainer (@dvorakj31) alone for now; a second holder, so one absence never blocks a recovery, is to be named</td>
 </tr>
 <tr>
 <td>Copy 1</td>
@@ -206,7 +284,7 @@ server&#39;s, so it never stays on the host: the first start writes it to
 <p>The file is one line, <code>rim-server-recovery:1:&lt;base64url&gt;</code>. Check a copy without using it: the
 public half it names is <code>recovery key</code> in <code>rim-relay server-key show</code>.</p>
 <h3 id="yearly-rotation">Yearly rotation <a class="anchor" href="#yearly-rotation" aria-label="Link to this section">#</a></h3>
-<p>Rotate the server key once a year (<strong>FILL</strong>: the month) and when someone with host access leaves.</p>
+<p>Rotate the server key once a year, in October, and when someone with host access leaves.</p>
 <pre><code class="language-sh">rim-relay server-key rotate
 rim-relay server-key show          # key seq went up by one</code></pre>
 <p>The running server switches within a minute. Peers accept the previous key for 24 hours after
@@ -233,7 +311,7 @@ rim-relay franking-key rotate</code></pre>
 messages sent before: back it up with everything else in <code>/data</code>.</p>
 <h2 id="the-default-workspace">The default workspace <a class="anchor" href="#the-default-workspace" aria-label="Link to this section">#</a></h2>
 <p>With <code>RIM_DEFAULT_WORKSPACE_FILE=/config/default-workspace.json</code> in <code>.env</code> (<a href="../deploy/index.html"><code>deploy/README.md</code></a>, &quot;A
-relay that hosts a workspace&quot;), <a href="https://github.com/rim-platform/rim-server/blob/b928b46587390d75bec693993f3006251271ecb4/deploy/default-workspace.json"><code>deploy/default-workspace.json</code></a> is the server&#39;s default
+relay that hosts a workspace&quot;), <a href="https://github.com/rim-platform/rim-server/blob/009ad9d81f0977df2419f9e4e136867a95ea5a17/deploy/default-workspace.json"><code>deploy/default-workspace.json</code></a> is the server&#39;s default
 workspace: every new account joins it as a Member with its public channels. Its owner claims it once, right after the
 first start:</p>
 <pre><code class="language-sh">dc exec rim cat /data/owner-claim.txt</code></pre>
@@ -246,15 +324,20 @@ add the owner&#39;s name to <code>RIM_RESERVED_NAMES</code>.</p>
 channels, topics, the name, the DM policy) and deletes nothing. A channel is renamed in the app
 first and then in the file. Ownership moves in the app.</p>
 <h2 id="backups">Backups <a class="anchor" href="#backups" aria-label="Link to this section">#</a></h2>
-<p><a href="https://github.com/rim-platform/rim-server/blob/b928b46587390d75bec693993f3006251271ecb4/deploy/backup.sh"><code>deploy/backup.sh</code></a> writes one archive of the database dump, the <code>/data</code> volume and <code>deploy/.env</code>;
+<p><a href="https://github.com/rim-platform/rim-server/blob/009ad9d81f0977df2419f9e4e136867a95ea5a17/deploy/backup.sh"><code>deploy/backup.sh</code></a> writes one archive of the database dump, the <code>/data</code> volume and <code>deploy/.env</code>;
 <a href="../self-hosting.html"><code>docs/self-hosting.md</code></a>, &quot;Backups&quot;, says what is in it. It never includes the recovery key file.</p>
-<p>Nightly (<strong>FILL</strong>: the time and the cron or timer that runs it), before every update and right
-after every key rotation; encrypted with <code>age</code> to <strong>FILL</strong>: the recipient, whose identity is held
-by <strong>FILL</strong>; copied off the host to <strong>FILL</strong>: the destination; kept for <strong>FILL</strong> days.</p>
+<p>Nightly at 03:15 host time from root&#39;s cron (<code>/etc/cron.d/rim-backup</code>, below), before every
+update and right after every key rotation; encrypted with <code>age</code> to the public key of the
+maintainer&#39;s backup identity (<code>RIM_BACKUP_AGE_RECIPIENT</code>), whose private half is held by the
+maintainer and never on the host; written off the VPS disk to the provider&#39;s NAS share mounted
+at <code>/mnt/backups</code> (<code>RIM_BACKUP_DIR=/mnt/backups/rim-backups</code>); kept for 30 days, with
+<code>RIM_BACKUP_KEEP_DAYS=30</code> in <code>/srv/rim-server/.env</code> so each backup deletes the older ones. The
+share is with the same provider as the VPS; a copy elsewhere is not set up yet.</p>
 <pre><code class="language-sh">RIM_BACKUP_AGE_RECIPIENT=age1… deploy/backup.sh       # or set it in deploy/.env
-# copy the archive it names off the host (FILL: destination)</code></pre>
-<p>Cron, with <code>RIM_BACKUP_AGE_RECIPIENT</code> in <code>deploy/.env</code>:</p>
-<pre><code class="language-cron">15 3 * * * cd /srv/rim-server &amp;&amp; COMPOSE_FILE=deploy/compose.yml:deploy/compose.relay.yml deploy/backup.sh &gt;&gt;/var/log/rim-backup.log 2&gt;&amp;1</code></pre>
+# with RIM_BACKUP_DIR on the NAS share, the archive is already off the VPS disk</code></pre>
+<p>Cron, <code>/etc/cron.d/rim-backup</code> on the host, with <code>COMPOSE_FILE</code>, <code>RIM_BACKUP_DIR</code>,
+<code>RIM_BACKUP_AGE_RECIPIENT</code> and <code>RIM_BACKUP_KEEP_DAYS</code> in <code>/srv/rim-server/.env</code>:</p>
+<pre><code class="language-cron">15 3 * * * root cd /srv/rim-server &amp;&amp; ./backup.sh &gt;&gt;/var/log/rim-backup.log 2&gt;&amp;1</code></pre>
 <p>The dump and the data archive are one set: the key file must match the head of the key log in
 the database. The scripts restore both from one archive; never mix sets.</p>
 <h3 id="restore">Restore <a class="anchor" href="#restore" aria-label="Link to this section">#</a></h3>
@@ -268,8 +351,8 @@ stack and waits for <code>/readyz</code>. The server refuses to start when the k
 disagree: that is a mixed set, or a rotation after the backup. Use a matching set, or
 <code>server-key recover</code> if the key file of the newest log is gone.</p>
 <h3 id="restore-drill">Restore drill <a class="anchor" href="#restore-drill" aria-label="Link to this section">#</a></h3>
-<p>Every quarter (<strong>FILL</strong>: the months; record each drill&#39;s date and result below), restore the
-latest set:</p>
+<p>Every quarter, in January, April, July and October (record each drill&#39;s date and result
+below), restore the latest set:</p>
 <pre><code class="language-sh">RIM_BACKUP_AGE_IDENTITY=/path/to/identity deploy/restore-drill.sh rim-backup-rim-relay-&lt;time&gt;.tar.age</code></pre>
 <p>The drill runs in its own project, <code>rim-drill</code>, with server-to-server traffic and mail off and no
 port published, so the copy never speaks for the relay; it removes the project and its volumes
@@ -398,11 +481,11 @@ new signups only; nobody loses an account.</p>
 <p>The public relay keeps the DM defaults, <code>RIM_DM_INBOUND=requests</code> and
 <code>RIM_DM_OUTBOUND=allowed</code>: a stranger&#39;s first message is a request, from anywhere (&quot;Who May Start
 A DM&quot; in <a href="../messaging.html"><code>docs/messaging.md</code></a>).</p>
-<p>The public relay serves <a href="https://github.com/rim-platform/rim-server/blob/b928b46587390d75bec693993f3006251271ecb4/deploy/terms.md"><code>deploy/terms.md</code></a> as its terms of use (<code>RIM_TERMS_FILE=/config/terms.md</code>),
+<p>The public relay serves <a href="https://github.com/rim-platform/rim-server/blob/009ad9d81f0977df2419f9e4e136867a95ea5a17/deploy/terms.md"><code>deploy/terms.md</code></a> as its terms of use (<code>RIM_TERMS_FILE=/config/terms.md</code>),
 publishes where to reach its operators
 (<code>RIM_ABUSE_CONTACT=https://github.com/rim-platform/rim-server/issues</code>, public; reports about
 content or a person go through the app&#39;s report function), both set in <code>deploy/.env</code>. It
-asks for no minimum age: <code>RIM_MINIMUM_AGE</code> stays unset. After editing <a href="https://github.com/rim-platform/rim-server/blob/b928b46587390d75bec693993f3006251271ecb4/deploy/terms.md"><code>deploy/terms.md</code></a>,
+asks for no minimum age: <code>RIM_MINIMUM_AGE</code> stays unset. After editing <a href="https://github.com/rim-platform/rim-server/blob/009ad9d81f0977df2419f9e4e136867a95ea5a17/deploy/terms.md"><code>deploy/terms.md</code></a>,
 <code>dc restart rim</code> serves the new text; its URL changes with it, so new signups accept the new
 version.</p>
 <p>To change one, edit <code>deploy/.env</code> and run <code>dc up -d</code>: the server restarts in seconds and apps
@@ -419,9 +502,9 @@ single-use link bound to that address: the account it signs up gets that address
 does not keep others out, since a key signup gives no address: whoever holds the link signs up
 with it.</p>
 <h2 id="monitoring">Monitoring <a class="anchor" href="#monitoring" aria-label="Link to this section">#</a></h2>
-<p>Logs are JSON on stdout (<code>dc logs rim</code>); audit events (<code>&quot;target&quot;:&quot;audit&quot;</code>) also go to
-<code>/data/audit.log</code>. The database answers what logs do not. Alert thresholds are <strong>FILL</strong> until a
-month of normal traffic shows the baseline.</p>
+<p>Logs are JSON on stdout (<code>dc logs rim</code>); audit events (<code>&quot;target&quot;:&quot;audit&quot;</code>) also go to the
+daily files <code>/data/audit.&lt;YYYY-MM-DD&gt;.log</code>, kept 90 days. The database answers what logs do not.
+Alert thresholds are <strong>FILL</strong> until a month of normal traffic shows the baseline.</p>
 <div class="tablewrap"><table>
 <thead>
 <tr>
@@ -501,8 +584,9 @@ SQL</code></pre>
 default, since it would hold users&#39; IP addresses; during an incident add <code>log</code> to the site block
 of the Caddyfile <code>RIM_CADDYFILE</code> names, <code>dc restart caddy</code>, and remove it afterwards.</p>
 <h2 id="incidents">Incidents <a class="anchor" href="#incidents" aria-label="Link to this section">#</a></h2>
-<p>Record each incident: start, what was seen, what was done, end (<strong>FILL</strong>: where the record
-goes).</p>
+<p>Record each incident: start, what was seen, what was done, end, in an issue in
+<code>rim-platform/rim-server</code> labelled <code>incident</code>, with no personal data in it (principal and server
+ids are fine; names, addresses and message content are not).</p>
 <h3 id="a-spam-wave">A spam wave <a class="anchor" href="#a-spam-wave" aria-label="Link to this section">#</a></h3>
 <p>Signs: <code>relay.registration_pow</code> far above normal, many reports, DM requests from few senders.</p>
 <ol>
@@ -564,7 +648,8 @@ then <code>dc up -d</code>).</li>
 <li>Find how it left: host logins, who had the backups. Rebuild the host if it was broken into.</li>
 <li>Tell users what the thief could do until the recovery (sign as this server towards peers and
 receive what peers delivered for its users; never sign as a user or read their DMs) and when
-it stopped. <strong>FILL</strong>: the channel for such notices.</li>
+it stopped: in the instance notice (<code>RIM_INSTANCE_NOTICE</code>, shown on the sign-in page), in
+<code>#announcements</code> in the RIM workspace and in the incident&#39;s issue.</li>
 </ol>
 <h3 id="a-database-leak">A database leak <a class="anchor" href="#a-database-leak" aria-label="Link to this section">#</a></h3>
 <p>What a dump holds: accounts and who invited them, key logs, devices and cards (public anyway),
@@ -576,29 +661,33 @@ files in <code>/data</code>.</p>
 <li>End every session: <code>rim-sql -c 'UPDATE session SET revoked_at = now() WHERE revoked_at IS NULL'</code>.</li>
 <li>Rotate <code>POSTGRES_PASSWORD</code> as above, and find and close the way out.</li>
 <li>If <code>/data</code> or a backup set went too: &quot;A stolen server key&quot;.</li>
-<li>Notify users and, where the law asks for it, the authority (<strong>FILL</strong>: who decides, the
-deadline that applies, e.g. 72 hours under the GDPR, and the contact).</li>
+<li>Notify users as in &quot;A stolen server key&quot;, and the authority where the law asks for it: the
+maintainer decides; under the GDPR a breach that risks people&#39;s rights goes to the Czech
+Office for Personal Data Protection (ÚOOÚ, <a href="https://uoou.gov.cz">https://uoou.gov.cz</a>) within 72 hours of
+learning of it, and to the people affected without delay when the risk is high.</li>
 </ol>
 <h2 id="abuse-policy">Abuse policy <a class="anchor" href="#abuse-policy" aria-label="Link to this section">#</a></h2>
-<p>The text to publish (<strong>FILL</strong>: where, e.g. <code>https://&lt;domain&gt;/abuse</code>), filled in:</p>
+<p>The text below is published with this page on the project site; the terms
+(<a href="https://github.com/rim-platform/rim-server/blob/009ad9d81f0977df2419f9e4e136867a95ea5a17/deploy/terms.md"><code>deploy/terms.md</code></a>) carry the rules and the contact. Filled in:</p>
 <blockquote>
 <p><strong>Abuse on &lt;relay name&gt;</strong></p>
 <p>This relay carries messages for anyone who signs up. We block an account (its key identity)
 on this relay when it sends spam or unsolicited bulk requests, harasses or threatens people,
 impersonates someone, spreads malware or phishing, tries to break or overload the service, or
-uses it for anything illegal where the relay operates (<strong>FILL</strong>: jurisdiction). We block
+uses it for anything illegal under the law of the Czech Republic or of the European Union. We block
 another server when it sends such traffic and its operator does not stop it, or when it
 attacks this relay.</p>
-<p>To report: use &quot;Report&quot; on a message request in the app, or write to <strong>FILL</strong>: abuse address
-with the principal id or server id, what happened and when. We cannot read encrypted
-messages; a report from the app carries what the sender&#39;s own request showed.</p>
+<p>To report: use &quot;Report&quot; in the app, or open an issue at
+<a href="https://github.com/rim-platform/rim-server/issues">https://github.com/rim-platform/rim-server/issues</a> with the principal id or server id, what
+happened and when. Issues are public: put no personal details in one. We cannot read
+encrypted messages; a report from the app carries what the sender&#39;s own request showed.</p>
 <p>The workspaces this relay hosts, the RIM community workspace among them, are moderated from
 the app: by each workspace&#39;s owners and moderators, who get the reports of its messages, and by
 the instance operators, who block accounts and servers on the whole relay.</p>
-<p>We answer reports within <strong>FILL</strong> (e.g. one working day) and act on clear spam or attacks
-within <strong>FILL</strong> (e.g. four hours). We keep reports for <strong>FILL</strong> and the blocked identity until
-it is unblocked. A blocked person may ask for a review at the same address; we answer within
-<strong>FILL</strong>.</p>
+<p>This relay is a first test run, looked after by one person. We read reports as time allows,
+usually within a few days, and block clear spam or attacks as soon as we see them. We keep
+reports for one year and the blocked identity until it is unblocked. A blocked person may
+ask for a review the same way; we answer as time allows.</p>
 </blockquote>
 <p>Reports from the abuse address go into the same list as those from the app:</p>
 <pre><code class="language-sh">rim-relay abuse-reports add --principal rimp1_… --reason &quot;mail of &lt;date&gt;: phishing links&quot;
@@ -630,13 +719,12 @@ account a block reaches, <code>cascade</code> true for those after the first),
 <code>server</code>, with the <code>user_id</code>). The principal, report and IP lines carry <code>actor_id</code>: <code>cli</code> for
 the command line, the operator&#39;s user id for a change made in the app. <code>audit purge</code> writes
 <code>audit.retention.purged</code> (<code>trigger</code> <code>cli</code>), the same event the daily purge writes; the purge, its
-export files and the logrotate setup for <code>/data/audit.log</code> are in
-<a href="audit-retention.html"><code>docs/operations/audit-retention.md</code></a>.</p>
+export files and the retention of the audit files are in <a href="audit-retention.html"><code>docs/operations/audit-retention.md</code></a>.</p>
 
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/b928b46587390d75bec693993f3006251271ecb4/docs/operations/relay-public.md">rim-server/docs/operations/relay-public.md</a> at <code>b928b46</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/009ad9d81f0977df2419f9e4e136867a95ea5a17/docs/operations/relay-public.md">rim-server/docs/operations/relay-public.md</a> at <code>009ad9d</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>
