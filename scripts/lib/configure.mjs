@@ -41,7 +41,7 @@ const GROUPS = [
   {
     title: "Operations",
     intro: "Metrics, the audit log, features switched off on this instance, logging, the notice shown to people, and how many link preview fetches and password hashes run at once.",
-    names: ["RIM_METRICS_ADDR", "RIM_AUDIT_LOG_PATH", "RIM_AUDIT_RETENTION_DAYS", "RIM_FEATURES_DISABLED", "RUST_LOG", "RIM_ENABLE_GRAPHIQL", "RIM_INSTANCE_NOTICE", "RIM_ABUSE_CONTACT", "RIM_LINK_PREVIEW_CONCURRENCY", "RIM_PASSWORD_HASH_CONCURRENCY"],
+    names: ["RIM_METRICS_ADDR", "RIM_AUDIT_LOG_PATH", "RIM_AUDIT_RETENTION_DAYS", "RIM_AUDIT_LOG_RETENTION_DAYS", "RIM_AUDIT_EXPORT_RETENTION_DAYS", "RIM_FEATURES_DISABLED", "RUST_LOG", "RIM_ENABLE_GRAPHIQL", "RIM_INSTANCE_NOTICE", "RIM_ABUSE_CONTACT", "RIM_LINK_PREVIEW_CONCURRENCY", "RIM_PASSWORD_HASH_CONCURRENCY"],
   },
   {
     title: "Limits and rate limits",

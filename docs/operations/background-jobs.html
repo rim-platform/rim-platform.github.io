@@ -104,6 +104,18 @@ purges are idempotent, so a second run finds nothing left to do.</p>
 <td>Exports and deletes command audit rows past retention (<a href="audit-retention.html"><code>docs/operations/audit-retention.md</code></a>).</td>
 </tr>
 <tr>
+<td>Audit export retention</td>
+<td>daily, first a minute after boot</td>
+<td><code>RIM_AUDIT_EXPORT_RETENTION_DAYS</code>; unset, the job does not run</td>
+<td>Deletes the audit export files written more than that many days ago, logs how many and adds them to <code>rim_audit_exports_deleted_total</code> (<a href="audit-retention.html"><code>docs/operations/audit-retention.md</code></a>).</td>
+</tr>
+<tr>
+<td>Audit file retention</td>
+<td>daily, first a minute after boot</td>
+<td><code>RIM_AUDIT_LOG_RETENTION_DAYS</code> (default 90)</td>
+<td>Deletes the daily audit files <code>audit.&lt;YYYY-MM-DD&gt;.log</code> whose day is further back than the retention, and logs how many (<a href="audit-retention.html"><code>docs/operations/audit-retention.md</code></a>).</td>
+</tr>
+<tr>
 <td>Stale attachment cleanup</td>
 <td>daily, first 5 minutes after boot</td>
 <td>none</td>
@@ -120,6 +132,12 @@ purges are idempotent, so a second run finds nothing left to do.</p>
 <td>hourly, first 5 minutes after boot</td>
 <td>none</td>
 <td>Deletes workspace state entries whose time to live ran out. Logs the count and adds it to <code>rim_workspace_state_purged_total</code>.</td>
+</tr>
+<tr>
+<td>Session purge</td>
+<td>hourly, first 5 minutes after boot</td>
+<td>none; <code>RIM_SESSION_TTL_DAYS</code> (default 30) sets when a session expires</td>
+<td>Deletes the sessions that sign nobody in any more: revoked ones (sign-out, a revoked device, a block) and those past their expiry, which is set at sign-in and never extended. Logs the count and adds it to <code>rim_sessions_purged_total</code>.</td>
 </tr>
 <tr>
 <td>Conversation invitation expiry</td>
@@ -150,7 +168,7 @@ purges are idempotent, so a second run finds nothing left to do.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/b928b46587390d75bec693993f3006251271ecb4/docs/operations/background-jobs.md">rim-server/docs/operations/background-jobs.md</a> at <code>b928b46</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/009ad9d81f0977df2419f9e4e136867a95ea5a17/docs/operations/background-jobs.md">rim-server/docs/operations/background-jobs.md</a> at <code>009ad9d</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>
