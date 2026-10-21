@@ -55,14 +55,83 @@ not.</li>
 <li>A change the operator has to act on (a new required setting, a migration that rewrites a
 large table, a contract migration, a changed default) starts with <strong>Upgrade:</strong> and says what
 to do. <a href="operations/upgrade.html"><code>docs/operations/upgrade.md</code></a> is how an upgrade runs.</li>
-<li>A change to the GraphQL schema or a spec in <a href="https://github.com/rim-platform/rim-server/tree/fd4cfda821c7e11b248267958493b19503c3e153/docs/specs"><code>docs/specs/</code></a> names the type, field or spec.</li>
+<li>A change to the GraphQL schema or a spec in <a href="https://github.com/rim-platform/rim-server/tree/fb6123fbd6491e9c956a52b985b9ae1b5007402b/docs/specs"><code>docs/specs/</code></a> names the type, field or spec.</li>
 <li>At release time <code>Unreleased</code> becomes <code>## [&lt;version&gt;] - &lt;YYYY-MM-DD&gt;</code> and a new empty
 <code>Unreleased</code> starts above it (<a href="operations/release-checklist.html"><code>docs/operations/release-checklist.md</code></a>).</li>
 </ul>
 <h2 id="unreleased"><a href="https://github.com/rim-platform/rim-server/commits/master">Unreleased</a> <a class="anchor" href="#unreleased" aria-label="Link to this section">#</a></h2>
 <h3 id="added">Added <a class="anchor" href="#added" aria-label="Link to this section">#</a></h3>
 <ul>
-<li><p><a href="https://github.com/rim-platform/rim-server/blob/fd4cfda821c7e11b248267958493b19503c3e153/deploy/compose.monitoring-containers.yml"><code>deploy/compose.monitoring-containers.yml</code></a>, an opt-in overlay on top of
+<li><p>Handles, <code>@&lt;username&gt;:&lt;domain&gt;</code>: GraphQL <code>User.handle</code> gives a local account its username at
+this server&#39;s handle domain and a person from another server their username at their home
+server and its handle domain, never the internal <code>r_…</code> name; null while unknown and for
+deleted accounts. The domain is the new <code>RIM_HANDLE_DOMAIN</code>, by default the host of
+<code>RIM_PUBLIC_BASE_URL</code> (the server refuses to start when it is not a DNS name, so a server
+whose public URL has an IPv6 host sets it). The signed descriptor declares it as the optional
+<code>handleDomain</code>; a domain that is not the server&#39;s host delegates with
+<code>{&quot;delegate&quot;: &quot;&lt;origin&gt;&quot;}</code> at its <code>/.well-known/rim-server</code>, followed once and accepted only
+when the server&#39;s descriptor names that domain. Identity documents and joins carry the
+person&#39;s <code>username</code> at their relay. <code>searchMessages</code> takes <code>from:@name:domain</code>.
+<a href="server-identity.html"><code>docs/server-identity.md</code></a> (&quot;Handles and delegation&quot;) and <a href="../specs/server-to-server-v1.html"><code>docs/specs/server-to-server-v1.md</code></a>
+(&quot;Handles&quot;) describe it; a client that refuses unknown descriptor fields must accept
+<code>handleDomain</code>.</p>
+</li>
+<li><p><code>RIM_DEFAULT_WORKSPACE_FILE</code>: the default workspace described in a JSON file (its name, DM
+policy and channels with topics), checked at every start. While nobody has claimed it, each
+start writes a single-use owner claim link to <code>&lt;RIM_DATA_DIR&gt;/owner-claim.txt</code>; the account
+that signs up through it creates the workspace as its Owner, optionally becomes an instance
+operator (<code>claimGrantsOperator</code>), and every existing local account joins as a Member. Later
+starts add new channels, topics, the name and the DM policy from the file and delete nothing.
+<a href="https://github.com/rim-platform/rim-server/blob/fb6123fbd6491e9c956a52b985b9ae1b5007402b/deploy/default-workspace.json"><code>deploy/default-workspace.json</code></a> is the public relay&#39;s workspace; <code>compose.yml</code> mounts it at
+<code>/config/default-workspace.json</code>, and <code>RIM_DEFAULT_WORKSPACE_FILE</code> in <code>deploy/.env</code> turns it
+on. The signup through the claim link
+answers the new workspace as <code>serverId</code>, and <code>serverInfo.defaultWorkspace</code> names it from then
+on. &quot;A default workspace&quot; in <a href="self-hosting.html"><code>docs/self-hosting.md</code></a> describes it.</p>
+</li>
+<li><p><code>RIM_TERMS_FILE</code>: the terms of service as a Markdown file the server serves as a page at
+<code>/api/terms?v=&lt;hash&gt;</code>, which is then <code>serverInfo.termsUrl</code> and the URL every signup accepts.
+A missing, empty or oversized file, a <code>FILL:</code> placeholder in it, or <code>RIM_TERMS_URL</code> set too
+stops the server at boot. <a href="https://github.com/rim-platform/rim-server/blob/fb6123fbd6491e9c956a52b985b9ae1b5007402b/deploy/terms.md"><code>deploy/terms.md</code></a> holds the public RIM server&#39;s terms and an example
+for self-hosters; <code>compose.yml</code> mounts it read-only at <code>/config/terms.md</code>.</p>
+</li>
+<li><p><code>RIM_ABUSE_CONTACT</code>: where to report abuse, an email address or an https URL, published as
+<code>abuseContact</code> in the signed server descriptor (<a href="../specs/server-to-server-v1.html"><code>docs/specs/server-to-server-v1.md</code></a>) and as
+<code>serverInfo.abuseContact</code>.</p>
+</li>
+<li><p><code>RIM_MINIMUM_AGE</code> (13 to 21): every signup confirms the person has reached that age.
+<code>serverInfo.minimumAge</code> names it and <code>signupWithInvite</code> and <code>signupWithKey</code> take
+<code>confirmedMinimumAge</code>; a signup without it answers <code>VALIDATION</code>. The account records only the
+age confirmed. The migration adds a nullable <code>user.minimum_age_confirmed</code> column.</p>
+</li>
+<li><p>&quot;Legal duties of an operator&quot; in <a href="self-hosting.html"><code>docs/self-hosting.md</code></a>.</p>
+</li>
+<li><p><code>RIM_WEB_DOMAIN</code> in <code>deploy/.env</code> serves the web client on a domain of its own with
+<a href="https://github.com/rim-platform/rim-server/blob/fb6123fbd6491e9c956a52b985b9ae1b5007402b/deploy/Caddyfile"><code>deploy/Caddyfile</code></a>, such as <code>chat.example.org</code> next to <code>RIM_DOMAIN</code>. The client calls the API
+on that origin; <code>RIM_DOMAIN</code> stays the server&#39;s name for apps, other servers and the discovery
+document, and redirects browsers to the web domain with the path kept, so invite links still
+open the client. The compose file sets <code>RIM_CORS_ALLOWED_ORIGIN</code> to the web domain&#39;s origin
+and <code>RIM_KEY_LOGIN_AUDIENCES</code> to both domains unless they are set. Unset, nothing changes.
+&quot;The web client on its own domain&quot; in <a href="self-hosting.html"><code>docs/self-hosting.md</code></a> describes it.</p>
+</li>
+<li><p><code>deploy/upgrade.sh &lt;version&gt;</code>, the upgrade of <a href="operations/upgrade.html"><code>docs/operations/upgrade.md</code></a> in one script: it
+checks that the version&#39;s images are published (exit 2 when one is not), verifies their
+signatures against the release workflows, takes a backup, sets <code>RIM_VERSION</code> in
+<code>deploy/.env</code>, pulls, migrates and starts, waits for <code>/readyz</code> and the public discovery
+document, and rolls back to the version before when they do not answer. <code>--dry-run</code> checks
+the images and prints the rest.</p>
+</li>
+<li><p><a href="https://github.com/rim-platform/rim-server/blob/fb6123fbd6491e9c956a52b985b9ae1b5007402b/deploy/rim-deploy.sh"><code>deploy/rim-deploy.sh</code></a> with <a href="https://github.com/rim-platform/rim-server/blob/fb6123fbd6491e9c956a52b985b9ae1b5007402b/deploy/systemd/rim-deploy.service"><code>deploy/systemd/rim-deploy.service</code></a> and <code>rim-deploy.timer</code>, the
+unattended upgrade for a host that runs published images: every five minutes it installs the
+latest published rim-server release that is not a pre-release from the tag&#39;s <a href="https://github.com/rim-platform/rim-server/tree/fb6123fbd6491e9c956a52b985b9ae1b5007402b/deploy"><code>deploy/</code></a> files
+and its <code>upgrade.sh</code>, once the version&#39;s signed <code>rim-server</code> image proves an approved release
+run. A <code>HOLD</code> file stops it, a failed version is held back in <code>FAILED</code>,
+and <code>rim-deploy &lt;version&gt;</code> deploys or rolls back by hand. &quot;Unattended upgrades from releases&quot;
+in <a href="deploy/index.html"><code>deploy/README.md</code></a> describes it.</p>
+</li>
+<li><p>The backup and upgrade scripts read <code>COMPOSE_FILE</code> from <code>deploy/.env</code> too, so a relay can name
+its compose files there once.</p>
+</li>
+<li><p><a href="https://github.com/rim-platform/rim-server/blob/fb6123fbd6491e9c956a52b985b9ae1b5007402b/deploy/compose.monitoring-containers.yml"><code>deploy/compose.monitoring-containers.yml</code></a>, an opt-in overlay on top of
 <code>compose.monitoring.yml</code> that adds cAdvisor, so Alloy also sends each compose service&#39;s CPU
 and memory use (job <code>cadvisor</code>). cAdvisor reaches the Docker and containerd sockets only
 through proxies that allow it read-only calls alone; it needs the new <code>DOCKER_GID</code> in
@@ -70,7 +139,7 @@ through proxies that allow it read-only calls alone; it needs the new <code>DOCK
 <code>compose.monitoring-containers-overlay2.yml</code>. &quot;Container metrics&quot; in
 <a href="operations/metrics.html"><code>docs/operations/metrics.md</code></a> describes it.</p>
 </li>
-<li><p><a href="https://github.com/rim-platform/rim-server/blob/fd4cfda821c7e11b248267958493b19503c3e153/deploy/compose.monitoring.yml"><code>deploy/compose.monitoring.yml</code></a>, an opt-in overlay that turns on the metrics listener and
+<li><p><a href="https://github.com/rim-platform/rim-server/blob/fb6123fbd6491e9c956a52b985b9ae1b5007402b/deploy/compose.monitoring.yml"><code>deploy/compose.monitoring.yml</code></a>, an opt-in overlay that turns on the metrics listener and
 adds a Grafana Alloy collector: every 15 seconds it scrapes rim-server&#39;s metrics, probes
 <code>/readyz</code> and reads the host&#39;s metrics, and remote-writes them to Grafana Cloud with the new
 <code>GRAFANA_CLOUD_METRICS_URL</code>, <code>GRAFANA_CLOUD_METRICS_USER</code> and <code>GRAFANA_CLOUD_METRICS_TOKEN</code>
@@ -234,9 +303,27 @@ now 16 to 21. <a href="decisions/plugin-settings-2026-10-18.html"><code>docs/dec
 stops an invite admitting anyone, while members who joined with it stay (&quot;Workspace invites&quot;
 in <a href="messaging.html"><code>docs/messaging.md</code></a>).</p>
 </li>
+<li><p><code>RIM_LIMIT_ACCOUNTS</code> caps the local accounts a server holds, those waiting out their deletion
+grace period included; people from other servers and purged accounts do not count. Off when
+unset or 0. At the cap every signup, password or key, with an invite, open or with a
+proof-of-work, is refused with the new GraphQL error code <code>REGISTRATION_FULL</code> and a message
+that the server is full and points to running a server or signing up on another one. The new
+<code>ServerInfo.registrationFull</code> and <code>ServerLimits.accounts</code>, and <code>registration.full</code> in the
+discovery document beside the descriptor (<code>server-to-server-v1.md</code>), say so before anyone
+tries. <a href="operations/relay-public.html"><code>docs/operations/relay-public.md</code></a> says the public relay is a first test run with no
+guarantee against data loss, and what happens if it shuts down.</p>
+</li>
 </ul>
 <h3 id="changed">Changed <a class="anchor" href="#changed" aria-label="Link to this section">#</a></h3>
 <ul>
+<li><p><strong>Upgrade:</strong> <a href="https://github.com/rim-platform/rim-server/blob/fb6123fbd6491e9c956a52b985b9ae1b5007402b/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a> no longer sets <code>RIM_ROLE=relay</code> and the Caddyfile
+itself: set <code>RIM_ROLE</code> (<code>relay</code>, or <code>both</code> to host workspaces) and <code>RIM_CADDYFILE</code>
+(<code>./Caddyfile.relay</code>, or <code>./Caddyfile</code> with the web client and <code>COMPOSE_PROFILES=web</code>) in
+<code>deploy/.env</code>. Without either, every compose command with the overlay stops and names it.
+An existing relay keeps its behaviour with <code>RIM_ROLE=relay</code> and
+<code>RIM_CADDYFILE=./Caddyfile.relay</code>. &quot;A relay that hosts a workspace&quot; in <a href="deploy/index.html"><code>deploy/README.md</code></a>
+describes the other choice.</p>
+</li>
 <li><p><strong>Upgrade:</strong> usernames are stored lowercase and compared without regard to case. A signup
 stores <code>Alice</code> as <code>alice</code> and refuses <code>aLiCe</code> once <code>alice</code> exists (<code>CONFLICT</code>); <code>login</code>,
 <code>requestPasswordReset</code>, <code>requestAccountDeletion</code>, <code>from:@name</code> in message search and the
@@ -282,7 +369,7 @@ identity, sign up with a key and link other devices; a browser-held identity is 
 up, the recovery kit is shown after signup or enrollment and its entropy is kept until the
 person confirms they saved it.</p>
 </li>
-<li><p><strong>Upgrade:</strong> <a href="https://github.com/rim-platform/rim-server/blob/fd4cfda821c7e11b248267958493b19503c3e153/deploy/compose.yml"><code>deploy/compose.yml</code></a> runs the published images <code>ghcr.io/rim-platform/rim-server</code>
+<li><p><strong>Upgrade:</strong> <a href="https://github.com/rim-platform/rim-server/blob/fb6123fbd6491e9c956a52b985b9ae1b5007402b/deploy/compose.yml"><code>deploy/compose.yml</code></a> runs the published images <code>ghcr.io/rim-platform/rim-server</code>
 and <code>ghcr.io/rim-platform/rim-web</code> at <code>RIM_VERSION</code> (default <code>latest</code>) instead of building
 them. Set <code>RIM_VERSION</code> in <code>deploy/.env</code> to the release you run, and run <code>pull</code> then <code>up -d</code>
 where you ran <code>up -d --build</code>. Operators who build locally add <code>-f deploy/compose.dev.yml</code> to
@@ -390,6 +477,9 @@ also files at most 1,000 DM requests per day on a relay, whichever senders it na
 <li><code>rustls</code> 0.23.46: the TLS library behind outgoing HTTPS requests picks up the fixes for
 RUSTSEC-2026-0346, -0347, -0348 and -0349 (TLS secrets in <code>Debug</code> output, buffered data after
 an ECH rejection, certificate decompression memory, key-exchange downgrade).</li>
+<li><code>rustls-webpki</code> 0.103.16 and <code>webpki-roots</code> 1.0.10: outgoing HTTPS requests no longer trust
+the distrusted emSign intermediates or accept other distrusted intermediates
+(RUSTSEC-2026-0381, RUSTSEC-2026-0382).</li>
 <li>A member removed from a workspace (kicked, banned) or from a conversation (left, removed)
 loses their notifications for it, and the email digest leaves out anything its recipient can
 no longer read. Before, a kicked member&#39;s pending notification was still emailed in the next
@@ -557,7 +647,7 @@ is filed again. Before, each accepted conversation was kept for a hundred years 
 to 128 KiB, so a host could fill a relay&#39;s database by inventing conversations
 (<code>server-to-server-v1.md</code> &quot;Outbox and <code>deliver</code>&quot;, &quot;The request inbox&quot;, &quot;Storage&quot;, &quot;Limits and
 audit&quot;).</li>
-<li>Every service of <a href="https://github.com/rim-platform/rim-server/blob/fd4cfda821c7e11b248267958493b19503c3e153/deploy/compose.yml"><code>deploy/compose.yml</code></a> drops its capabilities, cannot gain privileges and has
+<li>Every service of <a href="https://github.com/rim-platform/rim-server/blob/fb6123fbd6491e9c956a52b985b9ae1b5007402b/deploy/compose.yml"><code>deploy/compose.yml</code></a> drops its capabilities, cannot gain privileges and has
 a read-only root filesystem, as the monitoring overlays&#39; services already did. PostgreSQL runs
 as <code>postgres</code> from the start, and Caddy, the only container on the public ports, as <code>nobody</code>
 instead of root, keeping only <code>NET_BIND_SERVICE</code>, which its binary needs to start. A new
@@ -569,7 +659,7 @@ volumes a root Caddy wrote keep working. <code>docker compose cp</code> into a c
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/fd4cfda821c7e11b248267958493b19503c3e153/CHANGELOG.md">rim-server/CHANGELOG.md</a> at <code>fd4cfda</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/fb6123fbd6491e9c956a52b985b9ae1b5007402b/CHANGELOG.md">rim-server/CHANGELOG.md</a> at <code>fb6123f</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

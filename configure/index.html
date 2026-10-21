@@ -48,7 +48,7 @@
 </details></aside>
     <main id="content" class="prose">
 <h1>Configure</h1>
-<p class="lede">The server is configured by environment variables, all prefixed <code>RIM_</code> except <code>DATABASE_URL</code> and the log filter <code>RUST_LOG</code>. In development an untracked <code>.env</code> file works too. This page is generated from <a href="https://github.com/rim-platform/rim-server/blob/fd4cfda821c7e11b248267958493b19503c3e153/rim_server/src/config.rs"><code>rim_server/src/config.rs</code></a>, cross-checked with the variable block of the <a href="https://github.com/rim-platform/rim-server/blob/fd4cfda821c7e11b248267958493b19503c3e153/Dockerfile"><code>Dockerfile</code></a>; the compose stack's own settings are in <a href="https://github.com/rim-platform/rim-server/blob/fd4cfda821c7e11b248267958493b19503c3e153/deploy/.env.example"><code>deploy/.env.example</code></a>.</p>
+<p class="lede">The server is configured by environment variables, all prefixed <code>RIM_</code> except <code>DATABASE_URL</code> and the log filter <code>RUST_LOG</code>. In development an untracked <code>.env</code> file works too. This page is generated from <a href="https://github.com/rim-platform/rim-server/blob/fb6123fbd6491e9c956a52b985b9ae1b5007402b/rim_server/src/config.rs"><code>rim_server/src/config.rs</code></a>, cross-checked with the variable block of the <a href="https://github.com/rim-platform/rim-server/blob/fb6123fbd6491e9c956a52b985b9ae1b5007402b/Dockerfile"><code>Dockerfile</code></a>; the compose stack's own settings are in <a href="https://github.com/rim-platform/rim-server/blob/fb6123fbd6491e9c956a52b985b9ae1b5007402b/deploy/.env.example"><code>deploy/.env.example</code></a>.</p>
 <h2 id="listening">Listening <a class="anchor" href="#listening" aria-label="Link to this section">#</a></h2>
 <p class="muted">Where the server listens, the origin clients reach it at, and how it treats the proxy in front of it.</p>
 <div class="tablewrap"><table class="vars">
@@ -111,6 +111,15 @@ account joins only the workspace its invite names. The server refuses to start w
 workspace does not exist here or is the direct space.</p>
 <p><code>RIM_DEFAULT_WORKSPACE</code>, trimmed; <code>None</code> when unset or blank. Whether the workspace
 exists is checked against the database at start.</p><p class="faint">Unset, it keeps signups as they are: a new account joins only the workspace its invite names.</p><p class="faint">Refused at boot with a message naming the variable when the value is not a workspace id.</p><p class="faint">Dockerfile: id of a workspace here every new account joins as a member; one that does not exist stops the server at boot.</p></td></tr>
+<tr id="RIM_DEFAULT_WORKSPACE_FILE"><td><code>RIM_DEFAULT_WORKSPACE_FILE</code><span class="default">default none</span></td><td><p>A JSON file describing the default workspace: its name, DM policy and channels. While
+nobody has claimed it, each start writes a single-use owner claim link to
+<code>&lt;RIM_DATA_DIR&gt;/owner-claim.txt</code>; the account that signs up through the link creates the
+workspace and owns it, and every later start applies the file to it again. Unset, no
+file is read. Cannot be set together with <code>RIM_DEFAULT_WORKSPACE</code>.</p>
+<p>Where the default workspace comes from: the workspace <code>RIM_DEFAULT_WORKSPACE</code> names, the
+definition <code>RIM_DEFAULT_WORKSPACE_FILE</code> holds (read and checked here, its claim link file
+in the data directory), or neither.</p><p class="faint">Refused at boot with a message naming both variables when both are set, the message of
+<code>default_workspace</code>, or one naming the file and the field it refuses.</p><p class="faint">Dockerfile: JSON definition of the default workspace; unclaimed, each start writes a single-use owner claim link to &lt;RIM_DATA_DIR&gt;/owner-claim.txt; an invalid file stops the server.</p></td></tr>
 <tr id="RIM_RESERVED_NAMES"><td><code>RIM_RESERVED_NAMES</code><span class="default">default none</span></td><td><p>Comma-separated usernames and display names signups and profile edits refuse, with
 each followed by <code>-</code>, <code>_</code>, <code>.</code> or a space.</p>
 <p><code>RIM_RESERVED_NAMES</code>, compared case-insensitively after NFKC normalisation; nothing is
@@ -118,18 +127,34 @@ reserved when it is unset or blank.</p><p class="faint">Refused at boot with a m
 <tr id="RIM_PROBATION_HOURS"><td><code>RIM_PROBATION_HOURS</code><span class="default">default off</span></td><td><p>Hours after its creation during which an account cannot create a workspace or send a
 DM request to a stranger; unset or 0 turns probation off.</p><p class="faint">Unset, it turns probation off.</p><p class="faint">Dockerfile: hours after creation during which an account creates no workspace and sends no DM request to a stranger.</p></td></tr>
 <tr id="RIM_SESSION_TTL_DAYS"><td><code>RIM_SESSION_TTL_DAYS</code><span class="default">default <code>30</code></span></td><td><p>Session lifetime.</p><p class="note">No doc comment in config.rs; described from the Dockerfile.</p></td></tr>
-<tr id="RIM_TERMS_URL"><td><code>RIM_TERMS_URL</code><span class="default">default none</span></td><td><p>The terms of service every signup accepts, an absolute http(s) URL.</p>
+<tr id="RIM_TERMS_URL"><td><code>RIM_TERMS_URL</code><span class="default">default none</span></td><td><p>The terms of service every signup accepts, an absolute http(s) URL, for terms hosted
+elsewhere.</p>
 <p><code>RIM_TERMS_URL</code>, trimmed; <code>None</code> when unset or blank.</p><p class="faint">Refused at boot with a message naming the variable when the value is not an absolute <code>http</code> or <code>https</code> URL
 with a host.</p><p class="faint">Dockerfile: absolute http(s) URL of the terms of service; set, every signup must accept it; a malformed URL stops the server at boot.</p></td></tr>
+<tr id="RIM_TERMS_FILE"><td><code>RIM_TERMS_FILE</code><span class="default">default none</span></td><td><p>Path of a Markdown file holding the terms of service every signup accepts. The server
+reads it at start, refuses to start when it is missing, unreadable, empty or larger
+than 64 KiB, and serves it as a page at <code>/api/terms</code>; that page is then the terms URL.
+Cannot be set together with <code>RIM_TERMS_URL</code>.</p><p class="faint">Dockerfile: path of a Markdown file of the terms of service, served at /api/terms, which every signup then accepts; a missing, empty or oversized file, a FILL: placeholder in it, or RIM_TERMS_URL set too stops the server at boot.</p></td></tr>
+<tr id="RIM_MINIMUM_AGE"><td><code>RIM_MINIMUM_AGE</code><span class="default">default none</span></td><td><p>The age, 13 to 21, every signup confirms the person has reached; unset asks for no
+confirmation. The age is self-declared: nothing checks it.</p>
+<p><code>RIM_MINIMUM_AGE</code>; <code>None</code> when unset.</p><p class="faint">Refused at boot with a message naming the variable when the age is outside 13..=21.</p><p class="faint">Dockerfile: age, 13-21, every signup confirms the person has reached; self- declared; outside the range stops the server at boot.</p></td></tr>
 <tr id="RIM_ACCOUNT_DELETION_GRACE_DAYS"><td><code>RIM_ACCOUNT_DELETION_GRACE_DAYS</code><span class="default">default <code>14</code></span></td><td><p>Days between an account&#39;s deletion request and its purge, 0 to 30; default 14.</p><p class="faint">Refused at boot with a message naming the variable when the value is above 30.</p><p class="faint">Dockerfile: days between an account&#39;s deletion request and its purge, 0-30; outside the range stops the server at boot.</p></td></tr>
 </tbody>
 </table></div>
 <h2 id="roles-and-federation">Roles and federation <a class="anchor" href="#roles-and-federation" aria-label="Link to this section">#</a></h2>
-<p class="muted">Whether the server is a relay, a host or both, which servers it talks to, who outside a shared workspace may start a DM, and the per-user quotas of a relay.</p>
+<p class="muted">Whether the server is a relay, a host or both, the domain of its people's handles, which servers it talks to, who outside a shared workspace may start a DM, and the per-user quotas of a relay.</p>
 <div class="tablewrap"><table class="vars">
 <thead><tr><th>Variable</th><th>What it does</th></tr></thead>
 <tbody>
 <tr id="RIM_ROLE"><td><code>RIM_ROLE</code><span class="default">default <code>both</code></span></td><td><p><code>relay</code>, <code>host</code> or <code>both</code> (default).</p><p class="faint">Refused at boot with a message naming the value when it is not <code>relay</code>, <code>host</code> or <code>both</code>.</p><p class="faint">Dockerfile: relay, host or both.</p></td></tr>
+<tr id="RIM_HANDLE_DOMAIN"><td><code>RIM_HANDLE_DOMAIN</code><span class="default">default the host of RIM_PUBLIC_BASE_URL, else localhost</span></td><td><p>The domain of this server&#39;s handles: people here are <code>@&lt;username&gt;:&lt;domain&gt;</code>, and the
+signed descriptor declares it as <code>handleDomain</code>. A lowercase DNS name; default the host
+of <code>RIM_PUBLIC_BASE_URL</code>, else <code>localhost</code>. A domain other than that host must serve
+<code>{&quot;delegate&quot;: &quot;&lt;this server's origin&gt;&quot;}</code> at <code>/.well-known/rim-server</code>, or other servers
+show no handles for people here.</p>
+<p>The domain of this server&#39;s handles: <code>RIM_HANDLE_DOMAIN</code>, trimmed and lowercased; when
+unset or empty, the host of <code>RIM_PUBLIC_BASE_URL</code>, else <code>localhost</code>.</p><p class="faint">Refused at boot with a message naming <code>RIM_HANDLE_DOMAIN</code> when the domain is not a DNS name (an IPv6 host
+of <code>RIM_PUBLIC_BASE_URL</code> is not one, and needs the variable set).</p><p class="faint">Dockerfile: domain of handles, @&lt;username&gt;:&lt;domain&gt;; another domain delegates to this server.</p></td></tr>
 <tr id="RIM_HOST_ALLOWED_RELAYS"><td><code>RIM_HOST_ALLOWED_RELAYS</code><span class="default">default any</span></td><td><p>Comma-separated server ids allowed on host endpoints; empty allows any relay.</p><p class="faint">Refused at boot with a message naming the first entry that is not a server id.</p><p class="faint">Dockerfile: Server ids allowed on host endpoints, comma-separated.</p></td></tr>
 <tr id="RIM_DM_INBOUND"><td><code>RIM_DM_INBOUND</code><span class="default">default <code>requests</code></span></td><td><p>DMs from people on other servers, and from people here who share no workspace with the
 recipient: <code>open</code> (no floor), <code>requests</code> (default: their first message is a request the
@@ -183,7 +208,7 @@ Default: 900 (15 minutes); values below 60 are raised to 60.</p><p class="faint"
 <thead><tr><th>Variable</th><th>What it does</th></tr></thead>
 <tbody>
 <tr id="RIM_METRICS_ADDR"><td><code>RIM_METRICS_ADDR</code><span class="default">default off</span></td><td><p><code>host:port</code> of the Prometheus listener serving <code>GET /metrics</code>; unset turns metrics off.</p><p class="faint">Unset, it turns metrics off.</p><p class="faint">Refused at boot with a message naming the variable when the value is not an <code>ip:port</code> address.</p><p class="faint">Dockerfile: ip:port of the Prometheus /metrics listener. In a container bind 0.0.0.0:9090 and do not publish it: keep it on an internal network, never behind the public proxy.</p></td></tr>
-<tr id="RIM_AUDIT_LOG_PATH"><td><code>RIM_AUDIT_LOG_PATH</code><span class="default">default the working directory</span></td><td><p>Directory of <code>audit.log</code></p><p class="note">Read by <a href="https://github.com/rim-platform/rim-server/blob/fd4cfda821c7e11b248267958493b19503c3e153/rim_logging/src/logging.rs"><code>rim_logging/src/logging.rs</code></a>, not config.rs.</p></td></tr>
+<tr id="RIM_AUDIT_LOG_PATH"><td><code>RIM_AUDIT_LOG_PATH</code><span class="default">default the working directory</span></td><td><p>Directory of <code>audit.log</code></p><p class="note">Read by <a href="https://github.com/rim-platform/rim-server/blob/fb6123fbd6491e9c956a52b985b9ae1b5007402b/rim_logging/src/logging.rs"><code>rim_logging/src/logging.rs</code></a>, not config.rs.</p></td></tr>
 <tr id="RIM_AUDIT_RETENTION_DAYS"><td><code>RIM_AUDIT_RETENTION_DAYS</code><span class="default">default forever</span></td><td><p>Days command audit log rows are kept before the daily purge exports and deletes them;
 unset keeps them forever. 1 to 3650.</p><p class="faint">Unset, it keeps them forever.</p><p class="faint">Refused at boot with a message naming the variable when the value is outside 1 to 3650.</p><p class="faint">Dockerfile: days command audit rows are kept, 1-3650; older rows are exported to $RIM_DATA_DIR/audit-exports and deleted daily.</p></td></tr>
 <tr id="RIM_FEATURES_DISABLED"><td><code>RIM_FEATURES_DISABLED</code><span class="default">default none</span></td><td><p>Comma-separated optional features switched off on this instance, e.g.
@@ -195,6 +220,11 @@ stops the server instead of leaving a feature on.</p><p class="faint">Dockerfile
 <tr id="RIM_INSTANCE_NOTICE"><td><code>RIM_INSTANCE_NOTICE</code><span class="default">default none</span></td><td><p>A short text shown to people on this instance, at most 500 characters.</p>
 <p><code>RIM_INSTANCE_NOTICE</code>, trimmed; <code>None</code> when unset or blank.</p><p class="faint">Refused at boot with a message naming the variable when the notice is longer than
 500 characters.</p><p class="faint">Dockerfile: a short text shown to people on this instance, at most 500 characters; longer stops the server at boot.</p></td></tr>
+<tr id="RIM_ABUSE_CONTACT"><td><code>RIM_ABUSE_CONTACT</code><span class="default">default none</span></td><td><p>Where to report abuse on this server: an email address or an https URL, published in
+the signed server descriptor and in <code>serverInfo</code>.</p>
+<p><code>RIM_ABUSE_CONTACT</code>, trimmed; <code>None</code> when unset or blank.</p><p class="faint">Refused at boot with a message naming the variable when the value is neither an email address nor an
+absolute https URL, or is longer than [<code>rim_s2s::descriptor::MAX_ABUSE_CONTACT_BYTES</code>]
+bytes.</p><p class="faint">Dockerfile: email address or https URL for abuse reports, in the signed descriptor and serverInfo; anything else stops the server at boot.</p></td></tr>
 <tr id="RIM_LINK_PREVIEW_CONCURRENCY"><td><code>RIM_LINK_PREVIEW_CONCURRENCY</code><span class="default">default <code>8</code></span></td><td><p>Link preview fetches the process runs at once, 1 to 64; default 8.</p>
 <p><code>RIM_LINK_PREVIEW_CONCURRENCY</code>: the link preview fetches the process runs at once; 8
 when unset.</p><p class="faint">Refused at boot with a message naming the variable when the value is outside 1 to 64.</p><p class="faint">Dockerfile: link preview fetches the server runs at once, 1-64; outside the range stops the server at boot.</p></td></tr>
@@ -247,6 +277,8 @@ turns it off.</p><p class="faint">Dockerfile: workspace invites one user creates
 <tr id="RIM_LIMIT_MESSAGE_BYTES"><td><code>RIM_LIMIT_MESSAGE_BYTES</code><span class="default">unset by default</span></td><td><p>Bytes of one message&#39;s text, at most 65536.</p><p class="faint">Dockerfile: bytes of a message&#39;s text, at most 65536; more stops the server at boot.</p></td></tr>
 <tr id="RIM_LIMIT_PENDING_INVITES_PER_USER"><td><code>RIM_LIMIT_PENDING_INVITES_PER_USER</code><span class="default">default <code>50</code></span></td><td><p>Pending invitations to encrypted conversations one user holds; unlike the other caps it
 defaults to 50, and 0 turns it off.</p><p class="faint">Dockerfile: pending invitations to encrypted conversations one user holds; unlike the others it is on unless set to 0.</p></td></tr>
+<tr id="RIM_LIMIT_ACCOUNTS"><td><code>RIM_LIMIT_ACCOUNTS</code><span class="default">unset by default</span></td><td><p>Local accounts the instance holds, those waiting out a deletion grace period included;
+at the cap every signup path is refused as full, an operator&#39;s instance invite too.</p><p class="faint">Dockerfile: local accounts the instance holds, those in their deletion grace period included; at it every signup answers REGISTRATION_FULL.</p></td></tr>
 </tbody>
 </table></div>
 <h2 id="command-line">Command line <a class="anchor" href="#command-line" aria-label="Link to this section">#</a></h2>
@@ -286,7 +318,7 @@ and IP blocks from the app (<a href="../docs/api.html"><code>docs/api.md</code><
     </main>
   </div>
   <footer class="site">
-    <span>Generated from <a href="https://github.com/rim-platform/rim-server/blob/fd4cfda821c7e11b248267958493b19503c3e153/rim_server/src/config.rs">rim-server/rim_server/src/config.rs</a>, <a href="https://github.com/rim-platform/rim-server/blob/fd4cfda821c7e11b248267958493b19503c3e153/Dockerfile">Dockerfile</a> and <a href="https://github.com/rim-platform/rim-server/blob/fd4cfda821c7e11b248267958493b19503c3e153/README.md">README.md</a> at <code>fd4cfda</code></span>
+    <span>Generated from <a href="https://github.com/rim-platform/rim-server/blob/fb6123fbd6491e9c956a52b985b9ae1b5007402b/rim_server/src/config.rs">rim-server/rim_server/src/config.rs</a>, <a href="https://github.com/rim-platform/rim-server/blob/fb6123fbd6491e9c956a52b985b9ae1b5007402b/Dockerfile">Dockerfile</a> and <a href="https://github.com/rim-platform/rim-server/blob/fb6123fbd6491e9c956a52b985b9ae1b5007402b/README.md">README.md</a> at <code>fb6123f</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

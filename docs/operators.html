@@ -40,7 +40,7 @@
 <h2 id="install-and-run">Install and run</h2>
 <ul class="cards">
 <li><a href="self-hosting.html"><b>Self-hosting a RIM server</b><span>deploy/compose.yml runs one RIM server on one domain: rim-server with RIM_ROLE=both (it hosts workspaces and is its users' relay), PostgreSQL 17, the web client, and Caddy terminating TLS. Caddy sends /api (with …</span><span class="src">rim-server/docs/self-hosting.md</span></a></li>
-<li><a href="deploy/index.html"><b>Deploying a public relay</b><span>compose.relay.yml turns compose.yml into a public relay: rim-server with RIM_ROLE=relay, the public relay's quotas and proof-of-work signups, PostgreSQL 17 and Caddy terminating TLS, and no web client. The relay holds …</span><span class="src">rim-server/deploy/README.md</span></a></li>
+<li><a href="deploy/index.html"><b>Deploying a public relay</b><span>compose.relay.yml turns compose.yml into a public relay: rim-server with the public relay's quotas and proof-of-work signups, PostgreSQL 17 and Caddy terminating TLS, and no web client unless the operator adds it. The …</span><span class="src">rim-server/deploy/README.md</span></a></li>
 <li><a href="email.html"><b>Transactional Email</b><span>RIM sends transactional email for password resets, invites, and notification digests. This document covers the RIM_SMTP_* config matrix, TLS modes, the three wired flows, retry policy, and the &quot;unconfigured → log-only&quot; …</span><span class="src">rim-server/docs/email.md</span></a></li>
 </ul>
 <h2 id="operations">Operations</h2>
@@ -67,7 +67,7 @@
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/tree/fd4cfda821c7e11b248267958493b19503c3e153">rim-server</a> <code>fd4cfda</code> and <a href="https://github.com/rim-platform/rim-ui/tree/328524daa76e8e0689d674f025f19a15be9d4ede">rim-ui</a> <code>328524d</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/tree/fb6123fbd6491e9c956a52b985b9ae1b5007402b">rim-server</a> <code>fb6123f</code> and <a href="https://github.com/rim-platform/rim-ui/tree/507799b76395280330a25d4970fcd67785414973">rim-ui</a> <code>507799b</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

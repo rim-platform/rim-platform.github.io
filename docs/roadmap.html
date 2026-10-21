@@ -62,9 +62,10 @@ The shipped-state ledger is at the end.</em></p>
 <h2 id="strategic-thesis--2026-10-04">Strategic Thesis — 2026-10-04 <a class="anchor" href="#strategic-thesis--2026-10-04" aria-label="Link to this section">#</a></h2>
 <p>RIM is not trying to replace Discord, Slack, or Matrix. It is a <strong>programmable communication
 workspace</strong>: a place where chat is the medium and the product is what the user can build on
-top of it. Gamers can live in it, developers can live in it, people who want a self-hosted
-private place to talk can live in it, and each of them shapes it differently without RIM
-shipping a feature for each of them.</p>
+top of it. Developer teams can live in it, open-source communities can live in it, people who
+want a self-hosted private place to talk can live in it, and gamers can once a voice bridge
+plugin exists; each of them shapes it differently without RIM shipping a feature for each of
+them.</p>
 <p>Five bets define the product. Everything on this roadmap either serves one of them or is the
 minimum support needed so people can use the app daily.</p>
 <ol>
@@ -107,7 +108,7 @@ public: the incident and on-call vertical was dropped from
 the core (the last commit with it is 77846eb), dead code and GraphQL roots no
 client calls were removed, bootstrap tokens were folded into instance invites, and the schema,
 build and metadata were tidied. The documentation and comment pass (C-4) is merged, and the
-<code>.env</code> history purge (C-5) ran on 2026-10-11 (<a href="https://github.com/rim-platform/rim-server/blob/fd4cfda821c7e11b248267958493b19503c3e153/docs/security/env-history-purge-runbook.md"><code>docs/security/env-history-purge-runbook.md</code></a>).</p>
+<code>.env</code> history purge (C-5) ran on 2026-10-11 (<a href="https://github.com/rim-platform/rim-server/blob/fb6123fbd6491e9c956a52b985b9ae1b5007402b/docs/security/env-history-purge-runbook.md"><code>docs/security/env-history-purge-runbook.md</code></a>).</p>
 <div class="tablewrap"><table>
 <thead>
 <tr>
@@ -170,7 +171,7 @@ PWA.</p>
 <a href="changelog.html"><code>CHANGELOG.md</code></a>), the release workflows that sign and publish the images to
 <code>ghcr.io/rim-platform</code> (<code>.github/workflows/release.yaml</code> in rim-server and in rim-ui), and the
 cleanup&#39;s last two groups, C-4 and the <code>.env</code> history purge C-5
-(<a href="https://github.com/rim-platform/rim-server/blob/fd4cfda821c7e11b248267958493b19503c3e153/docs/security/env-history-purge-runbook.md"><code>docs/security/env-history-purge-runbook.md</code></a>).</p>
+(<a href="https://github.com/rim-platform/rim-server/blob/fb6123fbd6491e9c956a52b985b9ae1b5007402b/docs/security/env-history-purge-runbook.md"><code>docs/security/env-history-purge-runbook.md</code></a>).</p>
 <h2 id="principles-for-sequencing">Principles for sequencing <a class="anchor" href="#principles-for-sequencing" aria-label="Link to this section">#</a></h2>
 <ul>
 <li><strong>Enough chat, not parity chat.</strong> Each chat item must be justified as &quot;people cannot live
@@ -198,7 +199,7 @@ step that names it as arbitrary code execution.</li>
 <code>feature/initial-code</code> to <code>master</code>; <code>cargo audit</code> blocking; close stale issues; schedule
 the audit retention job once the variant is picked; delete the dead server-side
 <code>plugin_host</code> module; messaging e2e test that walks pagination both ways; split the GraphQL resolvers and types
-by domain (<a href="https://github.com/rim-platform/rim-server/tree/fd4cfda821c7e11b248267958493b19503c3e153/rim_api/src/query"><code>rim_api/src/query/</code></a>, <code>mutation/</code>, <code>types/</code>) before more resolvers land.</li>
+by domain (<a href="https://github.com/rim-platform/rim-server/tree/fb6123fbd6491e9c956a52b985b9ae1b5007402b/rim_api/src/query"><code>rim_api/src/query/</code></a>, <code>mutation/</code>, <code>types/</code>) before more resolvers land.</li>
 <li><strong>Done, then superseded</strong> by dropping the vertical from the core (2026-10-10).
 <strong>Make the showcase vertical optional</strong> (S/M): a per-workspace feature flag that hides
 the incident and on-call commands, settings and AI surface. Communities that do not run
@@ -221,7 +222,7 @@ Track 1.5 lands.</li>
 quoting. Markdown remains the format and DOMPurify the backstop; no new content model.</li>
 <li><strong>Reach</strong> (L, lower priority): the web build made installable as a PWA with web push and a
 narrow layout per rim-ui <code>docs/ui-shell.md</code>. Native mobile out of scope. The one-command
-deployment part is done: <a href="https://github.com/rim-platform/rim-server/blob/fd4cfda821c7e11b248267958493b19503c3e153/deploy/compose.yml"><code>deploy/compose.yml</code></a> with backup and restore
+deployment part is done: <a href="https://github.com/rim-platform/rim-server/blob/fb6123fbd6491e9c956a52b985b9ae1b5007402b/deploy/compose.yml"><code>deploy/compose.yml</code></a> with backup and restore
 (<a href="self-hosting.html"><code>docs/self-hosting.md</code></a>).</li>
 </ol>
 <h3 id="track-2--the-plugin-platform-bet-2-the-main-investment-xl-total">Track 2 — The plugin platform (bet 2, the main investment, XL total) <a class="anchor" href="#track-2--the-plugin-platform-bet-2-the-main-investment-xl-total" aria-label="Link to this section">#</a></h3>
@@ -302,7 +303,7 @@ existing password accounts migrate to a key.</li>
 per workspace, admin audit views. Audit retention is done: configurable, kept forever by
 default (<a href="operations/audit-retention.html"><code>docs/operations/audit-retention.md</code></a>).</li>
 <li><strong>Privacy posture</strong> (S): metadata minimization pass (what is logged, how long presence is
-kept, what link previews fetch), documented in <a href="https://github.com/rim-platform/rim-server/tree/fd4cfda821c7e11b248267958493b19503c3e153/docs/security"><code>docs/security/</code></a>.</li>
+kept, what link previews fetch), documented in <a href="https://github.com/rim-platform/rim-server/tree/fb6123fbd6491e9c956a52b985b9ae1b5007402b/docs/security"><code>docs/security/</code></a>.</li>
 </ol>
 <h3 id="track-7--decentralization-xl-total-stages-1-to-5">Track 7 — Decentralization (XL total, Stages 1 to 5) <a class="anchor" href="#track-7--decentralization-xl-total-stages-1-to-5" aria-label="Link to this section">#</a></h3>
 <p>Rewritten 2026-10-08. The model is decided (see
@@ -587,7 +588,7 @@ and run it, which a decentralized product depends on more than a hosted one.</p>
 </tr>
 <tr>
 <td>First run and docs</td>
-<td>One first-run path that grows per stage: install a plugin (1), choose a drive (2), create a key and write down the phrase (3), pick a relay (5). Docs: plugin guide (1), self-host guide (2), all specs in <a href="https://github.com/rim-platform/rim-server/tree/fd4cfda821c7e11b248267958493b19503c3e153/docs/specs"><code>docs/specs/</code></a></td>
+<td>One first-run path that grows per stage: install a plugin (1), choose a drive (2), create a key and write down the phrase (3), pick a relay (5). Docs: plugin guide (1), self-host guide (2), all specs in <a href="https://github.com/rim-platform/rim-server/tree/fb6123fbd6491e9c956a52b985b9ae1b5007402b/docs/specs"><code>docs/specs/</code></a></td>
 <td>Every stage</td>
 </tr>
 <tr>
@@ -898,7 +899,7 @@ settled: the master plan adopts sandboxed iframes for web plugins and DMs plus p
 for E2EE v1, Jakub confirmed the decentralization model (see the decision record), and the
 four-role ladder shipped in 1.2.</p>
 <p>Carried: formal ratification of the client-side plugin reframe. The <code>.env</code> history purge
-(cleanup C-5) is done (<a href="https://github.com/rim-platform/rim-server/blob/fd4cfda821c7e11b248267958493b19503c3e153/docs/security/env-history-purge-runbook.md"><code>docs/security/env-history-purge-runbook.md</code></a>).</p>
+(cleanup C-5) is done (<a href="https://github.com/rim-platform/rim-server/blob/fb6123fbd6491e9c956a52b985b9ae1b5007402b/docs/security/env-history-purge-runbook.md"><code>docs/security/env-history-purge-runbook.md</code></a>).</p>
 <h2 id="ledger--what-the-previous-roadmaps-shipped">Ledger — what the previous roadmaps shipped <a class="anchor" href="#ledger--what-the-previous-roadmaps-shipped" aria-label="Link to this section">#</a></h2>
 <p>Phases 0–4 of the April 2026 roadmap (communication core, command system, keybinds,
 plugins, incident mode v1, AI agent reframe phases 1–5) and Tracks A, B, C1, C2 of the July
@@ -915,7 +916,7 @@ repository history.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/fd4cfda821c7e11b248267958493b19503c3e153/ROADMAP.md">rim-server/ROADMAP.md</a> at <code>fd4cfda</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/fb6123fbd6491e9c956a52b985b9ae1b5007402b/ROADMAP.md">rim-server/ROADMAP.md</a> at <code>fb6123f</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>
