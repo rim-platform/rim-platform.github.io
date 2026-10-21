@@ -118,7 +118,7 @@ explicit <code>conversationId</code> scope is given) before ever calling the rep
 itself is intentionally visibility-agnostic: it only ever searches the conversation ids it&#39;s
 handed, and an empty set yields zero rows — never &quot;search everything&quot;. See the doc comments on
 <code>MessageSearchParams</code> (<code>rim_core::message::repository</code>) and the db-tests in
-<a href="https://github.com/rim-platform/rim-server/blob/fb6123fbd6491e9c956a52b985b9ae1b5007402b/rim_infra_db/tests/message_search_fts.rs"><code>rim_infra_db/tests/message_search_fts.rs</code></a> for the enforced guarantees.</p>
+<a href="https://github.com/rim-platform/rim-server/blob/0db7a297daacdc8c763d691b5a9d4645e13bb91f/rim_infra_db/tests/message_search_fts.rs"><code>rim_infra_db/tests/message_search_fts.rs</code></a> for the enforced guarantees.</p>
 <h2 id="underlying-storage">Underlying storage <a class="anchor" href="#underlying-storage" aria-label="Link to this section">#</a></h2>
 <p><code>message.search_tsv</code> is a <code>GENERATED ALWAYS ... STORED</code> <code>tsvector</code> column
 (<code>to_tsvector('english', coalesce(text, ''))</code>) with a GIN index, added in migration
@@ -154,7 +154,7 @@ codegen must be re-run against the updated schema.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/fb6123fbd6491e9c956a52b985b9ae1b5007402b/docs/search.md">rim-server/docs/search.md</a> at <code>fb6123f</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/0db7a297daacdc8c763d691b5a9d4645e13bb91f/docs/search.md">rim-server/docs/search.md</a> at <code>0db7a29</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>
