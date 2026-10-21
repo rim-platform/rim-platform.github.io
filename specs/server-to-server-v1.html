@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Server-to-server v1 · RIM</title>
-<meta name="description" content="Status: implemented, normative. Follows docs/decisions/decentralization-2026-10-08.md and docs/decisions/relay-proxied-workspaces-2026-10-09.md. Read key-identity-v1.md, device-linking-v1.md and e2ee-mls-v1.md first. …">
+<meta name="description" content="Status: implemented, normative. Read key-identity-v1.md, device-linking-v1.md and e2ee-mls-v1.md first. This document is the contract between servers and between a server and its clients: server identity, the signed …">
 <link rel="icon" href="../favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
@@ -64,13 +64,11 @@
 </details></aside>
     <main id="content" class="prose">
 <h1 id="server-to-server-v1">Server-to-server v1</h1>
-<p class="status"><span><b>Server-to-server v1</b></span><span>version 1</span><span>status: implemented, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/009ad9d81f0977df2419f9e4e136867a95ea5a17/docs/specs/server-to-server-v1.md">rim-server/docs/specs/server-to-server-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/009ad9d81f0977df2419f9e4e136867a95ea5a17">009ad9d</a></span></p>
-<p><em>Status: implemented, normative. Follows <a href="../docs/decisions/decentralization-2026-10-08.html"><code>docs/decisions/decentralization-2026-10-08.md</code></a> and
-<a href="../docs/decisions/relay-proxied-workspaces-2026-10-09.html"><code>docs/decisions/relay-proxied-workspaces-2026-10-09.md</code></a>. Read <a href="key-identity-v1.html"><code>key-identity-v1.md</code></a>,
-<a href="device-linking-v1.html"><code>device-linking-v1.md</code></a> and <a href="e2ee-mls-v1.html"><code>e2ee-mls-v1.md</code></a> first. This document is the contract between servers
-and between a server and its clients: server identity, the signed HTTP API between servers,
-relays, hosts, and what the client verifies. Labels of the form S5-n below name the change that
-introduced an item.</em></p>
+<p class="status"><span><b>Server-to-server v1</b></span><span>version 1</span><span>status: implemented, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/07d1ed69bb71d59fd9deaaf832132e469fcf91f9/docs/specs/server-to-server-v1.md">rim-server/docs/specs/server-to-server-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/07d1ed69bb71d59fd9deaaf832132e469fcf91f9">07d1ed6</a></span></p>
+<p><em>Status: implemented, normative. Read <a href="key-identity-v1.html"><code>key-identity-v1.md</code></a>, <a href="device-linking-v1.html"><code>device-linking-v1.md</code></a> and
+<a href="e2ee-mls-v1.html"><code>e2ee-mls-v1.md</code></a> first. This document is the contract between servers and between a server and
+its clients: server identity, the signed HTTP API between servers, relays, hosts, and what the
+client verifies. Labels of the form S5-n below name the change that introduced an item.</em></p>
 <h2 id="summary">Summary <a class="anchor" href="#summary" aria-label="Link to this section">#</a></h2>
 <ol>
 <li>Every rim-server has an Ed25519 <strong>server key</strong> in a signed key log whose inception fixes a
@@ -234,8 +232,7 @@ time. The descriptor&#39;s <code>registration</code> still says how to sign up; 
 <td>Optional, after <code>issuedAt</code>: where to report abuse on the server, an email address or an https URL (<code>RIM_ABUSE_CONTACT</code>), 1 to 512 bytes. Left out of the payload when the operator names none, so such a descriptor is byte for byte what it was before the field existed</td>
 </tr>
 </tbody></table></div>
-<p>The decision record wrote <code>/.well-known/rim/server</code> as an illustration; one well-known name is
-simpler. Rejected: an unsigned descriptor (anyone proxying the fetch, a relay included, could change
+<p>One well-known name is enough. Rejected: an unsigned descriptor (anyone proxying the fetch, a relay included, could change
 endpoints), and signing the whole document (the log is self-certifying; one verifier per statement).</p>
 <h3 id="pinning-a-peer">Pinning a peer <a class="anchor" href="#pinning-a-peer" aria-label="Link to this section">#</a></h3>
 <p>A server learns a peer&#39;s id from a request&#39;s <code>keyid</code>, a delegation, a card&#39;s relay URL or an
@@ -1040,8 +1037,8 @@ Bob&#39;s devices through R_B&#39;s queue. The envelopes are exactly the <code>m
 holds no conversation row. R_A keeps the conversation like any server today (Commits 90 days,
 Welcomes 30 days); R_B&#39;s items follow &quot;Relay queues&quot;.</li>
 </ol>
-<p>Rejected: a sequencer that moves between relays or a vote between them (the state resolution the
-2026-10-08 decision rejected), and storing the conversation on both relays (two truths for epochs).</p>
+<p>Rejected: a sequencer that moves between relays or a vote between them (state resolution
+between servers, which RIM does not do), and storing the conversation on both relays (two truths for epochs).</p>
 <p><strong>When the home is gone</strong>: unreachable directly and through the member&#39;s relay for 7 days, or
 absent from the creator&#39;s newest card and not answering. Any member&#39;s app may then create a
 <strong>successor</strong> in its own relay&#39;s direct space with the same members and
@@ -1410,7 +1407,7 @@ yearly <code>server-key rotate</code> and <code>recover</code> on compromise, da
 drill, quotas and how to change them, monitoring (queue bytes, outbox depth per peer, deliver
 failures, <code>401</code>/<code>409</code>/<code>429</code> rates, PoW signups), incident response for spam waves, a hostile peer, a
 stolen server key and a database leak, and the abuse policy text.</p>
-<p><strong>Compose</strong> (<a href="https://github.com/rim-platform/rim-server/blob/009ad9d81f0977df2419f9e4e136867a95ea5a17/deploy/compose.yml"><code>deploy/compose.yml</code></a> with the <a href="https://github.com/rim-platform/rim-server/blob/009ad9d81f0977df2419f9e4e136867a95ea5a17/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a> override, and
+<p><strong>Compose</strong> (<a href="https://github.com/rim-platform/rim-server/blob/07d1ed69bb71d59fd9deaaf832132e469fcf91f9/deploy/compose.yml"><code>deploy/compose.yml</code></a> with the <a href="https://github.com/rim-platform/rim-server/blob/07d1ed69bb71d59fd9deaaf832132e469fcf91f9/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a> override, and
 <a href="../docs/deploy/index.html"><code>deploy/README.md</code></a>): rim-server with the <code>RIM_ROLE</code> <code>deploy/.env</code> sets (<code>relay</code>, or <code>both</code> to host
 workspaces too), <code>RIM_PUBLIC_BASE_URL=https://&lt;RIM_DOMAIN&gt;</code>,
 <code>RIM_REGISTRATION_POW_BITS=24</code>, <code>RIM_RELAY_QUEUE_BYTES_PER_USER=67108864</code> and the other quotas
@@ -1770,7 +1767,7 @@ device keys move to hybrid.</p>
 <td>S5-2</td>
 </tr>
 <tr>
-<td>Visibility rules live in <a href="https://github.com/rim-platform/rim-server/blob/009ad9d81f0977df2419f9e4e136867a95ea5a17/rim_api/src/subscription.rs"><code>rim_api/src/subscription.rs</code></a></td>
+<td>Visibility rules live in <a href="https://github.com/rim-platform/rim-server/blob/07d1ed69bb71d59fd9deaaf832132e469fcf91f9/rim_api/src/subscription.rs"><code>rim_api/src/subscription.rs</code></a></td>
 <td>Moved to <code>rim_services</code> for the outbox writer</td>
 <td>S5-2</td>
 </tr>
@@ -1814,7 +1811,7 @@ without gaps or repeats; outbox order per peer; a relay&#39;s backlog counts onl
 acknowledgement, and a run of failures starts once and ends with a success; <code>received_through</code>
 idempotency; items deleted only once every device acked; cascades; each migration up and down,
 and the refusing <code>down</code>s.</li>
-<li><strong>e2e with two servers</strong> (<a href="https://github.com/rim-platform/rim-server/blob/009ad9d81f0977df2419f9e4e136867a95ea5a17/rim_api/tests/s2s_e2e.rs"><code>rim_api/tests/s2s_e2e.rs</code></a>, <code>e2e-tests</code>): two Actix servers in one
+<li><strong>e2e with two servers</strong> (<a href="https://github.com/rim-platform/rim-server/blob/07d1ed69bb71d59fd9deaaf832132e469fcf91f9/rim_api/tests/s2s_e2e.rs"><code>rim_api/tests/s2s_e2e.rs</code></a>, <code>e2e-tests</code>): two Actix servers in one
 process with two databases, <code>RIM_S2S_ALLOW_HTTP</code> and <code>RIM_S2S_ALLOW_PRIVATE_ADDRESSES</code>. Flows:
 pinning and rotation; an encrypted DM across relays from creation to edit and read state
 (<code>rim_mls</code> fixtures); a DM request accepted, ignored, blocked; a remote join; channel traffic both
@@ -1942,7 +1939,7 @@ ed25519:waKbDNMuQ460M8gX_H1NKzAMDXF3x4P8hbHoJFPr-pSduvfvQSbXvOcRmK5VcF5F9-sICQmF
 <code>powBits</code> 16: the smallest working counter is 37283, nonce <code>AAAAAAAAkaM</code> (8 bytes big-endian), hash
 <code>00002f63d137749fda27201ccf9d282a4ed846287d49c55fea89a47617e78ed6</code>.</p>
 <h3 id="filled-by-s5-1">Filled by S5-1 <a class="anchor" href="#filled-by-s5-1" aria-label="Link to this section">#</a></h3>
-<p><strong>RFC 9421 appendix B.2.6</strong> through <code>rim_s2s</code> (<a href="https://github.com/rim-platform/rim-server/blob/009ad9d81f0977df2419f9e4e136867a95ea5a17/rim_s2s/src/vectors.rs"><code>rim_s2s/src/vectors.rs</code></a>): the RFC&#39;s
+<p><strong>RFC 9421 appendix B.2.6</strong> through <code>rim_s2s</code> (<a href="https://github.com/rim-platform/rim-server/blob/07d1ed69bb71d59fd9deaaf832132e469fcf91f9/rim_s2s/src/vectors.rs"><code>rim_s2s/src/vectors.rs</code></a>): the RFC&#39;s
 <code>test-key-ed25519</code> (seed: the last 32 bytes of its PKCS#8 key), the components <code>&quot;date&quot; &quot;@method&quot; &quot;@path&quot; &quot;@authority&quot; &quot;content-type&quot; &quot;content-length&quot;</code> with <code>created=1618884473</code> and
 <code>keyid=&quot;test-key-ed25519&quot;</code> serialize to the RFC&#39;s <code>Signature-Input</code>, the crate builds the RFC&#39;s
 signature base, and signing it gives the RFC&#39;s
@@ -1980,7 +1977,7 @@ A.1 to A.8 reproduces byte for byte in <code>rim_s2s</code>&#39;s tests; A.8&#39
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/009ad9d81f0977df2419f9e4e136867a95ea5a17/docs/specs/server-to-server-v1.md">rim-server/docs/specs/server-to-server-v1.md</a> at <code>009ad9d</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/07d1ed69bb71d59fd9deaaf832132e469fcf91f9/docs/specs/server-to-server-v1.md">rim-server/docs/specs/server-to-server-v1.md</a> at <code>07d1ed6</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

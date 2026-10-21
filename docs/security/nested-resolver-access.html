@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nested resolver access · RIM</title>
+<meta name="description" content="Every field of a non-root GraphQL type that loads another object, what it loads and what stops a viewer from reading something the matching root would refuse them. &quot;Parent&quot; means the field returns data about the …">
+<link rel="icon" href="../../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../../index.html" aria-label="RIM home">
+      <picture><source srcset="../../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../../index.html#what">What RIM is</a>
+      <a href="../../index.html#how">How it works</a>
+      <a href="../self-hosting.html">Self-host</a>
+      <a href="../../configure/index.html">Configure</a>
+      <a href="../../plugins/index.html">Plugins</a>
+      <a href="../index.html" aria-current="page">Docs</a>
+      <a href="../../api/index.html">API</a>
+      <a href="../../specs/index.html">Specs</a>
+      <a href="../contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="../index.html">Docs</a><span aria-hidden="true">/</span><a href="../project.html">Project</a><span aria-hidden="true">/</span><span>Nested resolver access</span></div>
+  <div class="page">
+
+    <main id="content" class="prose">
+<h1 id="nested-resolver-access">Nested resolver access</h1>
+<p>Every field of a non-root GraphQL type that loads another object, what it loads and what stops
+a viewer from reading something the matching root would refuse them. &quot;Parent&quot; means the field
+returns data about the conversation or workspace the root that produced the parent already
+checked. A field that crosses into another conversation, workspace or user needs its own check.</p>
+<p>The member visibility rule referred to below: a guest sees only the members who share a joined
+conversation with them (<code>ServerMemberService::visible_members</code>); everyone else sees every member.</p>
+<h2 id="fields-resolved-with-io">Fields resolved with I/O <a class="anchor" href="#fields-resolved-with-io" aria-label="Link to this section">#</a></h2>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Loads</th>
+<th>Guard</th>
+<th>Verdict</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Message.author</code></td>
+<td>the author&#39;s <code>User</code> through <code>UserLoader</code></td>
+<td>parent: the author of a message the viewer may read</td>
+<td>guarded</td>
+</tr>
+<tr>
+<td><code>Message.mentions</code></td>
+<td>the mentioned users through <code>MentionLoader</code> and <code>UserLoader</code></td>
+<td>parent; mentions are stored only for users who can read the conversation (plaintext) or are its members (encrypted)</td>
+<td>guarded</td>
+</tr>
+<tr>
+<td><code>Message.mentionedUserIds</code></td>
+<td>the same ids through <code>MentionLoader</code></td>
+<td>as <code>mentions</code></td>
+<td>guarded</td>
+</tr>
+<tr>
+<td><code>Message.reactions</code></td>
+<td>reaction groups with reactor ids through <code>ReactionLoader</code></td>
+<td>parent; reacting needs write access to the same conversation</td>
+<td>guarded</td>
+</tr>
+<tr>
+<td><code>Message.isPinned</code></td>
+<td>the pin flag through <code>PinLoader</code></td>
+<td>parent</td>
+<td>guarded</td>
+</tr>
+<tr>
+<td><code>Message.linkPreviews</code></td>
+<td>previews of the message&#39;s own URLs through <code>LinkPreviewLoader</code></td>
+<td>parent</td>
+<td>guarded</td>
+</tr>
+<tr>
+<td><code>Message.forwardedFrom</code></td>
+<td>the source message, in any conversation</td>
+<td>resolver: <code>ResolveExt::load_readable_conversation</code> on the source; null when unreadable</td>
+<td>guarded</td>
+</tr>
+<tr>
+<td><code>SearchResultMessage.author</code></td>
+<td>the author&#39;s <code>User</code></td>
+<td>parent: <code>searchMessages</code> returns only readable conversations (joined ones for a guest)</td>
+<td>guarded</td>
+</tr>
+<tr>
+<td><code>Notification.conversation</code></td>
+<td>the conversation</td>
+<td>resolver: <code>load_readable_conversation</code>; null when unreadable</td>
+<td>guarded</td>
+</tr>
+<tr>
+<td><code>Notification.message</code></td>
+<td>the message</td>
+<td>resolver: <code>load_readable_conversation</code> first</td>
+<td>guarded</td>
+</tr>
+<tr>
+<td><code>Conversation.isMuted</code>, <code>.notificationLevel</code>, <code>.effectiveNotificationLevel</code></td>
+<td>the viewer&#39;s own preferences</td>
+<td>keyed by the viewer</td>
+<td>guarded</td>
+</tr>
+<tr>
+<td><code>Conversation.mlsGroup</code></td>
+<td>the group and its devices</td>
+<td>resolver: null for a viewer in <code>pendingMemberIds</code>; service: <code>E2eeService::group</code> checks read access to the conversation</td>
+<td>guarded</td>
+</tr>
+<tr>
+<td><code>Conversation.predecessor</code></td>
+<td>the host and id this conversation succeeds</td>
+<td>parent: same conversation</td>
+<td>guarded</td>
+</tr>
+<tr>
+<td><code>Server.viewerRole</code></td>
+<td>the viewer&#39;s own membership</td>
+<td>keyed by the viewer</td>
+<td>guarded</td>
+</tr>
+<tr>
+<td><code>Server.owner</code></td>
+<td>the owner&#39;s <code>User</code> through <code>UserLoader</code></td>
+<td>service: <code>ServerMemberService::get_owner</code> answers members only; the owner is workspace metadata every member sees, guests included</td>
+<td>guarded</td>
+</tr>
+<tr>
+<td><code>ServerBan.user</code></td>
+<td>the banned user&#39;s <code>User</code></td>
+<td>root: <code>serverBans</code> and <code>banMember</code> are for moderators, who see every member</td>
+<td>guarded</td>
+</tr>
+<tr>
+<td><code>WorkspacePlugin.approvedBy</code></td>
+<td>the approver&#39;s <code>User</code></td>
+<td>resolver: the member visibility rule; null for a guest who shares no conversation with the approver</td>
+<td>guarded</td>
+</tr>
+</tbody></table></div>
+<h2 id="fields-filled-by-the-root">Fields filled by the root <a class="anchor" href="#fields-filled-by-the-root" aria-label="Link to this section">#</a></h2>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Holds</th>
+<th>Guard</th>
+<th>Verdict</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Message.attachments</code>, <code>.encryption</code></td>
+<td>the message&#39;s own attachments and envelope</td>
+<td>parent</td>
+<td>guarded</td>
+</tr>
+<tr>
+<td><code>MessageChange.message</code></td>
+<td>a changed message</td>
+<td>root: <code>messageChanges</code> checks each conversation and answers <code>NO_ACCESS</code> without changes</td>
+<td>guarded</td>
+</tr>
+<tr>
+<td><code>Conversation.memberIds</code></td>
+<td>the conversation&#39;s members</td>
+<td>root: a guest lists only joined conversations</td>
+<td>guarded</td>
+</tr>
+<tr>
+<td><code>Conversation.pendingMemberIds</code></td>
+<td>the users invited to an encrypted conversation</td>
+<td>root: as <code>memberIds</code>; an invitee gets the conversation from <code>inboxConversations</code> alone, and every root that reads its content (<code>conversation</code>, <code>messages</code>, <code>unreadCounts</code>, sends) treats them as a non-member</td>
+<td>guarded</td>
+</tr>
+<tr>
+<td><code>ServerMember</code> profile fields</td>
+<td>a member&#39;s profile</td>
+<td>root: <code>serverMembers</code> applies the member visibility rule</td>
+<td>guarded</td>
+</tr>
+<tr>
+<td><code>Thread.rootAuthorId</code>, <code>.rootText</code></td>
+<td>the thread root</td>
+<td>root: thread queries check the conversation</td>
+<td>guarded</td>
+</tr>
+<tr>
+<td><code>MessageReport.message*</code>, <code>.franked*</code></td>
+<td>the reported message</td>
+<td>root: moderators only</td>
+<td>guarded</td>
+</tr>
+<tr>
+<td><code>MlsGroup.*</code></td>
+<td>devices, pending adds and removes, re-add requests</td>
+<td><code>Conversation.mlsGroup</code></td>
+<td>guarded</td>
+</tr>
+<tr>
+<td><code>WorkspacePlugin.statement</code>, <code>.source</code>, <code>.publisherKeyLog</code></td>
+<td>the signed manifest and the publisher&#39;s key log</td>
+<td>key logs and manifests are signed public statements (<code>keyLog</code> needs no session)</td>
+<td>public by design</td>
+</tr>
+<tr>
+<td><code>KeyIdentity.*</code>, <code>DeviceKey.certificate</code></td>
+<td>the viewer&#39;s own key log, devices and card</td>
+<td><code>myKeyIdentity</code></td>
+<td>guarded</td>
+</tr>
+<tr>
+<td><code>RemoteIdentity.*</code></td>
+<td>a principal&#39;s key log, devices and card</td>
+<td>the same document the S2S identity endpoint serves to any peer</td>
+<td>public by design</td>
+</tr>
+<tr>
+<td><code>PrincipalDevices.devices</code></td>
+<td>certified devices</td>
+<td>root: <code>principalDevices</code> answers only principals who share a workspace with the viewer</td>
+<td>guarded</td>
+</tr>
+<tr>
+<td><code>DmRequest.card</code>, <code>.heldItems</code>, <code>RelayItem.envelope</code></td>
+<td>the viewer&#39;s own requests and queue</td>
+<td>keyed by the viewer or the session device</td>
+<td>guarded</td>
+</tr>
+<tr>
+<td><code>InviteTokenPreview.workspace</code></td>
+<td>workspace name, inviter name and owner name</td>
+<td>the token holder; meant to be read before joining</td>
+<td>public by design</td>
+</tr>
+</tbody></table></div>
+<h2 id="dataloaders">Dataloaders <a class="anchor" href="#dataloaders" aria-label="Link to this section">#</a></h2>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Loader</th>
+<th>Key</th>
+<th>Note</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>UserLoader</code></td>
+<td>user id</td>
+<td>No actor. Any call site must pass an id the viewer may see: today a message author, a mentioned user, a banned user (for a moderator), an approver after the member visibility check and a workspace&#39;s owner (for a member).</td>
+</tr>
+<tr>
+<td><code>ReactionLoader</code></td>
+<td>message id and viewer</td>
+<td>The viewer only sets <code>reactedByMe</code>; access comes from the parent message.</td>
+</tr>
+<tr>
+<td><code>MentionLoader</code>, <code>PinLoader</code>, <code>LinkPreviewLoader</code></td>
+<td>message id</td>
+<td>No actor; access comes from the parent message.</td>
+</tr>
+</tbody></table></div>
+<p>A new nested field that takes an id from outside its parent&#39;s conversation or workspace goes
+through the matching root&#39;s check, the way <code>forwardedFrom</code> and <code>approvedBy</code> do.</p>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/07d1ed69bb71d59fd9deaaf832132e469fcf91f9/docs/security/nested-resolver-access.md">rim-server/docs/security/nested-resolver-access.md</a> at <code>07d1ed6</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+
+</body>
+</html>
