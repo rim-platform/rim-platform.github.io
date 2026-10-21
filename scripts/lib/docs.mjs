@@ -10,7 +10,6 @@ import { renderMarkdown } from "./markdown.mjs";
 /** Where a rim-server file is rendered. */
 function serverOut(file) {
   if (file === "deploy/README.md") return "docs/deploy/index.html";
-  if (file === "docs/decisions/README.md") return "docs/decisions/index.html";
   if (file.startsWith("docs/specs/")) return `specs/${path.posix.basename(file, ".md")}.html`;
   if (file.startsWith("docs/")) return file.replace(/\.md$/, ".html");
   return `docs/${path.posix.basename(file, ".md").toLowerCase().replace(/_/g, "-")}.html`;
@@ -137,14 +136,13 @@ const GROUPS = [
   {
     key: "project",
     title: "Project",
-    lede: "Where RIM is heading and how it is built: the vision and the roadmap, the decision records, the server architecture and the design models, how to contribute, security with its overview and threat model, and the client's internals: the shell, search, the message cache and secret vault, end-to-end encryption, relays and branding.",
+    lede: "Where RIM is heading and how it is built: the vision and the roadmap, the server architecture and the design models, how to contribute, security with its overview and threat model, and the client's internals: the shell, search, the message cache and secret vault, end-to-end encryption, relays and branding.",
     subs: [
       {
         title: "Direction and design",
         items: [
           ["server", "docs/vision.md"],
           ["server", "ROADMAP.md"],
-          ["server", "docs/decisions/README.md", { pages: "docs/decisions" }],
           ["server", "docs/architecture.md"],
           ["server", "docs/command_model.md"],
           ["server", "docs/keybind_model.md"],
@@ -162,6 +160,7 @@ const GROUPS = [
           ["server", "SECURITY.md"],
           ["server", "docs/security/crypto-review-brief-2026-10.md"],
           ["server", "docs/security/audit-access-matrix.md"],
+          ["server", "docs/security/nested-resolver-access.md"],
         ],
       },
       {
