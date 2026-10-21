@@ -1,5 +1,6 @@
 // Checks the site as Pages will serve it: every internal link and fragment resolves, every
-// page has a title and the viewport meta, no page is over 1 MB, and tags balance.
+// page has a title and the viewport meta, no page is over 1 MB, tags balance, and the handle
+// delegation at /.well-known/rim-server names the public server.
 
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
@@ -9,6 +10,9 @@ import { SITE_ROOT } from "./lib/sources.mjs";
 
 export const OUTPUT_DIRS = ["docs", "plugins", "specs", "configure", "api"];
 const MAX_BYTES = 1024 * 1024;
+/** The discovery document of the handle domain: `@name:rim-platform.org` lives on the relay. */
+export const DELEGATION_FILE = ".well-known/rim-server";
+export const DELEGATE = "https://relay.rim-platform.org";
 const VOID = new Set(["area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "source", "track", "wbr"]);
 
 function walk(dir) {
@@ -103,7 +107,25 @@ export function check(root = SITE_ROOT) {
       }
     }
   }
+  errors.push(...checkDelegation(root));
   return { files, errors, warnings, bytes };
+}
+
+/** Problems with the handle delegation file: it must be exactly `{"delegate": DELEGATE}`. */
+export function checkDelegation(root = SITE_ROOT) {
+  const file = path.join(root, DELEGATION_FILE);
+  if (!existsSync(file)) return [`${DELEGATION_FILE}: missing`];
+  let doc;
+  try {
+    doc = JSON.parse(readFileSync(file, "utf8"));
+  } catch {
+    return [`${DELEGATION_FILE}: not JSON`];
+  }
+  const keys = doc && typeof doc === "object" && !Array.isArray(doc) ? Object.keys(doc) : [];
+  if (keys.length !== 1 || keys[0] !== "delegate" || doc.delegate !== DELEGATE) {
+    return [`${DELEGATION_FILE}: must be exactly {"delegate": "${DELEGATE}"}`];
+  }
+  return [];
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

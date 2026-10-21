@@ -52,7 +52,7 @@
 </details></aside>
     <main id="content" class="prose">
 <h1 id="device-linking-v1">Device linking v1</h1>
-<p class="status"><span><b>Device linking v1</b></span><span>version 1</span><span>status: implemented, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/fd4cfda821c7e11b248267958493b19503c3e153/docs/specs/device-linking-v1.md">rim-server/docs/specs/device-linking-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/fd4cfda821c7e11b248267958493b19503c3e153">fd4cfda</a></span></p>
+<p class="status"><span><b>Device linking v1</b></span><span>version 1</span><span>status: implemented, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/fb6123fbd6491e9c956a52b985b9ae1b5007402b/docs/specs/device-linking-v1.md">rim-server/docs/specs/device-linking-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/fb6123fbd6491e9c956a52b985b9ae1b5007402b">fb6123f</a></span></p>
 <p><em>Status: implemented, normative. Extends <a href="key-identity-v1.html"><code>docs/specs/key-identity-v1.md</code></a>
 (read it first: keys, tagged encodings, device certificates and challenge login are defined
 there). This document is the contract between the server (<code>DeviceLinkService</code>), the desktop
@@ -145,7 +145,7 @@ deviceLink (poll) ◄───────────────────�
 </tr>
 <tr>
 <td>Endpoint</td>
-<td>The old device&#39;s GraphQL endpoint as configured, trailing <code>/</code> removed</td>
+<td>The GraphQL endpoint of the old device&#39;s server, trailing <code>/</code> removed: the endpoint as configured, or, for a web client served on another origin than its server&#39;s identity origin (the base of <code>endpoints.s2s</code> in its discovery document), that origin followed by <code>/api</code>. A web client that cannot read its identity origin writes its own endpoint</td>
 </tr>
 </tbody></table></div>
 <p>Readers:</p>
@@ -558,8 +558,10 @@ the certificate with its non-extractable identity key. A web client that is itse
 device holds no identity key and links no other device. As the new device, it follows the new
 desktop device, except:</p>
 <ul>
-<li>It only takes a pasted code, and only for its own GraphQL endpoint (cookies and CORS would fail
-for another).</li>
+<li>It only takes a pasted code, and only for its own server: a code naming its own GraphQL
+endpoint, or its server&#39;s identity origin followed by <code>/api</code> when the web client is served on
+another origin (cookies and CORS would fail for another server). Its requests and its key store
+keep using its own endpoint.</li>
 <li>The device key is a WebCrypto Ed25519 key generated with <code>extractable: false</code> and kept as a
 <code>CryptoKey</code> in IndexedDB; the public key is exported raw and tagged <code>ed25519:</code>. A browser
 without Ed25519 in WebCrypto cannot be linked; there is no fallback to extractable keys.</li>
@@ -650,7 +652,7 @@ errors tables, idempotent repeats, expiry at the boundary, answer resetting expi
 <li><code>rim_infra_db</code> (<code>db-tests</code>): two concurrent offers on one link, exactly one wins; transitions
 refuse expired rows; cleanup deletes only rows past one hour; terminal states clear sealed
 columns; the partial unique index; cascade on user delete; migration up and down.</li>
-<li><a href="https://github.com/rim-platform/rim-server/blob/fd4cfda821c7e11b248267958493b19503c3e153/rim_api/tests/device_link_e2e.rs"><code>rim_api/tests/device_link_e2e.rs</code></a> (<code>e2e-tests</code>), with real sealed messages from
+<li><a href="https://github.com/rim-platform/rim-server/blob/fb6123fbd6491e9c956a52b985b9ae1b5007402b/rim_api/tests/device_link_e2e.rs"><code>rim_api/tests/device_link_e2e.rs</code></a> (<code>e2e-tests</code>), with real sealed messages from
 <code>rim_identity::device_link</code>: the whole flow from <code>startDeviceLink</code> to <code>loginWithKey</code> with the
 linked device and <code>CONSUMED</code> on the old side; anonymous calls on unknown, malformed, expired,
 cancelled and consumed links all <code>UNAUTHENTICATED</code> with identical bodies; another user&#39;s link
@@ -735,7 +737,7 @@ these bytes reproducible; readers do not depend on field order.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/fd4cfda821c7e11b248267958493b19503c3e153/docs/specs/device-linking-v1.md">rim-server/docs/specs/device-linking-v1.md</a> at <code>fd4cfda</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/fb6123fbd6491e9c956a52b985b9ae1b5007402b/docs/specs/device-linking-v1.md">rim-server/docs/specs/device-linking-v1.md</a> at <code>fb6123f</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

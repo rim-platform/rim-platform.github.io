@@ -24,12 +24,12 @@ const GROUPS = [
   {
     title: "Signups and sessions",
     intro: "Who may sign up and how, the names nobody may take, the probation of new accounts, the workspace every new account joins, how long a session lasts and how long a deleted account waits before its purge. The default is invite-only; invites come from the command line.",
-    names: ["RIM_OPEN_REGISTRATION", "RIM_REGISTRATION_POW_BITS", "RIM_SIGNUP_REQUIRE_KEYS", "RIM_DEFAULT_WORKSPACE", "RIM_RESERVED_NAMES", "RIM_PROBATION_HOURS", "RIM_SESSION_TTL_DAYS", "RIM_TERMS_URL", "RIM_ACCOUNT_DELETION_GRACE_DAYS"],
+    names: ["RIM_OPEN_REGISTRATION", "RIM_REGISTRATION_POW_BITS", "RIM_SIGNUP_REQUIRE_KEYS", "RIM_DEFAULT_WORKSPACE", "RIM_DEFAULT_WORKSPACE_FILE", "RIM_RESERVED_NAMES", "RIM_PROBATION_HOURS", "RIM_SESSION_TTL_DAYS", "RIM_TERMS_URL", "RIM_TERMS_FILE", "RIM_MINIMUM_AGE", "RIM_ACCOUNT_DELETION_GRACE_DAYS"],
   },
   {
     title: "Roles and federation",
-    intro: "Whether the server is a relay, a host or both, which servers it talks to, who outside a shared workspace may start a DM, and the per-user quotas of a relay.",
-    names: ["RIM_ROLE", "RIM_HOST_ALLOWED_RELAYS", "RIM_DM_INBOUND", "RIM_DM_OUTBOUND", "RIM_DM_PARTNERS"],
+    intro: "Whether the server is a relay, a host or both, the domain of its people's handles, which servers it talks to, who outside a shared workspace may start a DM, and the per-user quotas of a relay.",
+    names: ["RIM_ROLE", "RIM_HANDLE_DOMAIN", "RIM_HOST_ALLOWED_RELAYS", "RIM_DM_INBOUND", "RIM_DM_OUTBOUND", "RIM_DM_PARTNERS"],
     prefixes: ["RIM_S2S_", "RIM_RELAY_"],
   },
   {
@@ -41,7 +41,7 @@ const GROUPS = [
   {
     title: "Operations",
     intro: "Metrics, the audit log, features switched off on this instance, logging, the notice shown to people, and how many link preview fetches and password hashes run at once.",
-    names: ["RIM_METRICS_ADDR", "RIM_AUDIT_LOG_PATH", "RIM_AUDIT_RETENTION_DAYS", "RIM_FEATURES_DISABLED", "RUST_LOG", "RIM_ENABLE_GRAPHIQL", "RIM_INSTANCE_NOTICE", "RIM_LINK_PREVIEW_CONCURRENCY", "RIM_PASSWORD_HASH_CONCURRENCY"],
+    names: ["RIM_METRICS_ADDR", "RIM_AUDIT_LOG_PATH", "RIM_AUDIT_RETENTION_DAYS", "RIM_FEATURES_DISABLED", "RUST_LOG", "RIM_ENABLE_GRAPHIQL", "RIM_INSTANCE_NOTICE", "RIM_ABUSE_CONTACT", "RIM_LINK_PREVIEW_CONCURRENCY", "RIM_PASSWORD_HASH_CONCURRENCY"],
   },
   {
     title: "Limits and rate limits",

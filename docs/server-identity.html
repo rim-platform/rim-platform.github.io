@@ -40,7 +40,7 @@
 <li><a href="#commands">Commands</a></li>
 <li><a href="#the-franking-key-file">The franking key file</a></li>
 <li><a href="#key-login-audiences">Key login audiences</a></li>
-<li><a href="#the-discovery-document">The discovery document</a></li>
+<li><a href="#the-discovery-document">The discovery document</a><ol><li><a href="#handles-and-delegation">Handles and delegation</a></li></ol></li>
 <li><a href="#roles-and-server-to-server-configuration">Roles and server-to-server configuration</a></li>
 <li><a href="#what-a-peer-sees">What a peer sees</a></li>
 </ol>
@@ -173,8 +173,34 @@ only for loopback binds)</code></pre>
 <p><code>GET /.well-known/rim-server</code> answers, to anyone and cacheable for five minutes, the key log and
 the <strong>descriptor</strong>: a statement signed by the current key with the server&#39;s roles, its endpoints
 (<code>/api</code>, <code>/api/ws</code>, and <code>/s2s/v1</code> when server-to-server traffic is on), the protocol versions,
-MLS cipher suites, limits and registration mode. The server signs a new descriptor with a higher
-<code>version</code> whenever its configuration changes it and after every rotation.</p>
+MLS cipher suites, limits, registration mode and <strong>handle domain</strong>, and the abuse contact when
+<code>RIM_ABUSE_CONTACT</code> names one. Registration is invite-only (<code>invite</code>) unless
+<code>RIM_OPEN_REGISTRATION</code> or <code>RIM_REGISTRATION_POW_BITS</code> is set. The server signs a new descriptor
+with a higher <code>version</code> whenever its configuration changes it and after every rotation. Beside
+the descriptor, unsigned, the document lists the optional features and says whether
+registration is full (<code>RIM_LIMIT_ACCOUNTS</code>, <a href="api.html"><code>docs/api.md</code></a>).</p>
+<h3 id="handles-and-delegation">Handles and delegation <a class="anchor" href="#handles-and-delegation" aria-label="Link to this section">#</a></h3>
+<p>People are shown to other servers by their <strong>handle</strong>, <code>@&lt;username&gt;:&lt;domain&gt;</code>, such as
+<code>@kuba:rim-platform.org</code>. The domain is <code>RIM_HANDLE_DOMAIN</code>, by default the host of
+<code>RIM_PUBLIC_BASE_URL</code>; the descriptor declares it as <code>handleDomain</code>. A handle is a readable name
+for a person&#39;s key, never the key itself: a username change changes the handle and nothing else.</p>
+<p>With the default nothing more is needed. To give handles a domain other than the server&#39;s own
+host, so that they survive moving the server to another machine or subdomain (the server at
+<code>https://relay.rim-platform.org</code> with handles at <code>rim-platform.org</code>), set
+<code>RIM_HANDLE_DOMAIN=rim-platform.org</code> and serve this file at
+<code>https://rim-platform.org/.well-known/rim-server</code>, from whatever answers there (a static site
+will do):</p>
+<pre><code class="language-json">{&quot;delegate&quot;: &quot;https://relay.rim-platform.org&quot;}</code></pre>
+<p>The value is the origin of <code>RIM_PUBLIC_BASE_URL</code>: <code>https</code>, no path, no trailing slash. Other
+servers check the claim both ways before they show a handle: the domain must hand them to this
+server, and this server&#39;s descriptor must name the domain. They fetch the file with the same rules
+as a discovery document (5 seconds, 64 KiB, no redirects, public addresses only) and follow a
+delegation once; the file at the delegate origin must be this server&#39;s own discovery document. A
+server whose domain does not answer, or answers with anything else, keeps its people without
+handles on other servers (they log &quot;a peer&#39;s handle domain does not point back at it&quot;), and its
+own users still see their own handles. Changing <code>RIM_HANDLE_DOMAIN</code> later changes everyone&#39;s
+handle; people&#39;s keys, contacts and memberships stay as they are. The protocol is in
+<a href="../specs/server-to-server-v1.html"><code>docs/specs/server-to-server-v1.md</code></a>, &quot;Handles&quot;.</p>
 <h2 id="roles-and-server-to-server-configuration">Roles and server-to-server configuration <a class="anchor" href="#roles-and-server-to-server-configuration" aria-label="Link to this section">#</a></h2>
 <p>With nothing configured a server is what it always was: its own users&#39; server and the host of its
 workspaces (<code>RIM_ROLE=both</code>), with server-to-server traffic off.</p>
@@ -190,6 +216,11 @@ workspaces (<code>RIM_ROLE=both</code>), with server-to-server traffic off.</p>
 <td><code>RIM_PUBLIC_BASE_URL</code></td>
 <td>unset</td>
 <td>The URL clients and peers reach this server at. Server-to-server traffic is on only when it is <code>https</code>. Its origin is sent as <code>Rim-Origin</code> and is the base every signed request is checked against, so it must be the URL peers actually use, also behind a TLS-terminating proxy</td>
+</tr>
+<tr>
+<td><code>RIM_HANDLE_DOMAIN</code></td>
+<td>the host of <code>RIM_PUBLIC_BASE_URL</code></td>
+<td>The domain of people&#39;s handles (<code>@&lt;username&gt;:&lt;domain&gt;</code>), a lowercase DNS name; the server refuses to start on anything else. Another domain delegates to this server (&quot;Handles and delegation&quot;)</td>
 </tr>
 <tr>
 <td><code>RIM_ROLE</code></td>
@@ -257,14 +288,16 @@ of this server&#39;s.</p>
 document from the origin, checks that the log hashes to the id, and pins the log. From then on it
 accepts only requests and answers signed by the pinned key (or the previous key for 24 hours after
 a routine rotation). If the log it fetches later does not extend the pin, it refuses this server
-until its operator resets the pin. Each peer appears in the log as <code>s2s.peer_pinned</code>,
-<code>s2s.peer_rotated</code>, <code>s2s.peer_forked</code>, <code>s2s.peer_blocked</code> and <code>s2s.peer_unblocked</code> events (target
-<code>audit</code>), with server ids only.</p>
+until its operator resets the pin. It also checks this server&#39;s handle domain, as &quot;Handles and
+delegation&quot; says, at the pin and at every refetch. Each peer appears in the log as
+<code>s2s.peer_pinned</code>, <code>s2s.peer_rotated</code>, <code>s2s.peer_forked</code>, <code>s2s.peer_blocked</code>,
+<code>s2s.peer_unblocked</code> and <code>s2s.peer_handle_domain</code> events (target <code>audit</code>), with server ids and
+the checked domain only.</p>
 
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/fd4cfda821c7e11b248267958493b19503c3e153/docs/server-identity.md">rim-server/docs/server-identity.md</a> at <code>fd4cfda</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/fb6123fbd6491e9c956a52b985b9ae1b5007402b/docs/server-identity.md">rim-server/docs/server-identity.md</a> at <code>fb6123f</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

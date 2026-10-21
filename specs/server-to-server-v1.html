@@ -37,7 +37,7 @@
 <ol>
 <li><a href="#summary">Summary</a></li>
 <li><a href="#parties-and-terms">Parties and terms</a></li>
-<li><a href="#server-identity">Server identity</a><ol><li><a href="#server-key-log">Server key log</a></li><li><a href="#discovery-document">Discovery document</a></li><li><a href="#pinning-a-peer">Pinning a peer</a></li><li><a href="#host-keys-in-clients">Host keys in clients</a></li></ol></li>
+<li><a href="#server-identity">Server identity</a><ol><li><a href="#server-key-log">Server key log</a></li><li><a href="#discovery-document">Discovery document</a></li><li><a href="#pinning-a-peer">Pinning a peer</a></li><li><a href="#handles">Handles</a></li><li><a href="#host-keys-in-clients">Host keys in clients</a></li></ol></li>
 <li><a href="#the-s2s-transport">The S2S transport</a><ol><li><a href="#signature-profile">Signature profile</a></li><li><a href="#verifying-a-request">Verifying a request</a></li><li><a href="#responses">Responses</a></li><li><a href="#errors">Errors</a></li><li><a href="#ping">Ping</a></li><li><a href="#implementation">Implementation</a></li></ol></li>
 <li><a href="#roles-and-configuration">Roles and configuration</a><ol><li><a href="#remote-users-on-a-host">Remote users on a host</a></li></ol></li>
 <li><a href="#statements-added-by-this-document">Statements added by this document</a></li>
@@ -64,7 +64,7 @@
 </details></aside>
     <main id="content" class="prose">
 <h1 id="server-to-server-v1">Server-to-server v1</h1>
-<p class="status"><span><b>Server-to-server v1</b></span><span>version 1</span><span>status: implemented, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/fd4cfda821c7e11b248267958493b19503c3e153/docs/specs/server-to-server-v1.md">rim-server/docs/specs/server-to-server-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/fd4cfda821c7e11b248267958493b19503c3e153">fd4cfda</a></span></p>
+<p class="status"><span><b>Server-to-server v1</b></span><span>version 1</span><span>status: implemented, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/fb6123fbd6491e9c956a52b985b9ae1b5007402b/docs/specs/server-to-server-v1.md">rim-server/docs/specs/server-to-server-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/fb6123fbd6491e9c956a52b985b9ae1b5007402b">fb6123f</a></span></p>
 <p><em>Status: implemented, normative. Follows <a href="../docs/decisions/decentralization-2026-10-08.html"><code>docs/decisions/decentralization-2026-10-08.md</code></a> and
 <a href="../docs/decisions/relay-proxied-workspaces-2026-10-09.html"><code>docs/decisions/relay-proxied-workspaces-2026-10-09.md</code></a>. Read <a href="key-identity-v1.html"><code>key-identity-v1.md</code></a>,
 <a href="device-linking-v1.html"><code>device-linking-v1.md</code></a> and <a href="e2ee-mls-v1.html"><code>e2ee-mls-v1.md</code></a> first. This document is the contract between servers
@@ -167,20 +167,29 @@ refusing to overwrite a file there.</li>
 <p><code>GET /.well-known/rim-server</code>, unauthenticated, <code>Cache-Control: max-age=300</code>,
 <code>Access-Control-Allow-Origin: *</code>:</p>
 <pre><code class="language-json">{&quot;rim&quot;:&quot;server-discovery&quot;,&quot;keyLog&quot;:[{&quot;payload&quot;:&quot;…&quot;,&quot;signature&quot;:&quot;…&quot;}],&quot;descriptor&quot;:{&quot;payload&quot;:&quot;…&quot;,&quot;signature&quot;:&quot;…&quot;},
- &quot;features&quot;:{&quot;attachments&quot;:{&quot;state&quot;:&quot;enabled&quot;},&quot;email&quot;:{&quot;state&quot;:&quot;unavailable&quot;,&quot;reason&quot;:&quot;…&quot;},&quot;custom_emoji&quot;:{&quot;state&quot;:&quot;disabled&quot;},…}}</code></pre>
+ &quot;features&quot;:{&quot;attachments&quot;:{&quot;state&quot;:&quot;enabled&quot;},&quot;email&quot;:{&quot;state&quot;:&quot;unavailable&quot;,&quot;reason&quot;:&quot;…&quot;},&quot;custom_emoji&quot;:{&quot;state&quot;:&quot;disabled&quot;},…},
+ &quot;registration&quot;:{&quot;full&quot;:false}}</code></pre>
 <p><code>features</code> is optional and unsigned: each optional feature of the instance (the names of
 <code>RIM_FEATURES_DISABLED</code>, <a href="../docs/operations/features.html"><code>docs/operations/features.md</code></a>) with its <code>state</code>, <code>enabled</code>,
 <code>disabled</code> or <code>unavailable</code>, and a <code>reason</code> for an unavailable one. It is advisory, for clients
 deciding what to offer; the server enforces the switches itself, so a changed copy only changes
 what a client shows. Readers ignore a missing <code>features</code> and names they do not know. It sits
 beside the descriptor rather than in it because the descriptor refuses unknown fields: an
-earlier server would refuse a descriptor that carried it.</p>
+earlier server would refuse a descriptor that carried it.
+<code>abuseContact</code> is in the descriptor, signed, so a copy cannot send reports elsewhere; it is
+left out when unset, so only a server that sets it needs peers that know the field.</p>
+<p><code>registration</code> is optional and unsigned too: <code>full</code> is true while the server holds as many local
+accounts as it accepts (<code>RIM_LIMIT_ACCOUNTS</code>) and refuses every signup. It is advisory, since
+each signup counts afresh, and sits beside the descriptor for the reason <code>features</code> does and
+because it changes with signups and purges, which would otherwise re-sign the descriptor each
+time. The descriptor&#39;s <code>registration</code> still says how to sign up; readers ignore a missing
+<code>registration</code>.</p>
 <p>The descriptor is signed by the head server key over <code>rim.server-descriptor.v1\0 || payload</code>
 (at most 16 KiB):</p>
 <pre><code class="language-json">{&quot;v&quot;:2,&quot;type&quot;:&quot;server-descriptor&quot;,&quot;serverId&quot;:&quot;rims1_…&quot;,&quot;keySeq&quot;:0,&quot;version&quot;:1,&quot;roles&quot;:[&quot;host&quot;,&quot;relay&quot;],
  &quot;endpoints&quot;:{&quot;graphql&quot;:&quot;https://host.example/api&quot;,&quot;websocket&quot;:&quot;wss://host.example/api/ws&quot;,&quot;s2s&quot;:&quot;https://host.example/s2s/v1&quot;},
  &quot;s2sVersions&quot;:[1],&quot;mlsCipherSuites&quot;:[79],&quot;limits&quot;:{&quot;maxBodyBytes&quot;:8388608,&quot;clockSkewSeconds&quot;:300,&quot;maxDeliverItems&quot;:256},
- &quot;registration&quot;:{&quot;mode&quot;:&quot;invite&quot;,&quot;powBits&quot;:null},&quot;issuedAt&quot;:&quot;…&quot;}</code></pre>
+ &quot;registration&quot;:{&quot;mode&quot;:&quot;invite&quot;,&quot;powBits&quot;:null},&quot;handleDomain&quot;:&quot;host.example&quot;,&quot;issuedAt&quot;:&quot;…&quot;}</code></pre>
 <div class="tablewrap"><table>
 <thead>
 <tr>
@@ -215,6 +224,14 @@ earlier server would refuse a descriptor that carried it.</p>
 <tr>
 <td><code>registration</code></td>
 <td><code>mode</code> <code>invite</code>, <code>open</code> or <code>pow</code>; <code>powBits</code> only in <code>pow</code> mode</td>
+</tr>
+<tr>
+<td><code>handleDomain</code></td>
+<td>The domain of the server&#39;s handles (&quot;Handles&quot;): a lowercase DNS name of at most 253 bytes, labels of 1 to 63 letters, digits and hyphens, no leading or trailing hyphen, no trailing dot. Optional: a descriptor without it declares no handles, and is still valid. Placed before <code>issuedAt</code></td>
+</tr>
+<tr>
+<td><code>abuseContact</code></td>
+<td>Optional, after <code>issuedAt</code>: where to report abuse on the server, an email address or an https URL (<code>RIM_ABUSE_CONTACT</code>), 1 to 512 bytes. Left out of the payload when the operator names none, so such a descriptor is byte for byte what it was before the field existed</td>
 </tr>
 </tbody></table></div>
 <p>The decision record wrote <code>/.well-known/rim/server</code> as an illustration; one well-known name is
@@ -280,6 +297,43 @@ origin serves a new id and the earlier id&#39;s pin stays, since a refetch that 
 keeps it. An origin holds at most 4 pins, whatever their status. A fifth id there is not pinned
 (<code>CONFLICT</code> from <code>remoteServer</code>, an unknown peer to a request) until <code>rim_server peer reset</code> or
 the idle purge removes one. A lookup by origin takes the <code>active</code> pin fetched last.</p>
+<h3 id="handles">Handles <a class="anchor" href="#handles" aria-label="Link to this section">#</a></h3>
+<p>A person&#39;s handle is <code>@&lt;username&gt;:&lt;domain&gt;</code>: their username at their home relay and the
+<code>handleDomain</code> that relay&#39;s descriptor declares, such as <code>@kuba:rim-platform.org</code>. A username is
+3 to 32 lowercase ASCII letters, digits, <code>_</code> and <code>-</code> (never starting <code>r_</code> or <code>deleted-</code>) and the
+domain a DNS name, so neither <code>@</code> nor <code>:</code> occurs inside either part and the form parses
+unambiguously. The handle points at the principal id; it is never the identity. Contacts,
+memberships and pins stay keyed by principal id, and a username change changes the handle only.</p>
+<p>The domain need not be the host of the server&#39;s origin, so handles survive moving the server.
+A domain that is not the host delegates: <code>https://&lt;domain&gt;/.well-known/rim-server</code> serves
+exactly</p>
+<pre><code class="language-json">{&quot;delegate&quot;:&quot;https://relay.rim-platform.org&quot;}</code></pre>
+<p>(one field, an <code>https</code> origin without path, query or fragment) instead of a discovery document.
+<strong>Resolving</strong> a handle domain fetches <code>https://&lt;domain&gt;/.well-known/rim-server</code> with the pinning
+fetch rules above (5 s, 64 KiB, no redirects, public addresses only). A discovery document there
+is the server&#39;s own and must verify at <code>https://&lt;domain&gt;</code>. A delegation is followed exactly once
+to the named origin, whose answer must be a discovery document (a second delegation is refused).
+Either way the server&#39;s descriptor must declare <code>handleDomain</code> equal to the domain resolution
+started from. The binding is two-way, so neither a site nor a server can claim the other&#39;s
+people.</p>
+<p><strong>Checking a peer&#39;s domain.</strong> When a server pins a peer, and again on every refetch of the pin,
+it checks the <code>handleDomain</code> the descriptor declares: it holds when it is the host of the pinned
+origin (no fetch), or when the domain resolves to the same server id. The outcome is stored with
+the pin (<code>peer_server.handle_domain</code>, null when the descriptor declares none or the domain points
+elsewhere; audit <code>s2s.peer_handle_domain</code> when it changes). A check that cannot run (the domain
+does not answer, or the fetch limits of the pin are reached; the check counts against the
+overall 60 a minute and once a minute per domain) keeps the stored outcome. A stored domain
+counts only while the pin&#39;s current descriptor still declares it and the peer is <code>active</code>.</p>
+<p><strong>Usernames across servers.</strong> A relay&#39;s identity document and its join request carry the
+person&#39;s <code>username</code> there (below); it is outside every signed statement, the relay&#39;s own word
+about its own account. A host records a remote user&#39;s handle (<code>user.home_username</code>,
+<code>user.home_handle_domain</code>) only from a document or join presented by the relay that is the
+user&#39;s <code>home_relay</code> after the store: the username, when it is a valid lowercase username, with
+that relay&#39;s checked handle domain. From the home relay without a valid username or without a
+checked domain, the handle is cleared; from any other relay it is left as it is. A remote user
+without a handle has none in the API (<code>User.handle</code> is null), and the <code>r_</code> username is never
+offered as one. A row that becomes a local account, or is purged, loses its home handle.</p>
+<p>Looking a handle up on its server (<code>@name:domain</code> to principal id) is not part of v1.</p>
 <h3 id="host-keys-in-clients">Host keys in clients <a class="anchor" href="#host-keys-in-clients" aria-label="Link to this section">#</a></h3>
 <ul>
 <li><strong>From an invite</strong> (<code>rim-invite:1:&lt;hostServerId&gt;:&lt;hostKeyHash&gt;:&lt;inviteToken&gt;:&lt;hostOrigin&gt;</code>): the
@@ -546,6 +600,11 @@ Actix&#39;s request types.</p>
 <td>Turns on <code>pow</code> registration (1 to 40); wins over <code>RIM_OPEN_REGISTRATION</code></td>
 </tr>
 <tr>
+<td><code>RIM_ABUSE_CONTACT</code></td>
+<td>unset</td>
+<td>The descriptor&#39;s <code>abuseContact</code>: an email address or an https URL</td>
+</tr>
+<tr>
 <td><code>RIM_RELAY_CARD_MAX_BYTES</code></td>
 <td>131072</td>
 <td>Largest card a local user publishes (at most 128 KiB)</td>
@@ -603,6 +662,10 @@ delegation):</p>
 <tr>
 <td><code>home_relay</code></td>
 <td>Server id of the relay that most recently presented a valid delegation for the user, else the first relay of their newest card that pins, else the relay that served their identity: one that speaks for them (7.4a) or one the host fetched it from. Null for local users</td>
+</tr>
+<tr>
+<td><code>home_username</code>, <code>home_handle_domain</code></td>
+<td>The user&#39;s username at their home relay and its checked handle domain, set together (&quot;Handles&quot;); null while unknown and for local users</td>
 </tr>
 </tbody></table></div>
 <p>Key log, devices (with certificates and revocations) and card live in the existing
@@ -888,8 +951,9 @@ queued items or filed requests from for the person, and in S5-4 those holding th
 subscriptions. Device additions and revocations, identity rotations and recoveries are pushed
 the same way. The answer is <code>{&quot;applied&quot;:true|false}</code>.</li>
 <li><strong>Identity endpoint</strong> (relays, for local users): <code>GET /s2s/v1/principals/&lt;principalId&gt;</code> →
-<code>{&quot;principalId&quot;,&quot;keyLog&quot;:[…],&quot;devices&quot;:[{&quot;deviceId&quot;,&quot;certificate&quot;,&quot;revocation&quot;,&quot;mlsActive&quot;}],&quot;card&quot;}</code>,
-<code>404</code> for others. <code>devices</code> lists at most 64 devices, leaving out those whose certificate a
+<code>{&quot;principalId&quot;,&quot;keyLog&quot;:[…],&quot;devices&quot;:[{&quot;deviceId&quot;,&quot;certificate&quot;,&quot;revocation&quot;,&quot;mlsActive&quot;}],&quot;card&quot;,&quot;username&quot;}</code>,
+<code>404</code> for others. <code>username</code> is the person&#39;s username at the relay (optional; a reader
+takes a document without it, and records it only as &quot;Handles&quot; says). <code>devices</code> lists at most 64 devices, leaving out those whose certificate a
 recovery rotation voided (<code>keySeq</code> before the log&#39;s last recovery entry); past 64 it keeps the
 unrevoked devices, then the most recently revoked. <code>POST /s2s/v1/identity</code> takes the same
 JSON; the receiver applies it only for principals it holds as remote: a log extending its
@@ -1145,7 +1209,8 @@ workspace the invite names, checked as <code>previewInviteToken</code> checks it
 person. The proof keeps the <code>login</code> format, so what it may be used for lives with the
 challenge H issued; a distinct join statement naming the relay would harden this further and
 is not part of v1.</li>
-<li>The device signs a delegation. R sends H <code>{&quot;inviteToken&quot;,&quot;keyLog&quot;:[…],&quot;devices&quot;:[{&quot;certificate&quot;,&quot;revocation&quot;}],&quot;card&quot;,&quot;proof&quot;,&quot;delegation&quot;}</code>.</li>
+<li>The device signs a delegation. R sends H <code>{&quot;inviteToken&quot;,&quot;keyLog&quot;:[…],&quot;devices&quot;:[{&quot;certificate&quot;,&quot;revocation&quot;}],&quot;card&quot;,&quot;proof&quot;,&quot;delegation&quot;,&quot;username&quot;}</code>,
+<code>username</code> (optional) being the person&#39;s username at R.</li>
 <li>H verifies log, certificates, proof (claiming the join challenge it issued to R) and invite
 token (the rules of <code>joinServerByInvite</code>, bans included), creates or updates the remote user,
 adds the membership with the invite&#39;s role, stores devices and card, accepts the delegation,
@@ -1345,8 +1410,9 @@ yearly <code>server-key rotate</code> and <code>recover</code> on compromise, da
 drill, quotas and how to change them, monitoring (queue bytes, outbox depth per peer, deliver
 failures, <code>401</code>/<code>409</code>/<code>429</code> rates, PoW signups), incident response for spam waves, a hostile peer, a
 stolen server key and a database leak, and the abuse policy text.</p>
-<p><strong>Compose</strong> (<a href="https://github.com/rim-platform/rim-server/blob/fd4cfda821c7e11b248267958493b19503c3e153/deploy/compose.yml"><code>deploy/compose.yml</code></a> with the <a href="https://github.com/rim-platform/rim-server/blob/fd4cfda821c7e11b248267958493b19503c3e153/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a> override, and
-<a href="../docs/deploy/index.html"><code>deploy/README.md</code></a>): rim-server with <code>RIM_ROLE=relay</code>, <code>RIM_PUBLIC_BASE_URL=https://&lt;RIM_DOMAIN&gt;</code>,
+<p><strong>Compose</strong> (<a href="https://github.com/rim-platform/rim-server/blob/fb6123fbd6491e9c956a52b985b9ae1b5007402b/deploy/compose.yml"><code>deploy/compose.yml</code></a> with the <a href="https://github.com/rim-platform/rim-server/blob/fb6123fbd6491e9c956a52b985b9ae1b5007402b/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a> override, and
+<a href="../docs/deploy/index.html"><code>deploy/README.md</code></a>): rim-server with the <code>RIM_ROLE</code> <code>deploy/.env</code> sets (<code>relay</code>, or <code>both</code> to host
+workspaces too), <code>RIM_PUBLIC_BASE_URL=https://&lt;RIM_DOMAIN&gt;</code>,
 <code>RIM_REGISTRATION_POW_BITS=24</code>, <code>RIM_RELAY_QUEUE_BYTES_PER_USER=67108864</code> and the other quotas
 above, <code>RIM_TRUST_FORWARDED_HEADERS=true</code>, <code>RIM_FORCE_SECURE_COOKIES=true</code>, <code>RIM_DATA_DIR=/data</code> on a
 volume (the audit log too); a migration step before it; Postgres 17 on its own volume, on a
@@ -1469,7 +1535,13 @@ ALTER TABLE s2s_peer_delivery ADD COLUMN failing_since timestamptz NULL;
 CREATE TABLE peer_server_forgotten (server_id text PRIMARY KEY, origin text NOT NULL,
     head_seq integer NOT NULL CHECK (head_seq &gt;= 0), head_payload text NOT NULL,
     forgotten_at timestamptz NOT NULL DEFAULT now());
-CREATE INDEX idx_remote_identity_cache_fetched ON remote_identity_cache (fetched_at);</code></pre>
+CREATE INDEX idx_remote_identity_cache_fetched ON remote_identity_cache (fetched_at);
+-- add_user_handles (&quot;Handles&quot;)
+ALTER TABLE &quot;user&quot; ADD COLUMN home_username text, ADD COLUMN home_handle_domain text,
+    ADD CONSTRAINT chk_user_home_handle CHECK ((home_username IS NULL) = (home_handle_domain IS NULL));
+CREATE INDEX idx_user_home_handle ON &quot;user&quot; (home_handle_domain, home_username)
+    WHERE home_username IS NOT NULL;
+ALTER TABLE peer_server ADD COLUMN handle_domain text;   -- the checked handleDomain</code></pre>
 <p>A per-minute cleanup (like the key challenge cleanup) deletes expired nonces, <code>device_request_seen</code>
 rows, relay items and orphaned envelopes, expired requests and outbox rows older than 7 days, and
 ends expired delegations. An hourly purge deletes cached identities fetched more than 30 days ago,
@@ -1537,7 +1609,8 @@ type Mutation {
   leaveRelay: Boolean!
   applyRemoteRevocation(revocation: SignedStatementInput!): SignedStatement!  # host; no session, CSRF-exempt
 }
-type Subscription { relayStream(after: ID): String! }                     # JSON strings, as workspaceEvents</code></pre>
+type Subscription { relayStream(after: ID): String! }                     # JSON strings, as workspaceEvents
+type User { …  handle: String }                # &quot;Handles&quot;; null while unknown and for deleted accounts</code></pre>
 <p>Every new mutation but <code>applyRemoteRevocation</code> needs the CSRF header. A peer that cannot be reached
 is the new code <code>UPSTREAM_UNAVAILABLE</code> with <code>hostServerId</code>, the peer&#39;s server id. When only its
 origin is known (a relay URL from a card or contact that could not be pinned), <code>hostServerId</code> is
@@ -1607,7 +1680,7 @@ null and <code>origin</code> carries that origin. A peer&#39;s S2S error keeps i
 </tbody></table></div>
 <p>Rate limits are the in-memory per-node limiters; nonces, <code>seq</code> windows and cursors are in the
 database, so correctness never depends on one node. Audit (ids only):
-<code>s2s.peer_pinned</code>, <code>s2s.peer_rotated</code>, <code>s2s.peer_forked</code>, <code>s2s.peer_blocked</code>,
+<code>s2s.peer_pinned</code>, <code>s2s.peer_rotated</code>, <code>s2s.peer_forked</code>, <code>s2s.peer_blocked</code>, <code>s2s.peer_handle_domain</code>,
 <code>s2s.peer_unblocked</code>, <code>host.remote_join</code>, <code>host.delegation_accepted</code>, <code>host.revocation_applied</code>,
 <code>host.recovery_applied</code>, <code>host.identity_revocations_applied</code>,
 <code>relay.principal_blocked</code> (<code>scope</code> <code>user</code> for <code>blockPrincipal</code>, <code>server</code> for the operator&#39;s),
@@ -1697,7 +1770,7 @@ device keys move to hybrid.</p>
 <td>S5-2</td>
 </tr>
 <tr>
-<td>Visibility rules live in <a href="https://github.com/rim-platform/rim-server/blob/fd4cfda821c7e11b248267958493b19503c3e153/rim_api/src/subscription.rs"><code>rim_api/src/subscription.rs</code></a></td>
+<td>Visibility rules live in <a href="https://github.com/rim-platform/rim-server/blob/fb6123fbd6491e9c956a52b985b9ae1b5007402b/rim_api/src/subscription.rs"><code>rim_api/src/subscription.rs</code></a></td>
 <td>Moved to <code>rim_services</code> for the outbox writer</td>
 <td>S5-2</td>
 </tr>
@@ -1741,7 +1814,7 @@ without gaps or repeats; outbox order per peer; a relay&#39;s backlog counts onl
 acknowledgement, and a run of failures starts once and ends with a success; <code>received_through</code>
 idempotency; items deleted only once every device acked; cascades; each migration up and down,
 and the refusing <code>down</code>s.</li>
-<li><strong>e2e with two servers</strong> (<a href="https://github.com/rim-platform/rim-server/blob/fd4cfda821c7e11b248267958493b19503c3e153/rim_api/tests/s2s_e2e.rs"><code>rim_api/tests/s2s_e2e.rs</code></a>, <code>e2e-tests</code>): two Actix servers in one
+<li><strong>e2e with two servers</strong> (<a href="https://github.com/rim-platform/rim-server/blob/fb6123fbd6491e9c956a52b985b9ae1b5007402b/rim_api/tests/s2s_e2e.rs"><code>rim_api/tests/s2s_e2e.rs</code></a>, <code>e2e-tests</code>): two Actix servers in one
 process with two databases, <code>RIM_S2S_ALLOW_HTTP</code> and <code>RIM_S2S_ALLOW_PRIVATE_ADDRESSES</code>. Flows:
 pinning and rotation; an encrypted DM across relays from creation to edit and read state
 (<code>rim_mls</code> fixtures); a DM request accepted, ignored, blocked; a remote join; channel traffic both
@@ -1869,7 +1942,7 @@ ed25519:waKbDNMuQ460M8gX_H1NKzAMDXF3x4P8hbHoJFPr-pSduvfvQSbXvOcRmK5VcF5F9-sICQmF
 <code>powBits</code> 16: the smallest working counter is 37283, nonce <code>AAAAAAAAkaM</code> (8 bytes big-endian), hash
 <code>00002f63d137749fda27201ccf9d282a4ed846287d49c55fea89a47617e78ed6</code>.</p>
 <h3 id="filled-by-s5-1">Filled by S5-1 <a class="anchor" href="#filled-by-s5-1" aria-label="Link to this section">#</a></h3>
-<p><strong>RFC 9421 appendix B.2.6</strong> through <code>rim_s2s</code> (<a href="https://github.com/rim-platform/rim-server/blob/fd4cfda821c7e11b248267958493b19503c3e153/rim_s2s/src/vectors.rs"><code>rim_s2s/src/vectors.rs</code></a>): the RFC&#39;s
+<p><strong>RFC 9421 appendix B.2.6</strong> through <code>rim_s2s</code> (<a href="https://github.com/rim-platform/rim-server/blob/fb6123fbd6491e9c956a52b985b9ae1b5007402b/rim_s2s/src/vectors.rs"><code>rim_s2s/src/vectors.rs</code></a>): the RFC&#39;s
 <code>test-key-ed25519</code> (seed: the last 32 bytes of its PKCS#8 key), the components <code>&quot;date&quot; &quot;@method&quot; &quot;@path&quot; &quot;@authority&quot; &quot;content-type&quot; &quot;content-length&quot;</code> with <code>created=1618884473</code> and
 <code>keyid=&quot;test-key-ed25519&quot;</code> serialize to the RFC&#39;s <code>Signature-Input</code>, the crate builds the RFC&#39;s
 signature base, and signing it gives the RFC&#39;s
@@ -1907,7 +1980,7 @@ A.1 to A.8 reproduces byte for byte in <code>rim_s2s</code>&#39;s tests; A.8&#39
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/fd4cfda821c7e11b248267958493b19503c3e153/docs/specs/server-to-server-v1.md">rim-server/docs/specs/server-to-server-v1.md</a> at <code>fd4cfda</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/fb6123fbd6491e9c956a52b985b9ae1b5007402b/docs/specs/server-to-server-v1.md">rim-server/docs/specs/server-to-server-v1.md</a> at <code>fb6123f</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

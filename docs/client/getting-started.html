@@ -74,14 +74,21 @@ it says &quot;(optional)&quot;. Under it the form says what the code does: &quot
 server invite, or the server&#39;s reason when it refuses the code, such as an expired one. An
 invite to a workspace on another server (<code>rim-invite:1:…</code>) is joined after the account exists,
 with <strong>Join with an invite code</strong>.</li>
-<li><strong>Username</strong>: 3 to 32 characters, letters, digits, <code>_</code> and <code>-</code>, free on this server. It cannot
-start with <code>r_</code> or <code>deleted-</code>.</li>
+<li><strong>Username</strong>: 3 to 32 characters, lowercase letters, digits, <code>_</code> and <code>-</code>, free on this server.
+Capitals are folded to lowercase, so <code>Kuba</code> signs up as <code>kuba</code>. It cannot start with <code>r_</code> or
+<code>deleted-</code>. With the server&#39;s domain it makes your handle (below).</li>
 <li><strong>Display name (optional)</strong>: at most 80 characters. Left blank, your username is shown.</li>
 <li><strong>Name of this device</strong>: up to 64 characters, filled in with the computer&#39;s name or, in a
 browser, a name such as &quot;Firefox on Linux&quot;. It names this device in your device list.</li>
 <li><strong>I accept the terms of use</strong>, with a link to the server&#39;s terms, only when the server has
 terms. The account is not created without it.</li>
+<li><strong>I am at least N</strong>, only when the server asks for a minimum age: you confirm you are at least
+that old. Nothing else is checked, and no ID is asked for. The account is not created without
+it; if the server raised its age meanwhile, the box unticks and says so.</li>
 </ul>
+<p>A server that holds as many accounts as it takes says &quot;This server is full&quot; instead of the form,
+with a link to how to run your own server; sign up on another one, or run one. When the server
+names where to report abuse, the sign-in and signup pages show it at the bottom.</p>
 <p>Then choose <strong>Create account</strong>. In a browser the app first asks the browser to keep this site&#39;s
 data; if the browser refuses, the app says your keys could be cleared with it and goes on only
 after <strong>Continue anyway</strong>. On the public relay, without an invite code, the app then proves it is a
@@ -194,7 +201,13 @@ not accepted yet.&quot; above their composer. rim-server&#39;s
 <p><strong>Reactions.</strong> Hover a message and choose <strong>Add reaction</strong> to pick an emoji. Clicking a reaction
 under a message adds or removes yours.</p>
 <p><strong>Mentions.</strong> Type <code>@</code> and the start of a name, then pick the person from the list. They get a
-notification when they can read the conversation.</p>
+notification when they can read the conversation. Typing someone&#39;s whole handle, such as
+<code>@ada:example.org</code>, mentions them too once the app knows it.</p>
+<p><strong>Handles.</strong> Everyone has a handle, <code>@username:domain</code>: their username at their server and that
+server&#39;s domain, such as <code>@kuba:rim-platform.org</code>. People of your own server are shown as
+<code>@username</code>, people from other servers with their domain. <strong>Copy @username</strong> copies the whole
+handle, which names the person on any server. The app learns the handle of someone from another
+server from their messages; until then their card shows no handle, only their name.</p>
 <p><strong>The composer.</strong> &quot;Write a message...&quot; takes Markdown. <kbd>Enter</kbd> sends and
 <kbd>Shift+Enter</kbd> starts a new line. <code>/</code> at the start lists commands, and <code>:</code> followed by the
 start of a name suggests emoji. <strong>Insert emoji</strong> and <strong>Attach file</strong> sit beside the field; a
@@ -277,7 +290,8 @@ the conversation&#39;s are also under <strong>…</strong> in its header.</p>
 </tbody></table></div>
 <p>On a Mac, <kbd>Cmd</kbd> works wherever <kbd>Ctrl</kbd> is written. The command palette (&quot;Type a
 command...&quot;) lists every command you can run here, built in, from a plugin or your own, with its
-keybind. Search takes filters such as <code>from:@user</code>, <code>in:#channel</code>, <code>has:link</code> and
+keybind. Search takes filters such as <code>from:@user</code> (or a whole handle, <code>from:@user:domain</code>),
+<code>in:#channel</code>, <code>has:link</code> and
 <code>before:2026-01-01</code>. The shortcuts panel lists the bindings as they stand; Settings &gt; Keybinds and
 Settings &gt; Keyboard change them, and <a href="keyboard.html">Keyboard</a> explains profiles and the Vim layer.</p>
 <p><strong>Plugins</strong> on the side rail opens a menu of the panels of your running plugins, or <strong>Manage
@@ -327,7 +341,7 @@ default workspace for new accounts.</li>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/328524daa76e8e0689d674f025f19a15be9d4ede/docs/getting-started.md">rim-ui/docs/getting-started.md</a> at <code>328524d</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/507799b76395280330a25d4970fcd67785414973/docs/getting-started.md">rim-ui/docs/getting-started.md</a> at <code>507799b</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>
