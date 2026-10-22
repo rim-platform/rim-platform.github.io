@@ -851,6 +851,10 @@ Increases with every change; compare it to a cached copy to keep the newer one.<
 <div class="desc"><p>A member&#39;s report of a message. <code>messageText</code> and <code>messageAuthorId</code> are present only when
 the viewing moderator can read the conversation (<code>messageReadable</code>); otherwise only the ids
 and the reporter&#39;s reason are shown. <code>messageText</code> is also null for a deleted message.</p>
+<p>A report of the direct space (DMs and groups) goes to the instance operators, who are not
+members of its conversations: they see the author, send time and text of the one reported
+message when it is not encrypted, and the author&#39;s principal id (<code>messageAuthorPrincipalId</code>)
+whenever the author is shown.</p>
 <p>A report of an encrypted message is franked: the server verified that its content is what
 the sender&#39;s device sent (<code>frankingVerifiedAt</code>). Its author, send time and sender device are
 shown to every moderator; its content (<code>frankedContent</code>) only by <a href="query.html#messageReport"><code>messageReport</code></a>.</p>
@@ -869,6 +873,10 @@ shown to every moderator; its content (<code>frankedContent</code>) only by <a h
 <tr><td><code>messageReadable</code></td><td><code><a href="scalars.html#Boolean">Boolean</a>!</code></td><td></td></tr>
 <tr><td><code>messageText</code></td><td><code><a href="scalars.html#String">String</a></code></td><td></td></tr>
 <tr><td><code>messageAuthorId</code></td><td><code><a href="scalars.html#ID">ID</a></code></td><td></td></tr>
+<tr><td><code>messageAuthorPrincipalId</code></td><td><code><a href="scalars.html#String">String</a></code></td><td><p>The author&#39;s principal id, for <a href="mutation.html#instanceBlockPrincipal"><code>instanceBlockPrincipal</code></a>: filled for a report of the
+direct space whenever <code>messageAuthorId</code> is, null elsewhere and for an author without
+one.</p>
+</td></tr>
 <tr><td><code>messageSentAt</code></td><td><code><a href="scalars.html#DateTime">DateTime</a></code></td><td><p>When the reported message was sent; null when its details are not shown.</p>
 </td></tr>
 <tr><td><code>frankingVerifiedAt</code></td><td><code><a href="scalars.html#DateTime">DateTime</a></code></td><td><p>Set when the server verified a franked report of an encrypted message.</p>
@@ -1895,7 +1903,7 @@ shares no conversation with them.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Generated from <a href="https://github.com/rim-platform/rim-ui/blob/ffde70e2d194fb8a6017a8d9096e431bf6fc1fae/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>ffde70e</code></span>
+    <span>Generated from <a href="https://github.com/rim-platform/rim-ui/blob/6841483be3406ed2bae84572b3da743f806ae839/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>6841483</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

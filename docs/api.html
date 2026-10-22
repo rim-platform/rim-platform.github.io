@@ -172,7 +172,10 @@ the route needs the session cookie; &quot;CSRF&quot; means it also needs the <co
 </tbody></table></div>
 <h3 id="graphql-post-api">GraphQL: <code>POST /api</code> <a class="anchor" href="#graphql-post-api" aria-label="Link to this section">#</a></h3>
 <p>The request body is the usual GraphQL JSON (<code>query</code>, <code>variables</code>, <code>operationName</code>), or an array
-of such objects, which the server runs as one batch and answers with an array. A batch holds
+of such objects, which the server runs as one batch and answers with an array. The body is read
+as JSON whatever its <code>Content-Type</code>; a <code>multipart/*</code> body (the GraphQL multipart upload format)
+is answered 415 with <code>{&quot;error&quot;:&quot;unsupported_media_type&quot;,&quot;message&quot;:&quot;...&quot;}</code> before it is read, as
+the schema takes no file uploads (files go through the routes under <code>/api/files</code>). A batch holds
 at most <code>RIM_API_MAX_BATCH</code> requests (default 20); a larger one is answered 400 with
 <code>{&quot;error&quot;:&quot;batch_too_large&quot;}</code> and none of it runs. The body is at most 12 MiB, enough for
 <code>submitMlsCommit</code> with a Commit and a Welcome at their 4 MiB caps in base64; it holds at most
@@ -353,16 +356,22 @@ existing accounts works either way.</li>
 </ul>
 <p>Both signups store the username trimmed and in lowercase, so <code>Alice</code> signs up as <code>alice</code>, and a
 username that differs from an existing account&#39;s only in case answers <code>CONFLICT</code>.</p>
-<p>A display name, from a signup or <code>updateMyProfile</code>, is stored without control and invisible
-format characters (zero-width spaces, word joiners, soft hyphens, byte order marks,
-bidirectional overrides and isolates), with each run of whitespace made one space and no space
-at either end. The zero-width joiner and non-joiner stay, except at either end, since emoji
-sequences and scripts such as Persian and Arabic need them.
+<p>A display name, from a signup or <code>updateMyProfile</code>, is stored without control characters,
+format characters and other default-ignorable ones (zero-width spaces, word joiners, soft
+hyphens, byte order marks, bidirectional overrides and isolates, variation selectors, the
+combining grapheme joiner, Hangul fillers, tag characters), with each run of whitespace made one
+space and no space at either end. Kept are the invisible characters emoji and scripts need: the
+zero-width joiner and non-joiner (emoji sequences, Persian, Arabic), except at either end; the
+text and emoji presentation selectors U+FE0E and U+FE0F right after a visible character (<code>❤️</code>);
+a flag&#39;s tag characters, a run of U+E0020 to U+E007E ended by U+E007F right after the black
+flag U+1F3F4 (the flags of Scotland, England and Wales); and the Mongolian free variation
+selectors and vowel separator, U+180B to U+180F, right after a Mongolian letter.
 What is left is at most 64 characters, or the request answers <code>VALIDATION</code>; a signup with
 nothing visible left takes the username, and <code>updateMyProfile</code> clears the name. A name the
 server reserves (<code>RIM_RESERVED_NAMES</code>), followed by a separator or not, answers <code>VALIDATION</code>
 <code>this name is reserved</code>, also when it is written with lookalike letters from another script
-(the Unicode confusable skeleton) or hidden behind invisible characters. A person from another
+(the Unicode confusable skeleton) or hidden behind invisible characters, the kept ones
+included. A person from another
 server keeps the display name of their profile card, cleaned the same way and cut to 64
 characters; a reserved one is replaced by their username here.</p>
 <p>When the server has terms of service (<code>serverInfo.termsUrl</code> is set), both signups must accept
@@ -499,7 +508,7 @@ a number above 0, so a private server limits nothing but the batch size.</p>
 </tr>
 <tr>
 <td><code>RIM_RATE_MESSAGES_PER_MIN_PER_USER</code>, <code>RIM_RATE_MESSAGES_BURST</code></td>
-<td>Messages per user per minute, sent, replied, forwarded, encrypted or edited, with a burst defaulting to the per-minute number. Slow mode does not apply to edits.</td>
+<td>Messages per user per minute, sent, replied, forwarded or edited, plaintext or encrypted, with a burst defaulting to the per-minute number. Resending an encrypted edit that is already stored does not count. Slow mode does not apply to edits.</td>
 <td><code>RATE_LIMITED</code> with <code>retryAfterSeconds</code> on the mutation</td>
 </tr>
 <tr>
@@ -550,7 +559,7 @@ naming the cap, such as &quot;this instance allows 5 workspaces per user&quot;.<
 <tr>
 <td><code>RIM_LIMIT_CHANNELS_PER_WORKSPACE</code></td>
 <td><code>channelsPerWorkspace</code></td>
-<td>Unarchived channels of a workspace, public and private; a new workspace gets only the default channels the cap allows. Archiving a channel frees its place, and unarchiving one needs room.</td>
+<td>Unarchived channels of a workspace, public and private; a new workspace gets only the default channels the cap allows. Archiving a channel frees its place, and unarchiving one needs room. All channels, archived ones included, are capped at five times this.</td>
 </tr>
 <tr>
 <td><code>RIM_LIMIT_DEVICES_PER_USER</code></td>
@@ -692,8 +701,11 @@ instance operators, not a workspace&#39;s moderators. An operator handles them w
 moderation roots and the direct space&#39;s id (<code>relayInfo.directSpaceId</code>): <code>messageReports</code>,
 <code>messageReport</code> (with <code>frankedContent</code>, audited as <code>e2ee.report_viewed</code> with ids only),
 <code>resolveReport</code>, the report&#39;s attachment route and <code>deleteMessage</code> of a message with a verified
-report (<a href="messaging.html"><code>docs/messaging.md</code></a>, &quot;Reports&quot;). Resolving a report starts the 90 days after which its
-verified content is deleted.</p>
+report, or of a reported unencrypted message (<a href="messaging.html"><code>docs/messaging.md</code></a>, &quot;Reports&quot;). A report of an
+unencrypted message shows the operator that message&#39;s text, author and send time, and a report
+whose author is shown carries the author&#39;s principal id (<code>messageAuthorPrincipalId</code>), which
+<code>instanceBlockPrincipal</code> takes. Resolving a report starts the 90 days after which its verified
+content is deleted.</p>
 <h2 id="errors">Errors <a class="anchor" href="#errors" aria-label="Link to this section">#</a></h2>
 <h3 id="graphql-error-codes">GraphQL error codes <a class="anchor" href="#graphql-error-codes" aria-label="Link to this section">#</a></h3>
 <p>Every error a resolver returns carries <code>extensions.code</code>. A client branches on the code, never
@@ -841,6 +853,11 @@ JSON body naming the refusal:</p>
 <td>A GraphQL body past its caps (see &quot;GraphQL: <code>POST /api</code>&quot;).</td>
 </tr>
 <tr>
+<td>415</td>
+<td><code>{&quot;error&quot;:&quot;unsupported_media_type&quot;,&quot;message&quot;:&quot;...&quot;}</code></td>
+<td>A <code>multipart/*</code> body sent to <code>POST /api</code>.</td>
+</tr>
+<tr>
 <td>429</td>
 <td><code>{&quot;error&quot;:&quot;rate_limited&quot;,&quot;retryAfterSeconds&quot;:n}</code>, with <code>Retry-After: n</code></td>
 <td>The client address is over <code>RIM_RATE_REQUESTS_PER_MIN_PER_IP</code>.</td>
@@ -974,13 +991,13 @@ types from it:</p>
 <pre><code class="language-sh">curl -s http://localhost:8080/api/sdl &gt; ../rim-ui/schema.graphql
 cd ../rim-ui &amp;&amp; npm run codegen</code></pre>
 <p>Enum values appear in <code>SCREAMING_SNAKE</code> and fields in <code>camelCase</code>. The models in <a href="messaging.html"><code>messaging.md</code></a>,
-<a href="search.html"><code>search.md</code></a>, <a href="message-change-feed.html"><code>message-change-feed.md</code></a>, <a href="command_model.html"><code>command_model.md</code></a> and the specs in <a href="https://github.com/rim-platform/rim-server/tree/f7a4101d64c4f50b28a1d438466664710d2b3889/docs/specs"><code>specs/</code></a> explain what
+<a href="search.html"><code>search.md</code></a>, <a href="message-change-feed.html"><code>message-change-feed.md</code></a>, <a href="command_model.html"><code>command_model.md</code></a> and the specs in <a href="https://github.com/rim-platform/rim-server/tree/c3678ac0b585a8fb31514201485cbcdb2b59e44d/docs/specs"><code>specs/</code></a> explain what
 the fields mean.</p>
 
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/f7a4101d64c4f50b28a1d438466664710d2b3889/docs/api.md">rim-server/docs/api.md</a> at <code>f7a4101</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c3678ac0b585a8fb31514201485cbcdb2b59e44d/docs/api.md">rim-server/docs/api.md</a> at <code>c3678ac</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>
