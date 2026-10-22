@@ -242,7 +242,9 @@ sets their choices there; both personal mutations are refused through the forwar
 <li>Owner/Moderator archive and unarchive channels (<code>setConversationArchived</code>); other roles get
 <code>FORBIDDEN</code>. Only channels can be archived (<code>VALIDATION</code> otherwise). An archived channel does
 not count against <code>RIM_LIMIT_CHANNELS_PER_WORKSPACE</code>; unarchiving one past the cap is
-<code>VALIDATION</code>.</li>
+<code>VALIDATION</code>. A workspace holds at most five times that cap in channels, archived ones
+included, and creating one past it is <code>VALIDATION</code>; channels cannot be deleted, so archiving
+frees no room toward it.</li>
 <li>An archived conversation is read-only: sending, replying, editing, deleting and forwarding into
 it, reactions, pins, topic edits, threads, attachments, typing, joining and inviting fail with
 <code>CONVERSATION_ARCHIVED</code>. Leaving and removing members still work.</li>
@@ -386,8 +388,15 @@ that is no longer open is <code>CONFLICT</code>.</li>
 groups) go to the instance operators instead (<a href="api.html"><code>docs/api.md</code></a>, &quot;Instance moderation&quot;):
 <code>messageReports</code>, <code>messageReport</code> and <code>resolveReport</code> with the direct space&#39;s id
 (<code>relayInfo.directSpaceId</code>) answer an instance operator and refuse everyone else with
-<code>FORBIDDEN</code>, an app or bot acting for an operator too. An operator gets nothing else there: no
-kick, ban, timeout, role change or slow mode.</li>
+<code>FORBIDDEN</code>, an app or bot acting for an operator too. An operator is no member of the
+conversations there, yet for a report of an unencrypted message sees that one message&#39;s
+<code>messageText</code>, <code>messageAuthorId</code> and <code>messageSentAt</code> (never the rest of the conversation;
+<code>messageReadable</code> stays false), and for any report whose author is shown the author&#39;s
+principal id (<code>messageAuthorPrincipalId</code>, for <code>instanceBlockPrincipal</code>). An encrypted message
+shows its author only through a verified report, as in a workspace. <code>deleteMessage</code> lets the
+operator delete a reported unencrypted message, or an encrypted one with a verified report,
+and no other message there. An operator gets nothing else there: no kick, ban, timeout, role
+change or slow mode.</li>
 </ul>
 <h3 id="audit">Audit <a class="anchor" href="#audit" aria-label="Link to this section">#</a></h3>
 <p>Every moderation action writes one <code>command_audit_log</code> row (initiator <code>moderation</code>) through one
@@ -419,8 +428,9 @@ components that join, modify or tag them: zero-width joiner, variation selectors
 hair, keycaps, regional indicators, tags; digits, <code>#</code> and <code>*</code> alone are not one) or a custom
 emoji&#39;s <code>:name:</code>, the name made of letters, digits and underscores. A <code>:name:</code> that starts a
 new emoji on the message must name a custom emoji of the workspace while the <code>custom_emoji</code>
-feature is enabled; with the feature off every new <code>:name:</code> is refused. Anything else answers
-<code>VALIDATION</code>.</li>
+feature is enabled; with the feature off every new <code>:name:</code> is refused. Adding anything else
+answers <code>VALIDATION</code>. Removing checks only the length: a reaction the caller holds comes off
+whatever its text, so one stored before these rules stays removable.</li>
 <li>A message carries at most 20 different emoji, and one user puts at most 10 reactions on one
 message. Adding past either answers <code>VALIDATION</code>; joining an emoji the message already has
 (under the per-user cap) and removing a reaction always work. Toggles on one message run one
@@ -606,7 +616,7 @@ requires <code>blobSha256</code>, a fixed file name and type, and the upload is 
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/f7a4101d64c4f50b28a1d438466664710d2b3889/docs/messaging.md">rim-server/docs/messaging.md</a> at <code>f7a4101</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c3678ac0b585a8fb31514201485cbcdb2b59e44d/docs/messaging.md">rim-server/docs/messaging.md</a> at <code>c3678ac</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

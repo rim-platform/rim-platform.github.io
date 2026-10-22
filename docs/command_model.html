@@ -398,7 +398,8 @@ workspace scope (<code>scope: server</code>) and reads and writes their own user
 workspace scope takes a Member, Moderator or Owner who is not timed out and whose account is out
 of probation; a guest gets <code>FORBIDDEN</code>. A Member overwrites and deletes only the keys they
 created and increments any numeric key, so a shared counter takes everyone&#39;s count; Owners and
-Moderators change every key. A Member creates at most 100 workspace-scoped entries per
+Moderators change every key. A key whose entry expired is written as a new entry of its writer,
+even before the expired row is purged. A Member creates at most 100 workspace-scoped entries per
 workspace, holding at most 1 MiB of values; a workspace holds at most 10,000, a user scope
 1,000, and a value at most 64 KiB. Each user makes at most 60 writes (sets, increments and
 deletes, either scope) a minute in bursts of up to 30, however they reach the service (GraphQL,
@@ -846,7 +847,7 @@ it later.</li>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/f7a4101d64c4f50b28a1d438466664710d2b3889/docs/command_model.md">rim-server/docs/command_model.md</a> at <code>f7a4101</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c3678ac0b585a8fb31514201485cbcdb2b59e44d/docs/command_model.md">rim-server/docs/command_model.md</a> at <code>c3678ac</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>
