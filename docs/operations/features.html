@@ -86,6 +86,11 @@ SMTP is not configured, which is how it already behaved.</p>
 <td><code>commandDiscover</code>, <code>commands(surface: AI)</code>, <code>executeCommand</code> and <code>executeMacro</code> with the <code>AGENT</code> initiator, and the agent-facing fields of <code>Command</code> (<code>nlDescription</code> is null, <code>intentSamples</code> empty and <code>aiCallable</code> false while off)</td>
 <td>An instance may not want an AI agent driving its workspaces.</td>
 </tr>
+<tr>
+<td><code>avatars</code></td>
+<td><code>POST /api/files/avatar</code>, <code>GET /api/files/{path}</code> (the stored avatars; both also when another relay forwards them), <code>updateMyProfile</code> with an <code>avatarUrl</code>, and <code>User.avatarUrl</code> and <code>ServerMember.avatarUrl</code> (null while off)</td>
+<td>Uploaded profile pictures are content the operator moderates and stores.</td>
+</tr>
 </tbody></table></div>
 <p>These are platform core and have no switch: end-to-end encrypted conversations, key identity,
 the relay and host roles (<code>RIM_ROLE</code>), registration (its own modes: <code>RIM_OPEN_REGISTRATION</code>,
@@ -129,19 +134,21 @@ pipelines.</p>
 </tr>
 </tbody></table></div>
 <p>A feature both disabled and unavailable is reported as <code>disabled</code>. Storage is always the local
-data directory, so <code>attachments</code>, <code>custom_emoji</code> and <code>workspace_plugins</code> are never unavailable.</p>
+data directory, so <code>attachments</code>, <code>custom_emoji</code>, <code>workspace_plugins</code> and <code>avatars</code> are never
+unavailable.</p>
 <h2 id="setting-it">Setting it <a class="anchor" href="#setting-it" aria-label="Link to this section">#</a></h2>
 <p>A comma-separated list of names; spaces around names are ignored:</p>
 <pre><code class="language-sh">RIM_FEATURES_DISABLED=attachments,custom_emoji</code></pre>
 <p>An unknown name stops the server at boot, naming it, so a typo never leaves a feature on:</p>
-<pre><code class="language-text">RIM_FEATURES_DISABLED: unknown feature: atachments (known: attachments, link_previews, email, custom_emoji, workspace_plugins, ai_commands)</code></pre>
+<pre><code class="language-text">RIM_FEATURES_DISABLED: unknown feature: atachments (known: attachments, link_previews, email, custom_emoji, workspace_plugins, ai_commands, avatars)</code></pre>
 <p>The switches are read at boot; change the variable and restart. At boot the server logs the
 disabled and unavailable features:</p>
 <pre><code class="language-json">{&quot;level&quot;:&quot;INFO&quot;,&quot;fields&quot;:{&quot;message&quot;:&quot;instance features (RIM_FEATURES_DISABLED)&quot;,&quot;disabled&quot;:&quot;[\&quot;attachments\&quot;, \&quot;custom_emoji\&quot;]&quot;,&quot;unavailable&quot;:&quot;[\&quot;email: SMTP is not configured: set RIM_SMTP_HOST and RIM_SMTP_FROM\&quot;]&quot;},&quot;target&quot;:&quot;rim_server::app&quot;}</code></pre>
-<p>Switching a feature off deletes nothing. Stored attachments, emoji, plugin entries, bundles and
-link previews stay in the database and on disk, and come back when the feature is enabled
-again. While <code>attachments</code> is off, messages still list their attachments, but downloads are
-refused.</p>
+<p>Switching a feature off deletes nothing. Stored attachments, emoji, plugin entries, bundles,
+link previews and avatars stay in the database and on disk, and come back when the feature is
+enabled again. While <code>attachments</code> is off, messages still list their attachments, but downloads
+are refused. While <code>avatars</code> is off, every avatar URL reads as null, so clients show their
+placeholder; <code>updateMyProfile</code> without an <code>avatarUrl</code> still works.</p>
 <p>With <code>email</code> disabled, <code>requestPasswordReset</code> answers <code>FEATURE_DISABLED</code>, invite mail is not
 sent (the invite link is still returned to whoever created it), and the notification digest job
 does not run.</p>
@@ -194,7 +201,7 @@ answer <code>403</code> with <code>{&quot;error&quot;:&quot;…&quot;,&quot;code
 </ul>
 <p>A client reads <code>serverInfo.features</code> after connecting and hides the surfaces of disabled and
 unavailable features: the attach button, emoji management, the workspace plugin settings, the
-AI agent, &quot;forgot password&quot;. The server enforces the switches either way.</p>
+AI agent, &quot;forgot password&quot;, the profile picture upload. The server enforces the switches either way.</p>
 <p><code>ai_commands</code> refuses agent runs by the initiator the client declares. It switches the
 AI surface off for well-behaved clients; the capability checks, confirmation and audit that
 apply to every command are the security boundary, not this switch.</p>
@@ -202,7 +209,7 @@ apply to every command are the security boundary, not this switch.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/07d1ed69bb71d59fd9deaaf832132e469fcf91f9/docs/operations/features.md">rim-server/docs/operations/features.md</a> at <code>07d1ed6</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/f7a4101d64c4f50b28a1d438466664710d2b3889/docs/operations/features.md">rim-server/docs/operations/features.md</a> at <code>f7a4101</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

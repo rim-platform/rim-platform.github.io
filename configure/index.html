@@ -48,7 +48,7 @@
 </details></aside>
     <main id="content" class="prose">
 <h1>Configure</h1>
-<p class="lede">The server is configured by environment variables, all prefixed <code>RIM_</code> except <code>DATABASE_URL</code> and the log filter <code>RUST_LOG</code>. In development an untracked <code>.env</code> file works too. This page is generated from <a href="https://github.com/rim-platform/rim-server/blob/07d1ed69bb71d59fd9deaaf832132e469fcf91f9/rim_server/src/config.rs"><code>rim_server/src/config.rs</code></a>, cross-checked with the variable block of the <a href="https://github.com/rim-platform/rim-server/blob/07d1ed69bb71d59fd9deaaf832132e469fcf91f9/Dockerfile"><code>Dockerfile</code></a>; the compose stack's own settings are in <a href="https://github.com/rim-platform/rim-server/blob/07d1ed69bb71d59fd9deaaf832132e469fcf91f9/deploy/.env.example"><code>deploy/.env.example</code></a>.</p>
+<p class="lede">The server is configured by environment variables, all prefixed <code>RIM_</code> except <code>DATABASE_URL</code> and the log filter <code>RUST_LOG</code>. In development an untracked <code>.env</code> file works too. This page is generated from <a href="https://github.com/rim-platform/rim-server/blob/f7a4101d64c4f50b28a1d438466664710d2b3889/rim_server/src/config.rs"><code>rim_server/src/config.rs</code></a>, cross-checked with the variable block of the <a href="https://github.com/rim-platform/rim-server/blob/f7a4101d64c4f50b28a1d438466664710d2b3889/Dockerfile"><code>Dockerfile</code></a>; the compose stack's own settings are in <a href="https://github.com/rim-platform/rim-server/blob/f7a4101d64c4f50b28a1d438466664710d2b3889/deploy/.env.example"><code>deploy/.env.example</code></a>.</p>
 <h2 id="listening">Listening <a class="anchor" href="#listening" aria-label="Link to this section">#</a></h2>
 <p class="muted">Where the server listens, the origin clients reach it at, and how it treats the proxy in front of it.</p>
 <div class="tablewrap"><table class="vars">
@@ -59,11 +59,12 @@
 <tr id="RIM_PUBLIC_BASE_URL"><td><code>RIM_PUBLIC_BASE_URL</code><span class="default">unset by default</span></td><td><p>e.g. <code>https://rim.example.com</code>. Required to build clickable reset-password/invite
 links; without it, emails fall back to including the bare token/no link.</p><p class="faint">Dockerfile: https origin; turns server-to-server traffic on. This or RIM_KEY_LOGIN_AUDIENCES is required: the server binds 0.0.0.0 and refuses to start without an audience for key logins.</p></td></tr>
 <tr id="RIM_CORS_ALLOWED_ORIGIN"><td><code>RIM_CORS_ALLOWED_ORIGIN</code><span class="default">unset by default</span></td><td><p>one browser origin accepted besides the server&#39;s own (optional); the own origin is RIM_PUBLIC_BASE_URL&#39;s, else the request&#39;s Host.</p><p class="note">No doc comment in config.rs; described from the Dockerfile.</p></td></tr>
-<tr id="RIM_TRUST_FORWARDED_HEADERS"><td><code>RIM_TRUST_FORWARDED_HEADERS</code><span class="default">default <code>false</code></span></td><td><p>When <code>true</code>, the server reads <code>X-Forwarded-For</code> / <code>Forwarded</code> headers
-to determine the real client IP for rate-limiting. Only enable this
-when a trusted reverse proxy (Nginx, Caddy, Traefik, …) is the sole
-entry point; enabling it without a proxy lets attackers spoof their IP
-and defeat the rate limiters.</p><p class="faint">Dockerfile: Read the client address from X-Forwarded-For / Forwarded when true; only behind a reverse proxy that is the sole way in.</p></td></tr>
+<tr id="RIM_TRUST_FORWARDED_HEADERS"><td><code>RIM_TRUST_FORWARDED_HEADERS</code><span class="default">default <code>false</code></span></td><td><p>When <code>true</code>, the server takes the real client IP for rate-limiting and
+IP blocks from the first entry of <code>X-Forwarded-For</code>; <code>Forwarded</code> is
+never read. Only enable this when a trusted reverse proxy (Nginx,
+Caddy, Traefik, …) is the sole entry point and replaces any
+<code>X-Forwarded-For</code> the client sent; enabling it without such a proxy
+lets attackers spoof their IP and defeat the rate limiters.</p><p class="faint">Dockerfile: Read the client address from X-Forwarded-For / Forwarded when true; only behind a reverse proxy that is the sole way in.</p></td></tr>
 <tr id="RIM_FORCE_SECURE_COOKIES"><td><code>RIM_FORCE_SECURE_COOKIES</code><span class="default">default <code>false</code></span></td><td><p>When <code>true</code>, all session and CSRF cookies are issued with <code>Secure=true</code>
 regardless of the incoming request scheme or <code>X-Forwarded-Proto</code> header.
 Use this for direct-HTTPS deployments where the reverse proxy does not
@@ -124,8 +125,10 @@ in the data directory), or neither.</p><p class="faint">Refused at boot with a m
 each followed by <code>-</code>, <code>_</code>, <code>.</code> or a space.</p>
 <p><code>RIM_RESERVED_NAMES</code>, compared case-insensitively after NFKC normalisation; nothing is
 reserved when it is unset or blank.</p><p class="faint">Refused at boot with a message naming the variable when an entry is empty, as in <code>rim,,admin</code>.</p><p class="faint">Dockerfile: comma-separated usernames and display names signups and profile edits refuse, also followed by -, _, . or a space; an empty entry stops the server at boot.</p></td></tr>
-<tr id="RIM_PROBATION_HOURS"><td><code>RIM_PROBATION_HOURS</code><span class="default">default off</span></td><td><p>Hours after its creation during which an account cannot create a workspace or send a
-DM request to a stranger; unset or 0 turns probation off.</p><p class="faint">Unset, it turns probation off.</p><p class="faint">Dockerfile: hours after creation during which an account creates no workspace and sends no DM request to a stranger.</p></td></tr>
+<tr id="RIM_PROBATION_HOURS"><td><code>RIM_PROBATION_HOURS</code><span class="default">default off</span></td><td><p>Hours after its creation during which an account cannot create a workspace, write a
+workspace&#39;s shared state or send a DM request to a stranger; an instance operator is
+never on probation. Unset or 0 turns
+probation off.</p><p class="faint">Unset, it turns probation off.</p><p class="faint">Dockerfile: hours after creation during which an account creates no workspace, writes no shared workspace state and sends no DM request to a stranger; never an instance operator.</p></td></tr>
 <tr id="RIM_SESSION_TTL_DAYS"><td><code>RIM_SESSION_TTL_DAYS</code><span class="default">default <code>30</code></span></td><td><p>Session lifetime.</p><p class="note">No doc comment in config.rs; described from the Dockerfile.</p></td></tr>
 <tr id="RIM_TERMS_URL"><td><code>RIM_TERMS_URL</code><span class="default">default none</span></td><td><p>The terms of service every signup accepts, an absolute http(s) URL, for terms hosted
 elsewhere.</p>
@@ -208,7 +211,7 @@ Default: 900 (15 minutes); values below 60 are raised to 60.</p><p class="faint"
 <thead><tr><th>Variable</th><th>What it does</th></tr></thead>
 <tbody>
 <tr id="RIM_METRICS_ADDR"><td><code>RIM_METRICS_ADDR</code><span class="default">default off</span></td><td><p><code>host:port</code> of the Prometheus listener serving <code>GET /metrics</code>; unset turns metrics off.</p><p class="faint">Unset, it turns metrics off.</p><p class="faint">Refused at boot with a message naming the variable when the value is not an <code>ip:port</code> address.</p><p class="faint">Dockerfile: ip:port of the Prometheus /metrics listener. In a container bind 0.0.0.0:9090 and do not publish it: keep it on an internal network, never behind the public proxy.</p></td></tr>
-<tr id="RIM_AUDIT_LOG_PATH"><td><code>RIM_AUDIT_LOG_PATH</code><span class="default">default the working directory</span></td><td><p>Directory of the daily audit files <code>audit.&lt;YYYY-MM-DD&gt;.log</code></p><p class="note">Read by <a href="https://github.com/rim-platform/rim-server/blob/07d1ed69bb71d59fd9deaaf832132e469fcf91f9/rim_logging/src/logging.rs"><code>rim_logging/src/logging.rs</code></a>, not config.rs.</p></td></tr>
+<tr id="RIM_AUDIT_LOG_PATH"><td><code>RIM_AUDIT_LOG_PATH</code><span class="default">default the working directory</span></td><td><p>Directory of the daily audit files <code>audit.&lt;YYYY-MM-DD&gt;.log</code></p><p class="note">Read by <a href="https://github.com/rim-platform/rim-server/blob/f7a4101d64c4f50b28a1d438466664710d2b3889/rim_logging/src/logging.rs"><code>rim_logging/src/logging.rs</code></a>, not config.rs.</p></td></tr>
 <tr id="RIM_AUDIT_RETENTION_DAYS"><td><code>RIM_AUDIT_RETENTION_DAYS</code><span class="default">default forever</span></td><td><p>Days command audit log rows are kept before the daily purge exports and deletes them;
 unset keeps them forever. 1 to 3650.</p><p class="faint">Unset, it keeps them forever.</p><p class="faint">Refused at boot with a message naming the variable when the value is outside 1 to 3650.</p><p class="faint">Dockerfile: days command audit rows are kept, 1-3650; older rows are exported to $RIM_DATA_DIR/audit-exports and deleted daily.</p></td></tr>
 <tr id="RIM_AUDIT_LOG_RETENTION_DAYS"><td><code>RIM_AUDIT_LOG_RETENTION_DAYS</code><span class="default">default <code>90</code></span></td><td><p>Days the daily audit files (<code>audit.&lt;YYYY-MM-DD&gt;.log</code> in the directory of
@@ -219,7 +222,7 @@ older one is deleted daily. Unset keeps every export. 1 to 3650.</p><p class="fa
 <tr id="RIM_FEATURES_DISABLED"><td><code>RIM_FEATURES_DISABLED</code><span class="default">default none</span></td><td><p>Comma-separated optional features switched off on this instance, e.g.
 <code>attachments,custom_emoji</code>; unset or empty keeps every feature on.</p>
 <p><code>RIM_FEATURES_DISABLED</code> as features; empty when unset.</p><p class="faint">Unset, it keeps every feature on.</p><p class="faint">Refused at boot with a message naming the variable and the first name that is not a feature, so a typo
-stops the server instead of leaving a feature on.</p><p class="faint">Dockerfile: comma-separated optional features to switch off: attachments, link_previews, email, custom_emoji, workspace_plugins, ai_commands; an unknown name stops the server at boot.</p></td></tr>
+stops the server instead of leaving a feature on.</p><p class="faint">Dockerfile: comma-separated optional features to switch off: attachments, link_previews, email, custom_emoji, workspace_plugins, ai_commands, avatars; an unknown name stops the server at boot.</p></td></tr>
 <tr id="RUST_LOG"><td><code>RUST_LOG</code><span class="default">default <code>info</code></span></td><td><p>Log filter, e.g. info or rim_server=debug.</p><p class="note">The logger reads it, not config.rs.</p></td></tr>
 <tr id="RIM_ENABLE_GRAPHIQL"><td><code>RIM_ENABLE_GRAPHIQL</code><span class="default">default <code>false</code></span></td><td><p>Serve the GraphiQL explorer at GET /api when true.</p><p class="note">No doc comment in config.rs; described from the Dockerfile.</p></td></tr>
 <tr id="RIM_INSTANCE_NOTICE"><td><code>RIM_INSTANCE_NOTICE</code><span class="default">default none</span></td><td><p>A short text shown to people on this instance, at most 500 characters.</p>
@@ -266,14 +269,16 @@ instead of the normal message rate; unset or 0 keeps the normal rate.</p><p clas
 <div class="tablewrap"><table class="vars">
 <thead><tr><th>Variable</th><th>What it does</th></tr></thead>
 <tbody>
-<tr id="RIM_LIMIT_WORKSPACES_PER_USER"><td><code>RIM_LIMIT_WORKSPACES_PER_USER</code><span class="default">unset by default</span></td><td><p>Workspaces one user owns.</p><p class="faint">Dockerfile: workspaces one user owns.</p></td></tr>
+<tr id="RIM_LIMIT_WORKSPACES_PER_USER"><td><code>RIM_LIMIT_WORKSPACES_PER_USER</code><span class="default">unset by default</span></td><td><p>Workspaces one user owns, created or handed over to them.</p><p class="faint">Dockerfile: workspaces one user owns, created or handed over.</p></td></tr>
 <tr id="RIM_LIMIT_MEMBERS_PER_WORKSPACE"><td><code>RIM_LIMIT_MEMBERS_PER_WORKSPACE</code><span class="default">unset by default</span></td><td><p>Members of one workspace; the direct space has no cap.</p><p class="faint">Dockerfile: members of a workspace (the direct space has none).</p></td></tr>
-<tr id="RIM_LIMIT_CHANNELS_PER_WORKSPACE"><td><code>RIM_LIMIT_CHANNELS_PER_WORKSPACE</code><span class="default">unset by default</span></td><td><p>Channels of one workspace, public and private.</p><p class="faint">Dockerfile: channels of a workspace, public and private.</p></td></tr>
+<tr id="RIM_LIMIT_CHANNELS_PER_WORKSPACE"><td><code>RIM_LIMIT_CHANNELS_PER_WORKSPACE</code><span class="default">unset by default</span></td><td><p>Unarchived channels of one workspace, public and private.</p><p class="faint">Dockerfile: unarchived channels of a workspace, public and private.</p></td></tr>
 <tr id="RIM_LIMIT_DEVICES_PER_USER"><td><code>RIM_LIMIT_DEVICES_PER_USER</code><span class="default">unset by default</span></td><td><p>Devices on one account; the stricter of this and <code>RIM_RELAY_DEVICES_PER_USER</code> applies.</p><p class="faint">Dockerfile: devices on one account; the stricter of this and RIM_RELAY_DEVICES_PER_USER applies.</p></td></tr>
 <tr id="RIM_LIMIT_DM_REQUESTS_PER_DAY"><td><code>RIM_LIMIT_DM_REQUESTS_PER_DAY</code><span class="default">unset by default</span></td><td><p>DM requests one user sends to strangers per day; the stricter of this and
 <code>RIM_RELAY_DM_REQUESTS_PER_DAY</code> applies.</p><p class="faint">Dockerfile: DM requests to strangers per user per day; the stricter of this and RIM_RELAY_DM_REQUESTS_PER_DAY applies.</p></td></tr>
-<tr id="RIM_LIMIT_MACROS_PER_WORKSPACE"><td><code>RIM_LIMIT_MACROS_PER_WORKSPACE</code><span class="default">unset by default</span></td><td><p>Macros of one workspace.</p><p class="faint">Dockerfile: macros of a workspace.</p></td></tr>
-<tr id="RIM_LIMIT_PIPELINES_PER_WORKSPACE"><td><code>RIM_LIMIT_PIPELINES_PER_WORKSPACE</code><span class="default">unset by default</span></td><td><p>Pipelines of one workspace.</p><p class="faint">Dockerfile: pipelines of a workspace.</p></td></tr>
+<tr id="RIM_LIMIT_MACROS_PER_WORKSPACE"><td><code>RIM_LIMIT_MACROS_PER_WORKSPACE</code><span class="default">unset by default</span></td><td><p>Macros of one workspace; a member who is neither Owner nor Moderator holds at most a
+fifth of them.</p><p class="faint">Dockerfile: macros of a workspace; a member holds a fifth.</p></td></tr>
+<tr id="RIM_LIMIT_PIPELINES_PER_WORKSPACE"><td><code>RIM_LIMIT_PIPELINES_PER_WORKSPACE</code><span class="default">unset by default</span></td><td><p>Pipelines of one workspace; a member who is neither Owner nor Moderator holds at most
+a fifth of them.</p><p class="faint">Dockerfile: pipelines of a workspace; a member holds a fifth.</p></td></tr>
 <tr id="RIM_LIMIT_PLUGINS_PER_WORKSPACE"><td><code>RIM_LIMIT_PLUGINS_PER_WORKSPACE</code><span class="default">unset by default</span></td><td><p>Plugins of one workspace&#39;s registry.</p><p class="faint">Dockerfile: plugins of a workspace&#39;s registry.</p></td></tr>
 <tr id="RIM_LIMIT_INVITES_PER_USER_PER_DAY"><td><code>RIM_LIMIT_INVITES_PER_USER_PER_DAY</code><span class="default">default <code>50</code></span></td><td><p>Workspace invites one user creates per day, and invite emails one user has sent in the
 last 24 hours; unlike most caps it defaults to 50, and 0
@@ -323,7 +328,7 @@ and IP blocks from the app (<a href="../docs/api.html"><code>docs/api.md</code><
     </main>
   </div>
   <footer class="site">
-    <span>Generated from <a href="https://github.com/rim-platform/rim-server/blob/07d1ed69bb71d59fd9deaaf832132e469fcf91f9/rim_server/src/config.rs">rim-server/rim_server/src/config.rs</a>, <a href="https://github.com/rim-platform/rim-server/blob/07d1ed69bb71d59fd9deaaf832132e469fcf91f9/Dockerfile">Dockerfile</a> and <a href="https://github.com/rim-platform/rim-server/blob/07d1ed69bb71d59fd9deaaf832132e469fcf91f9/README.md">README.md</a> at <code>07d1ed6</code></span>
+    <span>Generated from <a href="https://github.com/rim-platform/rim-server/blob/f7a4101d64c4f50b28a1d438466664710d2b3889/rim_server/src/config.rs">rim-server/rim_server/src/config.rs</a>, <a href="https://github.com/rim-platform/rim-server/blob/f7a4101d64c4f50b28a1d438466664710d2b3889/Dockerfile">Dockerfile</a> and <a href="https://github.com/rim-platform/rim-server/blob/f7a4101d64c4f50b28a1d438466664710d2b3889/README.md">README.md</a> at <code>f7a4101</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

@@ -60,7 +60,7 @@
 </details></aside>
     <main id="content" class="prose">
 <h1 id="end-to-end-encryption-with-mls-v1">End-to-end encryption with MLS v1</h1>
-<p class="status"><span><b>End-to-end encryption with MLS v1</b></span><span>version 1</span><span>status: implemented, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/07d1ed69bb71d59fd9deaaf832132e469fcf91f9/docs/specs/e2ee-mls-v1.md">rim-server/docs/specs/e2ee-mls-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/07d1ed69bb71d59fd9deaaf832132e469fcf91f9">07d1ed6</a></span></p>
+<p class="status"><span><b>End-to-end encryption with MLS v1</b></span><span>version 1</span><span>status: implemented, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/f7a4101d64c4f50b28a1d438466664710d2b3889/docs/specs/e2ee-mls-v1.md">rim-server/docs/specs/e2ee-mls-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/f7a4101d64c4f50b28a1d438466664710d2b3889">f7a4101</a></span></p>
 <p><em>Status: implemented, normative. Read <a href="key-identity-v1.html"><code>key-identity-v1.md</code></a> (keys, tagged encodings, statements)
 and <a href="device-linking-v1.html"><code>device-linking-v1.md</code></a> first. This document is the contract between the server
 (<code>E2eeService</code>), the <code>rim_mls</code> crate in rim-ui, the desktop client and the web client. Labels of
@@ -884,6 +884,10 @@ named <code>encrypted.bin</code> with <code>X-Content-Type-Options: nosniff</cod
 <code>404</code>.</li>
 <li><code>deleteMessage</code> by an Owner/Moderator who cannot read the conversation succeeds when the
 message has a verified report.</li>
+<li>In the direct space, where everyone is a guest, the instance operators take the
+moderators&#39; place for reports: they list, open and resolve them, download their
+attachments and delete a message with a verified report, and nobody else in the direct
+space can (<a href="../docs/messaging.html"><code>docs/messaging.md</code></a>, &quot;Reports&quot;).</li>
 </ul>
 </li>
 </ol>
@@ -1242,7 +1246,7 @@ type Query {
   myMlsWelcomes(after: MlsWelcomeCursorInput, limit: Int): [MlsWelcome!]!   # session device, pending
   mlsCommits(serverId: ID!, conversationId: ID!, incarnation: Int!, afterEpoch: Int, limit: Int): MlsCommitPage!
   principalDevices(principalIds: [String!]!): [PrincipalDevices!]!     # principals sharing a workspace with the caller
-  messageReport(serverId: ID!, reportId: ID!): MessageReport!           # Owner/Moderator
+  messageReport(serverId: ID!, reportId: ID!): MessageReport!           # Owner/Moderator; instance operator in the direct space
 }
 type Mutation {
   uploadMlsKeyPackages(keyPackages: [String!]!): MlsKeyPackageStatus!
@@ -1336,7 +1340,11 @@ removes devices. <code>MlsWelcomeAvailable</code> goes to
 </tr>
 <tr>
 <td>Commit</td>
-<td>4 MiB; authenticated data 256 KiB</td>
+<td>4 MiB; authenticated data 256 KiB; one that adds no device 16 KiB plus 2 KiB per device of the group (<code>VALIDATION</code>); 32 MiB per member and conversation in 24 hours (<code>VALIDATION</code>)</td>
+</tr>
+<tr>
+<td>Commits per user</td>
+<td>30 per minute with bursts of 60, and 64 KiB per minute with bursts of 8 MiB (<code>RATE_LIMITED</code>)</td>
 </tr>
 <tr>
 <td>Welcome</td>
@@ -1614,7 +1622,7 @@ ed25519:UNry-YBfbQv1nUxStNVtA9jirfxTM5rLE-JA40KZGS9c-tCyl90KEq4W1OxmoxL0msvG62Gc
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/07d1ed69bb71d59fd9deaaf832132e469fcf91f9/docs/specs/e2ee-mls-v1.md">rim-server/docs/specs/e2ee-mls-v1.md</a> at <code>07d1ed6</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/f7a4101d64c4f50b28a1d438466664710d2b3889/docs/specs/e2ee-mls-v1.md">rim-server/docs/specs/e2ee-mls-v1.md</a> at <code>f7a4101</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

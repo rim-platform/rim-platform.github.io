@@ -248,17 +248,17 @@ stores each returned <code>cursor</code> and passes it back as <code>after</code
   limit: <a href="scalars.html#Int">Int</a>!
 ): <a href="objects.html#MessageReportPage">MessageReportPage</a>!</div>
 <div class="desc"><p>Message reports of the workspace (all statuses when <code>status</code> is omitted), ordered
-<code>createdAt ASC, id ASC</code>. Owner/Moderator only. The message body is included only when
-the moderator can read the conversation.</p>
+<code>createdAt ASC, id ASC</code>. Owner/Moderator only; for the direct space, instance operators
+only. The message body is included only when the moderator can read the conversation.</p>
 </div>
 
 </section>
 <section class="entry" id="messageReport" data-name="messageReport">
 <h3><code>messageReport</code></h3>
 <div class="sig">messageReport(serverId: <a href="scalars.html#ID">ID</a>!, reportId: <a href="scalars.html#ID">ID</a>!): <a href="objects.html#MessageReport">MessageReport</a>!</div>
-<div class="desc"><p>One report of the workspace. Owner/Moderator only. For a verified report of an
-encrypted message it includes <code>frankedContent</code>, and records that the moderator viewed
-it (<code>e2ee.report_viewed</code>).</p>
+<div class="desc"><p>One report of the workspace. Owner/Moderator only; for the direct space, instance
+operators only. For a verified report of an encrypted message it includes
+<code>frankedContent</code>, and records that the moderator viewed it (<code>e2ee.report_viewed</code>).</p>
 </div>
 
 </section>
@@ -551,12 +551,20 @@ user of a relay becomes a guest of the direct space, if not one yet.</p>
 <h2 id="group-report">Report <span class="faint">1</span></h2>
 <section class="entry" id="instanceReports" data-name="instanceReports">
 <h3><code>instanceReports</code></h3>
-<div class="sig">instanceReports(openOnly: <a href="scalars.html#Boolean">Boolean</a>! = true): [<a href="objects.html#InstanceAbuseReport">InstanceAbuseReport</a>!]!</div>
-<div class="desc"><p>Abuse reports filed with this server, oldest first. Instance operators only; anyone
-else gets <code>FORBIDDEN</code>.</p>
+<div class="sig">instanceReports(
+  openOnly: <a href="scalars.html#Boolean">Boolean</a>! = true
+  after: <a href="scalars.html#ID">ID</a>
+  limit: <a href="scalars.html#Int">Int</a>! = 100
+): [<a href="objects.html#InstanceAbuseReport">InstanceAbuseReport</a>!]!</div>
+<div class="desc"><p>Abuse reports filed with this server, oldest first, a page at a time. Instance
+operators only; anyone else gets <code>FORBIDDEN</code>.</p>
 </div>
 <div class="tablewrap"><table class="fields"><thead><tr><th>Argument</th><th>Type</th><th>Description</th></tr></thead><tbody>
 <tr><td><code>openOnly</code></td><td><code><a href="scalars.html#Boolean">Boolean</a>!</code> <span class="faint">= true</span></td><td><p>Only the reports not yet resolved.</p>
+</td></tr>
+<tr><td><code>after</code></td><td><code><a href="scalars.html#ID">ID</a></code></td><td><p>Start after this report: the last one of the previous page.</p>
+</td></tr>
+<tr><td><code>limit</code></td><td><code><a href="scalars.html#Int">Int</a>!</code> <span class="faint">= 100</span></td><td><p>The most reports to return, 1 to 500.</p>
 </td></tr>
 </tbody></table></div>
 </section>
@@ -702,7 +710,7 @@ floors are taken in, with where a refusing floor comes from.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Generated from <a href="https://github.com/rim-platform/rim-ui/blob/175c3354b08e863188d4f0bafb62a91f50216668/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>175c335</code></span>
+    <span>Generated from <a href="https://github.com/rim-platform/rim-ui/blob/ffde70e2d194fb8a6017a8d9096e431bf6fc1fae/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>ffde70e</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>
