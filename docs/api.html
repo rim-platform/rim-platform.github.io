@@ -174,8 +174,12 @@ the route needs the session cookie; &quot;CSRF&quot; means it also needs the <co
 <p>The request body is the usual GraphQL JSON (<code>query</code>, <code>variables</code>, <code>operationName</code>), or an array
 of such objects, which the server runs as one batch and answers with an array. A batch holds
 at most <code>RIM_API_MAX_BATCH</code> requests (default 20); a larger one is answered 400 with
-<code>{&quot;error&quot;:&quot;batch_too_large&quot;}</code> and none of it runs. Apart from that and the refusals under
-&quot;Limits&quot;, the answer is HTTP 200; errors are in the <code>errors</code> array of each response (see
+<code>{&quot;error&quot;:&quot;batch_too_large&quot;}</code> and none of it runs. The body is at most 12 MiB, enough for
+<code>submitMlsCommit</code> with a Commit and a Welcome at their 4 MiB caps in base64; it holds at most
+262,144 of the bytes <code>,</code>, <code>[</code> and <code>{</code>, counted anywhere in it, strings included, and its GraphQL
+documents (every <code>query</code> of a batch together) are at most 128 KiB. A body past any of these is
+answered 413 with <code>{&quot;error&quot;:&quot;too_large&quot;,&quot;message&quot;:&quot;...&quot;}</code> before it is parsed, and none of it
+runs. Apart from these and the refusals under &quot;Limits&quot;, the answer is HTTP 200; errors are in the <code>errors</code> array of each response (see
 &quot;Errors&quot;). The server
 reads an <code>X-Request-Id</code> header, or makes one, and adds it to every error as
 <code>extensions.request_id</code>, so a report can be matched to the server log.</p>
@@ -201,10 +205,16 @@ is refused with 400, and an upgrade without a valid session with 401: there are 
 subscriptions. A user holding as many connections as <code>RIM_RATE_WS_CONNECTIONS_PER_USER</code> allows
 is refused with 429 and <code>{&quot;error&quot;:&quot;too_many_connections&quot;}</code>. A subscription started past
 <code>RIM_RATE_SUBSCRIPTIONS_PER_CONNECTION</code> on one connection answers one error with the code
-<code>TOO_MANY_SUBSCRIPTIONS</code> and ends; ending another subscription frees its place. A client
+<code>TOO_MANY_SUBSCRIPTIONS</code> and ends; ending another subscription frees its place. A subscription
+operation selects exactly one root field: one with more, aliases, repeated fields and fragment
+expansions each counted, answers one error with the code <code>VALIDATION</code> and the message &quot;a
+subscription selects exactly one root field&quot;, over the WebSocket or anywhere else, and starts
+nothing. A client
 message over 256 KiB, whole or in fragments, closes the connection with code <code>1009</code> (&quot;message
 too large&quot;), and more than 32 messages waiting for the server close it with <code>1008</code> (&quot;too many
-messages&quot;). The socket runs subscriptions only: a query or a mutation sent on it answers one
+messages&quot;). A connection starts at most 10 subscriptions a second, in bursts of up to 50: a
+<code>subscribe</code> (or <code>start</code>) message past that closes it with <code>1008</code> (&quot;too many subscriptions
+started&quot;). The socket runs subscriptions only: a query or a mutation sent on it answers one
 error with the code <code>VALIDATION</code> and the message &quot;only subscriptions over the WebSocket&quot;, runs
 nothing, and completes; send those to <code>POST /api</code>. The subscription roots are <code>workspaceEvents</code> and
 <code>relayStream</code>; the schema describes both. A <code>TypingStarted</code> event, sent for direct conversations
@@ -274,10 +284,16 @@ The file is at most 25 MiB and its type is <code>image/*</code>, <code>text/*</c
 the blob of an encrypted conversation. The answer is <code>{&quot;size_bytes&quot;:&lt;n&gt;}</code>. Off when the
 <code>attachments</code> feature is not enabled.</li>
 <li><strong><code>POST /api/files/avatar</code></strong> stores the caller&#39;s avatar: a multipart body with one file of
-type <code>image/png</code>, <code>image/jpeg</code>, <code>image/gif</code> or <code>image/webp</code>, at most 2 MiB. The answer is
-<code>{&quot;path&quot;,&quot;size_bytes&quot;,&quot;url&quot;}</code>, where <code>url</code> is the <code>/api/files/...</code> path to read it back.</li>
-<li><strong><code>GET /api/files/{path}</code></strong> serves a stored avatar to any signed-in user. Any path outside
-<code>avatars/</code> is refused with 403.</li>
+type <code>image/png</code>, <code>image/jpeg</code>, <code>image/gif</code> or <code>image/webp</code>, at most 2 MiB, whose bytes start
+with that format&#39;s signature (PNG <code>89 50 4E 47 0D 0A 1A 0A</code>, JPEG <code>FF D8 FF</code>, GIF <code>GIF87a</code> or
+<code>GIF89a</code>, WebP <code>RIFF</code> with <code>WEBP</code> at byte 8); another type, or bytes that do not match the
+declared one, is 415. It is stored as <code>avatars/&lt;user id&gt;/avatar.&lt;png|jpeg|gif|webp&gt;</code>, and the
+caller&#39;s other avatar files are deleted. The answer is <code>{&quot;path&quot;,&quot;size_bytes&quot;,&quot;url&quot;}</code>, where
+<code>url</code> is the <code>/api/files/...</code> path to read it back and the only value <code>updateMyProfile</code> takes
+as <code>avatarUrl</code> besides an empty one. Off when the <code>avatars</code> feature is not enabled.</li>
+<li><strong><code>GET /api/files/{path}</code></strong> serves a stored avatar to any signed-in user, as an attachment
+with the type its extension implies and <code>X-Content-Type-Options: nosniff</code>. Any path outside
+<code>avatars/</code> is refused with 403. Off when the <code>avatars</code> feature is not enabled.</li>
 <li><strong><code>GET /api/attachments/{id}/download</code></strong> serves an attachment to a member of its conversation.
 The blob of an encrypted conversation is served as <code>application/octet-stream</code> named
 <code>encrypted.bin</code>; the client checks its hash and decrypts it. Off when the <code>attachments</code> feature
@@ -337,6 +353,18 @@ existing accounts works either way.</li>
 </ul>
 <p>Both signups store the username trimmed and in lowercase, so <code>Alice</code> signs up as <code>alice</code>, and a
 username that differs from an existing account&#39;s only in case answers <code>CONFLICT</code>.</p>
+<p>A display name, from a signup or <code>updateMyProfile</code>, is stored without control and invisible
+format characters (zero-width spaces, word joiners, soft hyphens, byte order marks,
+bidirectional overrides and isolates), with each run of whitespace made one space and no space
+at either end. The zero-width joiner and non-joiner stay, except at either end, since emoji
+sequences and scripts such as Persian and Arabic need them.
+What is left is at most 64 characters, or the request answers <code>VALIDATION</code>; a signup with
+nothing visible left takes the username, and <code>updateMyProfile</code> clears the name. A name the
+server reserves (<code>RIM_RESERVED_NAMES</code>), followed by a separator or not, answers <code>VALIDATION</code>
+<code>this name is reserved</code>, also when it is written with lookalike letters from another script
+(the Unicode confusable skeleton) or hidden behind invisible characters. A person from another
+server keeps the display name of their profile card, cleaned the same way and cut to 64
+characters; a reserved one is replaced by their username here.</p>
 <p>When the server has terms of service (<code>serverInfo.termsUrl</code> is set), both signups must accept
 them: <code>acceptedTermsUrl</code> in the input carries that URL unchanged. A signup without it, or with
 another URL, answers <code>VALIDATION</code>. The server records the acceptance and its time on the
@@ -369,7 +397,8 @@ needs a session then answers <code>UNAUTHENTICATED</code>.</p>
 makes another member the owner and the caller a moderator, in one step, and answers the
 workspace; both changes are announced with <code>MemberRoleChanged</code>. Only the owner may call it, the
 new owner must be a member and not a guest (<code>NOT_FOUND</code>, <code>VALIDATION</code>), and <code>setMemberRole</code> still
-never grants the owner role.</p>
+never grants the owner role. Under <code>RIM_LIMIT_WORKSPACES_PER_USER</code> a new owner who already owns as
+many workspaces as the cap is refused (<code>VALIDATION</code>).</p>
 <p><code>deleteWorkspace(input: { serverId, confirmName })</code> deletes the workspace for good, with its
 members, channels and conversations, their messages, files, pins and threads, invites, workspace
 state, keybinds, pipelines, macros, plugins, custom emoji and the notification rules scoped to it,
@@ -391,8 +420,8 @@ ends the account works as before, <code>me.deletionScheduledFor</code> holds the
 pending, and on every other user), and <code>cancelAccountDeletion</code> keeps the account; it returns
 whether a deletion was pending. Both mutations need a session and the CSRF header.</p>
 <p>When the grace period ends, the hourly purge removes the account&#39;s sessions, devices, keys,
-memberships, plaintext messages and files, settings and personal automations, and frees its
-username. The user row stays as a tombstone: <code>deleted-</code> and the start of its id as the username,
+memberships, plaintext messages and files, every avatar file it stored, settings and personal
+automations, and frees its username. The user row stays as a tombstone: <code>deleted-</code> and the start of its id as the username,
 &quot;Deleted account&quot; as the display name, no email, password or key. It cannot sign in and is in no
 member list or search result. It stays the author of the account&#39;s encrypted messages, which are
 kept so a conversation&#39;s history does not shift, and of a message others replied to, which shows
@@ -470,7 +499,7 @@ a number above 0, so a private server limits nothing but the batch size.</p>
 </tr>
 <tr>
 <td><code>RIM_RATE_MESSAGES_PER_MIN_PER_USER</code>, <code>RIM_RATE_MESSAGES_BURST</code></td>
-<td>Messages per user per minute, sent, replied, forwarded or encrypted, with a burst defaulting to the per-minute number.</td>
+<td>Messages per user per minute, sent, replied, forwarded, encrypted or edited, with a burst defaulting to the per-minute number. Slow mode does not apply to edits.</td>
 <td><code>RATE_LIMITED</code> with <code>retryAfterSeconds</code> on the mutation</td>
 </tr>
 <tr>
@@ -489,8 +518,10 @@ a number above 0, so a private server limits nothing but the batch size.</p>
 <td>HTTP 400 and <code>{&quot;error&quot;:&quot;batch_too_large&quot;}</code></td>
 </tr>
 </tbody></table></div>
-<p>The client address is the TCP peer, or with <code>RIM_TRUST_FORWARDED_HEADERS=true</code> the client a
-<code>Forwarded</code> or <code>X-Forwarded-For</code> header names. The limits are kept in memory by each server
+<p>The client address is the TCP peer, or with <code>RIM_TRUST_FORWARDED_HEADERS=true</code> the first
+address in <code>X-Forwarded-For</code> (the peer when that header is missing or does not parse).
+<code>Forwarded</code> is never read, so a proxy that replaces <code>X-Forwarded-For</code> but passes <code>Forwarded</code>
+through cannot be used to choose an address. The limits are kept in memory by each server
 process, so a restart forgets them and two processes behind one proxy each allow the full
 amount. <code>/healthz</code>, <code>/readyz</code>, discovery and <code>/s2s/v1/...</code> are outside the per-address limit;
 server-to-server traffic has its own, <code>RIM_S2S_PEER_RATE_PER_MIN</code>.</p>
@@ -509,7 +540,7 @@ naming the cap, such as &quot;this instance allows 5 workspaces per user&quot;.<
 <tbody><tr>
 <td><code>RIM_LIMIT_WORKSPACES_PER_USER</code></td>
 <td><code>workspacesPerUser</code></td>
-<td>Workspaces one user owns.</td>
+<td>Workspaces one user owns, created or handed over to them: <code>transferWorkspaceOwnership</code> to someone at the cap answers <code>VALIDATION</code>.</td>
 </tr>
 <tr>
 <td><code>RIM_LIMIT_MEMBERS_PER_WORKSPACE</code></td>
@@ -519,7 +550,7 @@ naming the cap, such as &quot;this instance allows 5 workspaces per user&quot;.<
 <tr>
 <td><code>RIM_LIMIT_CHANNELS_PER_WORKSPACE</code></td>
 <td><code>channelsPerWorkspace</code></td>
-<td>Channels of a workspace, public and private; a new workspace gets only the default channels the cap allows.</td>
+<td>Unarchived channels of a workspace, public and private; a new workspace gets only the default channels the cap allows. Archiving a channel frees its place, and unarchiving one needs room.</td>
 </tr>
 <tr>
 <td><code>RIM_LIMIT_DEVICES_PER_USER</code></td>
@@ -534,12 +565,12 @@ naming the cap, such as &quot;this instance allows 5 workspaces per user&quot;.<
 <tr>
 <td><code>RIM_LIMIT_MACROS_PER_WORKSPACE</code></td>
 <td><code>macrosPerWorkspace</code></td>
-<td>Macros of a workspace.</td>
+<td>Macros of a workspace. A member who is neither Owner nor Moderator holds at most a fifth of them (at least one, and never more than the 50 everyone may hold). The default workspace has no per-workspace cap, only that share.</td>
 </tr>
 <tr>
 <td><code>RIM_LIMIT_PIPELINES_PER_WORKSPACE</code></td>
 <td><code>pipelinesPerWorkspace</code></td>
-<td>Pipelines of a workspace.</td>
+<td>Pipelines of a workspace, with the same fifth for a member who is neither Owner nor Moderator, and the same exception for the default workspace.</td>
 </tr>
 <tr>
 <td><code>RIM_LIMIT_PLUGINS_PER_WORKSPACE</code></td>
@@ -572,6 +603,10 @@ naming the cap, such as &quot;this instance allows 5 workspaces per user&quot;.<
 <td>Local accounts the instance holds, those waiting out their deletion grace period included; people from other servers held here and purged accounts do not count. At the cap every signup, <code>signupWithInvite</code> and <code>signupWithKey</code> alike and whatever token or proof-of-work it carries, answers <code>REGISTRATION_FULL</code> instead of <code>VALIDATION</code>, and <code>serverInfo.registrationFull</code> is true.</td>
 </tr>
 </tbody></table></div>
+<p>The server&#39;s default workspace, which every account joins, has caps of its own that no
+setting changes: a group there is started with at most 50 people per call and a plaintext one
+holds at most 50 members, and <code>addConversationMembers</code> names at most 50 people per call; past
+either the call answers <code>VALIDATION</code>.</p>
 <p>Devices and DM requests also have a relay quota, <code>RIM_RELAY_DEVICES_PER_USER</code> (default 32) and
 <code>RIM_RELAY_DM_REQUESTS_PER_DAY</code> (default 20). The stricter of the cap and the quota applies,
 and <code>serverInfo.limits</code> reports that number, so <code>devicesPerUser</code> and <code>dmRequestsPerDay</code> are
@@ -579,14 +614,20 @@ never null. A DM request past the daily number stays <code>RATE_LIMITED</code> w
 as the quota answered before.</p>
 <p><code>RIM_PROBATION_HOURS</code> puts new accounts on probation for that many hours after their creation;
 unset or 0 turns it off, and an account older than the setting is judged by its age like any
-other. During probation an account cannot create a workspace or send a DM request to a stranger,
-someone it does not know (a contact who lists it too, or someone either of them accepted a DM
-request from: &quot;Who May Start A DM&quot; in <a href="messaging.html"><code>docs/messaging.md</code></a>) and shares no workspace with, and
-both answer <code>VALIDATION</code> saying when it can, in minutes rounded up (&quot;a new account can create a
-workspace in 42 minutes&quot;). Its messages follow <code>RIM_RATE_PROBATION_MESSAGES_PER_MIN</code>, with a
+other. The instance operator is never on probation: the role (from the default workspace&#39;s owner
+claim with <code>claimGrantsOperator</code>, or <code>rim_server operator grant</code>) is read at each request, so an
+account is out of probation from the moment it holds it. During probation an account cannot
+create a workspace, write a workspace&#39;s shared state, or start a DM with a stranger, in the
+direct space or in a workspace, someone it does not know (a contact who lists it too, or someone
+either of them accepted a DM request from: &quot;Who May Start A DM&quot; in <a href="messaging.html"><code>docs/messaging.md</code></a>) and
+shares no workspace with but the server&#39;s default workspace, which every new account joins
+(<code>serverInfo.defaultWorkspace</code>); an account without a key is known only through a workspace.
+Each answers <code>VALIDATION</code> saying when it can, in minutes rounded up (&quot;a new account can create
+a workspace in 42 minutes&quot;). Its messages follow <code>RIM_RATE_PROBATION_MESSAGES_PER_MIN</code>, with a
 burst of the same size, instead of <code>RIM_RATE_MESSAGES_PER_MIN_PER_USER</code>; unset, the normal rate
-applies. The <code>probationHours</code> of <code>serverInfo.limits</code> reports the setting, null when off, and
-<code>me { probationEndsAt }</code> tells the signed-in caller when theirs ends, null once it has.</p>
+applies. The <code>probationHours</code> of
+<code>serverInfo.limits</code> reports the setting, null when off, and <code>me { probationEndsAt }</code> tells the
+signed-in caller when theirs ends, null once it has and for an instance operator.</p>
 <p>An operator can also block an address or range (<code>rim_server ip block</code>). A blocked address is
 answered 403 with <code>{&quot;error&quot;:&quot;blocked&quot;}</code> and nothing else on every route but <code>/healthz</code>: the API,
 the readiness probe, discovery and <code>/s2s/v1/...</code>. The address is found the same way as for the
@@ -606,8 +647,8 @@ user).</p>
 </tr>
 </thead>
 <tbody><tr>
-<td><code>instanceReports(openOnly: true)</code></td>
-<td><code>abuse-reports list [--open]</code>, oldest first</td>
+<td><code>instanceReports(openOnly: true, after, limit: 100)</code></td>
+<td><code>abuse-reports list [--open] [--after] [--limit]</code>, oldest first, at most 500 a page</td>
 </tr>
 <tr>
 <td><code>instanceResolveReport(id)</code></td>
@@ -643,6 +684,16 @@ null when no account here holds it. Each root needs a session and the mutations 
 header. Anyone but an instance operator gets <code>FORBIDDEN</code>, an app or bot acting for one too.
 Each change writes the same audit line as its command, with the operator&#39;s user id as
 <code>actor_id</code> (<code>cli</code> for the command line).</p>
+<p><code>instanceReports</code> pages from the oldest report: the next page passes the last report&#39;s <code>id</code> as
+<code>after</code>. A user reports a DM request once (<code>reportDmRequest</code> answers <code>CONFLICT</code> the second
+time).</p>
+<p>Reports of messages in the direct space (DMs and groups, where everyone is a guest) reach the
+instance operators, not a workspace&#39;s moderators. An operator handles them with the workspace
+moderation roots and the direct space&#39;s id (<code>relayInfo.directSpaceId</code>): <code>messageReports</code>,
+<code>messageReport</code> (with <code>frankedContent</code>, audited as <code>e2ee.report_viewed</code> with ids only),
+<code>resolveReport</code>, the report&#39;s attachment route and <code>deleteMessage</code> of a message with a verified
+report (<a href="messaging.html"><code>docs/messaging.md</code></a>, &quot;Reports&quot;). Resolving a report starts the 90 days after which its
+verified content is deleted.</p>
 <h2 id="errors">Errors <a class="anchor" href="#errors" aria-label="Link to this section">#</a></h2>
 <h3 id="graphql-error-codes">GraphQL error codes <a class="anchor" href="#graphql-error-codes" aria-label="Link to this section">#</a></h3>
 <p>Every error a resolver returns carries <code>extensions.code</code>. A client branches on the code, never
@@ -785,6 +836,11 @@ JSON body naming the refusal:</p>
 <td>A GraphQL batch over <code>RIM_API_MAX_BATCH</code>.</td>
 </tr>
 <tr>
+<td>413</td>
+<td><code>{&quot;error&quot;:&quot;too_large&quot;,&quot;message&quot;:&quot;...&quot;}</code></td>
+<td>A GraphQL body past its caps (see &quot;GraphQL: <code>POST /api</code>&quot;).</td>
+</tr>
+<tr>
 <td>429</td>
 <td><code>{&quot;error&quot;:&quot;rate_limited&quot;,&quot;retryAfterSeconds&quot;:n}</code>, with <code>Retry-After: n</code></td>
 <td>The client address is over <code>RIM_RATE_REQUESTS_PER_MIN_PER_IP</code>.</td>
@@ -835,7 +891,7 @@ JSON body naming the refusal:</p>
 </tr>
 <tr>
 <td>415</td>
-<td>A file type the route does not take.</td>
+<td>A file type the route does not take, or an avatar whose bytes are not the declared type.</td>
 </tr>
 <tr>
 <td>422</td>
@@ -918,13 +974,13 @@ types from it:</p>
 <pre><code class="language-sh">curl -s http://localhost:8080/api/sdl &gt; ../rim-ui/schema.graphql
 cd ../rim-ui &amp;&amp; npm run codegen</code></pre>
 <p>Enum values appear in <code>SCREAMING_SNAKE</code> and fields in <code>camelCase</code>. The models in <a href="messaging.html"><code>messaging.md</code></a>,
-<a href="search.html"><code>search.md</code></a>, <a href="message-change-feed.html"><code>message-change-feed.md</code></a>, <a href="command_model.html"><code>command_model.md</code></a> and the specs in <a href="https://github.com/rim-platform/rim-server/tree/07d1ed69bb71d59fd9deaaf832132e469fcf91f9/docs/specs"><code>specs/</code></a> explain what
+<a href="search.html"><code>search.md</code></a>, <a href="message-change-feed.html"><code>message-change-feed.md</code></a>, <a href="command_model.html"><code>command_model.md</code></a> and the specs in <a href="https://github.com/rim-platform/rim-server/tree/f7a4101d64c4f50b28a1d438466664710d2b3889/docs/specs"><code>specs/</code></a> explain what
 the fields mean.</p>
 
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/07d1ed69bb71d59fd9deaaf832132e469fcf91f9/docs/api.md">rim-server/docs/api.md</a> at <code>07d1ed6</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/f7a4101d64c4f50b28a1d438466664710d2b3889/docs/api.md">rim-server/docs/api.md</a> at <code>f7a4101</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

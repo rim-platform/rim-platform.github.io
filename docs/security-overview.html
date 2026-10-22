@@ -213,9 +213,9 @@ the file, and the key too while the keyring is unlocked.</li>
 <li><strong>Sandboxed plugins</strong> run in an iframe with <code>allow-scripts</code> only and an opaque origin. They
 cannot reach the RIM session, the CSRF token, device keys, files or other plugins, and a
 per-plugin policy lets them fetch only from the sites their manifest lists and the user allowed
-(<a href="client/web-plugins.html">web plugins</a>, <a href="../specs/web-plugins-v1.html">spec</a>). Other
-channels remain, such as navigation, DNS prefetch and WebRTC, so whatever a plugin is shown is
-available to its author.</li>
+(<a href="client/web-plugins.html">web plugins</a>, <a href="../specs/web-plugins-v1.html">spec</a>). The shell
+removes WebRTC before any plugin code runs. Small one-way channels remain, such as navigation
+and DNS prefetch, so whatever a plugin is shown could still reach its author.</li>
 <li><strong>Plugins that run on the computer</strong> run as the user, with the user&#39;s access to files, the
 network and local credentials. Their permissions govern what the app does for them, not what
 the program can do. Install steps such as <code>npm install</code> run only after a dialog lists each
@@ -368,7 +368,7 @@ is still welcome, especially with an attack the brief does not describe.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/07d1ed69bb71d59fd9deaaf832132e469fcf91f9/docs/security-overview.md">rim-server/docs/security-overview.md</a> at <code>07d1ed6</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/f7a4101d64c4f50b28a1d438466664710d2b3889/docs/security-overview.md">rim-server/docs/security-overview.md</a> at <code>f7a4101</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

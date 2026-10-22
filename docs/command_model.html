@@ -41,6 +41,7 @@
 <li><a href="#command-identity">Command Identity</a></li>
 <li><a href="#command-kinds">Command Kinds</a><ol><li><a href="#built-in-commands">Built-in Commands</a></li><li><a href="#plugin-provided-commands">Plugin-Provided Commands</a></li><li><a href="#integration-provided-commands">Integration-Provided Commands</a></li><li><a href="#user-defined-commands">User-Defined Commands</a></li></ol></li>
 <li><a href="#user-commands-and-macros">User Commands And Macros</a></li>
+<li><a href="#size-limits">Size Limits</a></li>
 <li><a href="#command-contract">Command Contract</a><ol><li><a href="#required-fields">Required Fields</a></li><li><a href="#recommended-fields">Recommended Fields</a></li><li><a href="#confirmation-gate-h1">Confirmation gate (H1)</a></li><li><a href="#timeout-gate-t1">Timeout gate (T1)</a></li></ol></li>
 <li><a href="#arguments">Arguments</a></li>
 <li><a href="#context-model-for-commands">Context Model For Commands</a></li>
@@ -391,6 +392,19 @@ mutating-call cap. Palette and keybind still run them in one step.</p>
 <td><code>member_ids</code> is a JSON array or one comma-separated string</td>
 </tr>
 </tbody></table></div>
+<p>The <code>state.*</code> commands and the GraphQL roots <code>workspaceState</code>, <code>workspaceStateList</code>,
+<code>setWorkspaceState</code> and <code>deleteWorkspaceState</code> follow the same rules. Every member reads the
+workspace scope (<code>scope: server</code>) and reads and writes their own user scope. Writing the
+workspace scope takes a Member, Moderator or Owner who is not timed out and whose account is out
+of probation; a guest gets <code>FORBIDDEN</code>. A Member overwrites and deletes only the keys they
+created and increments any numeric key, so a shared counter takes everyone&#39;s count; Owners and
+Moderators change every key. A Member creates at most 100 workspace-scoped entries per
+workspace, holding at most 1 MiB of values; a workspace holds at most 10,000, a user scope
+1,000, and a value at most 64 KiB. Each user makes at most 60 writes (sets, increments and
+deletes, either scope) a minute in bursts of up to 30, however they reach the service (GraphQL,
+a command, a macro or pipe step, a pipeline); past that a write answers <code>RATE_LIMITED</code> with
+<code>retryAfterSeconds</code>. <code>WorkspaceStateChanged</code> names the key, scope and version
+but not the value, which a client reads again.</p>
 <p>Data the agent sends to its model provider grows with this set: <code>state.get</code> and <code>state.list</code> return
 stored values, including the caller&#39;s own <code>scope: user</code> entries, and nothing redacts secrets kept
 in workspace state. Kept off the AI surface on purpose: <code>chat.edit_message</code>,
@@ -447,12 +461,19 @@ commands in the same shape, enabled or not, sorted by id.</p>
 <li>a <strong>user command</strong> (<code>createUserCommand</code>, id <code>user.&lt;key&gt;</code>) is a command: it is listed with the
 others, so it shows in the palette and a keybind can name it; its steps run in order, each
 with its own arguments, in the context the user command runs in</li>
-<li>a <strong>macro</strong> (<code>createMacro</code>, <code>MacroDef</code>) is a list of up to 20 steps, each a command id with its
-own arguments; it is not in the command registry, so the palette does not list it and no
-keybind names it. It runs through <code>executeMacro</code> (from Settings or <code>/macro</code> in the client),
+<li>a <strong>macro</strong> (<code>createMacro</code>, <code>MacroDef</code>) is a list of up to 20 steps, each a builtin command id
+with its own arguments; a step may not name another macro or a user command, so one run
+performs at most 20 builtin steps. It is not in the command registry, so the palette does not
+list it and no keybind names it. It runs through <code>executeMacro</code> (from Settings or <code>/macro</code> in the client),
 its steps in order, each with its own arguments, in the context of the run. <code>commands</code> on the
 <code>AI</code> surface and <code>commandDiscover</code> offer an <code>ai_callable</code> macro to the agent as <code>macro.&lt;id&gt;</code></li>
 </ul>
+<p>A user holds at most 50 macros (and 50 pipelines) in a workspace, and one who is neither Owner
+nor Moderator at most a fifth of <code>RIM_LIMIT_MACROS_PER_WORKSPACE</code> (<code>RIM_LIMIT_PIPELINES_PER_WORKSPACE</code>)
+when it is set. In the server&#39;s default workspace, which every account joins, that share is the
+only bound: the per-workspace caps do not apply there, since macros and pipelines belong to
+their author and no account may fill a cap for everyone, and an account in probation creates
+none (<code>VALIDATION</code> saying when it can).</p>
 <p>Neither pipes: each step&#39;s payload is collected under its command id in the result, and no step
 receives another step&#39;s result. Only <code>executeCommand</code> with <code>isPipe</code> (the palette&#39;s <code>|</code>) passes
 one command&#39;s result to the next stage.</p>
@@ -474,6 +495,9 @@ steps runs; a pipe over 100 steps is refused with &quot;a pipe expands to more t
 or with a step naming an unknown or disabled command, or a cycle) and lists the rest. A
 disabled user command does not run: <code>executeCommand</code> answers <code>NOT_FOUND</code> for it, as for an id
 that names no command.</p>
+<p><code>createMacro</code> and <code>updateMacro</code> refuse a step naming a user command with a <code>VALIDATION</code> error,
+&quot;macro steps must not reference user commands&quot;; <code>executeMacro</code> refuses a stored macro with such
+a step the same way, before any of its steps runs.</p>
 <p>A macro run asks for one confirmation up front when the macro&#39;s own <code>sensitivity</code> is
 <code>Restricted</code> or when any step needs one under the confirmation gate below, judged with the
 run&#39;s initiator: a dangerous step, a <code>Restricted</code> one, or a <code>Mutating</code> one the agent or a plugin
@@ -481,6 +505,50 @@ started. Without a proof <code>executeMacro</code> runs no step and answers <cod
 challenge for the macro, and its <code>message</code> names the reason: the sensitivity tier, the steps,
 or both. The call made again with that proof runs the steps, and the one confirmation covers
 every step of the run that needs one. A macro with no such step runs without a confirmation.</p>
+<h2 id="size-limits">Size Limits <a class="anchor" href="#size-limits" aria-label="Link to this section">#</a></h2>
+<p>Each call and each stored definition has a size limit, so one request costs a bounded amount of
+work, storage and audit log. A request over a limit is refused with a <code>VALIDATION</code> error that
+names it, such as &quot;command arguments may be at most 65536 bytes&quot;.</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>What</th>
+<th>Limit</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>executeCommand</code> <code>args</code>, serialized as JSON</td>
+<td>65,536 bytes, room for the longest message <code>chat.post_message</code> takes</td>
+</tr>
+<tr>
+<td><code>executeCommand</code> <code>commandId</code></td>
+<td>256 bytes; a pipe expression (<code>isPipe</code>) 4,096 bytes</td>
+</tr>
+<tr>
+<td>User command (<code>createUserCommand</code>, <code>updateUserCommand</code>)</td>
+<td>id 256 bytes, title 128 characters, description 1,000 characters, each step&#39;s id 256 bytes and <code>args</code> 4,096 bytes</td>
+</tr>
+<tr>
+<td>Macro (<code>createMacro</code>, <code>updateMacro</code>)</td>
+<td>description and <code>nlDescription</code> 1,000 characters each, up to 10 <code>intentSamples</code> of 200 characters, each step&#39;s id 256 bytes and <code>args</code> 4,096 bytes</td>
+</tr>
+<tr>
+<td>Pipeline (<code>createPipeline</code>, <code>updatePipeline</code>)</td>
+<td>description 1,000 characters, up to 5 filter conditions, a <code>MessageContains</code> pattern of 256 characters, up to 10 actions, each action&#39;s id 256 bytes and <code>args</code> 4,096 bytes</td>
+</tr>
+</tbody></table></div>
+<p>Too large calls are refused before they run, so they write no audit row. The audit log keeps a
+call&#39;s redacted arguments when they serialize to 4,096 bytes or less; larger arguments are kept
+as <code>{&quot;truncated&quot;: true, &quot;bytes&quot;: &lt;size&gt;, &quot;prefix&quot;: &lt;the first 1,024 bytes of the redacted JSON&gt;}</code>.</p>
+<p>A pipeline action may not name a user command or a macro: each action runs as its own command
+call with its own budget of 100 builtin steps, and a pipeline fires on events other people cause.
+<code>createPipeline</code> and <code>updatePipeline</code> refuse such an action with &quot;pipeline actions must not
+reference user commands or macros&quot;. A pipeline saved before these limits runs at most its first
+10 actions and skips an action naming a user command or a macro.</p>
+<p>The server keeps at most 32 unanswered confirmation challenges per user; issuing one more drops
+that user&#39;s challenge closest to expiry, which then answers <code>CONFIRMATION_STALE</code>. A pipeline&#39;s
+action that needs a confirmation issues a challenge nobody answers, and this keeps such
+challenges from piling up.</p>
 <h2 id="command-contract">Command Contract <a class="anchor" href="#command-contract" aria-label="Link to this section">#</a></h2>
 <p>Each command should expose the following metadata.</p>
 <h3 id="required-fields">Required Fields <a class="anchor" href="#required-fields" aria-label="Link to this section">#</a></h3>
@@ -698,9 +766,12 @@ required capabilities passes the capability gate; a user command needs the role 
 needs. The role a builtin needs is the one the service behind it enforces: the Owner for
 <code>admin.invite_member</code>; an Owner or Moderator for <code>admin.kick</code>, <code>admin.ban</code>, <code>admin.unban</code>,
 <code>admin.timeout</code>, <code>admin.set_role</code>, <code>chat.set_slow_mode</code>, <code>chat.archive_channel</code> and
-<code>chat.unarchive_channel</code>; a member (not a guest) for <code>chat.create_channel</code>; a member, or a guest
-in the direct space, for <code>chat.create_group</code>, <code>chat.join_channel</code> and
-<code>chat.invite_to_conversation</code>; any member, guests included, for the rest. The commands the client
+<code>chat.unarchive_channel</code>; a member (not a guest) for <code>chat.create_channel</code>, <code>chat.create_group</code>
+and <code>chat.invite_to_conversation</code>; a member, or a guest in the direct space, for
+<code>chat.join_channel</code>; any member, guests included, for the rest. In the direct space, where
+everyone is a guest, a group is started and people are invited through <code>createConversation</code> and
+<code>addConversationMembers</code>, which apply the DM-request checks (the daily cap on requests to
+strangers and the probation of new accounts) that the commands do not. The commands the client
 runs itself (<code>desktop_local</code>) need no workspace and are listed to every signed-in caller, with a
 workspace or without. Naming the direct space makes the caller a guest of it, as other reads
 there do. A listed command can still be refused for its arguments, a confirmation it needs, or a
@@ -775,7 +846,7 @@ it later.</li>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/07d1ed69bb71d59fd9deaaf832132e469fcf91f9/docs/command_model.md">rim-server/docs/command_model.md</a> at <code>07d1ed6</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/f7a4101d64c4f50b28a1d438466664710d2b3889/docs/command_model.md">rim-server/docs/command_model.md</a> at <code>f7a4101</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

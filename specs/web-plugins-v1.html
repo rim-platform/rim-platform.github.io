@@ -56,7 +56,7 @@
 </details></aside>
     <main id="content" class="prose">
 <h1 id="web-plugins-v1">Web plugins v1</h1>
-<p class="status"><span><b>Web plugins v1</b></span><span>version 1</span><span>status: implemented, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/07d1ed69bb71d59fd9deaaf832132e469fcf91f9/docs/specs/web-plugins-v1.md">rim-server/docs/specs/web-plugins-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/07d1ed69bb71d59fd9deaaf832132e469fcf91f9">07d1ed6</a></span></p>
+<p class="status"><span><b>Web plugins v1</b></span><span>version 1</span><span>status: implemented, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/f7a4101d64c4f50b28a1d438466664710d2b3889/docs/specs/web-plugins-v1.md">rim-server/docs/specs/web-plugins-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/f7a4101d64c4f50b28a1d438466664710d2b3889">f7a4101</a></span></p>
 <p><em>Status: implemented, normative. Extends <a href="plugin-protocol-v1.html"><code>docs/specs/plugin-protocol-v1.md</code></a> (read it first:
 the messages, the handshake, capabilities and the dangerous-command gate are defined there and do
 not change). This document is the contract between the RIM host, on the desktop and on the web,
@@ -740,7 +740,7 @@ the module loaded is not lost.</p>
 <tr>
 <td>Leaking data by other channels</td>
 <td>No</td>
-<td>A frame can navigate itself to any URL (the load rule removes it after the request left); DNS prefetch, WebRTC ICE and timing are outside CSP. Anything shown to a web plugin should be treated as available to its author, which the <code>network.fetch</code> description says.</td>
+<td>A frame can navigate itself to any URL (the load rule removes it after the request left); DNS prefetch and timing are outside CSP; the shell removes WebRTC (rule 2). Anything shown to a web plugin should be treated as available to its author, which the <code>network.fetch</code> description says.</td>
 </tr>
 <tr>
 <td>Passing on its own secret settings</td>
@@ -766,7 +766,10 @@ the module loaded is not lost.</p>
 <p>Rules:</p>
 <ol>
 <li><code>sandbox</code> is exactly <code>allow-scripts</code>.</li>
-<li>The shell appends the per-plugin policy before any plugin byte runs.</li>
+<li>The shell appends the per-plugin policy before any plugin byte runs, and sets
+<code>RTCPeerConnection</code>, <code>webkitRTCPeerConnection</code>, <code>RTCSessionDescription</code>, <code>RTCIceCandidate</code>
+and <code>RTCDataChannel</code> to <code>undefined</code>, non-writable and non-configurable: ICE gathering reaches
+any STUN or TURN server, past <code>connect-src</code>.</li>
 <li>The host never puts the RIM API origin, the web app&#39;s origin, <code>http:</code> or a wildcard into a
 frame&#39;s policy. A manifest whose <code>network_origins</code> names the app&#39;s or the API&#39;s origin is
 refused at install.</li>
@@ -898,7 +901,7 @@ feed), as <code>JSON.stringify</code> does. <a href="workspace-plugins-v1.html">
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/07d1ed69bb71d59fd9deaaf832132e469fcf91f9/docs/specs/web-plugins-v1.md">rim-server/docs/specs/web-plugins-v1.md</a> at <code>07d1ed6</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/f7a4101d64c4f50b28a1d438466664710d2b3889/docs/specs/web-plugins-v1.md">rim-server/docs/specs/web-plugins-v1.md</a> at <code>f7a4101</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

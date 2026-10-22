@@ -61,7 +61,7 @@ offers the plugin; the server is never trusted for the signature. The contract i
 </thead>
 <tbody><tr>
 <td>Statement rules and verification</td>
-<td>desktop: <a href="https://github.com/rim-platform/rim-ui/blob/175c3354b08e863188d4f0bafb62a91f50216668/src-tauri/src/key_identity/plugin_manifest.rs"><code>src-tauri/src/key_identity/plugin_manifest.rs</code></a> (<code>key_identity_verify_plugin_manifest</code>); web: <a href="https://github.com/rim-platform/rim-ui/blob/175c3354b08e863188d4f0bafb62a91f50216668/src/features/key-identity/browser/pluginManifest.ts"><code>src/features/key-identity/browser/pluginManifest.ts</code></a>; both behind <code>verifyPluginManifest</code> in <code>key-identity/api/keyBackend.ts</code></td>
+<td>desktop: <a href="https://github.com/rim-platform/rim-ui/blob/ffde70e2d194fb8a6017a8d9096e431bf6fc1fae/src-tauri/src/key_identity/plugin_manifest.rs"><code>src-tauri/src/key_identity/plugin_manifest.rs</code></a> (<code>key_identity_verify_plugin_manifest</code>); web: <a href="https://github.com/rim-platform/rim-ui/blob/ffde70e2d194fb8a6017a8d9096e431bf6fc1fae/src/features/key-identity/browser/pluginManifest.ts"><code>src/features/key-identity/browser/pluginManifest.ts</code></a>; both behind <code>verifyPluginManifest</code> in <code>key-identity/api/keyBackend.ts</code></td>
 </tr>
 <tr>
 <td>Signing (desktop only, the key never reaches the webview)</td>
@@ -69,7 +69,7 @@ offers the plugin; the server is never trusted for the signature. The contract i
 </tr>
 <tr>
 <td>What a publisher signs: a git checkout&#39;s origin, <code>HEAD</code> and tree hash, or a bundle of the installed folder, or a picked <code>.rimbundle</code>; writing a <code>.rimsig.json</code></td>
-<td><a href="https://github.com/rim-platform/rim-ui/blob/175c3354b08e863188d4f0bafb62a91f50216668/src-tauri/src/plugin_host/registry.rs"><code>src-tauri/src/plugin_host/registry.rs</code></a> (<code>plugin_signing_source</code>, <code>plugin_pick_signing_bundle</code>, <code>plugin_export_signature</code>)</td>
+<td><a href="https://github.com/rim-platform/rim-ui/blob/ffde70e2d194fb8a6017a8d9096e431bf6fc1fae/src-tauri/src/plugin_host/registry.rs"><code>src-tauri/src/plugin_host/registry.rs</code></a> (<code>plugin_signing_source</code>, <code>plugin_pick_signing_bundle</code>, <code>plugin_export_signature</code>)</td>
 </tr>
 <tr>
 <td>Installing a git source at its commit, after checking the tree hash and the manifest</td>
@@ -81,7 +81,7 @@ offers the plugin; the server is never trusted for the signature. The contract i
 </tr>
 <tr>
 <td>The registry API: <code>workspacePlugins</code>, the three mutations, bundle uploads</td>
-<td><a href="https://github.com/rim-platform/rim-ui/blob/175c3354b08e863188d4f0bafb62a91f50216668/src/features/plugins/registry/api.ts"><code>src/features/plugins/registry/api.ts</code></a></td>
+<td><a href="https://github.com/rim-platform/rim-ui/blob/ffde70e2d194fb8a6017a8d9096e431bf6fc1fae/src/features/plugins/registry/api.ts"><code>src/features/plugins/registry/api.ts</code></a></td>
 </tr>
 <tr>
 <td>Verifying an entry (steps 1 to 5)</td>
@@ -113,7 +113,7 @@ offers the plugin; the server is never trusted for the signature. The contract i
 </tr>
 <tr>
 <td>Refetching</td>
-<td><code>WorkspacePluginChanged</code> in <a href="https://github.com/rim-platform/rim-ui/blob/175c3354b08e863188d4f0bafb62a91f50216668/src/core/events/useWorkspaceEvents.ts"><code>src/core/events/useWorkspaceEvents.ts</code></a></td>
+<td><code>WorkspacePluginChanged</code> in <a href="https://github.com/rim-platform/rim-ui/blob/ffde70e2d194fb8a6017a8d9096e431bf6fc1fae/src/core/events/useWorkspaceEvents.ts"><code>src/core/events/useWorkspaceEvents.ts</code></a></td>
 </tr>
 </tbody></table></div>
 <h2 id="verification">Verification <a class="anchor" href="#verification" aria-label="Link to this section">#</a></h2>
@@ -179,10 +179,11 @@ the dialog comes back only for a new statement.</li>
 <li>On workspace open and on <code>WorkspacePluginChanged</code>, each registry install is compared with
 its entry. A verified new statement installs at once when it keeps the runtime kind and the
 publisher, asks for no capability the installed copy did not ask for or the person did not
-approve, and adds no AI-callable command beyond those already there or consented; the
-person sees &quot;Updated Hello Web to 0.2.0&quot; and keeps their approvals. Anything else, or a git
-update that needs post-install steps, waits behind a prompt that shows what is new. A
-failed update keeps the old copy.</li>
+approve, adds no AI-callable command beyond those already there or consented, and, with
+<code>network.fetch</code> approved, lists the same <code>network_origins</code> in any order; the person sees
+&quot;Updated Hello Web to 0.2.0&quot; and keeps their approvals. Anything else, or a git update that
+needs post-install steps, waits behind a prompt that shows what is new. A failed update keeps
+the old copy.</li>
 <li>When an entry disappears, its plugin is stopped and turned off first, then the person
 chooses &quot;Remove&quot; (uninstall and delete its storage) or &quot;Keep&quot; (a local install with no
 registry source and no updates).</li>
@@ -210,7 +211,7 @@ moderator, so the dialog exports a <code>.rimsig.json</code>, which A adds with 
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/175c3354b08e863188d4f0bafb62a91f50216668/docs/workspace-plugins.md">rim-ui/docs/workspace-plugins.md</a> at <code>175c335</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/ffde70e2d194fb8a6017a8d9096e431bf6fc1fae/docs/workspace-plugins.md">rim-ui/docs/workspace-plugins.md</a> at <code>ffde70e</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

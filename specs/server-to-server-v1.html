@@ -64,7 +64,7 @@
 </details></aside>
     <main id="content" class="prose">
 <h1 id="server-to-server-v1">Server-to-server v1</h1>
-<p class="status"><span><b>Server-to-server v1</b></span><span>version 1</span><span>status: implemented, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/07d1ed69bb71d59fd9deaaf832132e469fcf91f9/docs/specs/server-to-server-v1.md">rim-server/docs/specs/server-to-server-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/07d1ed69bb71d59fd9deaaf832132e469fcf91f9">07d1ed6</a></span></p>
+<p class="status"><span><b>Server-to-server v1</b></span><span>version 1</span><span>status: implemented, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/f7a4101d64c4f50b28a1d438466664710d2b3889/docs/specs/server-to-server-v1.md">rim-server/docs/specs/server-to-server-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/f7a4101d64c4f50b28a1d438466664710d2b3889">f7a4101</a></span></p>
 <p><em>Status: implemented, normative. Read <a href="key-identity-v1.html"><code>key-identity-v1.md</code></a>, <a href="device-linking-v1.html"><code>device-linking-v1.md</code></a> and
 <a href="e2ee-mls-v1.html"><code>e2ee-mls-v1.md</code></a> first. This document is the contract between servers and between a server and
 its clients: server identity, the signed HTTP API between servers, relays, hosts, and what the
@@ -389,13 +389,16 @@ resolution; <code>created</code> is covered already).</p>
 <h3 id="verifying-a-request">Verifying a request <a class="anchor" href="#verifying-a-request" aria-label="Link to this section">#</a></h3>
 <p>In order, stopping at the first failure:</p>
 <ol>
-<li>Body at most <code>RIM_S2S_MAX_BODY_BYTES</code> (8 MiB; 32 MiB on <code>/forward/</code>) → <code>413 too_large</code>.</li>
+<li>A declared <code>Content-Length</code> at most <code>RIM_S2S_MAX_BODY_BYTES</code> (8 MiB; 32 MiB on
+<code>/forward/</code>) → <code>413 too_large</code>.</li>
 <li>Exactly the profile&#39;s components and parameters; <code>created ≤ now + 300</code>, <code>expires &gt; now</code>,
 <code>expires − created ≤ 300</code> → <code>401 bad_signature</code>.</li>
 <li>Peer: denied, <code>blocked</code> or <code>forked</code> → <code>403</code>; an unknown id is pinned from <code>Rim-Origin</code> first
 (<code>403 unknown_peer</code> on failure). The host allow-list applies here (&quot;Configuration&quot;).</li>
 <li><code>keyid</code>&#39;s seq is the pinned head, or the previous key in its grace period; a higher seq
-refreshes the pin once. Digest matches; signature verifies (<code>verify_strict</code>) → else <code>401</code>.</li>
+refreshes the pin once. The signature verifies (<code>verify_strict</code>) → else <code>401</code>.</li>
+<li>Only now is the body read, up to the same cap → <code>413 too_large</code>; its digest matches the signed
+<code>Content-Digest</code> → else <code>401</code>.</li>
 <li>Insert <code>(peer, nonce, expires_at = created + 600 s)</code> into <code>s2s_nonce</code>; a conflict is
 <code>409 replay</code>. Expired rows are deleted every minute.</li>
 <li>Rate limits per peer → <code>429</code> with <code>Retry-After</code>.</li>
@@ -650,7 +653,7 @@ delegation):</p>
 </tr>
 <tr>
 <td><code>display_name</code></td>
-<td>The card&#39;s <code>displayName</code>, updated with each newer card</td>
+<td>The card&#39;s <code>displayName</code> without control and format characters but the zero-width joiner and non-joiner, whitespace runs made one space, cut to 64 characters, updated with each newer card; the <code>username</code> when nothing visible is left or the name is reserved here (<code>RIM_RESERVED_NAMES</code>)</td>
 </tr>
 <tr>
 <td><code>password_hash</code>, <code>email</code></td>
@@ -674,8 +677,8 @@ since login and member lookups assume one row per name.</p>
 <code>revokeDeviceKey</code>, <code>rotateIdentityKey</code>, <code>publishProfileCard</code>, <code>logoutOtherSessions</code>, password and
 email mutations, <code>createServer</code> and bot mutations. Identity changes arrive by <code>POST /identity</code> and <code>POST /revocations</code>.</p>
 <p><code>updateMyProfile</code> sets what the host stores per member and the card does not carry: the avatar
-(uploaded with <code>POST /api/files/avatar</code> on the forward path, then named by <code>avatarUrl</code>), status
-text and bio. A <code>displayName</code> in it is <code>FORBIDDEN</code> (<code>a remote member's display name comes from their profile card</code>); the name changes with the next card the host receives.</p>
+(uploaded with <code>POST /api/files/avatar</code> on the forward path, then named by <code>avatarUrl</code>, which
+takes only the <code>url</code> that upload answered or an empty value), status text and bio. A <code>displayName</code> in it is <code>FORBIDDEN</code> (<code>a remote member's display name comes from their profile card</code>); the name changes with the next card the host receives.</p>
 <h2 id="statements-added-by-this-document">Statements added by this document <a class="anchor" href="#statements-added-by-this-document" aria-label="Link to this section">#</a></h2>
 <p>All follow key-identity&#39;s statement rules, version 2 only. Timestamps are informational, except a
 delegation&#39;s <code>expiresAt</code>, which the host enforces against its own clock.</p>
@@ -795,8 +798,9 @@ or the user is a member of this host&#39;s direct space and the relay&#39;s orig
 (<code>403 not_delegated</code> otherwise). It runs the normal handler (GraphQL, attachment upload and download,
 avatar upload, stored-file download, plugin bundle download) as that user and device, with no session; CSRF does not apply without cookies. Per-IP limiters key on
 <code>relay:&lt;serverId&gt;:&lt;principalId&gt;</code> for forwarded requests. Forwarded GraphQL keeps the host&#39;s own
-<code>/api</code> limits, whatever the relay&#39;s are: a batch over <code>RIM_API_MAX_BATCH</code> is answered
-<code>400 {&quot;error&quot;:&quot;batch_too_large&quot;}</code> and none of it runs, and its mutation fields are charged to a
+<code>/api</code> limits, whatever the relay&#39;s are: a body past the GraphQL body caps of <code>/api</code>
+(<a href="../docs/api.html"><code>docs/api.md</code></a>, &quot;Limits&quot;) is answered <code>413 {&quot;error&quot;:&quot;too_large&quot;}</code>, a batch over
+<code>RIM_API_MAX_BATCH</code> is answered <code>400 {&quot;error&quot;:&quot;batch_too_large&quot;}</code>, and none of either runs, and its mutation fields are charged to a
 <code>RIM_RATE_MUTATIONS_PER_MIN_PER_SESSION</code> budget of the device, so a batch past it answers
 <code>RATE_LIMITED</code> with <code>retryAfterSeconds</code> and nothing in it runs.</p>
 <p>Every forwarded response carries <code>Rim-Host-Response</code> (base64url payload) and <code>Rim-Host-Signature</code>:</p>
@@ -1018,9 +1022,11 @@ path, naming R_A&#39;s members the same way.</li>
 (<code>cipherSuite</code> optional, the preferred suite when absent; <code>conversation.host</code> must be the
 calling peer)
 → <code>{&quot;keyPackages&quot;:[{&quot;deviceId&quot;,&quot;keyPackage&quot;,&quot;keyPackageRef&quot;,&quot;lastResort&quot;}]}</code>, by today&#39;s claim
-rules. A claimer who is not Bob&#39;s contact, was never accepted by him, and shares no workspace R_B
-holds a subscription for, is a <strong>stranger</strong>: last-resort packages only, 20 claims per claimer
-principal per day. R_A stores the packages as claimed <code>mls_key_package</code> rows of Bob&#39;s device rows,
+rules. R_A names the claimer and R_B cannot check that name, so R_B judges the claim by Bob&#39;s
+tie to R_A, not by whom the claimer is: unless Bob accepted a conversation R_A homes or holds
+an active subscription to a workspace R_A hosts, the claimer is a <strong>stranger</strong>: last-resort
+packages only, 20 claims per claimer principal per day. A claimer Bob blocked is refused
+(<code>403</code>). R_A stores the packages as claimed <code>mls_key_package</code> rows of Bob&#39;s device rows,
 so <code>submitMlsCommit</code>&#39;s claim check runs unchanged.</li>
 <li><strong>Invite.</strong> When a remote member is added to a conversation of the direct space (at creation or
 by <code>addConversationMembers</code>), R_A emits <code>DmInvite</code> on the member&#39;s <code>u:</code> stream,
@@ -1407,7 +1413,7 @@ yearly <code>server-key rotate</code> and <code>recover</code> on compromise, da
 drill, quotas and how to change them, monitoring (queue bytes, outbox depth per peer, deliver
 failures, <code>401</code>/<code>409</code>/<code>429</code> rates, PoW signups), incident response for spam waves, a hostile peer, a
 stolen server key and a database leak, and the abuse policy text.</p>
-<p><strong>Compose</strong> (<a href="https://github.com/rim-platform/rim-server/blob/07d1ed69bb71d59fd9deaaf832132e469fcf91f9/deploy/compose.yml"><code>deploy/compose.yml</code></a> with the <a href="https://github.com/rim-platform/rim-server/blob/07d1ed69bb71d59fd9deaaf832132e469fcf91f9/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a> override, and
+<p><strong>Compose</strong> (<a href="https://github.com/rim-platform/rim-server/blob/f7a4101d64c4f50b28a1d438466664710d2b3889/deploy/compose.yml"><code>deploy/compose.yml</code></a> with the <a href="https://github.com/rim-platform/rim-server/blob/f7a4101d64c4f50b28a1d438466664710d2b3889/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a> override, and
 <a href="../docs/deploy/index.html"><code>deploy/README.md</code></a>): rim-server with the <code>RIM_ROLE</code> <code>deploy/.env</code> sets (<code>relay</code>, or <code>both</code> to host
 workspaces too), <code>RIM_PUBLIC_BASE_URL=https://&lt;RIM_DOMAIN&gt;</code>,
 <code>RIM_REGISTRATION_POW_BITS=24</code>, <code>RIM_RELAY_QUEUE_BYTES_PER_USER=67108864</code> and the other quotas
@@ -1652,11 +1658,11 @@ null and <code>origin</code> carries that origin. A peer&#39;s S2S error keeps i
 </tr>
 <tr>
 <td>Accepted conversations</td>
-<td>5,000 per recipient and host; 400 days after the last item delivered</td>
+<td>5,000 per recipient and other host (a relay&#39;s own direct space and workspace DMs not counted); 400 days after the last item delivered</td>
 </tr>
 <tr>
 <td>Stranger claims</td>
-<td>Last-resort packages only; 20 per claimer per day</td>
+<td>Every claim from a host the user accepted no conversation of and holds no subscription at; last-resort packages only; 20 per claimer per day</td>
 </tr>
 <tr>
 <td>Contacts</td>
@@ -1767,7 +1773,7 @@ device keys move to hybrid.</p>
 <td>S5-2</td>
 </tr>
 <tr>
-<td>Visibility rules live in <a href="https://github.com/rim-platform/rim-server/blob/07d1ed69bb71d59fd9deaaf832132e469fcf91f9/rim_api/src/subscription.rs"><code>rim_api/src/subscription.rs</code></a></td>
+<td>Visibility rules live in <a href="https://github.com/rim-platform/rim-server/blob/f7a4101d64c4f50b28a1d438466664710d2b3889/rim_api/src/subscription.rs"><code>rim_api/src/subscription.rs</code></a></td>
 <td>Moved to <code>rim_services</code> for the outbox writer</td>
 <td>S5-2</td>
 </tr>
@@ -1811,7 +1817,7 @@ without gaps or repeats; outbox order per peer; a relay&#39;s backlog counts onl
 acknowledgement, and a run of failures starts once and ends with a success; <code>received_through</code>
 idempotency; items deleted only once every device acked; cascades; each migration up and down,
 and the refusing <code>down</code>s.</li>
-<li><strong>e2e with two servers</strong> (<a href="https://github.com/rim-platform/rim-server/blob/07d1ed69bb71d59fd9deaaf832132e469fcf91f9/rim_api/tests/s2s_e2e.rs"><code>rim_api/tests/s2s_e2e.rs</code></a>, <code>e2e-tests</code>): two Actix servers in one
+<li><strong>e2e with two servers</strong> (<a href="https://github.com/rim-platform/rim-server/blob/f7a4101d64c4f50b28a1d438466664710d2b3889/rim_api/tests/s2s_e2e.rs"><code>rim_api/tests/s2s_e2e.rs</code></a>, <code>e2e-tests</code>): two Actix servers in one
 process with two databases, <code>RIM_S2S_ALLOW_HTTP</code> and <code>RIM_S2S_ALLOW_PRIVATE_ADDRESSES</code>. Flows:
 pinning and rotation; an encrypted DM across relays from creation to edit and read state
 (<code>rim_mls</code> fixtures); a DM request accepted, ignored, blocked; a remote join; channel traffic both
@@ -1939,7 +1945,7 @@ ed25519:waKbDNMuQ460M8gX_H1NKzAMDXF3x4P8hbHoJFPr-pSduvfvQSbXvOcRmK5VcF5F9-sICQmF
 <code>powBits</code> 16: the smallest working counter is 37283, nonce <code>AAAAAAAAkaM</code> (8 bytes big-endian), hash
 <code>00002f63d137749fda27201ccf9d282a4ed846287d49c55fea89a47617e78ed6</code>.</p>
 <h3 id="filled-by-s5-1">Filled by S5-1 <a class="anchor" href="#filled-by-s5-1" aria-label="Link to this section">#</a></h3>
-<p><strong>RFC 9421 appendix B.2.6</strong> through <code>rim_s2s</code> (<a href="https://github.com/rim-platform/rim-server/blob/07d1ed69bb71d59fd9deaaf832132e469fcf91f9/rim_s2s/src/vectors.rs"><code>rim_s2s/src/vectors.rs</code></a>): the RFC&#39;s
+<p><strong>RFC 9421 appendix B.2.6</strong> through <code>rim_s2s</code> (<a href="https://github.com/rim-platform/rim-server/blob/f7a4101d64c4f50b28a1d438466664710d2b3889/rim_s2s/src/vectors.rs"><code>rim_s2s/src/vectors.rs</code></a>): the RFC&#39;s
 <code>test-key-ed25519</code> (seed: the last 32 bytes of its PKCS#8 key), the components <code>&quot;date&quot; &quot;@method&quot; &quot;@path&quot; &quot;@authority&quot; &quot;content-type&quot; &quot;content-length&quot;</code> with <code>created=1618884473</code> and
 <code>keyid=&quot;test-key-ed25519&quot;</code> serialize to the RFC&#39;s <code>Signature-Input</code>, the crate builds the RFC&#39;s
 signature base, and signing it gives the RFC&#39;s
@@ -1977,7 +1983,7 @@ A.1 to A.8 reproduces byte for byte in <code>rim_s2s</code>&#39;s tests; A.8&#39
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/07d1ed69bb71d59fd9deaaf832132e469fcf91f9/docs/specs/server-to-server-v1.md">rim-server/docs/specs/server-to-server-v1.md</a> at <code>07d1ed6</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/f7a4101d64c4f50b28a1d438466664710d2b3889/docs/specs/server-to-server-v1.md">rim-server/docs/specs/server-to-server-v1.md</a> at <code>f7a4101</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

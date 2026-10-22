@@ -55,7 +55,7 @@ not.</li>
 <li>A change the operator has to act on (a new required setting, a migration that rewrites a
 large table, a contract migration, a changed default) starts with <strong>Upgrade:</strong> and says what
 to do. <a href="operations/upgrade.html"><code>docs/operations/upgrade.md</code></a> is how an upgrade runs.</li>
-<li>A change to the GraphQL schema or a spec in <a href="https://github.com/rim-platform/rim-server/tree/07d1ed69bb71d59fd9deaaf832132e469fcf91f9/docs/specs"><code>docs/specs/</code></a> names the type, field or spec.</li>
+<li>A change to the GraphQL schema or a spec in <a href="https://github.com/rim-platform/rim-server/tree/f7a4101d64c4f50b28a1d438466664710d2b3889/docs/specs"><code>docs/specs/</code></a> names the type, field or spec.</li>
 <li>At release time <code>Unreleased</code> becomes <code>## [&lt;version&gt;] - &lt;YYYY-MM-DD&gt;</code> and a new empty
 <code>Unreleased</code> starts above it (<a href="operations/release-checklist.html"><code>docs/operations/release-checklist.md</code></a>).</li>
 </ul>
@@ -82,7 +82,7 @@ start writes a single-use owner claim link to <code>&lt;RIM_DATA_DIR&gt;/owner-c
 that signs up through it creates the workspace as its Owner, optionally becomes an instance
 operator (<code>claimGrantsOperator</code>), and every existing local account joins as a Member. Later
 starts add new channels, topics, the name and the DM policy from the file and delete nothing.
-<a href="https://github.com/rim-platform/rim-server/blob/07d1ed69bb71d59fd9deaaf832132e469fcf91f9/deploy/default-workspace.json"><code>deploy/default-workspace.json</code></a> is the public relay&#39;s workspace; <code>compose.yml</code> mounts it at
+<a href="https://github.com/rim-platform/rim-server/blob/f7a4101d64c4f50b28a1d438466664710d2b3889/deploy/default-workspace.json"><code>deploy/default-workspace.json</code></a> is the public relay&#39;s workspace; <code>compose.yml</code> mounts it at
 <code>/config/default-workspace.json</code>, and <code>RIM_DEFAULT_WORKSPACE_FILE</code> in <code>deploy/.env</code> turns it
 on. The signup through the claim link
 answers the new workspace as <code>serverId</code>, and <code>serverInfo.defaultWorkspace</code> names it from then
@@ -91,7 +91,7 @@ on. &quot;A default workspace&quot; in <a href="self-hosting.html"><code>docs/se
 <li><p><code>RIM_TERMS_FILE</code>: the terms of service as a Markdown file the server serves as a page at
 <code>/api/terms?v=&lt;hash&gt;</code>, which is then <code>serverInfo.termsUrl</code> and the URL every signup accepts.
 A missing, empty or oversized file, a <code>FILL:</code> placeholder in it, or <code>RIM_TERMS_URL</code> set too
-stops the server at boot. <a href="https://github.com/rim-platform/rim-server/blob/07d1ed69bb71d59fd9deaaf832132e469fcf91f9/deploy/terms.md"><code>deploy/terms.md</code></a> holds the public RIM server&#39;s terms and an example
+stops the server at boot. <a href="https://github.com/rim-platform/rim-server/blob/f7a4101d64c4f50b28a1d438466664710d2b3889/deploy/terms.md"><code>deploy/terms.md</code></a> holds the public RIM server&#39;s terms and an example
 for self-hosters; <code>compose.yml</code> mounts it read-only at <code>/config/terms.md</code>.</p>
 </li>
 <li><p><code>RIM_ABUSE_CONTACT</code>: where to report abuse, an email address or an https URL, published as
@@ -106,7 +106,7 @@ age confirmed. The migration adds a nullable <code>user.minimum_age_confirmed</c
 <li><p>&quot;Legal duties of an operator&quot; in <a href="self-hosting.html"><code>docs/self-hosting.md</code></a>.</p>
 </li>
 <li><p><code>RIM_WEB_DOMAIN</code> in <code>deploy/.env</code> serves the web client on a domain of its own with
-<a href="https://github.com/rim-platform/rim-server/blob/07d1ed69bb71d59fd9deaaf832132e469fcf91f9/deploy/Caddyfile"><code>deploy/Caddyfile</code></a>, such as <code>chat.example.org</code> next to <code>RIM_DOMAIN</code>. The client calls the API
+<a href="https://github.com/rim-platform/rim-server/blob/f7a4101d64c4f50b28a1d438466664710d2b3889/deploy/Caddyfile"><code>deploy/Caddyfile</code></a>, such as <code>chat.example.org</code> next to <code>RIM_DOMAIN</code>. The client calls the API
 on that origin; <code>RIM_DOMAIN</code> stays the server&#39;s name for apps, other servers and the discovery
 document, and redirects browsers to the web domain with the path kept, so invite links still
 open the client. The compose file sets <code>RIM_CORS_ALLOWED_ORIGIN</code> to the web domain&#39;s origin
@@ -120,9 +120,9 @@ signatures against the release workflows, takes a backup, sets <code>RIM_VERSION
 document, and rolls back to the version before when they do not answer. <code>--dry-run</code> checks
 the images and prints the rest.</p>
 </li>
-<li><p><a href="https://github.com/rim-platform/rim-server/blob/07d1ed69bb71d59fd9deaaf832132e469fcf91f9/deploy/rim-deploy.sh"><code>deploy/rim-deploy.sh</code></a> with <a href="https://github.com/rim-platform/rim-server/blob/07d1ed69bb71d59fd9deaaf832132e469fcf91f9/deploy/systemd/rim-deploy.service"><code>deploy/systemd/rim-deploy.service</code></a> and <code>rim-deploy.timer</code>, the
+<li><p><a href="https://github.com/rim-platform/rim-server/blob/f7a4101d64c4f50b28a1d438466664710d2b3889/deploy/rim-deploy.sh"><code>deploy/rim-deploy.sh</code></a> with <a href="https://github.com/rim-platform/rim-server/blob/f7a4101d64c4f50b28a1d438466664710d2b3889/deploy/systemd/rim-deploy.service"><code>deploy/systemd/rim-deploy.service</code></a> and <code>rim-deploy.timer</code>, the
 unattended upgrade for a host that runs published images: every five minutes it installs the
-latest published rim-server release that is not a pre-release from the tag&#39;s <a href="https://github.com/rim-platform/rim-server/tree/07d1ed69bb71d59fd9deaaf832132e469fcf91f9/deploy"><code>deploy/</code></a> files
+latest published rim-server release that is not a pre-release from the tag&#39;s <a href="https://github.com/rim-platform/rim-server/tree/f7a4101d64c4f50b28a1d438466664710d2b3889/deploy"><code>deploy/</code></a> files
 and its <code>upgrade.sh</code>, once the version&#39;s signed <code>rim-server</code> image proves an approved release
 run. A <code>HOLD</code> file stops it, a failed version is held back in <code>FAILED</code>,
 and <code>rim-deploy &lt;version&gt;</code> deploys or rolls back by hand. &quot;Unattended upgrades from releases&quot;
@@ -131,7 +131,7 @@ in <a href="deploy/index.html"><code>deploy/README.md</code></a> describes it.</
 <li><p>The backup and upgrade scripts read <code>COMPOSE_FILE</code> from <code>deploy/.env</code> too, so a relay can name
 its compose files there once.</p>
 </li>
-<li><p><a href="https://github.com/rim-platform/rim-server/blob/07d1ed69bb71d59fd9deaaf832132e469fcf91f9/deploy/compose.monitoring-containers.yml"><code>deploy/compose.monitoring-containers.yml</code></a>, an opt-in overlay on top of
+<li><p><a href="https://github.com/rim-platform/rim-server/blob/f7a4101d64c4f50b28a1d438466664710d2b3889/deploy/compose.monitoring-containers.yml"><code>deploy/compose.monitoring-containers.yml</code></a>, an opt-in overlay on top of
 <code>compose.monitoring.yml</code> that adds cAdvisor, so Alloy also sends each compose service&#39;s CPU
 and memory use (job <code>cadvisor</code>). cAdvisor reaches the Docker and containerd sockets only
 through proxies that allow it read-only calls alone; it needs the new <code>DOCKER_GID</code> in
@@ -139,7 +139,7 @@ through proxies that allow it read-only calls alone; it needs the new <code>DOCK
 <code>compose.monitoring-containers-overlay2.yml</code>. &quot;Container metrics&quot; in
 <a href="operations/metrics.html"><code>docs/operations/metrics.md</code></a> describes it.</p>
 </li>
-<li><p><a href="https://github.com/rim-platform/rim-server/blob/07d1ed69bb71d59fd9deaaf832132e469fcf91f9/deploy/compose.monitoring.yml"><code>deploy/compose.monitoring.yml</code></a>, an opt-in overlay that turns on the metrics listener and
+<li><p><a href="https://github.com/rim-platform/rim-server/blob/f7a4101d64c4f50b28a1d438466664710d2b3889/deploy/compose.monitoring.yml"><code>deploy/compose.monitoring.yml</code></a>, an opt-in overlay that turns on the metrics listener and
 adds a Grafana Alloy collector: every 15 seconds it scrapes rim-server&#39;s metrics, probes
 <code>/readyz</code> and reads the host&#39;s metrics, and remote-writes them to Grafana Cloud with the new
 <code>GRAFANA_CLOUD_METRICS_URL</code>, <code>GRAFANA_CLOUD_METRICS_USER</code> and <code>GRAFANA_CLOUD_METRICS_TOKEN</code>
@@ -242,8 +242,11 @@ relay quota, which is what applies. <a href="api.html"><code>docs/api.md</code><
 <li><p>Probation for new accounts: <code>RIM_PROBATION_HOURS</code> (off unless set) keeps an account younger
 than that from creating a workspace or sending a DM request to a stranger, answered
 <code>VALIDATION</code> naming the minutes left, and <code>RIM_RATE_PROBATION_MESSAGES_PER_MIN</code> gives it a
-lower message rate. GraphQL <code>ServerLimits.probationHours</code> reports the setting and
-<code>User.probationEndsAt</code>, read on <code>me</code>, says when the caller&#39;s probation ends.</p>
+lower message rate. A DM in a workspace meets probation as one in the direct space does, and
+sharing only the server&#39;s default workspace does not make someone known to the account; an
+instance operator is never on probation. GraphQL
+<code>ServerLimits.probationHours</code> reports the setting and <code>User.probationEndsAt</code>, read on <code>me</code>,
+says when the caller&#39;s probation ends.</p>
 </li>
 <li><p>GraphQL <code>transferWorkspaceOwnership(input: { serverId, userId })</code> hands a workspace to another
 member, who becomes its one owner while the caller becomes a moderator, and
@@ -319,19 +322,75 @@ expiry, and counts them in <code>rim_sessions_purged_total</code>; until now the
 <li><p><code>RIM_AUDIT_EXPORT_RETENTION_DAYS</code> (1 to 3650): the server deletes the audit export files in
 <code>&lt;RIM_DATA_DIR&gt;/audit-exports/</code> written more than that many days ago, a minute after boot and
 daily, and counts them in <code>rim_audit_exports_deleted_total</code>. Unset keeps every export.
-<a href="https://github.com/rim-platform/rim-server/blob/07d1ed69bb71d59fd9deaaf832132e469fcf91f9/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a> sets it to 90, so on a public relay a command audit row is gone
+<a href="https://github.com/rim-platform/rim-server/blob/f7a4101d64c4f50b28a1d438466664710d2b3889/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a> sets it to 90, so on a public relay a command audit row is gone
 completely after about 180 days.</p>
 </li>
-<li><p><code>RIM_BACKUP_KEEP_DAYS</code> for <a href="https://github.com/rim-platform/rim-server/blob/07d1ed69bb71d59fd9deaaf832132e469fcf91f9/deploy/backup.sh"><code>deploy/backup.sh</code></a>: after a backup that succeeded, the deployment&#39;s
+<li><p><code>RIM_BACKUP_KEEP_DAYS</code> for <a href="https://github.com/rim-platform/rim-server/blob/f7a4101d64c4f50b28a1d438466664710d2b3889/deploy/backup.sh"><code>deploy/backup.sh</code></a>: after a backup that succeeded, the deployment&#39;s
 archives in <code>RIM_BACKUP_DIR</code> older than that many days are deleted. Unset keeps every archive.</p>
 </li>
-<li><p><code>RIM_BACKUP_HEARTBEAT_URL</code> for <a href="https://github.com/rim-platform/rim-server/blob/07d1ed69bb71d59fd9deaaf832132e469fcf91f9/deploy/backup.sh"><code>deploy/backup.sh</code></a>: an https URL it fetches after each backup
+<li><p><code>RIM_BACKUP_HEARTBEAT_URL</code> for <a href="https://github.com/rim-platform/rim-server/blob/f7a4101d64c4f50b28a1d438466664710d2b3889/deploy/backup.sh"><code>deploy/backup.sh</code></a>: an https URL it fetches after each backup
 that succeeded, for a monitor such as healthchecks.io that alerts when a night is missed. A
 failed ping is a warning, not a failed backup.</p>
+</li>
+<li><p>The <code>avatars</code> feature for <code>RIM_FEATURES_DISABLED</code>: while it is off, <code>POST /api/files/avatar</code>
+and <code>GET /api/files/{path}</code> (also when forwarded) answer 403 <code>FEATURE_DISABLED</code>,
+<code>updateMyProfile</code> with an <code>avatarUrl</code> answers <code>FEATURE_DISABLED</code>, and GraphQL <code>User.avatarUrl</code>
+and <code>ServerMember.avatarUrl</code> read as null. Stored avatars are kept. <code>serverInfo.features</code> and
+the discovery document list <code>avatars</code>; a client hides the profile picture upload while it is
+not enabled.</p>
 </li>
 </ul>
 <h3 id="changed">Changed <a class="anchor" href="#changed" aria-label="Link to this section">#</a></h3>
 <ul>
+<li><p>In the server&#39;s default workspace a group is started and grown like a DM with each newcomer:
+<code>createConversation</code> and <code>addConversationMembers</code> (and the <code>chat.create_group</code> and
+<code>chat.invite_to_conversation</code> commands) follow each newcomer&#39;s DM settings, the request
+limits and probation, and a newcomer who takes it as a request holds it in their request
+inbox until they accept it. One call names at most 50 people and a plaintext group holds at
+most 50 members (<code>VALIDATION</code>). There only an Owner or Moderator, or a private channel&#39;s
+creator, adds people to a channel (<code>FORBIDDEN</code>), and <code>@channel</code> and <code>@here</code> notify everyone
+only from an Owner or Moderator; from anyone else they are plain text.</p>
+</li>
+<li><p><strong>Upgrade:</strong> the committed <a href="https://github.com/rim-platform/rim-server/blob/f7a4101d64c4f50b28a1d438466664710d2b3889/deploy/default-workspace.json"><code>deploy/default-workspace.json</code></a> sets <code>&quot;memberDefault&quot;: &quot;REQUESTS&quot;</code>:
+a fellow member&#39;s first DM or group in the default workspace waits in the recipient&#39;s request
+inbox until they accept it. A server running the committed file applies it at its next start;
+set <code>DIRECT</code> in your copy to keep members&#39; DMs direct.</p>
+</li>
+<li><p>Starting a DM or group, or adding someone to a group, is refused (<code>FORBIDDEN</code>) when the
+recipient blocked the caller or the operator blocked the caller&#39;s principal, as when their DM
+settings refuse it. A member added to a group gets its invite from whoever added them, so
+their blocks and DM settings judge that person rather than the group&#39;s creator. A plaintext
+group holds at most 100 members, like an encrypted one (<code>VALIDATION</code>).</p>
+</li>
+<li><p>In the default workspace macros and pipelines meet each member&#39;s share of
+<code>RIM_LIMIT_MACROS_PER_WORKSPACE</code> and <code>RIM_LIMIT_PIPELINES_PER_WORKSPACE</code> but not the
+per-workspace caps, which a handful of accounts could otherwise fill for everyone, and an
+account in probation creates none there (<code>VALIDATION</code>).</p>
+</li>
+<li><p>A channel&#39;s topic is changed by an Owner or Moderator, or by a private channel&#39;s creator, and
+a message someone else pinned in a channel is unpinned by them alone; anyone else gets
+<code>FORBIDDEN</code>. DMs and groups are unchanged.</p>
+</li>
+<li><p>Workspace-scoped workspace state (<code>setWorkspaceState</code>, <code>deleteWorkspaceState</code>, <code>state.set</code>,
+<code>state.incr</code>, <code>state.delete</code> with the <code>SERVER</code> scope) takes a Member, Moderator or Owner who
+is not timed out and whose account is out of probation; a guest gets <code>FORBIDDEN</code>. A Member
+overwrites and deletes only the keys they created (<code>FORBIDDEN</code> otherwise) and increments any
+numeric key; Owners and Moderators change every key. A Member creates at most 100 such
+entries per workspace, holding at most 1 MiB of values (<code>VALIDATION</code>). Each user makes at
+most 60 workspace state writes a minute in bursts of up to 30, through GraphQL, commands,
+macros and pipelines alike (<code>RATE_LIMITED</code>). Every member still reads the workspace scope and
+writes their own user scope. The <code>WorkspaceStateChanged</code> event of <code>workspaceEvents</code> no longer
+carries <code>value</code>; a client reads the entry again.</p>
+</li>
+<li><p>In the default workspace only the Owner and Moderators create channels; a member gets
+<code>FORBIDDEN</code> and still starts DMs and groups. A later start of <code>RIM_DEFAULT_WORKSPACE_FILE</code>
+leaves alone a channel of a file&#39;s name that someone else created, and the log names it.</p>
+</li>
+<li><p><code>RIM_LIMIT_MACROS_PER_WORKSPACE</code> and <code>RIM_LIMIT_PIPELINES_PER_WORKSPACE</code> also bound each
+member: one who is neither Owner nor Moderator holds at most a fifth of the cap (at least
+one), so one member cannot fill it. Kicking or banning a member deletes their macros and
+pipelines in that workspace.</p>
+</li>
 <li><p><strong>Upgrade:</strong> the audit file is now one file per UTC day, <code>audit.&lt;YYYY-MM-DD&gt;.log</code> in the
 directory of <code>RIM_AUDIT_LOG_PATH</code>, and the server deletes the files older than
 <code>RIM_AUDIT_LOG_RETENTION_DAYS</code> (1 to 3650, default 90) daily. A logrotate rule for
@@ -341,10 +400,10 @@ Set <code>RIM_AUDIT_LOG_RETENTION_DAYS</code> in <code>deploy/.env</code> to kee
 <li><p>Every container in the compose files keeps about 100 MB of log per service, in five
 json-file files of 20 MB, instead of one file that grows without end.</p>
 </li>
-<li><p><a href="https://github.com/rim-platform/rim-server/blob/07d1ed69bb71d59fd9deaaf832132e469fcf91f9/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a> sets <code>RIM_AUDIT_RETENTION_DAYS</code> to 90: a public relay exports and
+<li><p><a href="https://github.com/rim-platform/rim-server/blob/f7a4101d64c4f50b28a1d438466664710d2b3889/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a> sets <code>RIM_AUDIT_RETENTION_DAYS</code> to 90: a public relay exports and
 deletes command audit rows after 90 days unless <code>deploy/.env</code> sets another value.</p>
 </li>
-<li><p><strong>Upgrade:</strong> <a href="https://github.com/rim-platform/rim-server/blob/07d1ed69bb71d59fd9deaaf832132e469fcf91f9/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a> no longer sets <code>RIM_ROLE=relay</code> and the Caddyfile
+<li><p><strong>Upgrade:</strong> <a href="https://github.com/rim-platform/rim-server/blob/f7a4101d64c4f50b28a1d438466664710d2b3889/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a> no longer sets <code>RIM_ROLE=relay</code> and the Caddyfile
 itself: set <code>RIM_ROLE</code> (<code>relay</code>, or <code>both</code> to host workspaces) and <code>RIM_CADDYFILE</code>
 (<code>./Caddyfile.relay</code>, or <code>./Caddyfile</code> with the web client and <code>COMPOSE_PROFILES=web</code>) in
 <code>deploy/.env</code>. Without either, every compose command with the overlay stops and names it.
@@ -397,7 +456,7 @@ identity, sign up with a key and link other devices; a browser-held identity is 
 up, the recovery kit is shown after signup or enrollment and its entropy is kept until the
 person confirms they saved it.</p>
 </li>
-<li><p><strong>Upgrade:</strong> <a href="https://github.com/rim-platform/rim-server/blob/07d1ed69bb71d59fd9deaaf832132e469fcf91f9/deploy/compose.yml"><code>deploy/compose.yml</code></a> runs the published images <code>ghcr.io/rim-platform/rim-server</code>
+<li><p><strong>Upgrade:</strong> <a href="https://github.com/rim-platform/rim-server/blob/f7a4101d64c4f50b28a1d438466664710d2b3889/deploy/compose.yml"><code>deploy/compose.yml</code></a> runs the published images <code>ghcr.io/rim-platform/rim-server</code>
 and <code>ghcr.io/rim-platform/rim-web</code> at <code>RIM_VERSION</code> (default <code>latest</code>) instead of building
 them. Set <code>RIM_VERSION</code> in <code>deploy/.env</code> to the release you run, and run <code>pull</code> then <code>up -d</code>
 where you ran <code>up -d --build</code>. Operators who build locally add <code>-f deploy/compose.dev.yml</code> to
@@ -433,38 +492,192 @@ throttle window, and <code>true</code> only when it emitted the event.</p>
 unsoundness advisory fails it like a vulnerability. Each advisory it accepts is listed in
 <code>.cargo/audit.toml</code> with why it does not apply and when the entry comes out.</p>
 </li>
+<li><p>GraphQL <code>updateMyProfile</code> takes as <code>avatarUrl</code> only an empty value or the caller&#39;s own avatar,
+the <code>url</code> that <code>POST /api/files/avatar</code> answered them
+(<code>/api/files/avatars/&lt;their id&gt;/avatar.&lt;png|jpeg|gif|webp&gt;</code>); any other path, another user&#39;s
+avatar included, answers <code>VALIDATION</code>. <code>POST /api/files/avatar</code> answers 415 when the file&#39;s
+bytes do not start with the signature of its declared type.</p>
+</li>
+<li><p>In the server&#39;s default workspace a member who never saved notification settings has the
+default level <code>MENTIONS</code> instead of <code>ALL</code>: a plain message there no longer stores a
+notification and sends <code>NotificationDue</code> to every member, only to those who chose <code>ALL</code> for
+the workspace or the conversation. <code>myNotificationSettings</code> and
+<code>Conversation.effectiveNotificationLevel</code> report it. Saved settings are kept as saved.</p>
+</li>
+<li><p><code>editMessage</code> draws on the message budget (<code>RIM_RATE_MESSAGES_PER_MIN_PER_USER</code>, and the
+probation rate for an account in probation) like a sent message, and answers <code>RATE_LIMITED</code>
+past it.</p>
+</li>
+<li><p>Display names from <code>signupWithInvite</code>, <code>signupWithKey</code> and <code>updateMyProfile</code> are stored
+without control and invisible format characters (zero-width spaces, word joiners, soft
+hyphens, byte order marks, bidirectional overrides and isolates; the zero-width joiner and
+non-joiner stay for emoji sequences and scripts that need them), with whitespace runs made
+one space, and are at most 64 characters after that for every path; the signups took up to
+80 before (<code>SignupWithKeyInput.displayName</code>, <code>signupWithInvite</code>&#39;s <code>displayName</code>).
+<code>RIM_RESERVED_NAMES</code> also refuses a reserved name hidden behind invisible characters or
+written with lookalike letters from another script (<code>Аdmin</code> with a Cyrillic <code>А</code>), and a
+remote person whose profile card names one is shown by their username here instead
+(<a href="../specs/server-to-server-v1.html"><code>docs/specs/server-to-server-v1.md</code></a>, <a href="../specs/key-identity-v1.html"><code>docs/specs/key-identity-v1.md</code></a>).</p>
+</li>
 </ul>
 <h3 id="removed">Removed <a class="anchor" href="#removed" aria-label="Link to this section">#</a></h3>
 <ul>
-<li>The dated records left <a href="https://github.com/rim-platform/rim-server/tree/07d1ed69bb71d59fd9deaaf832132e469fcf91f9/docs"><code>docs/</code></a>: the decision records, the manual test plans and their
+<li>The dated records left <a href="https://github.com/rim-platform/rim-server/tree/f7a4101d64c4f50b28a1d438466664710d2b3889/docs"><code>docs/</code></a>: the decision records, the manual test plans and their
 findings, and the <code>.env</code> history purge runbook. Git history keeps them. The nested resolver
 access reference moved to <a href="security/nested-resolver-access.html"><code>docs/security/nested-resolver-access.md</code></a>.</li>
 </ul>
 <h3 id="fixed">Fixed <a class="anchor" href="#fixed" aria-label="Link to this section">#</a></h3>
 <ul>
-<li><code>RIM_FEATURES_DISABLED</code> and <code>RIM_AUDIT_RETENTION_DAYS</code> set in <code>deploy/.env</code> reach the server:
-<a href="https://github.com/rim-platform/rim-server/blob/07d1ed69bb71d59fd9deaaf832132e469fcf91f9/deploy/compose.yml"><code>deploy/compose.yml</code></a> passes both through like every other setting. Before, the two lines were
+<li><p><code>toggleReaction</code> accepts only a Unicode emoji or a custom emoji&#39;s <code>:name:</code> (a new <code>:name:</code>
+must name one of the workspace&#39;s custom emoji, and is refused while <code>custom_emoji</code> is
+disabled), and a message carries at most 20 different emoji and 10 reactions per user; adding past either answers
+<code>VALIDATION</code>, while joining an existing emoji and removing a reaction still work. Before, any
+text of up to 32 characters showed as a reaction pill and the reaction groups of a message,
+sent to every member on each toggle, grew without bound.</p>
+</li>
+<li><p>A reaction replacing the author&#39;s reaction notification while it is unread and less than 10
+minutes old updates it without another <code>NotificationDue</code>, so adding and removing a reaction
+in a loop no longer makes the author&#39;s client toast and play a sound each time.</p>
+</li>
+<li><p>A message mentions at most 50 distinct users; later <code>&lt;@user&gt;</code> tokens stay plain text. The
+mentions are checked against the conversation&#39;s members and, for a public channel, in one
+query for the rest, instead of one or two queries each.</p>
+</li>
+<li><p>Reports of messages in DMs and groups reach someone: the direct space has no Owner or
+Moderator, so its reports now go to the instance operators. An operator lists, opens and
+resolves them with <code>messageReports</code>, <code>messageReport</code> and <code>resolveReport</code> and the direct
+space&#39;s id (<code>relayInfo.directSpaceId</code>), downloads their attachments and deletes a message with
+a verified report; nobody else can, and an operator gets no other moderation there. Before,
+nobody could read them, and the verified content of an encrypted message stayed stored for
+good because only a resolved report&#39;s content is deleted.</p>
+</li>
+<li><p><code>reportDmRequest</code> files one report per user and request: a second report is <code>CONFLICT</code>
+(&quot;you already reported this request&quot;). A migration deletes the repeated reports already
+stored, keeping the oldest of each, and adds a unique index. GraphQL <code>instanceReports</code>
+returns a page, with <code>after</code> (the last report&#39;s id) and <code>limit</code> (default 100, at most 500),
+and <code>abuse-reports list</code> takes <code>--after</code> and <code>--limit</code>. Before, one account could report the
+same request without end, and every open report came back in one list.</p>
+</li>
+<li><p><code>RIM_LIMIT_WORKSPACES_PER_USER</code> holds when an account creates several workspaces at once, and
+<code>transferWorkspaceOwnership</code> refuses a new owner who already owns as many (<code>VALIDATION</code>).</p>
+</li>
+<li><p><code>RIM_LIMIT_CHANNELS_PER_WORKSPACE</code> counts unarchived channels only, so archiving one frees its
+place; unarchiving a channel needs room under the cap (<code>VALIDATION</code>).</p>
+</li>
+<li><p><code>RIM_FEATURES_DISABLED</code> and <code>RIM_AUDIT_RETENTION_DAYS</code> set in <code>deploy/.env</code> reach the server:
+<a href="https://github.com/rim-platform/rim-server/blob/f7a4101d64c4f50b28a1d438466664710d2b3889/deploy/compose.yml"><code>deploy/compose.yml</code></a> passes both through like every other setting. Before, the two lines were
 commented out in the <code>rim</code> service and a value in <code>.env</code> was silently ignored, so every
-feature stayed on.</li>
-<li>The <code>TypingStarted</code> event of <code>workspaceEvents</code> carries the typing user&#39;s <code>username</code> and
-<code>display_name</code>, so a client can say who is typing.</li>
-<li>A local account&#39;s first use of the direct space, any operation that needs membership there,
-joins it as a guest instead of being refused.</li>
-<li><code>executeCommand</code> refuses a builtin whose required role the caller does not hold in its
+feature stayed on.</p>
+</li>
+<li><p>The <code>TypingStarted</code> event of <code>workspaceEvents</code> carries the typing user&#39;s <code>username</code> and
+<code>display_name</code>, so a client can say who is typing.</p>
+</li>
+<li><p>A local account&#39;s first use of the direct space, any operation that needs membership there,
+joins it as a guest instead of being refused.</p>
+</li>
+<li><p><code>executeCommand</code> refuses a builtin whose required role the caller does not hold in its
 workspace, with <code>FORBIDDEN</code> naming the command, before the service behind it runs; user command
-steps and pipe stages are checked the same way.</li>
-<li>On a server with terms of service, every signup path refuses an account that did not accept
-them, not only the <code>signupWithInvite</code> and <code>signupWithKey</code> resolvers.</li>
-<li><code>addContact</code> refuses the caller&#39;s own principal, and <code>createConversation</code> with <code>remoteMembers</code>
-naming only the caller answers &quot;cannot create DM with yourself&quot; instead of the group message.</li>
-<li><code>executeMacro</code> asks for one confirmation up front when a step needs one under the command
+steps and pipe stages are checked the same way.</p>
+</li>
+<li><p>On a server with terms of service, every signup path refuses an account that did not accept
+them, not only the <code>signupWithInvite</code> and <code>signupWithKey</code> resolvers.</p>
+</li>
+<li><p><code>addContact</code> refuses the caller&#39;s own principal, and <code>createConversation</code> with <code>remoteMembers</code>
+naming only the caller answers &quot;cannot create DM with yourself&quot; instead of the group message.</p>
+</li>
+<li><p><code>executeMacro</code> asks for one confirmation up front when a step needs one under the command
 confirmation gate: a dangerous step such as <code>admin.kick</code>, <code>admin.ban</code>, <code>admin.set_role</code> or
 <code>chat.remove_conversation_member</code>, a <code>Restricted</code> one, or for an agent a <code>Mutating</code> one. That
 confirmation covers every step of the run, so such a macro no longer fails at the step; the
-<code>message</code> of the <code>CONFIRMATION_REQUIRED</code> answer names those steps.</li>
-<li><code>MlsPendingDevice.hasKeyPackage</code> is false for a device whose pending MLS Welcomes leave no
+<code>message</code> of the <code>CONFIRMATION_REQUIRED</code> answer names those steps.</p>
+</li>
+<li><p><code>MlsPendingDevice.hasKeyPackage</code> is false for a device whose pending MLS Welcomes leave no
 room for one more, the devices <code>claimMlsKeyPackages</code> leaves out, so a client no longer waits
-to add a device that no claim serves (<a href="../specs/e2ee-mls-v1.html"><code>docs/specs/e2ee-mls-v1.md</code></a>, &quot;Key packages&quot;).</li>
+to add a device that no claim serves (<a href="../specs/e2ee-mls-v1.html"><code>docs/specs/e2ee-mls-v1.md</code></a>, &quot;Key packages&quot;).</p>
+</li>
+<li><p>A user&#39;s earlier avatar files no longer stay on disk: uploading an avatar deletes the user&#39;s
+avatar files in the other formats, setting <code>avatarUrl</code> deletes all but the one it names,
+clearing it deletes them all, and the account purge deletes every file in the account&#39;s avatar
+directory, whatever its <code>avatarUrl</code> named. The purge no longer deletes the file of another
+user that an account&#39;s <code>avatarUrl</code> pointed at.</p>
+</li>
+<li><p><code>GET /api/files/{path}</code> sends <code>X-Content-Type-Options: nosniff</code> with a stored avatar.</p>
+</li>
+<li><p>With <code>RIM_TRUST_FORWARDED_HEADERS=true</code> the client address is the first entry of
+<code>X-Forwarded-For</code> only. Before, a <code>Forwarded: for=</code> header, which Caddy passes through
+untouched, named it, so any client could choose its address and escape the per-address
+limits, IP blocks and the signup, login and invite limits keyed on it. The Caddyfiles also drop
+<code>Forwarded</code> (<code>header_up -Forwarded</code>); an operator behind another proxy has it replace
+<code>X-Forwarded-For</code> as before and drop <code>Forwarded</code> too (<a href="self-hosting.html"><code>docs/self-hosting.md</code></a>).</p>
+</li>
+<li><p><code>POST /api</code> reads at most 12 MiB of body, holding at most 262,144 of the bytes <code>,</code>, <code>[</code> and <code>{</code>
+and 128 KiB of GraphQL documents, and answers 413 <code>{&quot;error&quot;:&quot;too_large&quot;}</code> past any of them
+before parsing it; requests another server forwards here get the same caps. Before, the whole
+body, up to the proxy&#39;s 32 MiB, was parsed before any check, so a few anonymous requests could
+take gigabytes of memory. <code>/s2s/v1/…</code> checks a request&#39;s signature before it reads the body.</p>
+</li>
+<li><p>A subscription operation selects exactly one root field; one with more answers <code>VALIDATION</code>
+and starts nothing. A WebSocket connection starts at most 10 subscriptions a second, in bursts
+of up to 50, and is closed with <code>1008</code> past that (<a href="api.html"><code>docs/api.md</code></a>, &quot;Subscriptions&quot;). Before,
+aliased root fields started a stream each under one slot of
+<code>RIM_RATE_SUBSCRIPTIONS_PER_CONNECTION</code>.</p>
+</li>
+<li><p>Commands, user commands, macros, pipelines and channel lenses have size limits
+(<a href="command_model.html"><code>docs/command_model.md</code></a>, &quot;Size Limits&quot;), each refused with <code>VALIDATION</code> naming it:
+<code>executeCommand</code> takes <code>args</code> of up to 64 KiB and a command id of 256 bytes (a pipe 4 KiB); a
+stored step&#39;s or action&#39;s <code>args</code> up to 4 KiB; descriptions 1,000 characters; a user command&#39;s
+title 128 characters; a macro&#39;s <code>nlDescription</code> 1,000 characters and up to 10 <code>intentSamples</code>
+of 200; a pipeline up to 10 actions and 5 filter conditions with patterns of 256 characters; a
+lens condition&#39;s strings 256 characters and lists 100 entries, never nested. The audit log
+keeps a call&#39;s redacted <code>args</code> up to 4 KiB and a truncated prefix of larger ones.</p>
+</li>
+<li><p>A macro step or a pipeline action may not name a user command (nor a pipeline action a
+macro): each step ran with its own 100-step budget, so one <code>executeMacro</code> could run 2,000
+builtin steps. <code>createMacro</code>, <code>updateMacro</code>, <code>createPipeline</code> and <code>updatePipeline</code> refuse such a
+step; <code>executeMacro</code> refuses a stored one before any step runs, and a stored pipeline skips the
+action and runs at most its first 10.</p>
+</li>
+<li><p><code>chat.create_group</code> and <code>chat.invite_to_conversation</code> need a member, not a guest, in the
+direct space too, where they skipped the DM-request checks that <code>createConversation</code> and
+<code>addConversationMembers</code> apply; <code>commands</code> no longer lists them to a guest there.</p>
+</li>
+<li><p>Workspace keybinds cannot bind a <code>Mutating</code> or <code>Restricted</code> command or preset a <code>server_id</code>
+other than their own workspace: <code>createKeybind</code> and <code>updateKeybind</code> refuse one, and
+<code>resolvedKeybinds</code> leaves out a stored one (<a href="keybind_model.html"><code>docs/keybind_model.md</code></a>, &quot;Workspace Keybinds&quot;).</p>
+</li>
+<li><p>The server keeps at most 32 unanswered confirmation challenges per user, dropping the one
+closest to expiry, so pipeline actions that need a confirmation no longer pile them up.</p>
+</li>
+<li><p><code>submitMlsCommit</code> limits what one member can store: a Commit that adds no device is at most
+16 KiB plus 2 KiB per device of the group, a member sends at most 32 MiB of Commits to one
+conversation in 24 hours (both <code>VALIDATION</code>), and a user submits at most 30 Commits and
+64 KiB of them a minute, with bursts of 60 and 8 MiB (<code>RATE_LIMITED</code>). Before, two accounts
+could store gigabytes of empty Commits a minute for 90 days and keep a group&#39;s epoch moving
+under its other members (<a href="../specs/e2ee-mls-v1.html"><code>docs/specs/e2ee-mls-v1.md</code></a>, &quot;Limits and audit&quot;).</p>
+</li>
+<li><p>Conversations started on this server no longer count toward the 5,000 accepted conversations a
+recipient holds per host, which bounds what other hosts store; someone here could fill it with
+groups and have every later DM to the recipient refused and hidden. Instead a user starts at
+most 50 new conversations a day in the direct space (<code>VALIDATION</code>; reopening a DM is not
+counted).</p>
+</li>
+<li><p>An account with a principal id but no profile card can no longer start a conversation in the
+direct space, or a workspace DM, with a local user who has a principal id (<code>VALIDATION</code>,
+&quot;publish a profile card before starting a conversation with someone here&quot;). Without a card no
+invite was filed, so such conversations reached the recipient past their DM settings, blocks
+and request limits.</p>
+</li>
+<li><p>A key package claim from another server (<code>POST /s2s/v1/key-packages/claim</code>) counts as known
+only when the user accepted a conversation that server homes or holds an active subscription to
+a workspace it hosts. Before, the claimer the server named was trusted, so any server could
+name someone the user knows, or a member of the default workspace everyone shares, and drain
+their one-time key packages past the 20-a-day stranger limit
+(<a href="../specs/server-to-server-v1.html"><code>docs/specs/server-to-server-v1.md</code></a>).</p>
+</li>
+<li><p>A signup display name of 65 to 80 characters, and a remote profile card&#39;s of 65 to 80, no
+longer fail in the database, whose column holds 64: a signup answers <code>VALIDATION</code> and a
+card&#39;s name is cut to 64 characters.</p>
+</li>
 </ul>
 <h3 id="security">Security <a class="anchor" href="#security" aria-label="Link to this section">#</a></h3>
 <ul>
@@ -685,7 +898,7 @@ is filed again. Before, each accepted conversation was kept for a hundred years 
 to 128 KiB, so a host could fill a relay&#39;s database by inventing conversations
 (<code>server-to-server-v1.md</code> &quot;Outbox and <code>deliver</code>&quot;, &quot;The request inbox&quot;, &quot;Storage&quot;, &quot;Limits and
 audit&quot;).</li>
-<li>Every service of <a href="https://github.com/rim-platform/rim-server/blob/07d1ed69bb71d59fd9deaaf832132e469fcf91f9/deploy/compose.yml"><code>deploy/compose.yml</code></a> drops its capabilities, cannot gain privileges and has
+<li>Every service of <a href="https://github.com/rim-platform/rim-server/blob/f7a4101d64c4f50b28a1d438466664710d2b3889/deploy/compose.yml"><code>deploy/compose.yml</code></a> drops its capabilities, cannot gain privileges and has
 a read-only root filesystem, as the monitoring overlays&#39; services already did. PostgreSQL runs
 as <code>postgres</code> from the start, and Caddy, the only container on the public ports, as <code>nobody</code>
 instead of root, keeping only <code>NET_BIND_SERVICE</code>, which its binary needs to start. A new
@@ -697,7 +910,7 @@ volumes a root Caddy wrote keep working. <code>docker compose cp</code> into a c
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/07d1ed69bb71d59fd9deaaf832132e469fcf91f9/CHANGELOG.md">rim-server/CHANGELOG.md</a> at <code>07d1ed6</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/f7a4101d64c4f50b28a1d438466664710d2b3889/CHANGELOG.md">rim-server/CHANGELOG.md</a> at <code>f7a4101</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

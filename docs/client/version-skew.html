@@ -44,7 +44,7 @@ that field.</p>
 <pre><code class="language-sh">npm run skew:check -- &lt;git ref&gt;   # e.g. v0.3.0, origin/release, HEAD~30
 npm run skew:check                # the most recent v* tag</code></pre>
 <p>It takes <code>schema.graphql</code> as committed at the ref (the SDL exported from the server that the
-client was built against then), collects every <code>gql</code> document under <a href="https://github.com/rim-platform/rim-ui/tree/175c3354b08e863188d4f0bafb62a91f50216668/src"><code>src/</code></a> with its fragments
+client was built against then), collects every <code>gql</code> document under <a href="https://github.com/rim-platform/rim-ui/tree/ffde70e2d194fb8a6017a8d9096e431bf6fc1fae/src"><code>src/</code></a> with its fragments
 resolved the way the client sends it, validates each against that schema with <code>graphql</code>&#39;s
 <code>validate</code>, and prints the operations that fail, grouped by file. It exits 1 when any would be
 refused, 0 when none would, and 2 when it cannot run (no such ref, no <code>schema.graphql</code> there).
@@ -69,7 +69,7 @@ not have at all: a bug today, not skew.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/175c3354b08e863188d4f0bafb62a91f50216668/docs/version-skew.md">rim-ui/docs/version-skew.md</a> at <code>175c335</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/ffde70e2d194fb8a6017a8d9096e431bf6fc1fae/docs/version-skew.md">rim-ui/docs/version-skew.md</a> at <code>ffde70e</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

@@ -59,8 +59,10 @@ each in a few words:</p>
 <ul>
 <li><strong>Sandboxed</strong> (<code>WebSandboxed</code>) runs in a sandboxed frame of the app, in the web app and the
 desktop app alike. It cannot read files, run programs or use the RIM session. It reaches RIM
-only through the permissions it was granted, and the network only at the sites its manifest
-lists, once allowed.</li>
+only through the permissions it was granted, and exchanges data only with the sites its
+manifest lists, once allowed. It has no WebRTC. What it is shown can still leak out in small
+ways, such as a DNS lookup or a request that navigates its frame (which stops the plugin), so
+install a plugin that reads your messages only if you trust its author with them.</li>
 <li><strong>Runs on this computer</strong> (<code>DesktopLocalProcess</code>) is a program the desktop app starts. It runs
 as the user, with the user&#39;s access to files, the network and local credentials such as a
 kubeconfig. Its permissions govern what the app does for it, not what the program can do on
@@ -77,9 +79,9 @@ the plugin marks them so and the user agrees, callable by the AI agent;</li>
 <li>keybind suggestions the user can assign.</li>
 </ul>
 <p>Without the matching permission the app does not show a plugin&#39;s panel, read or post messages
-for it, or show its notifications, and a sandboxed plugin cannot reach any site. A command the
-plugin marks dangerous runs only after the user confirms that run: the AI agent can never
-confirm one, and a plugin&#39;s panel cannot confirm one for its own plugin.</p>
+for it, or show its notifications, and a sandboxed plugin cannot exchange data with any site. A
+command the plugin marks dangerous runs only after the user confirms that run: the AI agent can
+never confirm one, and a plugin&#39;s panel cannot confirm one for its own plugin.</p>
 <h2 id="the-official-plugins">The official plugins <a class="anchor" href="#the-official-plugins" aria-label="Link to this section">#</a></h2>
 <p>The project publishes four plugins, each in its own repository, all at version 0.0.x. Each
 README lists the plugin&#39;s commands and the ways to install it.</p>
@@ -203,11 +205,12 @@ permission prompt; a git source&#39;s install steps ask for consent as above.</l
 </ul>
 <p>On workspace open, and whenever the registry changes, each plugin installed from it is compared
 with its entry. A new version installs on its own, with the notice &quot;Updated &lt;name&gt; to
-&lt;version&gt;&quot;, when it keeps the kind and the publisher, asks for no new permission and adds no
-new command the AI agent can run; the approvals carry over. Anything else waits behind
-<strong>Update &lt;name&gt;?</strong>, which lists what is new: another publisher, another kind, new permissions,
-new commands the AI agent can run, or install steps. <strong>Review update</strong> opens the install
-dialog; <strong>Later</strong> keeps the installed version running. A failed update keeps the old copy.</p>
+&lt;version&gt;&quot;, when it keeps the kind and the publisher, asks for no new permission, adds no
+new command the AI agent can run and, with <code>network.fetch</code> approved, lists the same sites; the
+approvals carry over. Anything else waits behind <strong>Update &lt;name&gt;?</strong>, which lists what is new:
+another publisher, another kind, new permissions, new commands the AI agent can run, other
+sites, or install steps. <strong>Review update</strong> opens the install dialog; <strong>Later</strong> keeps the
+installed version running. A failed update keeps the old copy.</p>
 <p>When an entry leaves the registry, its plugin is stopped and <strong>&lt;name&gt; was removed</strong> offers
 <strong>Remove</strong>, which uninstalls it and deletes its data, or <strong>Keep</strong>, which leaves it installed,
 turned off, as a local plugin that no longer gets updates.</p>
@@ -222,9 +225,10 @@ the new version needs open <strong>Run plugin install scripts?</strong> first, a
 <strong>Cancel</strong> changes nothing. The row then says &quot;Updated to v&lt;version&gt;&quot;, &quot;Already up to date
 (v&lt;version&gt;)&quot;, or why the update failed. A running plugin restarts on the new files.
 Approvals carry over for the permissions the new version still asks for and are dropped for
-those it no longer does; a new permission opens the <strong>Plugin Permissions</strong> dialog, and the
-plugin cannot use it until it is approved. A plugin with commands the AI agent can run asks
-for that consent again in Settings → Plugin AI.</li>
+those it no longer does, and <code>network.fetch</code> is dropped too when the new version lists other
+sites; a new permission, or <code>network.fetch</code> for other sites, opens the <strong>Plugin Permissions</strong>
+dialog, and the plugin cannot use it until it is approved. A plugin with commands the AI
+agent can run asks for that consent again in Settings → Plugin AI.</li>
 <li><strong>From a link.</strong> A link names one bundle by its hash, so it cannot change, and the row says
 &quot;Installed from a link pinned to one bundle: install the new version&#39;s link to update it.&quot;
 Installing that link opens <strong>Replace &lt;name&gt;?</strong>, described under <a href="#installing">Installing</a>.</li>
@@ -300,7 +304,9 @@ plugin&#39;s <strong>⋯</strong> menu. It shows the plugin&#39;s name, version 
 plugin author:&quot;, which is the author&#39;s claim, not the app&#39;s; and what the kind of plugin means:</p>
 <ul>
 <li>Sandboxed: &quot;Runs sandboxed in this app. It cannot read your files, run programs, or use your
-RIM session. It reaches RIM only through the permissions below.&quot;</li>
+RIM session. It reaches RIM only through the permissions below. Without network access it
+cannot exchange data with other sites, but what you show it could still leak out in small
+ways, such as a DNS lookup.&quot;</li>
 <li>Runs on this computer: &quot;Runs as a program on this computer with your account&#39;s access. It is
 not sandboxed: it can read your files and use the network whatever you approve below. Install
 it only if you trust its author.&quot;</li>
@@ -432,7 +438,7 @@ permissions, data, settings and files. To use it again, install it again.</li>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/175c3354b08e863188d4f0bafb62a91f50216668/docs/plugins.md">rim-ui/docs/plugins.md</a> at <code>175c335</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/ffde70e2d194fb8a6017a8d9096e431bf6fc1fae/docs/plugins.md">rim-ui/docs/plugins.md</a> at <code>ffde70e</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

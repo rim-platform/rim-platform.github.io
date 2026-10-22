@@ -236,6 +236,19 @@ with the same steps can be bound instead.</p>
 <li><code>workspace</code> keybinds should be optional shared or team-managed bindings</li>
 </ul>
 <p>This allows teams to establish shared shortcuts without making workspace-level bindings mandatory.</p>
+<p>The workspace&#39;s Owner manages its keybinds, and each member runs them as themselves with one key
+press. So a workspace keybind is limited to commands that change nothing:</p>
+<ul>
+<li><code>createKeybind</code> and <code>updateKeybind</code> refuse a workspace keybind whose command is <code>Mutating</code> or
+<code>Restricted</code>, as the Owner resolves it, with a <code>VALIDATION</code> error naming the command. A
+read-only or navigation command (<code>Safe</code> or <code>Sensitive</code>) can be bound.</li>
+<li>They refuse a workspace keybind whose <code>presetArgs</code> hold a <code>server_id</code> other than the
+keybind&#39;s own workspace.</li>
+<li><code>resolvedKeybinds</code> leaves out a stored workspace keybind that breaks either rule, judged with
+the command as the member asking resolves it, so a binding saved before these rules, or naming
+a user command that changes data for that member, is not offered.</li>
+</ul>
+<p>A <code>user</code> keybind is the member&#39;s own choice and may bind any keybind-capable command.</p>
 <h2 id="multiple-bindings">Multiple Bindings <a class="anchor" href="#multiple-bindings" aria-label="Link to this section">#</a></h2>
 <p>Decision:</p>
 <ul>
@@ -325,7 +338,8 @@ user&#39;s, then the workspace&#39;s, each later layer replacing an earlier bind
 <li>users can create their own keybinds for built-in/plugin/user-defined commands</li>
 <li>dangerous commands still require confirmation by default</li>
 <li>plugins can suggest defaults, but suggestions require approval</li>
-<li>workspace keybinds are optional shared/team-managed bindings</li>
+<li>workspace keybinds are optional shared/team-managed bindings, limited to commands that change
+nothing and to their own workspace</li>
 <li>one command may have multiple keybindings in the same context</li>
 <li>resolved persisted precedence is currently <code>workspace &gt; user</code>, while <code>device_local</code> remains a
 future client-side layer on top of backend-resolved data</li>
@@ -334,7 +348,7 @@ future client-side layer on top of backend-resolved data</li>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/07d1ed69bb71d59fd9deaaf832132e469fcf91f9/docs/keybind_model.md">rim-server/docs/keybind_model.md</a> at <code>07d1ed6</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/f7a4101d64c4f50b28a1d438466664710d2b3889/docs/keybind_model.md">rim-server/docs/keybind_model.md</a> at <code>f7a4101</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>
