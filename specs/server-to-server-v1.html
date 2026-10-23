@@ -64,7 +64,7 @@
 </details></aside>
     <main id="content" class="prose">
 <h1 id="server-to-server-v1">Server-to-server v1</h1>
-<p class="status"><span><b>Server-to-server v1</b></span><span>version 1</span><span>status: implemented, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/e2812f23d55b5bb40c581c59f4ad43ead259cf34/docs/specs/server-to-server-v1.md">rim-server/docs/specs/server-to-server-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/e2812f23d55b5bb40c581c59f4ad43ead259cf34">e2812f2</a></span></p>
+<p class="status"><span><b>Server-to-server v1</b></span><span>version 1</span><span>status: implemented, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/be96e5bcba8dfa93ab7013875d5e96db4d9f4ab5/docs/specs/server-to-server-v1.md">rim-server/docs/specs/server-to-server-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/be96e5bcba8dfa93ab7013875d5e96db4d9f4ab5">be96e5b</a></span></p>
 <p><em>Status: implemented, normative. Read <a href="key-identity-v1.html"><code>key-identity-v1.md</code></a>, <a href="device-linking-v1.html"><code>device-linking-v1.md</code></a> and
 <a href="e2ee-mls-v1.html"><code>e2ee-mls-v1.md</code></a> first. This document is the contract between servers and between a server and
 its clients: server identity, the signed HTTP API between servers, relays, hosts, and what the
@@ -1225,6 +1225,54 @@ subscription; the app loads the space through the forward path. The join carries
 identity (<code>POST /identity</code>) right after the join, as it does for any host holding the person.</li>
 </ol>
 <p>A current member (an earlier join, or an existing local account on H) sends <code>inviteToken: null</code>.</p>
+<p><strong>Through a public link.</strong> A workspace&#39;s public link (<a href="../docs/messaging.html"><code>docs/messaging.md</code></a>, &quot;Public join link and
+join requests&quot;) takes the place of the invite on the same path. The link,
+<code>https://&lt;H's web domain&gt;/join/rim_pjl_…</code>, names H by origin only; the app pins H with
+<code>remoteServer(origin)</code>, which answers H&#39;s server id.</p>
+<ul>
+<li>The token travels in its own field, <code>publicLinkToken</code>, never in <code>inviteToken</code>:
+<code>POST /s2s/v1/join/challenge {&quot;publicLinkToken&quot;}</code> and <code>POST /s2s/v1/join {…, &quot;inviteToken&quot;: null, &quot;publicLinkToken&quot;, &quot;message&quot;}</code>, <code>message</code> being the optional note to the moderators. A
+request naming both is <code>400 bad_request</code>. Both bodies refuse unknown fields, so a host without
+links refuses a link token (<code>400</code>) instead of reading it as an invite, and H never has to tell
+the kinds apart by content. Rejected: one <code>inviteToken</code> field told apart by the <code>rim_pjl_</code>
+prefix (a client or relay that does not know links would send a link where an invite is
+expected, and an old host would answer it as an unknown invite).</li>
+<li>H checks the link with the code of <code>publicJoinLinkPreview</code> and <code>joinByPublicLink</code>: every
+invalid link (unknown, switched off, replaced, its workspace gone) is <code>404 not_found</code> with the
+same message; misses count against the presenting relay&#39;s server id (<code>s2s:&lt;serverId&gt;</code>), 20 in
+ten minutes answering <code>429 rate_limited</code> for an hour. The relay&#39;s address is shared by all its
+people, while its server id is what the request&#39;s signature proves and what an operator
+blocks. A valid link whose <code>allowRemote</code> is off is <code>403 forbidden</code> (&quot;this workspace&#39;s public
+link does not admit accounts from other servers&quot;) and is not a miss. A blocked or denied relay
+gets <code>403 peer_not_allowed</code> before any of this, as for every request.</li>
+<li>The challenge answers <code>workspaceId</code> (the link&#39;s workspace), <code>workspaceName</code> and <code>linkMode</code>
+(<code>direct</code> or <code>requests</code>), the preview the app shows before the person chooses &quot;Join&quot; or &quot;Ask
+to join&quot;. The link is checked, not used.</li>
+<li>At the join H checks the link again before it consumes the challenge: its workspace must be
+the delegation&#39;s (<code>400 bad_request</code> otherwise). After storing the person it runs the checks of
+<code>joinByPublicLink</code> in one transaction: not a member, not banned, room under
+<code>RIM_LIMIT_MEMBERS_PER_WORKSPACE</code>. A current member is joined again as with an invite, and
+their delegation accepted. A local account of H presented by a relay is <code>400 bad_request</code>: it
+uses the link at H directly.</li>
+<li><code>direct</code>: the person joins with the link&#39;s role and public channels, with <code>MemberJoined</code>
+<code>&quot;source&quot;: &quot;public_link&quot;</code>, the link&#39;s join count and the audit row; H accepts the delegation
+and answers as for an invite.</li>
+<li><code>requests</code>: H files a join request for the person, with the limits, message, expiry and
+decline wait of a local one, and records the presenting relay on it. It accepts no delegation
+(the person is not a member) and answers
+<code>{&quot;workspaceId&quot;,&quot;userId&quot;,&quot;role&quot;,&quot;streamHeads&quot;:{},&quot;joinRequest&quot;:{&quot;id&quot;,&quot;expiresAt&quot;}}</code>, <code>role</code>
+being the role the link gives. R records the request (<code>relay_join_request</code>) until <code>expiresAt</code>
+and records no subscription.</li>
+<li>The decision. Accepting adds the person as an invite join does. <code>JoinRequestDecided</code>
+(<code>accepted</code>, <code>declined</code>, or <code>cancelled</code> by a ban) goes on the person&#39;s <code>u:</code> stream to the
+relay recorded on the request, the one outbox recipient a workspace has without a delegation.
+R queues an item naming no conversation for a recipient without a subscription only when it
+is a <code>JoinRequestDecided</code> on their own <code>u:</code> stream for a workspace where it holds their
+recorded request (<code>not_subscribed</code> otherwise), then forgets the request. The app, told
+<code>accepted</code>, joins as a current member (<code>inviteToken: null</code>, no link) with a fresh challenge and
+delegation, and R subscribes. The person cannot withdraw the request through R; it expires
+after 30 days. <code>myJoinRequests</code> on R lists only requests filed at R.</li>
+</ul>
 <h3 id="delegation">Delegation <a class="anchor" href="#delegation" aria-label="Link to this section">#</a></h3>
 <pre><code class="language-json">{&quot;v&quot;:2,&quot;type&quot;:&quot;delegation&quot;,&quot;principalId&quot;:&quot;rimp1_…&quot;,&quot;deviceId&quot;:&quot;&lt;uuid&gt;&quot;,&quot;relay&quot;:&quot;rims1_…&quot;,&quot;relayKeyHash&quot;:&quot;…&quot;,
  &quot;host&quot;:&quot;rims1_…&quot;,&quot;workspaceId&quot;:&quot;&lt;uuid&gt;&quot;,&quot;scope&quot;:&quot;workspace&quot;,&quot;nonce&quot;:&quot;&lt;16 bytes&gt;&quot;,&quot;issuedAt&quot;:&quot;…&quot;,&quot;expiresAt&quot;:&quot;…&quot;}</code></pre>
@@ -1418,7 +1466,7 @@ yearly <code>server-key rotate</code> and <code>recover</code> on compromise, da
 drill, quotas and how to change them, monitoring (queue bytes, outbox depth per peer, deliver
 failures, <code>401</code>/<code>409</code>/<code>429</code> rates, PoW signups), incident response for spam waves, a hostile peer, a
 stolen server key and a database leak, and the abuse policy text.</p>
-<p><strong>Compose</strong> (<a href="https://github.com/rim-platform/rim-server/blob/e2812f23d55b5bb40c581c59f4ad43ead259cf34/deploy/compose.yml"><code>deploy/compose.yml</code></a> with the <a href="https://github.com/rim-platform/rim-server/blob/e2812f23d55b5bb40c581c59f4ad43ead259cf34/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a> override, and
+<p><strong>Compose</strong> (<a href="https://github.com/rim-platform/rim-server/blob/be96e5bcba8dfa93ab7013875d5e96db4d9f4ab5/deploy/compose.yml"><code>deploy/compose.yml</code></a> with the <a href="https://github.com/rim-platform/rim-server/blob/be96e5bcba8dfa93ab7013875d5e96db4d9f4ab5/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a> override, and
 <a href="../docs/deploy/index.html"><code>deploy/README.md</code></a>): rim-server with the <code>RIM_ROLE</code> <code>deploy/.env</code> sets (<code>relay</code>, or <code>both</code> to host
 workspaces too), <code>RIM_PUBLIC_BASE_URL=https://&lt;RIM_DOMAIN&gt;</code>,
 <code>RIM_REGISTRATION_POW_BITS=24</code>, <code>RIM_RELAY_QUEUE_BYTES_PER_USER=67108864</code> and the other quotas
@@ -1549,7 +1597,14 @@ ALTER TABLE &quot;user&quot; ADD COLUMN home_username text, ADD COLUMN home_hand
     ADD CONSTRAINT chk_user_home_handle CHECK ((home_username IS NULL) = (home_handle_domain IS NULL));
 CREATE INDEX idx_user_home_handle ON &quot;user&quot; (home_handle_domain, home_username)
     WHERE home_username IS NOT NULL;
-ALTER TABLE peer_server ADD COLUMN handle_domain text;   -- the checked handleDomain</code></pre>
+ALTER TABLE peer_server ADD COLUMN handle_domain text;   -- the checked handleDomain
+-- add_remote_join_requests (&quot;Through a public link&quot;)
+ALTER TABLE workspace_join_request ADD COLUMN relay_server_id text NULL;  -- host: the filing relay
+CREATE TABLE relay_join_request (user_id uuid NOT NULL REFERENCES &quot;user&quot; ON DELETE CASCADE,
+    host_server_id text NOT NULL, workspace_id uuid NOT NULL, request_id uuid NOT NULL,
+    created_at timestamptz NOT NULL DEFAULT now(), expires_at timestamptz NOT NULL,
+    PRIMARY KEY (user_id, host_server_id, workspace_id));          -- relay: requests filed elsewhere
+CREATE INDEX idx_relay_join_request_expires ON relay_join_request (expires_at);</code></pre>
 <p>A per-minute cleanup (like the key challenge cleanup) deletes expired nonces, <code>device_request_seen</code>
 rows, relay items and orphaned envelopes, expired requests and outbox rows older than 7 days, and
 ends expired delegations. An hourly purge deletes cached identities fetched more than 30 days ago,
@@ -1577,8 +1632,10 @@ type RemoteSubscription { hostServerId: String!  workspaceId: ID!  status: Strin
 enum RevocationFanoutStatus { PENDING  ACKED  GAVE_UP }
 type RevocationFanout { hostServerId: String!  status: RevocationFanoutStatus!  ack: SignedStatement
                         attempts: Int! }
-type RemoteJoinChallenge { challengeId: ID!  nonce: String!  expiresAt: DateTime!  workspaceId: ID }
-type RemoteJoinResult { hostServerId: String!  workspaceId: ID!  userId: ID!  role: String! }
+type RemoteJoinChallenge { challengeId: ID!  nonce: String!  expiresAt: DateTime!  workspaceId: ID
+                           workspaceName: String  publicLinkMode: PublicJoinLinkMode }   # link only
+type RemoteJoinResult { hostServerId: String!  workspaceId: ID!  userId: ID!  role: String!
+                        outcome: JoinByPublicLinkOutcome!  joinRequestId: ID  joinRequestExpiresAt: DateTime }
 type StreamHead { stream: String!  seq: String! }                                    # host; decimal
 type ConversationPredecessor { hostServerId: String!  conversationId: ID! }
 type Conversation { predecessor: ConversationPredecessor }                            # additive field
@@ -1589,7 +1646,8 @@ input CreateConversationInput { remoteMembers: [RemoteMemberInput!]  predecessor
 input SignupWithKeyInput { proofOfWork: String }   # additive field (S5-6)
 enum RegistrationModeGql { POW }                    # additive value (S5-6)
 input JoinRemoteWorkspaceInput { hostServerId: String!  hostOrigin: String!  inviteToken: String
-                                 proof: SignedStatementInput!  delegation: SignedStatementInput! }
+                                 proof: SignedStatementInput!  delegation: SignedStatementInput!
+                                 publicLinkToken: String  message: String }      # the last two additive
 
 type Query {
   relayInfo: RelayInfo!
@@ -1611,7 +1669,8 @@ type Mutation {
   unblockPrincipal(principalId: String!): Boolean!
   reportDmRequest(id: ID!, reason: String!): Boolean!
   ackRelayItems(upTo: ID!): Boolean!
-  remoteJoinChallenge(hostServerId: String!, hostOrigin: String!, inviteToken: String): RemoteJoinChallenge!
+  remoteJoinChallenge(hostServerId: String!, hostOrigin: String!, inviteToken: String,
+                      publicLinkToken: String): RemoteJoinChallenge!
   joinRemoteWorkspace(input: JoinRemoteWorkspaceInput!): RemoteJoinResult!
   renewDelegations(delegations: [SignedStatementInput!]!): [RemoteSubscription!]!
   leaveRelay: Boolean!
@@ -1720,8 +1779,8 @@ queue bytes, S2S responses by status, signature failures by reason.</p>
 </tr>
 <tr>
 <td>Hostile peer</td>
-<td>Send signed junk up to its limits; claim last-resort packages and send DM requests as a stranger, under any name the relay cannot check, up to 1,000 a day per relay</td>
-<td>Impersonate another server (self-certifying id); replay; push events for spaces it does not host (envelopes name their host; relays accept only subscribed spaces); change another principal&#39;s devices, device activity or relays at a host (it does not speak for them, 7.4a); file an invite in the name of someone whose card does not list it, or with a card their key did not sign, so it borrows no contact&#39;s or workspace member&#39;s standing; pass an allow-list</td>
+<td>Send signed junk up to its limits; present people with accounts it made for free through a workspace&#39;s public link, up to the workspace&#39;s member cap, unless the Owner turns <code>allowRemote</code> off or the operator blocks it; claim last-resort packages and send DM requests as a stranger, under any name the relay cannot check, up to 1,000 a day per relay</td>
+<td>Impersonate another server (self-certifying id); replay; push events for spaces it does not host (envelopes name their host; relays accept only subscribed spaces, and a join decision only for a request the user filed there); change another principal&#39;s devices, device activity or relays at a host (it does not speak for them, 7.4a); file an invite in the name of someone whose card does not list it, or with a card their key did not sign, so it borrows no contact&#39;s or workspace member&#39;s standing; pass an allow-list</td>
 </tr>
 <tr>
 <td>Stolen server key</td>
@@ -1778,7 +1837,7 @@ device keys move to hybrid.</p>
 <td>S5-2</td>
 </tr>
 <tr>
-<td>Visibility rules live in <a href="https://github.com/rim-platform/rim-server/blob/e2812f23d55b5bb40c581c59f4ad43ead259cf34/rim_api/src/subscription.rs"><code>rim_api/src/subscription.rs</code></a></td>
+<td>Visibility rules live in <a href="https://github.com/rim-platform/rim-server/blob/be96e5bcba8dfa93ab7013875d5e96db4d9f4ab5/rim_api/src/subscription.rs"><code>rim_api/src/subscription.rs</code></a></td>
 <td>Moved to <code>rim_services</code> for the outbox writer</td>
 <td>S5-2</td>
 </tr>
@@ -1822,7 +1881,7 @@ without gaps or repeats; outbox order per peer; a relay&#39;s backlog counts onl
 acknowledgement, and a run of failures starts once and ends with a success; <code>received_through</code>
 idempotency; items deleted only once every device acked; cascades; each migration up and down,
 and the refusing <code>down</code>s.</li>
-<li><strong>e2e with two servers</strong> (<a href="https://github.com/rim-platform/rim-server/blob/e2812f23d55b5bb40c581c59f4ad43ead259cf34/rim_api/tests/s2s_e2e.rs"><code>rim_api/tests/s2s_e2e.rs</code></a>, <code>e2e-tests</code>): two Actix servers in one
+<li><strong>e2e with two servers</strong> (<a href="https://github.com/rim-platform/rim-server/blob/be96e5bcba8dfa93ab7013875d5e96db4d9f4ab5/rim_api/tests/s2s_e2e.rs"><code>rim_api/tests/s2s_e2e.rs</code></a>, <code>e2e-tests</code>): two Actix servers in one
 process with two databases, <code>RIM_S2S_ALLOW_HTTP</code> and <code>RIM_S2S_ALLOW_PRIVATE_ADDRESSES</code>. Flows:
 pinning and rotation; an encrypted DM across relays from creation to edit and read state
 (<code>rim_mls</code> fixtures); a DM request accepted, ignored, blocked; a remote join; channel traffic both
@@ -1950,7 +2009,7 @@ ed25519:waKbDNMuQ460M8gX_H1NKzAMDXF3x4P8hbHoJFPr-pSduvfvQSbXvOcRmK5VcF5F9-sICQmF
 <code>powBits</code> 16: the smallest working counter is 37283, nonce <code>AAAAAAAAkaM</code> (8 bytes big-endian), hash
 <code>00002f63d137749fda27201ccf9d282a4ed846287d49c55fea89a47617e78ed6</code>.</p>
 <h3 id="filled-by-s5-1">Filled by S5-1 <a class="anchor" href="#filled-by-s5-1" aria-label="Link to this section">#</a></h3>
-<p><strong>RFC 9421 appendix B.2.6</strong> through <code>rim_s2s</code> (<a href="https://github.com/rim-platform/rim-server/blob/e2812f23d55b5bb40c581c59f4ad43ead259cf34/rim_s2s/src/vectors.rs"><code>rim_s2s/src/vectors.rs</code></a>): the RFC&#39;s
+<p><strong>RFC 9421 appendix B.2.6</strong> through <code>rim_s2s</code> (<a href="https://github.com/rim-platform/rim-server/blob/be96e5bcba8dfa93ab7013875d5e96db4d9f4ab5/rim_s2s/src/vectors.rs"><code>rim_s2s/src/vectors.rs</code></a>): the RFC&#39;s
 <code>test-key-ed25519</code> (seed: the last 32 bytes of its PKCS#8 key), the components <code>&quot;date&quot; &quot;@method&quot; &quot;@path&quot; &quot;@authority&quot; &quot;content-type&quot; &quot;content-length&quot;</code> with <code>created=1618884473</code> and
 <code>keyid=&quot;test-key-ed25519&quot;</code> serialize to the RFC&#39;s <code>Signature-Input</code>, the crate builds the RFC&#39;s
 signature base, and signing it gives the RFC&#39;s
@@ -1991,7 +2050,7 @@ having to rejoin; its visibility and <code>w</code>/<code>u:</code> streams matc
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/e2812f23d55b5bb40c581c59f4ad43ead259cf34/docs/specs/server-to-server-v1.md">rim-server/docs/specs/server-to-server-v1.md</a> at <code>e2812f2</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/be96e5bcba8dfa93ab7013875d5e96db4d9f4ab5/docs/specs/server-to-server-v1.md">rim-server/docs/specs/server-to-server-v1.md</a> at <code>be96e5b</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

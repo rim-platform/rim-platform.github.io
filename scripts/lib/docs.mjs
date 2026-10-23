@@ -117,11 +117,18 @@ const GROUPS = [
         items: [
           ["ui", "README.md"],
           ["ui", "docs/keyboard.md"],
+          ["ui", "docs/workspace-moderation.md"],
           ["ui", "docs/updater.md"],
           ["ui", "docs/version-skew.md"],
         ],
       },
-      { title: "Plugins", items: [["ui", "docs/plugins.md"]] },
+      {
+        title: "Plugins",
+        items: [
+          ["ui", "docs/plugins.md"],
+          ["ui", "docs/web-plugin-links.md"],
+        ],
+      },
       {
         title: "Keys and devices",
         items: [

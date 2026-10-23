@@ -369,8 +369,8 @@ subscriptions lapsed. Every 5 seconds it sends revocations due for another attem
 applied from a person&#39;s identity, with the sessions and delegations they ended); <code>host.remote_join</code> and
 <code>host.delegation_accepted</code> are also written to <code>command_audit_log</code> (initiator <code>s2s</code>).</p>
 <h3 id="the-public-relay">The public relay <a class="anchor" href="#the-public-relay" aria-label="Link to this section">#</a></h3>
-<p>A relay anyone may sign up on runs with the settings of <a href="https://github.com/rim-platform/rim-server/blob/e2812f23d55b5bb40c581c59f4ad43ead259cf34/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a> on top of
-<a href="https://github.com/rim-platform/rim-server/blob/e2812f23d55b5bb40c581c59f4ad43ead259cf34/deploy/compose.yml"><code>deploy/compose.yml</code></a>, as <code>RIM_ROLE=relay</code>, or <code>both</code> to host workspaces as well, as the
+<p>A relay anyone may sign up on runs with the settings of <a href="https://github.com/rim-platform/rim-server/blob/be96e5bcba8dfa93ab7013875d5e96db4d9f4ab5/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a> on top of
+<a href="https://github.com/rim-platform/rim-server/blob/be96e5bcba8dfa93ab7013875d5e96db4d9f4ab5/deploy/compose.yml"><code>deploy/compose.yml</code></a>, as <code>RIM_ROLE=relay</code>, or <code>both</code> to host workspaces as well, as the
 project&#39;s relay does. This section says how its registration and blocks behave;
 <a href="operations/relay-public.html"><code>docs/operations/relay-public.md</code></a> has its quotas, the operator&#39;s commands and the abuse policy.</p>
 <p><strong>Registration.</strong> <code>RIM_REGISTRATION_POW_BITS</code> (1 to 40; 24 on the public relay) turns on <code>pow</code>
@@ -472,17 +472,22 @@ to a device.</li>
 reconcile through the host (its change feed and <code>streamHeads(serverId, streams)</code> through the
 forward path).</li>
 <li><code>leaveRelay</code> cancels the caller&#39;s subscriptions at every host, then deletes their queue,
-requests, contacts and blocks on this relay.</li>
+DM requests, the join requests they filed at other hosts, contacts and blocks on this relay.</li>
 </ul>
 <h3 id="joining-a-workspace-on-another-host">Joining a workspace on another host <a class="anchor" href="#joining-a-workspace-on-another-host" aria-label="Link to this section">#</a></h3>
 <ol>
 <li><p>Read the invite link <code>rim-invite:1:&lt;hostServerId&gt;:&lt;hostKeyHash&gt;:&lt;inviteToken&gt;:&lt;hostOrigin&gt;</code>
-and pin the host with <code>remoteServer(origin)</code>.</p>
+and pin the host with <code>remoteServer(origin)</code>. A workspace&#39;s public link,
+<code>https://&lt;host&gt;/join/rim_pjl_…</code>, names the host by its origin only: <code>remoteServer(origin)</code>
+answers its server id, which the app pins.</p>
 </li>
-<li><p><code>remoteJoinChallenge(hostServerId, hostOrigin, inviteToken)</code> returns
-<code>{ challengeId nonce expiresAt workspaceId }</code>: <code>workspaceId</code> is the workspace the invite names
-(the invite is looked up, not used), null without one. Sign a <code>login</code> statement over the
-challenge with <code>audience</code> = the host&#39;s server id.</p>
+<li><p><code>remoteJoinChallenge(hostServerId, hostOrigin, inviteToken, publicLinkToken)</code>, with at most
+one of the two tokens, returns <code>{ challengeId nonce expiresAt workspaceId workspaceName publicLinkMode }</code>: <code>workspaceId</code> is the workspace the invite or link names (looked up, not
+used), null without either; <code>workspaceName</code> and <code>publicLinkMode</code> (<code>DIRECT</code> or <code>REQUESTS</code>) are
+set for a link, so the app can show &quot;Join&quot; or &quot;Ask to join&quot;. Every invalid link answers
+<code>NOT_FOUND</code>; a link that does not admit accounts of other servers, and a host that blocked
+this relay, answer <code>FORBIDDEN</code>. Sign a <code>login</code> statement over the challenge with <code>audience</code> =
+the host&#39;s server id.</p>
 </li>
 <li><p>Sign a delegation with the device key over <code>rim.delegation.v1\0 || payload</code>:</p>
 <pre><code class="language-json">{&quot;v&quot;:2,&quot;type&quot;:&quot;delegation&quot;,&quot;principalId&quot;:&quot;rimp1_…&quot;,&quot;deviceId&quot;:&quot;&lt;uuid&gt;&quot;,&quot;relay&quot;:&quot;&lt;relay server id&gt;&quot;,
@@ -491,10 +496,17 @@ challenge with <code>audience</code> = the host&#39;s server id.</p>
 <p><code>expiresAt</code> is at most 24 hours after <code>issuedAt</code>. <code>relayInfo</code> names the relay; its key hash is
 in the relay&#39;s discovery document.</p>
 </li>
-<li><p><code>joinRemoteWorkspace(input: { hostServerId, hostOrigin, inviteToken, proof, delegation })</code>
-returns <code>{ hostServerId workspaceId userId role }</code>; <code>inviteToken</code> is null for a current member.
-The workspace is then used through <code>/api/remote/&lt;hostServerId&gt;/api</code>, and its events arrive on
-<code>relayStream</code>.</p>
+<li><p><code>joinRemoteWorkspace(input: { hostServerId, hostOrigin, inviteToken, publicLinkToken, message, proof, delegation })</code> returns <code>{ hostServerId workspaceId userId role outcome joinRequestId joinRequestExpiresAt }</code>; both tokens are null for a current member, and
+<code>message</code> is the note to the moderators of a link that takes join requests. With <code>outcome: JOINED</code> the workspace is then used through <code>/api/remote/&lt;hostServerId&gt;/api</code>, and its events
+arrive on <code>relayStream</code>.</p>
+</li>
+<li><p>With <code>outcome: REQUESTED</code> the host filed a join request and the person is not a member yet:
+no subscription exists, and <code>role</code> is the role the link gives. The relay records the request
+until it expires and queues the decision, a <code>JoinRequestDecided</code> item on the person&#39;s <code>u:</code>
+stream with <code>outcome</code> <code>accepted</code>, <code>declined</code> or <code>cancelled</code>, then forgets the request. On
+<code>accepted</code>, sign a fresh challenge and delegation and send <code>joinRemoteWorkspace</code> with no token,
+as a current member. <code>myJoinRequests</code> on the relay does not list requests filed at other
+hosts.</p>
 </li>
 </ol>
 <h3 id="keeping-delegations-fresh">Keeping delegations fresh <a class="anchor" href="#keeping-delegations-fresh" aria-label="Link to this section">#</a></h3>
@@ -528,7 +540,7 @@ mutations are refused on it (<code>FORBIDDEN</code>), as through the relay.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/e2812f23d55b5bb40c581c59f4ad43ead259cf34/docs/relay.md">rim-server/docs/relay.md</a> at <code>e2812f2</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/be96e5bcba8dfa93ab7013875d5e96db4d9f4ab5/docs/relay.md">rim-server/docs/relay.md</a> at <code>be96e5b</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

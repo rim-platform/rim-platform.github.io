@@ -44,7 +44,7 @@
 <li><a href="#pagination">Pagination</a></li>
 <li><a href="#telling-which-server-you-talk-to">Telling which server you talk to</a></li>
 <li><a href="#handles">Handles</a></li>
-<li><a href="#the-full-graphql-reference">The full GraphQL reference</a><ol><li><a href="#profile-picture-refresh">Profile picture refresh</a></li><li><a href="#pinned-plugin-link-fetch">Pinned plugin link fetch</a></li><li><a href="#rejoining-the-default-workspace-and-removal-notices">Rejoining the default workspace and removal notices</a></li></ol></li>
+<li><a href="#the-full-graphql-reference">The full GraphQL reference</a><ol><li><a href="#profile-picture-refresh">Profile picture refresh</a></li><li><a href="#pinned-plugin-link-fetch">Pinned plugin link fetch</a></li><li><a href="#rejoining-the-default-workspace-and-removal-notices">Rejoining the default workspace and removal notices</a></li><li><a href="#public-join-link-and-join-requests">Public join link and join requests</a></li></ol></li>
 </ol>
 </details></aside>
     <main id="content" class="prose">
@@ -268,7 +268,7 @@ server holding that domain&#39;s handles (<a href="../specs/server-to-server-v1.
 <li><code>/healthz</code> answers 200 <code>{&quot;status&quot;:&quot;ok&quot;,&quot;version&quot;:&quot;&lt;version&gt;&quot;}</code> whenever the process serves
 requests.</li>
 <li><code>/readyz</code> answers 200 when every check passes and 503 otherwise, with <code>status</code>, <code>version</code> and
-<code>checks</code>: <code>database</code>, <code>migrations</code>, <code>serverKey</code> and <code>frankingKey</code>, each
+<code>checks</code>: <code>database</code>, <code>migrations</code>, <code>serverKey</code>, <code>frankingKey</code> and <code>linkKey</code>, each
 <code>{&quot;status&quot;:&quot;ok&quot;}</code> or <code>{&quot;status&quot;:&quot;fail&quot;,&quot;reason&quot;:&quot;...&quot;}</code>. A result is reused for one second.</li>
 </ul>
 <h3 id="metrics-metrics">Metrics: <code>/metrics</code> <a class="anchor" href="#metrics-metrics" aria-label="Link to this section">#</a></h3>
@@ -429,7 +429,7 @@ ends the account works as before, <code>me.deletionScheduledFor</code> holds the
 pending, and on every other user), and <code>cancelAccountDeletion</code> keeps the account; it returns
 whether a deletion was pending. Both mutations need a session and the CSRF header.</p>
 <p>When the grace period ends, the hourly purge removes the account&#39;s sessions, devices, keys,
-memberships, plaintext messages and files, every avatar file it stored, settings and personal
+memberships and join requests, plaintext messages and files, every avatar file it stored, settings and personal
 automations, and frees its username. The user row stays as a tombstone: <code>deleted-</code> and the start of its id as the username,
 &quot;Deleted account&quot; as the display name, no email, password or key. It cannot sign in and is in no
 member list or search result. It stays the author of the account&#39;s encrypted messages, which are
@@ -526,6 +526,11 @@ a number above 0, so a private server limits nothing but the batch size.</p>
 <td>GraphQL requests in one batch, default 20, whether sent here or forwarded by another server.</td>
 <td>HTTP 400 and <code>{&quot;error&quot;:&quot;batch_too_large&quot;}</code></td>
 </tr>
+<tr>
+<td>none (fixed)</td>
+<td>Failed public join link lookups and joins (<code>publicJoinLinkPreview</code>, <code>joinByPublicLink</code> with an invalid link) per client address, and those a relay makes for its users (<code>remoteJoinChallenge</code>, <code>joinRemoteWorkspace</code> with a link) per relay server id: 20 within ten minutes cut the address or relay off for an hour. Successful lookups do not count.</td>
+<td><code>RATE_LIMITED</code> with <code>retryAfterSeconds</code> on every link lookup and join from the address or relay, valid links included</td>
+</tr>
 </tbody></table></div>
 <p>The client address is the TCP peer, or with <code>RIM_TRUST_FORWARDED_HEADERS=true</code> the first
 address in <code>X-Forwarded-For</code> (the peer when that header is missing or does not parse).
@@ -554,7 +559,7 @@ naming the cap, such as &quot;this instance allows 5 workspaces per user&quot;.<
 <tr>
 <td><code>RIM_LIMIT_MEMBERS_PER_WORKSPACE</code></td>
 <td><code>membersPerWorkspace</code></td>
-<td>Members of a workspace, by invite or signup; the direct space has none.</td>
+<td>Members of a workspace, by invite, signup or public link (a join request is refused too while the workspace is full); the direct space has none.</td>
 </tr>
 <tr>
 <td><code>RIM_LIMIT_CHANNELS_PER_WORKSPACE</code></td>
@@ -730,7 +735,7 @@ on the message.</p>
 </tr>
 <tr>
 <td><code>NOT_FOUND</code></td>
-<td>The object does not exist, or is hidden from the caller (<a href="messaging.html"><code>messaging.md</code></a> says where).</td>
+<td>The object does not exist, or is hidden from the caller (<a href="messaging.html"><code>messaging.md</code></a> says where). Every invalid public join link answers it with the same message, &quot;not found&quot;.</td>
 <td></td>
 </tr>
 <tr>
@@ -750,7 +755,7 @@ on the message.</p>
 </tr>
 <tr>
 <td><code>INVALID_TOKEN</code></td>
-<td>An invite token is unknown, used up or revoked.</td>
+<td>An invite token is unknown, used up or revoked. A public join link token is never a signup token and answers this too.</td>
 <td></td>
 </tr>
 <tr>
@@ -991,7 +996,7 @@ types from it:</p>
 <pre><code class="language-sh">curl -s http://localhost:8080/api/sdl &gt; ../rim-ui/schema.graphql
 cd ../rim-ui &amp;&amp; npm run codegen</code></pre>
 <p>Enum values appear in <code>SCREAMING_SNAKE</code> and fields in <code>camelCase</code>. The models in <a href="messaging.html"><code>messaging.md</code></a>,
-<a href="search.html"><code>search.md</code></a>, <a href="message-change-feed.html"><code>message-change-feed.md</code></a>, <a href="command_model.html"><code>command_model.md</code></a> and the specs in <a href="https://github.com/rim-platform/rim-server/tree/e2812f23d55b5bb40c581c59f4ad43ead259cf34/docs/specs"><code>specs/</code></a> explain what
+<a href="search.html"><code>search.md</code></a>, <a href="message-change-feed.html"><code>message-change-feed.md</code></a>, <a href="command_model.html"><code>command_model.md</code></a> and the specs in <a href="https://github.com/rim-platform/rim-server/tree/be96e5bcba8dfa93ab7013875d5e96db4d9f4ab5/docs/specs"><code>specs/</code></a> explain what
 the fields mean.</p>
 <h3 id="profile-picture-refresh">Profile picture refresh <a class="anchor" href="#profile-picture-refresh" aria-label="Link to this section">#</a></h3>
 <p>Avatar uploads use <code>avatars/&lt;user id&gt;/avatar-&lt;16 lowercase SHA-256 hex&gt;.&lt;ext&gt;</code>, so changing
@@ -1021,11 +1026,164 @@ message&#39;s workspace; <code>banReason</code> is visible only to workspace mod
 return false/null. <code>ServerMember.banned</code> is false for active directory members, with null
 <code>bannedUntil</code>; banned users have been removed from that directory. MemberLeft carries an
 optional cause and ban end; the moderator&#39;s reason is delivered only to the removed user.</p>
+<h3 id="public-join-link-and-join-requests">Public join link and join requests <a class="anchor" href="#public-join-link-and-join-requests" aria-label="Link to this section">#</a></h3>
+<p>A workspace&#39;s permanent link, <code>&lt;server&gt;/join/&lt;token&gt;</code>, lets accounts of this server join it or
+ask to join, and accounts of other servers too through their own server unless <code>allowRemote</code> is
+off; it never creates an account. The same <code>/join/&lt;token&gt;</code> path carries invite links;
+the token&#39;s prefix tells the kinds apart: <code>rim_pjl_</code> is a public join link (for
+<code>publicJoinLinkPreview</code> and <code>joinByPublicLink</code>), <code>rim_inv_</code> a workspace invite and <code>rim_iinv_</code> an
+instance invite (for <code>previewInviteToken</code> and the signup and join-by-invite roots). <a href="messaging.html"><code>docs/messaging.md</code></a>, &quot;Public join link and join
+requests&quot;, has the rules; this is the surface.</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Root</th>
+<th>Who</th>
+<th>Answers</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>publicJoinLink(serverId): PublicJoinLink!</code></td>
+<td>the Owner</td>
+<td>settings, <code>token</code>, <code>url</code>, <code>joinsLastDay</code>, <code>joinsLastWeek</code>, <code>openRequests</code></td>
+</tr>
+<tr>
+<td><code>updatePublicJoinLink(input: UpdatePublicJoinLinkInput!): PublicJoinLink!</code></td>
+<td>the Owner</td>
+<td><code>enabled</code>, <code>mode</code> (<code>DIRECT</code>, <code>REQUESTS</code>), <code>role</code> (<code>MEMBER</code>, <code>GUEST</code>), <code>allowRemote</code>; omitted fields stay</td>
+</tr>
+<tr>
+<td><code>reissuePublicJoinLink(serverId): PublicJoinLink!</code></td>
+<td>the Owner</td>
+<td>a new token; the old one stops at once</td>
+</tr>
+<tr>
+<td><code>publicJoinLinkPreview(token): PublicJoinLinkPreview!</code></td>
+<td>anyone, no sign-in</td>
+<td><code>serverId</code>, <code>name</code>, <code>mode</code>, <code>viewer</code> (<code>SIGNED_OUT</code>, <code>NOT_MEMBER</code>, <code>MEMBER</code>, <code>BANNED</code>, <code>REQUEST_OPEN</code>), <code>joinRequestId</code></td>
+</tr>
+<tr>
+<td><code>joinByPublicLink(token, message): JoinByPublicLinkPayload!</code></td>
+<td>signed in</td>
+<td><code>outcome</code> (<code>JOINED</code>, <code>REQUESTED</code>), <code>serverId</code>, <code>joinRequest</code></td>
+</tr>
+<tr>
+<td><code>joinRequests(serverId, dir, cursor, limit): JoinRequestPage!</code></td>
+<td>Owner, Moderators</td>
+<td>open requests, newest first; cursor <code>JoinRequestCursorInput {createdAt, requestId}</code></td>
+</tr>
+<tr>
+<td><code>myJoinRequests: [JoinRequest!]!</code></td>
+<td>signed in</td>
+<td>the caller&#39;s open requests</td>
+</tr>
+<tr>
+<td><code>acceptJoinRequest(serverId, requestId): JoinRequest!</code></td>
+<td>Owner, Moderators</td>
+<td>the person joins with the link&#39;s role</td>
+</tr>
+<tr>
+<td><code>declineJoinRequest(serverId, requestId): JoinRequest!</code></td>
+<td>Owner, Moderators</td>
+<td>the person may ask again after 24 hours</td>
+</tr>
+<tr>
+<td><code>withdrawJoinRequest(requestId): JoinRequest!</code></td>
+<td>the person</td>
+<td></td>
+</tr>
+</tbody></table></div>
+<p>Refusals:</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Case</th>
+<th>Code</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Not the Owner (settings, link, new token); not Owner or Moderator (requests)</td>
+<td><code>FORBIDDEN</code></td>
+</tr>
+<tr>
+<td>The direct space or the server&#39;s default workspace; a role other than <code>MEMBER</code> or <code>GUEST</code></td>
+<td><code>VALIDATION</code></td>
+</tr>
+<tr>
+<td>Any invalid link: unknown, switched off, replaced, its workspace deleted</td>
+<td><code>NOT_FOUND</code>, message &quot;not found&quot;</td>
+</tr>
+<tr>
+<td>20 failed lookups or joins from the address in ten minutes (&quot;Limits&quot;)</td>
+<td><code>RATE_LIMITED</code> for an hour</td>
+</tr>
+<tr>
+<td>The caller is banned</td>
+<td><code>FORBIDDEN</code>, &quot;you are banned from this workspace&quot;</td>
+</tr>
+<tr>
+<td>The workspace is at <code>RIM_LIMIT_MEMBERS_PER_WORKSPACE</code></td>
+<td><code>VALIDATION</code>, &quot;this instance allows N members per workspace&quot;</td>
+</tr>
+<tr>
+<td>Already a member; a request already open; a request no longer open</td>
+<td><code>CONFLICT</code></td>
+</tr>
+<tr>
+<td>A message over 500 characters; 20 open requests; declined less than 24 hours ago</td>
+<td><code>VALIDATION</code></td>
+</tr>
+<tr>
+<td>A request of another workspace, or someone else&#39;s (withdraw)</td>
+<td><code>NOT_FOUND</code></td>
+</tr>
+</tbody></table></div>
+<p><code>RIM_LIMIT_WORKSPACES_PER_USER</code> counts owned workspaces and does not refuse a join.
+<code>JoinRequestCreated</code> and <code>JoinRequestDecided</code> reach the workspace&#39;s Owner and Moderators and the
+person, who gets them on the direct-space subscription; <code>MemberJoined</code> carries
+<code>&quot;source&quot;: &quot;public_link&quot;</code> for a join through the link.</p>
+<p><strong>From another server.</strong> An account of another server uses the link through its own server, the
+relay: <code>remoteJoinChallenge(hostServerId, hostOrigin, inviteToken, publicLinkToken)</code> and
+<code>joinRemoteWorkspace(input)</code> with <code>publicLinkToken</code> and an optional <code>message</code>
+(<a href="relay.html"><code>docs/relay.md</code></a>, &quot;Joining a workspace on another host&quot;). The challenge answers the link&#39;s
+<code>workspaceId</code>, <code>workspaceName</code> and <code>publicLinkMode</code>; the join answers <code>outcome</code> (<code>JOINED</code>, or
+<code>REQUESTED</code> with <code>joinRequestId</code> and <code>joinRequestExpiresAt</code>). The host&#39;s checks and refusals are
+the ones above, plus:</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Case</th>
+<th>Code</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>The link&#39;s <code>allowRemote</code> is off</td>
+<td><code>FORBIDDEN</code>, &quot;this workspace&#39;s public link does not admit accounts from other servers&quot;</td>
+</tr>
+<tr>
+<td>The host&#39;s operator blocked the relay</td>
+<td><code>FORBIDDEN</code>, &quot;this server does not accept requests from that server&quot;</td>
+</tr>
+<tr>
+<td>20 invalid links from one relay in ten minutes</td>
+<td><code>RATE_LIMITED</code> for an hour, counted per relay server id</td>
+</tr>
+<tr>
+<td>Both an invite and a link token</td>
+<td><code>VALIDATION</code></td>
+</tr>
+<tr>
+<td>An account of the host presented by a relay elsewhere</td>
+<td><code>VALIDATION</code>: it joins through the link at the host</td>
+</tr>
+</tbody></table></div>
+<p>The decision on a remote person&#39;s request reaches them as a <code>JoinRequestDecided</code> relay item;
+<code>myJoinRequests</code> lists only the requests filed on the server answering it.</p>
 
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/e2812f23d55b5bb40c581c59f4ad43ead259cf34/docs/api.md">rim-server/docs/api.md</a> at <code>e2812f2</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/be96e5bcba8dfa93ab7013875d5e96db4d9f4ab5/docs/api.md">rim-server/docs/api.md</a> at <code>be96e5b</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

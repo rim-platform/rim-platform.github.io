@@ -19,7 +19,7 @@ const GROUPS = [
   {
     title: "Database and data",
     intro: "PostgreSQL, the data directory, uploaded files and the key files. The data directory holds the server's identity: back it up.",
-    names: ["DATABASE_URL", "RIM_DATABASE_MAX_CONNECTIONS", "RIM_DATA_DIR", "RIM_STORAGE_LOCAL_PATH", "RIM_MAX_WORKSPACE_STORAGE_BYTES", "RIM_SERVER_KEY_FILE", "RIM_FRANKING_KEY_FILE"],
+    names: ["DATABASE_URL", "RIM_DATABASE_MAX_CONNECTIONS", "RIM_DATA_DIR", "RIM_STORAGE_LOCAL_PATH", "RIM_MAX_WORKSPACE_STORAGE_BYTES", "RIM_SERVER_KEY_FILE", "RIM_FRANKING_KEY_FILE", "RIM_LINK_KEY_FILE"],
   },
   {
     title: "Signups and sessions",

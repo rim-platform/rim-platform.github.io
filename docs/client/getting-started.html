@@ -146,6 +146,31 @@ have been invited to join &lt;workspace&gt;&quot;; <strong>Join workspace</stron
 of the workspace rail) and then <strong>Join Existing</strong>, takes the invite code: the whole invite link,
 the part of it that starts with <code>rim_inv_</code>, or a whole <code>rim-invite:1:…</code> link for a workspace on
 another server. <strong>Join</strong> opens it.</li>
+<li><strong>Join with a public link.</strong> A workspace can have one permanent link, <code>…/join/rim_pjl_…</code>, that
+its Owner posts on a website or a profile. Opened in a browser, it shows the workspace&#39;s name.
+Signed in, <strong>Join &lt;workspace&gt;</strong> joins it and opens it; on a workspace that asks first,
+<strong>Ask to join</strong> takes an optional <strong>Message</strong> to the moderators (at most 500 characters) and the
+page says &quot;Waiting for the moderators&quot;, with <strong>Withdraw request</strong>. When a moderator decides, the
+app tells you &quot;Your request to join &lt;workspace&gt; was accepted.&quot; (the workspace appears in the
+rail) or &quot;… was declined.&quot; (you can ask again after 24 hours), as your notification settings
+allow. Signed out, the page offers <strong>Sign in</strong> and <strong>Create an account</strong>: the link never
+creates an account, so that is the server&#39;s own signup, and once you are signed in the app
+opens the link again. A member is told &quot;You&#39;re already a member&quot; with <strong>Open workspace</strong>, and
+someone banned there &quot;You are banned from this workspace.&quot; A wrong, old or switched-off link
+says &quot;This link isn&#39;t valid.&quot;, the same in every case; after many of those from one network
+the page says how many minutes to wait. Pasted into <strong>Add workspace</strong>, the link opens the same
+page, and <strong>Add workspace</strong> lists your open requests under <strong>Waiting for approval</strong>, each with
+<strong>Withdraw</strong>.</li>
+<li><strong>Join with a public link of another server.</strong> Your account joins workspaces on other servers
+too: paste their link into <strong>Add workspace</strong>, <strong>Join Existing</strong>, of your own app (the link&#39;s
+page says so under &quot;I have an account on another server&quot;). <strong>Continue</strong> looks the link up
+through your server and shows the workspace&#39;s name; <strong>Join &lt;workspace&gt;</strong> joins and opens it,
+and <strong>Ask to join</strong> sends the request with an optional <strong>Message</strong>, after which the dialog says
+&quot;Waiting for the moderators of &lt;workspace&gt;. You&#39;ll be told when they decide.&quot; The request is
+listed under <strong>Waiting for approval</strong> with its server, without <strong>Withdraw</strong>: it cannot be
+withdrawn from your server and ends after 30 days. Once accepted, the app finishes the join
+and tells you, as for a request on your own server. A workspace whose Owner switched off
+accounts from other servers says so.</li>
 <li><strong>Create one.</strong> <strong>+ Create workspace</strong> on the welcome screen, or <strong>Add workspace</strong>, then <strong>Create
 New</strong>, asks for a name. <strong>Create</strong> opens the new workspace with you as its Owner.</li>
 </ul>
@@ -167,6 +192,19 @@ first: its role, how many of its uses are taken, when it expires and who created
 Active, Expired, Used up or Revoked. <strong>Revoke</strong> on an active invite, after its confirmation,
 stops the link admitting anyone; people who already joined with it stay. <strong>Create invite</strong> there
 opens the same dialog.</p>
+<p>Settings → Workspace → <strong>Public link</strong>, for the Owner only and not in the server&#39;s default
+workspace, sets up the workspace&#39;s permanent link. It lets people who already have an account
+join or ask to join, and never creates an account. <strong>Accounts from other servers can join</strong>, on
+by default, lets people whose account is on another server use the link from their own app;
+off, the link is for accounts of this server only. The first time the switch turns it
+on, the app asks again: &quot;Anyone with this link can join. Post it only where you want it public.&quot;
+The switch only pauses the link: &quot;Turning the link off pauses it. Turning it on again brings back
+the same link.&quot; Off, the link says &quot;This link isn&#39;t valid.&quot;; on again, it works wherever it was
+posted. <strong>Mode</strong> is <strong>Join directly</strong> or <strong>Ask to join</strong>, and <strong>Role</strong> is <strong>Member</strong> or <strong>Guest</strong>.
+While the link is on it shows with a copy button, and a line reads &quot;N joined in the last 24
+hours · M in the last 7 days · K requests waiting&quot;. <strong>Issue a new link</strong>, after the confirmation
+&quot;The current link stops working everywhere you posted it.&quot;, ends the current link at once;
+people who joined with it stay, and open requests stay open.</p>
 <p><strong>Creating a channel.</strong> <strong>New channel</strong> (the <strong>+</strong> beside Channels in the tool panel, or
 <kbd>Ctrl+Shift+C</kbd>) asks for a <strong>Channel name</strong>. The <strong>Private</strong> switch says &quot;Only invited
 members can see this channel. This cannot be changed later.&quot; <strong>Add members (optional)</strong> picks
@@ -341,7 +379,7 @@ default workspace for new accounts.</li>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/022a75f8c72900eb72d349872a48125596d235d2/docs/getting-started.md">rim-ui/docs/getting-started.md</a> at <code>022a75f</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/8aa7733e8b6fe5cfee270b572e4ddaf1ec32c432/docs/getting-started.md">rim-ui/docs/getting-started.md</a> at <code>8aa7733</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

@@ -40,7 +40,7 @@
 <li><a href="#channel-visibility-and-membership">Channel Visibility And Membership</a></li>
 <li><a href="#who-may-start-a-dm">Who May Start A DM</a></li>
 <li><a href="#archived-channels">Archived Channels</a></li>
-<li><a href="#roles-and-moderation">Roles And Moderation</a><ol><li><a href="#roles">Roles</a></li><li><a href="#workspace-invites">Workspace invites</a></li><li><a href="#guest-restrictions-enforced-in-the-services">Guest restrictions (enforced in the services)</a></li><li><a href="#kick-ban-timeout">Kick, ban, timeout</a></li><li><a href="#slow-mode">Slow mode</a></li><li><a href="#deleting-messages">Deleting messages</a></li><li><a href="#reports">Reports</a></li><li><a href="#audit">Audit</a></li><li><a href="#realtime-events">Realtime events</a></li></ol></li>
+<li><a href="#roles-and-moderation">Roles And Moderation</a><ol><li><a href="#roles">Roles</a></li><li><a href="#workspace-invites">Workspace invites</a></li><li><a href="#public-join-link-and-join-requests">Public join link and join requests</a></li><li><a href="#guest-restrictions-enforced-in-the-services">Guest restrictions (enforced in the services)</a></li><li><a href="#kick-ban-timeout">Kick, ban, timeout</a></li><li><a href="#slow-mode">Slow mode</a></li><li><a href="#deleting-messages">Deleting messages</a></li><li><a href="#reports">Reports</a></li><li><a href="#audit">Audit</a></li><li><a href="#realtime-events">Realtime events</a></li></ol></li>
 <li><a href="#reactions">Reactions</a></li>
 <li><a href="#notification-rules">Notification Rules</a><ol><li><a href="#settings">Settings</a></li><li><a href="#the-decision-per-member-except-the-author">The decision, per member except the author</a></li><li><a href="#reactions-1">Reactions</a></li><li><a href="#inbox">Inbox</a></li><li><a href="#notificationdue-event">NotificationDue event</a></li></ol></li>
 <li><a href="#titles">Titles</a></li>
@@ -321,6 +321,159 @@ another server) checks the revocation, the expiry and the uses in the same updat
 the use. A revoked, expired or used-up invite is <code>FORBIDDEN</code> for <code>joinServerByInvite</code>; a signup
 gets <code>INVALID_TOKEN</code> for a revoked or used-up invite and <code>EXPIRED_TOKEN</code> for an expired one.</li>
 </ul>
+<h3 id="public-join-link-and-join-requests">Public join link and join requests <a class="anchor" href="#public-join-link-and-join-requests" aria-label="Link to this section">#</a></h3>
+<p>A workspace can have one permanent public link, <code>&lt;server&gt;/join/&lt;token&gt;</code>, to put on a website, a
+README or a social profile. It lets <strong>existing accounts</strong> join the workspace, or ask to join it:
+accounts of this server, and, unless the Owner turns that off, accounts of other servers through
+their own server. It is a different thing from a workspace invite:</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th></th>
+<th>Workspace invite</th>
+<th>Public link</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Expiry, uses</td>
+<td>at most 30 days, <code>RIM_LIMIT_INVITE_MAX_USES</code></td>
+<td>none; it works until turned off or replaced</td>
+</tr>
+<tr>
+<td>Creates an account</td>
+<td>yes: it stands in for the proof-of-work and the per-address signup limit</td>
+<td>never, and no setting changes that</td>
+</tr>
+<tr>
+<td>Token shown</td>
+<td>once, by <code>createInvite</code></td>
+<td>to the Owner at any time (<code>publicJoinLink</code>)</td>
+</tr>
+<tr>
+<td>Join requests</td>
+<td>no</td>
+<td><code>REQUESTS</code> mode</td>
+</tr>
+</tbody></table></div>
+<p><strong>Why it never creates accounts.</strong> A workspace invite is a signup token: it skips the
+proof-of-work and the per-address signup limit, and on an invite-only server it is what opens
+registration. A permanent, unlimited link posted on a public page would let anyone, scripts
+included, create accounts on the server for free. So the link only admits accounts that already
+exist; someone without one signs up the server&#39;s normal way (proof-of-work, an instance invite,
+open registration) and then opens the link again. <code>signupWithInvite</code>, <code>signupWithKey</code> and
+<code>acceptInvite</code> refuse a link token as <code>INVALID_TOKEN</code>, as they do any unknown token.
+<code>joinByPublicLink</code> is for accounts this server holds; an account of another server joins through
+its own server, which presents it here (below), and nothing about that creates an account
+either: the host holds the person as a remote user, as for any member from elsewhere.</p>
+<p><strong>The link.</strong> A token <code>rim_pjl_</code> followed by 16 random bytes in base64url (22 characters).
+<code>/join/&lt;token&gt;</code> carries invite tokens too; the prefix tells the kinds apart (<code>rim_pjl_</code> a public
+link, <code>rim_inv_</code> a workspace invite, <code>rim_iinv_</code> an instance invite) and lets secret scanners
+recognise a link. It adds no guessable structure to the random part. Lookups go by the SHA-256
+of the whole string; a copy of the token is sealed under the server&#39;s link key (<code>RIM_LINK_KEY_FILE</code>, default
+<code>&lt;RIM_DATA_DIR&gt;/link-key.json</code>), so the Owner can read the link again and a database dump alone
+yields no working link. Neither the direct space nor the server&#39;s default workspace has a link:
+everyone joins the default workspace anyway.</p>
+<p><strong>The Owner&#39;s settings</strong> (only the Owner; <code>FORBIDDEN</code> for everyone else, Moderators included;
+<code>VALIDATION</code> for the direct space and the server&#39;s default workspace):</p>
+<ul>
+<li><code>publicJoinLink(serverId)</code>: <code>enabled</code> (off by default), <code>mode</code> (<code>DIRECT</code> or <code>REQUESTS</code>), <code>role</code>
+(<code>MEMBER</code>, the default, or <code>GUEST</code>), <code>allowRemote</code> (whether accounts of other servers may join
+or ask to join through the link; on by default), <code>enabledAt</code>, <code>issuedAt</code>, <code>issuedBy</code>, the
+<code>token</code> and <code>url</code>, <code>joinsLastDay</code> and <code>joinsLastWeek</code> (joins through the link, directly or by
+an accepted request) and <code>openRequests</code>. A workspace that never had a link answers with
+<code>enabled</code> false and a null token.</li>
+<li><code>updatePublicJoinLink(input)</code> changes any of <code>enabled</code>, <code>mode</code>, <code>role</code>, <code>allowRemote</code>; a role
+other than <code>MEMBER</code> or <code>GUEST</code> is <code>VALIDATION</code>. Turning the link on the first time issues its
+token. Turning it off makes every lookup answer <code>NOT_FOUND</code>; turning it on again brings the
+same link back.</li>
+<li><code>reissuePublicJoinLink(serverId)</code> issues a new token; the old one stops working at once. The
+settings stay.</li>
+</ul>
+<p><strong>Looking a link up.</strong> <code>publicJoinLinkPreview(token)</code> needs no sign-in. A valid, switched-on link
+answers the workspace&#39;s <code>serverId</code>, <code>name</code> and <code>mode</code> and, as <code>viewer</code>, where the caller stands:
+<code>SIGNED_OUT</code>, <code>NOT_MEMBER</code>, <code>MEMBER</code>, <code>BANNED</code> or <code>REQUEST_OPEN</code> (with <code>joinRequestId</code>). Every
+other token (unknown, switched off, replaced, its workspace deleted) answers <code>NOT_FOUND</code> with the
+message &quot;not found&quot;, on the same path: a lookup by the token&#39;s hash each time. Workspaces have no
+icon, so the preview carries none.</p>
+<p><strong>Misses are rate limited per address.</strong> Each failed lookup or join by an invalid link counts
+against the client address; at 20 within ten minutes, every link lookup and join from that address
+answers <code>RATE_LIMITED</code> (with <code>retryAfterSeconds</code>) for an hour, valid links included. Successful
+lookups, and refusals of a valid link (banned, full, already a member), do not count. Each miss is
+logged with the address in the normal log, not the audit trail. The counts are in memory, per
+server process.</p>
+<p><strong>Joining.</strong> <code>joinByPublicLink(token, message)</code>, signed in. In one transaction it checks that the
+link is valid, the caller is not a member (<code>CONFLICT</code>), not banned (<code>FORBIDDEN</code>, &quot;you are banned
+from this workspace&quot;) and that the workspace has room under <code>RIM_LIMIT_MEMBERS_PER_WORKSPACE</code>
+(<code>VALIDATION</code>). <code>RIM_LIMIT_WORKSPACES_PER_USER</code> counts workspaces a person owns, and a link never
+makes anyone an owner, so it does not refuse a join, as it does not refuse an invite.</p>
+<ul>
+<li><code>DIRECT</code>: the caller joins with the link&#39;s role and, as a Member, every public channel, as an
+invite join does. <code>MemberJoined</code> carries <code>&quot;source&quot;: &quot;public_link&quot;</code>. The answer is
+<code>{outcome: JOINED, serverId}</code>; <code>message</code> is ignored.</li>
+<li><code>REQUESTS</code>: the caller files a join request; the answer is <code>{outcome: REQUESTED, serverId, joinRequest}</code>.</li>
+</ul>
+<p><strong>Accounts from other servers.</strong> Someone whose account is on another server pastes the link into
+their own app (&quot;Add workspace&quot;), which reads this server from the URL and joins through the
+remote-join path of <a href="../specs/server-to-server-v1.html"><code>docs/specs/server-to-server-v1.md</code></a> (&quot;Joining&quot;): their server, the relay,
+asks this one for a join challenge with the link token (<code>remoteJoinChallenge(…, publicLinkToken)</code>), the app signs a login proof and a delegation, and <code>joinRemoteWorkspace</code> with
+<code>publicLinkToken</code> presents them. This server runs the same checks as <code>joinByPublicLink</code> through
+the same code, and the same modes, with these differences:</p>
+<ul>
+<li><code>allowRemote</code> off answers <code>FORBIDDEN</code> (&quot;this workspace&#39;s public link does not admit accounts
+from other servers&quot;), at the challenge and at the join; it is a refusal of a valid link and
+does not count as a miss. Accounts of this server still join.</li>
+<li>Misses count against the relay&#39;s server id rather than an IP address: the relay&#39;s signature
+proves its id, and its address is shared by all its users. The 20 misses in ten minutes cut
+that relay off from link lookups here for an hour; client addresses are not affected.</li>
+<li>A server the operator blocked (<code>rim-server peer block &lt;serverId&gt;</code>, <a href="relay.html"><code>docs/relay.md</code></a>, &quot;Blocking a
+peer&quot;) gets <code>403 peer_not_allowed</code> for every request, the challenge included, before the link
+is looked up: its people do not join through any link here, whatever <code>allowRemote</code> says.</li>
+<li><code>DIRECT</code>: the person joins with the link&#39;s role and public channels, with <code>MemberJoined</code>
+<code>&quot;source&quot;: &quot;public_link&quot;</code>, the join count and the audit row, and their relay subscribes as
+for any remote join.</li>
+<li><code>REQUESTS</code>: a join request is filed for the person as for a local one (the same message,
+limits, expiry, decline wait, ban cancellation), recording the relay that filed it. The
+moderators see it in <code>joinRequests</code>; its <code>user</code> is the person as held here (a remote user,
+<code>r_…</code>). Accepting adds them with the link&#39;s role, as an invite join does. The decision
+(<code>JoinRequestDecided</code> with <code>accepted</code>, <code>declined</code> or <code>cancelled</code>) travels to that relay as a host
+event on the person&#39;s <code>u:</code> stream; their app, told <code>accepted</code>, completes the join as a current
+member (<code>joinRemoteWorkspace</code> without a token) to subscribe. The person cannot withdraw the
+request from their own server; it expires after 30 days.</li>
+<li><code>myJoinRequests</code> lists the requests filed on the server answering it, so a person&#39;s requests
+at other servers are not in their own server&#39;s list; their app knows them from the
+<code>REQUESTED</code> answer and learns the decision from the relay item.</li>
+<li>An account of this server presented by a relay elsewhere is refused (<code>VALIDATION</code>): it joins
+through the link here directly.</li>
+</ul>
+<p><strong>Join requests.</strong></p>
+<ul>
+<li>One open request per person and workspace (<code>CONFLICT</code> for a second); a person holds at most 20
+open requests across workspaces (<code>VALIDATION</code>). The message is trimmed, at most 500 characters
+(<code>VALIDATION</code>); an empty one is null.</li>
+<li>A request expires 30 days after it was filed. Expiry is read, not scheduled: an open request
+past <code>expiresAt</code> is no longer listed or counted, cannot be accepted, declined or withdrawn
+(<code>CONFLICT</code>), reads as <code>EXPIRED</code>, and is marked expired when the person asks again.</li>
+<li><code>joinRequests(serverId, dir, cursor, limit)</code> lists the open requests for the Owner and the
+Moderators (<code>FORBIDDEN</code> for everyone else), newest first (<code>createdAt DESC, id DESC</code>, standard
+cursors, <code>limit</code> 50 by default and at most 100). <code>myJoinRequests</code> lists the caller&#39;s own open
+requests.</li>
+<li><code>acceptJoinRequest(serverId, requestId)</code> (Owner or Moderator) runs the checks of a direct join
+and adds the person with the link&#39;s current role; the request need not be valid through the
+link any more (it may have been turned off or replaced since). A person who joined another way
+since asking (an invite, say) is left as they are: the request is closed as accepted, with
+<code>JoinRequestDecided</code> but no second <code>MemberJoined</code>, join count or join audit row.
+<code>declineJoinRequest</code> closes it;
+the person may ask the same workspace again 24 hours after the decline (<code>VALIDATION</code> naming the
+hours left before that). A request of another workspace is <code>NOT_FOUND</code>; one no longer open is
+<code>CONFLICT</code>.</li>
+<li><code>withdrawJoinRequest(requestId)</code>: the person takes their open request back (<code>NOT_FOUND</code> for
+anyone else&#39;s); they may ask again at once.</li>
+<li>A ban cancels the person&#39;s open requests in that workspace, and the purge of a deleted account
+deletes its requests. A banned person cannot file one.</li>
+<li><code>JoinRequest</code>: <code>id</code>, <code>serverId</code>, <code>workspaceName</code>, <code>userId</code>, <code>user</code>, <code>message</code>, <code>status</code> (<code>OPEN</code>,
+<code>ACCEPTED</code>, <code>DECLINED</code>, <code>WITHDRAWN</code>, <code>CANCELLED</code>, <code>EXPIRED</code>), <code>createdAt</code>, <code>expiresAt</code>,
+<code>decidedAt</code>, <code>decidedById</code>.</li>
+</ul>
 <h3 id="guest-restrictions-enforced-in-the-services">Guest restrictions (enforced in the services) <a class="anchor" href="#guest-restrictions-enforced-in-the-services" aria-label="Link to this section">#</a></h3>
 <ul>
 <li>Creating a channel or a group, joining a channel, inviting into a conversation
@@ -414,6 +567,12 @@ shared helper, whether it came from GraphQL or a command: <code>admin.set_member
 <code>chat.report_message</code>, <code>admin.resolve_report</code>, <code>admin.delete_message</code>. Arguments hold ids and
 flags only, never reasons or message text. An action run as a command also gets the generic
 command-execution row. Refused actions are not audited by the helper.</p>
+<p>The public link writes rows with initiator <code>public_link</code>: <code>public_link.enabled</code>,
+<code>public_link.disabled</code>, <code>public_link.reissued</code> and <code>public_link.settings_changed</code> (the Owner&#39;s
+changes, with the mode, role and <code>allow_remote</code>), <code>join_request.accepted</code> and
+<code>join_request.declined</code> (the moderator&#39;s decisions, with the request and the person), and
+<code>workspace.member_joined</code> with <code>&quot;source&quot;: &quot;public_link&quot;</code> for every join through the link (the
+joiner&#39;s row, with the role and the accepted request&#39;s id). Never the token.</p>
 <h3 id="realtime-events">Realtime events <a class="anchor" href="#realtime-events" aria-label="Link to this section">#</a></h3>
 <p>Two new <code>WorkspaceEvent</code> variants (snake_case fields, like every other variant):</p>
 <ul>
@@ -427,7 +586,23 @@ receive no reason. The removed member may keep this explanation until they dismi
 is <code>owner</code>, <code>moderator</code>, <code>member</code> or <code>guest</code>. Same visibility as <code>MemberLeft</code>. A subscriber whose
 own role changes to or from <code>guest</code> gets the matching visibility from the next event on.</li>
 </ul>
-<p>A subscription that falls behind loses events, possibly these two. Before it delivers another
+<p>Join requests:</p>
+<ul>
+<li><code>{&quot;type&quot;: &quot;MemberJoined&quot;, &quot;workspace_id&quot;, &quot;user_id&quot;, &quot;username&quot;, &quot;source&quot;: &quot;public_link&quot;}</code> —
+<code>source</code> is present only for a join through the public link, directly or by an accepted
+request.</li>
+<li><code>{&quot;type&quot;: &quot;JoinRequestCreated&quot;, &quot;workspace_id&quot;: &quot;…&quot;, &quot;request_id&quot;: &quot;…&quot;, &quot;user_id&quot;: &quot;…&quot;}</code> — a
+person filed a request.</li>
+<li><code>{&quot;type&quot;: &quot;JoinRequestDecided&quot;, &quot;workspace_id&quot;: &quot;…&quot;, &quot;request_id&quot;: &quot;…&quot;, &quot;user_id&quot;: &quot;…&quot;, &quot;outcome&quot;: &quot;accepted&quot;}</code> — <code>outcome</code> is <code>accepted</code>, <code>declined</code>, <code>withdrawn</code> or <code>cancelled</code>
+(a ban).</li>
+</ul>
+<p>Both reach the workspace&#39;s Owner and Moderators on their <code>workspaceEvents(workspace)</code>
+subscription, and the person, who is not a member, on their subscription to their server&#39;s
+direct space (<code>workspaceEvents(relayInfo.directSpaceId)</code>, which a signed-in client keeps open):
+<code>workspace_id</code> is still the workspace asked to join. On acceptance the person gets
+<code>JoinRequestDecided</code> there and then subscribes to the workspace; <code>MemberJoined</code> goes to its
+members as for any join.</p>
+<p>A subscription that falls behind loses events, possibly any of these. Before it delivers another
 event it reads the subscriber&#39;s membership and role again: it ends when they are no longer a
 member (or the read fails), and otherwise goes on with the visibility of their current role.</p>
 <h2 id="reactions">Reactions <a class="anchor" href="#reactions" aria-label="Link to this section">#</a></h2>
@@ -640,7 +815,7 @@ and the next query, without a scheduled event.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/e2812f23d55b5bb40c581c59f4ad43ead259cf34/docs/messaging.md">rim-server/docs/messaging.md</a> at <code>e2812f2</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/be96e5bcba8dfa93ab7013875d5e96db4d9f4ab5/docs/messaging.md">rim-server/docs/messaging.md</a> at <code>be96e5b</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>
