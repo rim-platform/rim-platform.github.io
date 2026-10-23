@@ -49,7 +49,7 @@
 <li><a href="#thread_id-vs-root_thread_id">thread_id vs root_thread_id</a></li>
 <li><a href="#attachments">Attachments</a></li>
 <li><a href="#pagination">Pagination</a></li>
-<li><a href="#permalinks">Permalinks</a></li>
+<li><a href="#permalinks">Permalinks</a><ol><li><a href="#profile-changes">Profile changes</a></li><li><a href="#ban-changes">Ban changes</a></li></ol></li>
 </ol>
 </details></aside>
     <main id="content" class="prose">
@@ -346,7 +346,16 @@ their macros and pipelines there, emits <code>MemberLeft</code>. They can re-joi
 kick. A user who is not a member can be banned pre-emptively. While a ban is active (no
 <code>expiresAt</code>, or <code>expiresAt</code> in the future) accepting an invite, joining by invite and being
 added by the owner fail with <code>FORBIDDEN</code>; the refused join consumes no invite use.
-<code>unbanMember</code> deletes the ban; <code>serverBans</code> lists active bans (Owner/Moderator).</li>
+<code>unbanMember</code> deletes the ban; <code>serverBans</code> lists active bans (Owner/Moderator).
+In the current default workspace, an unban also restores a local account as Member with
+public channels, in the same transaction; it does not restore private channels, workspace
+DMs, macros or pipelines. In other workspaces a new invite is needed. After a temporary
+ban expires, or for an older account, <code>joinDefaultWorkspace</code> lets a signed-in local account
+rejoin the default workspace without an invite; an active ban returns <code>FORBIDDEN</code> with
+&quot;you are banned from this workspace&quot;. Already joined accounts keep their role.
+Message authors expose <code>banned</code> and <code>bannedUntil</code> in that message&#39;s workspace to its
+members. <code>banReason</code> is null unless the viewer moderates that workspace. Expired and lifted
+bans report false with null end and reason.</li>
 <li><code>timeoutMember(until, reason)</code>: <code>until</code> must be in the future and at most 30 days ahead. While
 it lasts, every write fails with <code>TIMED_OUT</code> (extension <code>until</code>, RFC 3339): sending, replying,
 editing, forwarding, reactions, pins, topic, attachments (REST upload: 403 with <code>until</code>),
@@ -410,7 +419,10 @@ command-execution row. Refused actions are not audited by the helper.</p>
 <ul>
 <li><code>{&quot;type&quot;: &quot;MemberLeft&quot;, &quot;workspace_id&quot;: &quot;…&quot;, &quot;user_id&quot;: &quot;…&quot;}</code> — a member was kicked or banned.
 Delivered to the workspace (guests: only about themselves), including the removed user, whose
-subscription then ends.</li>
+subscription then ends. Optional <code>cause</code> is <code>kick</code>, <code>ban</code>, <code>workspace_deleted</code> or
+<code>account_deleted</code>; a temporary ban includes <code>until</code> (RFC 3339). For a kick or ban, only the
+removed user&#39;s own delivery includes the moderator&#39;s optional <code>reason</code>. Other members
+receive no reason. The removed member may keep this explanation until they dismiss it.</li>
 <li><code>{&quot;type&quot;: &quot;MemberRoleChanged&quot;, &quot;workspace_id&quot;: &quot;…&quot;, &quot;user_id&quot;: &quot;…&quot;, &quot;role&quot;: &quot;member&quot;}</code> — <code>role</code>
 is <code>owner</code>, <code>moderator</code>, <code>member</code> or <code>guest</code>. Same visibility as <code>MemberLeft</code>. A subscriber whose
 own role changes to or from <code>guest</code> gets the matching visibility from the next event on.</li>
@@ -612,11 +624,23 @@ requires <code>blobSha256</code>, a fixed file name and type, and the upload is 
 <code>/workspaces/{server}/conversations/{conversation}/threads/{thread}/messages/{message}</code>.</li>
 <li>The email digest links each message by its permalink.</li>
 </ul>
+<h3 id="profile-changes">Profile changes <a class="anchor" href="#profile-changes" aria-label="Link to this section">#</a></h3>
+<p><code>MemberProfileUpdated {workspace_id, user_id}</code> announces a successful local profile update.
+It carries no profile fields. Workspace members refetch their member directory; guests see
+only their own event. In the local direct space the account&#39;s own sessions receive it and
+refetch <code>me</code>. A client showing the changed account&#39;s own profile invalidates <code>me</code> too. It
+uses the directory stream rules (<code>w</code> for members and the subject&#39;s <code>u:</code> stream for guests).
+Profiles published by another server are unchanged by this event.</p>
+<h3 id="ban-changes">Ban changes <a class="anchor" href="#ban-changes" aria-label="Link to this section">#</a></h3>
+<p><code>MemberBanChanged {workspace_id, user_id}</code> follows every successful ban and unban, including
+pre-emptive bans. It carries no reason. It follows directory visibility and stream rules;
+clients refetch workspace message-author ban status. Ban expiry is evaluated from <code>until</code>
+and the next query, without a scheduled event.</p>
 
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c3678ac0b585a8fb31514201485cbcdb2b59e44d/docs/messaging.md">rim-server/docs/messaging.md</a> at <code>c3678ac</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/e2812f23d55b5bb40c581c59f4ad43ead259cf34/docs/messaging.md">rim-server/docs/messaging.md</a> at <code>e2812f2</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

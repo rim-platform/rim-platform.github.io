@@ -44,7 +44,7 @@
 <li><a href="#pagination">Pagination</a></li>
 <li><a href="#telling-which-server-you-talk-to">Telling which server you talk to</a></li>
 <li><a href="#handles">Handles</a></li>
-<li><a href="#the-full-graphql-reference">The full GraphQL reference</a></li>
+<li><a href="#the-full-graphql-reference">The full GraphQL reference</a><ol><li><a href="#profile-picture-refresh">Profile picture refresh</a></li><li><a href="#pinned-plugin-link-fetch">Pinned plugin link fetch</a></li><li><a href="#rejoining-the-default-workspace-and-removal-notices">Rejoining the default workspace and removal notices</a></li></ol></li>
 </ol>
 </details></aside>
     <main id="content" class="prose">
@@ -609,7 +609,7 @@ naming the cap, such as &quot;this instance allows 5 workspaces per user&quot;.<
 <tr>
 <td><code>RIM_LIMIT_ACCOUNTS</code></td>
 <td><code>accounts</code></td>
-<td>Local accounts the instance holds, those waiting out their deletion grace period included; people from other servers held here and purged accounts do not count. At the cap every signup, <code>signupWithInvite</code> and <code>signupWithKey</code> alike and whatever token or proof-of-work it carries, answers <code>REGISTRATION_FULL</code> instead of <code>VALIDATION</code>, and <code>serverInfo.registrationFull</code> is true.</td>
+<td>Local accounts the instance holds, those waiting out their deletion grace period included; people from other servers held here and purged accounts do not count. At the cap every signup, <code>signupWithInvite</code> and <code>signupWithKey</code> alike and whatever token or proof-of-work it carries, answers <code>REGISTRATION_FULL</code> before validating terms, credentials or the combination of tokens. GraphQL input coercion still runs before resolvers. When full, <code>serverInfo.registrationFull</code> is true.</td>
 </tr>
 </tbody></table></div>
 <p>The server&#39;s default workspace, which every account joins, has caps of its own that no
@@ -991,13 +991,41 @@ types from it:</p>
 <pre><code class="language-sh">curl -s http://localhost:8080/api/sdl &gt; ../rim-ui/schema.graphql
 cd ../rim-ui &amp;&amp; npm run codegen</code></pre>
 <p>Enum values appear in <code>SCREAMING_SNAKE</code> and fields in <code>camelCase</code>. The models in <a href="messaging.html"><code>messaging.md</code></a>,
-<a href="search.html"><code>search.md</code></a>, <a href="message-change-feed.html"><code>message-change-feed.md</code></a>, <a href="command_model.html"><code>command_model.md</code></a> and the specs in <a href="https://github.com/rim-platform/rim-server/tree/c3678ac0b585a8fb31514201485cbcdb2b59e44d/docs/specs"><code>specs/</code></a> explain what
+<a href="search.html"><code>search.md</code></a>, <a href="message-change-feed.html"><code>message-change-feed.md</code></a>, <a href="command_model.html"><code>command_model.md</code></a> and the specs in <a href="https://github.com/rim-platform/rim-server/tree/e2812f23d55b5bb40c581c59f4ad43ead259cf34/docs/specs"><code>specs/</code></a> explain what
 the fields mean.</p>
+<h3 id="profile-picture-refresh">Profile picture refresh <a class="anchor" href="#profile-picture-refresh" aria-label="Link to this section">#</a></h3>
+<p>Avatar uploads use <code>avatars/&lt;user id&gt;/avatar-&lt;16 lowercase SHA-256 hex&gt;.&lt;ext&gt;</code>, so changing
+image bytes changes the URL. Authenticated downloads of these names use
+<code>Cache-Control: private, max-age=31536000, immutable</code>; unversioned avatar names require
+revalidation. <code>updateMyProfile</code> accepts both name forms only for the caller&#39;s own directory.
+Replacement deletes the old avatar file. <code>MemberProfileUpdated</code> identifies a changed profile
+in each workspace; the direct space sends the account&#39;s own change to its other sessions.
+Clients refetch the directory and, for their own user id, <code>me</code> when the event arrives.</p>
+<h3 id="pinned-plugin-link-fetch">Pinned plugin link fetch <a class="anchor" href="#pinned-plugin-link-fetch" aria-label="Link to this section">#</a></h3>
+<p><code>POST /api/plugin-bundles/fetch</code> takes JSON <code>{url, sha256}</code>, at most 8 KiB, with a session and
+CSRF token. It returns a validated, hash-pinned bundle as an attachment, at most 8 MiB. The
+<code>plugin_link_fetch</code> feature is enabled by default, independent of <code>workspace_plugins</code>. Only
+public HTTPS targets are accepted, with at most ten safe redirects and a 120-second timeout.
+Twenty attempts per account per hour are allowed, with four concurrent downloads per server.
+Failures use the normal feature/auth/rate responses; invalid pins or bundles return 422.</p>
+<h3 id="rejoining-the-default-workspace-and-removal-notices">Rejoining the default workspace and removal notices <a class="anchor" href="#rejoining-the-default-workspace-and-removal-notices" aria-label="Link to this section">#</a></h3>
+<p><code>joinDefaultWorkspace: ID!</code> requires a signed-in local account and returns the current default
+workspace id. It preserves an existing role, or joins as Member with public channels. It
+returns <code>NOT_FOUND</code> if no default is available, and <code>FORBIDDEN</code> for remote accounts or an
+active ban (&quot;you are banned from this workspace&quot;). Older accounts and accounts whose ban
+expired may use it without an invite. Unbanning a local account in the current default
+workspace restores that membership automatically; other workspaces still require an invite.
+Private conversations and deleted automations are never restored.</p>
+<p>On a message&#39;s <code>author</code>, <code>User.banned</code> and <code>bannedUntil</code> describe the active ban in that
+message&#39;s workspace; <code>banReason</code> is visible only to workspace moderators. Other User contexts
+return false/null. <code>ServerMember.banned</code> is false for active directory members, with null
+<code>bannedUntil</code>; banned users have been removed from that directory. MemberLeft carries an
+optional cause and ban end; the moderator&#39;s reason is delivered only to the removed user.</p>
 
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c3678ac0b585a8fb31514201485cbcdb2b59e44d/docs/api.md">rim-server/docs/api.md</a> at <code>c3678ac</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/e2812f23d55b5bb40c581c59f4ad43ead259cf34/docs/api.md">rim-server/docs/api.md</a> at <code>e2812f2</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

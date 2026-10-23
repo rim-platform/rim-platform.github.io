@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Workspace removals and bans · RIM</title>
+<meta name="description" content="A removal notice shows the workspace name, cause, end date and reason sent for this account. It remains visible across reloads until dismissed, scoped to the server and signed-in account. Moderators are told that the …">
+<link rel="icon" href="../../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../../index.html" aria-label="RIM home">
+      <picture><source srcset="../../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../../index.html#what">What RIM is</a>
+      <a href="../../index.html#how">How it works</a>
+      <a href="../self-hosting.html">Self-host</a>
+      <a href="../../configure/index.html">Configure</a>
+      <a href="../../plugins/index.html">Plugins</a>
+      <a href="../index.html" aria-current="page">Docs</a>
+      <a href="../../api/index.html">API</a>
+      <a href="../../specs/index.html">Specs</a>
+      <a href="../contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="../index.html">Docs</a><span aria-hidden="true">/</span><a href="../using-rim.html">Using RIM</a><span aria-hidden="true">/</span><span>Workspace removals and bans</span></div>
+  <div class="page">
+
+    <main id="content" class="prose">
+<h1 id="workspace-removals-and-bans">Workspace removals and bans</h1>
+<p>A removal notice shows the workspace name, cause, end date and reason sent for this account.
+It remains visible across reloads until dismissed, scoped to the server and signed-in account.
+Moderators are told that the member will see the reason they enter.</p>
+<p>Message authors retain their readable names. Active bans have a muted marker; hover cards
+show a reason only when the server grants access to it. Ban changes refresh author views,
+and temporary markers clear when the ban expires.</p>
+<p>In direct messages, local accounts missing the configured default workspace can choose
+“Join the default workspace”. Active bans still prevent joining. An explicit unban restores
+local membership in the current default workspace and its public channels; other workspaces
+still require an invitation.</p>
+<p>Deploy the corresponding server update before this client. Older servers reject the new
+message-author ban fields, so message queries require a server that provides them.</p>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/022a75f8c72900eb72d349872a48125596d235d2/docs/workspace-moderation.md">rim-ui/docs/workspace-moderation.md</a> at <code>022a75f</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+
+</body>
+</html>
