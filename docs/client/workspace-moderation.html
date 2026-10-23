@@ -48,11 +48,23 @@ local membership in the current default workspace and its public channels; other
 still require an invitation.</p>
 <p>Deploy the corresponding server update before this client. Older servers reject the new
 message-author ban fields, so message queries require a server that provides them.</p>
+<h1 id="join-requests">Join requests</h1>
+<p>A workspace whose public link is set to <strong>Ask to join</strong> collects requests. Settings → Moderation
+→ <strong>Join requests</strong>, for the Owner and the Moderators, lists the open ones newest first, with
+<strong>Load more</strong> for older ones: the person, their message, when they asked and when the request
+expires (30 days after it was filed). <strong>Accept</strong> adds them with the link&#39;s current role;
+<strong>Decline</strong> closes the request, and the person can ask again after 24 hours. A count of open requests shows on the Moderation entry in Settings and, as <strong>Join
+requests…</strong>, in the workspace&#39;s menu on the rail. Lists and counts refresh when a request is
+filed or decided, by anyone, while the workspace is open. The direct space and the server&#39;s
+default workspace have no public link and no join requests.</p>
+<p>The person is told when their request is accepted or declined, through the direct space&#39;s
+connection, since they are not a member yet; a withdrawn request, or one a ban cancelled, is not
+announced.</p>
 
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/022a75f8c72900eb72d349872a48125596d235d2/docs/workspace-moderation.md">rim-ui/docs/workspace-moderation.md</a> at <code>022a75f</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/8aa7733e8b6fe5cfee270b572e4ddaf1ec32c432/docs/workspace-moderation.md">rim-ui/docs/workspace-moderation.md</a> at <code>8aa7733</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

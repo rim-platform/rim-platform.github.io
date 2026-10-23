@@ -257,6 +257,17 @@ accounts from creating workspaces or messaging strangers for a set number of hou
 session or user, and caps on workspaces, members, devices, DM requests, invites and message
 size, are each off until the operator sets them. Pending invitations to encrypted
 conversations are capped at 50 per person by default.</li>
+<li><strong>Public join links.</strong> A workspace&#39;s permanent link is a 128-bit random token behind the
+prefix <code>rim_pjl_</code> (which secret scanners can match), never a name,
+and admits only accounts that already exist: it is never a signup token, so it opens no way
+around proof-of-work, the per-address signup limit or an invite-only server. Every invalid
+link answers <code>NOT_FOUND</code> with one message on one path (a lookup by the token&#39;s SHA-256), so a
+guesser learns nothing about which workspaces exist or have a link, and 20 misses from an
+address in ten minutes cut it off for an hour. The token is stored as its hash plus a copy
+sealed (XChaCha20-Poly1305, bound to the workspace) under the link key file
+<code>&lt;RIM_DATA_DIR&gt;/link-key.json</code>, which <code>/readyz</code> checks; a database dump alone yields no
+working link. The Owner can issue a new token or turn the link off at any time, and switch to
+join requests that a moderator decides (<a href="messaging.html">messaging</a>).</li>
 <li><strong>DM policy.</strong> The operator sets floors for DMs from strangers and to other servers, a
 workspace Owner sets one for members, and each person chooses within both. By default a
 stranger&#39;s first message is a request the recipient accepts, ignores, blocks or reports.</li>
@@ -299,7 +310,7 @@ sets a retention (<a href="operations/audit-retention.html">audit retention</a>)
 </tr>
 <tr>
 <td>Database or key-file thief</td>
-<td>Read channels, metadata, ciphertext and session token hashes; with the franking key file, mint receipts</td>
+<td>Read channels, metadata, ciphertext and session token hashes; with the franking key file, mint receipts; with the link key file, read the public join links</td>
 <td>No private key in the database; reports checked against recorded commitments; franking and server key rotation and recovery</td>
 <td>Channel text in the dump</td>
 </tr>
@@ -375,7 +386,7 @@ query strings or bundle contents. This route stores no workspace bundle.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/e2812f23d55b5bb40c581c59f4ad43ead259cf34/docs/security-overview.md">rim-server/docs/security-overview.md</a> at <code>e2812f2</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/be96e5bcba8dfa93ab7013875d5e96db4d9f4ab5/docs/security-overview.md">rim-server/docs/security-overview.md</a> at <code>be96e5b</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

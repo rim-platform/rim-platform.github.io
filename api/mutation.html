@@ -53,12 +53,12 @@
 <li><a href="#group-key">Key (7)</a></li>
 <li><a href="#group-device">Device (7)</a></li>
 <li><a href="#group-relay">Relay (2)</a></li>
-<li><a href="#group-other">Other (39)</a></li>
+<li><a href="#group-other">Other (45)</a></li>
 </ol>
 </details></aside>
     <main id="content" class="prose">
 <h1>Mutation</h1>
-<p class="lede">122 mutations, grouped by the domain their name starts with or names, in the order the schema lists them.</p>
+<p class="lede">128 mutations, grouped by the domain their name starts with or names, in the order the schema lists them.</p>
 <input id="filter" class="search" type="search" placeholder="Filter fields by name" aria-label="Filter fields by name" autocomplete="off">
 <p id="filter-none" class="muted" hidden>Nothing matches.</p>
 <section data-group>
@@ -415,7 +415,8 @@ are refused; existing membership is unchanged.</p>
 <h3><code>joinRemoteWorkspace</code></h3>
 <div class="sig">joinRemoteWorkspace(input: <a href="inputs.html#JoinRemoteWorkspaceInput">JoinRemoteWorkspaceInput</a>!): <a href="objects.html#RemoteJoinResult">RemoteJoinResult</a>!</div>
 <div class="desc"><p>Join a workspace on another host: the relay presents the caller&#39;s identity, proof and
-delegation, and records the subscription.</p>
+delegation, and records the subscription. Through a public link that takes join
+requests, the host files a request instead (<code>outcome: REQUESTED</code>).</p>
 </div>
 
 </section>
@@ -764,7 +765,7 @@ contacts and blocks on this relay.</p>
 </section>
 </section>
 <section data-group>
-<h2 id="group-other">Other <span class="faint">39</span></h2>
+<h2 id="group-other">Other <span class="faint">45</span></h2>
 <section class="entry" id="login" data-name="login">
 <h3><code>login</code></h3>
 <div class="sig">login(input: <a href="inputs.html#LoginInput">LoginInput</a>!): <a href="objects.html#LoginPayload">LoginPayload</a>!</div>
@@ -1025,9 +1026,11 @@ or off. While paused, notifications are still recorded but arrive <code>quiet</c
   hostServerId: <a href="scalars.html#String">String</a>!
   hostOrigin: <a href="scalars.html#String">String</a>!
   inviteToken: <a href="scalars.html#String">String</a>
+  publicLinkToken: <a href="scalars.html#String">String</a>
 ): <a href="objects.html#RemoteJoinChallenge">RemoteJoinChallenge</a>!</div>
 <div class="desc"><p>Pin the host at <code>hostOrigin</code> as <code>hostServerId</code> and fetch a login challenge from it for a
-join, with the workspace <code>inviteToken</code> names (the invite is not used).</p>
+join, with the workspace <code>inviteToken</code> names (the invite is not used), or the workspace,
+its name and the link&#39;s mode <code>publicLinkToken</code> names. At most one of the two.</p>
 </div>
 
 </section>
@@ -1159,12 +1162,70 @@ seconds. Instance operators only; anyone else gets <code>FORBIDDEN</code>.</p>
 </div>
 
 </section>
+<section class="entry" id="updatePublicJoinLink" data-name="updatePublicJoinLink">
+<h3><code>updatePublicJoinLink</code></h3>
+<div class="sig">updatePublicJoinLink(input: <a href="inputs.html#UpdatePublicJoinLinkInput">UpdatePublicJoinLinkInput</a>!): <a href="objects.html#PublicJoinLink">PublicJoinLink</a>!</div>
+<div class="desc"><p>Change the workspace&#39;s public link: on or off, <code>mode</code>, <code>role</code> (<code>MEMBER</code> or <code>GUEST</code>) and
+<code>allowRemote</code>. Turning it on for the first time issues its token; turning it off makes
+every lookup of it answer <code>NOT_FOUND</code> until it is turned on again. Owner only
+(<code>FORBIDDEN</code>); <code>VALIDATION</code> for the direct space, the server&#39;s default workspace and any
+other role.</p>
+</div>
+
+</section>
+<section class="entry" id="reissuePublicJoinLink" data-name="reissuePublicJoinLink">
+<h3><code>reissuePublicJoinLink</code></h3>
+<div class="sig">reissuePublicJoinLink(serverId: <a href="scalars.html#ID">ID</a>!): <a href="objects.html#PublicJoinLink">PublicJoinLink</a>!</div>
+<div class="desc"><p>Issue a new token for the workspace&#39;s public link; the old one stops working at once.
+The settings stay. Owner only, with the refusals of <a href="mutation.html#updatePublicJoinLink"><code>updatePublicJoinLink</code></a>.</p>
+</div>
+
+</section>
+<section class="entry" id="joinByPublicLink" data-name="joinByPublicLink">
+<h3><code>joinByPublicLink</code></h3>
+<div class="sig">joinByPublicLink(token: <a href="scalars.html#String">String</a>!, message: <a href="scalars.html#String">String</a>): <a href="objects.html#JoinByPublicLinkPayload">JoinByPublicLinkPayload</a>!</div>
+<div class="desc"><p>Join a workspace through its public link (<code>DIRECT</code>), or ask to join with an optional
+<a href="query.html#message"><code>message</code></a> of at most 500 characters (<code>REQUESTS</code>). For an account of this server; the
+link never creates an account. An invalid link is <code>NOT_FOUND</code> and counts towards the
+address&#39;s misses (<code>RATE_LIMITED</code> past them); a ban is <code>FORBIDDEN</code>; a full workspace,
+a too long message, 20 open requests or a decline less than 24 hours ago are
+<code>VALIDATION</code>; a member or an open request is <code>CONFLICT</code>.</p>
+</div>
+
+</section>
+<section class="entry" id="withdrawJoinRequest" data-name="withdrawJoinRequest">
+<h3><code>withdrawJoinRequest</code></h3>
+<div class="sig">withdrawJoinRequest(requestId: <a href="scalars.html#ID">ID</a>!): <a href="objects.html#JoinRequest">JoinRequest</a>!</div>
+<div class="desc"><p>Take back the caller&#39;s open join request. <code>NOT_FOUND</code> unless it is theirs, <code>CONFLICT</code>
+once it is no longer open.</p>
+</div>
+
+</section>
+<section class="entry" id="acceptJoinRequest" data-name="acceptJoinRequest">
+<h3><code>acceptJoinRequest</code></h3>
+<div class="sig">acceptJoinRequest(serverId: <a href="scalars.html#ID">ID</a>!, requestId: <a href="scalars.html#ID">ID</a>!): <a href="objects.html#JoinRequest">JoinRequest</a>!</div>
+<div class="desc"><p>Accept an open join request: the person joins with the link&#39;s current role and the
+public channels, as a direct join does; a person who has joined another way since is
+left as they are and the request is closed as accepted. Owner and Moderators only
+(<code>FORBIDDEN</code>); a request of another workspace is <code>NOT_FOUND</code>, one no longer open is
+<code>CONFLICT</code>, a ban <code>FORBIDDEN</code>, a full workspace <code>VALIDATION</code>.</p>
+</div>
+
+</section>
+<section class="entry" id="declineJoinRequest" data-name="declineJoinRequest">
+<h3><code>declineJoinRequest</code></h3>
+<div class="sig">declineJoinRequest(serverId: <a href="scalars.html#ID">ID</a>!, requestId: <a href="scalars.html#ID">ID</a>!): <a href="objects.html#JoinRequest">JoinRequest</a>!</div>
+<div class="desc"><p>Decline an open join request; the person may ask again 24 hours later. Owner and
+Moderators only, with the refusals of <a href="mutation.html#acceptJoinRequest"><code>acceptJoinRequest</code></a> other than the join checks.</p>
+</div>
+
+</section>
 </section>
 
     </main>
   </div>
   <footer class="site">
-    <span>Generated from <a href="https://github.com/rim-platform/rim-ui/blob/022a75f8c72900eb72d349872a48125596d235d2/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>022a75f</code></span>
+    <span>Generated from <a href="https://github.com/rim-platform/rim-ui/blob/8aa7733e8b6fe5cfee270b572e4ddaf1ec32c432/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>8aa7733</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

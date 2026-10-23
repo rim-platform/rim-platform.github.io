@@ -36,7 +36,7 @@
 
     <main id="content" class="prose">
 <h1>API</h1>
-<p class="lede">Everything a client does goes through one GraphQL endpoint, <code>POST /api</code>; subscriptions arrive over <code>/api/ws</code>. The server publishes its schema at <code>/api/sdl</code>. This reference is generated from it: 256 types, 64 queries, 122 mutations and 2 subscriptions.</p>
+<p class="lede">Everything a client does goes through one GraphQL endpoint, <code>POST /api</code>; subscriptions arrive over <code>/api/ws</code>. The server publishes its schema at <code>/api/sdl</code>. This reference is generated from it: 268 types, 68 queries, 128 mutations and 2 subscriptions.</p>
 <input id="filter" class="search" type="search" placeholder="Filter the whole schema by name" aria-label="Filter the whole schema by name" autocomplete="off">
 <p id="filter-none" class="muted" hidden>Nothing matches.</p>
 <div data-search-only><ul class="hits">
@@ -162,6 +162,12 @@
 <li data-name="instanceBlockIp"><a href="mutation.html#instanceBlockIp"><code>instanceBlockIp</code></a><span class="kind">mutation</span></li>
 <li data-name="instanceUnblockIp"><a href="mutation.html#instanceUnblockIp"><code>instanceUnblockIp</code></a><span class="kind">mutation</span></li>
 <li data-name="setMyDmSettings"><a href="mutation.html#setMyDmSettings"><code>setMyDmSettings</code></a><span class="kind">mutation</span></li>
+<li data-name="updatePublicJoinLink"><a href="mutation.html#updatePublicJoinLink"><code>updatePublicJoinLink</code></a><span class="kind">mutation</span></li>
+<li data-name="reissuePublicJoinLink"><a href="mutation.html#reissuePublicJoinLink"><code>reissuePublicJoinLink</code></a><span class="kind">mutation</span></li>
+<li data-name="joinByPublicLink"><a href="mutation.html#joinByPublicLink"><code>joinByPublicLink</code></a><span class="kind">mutation</span></li>
+<li data-name="withdrawJoinRequest"><a href="mutation.html#withdrawJoinRequest"><code>withdrawJoinRequest</code></a><span class="kind">mutation</span></li>
+<li data-name="acceptJoinRequest"><a href="mutation.html#acceptJoinRequest"><code>acceptJoinRequest</code></a><span class="kind">mutation</span></li>
+<li data-name="declineJoinRequest"><a href="mutation.html#declineJoinRequest"><code>declineJoinRequest</code></a><span class="kind">mutation</span></li>
 <li data-name="commands"><a href="query.html#commands"><code>commands</code></a><span class="kind">query</span></li>
 <li data-name="commandDiscover"><a href="query.html#commandDiscover"><code>commandDiscover</code></a><span class="kind">query</span></li>
 <li data-name="resolvedKeybinds"><a href="query.html#resolvedKeybinds"><code>resolvedKeybinds</code></a><span class="kind">query</span></li>
@@ -226,6 +232,10 @@
 <li data-name="instancePrincipalBlocks"><a href="query.html#instancePrincipalBlocks"><code>instancePrincipalBlocks</code></a><span class="kind">query</span></li>
 <li data-name="instanceIpBlocks"><a href="query.html#instanceIpBlocks"><code>instanceIpBlocks</code></a><span class="kind">query</span></li>
 <li data-name="myDmSettings"><a href="query.html#myDmSettings"><code>myDmSettings</code></a><span class="kind">query</span></li>
+<li data-name="publicJoinLink"><a href="query.html#publicJoinLink"><code>publicJoinLink</code></a><span class="kind">query</span></li>
+<li data-name="publicJoinLinkPreview"><a href="query.html#publicJoinLinkPreview"><code>publicJoinLinkPreview</code></a><span class="kind">query</span></li>
+<li data-name="joinRequests"><a href="query.html#joinRequests"><code>joinRequests</code></a><span class="kind">query</span></li>
+<li data-name="myJoinRequests"><a href="query.html#myJoinRequests"><code>myJoinRequests</code></a><span class="kind">query</span></li>
 <li data-name="workspaceEvents"><a href="subscription.html#workspaceEvents"><code>workspaceEvents</code></a><span class="kind">subscription</span></li>
 <li data-name="relayStream"><a href="subscription.html#relayStream"><code>relayStream</code></a><span class="kind">subscription</span></li>
 <li data-name="AccountDeletionSchedule"><a href="objects.html#AccountDeletionSchedule"><code>AccountDeletionSchedule</code></a><span class="kind">object</span></li>
@@ -266,6 +276,10 @@
 <li data-name="InstancePrincipalBlockOutcome"><a href="objects.html#InstancePrincipalBlockOutcome"><code>InstancePrincipalBlockOutcome</code></a><span class="kind">object</span></li>
 <li data-name="InstancePrincipalUnblockOutcome"><a href="objects.html#InstancePrincipalUnblockOutcome"><code>InstancePrincipalUnblockOutcome</code></a><span class="kind">object</span></li>
 <li data-name="InviteTokenPreviewGql"><a href="objects.html#InviteTokenPreviewGql"><code>InviteTokenPreviewGql</code></a><span class="kind">object</span></li>
+<li data-name="JoinByPublicLinkPayload"><a href="objects.html#JoinByPublicLinkPayload"><code>JoinByPublicLinkPayload</code></a><span class="kind">object</span></li>
+<li data-name="JoinRequest"><a href="objects.html#JoinRequest"><code>JoinRequest</code></a><span class="kind">object</span></li>
+<li data-name="JoinRequestCursorOutput"><a href="objects.html#JoinRequestCursorOutput"><code>JoinRequestCursorOutput</code></a><span class="kind">object</span></li>
+<li data-name="JoinRequestPage"><a href="objects.html#JoinRequestPage"><code>JoinRequestPage</code></a><span class="kind">object</span></li>
 <li data-name="JoinServerByInvitePayload"><a href="objects.html#JoinServerByInvitePayload"><code>JoinServerByInvitePayload</code></a><span class="kind">object</span></li>
 <li data-name="KeyIdentity"><a href="objects.html#KeyIdentity"><code>KeyIdentity</code></a><span class="kind">object</span></li>
 <li data-name="KeyLogEntry"><a href="objects.html#KeyLogEntry"><code>KeyLogEntry</code></a><span class="kind">object</span></li>
@@ -309,6 +323,8 @@
 <li data-name="PrincipalDevice"><a href="objects.html#PrincipalDevice"><code>PrincipalDevice</code></a><span class="kind">object</span></li>
 <li data-name="PrincipalDevices"><a href="objects.html#PrincipalDevices"><code>PrincipalDevices</code></a><span class="kind">object</span></li>
 <li data-name="ProfileCard"><a href="objects.html#ProfileCard"><code>ProfileCard</code></a><span class="kind">object</span></li>
+<li data-name="PublicJoinLink"><a href="objects.html#PublicJoinLink"><code>PublicJoinLink</code></a><span class="kind">object</span></li>
+<li data-name="PublicJoinLinkPreview"><a href="objects.html#PublicJoinLinkPreview"><code>PublicJoinLinkPreview</code></a><span class="kind">object</span></li>
 <li data-name="ReactionGroup"><a href="objects.html#ReactionGroup"><code>ReactionGroup</code></a><span class="kind">object</span></li>
 <li data-name="RelayInfo"><a href="objects.html#RelayInfo"><code>RelayInfo</code></a><span class="kind">object</span></li>
 <li data-name="RelayItem"><a href="objects.html#RelayItem"><code>RelayItem</code></a><span class="kind">object</span></li>
@@ -386,6 +402,7 @@
 <li data-name="InBandTokenInput"><a href="inputs.html#InBandTokenInput"><code>InBandTokenInput</code></a><span class="kind">input</span></li>
 <li data-name="InboxCursorInput"><a href="inputs.html#InboxCursorInput"><code>InboxCursorInput</code></a><span class="kind">input</span></li>
 <li data-name="JoinRemoteWorkspaceInput"><a href="inputs.html#JoinRemoteWorkspaceInput"><code>JoinRemoteWorkspaceInput</code></a><span class="kind">input</span></li>
+<li data-name="JoinRequestCursorInput"><a href="inputs.html#JoinRequestCursorInput"><code>JoinRequestCursorInput</code></a><span class="kind">input</span></li>
 <li data-name="JoinServerByInviteInput"><a href="inputs.html#JoinServerByInviteInput"><code>JoinServerByInviteInput</code></a><span class="kind">input</span></li>
 <li data-name="LoginInput"><a href="inputs.html#LoginInput"><code>LoginInput</code></a><span class="kind">input</span></li>
 <li data-name="MacroStepInput"><a href="inputs.html#MacroStepInput"><code>MacroStepInput</code></a><span class="kind">input</span></li>
@@ -431,6 +448,7 @@
 <li data-name="UpdateMyProfileInput"><a href="inputs.html#UpdateMyProfileInput"><code>UpdateMyProfileInput</code></a><span class="kind">input</span></li>
 <li data-name="UpdateNotificationSettingsInput"><a href="inputs.html#UpdateNotificationSettingsInput"><code>UpdateNotificationSettingsInput</code></a><span class="kind">input</span></li>
 <li data-name="UpdatePipelineInput"><a href="inputs.html#UpdatePipelineInput"><code>UpdatePipelineInput</code></a><span class="kind">input</span></li>
+<li data-name="UpdatePublicJoinLinkInput"><a href="inputs.html#UpdatePublicJoinLinkInput"><code>UpdatePublicJoinLinkInput</code></a><span class="kind">input</span></li>
 <li data-name="UpdateUserCommandInput"><a href="inputs.html#UpdateUserCommandInput"><code>UpdateUserCommandInput</code></a><span class="kind">input</span></li>
 <li data-name="UpdateWorkspacePluginInput"><a href="inputs.html#UpdateWorkspacePluginInput"><code>UpdateWorkspacePluginInput</code></a><span class="kind">input</span></li>
 <li data-name="UserCommandStepInput"><a href="inputs.html#UserCommandStepInput"><code>UserCommandStepInput</code></a><span class="kind">input</span></li>
@@ -459,6 +477,8 @@
 <li data-name="FilterLogic"><a href="enums.html#FilterLogic"><code>FilterLogic</code></a><span class="kind">enum</span></li>
 <li data-name="FilterOp"><a href="enums.html#FilterOp"><code>FilterOp</code></a><span class="kind">enum</span></li>
 <li data-name="InviteTokenTypeGql"><a href="enums.html#InviteTokenTypeGql"><code>InviteTokenTypeGql</code></a><span class="kind">enum</span></li>
+<li data-name="JoinByPublicLinkOutcome"><a href="enums.html#JoinByPublicLinkOutcome"><code>JoinByPublicLinkOutcome</code></a><span class="kind">enum</span></li>
+<li data-name="JoinRequestStatus"><a href="enums.html#JoinRequestStatus"><code>JoinRequestStatus</code></a><span class="kind">enum</span></li>
 <li data-name="KeyLogEntryKind"><a href="enums.html#KeyLogEntryKind"><code>KeyLogEntryKind</code></a><span class="kind">enum</span></li>
 <li data-name="KeybindContext"><a href="enums.html#KeybindContext"><code>KeybindContext</code></a><span class="kind">enum</span></li>
 <li data-name="KeybindScope"><a href="enums.html#KeybindScope"><code>KeybindScope</code></a><span class="kind">enum</span></li>
@@ -473,6 +493,8 @@
 <li data-name="PluginSignatureStatus"><a href="enums.html#PluginSignatureStatus"><code>PluginSignatureStatus</code></a><span class="kind">enum</span></li>
 <li data-name="PluginSourceKind"><a href="enums.html#PluginSourceKind"><code>PluginSourceKind</code></a><span class="kind">enum</span></li>
 <li data-name="PresenceStatus"><a href="enums.html#PresenceStatus"><code>PresenceStatus</code></a><span class="kind">enum</span></li>
+<li data-name="PublicJoinLinkMode"><a href="enums.html#PublicJoinLinkMode"><code>PublicJoinLinkMode</code></a><span class="kind">enum</span></li>
+<li data-name="PublicJoinLinkViewer"><a href="enums.html#PublicJoinLinkViewer"><code>PublicJoinLinkViewer</code></a><span class="kind">enum</span></li>
 <li data-name="RegistrationModeGql"><a href="enums.html#RegistrationModeGql"><code>RegistrationModeGql</code></a><span class="kind">enum</span></li>
 <li data-name="ReportOutcome"><a href="enums.html#ReportOutcome"><code>ReportOutcome</code></a><span class="kind">enum</span></li>
 <li data-name="RevocationFanoutStatus"><a href="enums.html#RevocationFanoutStatus"><code>RevocationFanoutStatus</code></a><span class="kind">enum</span></li>
@@ -495,12 +517,12 @@
 </ul></div>
 <ul class="cards">
 <li><a href="../docs/api.html"><b>Talking to a server</b><span>The endpoints, the session cookie and CSRF, origins, limits, error codes and pagination: the contract around the schema.</span></a></li>
-<li><a href="query.html"><b>Query</b><span>64 fields, grouped by domain.</span></a></li>
-<li><a href="mutation.html"><b>Mutation</b><span>122 fields, grouped by domain.</span></a></li>
+<li><a href="query.html"><b>Query</b><span>68 fields, grouped by domain.</span></a></li>
+<li><a href="mutation.html"><b>Mutation</b><span>128 fields, grouped by domain.</span></a></li>
 <li><a href="subscription.html"><b>Subscription</b><span>2 fields, grouped by domain.</span></a></li>
-<li><a href="objects.html"><b>Objects</b><span>120 objects.</span></a></li>
-<li><a href="inputs.html"><b>Inputs</b><span>87 inputs.</span></a></li>
-<li><a href="enums.html"><b>Enums</b><span>47 enums.</span></a></li>
+<li><a href="objects.html"><b>Objects</b><span>126 objects.</span></a></li>
+<li><a href="inputs.html"><b>Inputs</b><span>89 inputs.</span></a></li>
+<li><a href="enums.html"><b>Enums</b><span>51 enums.</span></a></li>
 <li><a href="scalars.html"><b>Scalars</b><span>7 scalars.</span></a></li>
 <li><a href="directives.html"><b>Directives</b><span>3 directives.</span></a></li>
 </ul>
@@ -508,7 +530,7 @@
     </main>
   </div>
   <footer class="site">
-    <span>Generated from <a href="https://github.com/rim-platform/rim-ui/blob/022a75f8c72900eb72d349872a48125596d235d2/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>022a75f</code></span>
+    <span>Generated from <a href="https://github.com/rim-platform/rim-ui/blob/8aa7733e8b6fe5cfee270b572e4ddaf1ec32c432/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>8aa7733</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

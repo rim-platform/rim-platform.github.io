@@ -51,12 +51,14 @@
 <ul class="cards">
 <li><a href="client/guide.html"><b>RIM client</b><span>RIM is a programmable communication workspace. Chat is the medium; the product is what people build on top of it: a command palette over every action, keybinds for anything, macros that chain commands, pipelines that …</span><span class="src">rim-ui/README.md</span></a></li>
 <li><a href="client/keyboard.html"><b>Keyboard</b><span>Everything in the shell is reachable without a mouse. This page describes how keys are resolved, the keybind profile file, and the opt-in Vim layer.</span><span class="src">rim-ui/docs/keyboard.md</span></a></li>
+<li><a href="client/workspace-moderation.html"><b>Workspace removals and bans</b><span>A removal notice shows the workspace name, cause, end date and reason sent for this account. It remains visible across reloads until dismissed, scoped to the server and signed-in account. Moderators are told that the …</span><span class="src">rim-ui/docs/workspace-moderation.md</span></a></li>
 <li><a href="client/updater.html"><b>In-app updates</b><span>The desktop app can check for, download and install new versions of itself with Tauri's updater plugin. It ships dormant: src-tauri/updater.json is committed empty, and an app built from it never contacts an update …</span><span class="src">rim-ui/docs/updater.md</span></a></li>
 <li><a href="client/version-skew.html"><b>Version skew between client and server</b><span>A desktop client lives longer than the server it talks to: users update the app when they choose, and an operator updates the server when they choose. A client release that sends a field or a mutation an older server …</span><span class="src">rim-ui/docs/version-skew.md</span></a></li>
 </ul>
 <h2 id="plugins">Plugins</h2>
 <ul class="cards">
 <li><a href="../plugins/index.html"><b>Plugins</b><span>A plugin adds commands, panels and keybinds to RIM. This page is for the person using the app: what a plugin can do, the official plugins, and how to install, use, trust and remove one. How the client hosts plugins is …</span><span class="src">rim-ui/docs/plugins.md</span></a></li>
+<li><a href="client/web-plugin-links.html"><b>Installing plugins from links in the browser</b><span>Paste the HTTPS bundle URL with its #sha256=&lt;64 lowercase hex&gt; pin. The browser requests it through the configured RIM server using the current session and CSRF protection, then checks the bytes against the pin again. …</span><span class="src">rim-ui/docs/web-plugin-links.md</span></a></li>
 </ul>
 <h2 id="keys-and-devices">Keys and devices</h2>
 <ul class="cards">
@@ -64,16 +66,11 @@
 <li><a href="client/device-linking-desktop.html"><b>Device linking (desktop)</b><span>A computer that holds the account's identity key shows a code; another computer pastes it and gets a device key of its own, certified by the identity key, and signs in with it. The contract, with the code format, the …</span><span class="src">rim-ui/docs/device-linking-desktop.md</span></a></li>
 <li><a href="client/web-linked-device.html"><b>The web app as a linked device</b><span>As a linked device, the web app holds no identity key. It gets a device key of its own by pasting a link code shown on the desktop app (Settings &gt; Security &gt; Link a device), and signs in with that key; linking other …</span><span class="src">rim-ui/docs/web-linked-device.md</span></a></li>
 </ul>
-<h2 id="more-from-the-client">More from the client</h2>
-<ul class="cards">
-<li><a href="client/web-plugin-links.html"><b>Installing plugins from links in the browser</b><span>Paste the HTTPS bundle URL with its #sha256=&lt;64 lowercase hex&gt; pin. The browser requests it through the configured RIM server using the current session and CSRF protection, then checks the bytes against the pin again. …</span><span class="src">rim-ui/docs/web-plugin-links.md</span></a></li>
-<li><a href="client/workspace-moderation.html"><b>Workspace removals and bans</b><span>A removal notice shows the workspace name, cause, end date and reason sent for this account. It remains visible across reloads until dismissed, scoped to the server and signed-in account. Moderators are told that the …</span><span class="src">rim-ui/docs/workspace-moderation.md</span></a></li>
-</ul>
 
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/tree/e2812f23d55b5bb40c581c59f4ad43ead259cf34">rim-server</a> <code>e2812f2</code> and <a href="https://github.com/rim-platform/rim-ui/tree/022a75f8c72900eb72d349872a48125596d235d2">rim-ui</a> <code>022a75f</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/tree/be96e5bcba8dfa93ab7013875d5e96db4d9f4ab5">rim-server</a> <code>be96e5b</code> and <a href="https://github.com/rim-platform/rim-ui/tree/8aa7733e8b6fe5cfee270b572e4ddaf1ec32c432">rim-ui</a> <code>8aa7733</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>
