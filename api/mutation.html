@@ -44,9 +44,9 @@
 <li><a href="#group-command">Command (1)</a></li>
 <li><a href="#group-user">User (3)</a></li>
 <li><a href="#group-keybind">Keybind (3)</a></li>
+<li><a href="#group-workspace">Workspace (11)</a></li>
 <li><a href="#group-emoji">Emoji (2)</a></li>
 <li><a href="#group-macro">Macro (4)</a></li>
-<li><a href="#group-workspace">Workspace (10)</a></li>
 <li><a href="#group-pipeline">Pipeline (4)</a></li>
 <li><a href="#group-report">Report (5)</a></li>
 <li><a href="#group-notification">Notification (2)</a></li>
@@ -58,7 +58,7 @@
 </details></aside>
     <main id="content" class="prose">
 <h1>Mutation</h1>
-<p class="lede">121 mutations, grouped by the domain their name starts with or names, in the order the schema lists them.</p>
+<p class="lede">122 mutations, grouped by the domain their name starts with or names, in the order the schema lists them.</p>
 <input id="filter" class="search" type="search" placeholder="Filter fields by name" aria-label="Filter fields by name" autocomplete="off">
 <p id="filter-none" class="muted" hidden>Nothing matches.</p>
 <section data-group>
@@ -369,49 +369,15 @@ when the caller was not invited.</p>
 </section>
 </section>
 <section data-group>
-<h2 id="group-emoji">Emoji <span class="faint">2</span></h2>
-<section class="entry" id="createCustomEmoji" data-name="createCustomEmoji">
-<h3><code>createCustomEmoji</code></h3>
-<div class="sig">createCustomEmoji(input: <a href="inputs.html#CreateCustomEmojiInput">CreateCustomEmojiInput</a>!): <a href="objects.html#CustomEmoji">CustomEmoji</a>!</div>
-<div class="desc"><p class="faint">No description in the schema.</p></div>
+<h2 id="group-workspace">Workspace <span class="faint">11</span></h2>
+<section class="entry" id="joinDefaultWorkspace" data-name="joinDefaultWorkspace">
+<h3><code>joinDefaultWorkspace</code></h3>
+<div class="sig">joinDefaultWorkspace: <a href="scalars.html#ID">ID</a>!</div>
+<div class="desc"><p>Join the current default workspace as Member with its public channels. Active bans
+are refused; existing membership is unchanged.</p>
+</div>
 
 </section>
-<section class="entry" id="deleteCustomEmoji" data-name="deleteCustomEmoji">
-<h3><code>deleteCustomEmoji</code></h3>
-<div class="sig">deleteCustomEmoji(emojiId: <a href="scalars.html#ID">ID</a>!): <a href="scalars.html#Boolean">Boolean</a>!</div>
-<div class="desc"><p class="faint">No description in the schema.</p></div>
-
-</section>
-</section>
-<section data-group>
-<h2 id="group-macro">Macro <span class="faint">4</span></h2>
-<section class="entry" id="createMacro" data-name="createMacro">
-<h3><code>createMacro</code></h3>
-<div class="sig">createMacro(input: <a href="inputs.html#CreateMacroInput">CreateMacroInput</a>!): <a href="objects.html#MacroDef">MacroDef</a>!</div>
-<div class="desc"><p class="faint">No description in the schema.</p></div>
-
-</section>
-<section class="entry" id="updateMacro" data-name="updateMacro">
-<h3><code>updateMacro</code></h3>
-<div class="sig">updateMacro(input: <a href="inputs.html#UpdateMacroInput">UpdateMacroInput</a>!): <a href="objects.html#MacroDef">MacroDef</a>!</div>
-<div class="desc"><p class="faint">No description in the schema.</p></div>
-
-</section>
-<section class="entry" id="deleteMacro" data-name="deleteMacro">
-<h3><code>deleteMacro</code></h3>
-<div class="sig">deleteMacro(macroId: <a href="scalars.html#ID">ID</a>!): <a href="scalars.html#Boolean">Boolean</a>!</div>
-<div class="desc"><p class="faint">No description in the schema.</p></div>
-
-</section>
-<section class="entry" id="executeMacro" data-name="executeMacro">
-<h3><code>executeMacro</code></h3>
-<div class="sig">executeMacro(input: <a href="inputs.html#ExecuteMacroInput">ExecuteMacroInput</a>!): <a href="objects.html#CommandResult">CommandResult</a>!</div>
-<div class="desc"><p class="faint">No description in the schema.</p></div>
-
-</section>
-</section>
-<section data-group>
-<h2 id="group-workspace">Workspace <span class="faint">10</span></h2>
 <section class="entry" id="setWorkspaceState" data-name="setWorkspaceState">
 <h3><code>setWorkspaceState</code></h3>
 <div class="sig">setWorkspaceState(input: <a href="inputs.html#SetWorkspaceStateInput">SetWorkspaceStateInput</a>!): <a href="objects.html#WorkspaceStateEntryGql">WorkspaceStateEntryGql</a>!</div>
@@ -506,6 +472,48 @@ workspace&#39;s Owner only; anyone else gets <code>FORBIDDEN</code>.</p>
 <div class="desc"><p>Set how a DM from the members of one of the caller&#39;s workspaces arrives, whatever the
 workspace&#39;s default. <code>NOT_FOUND</code> unless the caller is a member.</p>
 </div>
+
+</section>
+</section>
+<section data-group>
+<h2 id="group-emoji">Emoji <span class="faint">2</span></h2>
+<section class="entry" id="createCustomEmoji" data-name="createCustomEmoji">
+<h3><code>createCustomEmoji</code></h3>
+<div class="sig">createCustomEmoji(input: <a href="inputs.html#CreateCustomEmojiInput">CreateCustomEmojiInput</a>!): <a href="objects.html#CustomEmoji">CustomEmoji</a>!</div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+<section class="entry" id="deleteCustomEmoji" data-name="deleteCustomEmoji">
+<h3><code>deleteCustomEmoji</code></h3>
+<div class="sig">deleteCustomEmoji(emojiId: <a href="scalars.html#ID">ID</a>!): <a href="scalars.html#Boolean">Boolean</a>!</div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+</section>
+<section data-group>
+<h2 id="group-macro">Macro <span class="faint">4</span></h2>
+<section class="entry" id="createMacro" data-name="createMacro">
+<h3><code>createMacro</code></h3>
+<div class="sig">createMacro(input: <a href="inputs.html#CreateMacroInput">CreateMacroInput</a>!): <a href="objects.html#MacroDef">MacroDef</a>!</div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+<section class="entry" id="updateMacro" data-name="updateMacro">
+<h3><code>updateMacro</code></h3>
+<div class="sig">updateMacro(input: <a href="inputs.html#UpdateMacroInput">UpdateMacroInput</a>!): <a href="objects.html#MacroDef">MacroDef</a>!</div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+<section class="entry" id="deleteMacro" data-name="deleteMacro">
+<h3><code>deleteMacro</code></h3>
+<div class="sig">deleteMacro(macroId: <a href="scalars.html#ID">ID</a>!): <a href="scalars.html#Boolean">Boolean</a>!</div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+<section class="entry" id="executeMacro" data-name="executeMacro">
+<h3><code>executeMacro</code></h3>
+<div class="sig">executeMacro(input: <a href="inputs.html#ExecuteMacroInput">ExecuteMacroInput</a>!): <a href="objects.html#CommandResult">CommandResult</a>!</div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
 
 </section>
 </section>
@@ -839,7 +847,7 @@ off.</li>
 display name comes from their profile card.</li>
 <li><code>VALIDATION</code> — <code>displayName</code> &gt; 64 chars, <code>statusText</code> &gt; 256 chars,
 <code>bio</code> &gt; 2000 chars, or <code>avatarUrl</code> neither empty nor the URL of one of the caller&#39;s own
-uploaded avatars (<code>/api/files/avatars/&lt;caller id&gt;/avatar.&lt;png|jpeg|gif|webp&gt;</code>, as
+uploaded avatars (<code>/api/files/avatars/&lt;caller id&gt;/avatar-&lt;content hash&gt;.&lt;ext&gt;</code>, as
 <code>POST /api/files/avatar</code> answers it).</li>
 <li><code>NOT_FOUND</code> — caller&#39;s user row missing (should not happen in practice).</li>
 <li><code>INTERNAL</code> — repository failure.</li>
@@ -1156,7 +1164,7 @@ seconds. Instance operators only; anyone else gets <code>FORBIDDEN</code>.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Generated from <a href="https://github.com/rim-platform/rim-ui/blob/6841483be3406ed2bae84572b3da743f806ae839/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>6841483</code></span>
+    <span>Generated from <a href="https://github.com/rim-platform/rim-ui/blob/022a75f8c72900eb72d349872a48125596d235d2/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>022a75f</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

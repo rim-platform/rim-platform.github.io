@@ -46,12 +46,12 @@
 <li><a href="#limits-and-audit">Limits and audit</a></li>
 <li><a href="#test-plan">Test plan</a></li>
 <li><a href="#deferred">Deferred</a></li>
-<li><a href="#appendix-a-known-answer-statement">Appendix A: known-answer statement</a></li>
+<li><a href="#appendix-a-known-answer-statement">Appendix A: known-answer statement</a><ol><li><a href="#fetching-an-external-pinned-bundle">Fetching an external pinned bundle</a></li></ol></li>
 </ol>
 </details></aside>
     <main id="content" class="prose">
 <h1 id="workspace-plugins-v1">Workspace plugins v1</h1>
-<p class="status"><span><b>Workspace plugins v1</b></span><span>version 1</span><span>status: implemented, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/c3678ac0b585a8fb31514201485cbcdb2b59e44d/docs/specs/workspace-plugins-v1.md">rim-server/docs/specs/workspace-plugins-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/c3678ac0b585a8fb31514201485cbcdb2b59e44d">c3678ac</a></span></p>
+<p class="status"><span><b>Workspace plugins v1</b></span><span>version 1</span><span>status: implemented, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/e2812f23d55b5bb40c581c59f4ad43ead259cf34/docs/specs/workspace-plugins-v1.md">rim-server/docs/specs/workspace-plugins-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/e2812f23d55b5bb40c581c59f4ad43ead259cf34">e2812f2</a></span></p>
 <p><em>Status: implemented, normative. Extends <a href="key-identity-v1.html"><code>docs/specs/key-identity-v1.md</code></a> (signed statements,
 version 2 tagged keys, the public <code>keyLog</code>) and <a href="web-plugins-v1.html"><code>docs/specs/web-plugins-v1.md</code></a> (the <code>WebSandboxed</code>
 kind and the bundle format). This document is the contract between the server
@@ -665,7 +665,7 @@ log, the default URL needing an uploaded bundle of that size, the approval colum
 event per change.</li>
 <li><strong><code>db-tests</code>:</strong> unique and check constraints; cascade on workspace delete; <code>approved_by</code> set null
 on user delete; cleanup deleting only unnamed bundles over 24 hours old; migration up and down.</li>
-<li><strong>e2e</strong> (<a href="https://github.com/rim-platform/rim-server/blob/c3678ac0b585a8fb31514201485cbcdb2b59e44d/rim_api/tests/workspace_plugin_e2e.rs"><code>rim_api/tests/workspace_plugin_e2e.rs</code></a>): upload web-plugins-v1 appendix A&#39;s bundle
+<li><strong>e2e</strong> (<a href="https://github.com/rim-platform/rim-server/blob/e2812f23d55b5bb40c581c59f4ad43ead259cf34/rim_api/tests/workspace_plugin_e2e.rs"><code>rim_api/tests/workspace_plugin_e2e.rs</code></a>): upload web-plugins-v1 appendix A&#39;s bundle
 (<code>201</code>, then <code>200</code>); add appendix A&#39;s statement as an Owner with the inception as
 <code>publisherKeyLog</code> (<code>VALID</code>); read as a Member and a Guest; download as a member (<code>200</code>) and a
 non-member (<code>404</code>); a Member&#39;s add <code>FORBIDDEN</code>; a tampered signature <code>VALIDATION</code>; a status update
@@ -703,11 +703,16 @@ use these keys for real statements.</p>
 <pre><code>{&quot;v&quot;:2,&quot;type&quot;:&quot;plugin-manifest&quot;,&quot;principalId&quot;:&quot;rimp1_txDLbnipi5i3kCJtJwBOUixzv_MY8OnU0mcy--Tyje0&quot;,&quot;keySeq&quot;:0,&quot;publisherName&quot;:&quot;Ada&quot;,&quot;pluginId&quot;:&quot;dev.example.hello-web&quot;,&quot;version&quot;:&quot;0.1.0&quot;,&quot;manifest&quot;:&quot;{\&quot;manifest_version\&quot;:1,\&quot;plugin_id\&quot;:\&quot;dev.example.hello-web\&quot;,\&quot;display_name\&quot;:\&quot;Hello Web\&quot;,\&quot;version\&quot;:\&quot;0.1.0\&quot;,\&quot;description\&quot;:\&quot;Says hello from a sandboxed frame.\&quot;,\&quot;runtime_kind\&quot;:\&quot;WebSandboxed\&quot;,\&quot;entrypoint\&quot;:\&quot;main.mjs\&quot;,\&quot;commands\&quot;:[{\&quot;id\&quot;:\&quot;greet\&quot;,\&quot;title\&quot;:\&quot;Hello Web: Greet\&quot;,\&quot;description\&quot;:\&quot;Greets the signed-in user.\&quot;}]}&quot;,&quot;source&quot;:{&quot;kind&quot;:&quot;bundle&quot;,&quot;sha256&quot;:&quot;5b154b3eb45c3ebc44f6820ba30a389ce85b43dea34bcbf652b9b1a5416fbe85&quot;,&quot;size&quot;:1605},&quot;issuedAt&quot;:&quot;2026-10-09T00:00:00Z&quot;}</code></pre>
 <p>Signature:</p>
 <pre><code>ed25519:FRHxrYnev03jlVo484kL4PLh7GMArjEE4q1wiBNMSx7rD8CAis8YIivjSccshXkEdvYEw-wAIjzQgzDRj6kGCg</code></pre>
+<h3 id="fetching-an-external-pinned-bundle">Fetching an external pinned bundle <a class="anchor" href="#fetching-an-external-pinned-bundle" aria-label="Link to this section">#</a></h3>
+<p>Browser clients fetch external registry bundles through <code>POST /api/plugin-bundles/fetch</code>
+with <code>{url, sha256}</code> and session/CSRF protection, then verify the pin locally. This route is
+independent of workspace hosting and needs <code>plugin_link_fetch</code>; it never registers or stores
+an entry. The checks and transport limits are the same as for a pasted link in web-plugins-v1.</p>
 
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c3678ac0b585a8fb31514201485cbcdb2b59e44d/docs/specs/workspace-plugins-v1.md">rim-server/docs/specs/workspace-plugins-v1.md</a> at <code>c3678ac</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/e2812f23d55b5bb40c581c59f4ad43ead259cf34/docs/specs/workspace-plugins-v1.md">rim-server/docs/specs/workspace-plugins-v1.md</a> at <code>e2812f2</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

@@ -43,7 +43,7 @@
 <li><a href="#abuse-and-limits-on-a-public-server">Abuse and limits on a public server</a></li>
 <li><a href="#threat-model">Threat model</a></li>
 <li><a href="#known-gaps-and-review-status">Known gaps and review status</a></li>
-<li><a href="#reporting-a-vulnerability">Reporting a vulnerability</a></li>
+<li><a href="#reporting-a-vulnerability">Reporting a vulnerability</a><ol><li><a href="#plugin-link-downloads">Plugin link downloads</a></li></ol></li>
 </ol>
 </details></aside>
     <main id="content" class="prose">
@@ -364,11 +364,18 @@ checked against a hash of its sources, not rebuilt reproducibly.</li>
 or chat room. <a href="security.html"><code>SECURITY.md</code></a> says what to include, which repository a problem
 belongs to, and when to expect an answer. A report that matches a gap listed in the review brief
 is still welcome, especially with an attack the brief does not describe.</p>
+<h3 id="plugin-link-downloads">Plugin link downloads <a class="anchor" href="#plugin-link-downloads" aria-label="Link to this section">#</a></h3>
+<p>Authenticated browser installs use the server&#39;s <code>plugin_link_fetch</code> endpoint. The fetcher
+requires a SHA-256 pin and public HTTPS targets, validates every redirect and DNS result,
+disables proxies and referrers, and enforces size, time, concurrency and account rate limits.
+It verifies both the hash and bundle structure before returning an attachment with <code>no-store</code>
+and <code>nosniff</code>. Audit records include the account and original hostname, without URL paths,
+query strings or bundle contents. This route stores no workspace bundle.</p>
 
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c3678ac0b585a8fb31514201485cbcdb2b59e44d/docs/security-overview.md">rim-server/docs/security-overview.md</a> at <code>c3678ac</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/e2812f23d55b5bb40c581c59f4ad43ead259cf34/docs/security-overview.md">rim-server/docs/security-overview.md</a> at <code>e2812f2</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

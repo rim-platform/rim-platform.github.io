@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Installing plugins from links in the browser · RIM</title>
+<meta name="description" content="Paste the HTTPS bundle URL with its #sha256=&lt;64 lowercase hex&gt; pin. The browser requests it through the configured RIM server using the current session and CSRF protection, then checks the bytes against the pin again. …">
+<link rel="icon" href="../../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<div class="wrap">
+  <header class="nav">
+    <a class="brand" href="../../index.html" aria-label="RIM home">
+      <picture><source srcset="../../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
+      RIM
+    </a>
+    <nav aria-label="Site">
+      <a href="../../index.html#what">What RIM is</a>
+      <a href="../../index.html#how">How it works</a>
+      <a href="../self-hosting.html">Self-host</a>
+      <a href="../../configure/index.html">Configure</a>
+      <a href="../../plugins/index.html">Plugins</a>
+      <a href="../index.html" aria-current="page">Docs</a>
+      <a href="../../api/index.html">API</a>
+      <a href="../../specs/index.html">Specs</a>
+      <a href="../contributing.html">Contribute</a>
+      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+  <div class="crumbs"><a href="../index.html">Docs</a><span aria-hidden="true">/</span><a href="../using-rim.html">Using RIM</a><span aria-hidden="true">/</span><span>Installing plugins from links in the browser</span></div>
+  <div class="page">
+
+    <main id="content" class="prose">
+<h1 id="installing-plugins-from-links-in-the-browser">Installing plugins from links in the browser</h1>
+<p>Paste the HTTPS bundle URL with its <code>#sha256=&lt;64 lowercase hex&gt;</code> pin. The browser requests
+it through the configured RIM server using the current session and CSRF protection, then
+checks the bytes against the pin again. External hosts do not need browser CORS headers.</p>
+<p>The server must support <code>plugin_link_fetch</code> and have it enabled. It enforces public HTTPS
+addresses, redirect and download limits, and validates the pin and bundle structure. The
+client explains an older server, disabled feature, invalid bundle, rate limit or connection
+failure. An older server needs an update to install these links in the browser.</p>
+<p>Desktop external downloads continue through the desktop host. Workspace-hosted bundle
+copies still use the existing authenticated download route.</p>
+
+    </main>
+  </div>
+  <footer class="site">
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/022a75f8c72900eb72d349872a48125596d235d2/docs/web-plugin-links.md">rim-ui/docs/web-plugin-links.md</a> at <code>022a75f</code></span>
+    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
+  </footer>
+</div>
+
+</body>
+</html>

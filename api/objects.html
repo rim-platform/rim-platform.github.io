@@ -1488,7 +1488,7 @@ space. Every member sees it.</p>
 </div>
 <div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
 <tr><td><code>key</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td><p>The feature&#39;s name, as <code>RIM_FEATURES_DISABLED</code> takes it: <code>attachments</code>, <code>link_previews</code>,
-<code>email</code>, <code>custom_emoji</code>, <code>workspace_plugins</code>, <code>ai_commands</code> or <code>avatars</code>. A client
+<code>email</code>, <code>custom_emoji</code>, <code>workspace_plugins</code>, <code>ai_commands</code>, <code>avatars</code> or <code>plugin_link_fetch</code>. A client
 ignores a name it does not know.</p>
 </td></tr>
 <tr><td><code>state</code></td><td><code><a href="enums.html#ServerFeatureState">ServerFeatureState</a>!</code></td><td></td></tr>
@@ -1611,6 +1611,10 @@ at it every signup answers <code>REGISTRATION_FULL</code> and <code>serverInfo.r
 </td></tr>
 <tr><td><code>principalId</code></td><td><code><a href="scalars.html#String">String</a></code></td><td><p>The member&#39;s key identity (<code>rimp1_…</code>), once enrolled; null for a password-only account.</p>
 </td></tr>
+<tr><td><code>banned</code></td><td><code><a href="scalars.html#Boolean">Boolean</a>!</code></td><td><p>Whether this member is banned in this workspace.</p>
+</td></tr>
+<tr><td><code>bannedUntil</code></td><td><code><a href="scalars.html#DateTime">DateTime</a></code></td><td><p>End of the active ban; null for a permanent ban or no ban.</p>
+</td></tr>
 </tbody></table></div>
 <p class="faint">Used by <a href="mutation.html#setMemberRole">Mutation.setMemberRole</a>, <a href="query.html#serverMembers">Query.serverMembers</a></p>
 </section>
@@ -1725,6 +1729,12 @@ handle domain, or a person from another server&#39;s username at their home serv
 server&#39;s handle domain. Null when it is not known (a person from another server whose
 home server did not say, or whose handle domain does not point back at it) and for a
 deleted account.</p>
+</td></tr>
+<tr><td><code>banned</code></td><td><code><a href="scalars.html#Boolean">Boolean</a>!</code></td><td><p>Whether this message&#39;s author is banned in its workspace; false outside message authors.</p>
+</td></tr>
+<tr><td><code>bannedUntil</code></td><td><code><a href="scalars.html#DateTime">DateTime</a></code></td><td><p>End of the active workspace ban; null for a permanent ban or no ban.</p>
+</td></tr>
+<tr><td><code>banReason</code></td><td><code><a href="scalars.html#String">String</a></code></td><td><p>The active ban&#39;s reason, readable only by workspace moderators.</p>
 </td></tr>
 </tbody></table></div>
 <p class="faint">Used by <a href="objects.html#Message">Message</a>, <a href="mutation.html#updateMyProfile">Mutation.updateMyProfile</a>, <a href="objects.html#Notification">Notification</a>, <a href="query.html#me">Query.me</a>, <a href="objects.html#SearchResultMessage">SearchResultMessage</a>, <a href="objects.html#Server">Server</a>, <a href="objects.html#ServerBan">ServerBan</a>, <a href="objects.html#WorkspaceInvite">WorkspaceInvite</a>, <a href="objects.html#WorkspacePlugin">WorkspacePlugin</a></p>
@@ -1903,7 +1913,7 @@ shares no conversation with them.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Generated from <a href="https://github.com/rim-platform/rim-ui/blob/6841483be3406ed2bae84572b3da743f806ae839/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>6841483</code></span>
+    <span>Generated from <a href="https://github.com/rim-platform/rim-ui/blob/022a75f8c72900eb72d349872a48125596d235d2/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>022a75f</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

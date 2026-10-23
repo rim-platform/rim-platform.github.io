@@ -53,7 +53,7 @@
 <li><a href="#availability-rules">Availability Rules</a></li>
 <li><a href="#example-command-shapes">Example Command Shapes</a><ol><li><a href="#built-in-command">Built-in Command</a></li><li><a href="#integration-command">Integration Command</a></li><li><a href="#plugin-command">Plugin Command</a></li><li><a href="#user-defined-command">User-Defined Command</a></li></ol></li>
 <li><a href="#non-goals">Non-Goals</a></li>
-<li><a href="#summary-of-decisions">Summary Of Decisions</a></li>
+<li><a href="#summary-of-decisions">Summary Of Decisions</a><ol><li><a href="#default-workspace-unbans">Default-workspace unbans</a></li></ol></li>
 </ol>
 </details></aside>
     <main id="content" class="prose">
@@ -843,11 +843,16 @@ capability.</li>
 <li>Dangerous local commands should show a confirmation dialog by default, with an option to disable
 it later.</li>
 </ul>
+<h3 id="default-workspace-unbans">Default-workspace unbans <a class="anchor" href="#default-workspace-unbans" aria-label="Link to this section">#</a></h3>
+<p><code>admin.unban</code> restores a local account to the current default workspace as Member with public
+channels, atomically with lifting the ban. The audit action records
+<code>restored_default_workspace</code>; reasons remain flags rather than free text. Other workspaces
+still need a fresh invite after unban.</p>
 
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c3678ac0b585a8fb31514201485cbcdb2b59e44d/docs/command_model.md">rim-server/docs/command_model.md</a> at <code>c3678ac</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/e2812f23d55b5bb40c581c59f4ad43ead259cf34/docs/command_model.md">rim-server/docs/command_model.md</a> at <code>e2812f2</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>
