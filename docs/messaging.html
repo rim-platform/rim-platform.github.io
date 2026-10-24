@@ -316,8 +316,7 @@ a revoked invite answers it unchanged. The revocation is audit-logged
 (<code>workspace_invite_revoked</code>), as the creation is (<code>workspace_invite_created</code>).</li>
 <li>An invite stored without an expiry, by a server from before invites had to expire, keeps
 admitting until it is used up or revoked.</li>
-<li>Redeeming an invite (<code>joinServerByInvite</code>, <code>signupWithInvite</code>, <code>signupWithKey</code>, a join through
-another server) checks the revocation, the expiry and the uses in the same update that counts
+<li>Redeeming an invite (<code>joinServerByInvite</code>, <code>signupWithKey</code>, a join through another server) checks the revocation, the expiry and the uses in the same update that counts
 the use. A revoked, expired or used-up invite is <code>FORBIDDEN</code> for <code>joinServerByInvite</code>; a signup
 gets <code>INVALID_TOKEN</code> for a revoked or used-up invite and <code>EXPIRED_TOKEN</code> for an expired one.</li>
 </ul>
@@ -360,8 +359,8 @@ proof-of-work and the per-address signup limit, and on an invite-only server it 
 registration. A permanent, unlimited link posted on a public page would let anyone, scripts
 included, create accounts on the server for free. So the link only admits accounts that already
 exist; someone without one signs up the server&#39;s normal way (proof-of-work, an instance invite,
-open registration) and then opens the link again. <code>signupWithInvite</code>, <code>signupWithKey</code> and
-<code>acceptInvite</code> refuse a link token as <code>INVALID_TOKEN</code>, as they do any unknown token.
+open registration) and then opens the link again. <code>signupWithKey</code> refuses a link token as
+<code>INVALID_TOKEN</code>, as it does any unknown token.
 <code>joinByPublicLink</code> is for accounts this server holds; an account of another server joins through
 its own server, which presents it here (below), and nothing about that creates an account
 either: the host holds the person as a remote user, as for any member from elsewhere.</p>
@@ -815,7 +814,7 @@ and the next query, without a scheduled event.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c2a30ae9bfc7d4925af4af4e0f524ad67424086c/docs/messaging.md">rim-server/docs/messaging.md</a> at <code>c2a30ae</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c5a6a52b10286eeee7c4464ce17fed7b2cd68e4c/docs/messaging.md">rim-server/docs/messaging.md</a> at <code>c5a6a52</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

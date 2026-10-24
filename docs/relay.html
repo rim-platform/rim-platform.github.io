@@ -364,13 +364,13 @@ subscriptions lapsed. Every 5 seconds it sends revocations due for another attem
 (target <code>audit</code>, ids only): <code>relay.principal_blocked</code> (<code>scope</code> <code>user</code> for a user&#39;s block,
 <code>server</code> for an operator&#39;s), <code>relay.principal_unblocked</code>, <code>relay.blocked_principal_refused</code>,
 <code>relay.dm_request_reported</code>, <code>relay.abuse_report_filed</code>, <code>relay.abuse_report_resolved</code>,
-<code>blocked_email_refused</code> (<code>action</code> <code>signup</code> or <code>login</code>), <code>relay.registration_pow</code>, <code>relay.left</code>, <code>key_identity_adopted</code>, <code>host.revocation_applied</code>,
+<code>blocked_email_refused</code> (<code>action</code> <code>signup</code>), <code>relay.registration_pow</code>, <code>relay.left</code>, <code>key_identity_adopted</code>, <code>host.revocation_applied</code>,
 <code>host.recovery_applied</code> and <code>host.identity_revocations_applied</code> (a recovery or revocations
 applied from a person&#39;s identity, with the sessions and delegations they ended); <code>host.remote_join</code> and
 <code>host.delegation_accepted</code> are also written to <code>command_audit_log</code> (initiator <code>s2s</code>).</p>
 <h3 id="the-public-relay">The public relay <a class="anchor" href="#the-public-relay" aria-label="Link to this section">#</a></h3>
-<p>A relay anyone may sign up on runs with the settings of <a href="https://github.com/rim-platform/rim-server/blob/c2a30ae9bfc7d4925af4af4e0f524ad67424086c/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a> on top of
-<a href="https://github.com/rim-platform/rim-server/blob/c2a30ae9bfc7d4925af4af4e0f524ad67424086c/deploy/compose.yml"><code>deploy/compose.yml</code></a>, as <code>RIM_ROLE=relay</code>, or <code>both</code> to host workspaces as well, as the
+<p>A relay anyone may sign up on runs with the settings of <a href="https://github.com/rim-platform/rim-server/blob/c5a6a52b10286eeee7c4464ce17fed7b2cd68e4c/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a> on top of
+<a href="https://github.com/rim-platform/rim-server/blob/c5a6a52b10286eeee7c4464ce17fed7b2cd68e4c/deploy/compose.yml"><code>deploy/compose.yml</code></a>, as <code>RIM_ROLE=relay</code>, or <code>both</code> to host workspaces as well, as the
 project&#39;s relay does. This section says how its registration and blocks behave;
 <a href="operations/relay-public.html"><code>docs/operations/relay-public.md</code></a> has its quotas, the operator&#39;s commands and the abuse policy.</p>
 <p><strong>Registration.</strong> <code>RIM_REGISTRATION_POW_BITS</code> (1 to 40; 24 on the public relay) turns on <code>pow</code>
@@ -380,8 +380,7 @@ unpadded base64url, such that</p>
 <pre><code>SHA-256(&quot;rim.pow.v1\0&quot; || this server's id || &quot;\0&quot; || inception payload || nonce)</code></pre>
 <p>starts with that many zero bits. The work is bound to this server and one principal, and
 checking it is one hash. Proof-of-work signups also count against the open-signup limit per IP
-and are audited as <code>relay.registration_pow</code>. Password signups take a token, as in invite-only
-mode. The descriptor says <code>&quot;registration&quot;:{&quot;mode&quot;:&quot;pow&quot;,&quot;powBits&quot;:24}</code> and <code>registrationMode</code>
+and are audited as <code>relay.registration_pow</code>. The descriptor says <code>&quot;registration&quot;:{&quot;mode&quot;:&quot;pow&quot;,&quot;powBits&quot;:24}</code> and <code>registrationMode</code>
 answers <code>POW</code>. A signup link from <code>rim_server invite create</code> lets a person in without the work;
 it needs no account or workspace, so it works with <code>RIM_ROLE=relay</code>.</p>
 <p><strong>Account cap.</strong> <code>RIM_LIMIT_ACCOUNTS</code> caps the local accounts the relay holds, those waiting out
@@ -393,14 +392,13 @@ and the discovery document says <code>&quot;registration&quot;:{&quot;full&quot;
 counters are in memory, per node.</p>
 <p><strong>Blocking a principal.</strong> <code>rim_server principal block &lt;principalId&gt; --reason &lt;text&gt;</code> stores the
 block in <code>relay_principal_block</code>, ends the sessions of the account holding the principal here
-and ignores its pending DM requests for every recipient. From then on, until <code>principal unblock</code>: its logins, signups and enrollments are refused (<code>FORBIDDEN</code>); deliveries to it are
+and ignores its pending DM requests for every recipient. From then on, until <code>principal unblock</code>: its logins and signups are refused (<code>FORBIDDEN</code>); deliveries to it are
 refused as <code>unknown_principal</code> and its invites as <code>blocked</code>; its key packages are not handed
 out, and it claims none; <code>GET /s2s/v1/principals/&lt;id&gt;</code> answers <code>404</code>; forwarded requests it
 signs are refused with <code>403</code>. <code>principal list</code> shows the blocks.</p>
 <p>In the same transaction the command revokes the account&#39;s instance and workspace invites that
 still have uses left, adds its email (if it has one) to <code>blocked_email</code>, which refuses that
-address at signup (<code>VALIDATION</code>, &quot;this email cannot sign up here&quot;) and at password login
-(<code>FORBIDDEN</code>), and records the reason as an abuse report, resolved by the block. Every account
+address at signup (<code>VALIDATION</code>, &quot;this email cannot sign up here&quot;), and records the reason as an abuse report, resolved by the block. Every account
 records the invite it signed up with and that invite&#39;s creator, so the command then lists the
 accounts the blocked one&#39;s invites created; <code>--cascade</code> blocks them too, recursively, each with
 the reason followed by &quot;(invited by &lt;username&gt;)&quot;. An account without a key identity is blocked
@@ -540,7 +538,7 @@ mutations are refused on it (<code>FORBIDDEN</code>), as through the relay.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c2a30ae9bfc7d4925af4af4e0f524ad67424086c/docs/relay.md">rim-server/docs/relay.md</a> at <code>c2a30ae</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c5a6a52b10286eeee7c4464ce17fed7b2cd68e4c/docs/relay.md">rim-server/docs/relay.md</a> at <code>c5a6a52</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

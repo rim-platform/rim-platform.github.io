@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Transactional Email · RIM</title>
-<meta name="description" content="RIM sends transactional email for password resets, invites, and notification digests. This document covers the RIM_SMTP_* config matrix, TLS modes, the three wired flows, retry policy, and the &quot;unconfigured → log-only&quot; …">
+<meta name="description" content="RIM sends transactional email for invites and notification digests. This document covers the RIM_SMTP_* config matrix, TLS modes, the two wired flows, retry policy, and the &quot;unconfigured → log-only&quot; fallback behavior.">
 <link rel="icon" href="../favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
@@ -36,7 +36,7 @@
     <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
 <ol>
 <li><a href="#config-matrix">Config matrix</a><ol><li><a href="#tls-modes">TLS modes</a></li><li><a href="#rim_public_base_url-and-link-building">RIM_PUBLIC_BASE_URL and link building</a></li></ol></li>
-<li><a href="#wired-flows">Wired flows</a><ol><li><a href="#password-reset">Password reset</a></li><li><a href="#invites">Invites</a></li><li><a href="#notification-digest">Notification digest</a></li></ol></li>
+<li><a href="#wired-flows">Wired flows</a><ol><li><a href="#invites">Invites</a></li><li><a href="#notification-digest">Notification digest</a></li></ol></li>
 <li><a href="#retry-policy">Retry policy</a></li>
 <li><a href="#dependency">Dependency</a></li>
 <li><a href="#not-handled">Not handled</a></li>
@@ -44,9 +44,9 @@
 </details></aside>
     <main id="content" class="prose">
 <h1 id="transactional-email">Transactional Email</h1>
-<p>RIM sends transactional email for password resets, invites, and notification digests. This
-document covers the <code>RIM_SMTP_*</code> config matrix, TLS modes, the three wired flows, retry policy,
-and the &quot;unconfigured → log-only&quot; fallback behavior.</p>
+<p>RIM sends transactional email for invites and notification digests. This document covers the
+<code>RIM_SMTP_*</code> config matrix, TLS modes, the two wired flows, retry policy, and the
+&quot;unconfigured → log-only&quot; fallback behavior.</p>
 <h2 id="config-matrix">Config matrix <a class="anchor" href="#config-matrix" aria-label="Link to this section">#</a></h2>
 <div class="tablewrap"><table>
 <thead>
@@ -72,8 +72,8 @@ and the &quot;unconfigured → log-only&quot; fallback behavior.</p>
 <td><code>SmtpEmailSender</code> — real SMTP delivery via <code>lettre</code>.</td>
 </tr>
 </tbody></table></div>
-<p><code>RIM_FEATURES_DISABLED=email</code> overrides the matrix: every message is dropped, the digest job does
-not run and <code>requestPasswordReset</code> answers <code>FEATURE_DISABLED</code>. Without SMTP, <code>serverInfo.features</code>
+<p><code>RIM_FEATURES_DISABLED=email</code> overrides the matrix: every message is dropped and the digest job
+does not run. Without SMTP, <code>serverInfo.features</code>
 reports email as <code>UNAVAILABLE</code> (<a href="operations/features.html"><code>docs/operations/features.md</code></a>).</p>
 <p>Both <code>RIM_SMTP_HOST</code> and <code>RIM_SMTP_FROM</code> must be present to enable real delivery
 (<code>SmtpConfig::from_parts</code>); this is the minimum needed to construct a <code>From:</code> mailbox and a
@@ -131,31 +131,22 @@ port 587.</li>
 localhost container) — never use against a real mail server.</li>
 </ul>
 <h3 id="rim_public_base_url-and-link-building"><code>RIM_PUBLIC_BASE_URL</code> and link building <a class="anchor" href="#rim_public_base_url-and-link-building" aria-label="Link to this section">#</a></h3>
-<p>Every email that includes a link (<code>reset-password</code>, <code>join</code>, digest permalinks) needs a base
-URL to build it from. If <code>RIM_PUBLIC_BASE_URL</code> is unset:</p>
+<p>Every email that includes a link (<code>join</code>, digest permalinks) needs a base URL to build it from.
+If <code>RIM_PUBLIC_BASE_URL</code> is unset:</p>
 <ul>
-<li>Password reset / invite emails fall back to including the <strong>bare token</strong> instead of a link
-(a warning is logged). The user has to construct the URL themselves — acceptable for local
+<li>Invite emails fall back to including the <strong>bare token</strong> instead of a link (a warning is
+logged). The user has to construct the URL themselves — acceptable for local
 dev, not for production.</li>
 <li>Notification digests are sent without links.</li>
 </ul>
 <p>Links are always a <strong>path segment</strong>, never a <code>?token=</code> query string:</p>
 <ul>
-<li>Password reset: <code>{RIM_PUBLIC_BASE_URL}/reset-password/{raw_token}</code></li>
 <li>Invite (server or instance): <code>{RIM_PUBLIC_BASE_URL}/join/{raw_token}</code></li>
 </ul>
-<p>This matters for two reasons: query strings would fail to route against the frontend&#39;s
-<code>/reset-password/:token</code> and <code>/join/:token</code> routes, and the reset-password page ships a
-<code>&lt;meta name=&quot;referrer&quot; content=&quot;no-referrer&quot;&gt;</code> specifically so a path-segment token isn&#39;t
-leaked via the <code>Referer</code> header on outbound links — a query-string token would defeat that.
-The token is percent-encoded defensively before being placed in the path, even though the
-<code>rim_rst_</code>/<code>rim_inv_</code>/<code>rim_iinv_</code>-prefixed base64url tokens are already path-safe.</p>
+<p>A query string would fail to route against the frontend&#39;s <code>/join/:token</code> route. The token is percent-encoded defensively before
+being placed in the path, even though the <code>rim_inv_</code>/<code>rim_iinv_</code>-prefixed base64url tokens are
+already path-safe.</p>
 <h2 id="wired-flows">Wired flows <a class="anchor" href="#wired-flows" aria-label="Link to this section">#</a></h2>
-<h3 id="password-reset">Password reset <a class="anchor" href="#password-reset" aria-label="Link to this section">#</a></h3>
-<p><code>request_reset</code> looks up the user by username, creates the reset token as before, then builds
-the reset link and sends <code>templates::password_reset(to, link)</code>. <strong>Send failure is non-fatal</strong> —
-the request still returns <code>Ok(())</code> either way, so reset requests never leak whether a username
-exists and never fail because of an SMTP hiccup.</p>
 <h3 id="invites">Invites <a class="anchor" href="#invites" aria-label="Link to this section">#</a></h3>
 <p><code>createInvite</code> accepts an optional <code>recipientEmail</code>. If provided:</p>
 <ol>
@@ -183,7 +174,7 @@ revoked.</p>
 <p>A user can ask for unread notifications by email: <code>digest</code> in their workspace notification
 settings is <code>OFF</code> (default), <code>HOURLY</code> or <code>DAILY</code> (<a href="messaging.html"><code>docs/messaging.md</code></a>, Notification rules). A
 periodic job (<code>rim_infra_services::notification::DefaultNotificationJobs</code>, driven from
-<a href="https://github.com/rim-platform/rim-server/blob/c2a30ae9bfc7d4925af4af4e0f524ad67424086c/rim_server/src/app.rs"><code>rim_server/src/app.rs</code></a>, every <code>RIM_NOTIFICATION_DIGEST_INTERVAL_SECS</code> seconds, default 900, minimum 60) sends one email per user per workspace when all of these hold:</p>
+<a href="https://github.com/rim-platform/rim-server/blob/c5a6a52b10286eeee7c4464ce17fed7b2cd68e4c/rim_server/src/app.rs"><code>rim_server/src/app.rs</code></a>, every <code>RIM_NOTIFICATION_DIGEST_INTERVAL_SECS</code> seconds, default 900, minimum 60) sends one email per user per workspace when all of these hold:</p>
 <ul>
 <li>the oldest unread, un-emailed notification is at least one interval old (hourly: 60 minutes,
 daily: 24 hours);</li>
@@ -232,7 +223,7 @@ would be the path if one is wanted.</li>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c2a30ae9bfc7d4925af4af4e0f524ad67424086c/docs/email.md">rim-server/docs/email.md</a> at <code>c2a30ae</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c5a6a52b10286eeee7c4464ce17fed7b2cd68e4c/docs/email.md">rim-server/docs/email.md</a> at <code>c5a6a52</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

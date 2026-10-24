@@ -48,7 +48,7 @@
 </details></aside>
     <main id="content" class="prose">
 <h1>Configure</h1>
-<p class="lede">The server is configured by environment variables, all prefixed <code>RIM_</code> except <code>DATABASE_URL</code> and the log filter <code>RUST_LOG</code>. In development an untracked <code>.env</code> file works too. This page is generated from <a href="https://github.com/rim-platform/rim-server/blob/c2a30ae9bfc7d4925af4af4e0f524ad67424086c/rim_server/src/config.rs"><code>rim_server/src/config.rs</code></a>, cross-checked with the variable block of the <a href="https://github.com/rim-platform/rim-server/blob/c2a30ae9bfc7d4925af4af4e0f524ad67424086c/Dockerfile"><code>Dockerfile</code></a>; the compose stack's own settings are in <a href="https://github.com/rim-platform/rim-server/blob/c2a30ae9bfc7d4925af4af4e0f524ad67424086c/deploy/.env.example"><code>deploy/.env.example</code></a>.</p>
+<p class="lede">The server is configured by environment variables, all prefixed <code>RIM_</code> except <code>DATABASE_URL</code> and the log filter <code>RUST_LOG</code>. In development an untracked <code>.env</code> file works too. This page is generated from <a href="https://github.com/rim-platform/rim-server/blob/c5a6a52b10286eeee7c4464ce17fed7b2cd68e4c/rim_server/src/config.rs"><code>rim_server/src/config.rs</code></a>, cross-checked with the variable block of the <a href="https://github.com/rim-platform/rim-server/blob/c5a6a52b10286eeee7c4464ce17fed7b2cd68e4c/Dockerfile"><code>Dockerfile</code></a>; the compose stack's own settings are in <a href="https://github.com/rim-platform/rim-server/blob/c5a6a52b10286eeee7c4464ce17fed7b2cd68e4c/deploy/.env.example"><code>deploy/.env.example</code></a>.</p>
 <h2 id="listening">Listening <a class="anchor" href="#listening" aria-label="Link to this section">#</a></h2>
 <p class="muted">Where the server listens, the origin clients reach it at, and how it treats the proxy in front of it.</p>
 <div class="tablewrap"><table class="vars">
@@ -56,8 +56,8 @@
 <tbody>
 <tr id="RIM_SERVER_HOST"><td><code>RIM_SERVER_HOST</code><span class="default">default <code>0.0.0.0</code></span></td><td><p>Bind address.</p><p class="note">No doc comment in config.rs; described from the Dockerfile.</p><p class="note">The container image sets 0.0.0.0.</p></td></tr>
 <tr id="RIM_SERVER_PORT"><td><code>RIM_SERVER_PORT</code><span class="default">default <code>8080</code></span></td><td><p>Listen port.</p><p class="note">No doc comment in config.rs; described from the Dockerfile.</p><p class="note">The container image sets 8080.</p></td></tr>
-<tr id="RIM_PUBLIC_BASE_URL"><td><code>RIM_PUBLIC_BASE_URL</code><span class="default">unset by default</span></td><td><p>e.g. <code>https://rim.example.com</code>. Required to build clickable reset-password/invite
-links; without it, emails fall back to including the bare token/no link.</p><p class="faint">Dockerfile: https origin; turns server-to-server traffic on. This or RIM_KEY_LOGIN_AUDIENCES is required: the server binds 0.0.0.0 and refuses to start without an audience for key logins.</p></td></tr>
+<tr id="RIM_PUBLIC_BASE_URL"><td><code>RIM_PUBLIC_BASE_URL</code><span class="default">unset by default</span></td><td><p>e.g. <code>https://rim.example.com</code>. Required to build clickable invite links; without it,
+invite emails fall back to including the bare token.</p><p class="faint">Dockerfile: https origin; turns server-to-server traffic on. This or RIM_KEY_LOGIN_AUDIENCES is required: the server binds 0.0.0.0 and refuses to start without an audience for key logins.</p></td></tr>
 <tr id="RIM_CORS_ALLOWED_ORIGIN"><td><code>RIM_CORS_ALLOWED_ORIGIN</code><span class="default">unset by default</span></td><td><p>one browser origin accepted besides the server&#39;s own (optional); the own origin is RIM_PUBLIC_BASE_URL&#39;s, else the request&#39;s Host.</p><p class="note">No doc comment in config.rs; described from the Dockerfile.</p></td></tr>
 <tr id="RIM_TRUST_FORWARDED_HEADERS"><td><code>RIM_TRUST_FORWARDED_HEADERS</code><span class="default">default <code>false</code></span></td><td><p>When <code>true</code>, the server takes the real client IP for rate-limiting and
 IP blocks from the first entry of <code>X-Forwarded-For</code>; <code>Forwarded</code> is
@@ -110,9 +110,6 @@ recovery phrase. Default <code>&lt;RIM_DATA_DIR&gt;/password-key.json</code>.</p
 <tr id="RIM_OPEN_REGISTRATION"><td><code>RIM_OPEN_REGISTRATION</code><span class="default">default <code>false</code></span></td><td><p>Set <code>RIM_OPEN_REGISTRATION=true</code> to enable open signup.</p><p class="faint">Dockerfile: Let anyone sign up, rate-limited, when true.</p></td></tr>
 <tr id="RIM_REGISTRATION_POW_BITS"><td><code>RIM_REGISTRATION_POW_BITS</code><span class="default">unset by default</span></td><td><p>Leading zero bits a key-only signup&#39;s proof-of-work needs; set, it turns on <code>pow</code>
 registration. 1 to 40.</p><p class="faint">Dockerfile: turns on proof-of-work signups with that many leading zero bits.</p></td></tr>
-<tr id="RIM_SIGNUP_REQUIRE_KEYS"><td><code>RIM_SIGNUP_REQUIRE_KEYS</code><span class="default">default <code>true</code></span></td><td><p>Refuse every password signup, so new accounts sign up with a key only; unset is <code>true</code>.
-Password sign-in of existing accounts is unaffected.</p>
-<p>Whether password signups are refused: <code>RIM_SIGNUP_REQUIRE_KEYS</code>, <code>true</code> when unset.</p><p class="faint">Dockerfile: Refuse every password signup, so accounts sign up with a key; password sign-in of existing accounts still works.</p></td></tr>
 <tr id="RIM_DEFAULT_WORKSPACE"><td><code>RIM_DEFAULT_WORKSPACE</code><span class="default">default none</span></td><td><p>The id of a workspace on this server that every new account joins as a member, with its
 public channels, whichever way it signs up. Unset keeps signups as they are: a new
 account joins only the workspace its invite names. The server refuses to start when the
@@ -218,7 +215,7 @@ Default: 900 (15 minutes); values below 60 are raised to 60.</p><p class="faint"
 <thead><tr><th>Variable</th><th>What it does</th></tr></thead>
 <tbody>
 <tr id="RIM_METRICS_ADDR"><td><code>RIM_METRICS_ADDR</code><span class="default">default off</span></td><td><p><code>host:port</code> of the Prometheus listener serving <code>GET /metrics</code>; unset turns metrics off.</p><p class="faint">Unset, it turns metrics off.</p><p class="faint">Refused at boot with a message naming the variable when the value is not an <code>ip:port</code> address.</p><p class="faint">Dockerfile: ip:port of the Prometheus /metrics listener. In a container bind 0.0.0.0:9090 and do not publish it: keep it on an internal network, never behind the public proxy.</p></td></tr>
-<tr id="RIM_AUDIT_LOG_PATH"><td><code>RIM_AUDIT_LOG_PATH</code><span class="default">default the working directory</span></td><td><p>Directory of the daily audit files <code>audit.&lt;YYYY-MM-DD&gt;.log</code></p><p class="note">Read by <a href="https://github.com/rim-platform/rim-server/blob/c2a30ae9bfc7d4925af4af4e0f524ad67424086c/rim_logging/src/logging.rs"><code>rim_logging/src/logging.rs</code></a>, not config.rs.</p></td></tr>
+<tr id="RIM_AUDIT_LOG_PATH"><td><code>RIM_AUDIT_LOG_PATH</code><span class="default">default the working directory</span></td><td><p>Directory of the daily audit files <code>audit.&lt;YYYY-MM-DD&gt;.log</code></p><p class="note">Read by <a href="https://github.com/rim-platform/rim-server/blob/c5a6a52b10286eeee7c4464ce17fed7b2cd68e4c/rim_logging/src/logging.rs"><code>rim_logging/src/logging.rs</code></a>, not config.rs.</p></td></tr>
 <tr id="RIM_AUDIT_RETENTION_DAYS"><td><code>RIM_AUDIT_RETENTION_DAYS</code><span class="default">default forever</span></td><td><p>Days command audit log rows are kept before the daily purge exports and deletes them;
 unset keeps them forever. 1 to 3650.</p><p class="faint">Unset, it keeps them forever.</p><p class="faint">Refused at boot with a message naming the variable when the value is outside 1 to 3650.</p><p class="faint">Dockerfile: days command audit rows are kept, 1-3650; older rows are exported to $RIM_DATA_DIR/audit-exports and deleted daily.</p></td></tr>
 <tr id="RIM_AUDIT_LOG_RETENTION_DAYS"><td><code>RIM_AUDIT_LOG_RETENTION_DAYS</code><span class="default">default <code>90</code></span></td><td><p>Days the daily audit files (<code>audit.&lt;YYYY-MM-DD&gt;.log</code> in the directory of
@@ -243,10 +240,6 @@ bytes.</p><p class="faint">Dockerfile: email address or https URL for abuse repo
 <tr id="RIM_LINK_PREVIEW_CONCURRENCY"><td><code>RIM_LINK_PREVIEW_CONCURRENCY</code><span class="default">default <code>8</code></span></td><td><p>Link preview fetches the process runs at once, 1 to 64; default 8.</p>
 <p><code>RIM_LINK_PREVIEW_CONCURRENCY</code>: the link preview fetches the process runs at once; 8
 when unset.</p><p class="faint">Refused at boot with a message naming the variable when the value is outside 1 to 64.</p><p class="faint">Dockerfile: link preview fetches the server runs at once, 1-64; outside the range stops the server at boot.</p></td></tr>
-<tr id="RIM_PASSWORD_HASH_CONCURRENCY"><td><code>RIM_PASSWORD_HASH_CONCURRENCY</code><span class="default">default the number of CPUs</span></td><td><p>Argon2 hashes and verifications the server runs at once, 1 to 64; default the number
-of CPUs.</p>
-<p><code>RIM_PASSWORD_HASH_CONCURRENCY</code>: the Argon2 computations run at once; the number of
-CPUs, within 1 to 64, when unset.</p><p class="faint">Refused at boot with a message naming the variable when the value is outside 1 to 64.</p><p class="faint">Dockerfile: Argon2 password hashes and checks run at once, 1-64; each holds 64 MiB while it runs, and a request that waits over 10 seconds for a turn answers UNAVAILABLE.</p></td></tr>
 </tbody>
 </table></div>
 <h2 id="limits-and-rate-limits">Limits and rate limits <a class="anchor" href="#limits-and-rate-limits" aria-label="Link to this section">#</a></h2>
@@ -336,7 +329,7 @@ and IP blocks from the app (<a href="../docs/api.html"><code>docs/api.md</code><
     </main>
   </div>
   <footer class="site">
-    <span>Generated from <a href="https://github.com/rim-platform/rim-server/blob/c2a30ae9bfc7d4925af4af4e0f524ad67424086c/rim_server/src/config.rs">rim-server/rim_server/src/config.rs</a>, <a href="https://github.com/rim-platform/rim-server/blob/c2a30ae9bfc7d4925af4af4e0f524ad67424086c/Dockerfile">Dockerfile</a> and <a href="https://github.com/rim-platform/rim-server/blob/c2a30ae9bfc7d4925af4af4e0f524ad67424086c/README.md">README.md</a> at <code>c2a30ae</code></span>
+    <span>Generated from <a href="https://github.com/rim-platform/rim-server/blob/c5a6a52b10286eeee7c4464ce17fed7b2cd68e4c/rim_server/src/config.rs">rim-server/rim_server/src/config.rs</a>, <a href="https://github.com/rim-platform/rim-server/blob/c5a6a52b10286eeee7c4464ce17fed7b2cd68e4c/Dockerfile">Dockerfile</a> and <a href="https://github.com/rim-platform/rim-server/blob/c5a6a52b10286eeee7c4464ce17fed7b2cd68e4c/README.md">README.md</a> at <code>c5a6a52</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

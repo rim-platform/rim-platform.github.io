@@ -68,7 +68,7 @@ SMTP is not configured, which is how it already behaved.</p>
 </tr>
 <tr>
 <td><code>email</code></td>
-<td>Password reset mail, invite mail and notification digests</td>
+<td>Invite mail and notification digests</td>
 <td>Some instances must not send mail at all.</td>
 </tr>
 <tr>
@@ -130,7 +130,7 @@ pipelines.</p>
 <tbody><tr>
 <td><code>email</code></td>
 <td><code>RIM_SMTP_HOST</code> or <code>RIM_SMTP_FROM</code> is not set</td>
-<td>Mail is logged (recipient and subject) instead of sent, as before. Password reset still answers, so the token can be read from a development log.</td>
+<td>Mail is logged (recipient and subject) instead of sent, as before.</td>
 </tr>
 </tbody></table></div>
 <p>A feature both disabled and unavailable is reported as <code>disabled</code>. Storage is always the local
@@ -149,9 +149,8 @@ link previews and avatars stay in the database and on disk, and come back when t
 enabled again. While <code>attachments</code> is off, messages still list their attachments, but downloads
 are refused. While <code>avatars</code> is off, every avatar URL reads as null, so clients show their
 placeholder; <code>updateMyProfile</code> without an <code>avatarUrl</code> still works.</p>
-<p>With <code>email</code> disabled, <code>requestPasswordReset</code> answers <code>FEATURE_DISABLED</code>, invite mail is not
-sent (the invite link is still returned to whoever created it), and the notification digest job
-does not run.</p>
+<p>With <code>email</code> disabled, invite mail is not sent (the invite link is still returned to whoever
+created it), and the notification digest job does not run.</p>
 <h2 id="link-preview-limits">Link preview limits <a class="anchor" href="#link-preview-limits" aria-label="Link to this section">#</a></h2>
 <p>While <code>link_previews</code> is on, the server fetches each page under these limits:</p>
 <div class="tablewrap"><table>
@@ -209,7 +208,7 @@ apply to every command are the security boundary, not this switch.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c2a30ae9bfc7d4925af4af4e0f524ad67424086c/docs/operations/features.md">rim-server/docs/operations/features.md</a> at <code>c2a30ae</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c5a6a52b10286eeee7c4464ce17fed7b2cd68e4c/docs/operations/features.md">rim-server/docs/operations/features.md</a> at <code>c5a6a52</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>
