@@ -53,13 +53,13 @@ with the code format, the channel cryptography and the known-answer vectors, is
 it.</p>
 <h2 id="what-lives-where">What lives where <a class="anchor" href="#what-lives-where" aria-label="Link to this section">#</a></h2>
 <ul>
-<li><a href="https://github.com/rim-platform/rim-ui/blob/8aa7733e8b6fe5cfee270b572e4ddaf1ec32c432/src-tauri/src/key_identity/device_link.rs"><code>src-tauri/src/key_identity/device_link.rs</code></a>: everything secret. The link code (format and the
+<li><a href="https://github.com/rim-platform/rim-ui/blob/494da4e3ff7d868a584a6cd0f379917b4c9a6958/src-tauri/src/key_identity/device_link.rs"><code>src-tauri/src/key_identity/device_link.rs</code></a>: everything secret. The link code (format and the
 spec&#39;s reader rules), HKDF-SHA256 per direction, AES-256-GCM seal and open with the AAD rule,
 the fingerprint, the offer and answer plaintexts (<code>serde</code> with <code>deny_unknown_fields</code>; serde&#39;s
 derive refuses a field named twice), and the <code>KeyIdentityState</code> methods behind the
 <code>key_identity_link_*</code> commands. Its tests check appendix A byte for byte; the two-device flow
 tests are in <code>key_identity/tests.rs</code>.</li>
-<li><a href="https://github.com/rim-platform/rim-ui/blob/8aa7733e8b6fe5cfee270b572e4ddaf1ec32c432/src/features/key-identity/api/deviceLink.ts"><code>src/features/key-identity/api/deviceLink.ts</code></a>: the GraphQL documents, the command wrappers, and
+<li><a href="https://github.com/rim-platform/rim-ui/blob/494da4e3ff7d868a584a6cd0f379917b4c9a6958/src/features/key-identity/api/deviceLink.ts"><code>src/features/key-identity/api/deviceLink.ts</code></a>: the GraphQL documents, the command wrappers, and
 the two flows. <code>linkNewDevice</code> is the new device from the code to the session.
 <code>startLinkingDevice</code>, <code>waitForOffer</code>, <code>confirmLink</code> and <code>cancelLink</code> are the old device, driven
 by the settings panel; <code>resumePendingDeviceLinks</code> finishes links an earlier run left open.
@@ -94,7 +94,7 @@ answer, and writes the <strong>pending link</strong> record before the webview s
 </thead>
 <tbody><tr>
 <td><code>device-link-v1:&lt;link id&gt;</code></td>
-<td>link id, secret, endpoint, principal id, device id and key, certificate, sealed answer (resent byte for byte)</td>
+<td><code>{principalId, sealed}</code>: the link id, secret, endpoint, principal id, device id and key, certificate and sealed answer (resent byte for byte), sealed under the account&#39;s data key, so the record is written only while the account is unlocked and a locked account&#39;s links wait for its unlock (<a href="account-password.html"><code>account-password.md</code></a>)</td>
 </tr>
 <tr>
 <td><code>device-links-v1</code></td>
@@ -153,7 +153,7 @@ non-extractable key in IndexedDB and signs in with it, through the same <code>li
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/8aa7733e8b6fe5cfee270b572e4ddaf1ec32c432/docs/device-linking-desktop.md">rim-ui/docs/device-linking-desktop.md</a> at <code>8aa7733</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/494da4e3ff7d868a584a6cd0f379917b4c9a6958/docs/device-linking-desktop.md">rim-ui/docs/device-linking-desktop.md</a> at <code>494da4e</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

@@ -36,7 +36,7 @@
 
     <main id="content" class="prose">
 <h1>API</h1>
-<p class="lede">Everything a client does goes through one GraphQL endpoint, <code>POST /api</code>; subscriptions arrive over <code>/api/ws</code>. The server publishes its schema at <code>/api/sdl</code>. This reference is generated from it: 268 types, 68 queries, 128 mutations and 2 subscriptions.</p>
+<p class="lede">Everything a client does goes through one GraphQL endpoint, <code>POST /api</code>; subscriptions arrive over <code>/api/ws</code>. The server publishes its schema at <code>/api/sdl</code>. This reference is generated from it: 275 types, 69 queries, 140 mutations and 2 subscriptions.</p>
 <input id="filter" class="search" type="search" placeholder="Filter the whole schema by name" aria-label="Filter the whole schema by name" autocomplete="off">
 <p id="filter-none" class="muted" hidden>Nothing matches.</p>
 <div data-search-only><ul class="hits">
@@ -114,6 +114,7 @@
 <li data-name="signupWithKey"><a href="mutation.html#signupWithKey"><code>signupWithKey</code></a><span class="kind">mutation</span></li>
 <li data-name="uploadMlsKeyPackages"><a href="mutation.html#uploadMlsKeyPackages"><code>uploadMlsKeyPackages</code></a><span class="kind">mutation</span></li>
 <li data-name="claimMlsKeyPackages"><a href="mutation.html#claimMlsKeyPackages"><code>claimMlsKeyPackages</code></a><span class="kind">mutation</span></li>
+<li data-name="setReloadKey"><a href="mutation.html#setReloadKey"><code>setReloadKey</code></a><span class="kind">mutation</span></li>
 <li data-name="addDeviceKey"><a href="mutation.html#addDeviceKey"><code>addDeviceKey</code></a><span class="kind">mutation</span></li>
 <li data-name="revokeDeviceKey"><a href="mutation.html#revokeDeviceKey"><code>revokeDeviceKey</code></a><span class="kind">mutation</span></li>
 <li data-name="startDeviceLink"><a href="mutation.html#startDeviceLink"><code>startDeviceLink</code></a><span class="kind">mutation</span></li>
@@ -168,6 +169,17 @@
 <li data-name="withdrawJoinRequest"><a href="mutation.html#withdrawJoinRequest"><code>withdrawJoinRequest</code></a><span class="kind">mutation</span></li>
 <li data-name="acceptJoinRequest"><a href="mutation.html#acceptJoinRequest"><code>acceptJoinRequest</code></a><span class="kind">mutation</span></li>
 <li data-name="declineJoinRequest"><a href="mutation.html#declineJoinRequest"><code>declineJoinRequest</code></a><span class="kind">mutation</span></li>
+<li data-name="passwordRegistrationStart"><a href="mutation.html#passwordRegistrationStart"><code>passwordRegistrationStart</code></a><span class="kind">mutation</span></li>
+<li data-name="passwordLoginStart"><a href="mutation.html#passwordLoginStart"><code>passwordLoginStart</code></a><span class="kind">mutation</span></li>
+<li data-name="passwordLoginFinish"><a href="mutation.html#passwordLoginFinish"><code>passwordLoginFinish</code></a><span class="kind">mutation</span></li>
+<li data-name="passwordChangeStart"><a href="mutation.html#passwordChangeStart"><code>passwordChangeStart</code></a><span class="kind">mutation</span></li>
+<li data-name="passwordChangeFinish"><a href="mutation.html#passwordChangeFinish"><code>passwordChangeFinish</code></a><span class="kind">mutation</span></li>
+<li data-name="passwordResetChallenge"><a href="mutation.html#passwordResetChallenge"><code>passwordResetChallenge</code></a><span class="kind">mutation</span></li>
+<li data-name="passwordResetStart"><a href="mutation.html#passwordResetStart"><code>passwordResetStart</code></a><span class="kind">mutation</span></li>
+<li data-name="passwordResetFinish"><a href="mutation.html#passwordResetFinish"><code>passwordResetFinish</code></a><span class="kind">mutation</span></li>
+<li data-name="setPasswordStart"><a href="mutation.html#setPasswordStart"><code>setPasswordStart</code></a><span class="kind">mutation</span></li>
+<li data-name="setPassword"><a href="mutation.html#setPassword"><code>setPassword</code></a><span class="kind">mutation</span></li>
+<li data-name="reloadSession"><a href="mutation.html#reloadSession"><code>reloadSession</code></a><span class="kind">mutation</span></li>
 <li data-name="commands"><a href="query.html#commands"><code>commands</code></a><span class="kind">query</span></li>
 <li data-name="commandDiscover"><a href="query.html#commandDiscover"><code>commandDiscover</code></a><span class="kind">query</span></li>
 <li data-name="resolvedKeybinds"><a href="query.html#resolvedKeybinds"><code>resolvedKeybinds</code></a><span class="kind">query</span></li>
@@ -209,6 +221,7 @@
 <li data-name="myKeyIdentity"><a href="query.html#myKeyIdentity"><code>myKeyIdentity</code></a><span class="kind">query</span></li>
 <li data-name="keyLog"><a href="query.html#keyLog"><code>keyLog</code></a><span class="kind">query</span></li>
 <li data-name="myMlsKeyPackageStatus"><a href="query.html#myMlsKeyPackageStatus"><code>myMlsKeyPackageStatus</code></a><span class="kind">query</span></li>
+<li data-name="sessionKeepKey"><a href="query.html#sessionKeepKey"><code>sessionKeepKey</code></a><span class="kind">query</span></li>
 <li data-name="deviceLink"><a href="query.html#deviceLink"><code>deviceLink</code></a><span class="kind">query</span></li>
 <li data-name="deviceLinkAnswer"><a href="query.html#deviceLinkAnswer"><code>deviceLinkAnswer</code></a><span class="kind">query</span></li>
 <li data-name="principalDevices"><a href="query.html#principalDevices"><code>principalDevices</code></a><span class="kind">query</span></li>
@@ -313,6 +326,11 @@
 <li data-name="NotificationPage"><a href="objects.html#NotificationPage"><code>NotificationPage</code></a><span class="kind">object</span></li>
 <li data-name="NotificationSettings"><a href="objects.html#NotificationSettings"><code>NotificationSettings</code></a><span class="kind">object</span></li>
 <li data-name="PageInfo"><a href="objects.html#PageInfo"><code>PageInfo</code></a><span class="kind">object</span></li>
+<li data-name="PasswordChangeStart"><a href="objects.html#PasswordChangeStart"><code>PasswordChangeStart</code></a><span class="kind">object</span></li>
+<li data-name="PasswordChanged"><a href="objects.html#PasswordChanged"><code>PasswordChanged</code></a><span class="kind">object</span></li>
+<li data-name="PasswordLoginFinish"><a href="objects.html#PasswordLoginFinish"><code>PasswordLoginFinish</code></a><span class="kind">object</span></li>
+<li data-name="PasswordLoginStart"><a href="objects.html#PasswordLoginStart"><code>PasswordLoginStart</code></a><span class="kind">object</span></li>
+<li data-name="PasswordResetStart"><a href="objects.html#PasswordResetStart"><code>PasswordResetStart</code></a><span class="kind">object</span></li>
 <li data-name="PipeStageResult"><a href="objects.html#PipeStageResult"><code>PipeStageResult</code></a><span class="kind">object</span></li>
 <li data-name="PipelineActionGql"><a href="objects.html#PipelineActionGql"><code>PipelineActionGql</code></a><span class="kind">object</span></li>
 <li data-name="PipelineFilterConditionGql"><a href="objects.html#PipelineFilterConditionGql"><code>PipelineFilterConditionGql</code></a><span class="kind">object</span></li>
@@ -329,6 +347,7 @@
 <li data-name="RelayInfo"><a href="objects.html#RelayInfo"><code>RelayInfo</code></a><span class="kind">object</span></li>
 <li data-name="RelayItem"><a href="objects.html#RelayItem"><code>RelayItem</code></a><span class="kind">object</span></li>
 <li data-name="RelayItemPage"><a href="objects.html#RelayItemPage"><code>RelayItemPage</code></a><span class="kind">object</span></li>
+<li data-name="ReloadSessionPayload"><a href="objects.html#ReloadSessionPayload"><code>ReloadSessionPayload</code></a><span class="kind">object</span></li>
 <li data-name="RemoteIdentity"><a href="objects.html#RemoteIdentity"><code>RemoteIdentity</code></a><span class="kind">object</span></li>
 <li data-name="RemoteJoinChallenge"><a href="objects.html#RemoteJoinChallenge"><code>RemoteJoinChallenge</code></a><span class="kind">object</span></li>
 <li data-name="RemoteJoinResult"><a href="objects.html#RemoteJoinResult"><code>RemoteJoinResult</code></a><span class="kind">object</span></li>
@@ -345,6 +364,7 @@
 <li data-name="ServerInfo"><a href="objects.html#ServerInfo"><code>ServerInfo</code></a><span class="kind">object</span></li>
 <li data-name="ServerLimits"><a href="objects.html#ServerLimits"><code>ServerLimits</code></a><span class="kind">object</span></li>
 <li data-name="ServerMember"><a href="objects.html#ServerMember"><code>ServerMember</code></a><span class="kind">object</span></li>
+<li data-name="SetPasswordPayload"><a href="objects.html#SetPasswordPayload"><code>SetPasswordPayload</code></a><span class="kind">object</span></li>
 <li data-name="SignedStatement"><a href="objects.html#SignedStatement"><code>SignedStatement</code></a><span class="kind">object</span></li>
 <li data-name="SignupWithInvitePayloadGql"><a href="objects.html#SignupWithInvitePayloadGql"><code>SignupWithInvitePayloadGql</code></a><span class="kind">object</span></li>
 <li data-name="StartedDeviceLink"><a href="objects.html#StartedDeviceLink"><code>StartedDeviceLink</code></a><span class="kind">object</span></li>
@@ -517,10 +537,10 @@
 </ul></div>
 <ul class="cards">
 <li><a href="../docs/api.html"><b>Talking to a server</b><span>The endpoints, the session cookie and CSRF, origins, limits, error codes and pagination: the contract around the schema.</span></a></li>
-<li><a href="query.html"><b>Query</b><span>68 fields, grouped by domain.</span></a></li>
-<li><a href="mutation.html"><b>Mutation</b><span>128 fields, grouped by domain.</span></a></li>
+<li><a href="query.html"><b>Query</b><span>69 fields, grouped by domain.</span></a></li>
+<li><a href="mutation.html"><b>Mutation</b><span>140 fields, grouped by domain.</span></a></li>
 <li><a href="subscription.html"><b>Subscription</b><span>2 fields, grouped by domain.</span></a></li>
-<li><a href="objects.html"><b>Objects</b><span>126 objects.</span></a></li>
+<li><a href="objects.html"><b>Objects</b><span>133 objects.</span></a></li>
 <li><a href="inputs.html"><b>Inputs</b><span>89 inputs.</span></a></li>
 <li><a href="enums.html"><b>Enums</b><span>51 enums.</span></a></li>
 <li><a href="scalars.html"><b>Scalars</b><span>7 scalars.</span></a></li>
@@ -530,7 +550,7 @@
     </main>
   </div>
   <footer class="site">
-    <span>Generated from <a href="https://github.com/rim-platform/rim-ui/blob/8aa7733e8b6fe5cfee270b572e4ddaf1ec32c432/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>8aa7733</code></span>
+    <span>Generated from <a href="https://github.com/rim-platform/rim-ui/blob/494da4e3ff7d868a584a6cd0f379917b4c9a6958/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>494da4e</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

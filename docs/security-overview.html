@@ -107,7 +107,31 @@ join proof into a session at the host. A server bound to a public address refuse
 start without an audience. Sessions are cookies whose tokens the server stores hashed, and a
 mutation made with a session needs a CSRF token.</li>
 <li><strong>Passwords.</strong> New accounts sign up with a key by default. Once an account has a key, its
-password no longer signs in and a password reset sends nothing.</li>
+old password no longer signs in and a password reset sends nothing.</li>
+<li><strong>The account password.</strong> A local account also has a password (a PIN or a passphrase),
+checked with OPAQUE (<a href="../specs/key-identity-v1.html">key identity</a>, &quot;Account password&quot;): the
+server stores a record that checks the password without revealing it, and a sign-in needs the
+device key&#39;s proof and the password together. The server counts every login start as a wrong
+try until a login finishes: three are free, the 4th to the 9th make the next wait from one
+minute to twelve hours, and the 10th locks the password until a reset signed by the recovery
+key. A finished login returns the account&#39;s server share, sealed under the login&#39;s session
+key; the client needs it with the password to open its local data. The records need the
+password key file <code>&lt;RIM_DATA_DIR&gt;/password-key.json</code> (<code>RIM_PASSWORD_KEY_FILE</code>), which also
+seals the shares, which <code>/readyz</code> checks and which the backups hold; without it every account
+resets its password with its recovery phrase. An account of this server without a password
+signs in with its key alone and may only set one. People from other servers keep their
+password at their own server.</li>
+<li><strong>Keep me signed in.</strong> A key sign-in chooses it. A kept session has persistent cookies; for
+a web client the server also holds a keep key for it, sealed under the password key file,
+which opens the client&#39;s data key at start. An unkept session has browser-session cookies and
+a session secret (32 random bytes, stored hashed) that the client holds only in memory and
+that every request carries in a header and the WebSocket in its <code>connection_init</code>, so a
+cookie left behind in a closed browser or a copied profile signs nobody in. Plain <code>GET</code>
+downloads of files, avatars and attachments are the exception: an <code>&lt;img&gt;</code> tag cannot send a
+header, so they answer to the cookie alone, as do <code>logout</code> and the reload below. A reloaded
+tab takes back its sealed data with a reload key the server holds, once, and only within 60
+seconds of the session&#39;s WebSocket closing and while none is open; after that the account
+is locked on that device until the password is entered again.</li>
 <li><strong>Linking a device.</strong> The old device shows a code holding a 32-byte secret the server never
 sees. The new device sends its key sealed under that secret; the person compares an
 8-character fingerprint and confirms on the old device, which then signs the certificate
@@ -253,6 +277,10 @@ every file carries a build attestation, and the server image is signed with cosi
 limited per address, and a proof-of-work can be asked of every signup without an invite; the
 public relay asks 24 bits (<a href="operations/relay-public.html">public relay</a>). Probation keeps new
 accounts from creating workspaces or messaging strangers for a set number of hours.</li>
+<li><strong>Password tries.</strong> Every OPAQUE login start counts against the account (the schedule in
+&quot;Identity&quot;) and against the address, sharing the key sign-in&#39;s 20 failures per address per 15
+minutes. A principal without a password here gets an answer of the same shape, so the start
+does not tell whether an account or a password exists.</li>
 <li><strong>Rate and instance limits.</strong> Request, mutation, message and connection limits per address,
 session or user, and caps on workspaces, members, devices, DM requests, invites and message
 size, are each off until the operator sets them. Pending invitations to encrypted
@@ -310,9 +338,15 @@ sets a retention (<a href="operations/audit-retention.html">audit retention</a>)
 </tr>
 <tr>
 <td>Database or key-file thief</td>
-<td>Read channels, metadata, ciphertext and session token hashes; with the franking key file, mint receipts; with the link key file, read the public join links</td>
-<td>No private key in the database; reports checked against recorded commitments; franking and server key rotation and recovery</td>
-<td>Channel text in the dump</td>
+<td>Read channels, metadata, ciphertext and session token hashes; with the franking key file, mint receipts; with the link key file, read the public join links; with the password key file and the database, run offline guesses against a password record and open the server shares</td>
+<td>No private key in the database; reports checked against recorded commitments; franking and server key rotation and recovery; OPAQUE records without the key file allow no guessing, and each guess costs an Argon2id run (64 MiB, 3 passes)</td>
+<td>Channel text in the dump; a weak PIN once both the database and the key file are taken</td>
+</tr>
+<tr>
+<td>Another person using the same browser profile or OS account</td>
+<td>Open the app on a device where the account was used</td>
+<td>The account password at every sign-in, checked by the server with the counted, slowed and locked tries; the server share only after the password; the device key alone signs in no account of this server that has a password</td>
+<td>What the device holds unencrypted until the clients seal it under the data key; a kept session left open; an unkept one&#39;s file downloads while its cookie lives</td>
 </tr>
 <tr>
 <td>Another server</td>
@@ -342,7 +376,9 @@ sets a retention (<a href="operations/audit-retention.html">audit retention</a>)
 <h2 id="known-gaps-and-review-status">Known gaps and review status <a class="anchor" href="#known-gaps-and-review-status" aria-label="Link to this section">#</a></h2>
 <ul>
 <li><strong>Outside review open.</strong> The outside cryptographic review of key identity, device linking,
-recovery, the secret vault, the browser device key and end-to-end encryption is still open. The
+recovery, the secret vault, the browser device key, the account password (OPAQUE with
+<code>opaque-ke</code> 4.0.1, which has no public audit of its own) and end-to-end encryption is still
+open. The
 0.0.x releases come out before it and are pre-review; <code>0.1.0</code> and any 1.0 or production-ready
 claim wait for its sign-off (<a href="security/crypto-review-brief-2026-10.html">review brief</a>,
 <a href="roadmap.html">roadmap</a>).</li>
@@ -386,7 +422,7 @@ query strings or bundle contents. This route stores no workspace bundle.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/be96e5bcba8dfa93ab7013875d5e96db4d9f4ab5/docs/security-overview.md">rim-server/docs/security-overview.md</a> at <code>be96e5b</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c2a30ae9bfc7d4925af4af4e0f524ad67424086c/docs/security-overview.md">rim-server/docs/security-overview.md</a> at <code>c2a30ae</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

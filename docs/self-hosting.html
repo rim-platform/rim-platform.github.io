@@ -52,13 +52,13 @@
 </details></aside>
     <main id="content" class="prose">
 <h1 id="self-hosting-a-rim-server">Self-hosting a RIM server</h1>
-<p><a href="https://github.com/rim-platform/rim-server/blob/be96e5bcba8dfa93ab7013875d5e96db4d9f4ab5/deploy/compose.yml"><code>deploy/compose.yml</code></a> runs one RIM server on one domain: rim-server with <code>RIM_ROLE=both</code> (it
+<p><a href="https://github.com/rim-platform/rim-server/blob/c2a30ae9bfc7d4925af4af4e0f524ad67424086c/deploy/compose.yml"><code>deploy/compose.yml</code></a> runs one RIM server on one domain: rim-server with <code>RIM_ROLE=both</code> (it
 hosts workspaces and is its users&#39; relay), PostgreSQL 17, the web client, and Caddy terminating
 TLS. Caddy sends <code>/api</code> (with <code>/api/ws</code>), <code>/.well-known/…</code> and <code>/s2s/…</code> to rim-server and every
 other path to the web client, so the client and the API share one origin, unless the web client
 gets a domain of its own (&quot;The web client on its own domain&quot;). The health probes stay inside
 the compose network.
-A public relay is the same file with <a href="https://github.com/rim-platform/rim-server/blob/be96e5bcba8dfa93ab7013875d5e96db4d9f4ab5/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a> on top; <a href="deploy/index.html"><code>deploy/README.md</code></a>
+A public relay is the same file with <a href="https://github.com/rim-platform/rim-server/blob/c2a30ae9bfc7d4925af4af4e0f524ad67424086c/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a> on top; <a href="deploy/index.html"><code>deploy/README.md</code></a>
 covers it.</p>
 <p>Everything marked <strong>FILL</strong> is the operator&#39;s choice, recorded here once made.</p>
 <h2 id="before-the-first-start">Before the first start <a class="anchor" href="#before-the-first-start" aria-label="Link to this section">#</a></h2>
@@ -110,7 +110,7 @@ exactly those images. Each release also carries the image&#39;s SBOM (SPDX JSON)
 image: <code>cosign verify-attestation --type spdxjson</code> with the same flags checks it.</p>
 <h3 id="the-web-clients-endpoint">The web client&#39;s endpoint <a class="anchor" href="#the-web-clients-endpoint" aria-label="Link to this section">#</a></h3>
 <p>The web client finds the API through <code>VITE_GRAPHQL_ENDPOINT</code>, baked in when its image is built.
-The published image is built with <code>/api</code>, and <a href="https://github.com/rim-platform/rim-server/blob/be96e5bcba8dfa93ab7013875d5e96db4d9f4ab5/deploy/compose.dev.yml"><code>deploy/compose.dev.yml</code></a> passes
+The published image is built with <code>/api</code>, and <a href="https://github.com/rim-platform/rim-server/blob/c2a30ae9bfc7d4925af4af4e0f524ad67424086c/deploy/compose.dev.yml"><code>deploy/compose.dev.yml</code></a> passes
 <code>RIM_WEB_GRAPHQL_ENDPOINT</code>, default <code>/api</code>: the client resolves it against the page&#39;s own
 address, so one image serves any domain and needs no CORS. The image&#39;s
 content security policy allows <code>connect-src 'self'</code>, which covers the API and its WebSocket on
@@ -129,7 +129,7 @@ the web domain&#39;s origin when <code>RIM_WEB_DOMAIN</code> is set (next sectio
 <p><code>RIM_WEB_DOMAIN</code> in <code>deploy/.env</code> serves the web client on a second domain, such as
 <code>chat.example.org</code> next to <code>RIM_DOMAIN=rim.example.org</code>; its DNS records point at the same host.
 <code>RIM_DOMAIN</code> stays the server&#39;s name: <code>RIM_PUBLIC_BASE_URL</code> follows it, apps sign in to it,
-other servers reach it, and the discovery document names it. <a href="https://github.com/rim-platform/rim-server/blob/be96e5bcba8dfa93ab7013875d5e96db4d9f4ab5/deploy/Caddyfile"><code>deploy/Caddyfile</code></a> then answers
+other servers reach it, and the discovery document names it. <a href="https://github.com/rim-platform/rim-server/blob/c2a30ae9bfc7d4925af4af4e0f524ad67424086c/deploy/Caddyfile"><code>deploy/Caddyfile</code></a> then answers
 for both names:</p>
 <ul>
 <li>on the web domain, <code>/api</code> (with <code>/api/ws</code>) and <code>/.well-known/rim-server</code> go to rim-server and
@@ -190,7 +190,7 @@ dc exec rim /app/rim-server invite revoke &lt;id&gt;</code></pre>
 anyone sign up, rate-limited per address; <code>RIM_REGISTRATION_POW_BITS</code> asks a proof-of-work of
 signups without an invite.</p>
 <p>New accounts sign up with a key: the app creates the account&#39;s identity on the device that signs
-up and shows its recovery kit. <code>RIM_SIGNUP_REQUIRE_KEYS</code> (commented out in <a href="https://github.com/rim-platform/rim-server/blob/be96e5bcba8dfa93ab7013875d5e96db4d9f4ab5/deploy/.env.example"><code>deploy/.env.example</code></a>,
+up and shows its recovery kit. <code>RIM_SIGNUP_REQUIRE_KEYS</code> (commented out in <a href="https://github.com/rim-platform/rim-server/blob/c2a30ae9bfc7d4925af4af4e0f524ad67424086c/deploy/.env.example"><code>deploy/.env.example</code></a>,
 on unless set to <code>false</code>) refuses every password signup, whatever the registration mode;
 password accounts that already exist still sign in. Set it to <code>false</code> only for clients that
 cannot sign up with a key.</p>
@@ -215,7 +215,7 @@ release runs on them, started with <code>dc up -d --no-deps rim web</code>, and 
 backup taken before the update. <a href="operations/upgrade.html"><code>docs/operations/upgrade.md</code></a> has the whole procedure, what to
 read in <a href="changelog.html"><code>CHANGELOG.md</code></a> first, and the rollback.</p>
 <h2 id="backups">Backups <a class="anchor" href="#backups" aria-label="Link to this section">#</a></h2>
-<p><a href="https://github.com/rim-platform/rim-server/blob/be96e5bcba8dfa93ab7013875d5e96db4d9f4ab5/deploy/backup.sh"><code>deploy/backup.sh</code></a> writes one archive, <code>rim-backup-&lt;project&gt;-&lt;UTC time&gt;.tar</code>, under
+<p><a href="https://github.com/rim-platform/rim-server/blob/c2a30ae9bfc7d4925af4af4e0f524ad67424086c/deploy/backup.sh"><code>deploy/backup.sh</code></a> writes one archive, <code>rim-backup-&lt;project&gt;-&lt;UTC time&gt;.tar</code>, under
 <code>RIM_BACKUP_DIR</code> (default <code>./backups</code>, which Git ignores). It holds:</p>
 <div class="tablewrap"><table>
 <thead>
@@ -230,7 +230,7 @@ read in <a href="changelog.html"><code>CHANGELOG.md</code></a> first, and the ro
 </tr>
 <tr>
 <td><code>rim-data.tgz</code></td>
-<td>the <code>rim_data</code> volume: server key, franking keys, the link key (<code>link-key.json</code>), uploads, the audit files and audit exports</td>
+<td>the <code>rim_data</code> volume: server key, franking keys, the link key (<code>link-key.json</code>), the password key (<code>password-key.json</code>), uploads, the audit files and audit exports</td>
 </tr>
 <tr>
 <td><code>env</code></td>
@@ -243,7 +243,10 @@ read in <a href="changelog.html"><code>CHANGELOG.md</code></a> first, and the ro
 </tbody></table></div>
 <p>The recovery key file is never in it; the script warns while it is still on the host. The
 database and the data volume are one set: the server key file must match the key log in the
-database, and the server refuses to start on a mixed set. Never restore one without the other.</p>
+database, and the server refuses to start on a mixed set. Never restore one without the other.
+The password key belongs to the same set: the server refuses to start when it is missing while
+the database holds account passwords, and without it every account resets its password with its
+recovery phrase.</p>
 <p>With <code>RIM_BACKUP_AGE_RECIPIENT</code> set (an <code>age1…</code> recipient or a file of recipients), the archive
 is encrypted with <a href="https://age-encryption.org">age</a> to <code>….tar.age</code> and nothing unencrypted is
 left on disk. Keep the identity that decrypts it off the host, with the recovery key&#39;s holders.</p>
@@ -266,7 +269,7 @@ warning and the backup still succeeds; a URL that is not https stops the script 
 machine) and how long copies are kept. The archive holds the server&#39;s private key and every
 user&#39;s data; treat it like the host itself.</p>
 <h3 id="restore">Restore <a class="anchor" href="#restore" aria-label="Link to this section">#</a></h3>
-<p><a href="https://github.com/rim-platform/rim-server/blob/be96e5bcba8dfa93ab7013875d5e96db4d9f4ab5/deploy/restore.sh"><code>deploy/restore.sh</code></a> restores an archive into a stopped stack: it drops and recreates the
+<p><a href="https://github.com/rim-platform/rim-server/blob/c2a30ae9bfc7d4925af4af4e0f524ad67424086c/deploy/restore.sh"><code>deploy/restore.sh</code></a> restores an archive into a stopped stack: it drops and recreates the
 database from the dump, empties the data volume and refills it, starts the stack and waits for
 <code>/readyz</code>. It asks for the project name before it replaces anything (<code>RIM_RESTORE_YES=1</code> skips
 that).</p>
@@ -277,7 +280,7 @@ RIM_BACKUP_AGE_IDENTITY=~/rim-backup.key deploy/restore.sh backups/….tar.age</
 or pull the images, and run the same command. A newer image applies its migrations to the
 restored database when it starts.</p>
 <h3 id="the-restore-drill">The restore drill <a class="anchor" href="#the-restore-drill" aria-label="Link to this section">#</a></h3>
-<p>A backup is good once it has been restored. <a href="https://github.com/rim-platform/rim-server/blob/be96e5bcba8dfa93ab7013875d5e96db4d9f4ab5/deploy/restore-drill.sh"><code>deploy/restore-drill.sh</code></a> restores the newest archive
+<p>A backup is good once it has been restored. <a href="https://github.com/rim-platform/rim-server/blob/c2a30ae9bfc7d4925af4af4e0f524ad67424086c/deploy/restore-drill.sh"><code>deploy/restore-drill.sh</code></a> restores the newest archive
 (or the one given) into a throwaway project, <code>rim-drill</code>, waits for <code>/readyz</code>, prints the server
 key and the row counts of a few tables, and removes the project and its volumes. The drill&#39;s
 server has server-to-server traffic and mail off and publishes no port, so it never speaks for the
@@ -325,7 +328,7 @@ timer, how often, and the setting that changes it.</p>
 <p>A server open to the internet can limit what one client sends: requests per address, mutations
 per session, messages per user, and WebSocket connections and subscriptions. Every limit is off
 until its <code>RIM_RATE_*</code> variable is set in <code>deploy/.env</code> (the &quot;Request limits&quot; block of
-<a href="https://github.com/rim-platform/rim-server/blob/be96e5bcba8dfa93ab7013875d5e96db4d9f4ab5/deploy/.env.example"><code>deploy/.env.example</code></a>); <a href="api.html"><code>docs/api.md</code></a> (&quot;Limits&quot;) says what clients see past each one. An
+<a href="https://github.com/rim-platform/rim-server/blob/c2a30ae9bfc7d4925af4af4e0f524ad67424086c/deploy/.env.example"><code>deploy/.env.example</code></a>); <a href="api.html"><code>docs/api.md</code></a> (&quot;Limits&quot;) says what clients see past each one. An
 address or range that keeps misbehaving is blocked outright with
 <code>dc exec rim /app/rim-server ip block 203.0.113.0/24 --reason &quot;scraping&quot; --expires-in-days 30</code>:
 it gets 403 <code>{&quot;error&quot;:&quot;blocked&quot;}</code> on every route but <code>/healthz</code>, server-to-server routes
@@ -341,7 +344,7 @@ the first address in <code>X-Forwarded-For</code>, which Caddy replaces with the
 channels per workspace, devices per account, DM requests to strangers per day, macros,
 pipelines and plugins per workspace, invites per user per day, uses per invite and the bytes
 of a message. Each is a <code>RIM_LIMIT_*</code> variable, off until set (the &quot;Instance limits&quot; block of
-<a href="https://github.com/rim-platform/rim-server/blob/be96e5bcba8dfa93ab7013875d5e96db4d9f4ab5/deploy/.env.example"><code>deploy/.env.example</code></a> has values for a small test instance); past one a write is refused with
+<a href="https://github.com/rim-platform/rim-server/blob/c2a30ae9bfc7d4925af4af4e0f524ad67424086c/deploy/.env.example"><code>deploy/.env.example</code></a> has values for a small test instance); past one a write is refused with
 a message naming the cap, and clients read every cap from <code>serverInfo.limits</code>. Channels count
 while unarchived, and a workspace holds at most five times the channel cap counting archived
 ones. A member who is neither Owner nor Moderator holds at most a fifth of a
@@ -388,7 +391,7 @@ URL it accepted. The terms come from one of two settings, never both (both set s
 server at boot):</p>
 <ul>
 <li><code>RIM_TERMS_FILE</code>, a Markdown file the server reads at start and serves as a page at
-<code>https://&lt;your domain&gt;/api/terms</code>. <code>compose.yml</code> mounts <a href="https://github.com/rim-platform/rim-server/blob/be96e5bcba8dfa93ab7013875d5e96db4d9f4ab5/deploy/terms.md"><code>deploy/terms.md</code></a> at
+<code>https://&lt;your domain&gt;/api/terms</code>. <code>compose.yml</code> mounts <a href="https://github.com/rim-platform/rim-server/blob/c2a30ae9bfc7d4925af4af4e0f524ad67424086c/deploy/terms.md"><code>deploy/terms.md</code></a> at
 <code>/config/terms.md</code>; that file is the public RIM server&#39;s terms, so rewrite it for your
 server, then set <code>RIM_TERMS_FILE=/config/terms.md</code>. The page shows headings, paragraphs,
 lists, bold and italic text, code and links (https, http and mailto); any HTML in the file
@@ -406,11 +409,11 @@ show it. Anything else stops the server at boot.</p>
 age: clients show &quot;I am at least 16&quot; beside the terms, and a signup without the confirmation
 is refused. The age is self-declared. Nothing checks it and the account records only the age it
 confirmed, next to its acceptance of the terms.</p>
-<p>All of these are commented out in <a href="https://github.com/rim-platform/rim-server/blob/be96e5bcba8dfa93ab7013875d5e96db4d9f4ab5/deploy/.env.example"><code>deploy/.env.example</code></a> and reach the <code>rim</code> service when set;
+<p>All of these are commented out in <a href="https://github.com/rim-platform/rim-server/blob/c2a30ae9bfc7d4925af4af4e0f524ad67424086c/deploy/.env.example"><code>deploy/.env.example</code></a> and reach the <code>rim</code> service when set;
 clients read them from <code>serverInfo</code>. A notice over 500 characters or a terms URL that is not an
 absolute http(s) URL stops the server at boot. Changing the terms does not ask existing
 accounts to accept again.</p>
-<p><code>RIM_RESERVED_NAMES</code> (commented out in <a href="https://github.com/rim-platform/rim-server/blob/be96e5bcba8dfa93ab7013875d5e96db4d9f4ab5/deploy/.env.example"><code>deploy/.env.example</code></a>) lists usernames and display names
+<p><code>RIM_RESERVED_NAMES</code> (commented out in <a href="https://github.com/rim-platform/rim-server/blob/c2a30ae9bfc7d4925af4af4e0f524ad67424086c/deploy/.env.example"><code>deploy/.env.example</code></a>) lists usernames and display names
 that signups and profile edits refuse, ignoring case, invisible characters and lookalike letters
 from other scripts (Cyrillic <code>А</code> for <code>A</code>), so nobody can pose as your maintainers; a person from
 another server whose profile card names one is shown by their username instead. Set it once
@@ -455,7 +458,7 @@ it still sends no DM request to someone it shares no other workspace with.</p>
 Setting both stops the server at boot.</p>
 <h3 id="from-a-definition-file">From a definition file <a class="anchor" href="#from-a-definition-file" aria-label="Link to this section">#</a></h3>
 <p><code>RIM_DEFAULT_WORKSPACE_FILE</code> names a JSON file that describes the workspace. <code>compose.yml</code>
-mounts <a href="https://github.com/rim-platform/rim-server/blob/be96e5bcba8dfa93ab7013875d5e96db4d9f4ab5/deploy/default-workspace.json"><code>deploy/default-workspace.json</code></a> read-only at <code>/config/default-workspace.json</code>; set the
+mounts <a href="https://github.com/rim-platform/rim-server/blob/c2a30ae9bfc7d4925af4af4e0f524ad67424086c/deploy/default-workspace.json"><code>deploy/default-workspace.json</code></a> read-only at <code>/config/default-workspace.json</code>; set the
 variable to that path in <code>deploy/.env</code> (a relay that hosts a workspace does the same,
 <a href="deploy/index.html"><code>deploy/README.md</code></a>). The committed file is the project&#39;s own workspace on the public relay; edit
 it for yours:</p>
@@ -511,7 +514,7 @@ the claimed workspace is deleted, the next start offers a new claim. Unsetting t
 stops the default workspace (signups join nothing) and revokes a waiting claim link; the
 workspace itself stays.</p>
 <h3 id="a-workspace-made-in-the-app">A workspace made in the app <a class="anchor" href="#a-workspace-made-in-the-app" aria-label="Link to this section">#</a></h3>
-<p><code>RIM_DEFAULT_WORKSPACE</code> (commented out in <a href="https://github.com/rim-platform/rim-server/blob/be96e5bcba8dfa93ab7013875d5e96db4d9f4ab5/deploy/.env.example"><code>deploy/.env.example</code></a>) names a workspace on this server
+<p><code>RIM_DEFAULT_WORKSPACE</code> (commented out in <a href="https://github.com/rim-platform/rim-server/blob/c2a30ae9bfc7d4925af4af4e0f524ad67424086c/deploy/.env.example"><code>deploy/.env.example</code></a>) names a workspace on this server
 by its id. Create the workspace in the app, look its id up, set it in <code>deploy/.env</code> and run
 <code>dc up -d</code>:</p>
 <pre><code class="language-sh">dc exec -T postgres psql -U rim -d rim -c &quot;SELECT id, name FROM server WHERE kind = 'workspace'&quot;</code></pre>
@@ -537,7 +540,7 @@ DMs and encrypted groups are untouched, and other servers see an ordinary member
 <p>Everyone here has a handle, <code>@&lt;username&gt;:&lt;domain&gt;</code>, which other servers and their apps show
 for them and which people type to mention or search for them. Usernames are 3 to 32 letters,
 digits, <code>_</code> and <code>-</code>, stored in lowercase: <code>Kuba</code> signs up as <code>kuba</code>, and sign-in and search
-accept any case. The domain is <code>RIM_HANDLE_DOMAIN</code>, commented out in <a href="https://github.com/rim-platform/rim-server/blob/be96e5bcba8dfa93ab7013875d5e96db4d9f4ab5/deploy/.env.example"><code>deploy/.env.example</code></a>: by
+accept any case. The domain is <code>RIM_HANDLE_DOMAIN</code>, commented out in <a href="https://github.com/rim-platform/rim-server/blob/c2a30ae9bfc7d4925af4af4e0f524ad67424086c/deploy/.env.example"><code>deploy/.env.example</code></a>: by
 default the host of <code>RIM_PUBLIC_BASE_URL</code> (<code>rim.example.org</code> gives <code>@kuba:rim.example.org</code>),
 and the server refuses to start when it is not a DNS name. Handles may use a shorter domain
 than the server&#39;s, say <code>example.org</code> for a server at <code>rim.example.org</code>, when
@@ -545,7 +548,7 @@ than the server&#39;s, say <code>example.org</code> for a server at <code>rim.ex
 <a href="server-identity.html"><code>docs/server-identity.md</code></a>, &quot;Handles and delegation&quot;, has the details. Choose the domain before
 people join: changing it later changes every handle here (keys, contacts and memberships stay).</p>
 <p><code>RIM_DM_INBOUND</code>, <code>RIM_DM_OUTBOUND</code> and <code>RIM_DM_PARTNERS</code> (commented out in
-<a href="https://github.com/rim-platform/rim-server/blob/be96e5bcba8dfa93ab7013875d5e96db4d9f4ab5/deploy/.env.example"><code>deploy/.env.example</code></a>) set floors for every account: by default a stranger&#39;s first message is a
+<a href="https://github.com/rim-platform/rim-server/blob/c2a30ae9bfc7d4925af4af4e0f524ad67424086c/deploy/.env.example"><code>deploy/.env.example</code></a>) set floors for every account: by default a stranger&#39;s first message is a
 request the recipient accepts, and people here may start DMs with anyone. A company closes its
 server with <code>none</code>, or opens it to named partner servers with <code>partners</code>
 (<a href="operations/closed-company-server.html"><code>docs/operations/closed-company-server.md</code></a>). Workspace owners and each person tighten further
@@ -554,7 +557,7 @@ it at boot.</p>
 <h2 id="deleted-accounts">Deleted accounts <a class="anchor" href="#deleted-accounts" aria-label="Link to this section">#</a></h2>
 <p>People delete their own account from the client. The account is purged once a grace period
 ends, <code>RIM_ACCOUNT_DELETION_GRACE_DAYS</code> days after the request (default 14, 0 to 30; 0 purges at
-the next hourly run; commented out in <a href="https://github.com/rim-platform/rim-server/blob/be96e5bcba8dfa93ab7013875d5e96db4d9f4ab5/deploy/.env.example"><code>deploy/.env.example</code></a>); until then the person can cancel.
+the next hourly run; commented out in <a href="https://github.com/rim-platform/rim-server/blob/c2a30ae9bfc7d4925af4af4e0f524ad67424086c/deploy/.env.example"><code>deploy/.env.example</code></a>); until then the person can cancel.
 The purge removes the account&#39;s sessions, devices and keys, memberships, plaintext messages with
 their files, every file in its avatar directory (<code>avatars/&lt;user id&gt;/</code> under the uploads), settings
 and personal automations, and deletes the workspaces where it was the only member. What remains is a tombstone row with the same id, named <code>deleted-</code> and the
@@ -584,7 +587,7 @@ address from its first entry and never reads <code>Forwarded</code>;</li>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/be96e5bcba8dfa93ab7013875d5e96db4d9f4ab5/docs/self-hosting.md">rim-server/docs/self-hosting.md</a> at <code>be96e5b</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c2a30ae9bfc7d4925af4af4e0f524ad67424086c/docs/self-hosting.md">rim-server/docs/self-hosting.md</a> at <code>c2a30ae</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

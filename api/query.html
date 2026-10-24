@@ -49,7 +49,7 @@
 <li><a href="#group-audit">Audit (1)</a></li>
 <li><a href="#group-invite">Invite (1)</a></li>
 <li><a href="#group-notification">Notification (3)</a></li>
-<li><a href="#group-key">Key (3)</a></li>
+<li><a href="#group-key">Key (4)</a></li>
 <li><a href="#group-device">Device (4)</a></li>
 <li><a href="#group-relay">Relay (2)</a></li>
 <li><a href="#group-report">Report (1)</a></li>
@@ -59,7 +59,7 @@
 </details></aside>
     <main id="content" class="prose">
 <h1>Query</h1>
-<p class="lede">68 queries, grouped by the domain their name starts with or names, in the order the schema lists them.</p>
+<p class="lede">69 queries, grouped by the domain their name starts with or names, in the order the schema lists them.</p>
 <input id="filter" class="search" type="search" placeholder="Filter fields by name" aria-label="Filter fields by name" autocomplete="off">
 <p id="filter-none" class="muted" hidden>Nothing matches.</p>
 <section data-group>
@@ -469,7 +469,7 @@ per IP; no authentication required.</p>
 </section>
 </section>
 <section data-group>
-<h2 id="group-key">Key <span class="faint">3</span></h2>
+<h2 id="group-key">Key <span class="faint">4</span></h2>
 <section class="entry" id="myKeyIdentity" data-name="myKeyIdentity">
 <h3><code>myKeyIdentity</code></h3>
 <div class="sig">myKeyIdentity: <a href="objects.html#KeyIdentity">KeyIdentity</a>!</div>
@@ -490,6 +490,16 @@ recovery rotation (<a href="mutation.html#rotateIdentityKey"><code>rotateIdentit
 <h3><code>myMlsKeyPackageStatus</code></h3>
 <div class="sig">myMlsKeyPackageStatus: [<a href="objects.html#MlsKeyPackageStatus">MlsKeyPackageStatus</a>!]!</div>
 <div class="desc"><p>The session device&#39;s stored key packages, per cipher suite.</p>
+</div>
+
+</section>
+<section class="entry" id="sessionKeepKey" data-name="sessionKeepKey">
+<h3><code>sessionKeepKey</code></h3>
+<div class="sig">sessionKeepKey: <a href="scalars.html#String">String</a></div>
+<div class="desc"><p>The keep key the server holds for this session, 32 bytes as unpadded base64url, in the
+clear: what a web client signed in with &quot;Keep me signed in&quot; opens its data key with at
+start. <code>null</code> for a session signed in without it, and for one whose client holds its
+own keep key.</p>
 </div>
 
 </section>
@@ -749,7 +759,7 @@ and Moderators only: anyone else gets <code>FORBIDDEN</code>.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Generated from <a href="https://github.com/rim-platform/rim-ui/blob/8aa7733e8b6fe5cfee270b572e4ddaf1ec32c432/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>8aa7733</code></span>
+    <span>Generated from <a href="https://github.com/rim-platform/rim-ui/blob/494da4e3ff7d868a584a6cd0f379917b4c9a6958/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>494da4e</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

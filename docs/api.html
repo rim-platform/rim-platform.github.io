@@ -36,7 +36,7 @@
     <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
 <ol>
 <li><a href="#endpoints">Endpoints</a><ol><li><a href="#graphql-post-api">GraphQL: POST /api</a></li><li><a href="#subscriptions-get-apiws">Subscriptions: GET /api/ws</a></li><li><a href="#the-schema-get-apisdl">The schema: GET /api/sdl</a></li><li><a href="#discovery-get-well-knownrim-server">Discovery: GET /.well-known/rim-server</a></li><li><a href="#probes-healthz-and-readyz">Probes: /healthz and /readyz</a></li><li><a href="#metrics-metrics">Metrics: /metrics</a></li><li><a href="#files">Files</a></li><li><a href="#spaces-on-another-server-apiremotehost_server_idtail">Spaces on another server: /api/remote/{host_server_id}/{tail}</a></li><li><a href="#server-to-server-s2sv1">Server to server: /s2s/v1/...</a></li></ol></li>
-<li><a href="#sessions-and-csrf">Sessions and CSRF</a><ol><li><a href="#the-session-cookie">The session cookie</a></li><li><a href="#handing-over-or-deleting-a-workspace">Handing over or deleting a workspace</a></li><li><a href="#deleting-an-account">Deleting an account</a></li><li><a href="#the-csrf-token">The CSRF token</a></li></ol></li>
+<li><a href="#sessions-and-csrf">Sessions and CSRF</a><ol><li><a href="#the-session-cookie">The session cookie</a></li><li><a href="#keep-me-signed-in">Keep me signed in</a></li><li><a href="#handing-over-or-deleting-a-workspace">Handing over or deleting a workspace</a></li><li><a href="#deleting-an-account">Deleting an account</a></li><li><a href="#the-csrf-token">The CSRF token</a></li></ol></li>
 <li><a href="#origins">Origins</a></li>
 <li><a href="#limits">Limits</a></li>
 <li><a href="#instance-moderation">Instance moderation</a></li>
@@ -44,7 +44,7 @@
 <li><a href="#pagination">Pagination</a></li>
 <li><a href="#telling-which-server-you-talk-to">Telling which server you talk to</a></li>
 <li><a href="#handles">Handles</a></li>
-<li><a href="#the-full-graphql-reference">The full GraphQL reference</a><ol><li><a href="#profile-picture-refresh">Profile picture refresh</a></li><li><a href="#pinned-plugin-link-fetch">Pinned plugin link fetch</a></li><li><a href="#rejoining-the-default-workspace-and-removal-notices">Rejoining the default workspace and removal notices</a></li><li><a href="#public-join-link-and-join-requests">Public join link and join requests</a></li></ol></li>
+<li><a href="#the-full-graphql-reference">The full GraphQL reference</a><ol><li><a href="#profile-picture-refresh">Profile picture refresh</a></li><li><a href="#pinned-plugin-link-fetch">Pinned plugin link fetch</a></li><li><a href="#rejoining-the-default-workspace-and-removal-notices">Rejoining the default workspace and removal notices</a></li><li><a href="#public-join-link-and-join-requests">Public join link and join requests</a></li><li><a href="#account-password">Account password</a></li></ol></li>
 </ol>
 </details></aside>
     <main id="content" class="prose">
@@ -56,8 +56,9 @@ server version it talks to. The GraphQL types and fields themselves are in the s
 <a href="../specs/server-to-server-v1.html"><code>specs/server-to-server-v1.md</code></a>.</p>
 <h2 id="endpoints">Endpoints <a class="anchor" href="#endpoints" aria-label="Link to this section">#</a></h2>
 <p>Everything except <code>/metrics</code> is served on <code>RIM_SERVER_HOST:RIM_SERVER_PORT</code>. &quot;Session&quot; means
-the route needs the session cookie; &quot;CSRF&quot; means it also needs the <code>X-CSRF-Token</code> header (see
-&quot;Sessions and CSRF&quot;).</p>
+the route needs the session cookie; &quot;with its secret&quot; that a session signed in without &quot;Keep
+me signed in&quot; also needs its secret in the <code>X-RIM-Session-Secret</code> header; &quot;CSRF&quot; means it also
+needs the <code>X-CSRF-Token</code> header (see &quot;Sessions and CSRF&quot;).</p>
 <div class="tablewrap"><table>
 <thead>
 <tr>
@@ -70,7 +71,7 @@ the route needs the session cookie; &quot;CSRF&quot; means it also needs the <co
 <tbody><tr>
 <td><code>POST</code></td>
 <td><code>/api</code></td>
-<td>Session for most fields; CSRF on mutations</td>
+<td>Session (with its secret) for most fields; CSRF on mutations</td>
 <td>GraphQL. The body is one GraphQL request or a JSON array of them (a batch).</td>
 </tr>
 <tr>
@@ -118,13 +119,13 @@ the route needs the session cookie; &quot;CSRF&quot; means it also needs the <co
 <tr>
 <td><code>POST</code></td>
 <td><code>/api/files/upload</code></td>
-<td>Session, CSRF</td>
+<td>Session (with its secret), CSRF</td>
 <td>Upload the bytes of an attachment.</td>
 </tr>
 <tr>
 <td><code>POST</code></td>
 <td><code>/api/files/avatar</code></td>
-<td>Session, CSRF</td>
+<td>Session (with its secret), CSRF</td>
 <td>Upload the caller&#39;s avatar.</td>
 </tr>
 <tr>
@@ -142,7 +143,7 @@ the route needs the session cookie; &quot;CSRF&quot; means it also needs the <co
 <tr>
 <td><code>POST</code></td>
 <td><code>/api/plugin-bundles/{server_id}</code></td>
-<td>Session, CSRF</td>
+<td>Session (with its secret), CSRF</td>
 <td>Upload a web plugin bundle to a workspace.</td>
 </tr>
 <tr>
@@ -160,7 +161,7 @@ the route needs the session cookie; &quot;CSRF&quot; means it also needs the <co
 <tr>
 <td><code>GET</code>, <code>POST</code></td>
 <td><code>/api/remote/{host_server_id}/{tail}</code></td>
-<td>Session; CSRF on <code>POST</code></td>
+<td>Session (with its secret); CSRF on <code>POST</code></td>
 <td>A request to a space hosted on another server, through this relay.</td>
 </tr>
 <tr>
@@ -223,6 +224,11 @@ nothing, and completes; send those to <code>POST /api</code>. The subscription r
 <code>relayStream</code>; the schema describes both. A <code>TypingStarted</code> event, sent for direct conversations
 only, names the typing user by <code>user_id</code>, <code>username</code> and <code>display_name</code>, which is <code>null</code> when
 they have none.</p>
+<p>A session signed in without &quot;Keep me signed in&quot; opens its connection with the cookie alone,
+and its first message must be <code>connection_init</code> with the session secret as
+<code>payload.sessionSecret</code>. Any other first message, or a wrong secret, closes the connection with
+code <code>4401</code> and reason <code>session secret required</code>. The server notes when such a session&#39;s last
+connection closed, for the reload window (&quot;Keep me signed in&quot; below).</p>
 <p>A connection lives no longer than the session it was opened with. When that session ends, the
 server ends every stream on the connection and closes it with code <code>4401</code> and reason
 <code>session ended</code>; nothing is sent after the close, and the connection&#39;s place under
@@ -341,11 +347,14 @@ reports <code>https</code>. These mutations set it, and need no session or CSRF 
 <ul>
 <li><strong>Key login.</strong> <code>keyLoginChallenge</code> returns <code>{ challengeId, nonce, expiresAt }</code>. The client
 signs a <code>login</code> statement over the nonce with its device key and calls <code>loginWithKey(proof)</code>.
-The session is bound to that device. <a href="../specs/key-identity-v1.html"><code>specs/key-identity-v1.md</code></a> (&quot;Challenge login&quot;) has the
+The session is bound to that device. An account of this server with a password also proves
+it first: <code>passwordLoginStart</code> and <code>passwordLoginFinish</code>, whose ticket goes to
+<code>loginWithKey(proof, passwordTicket)</code> (&quot;Account password&quot; below). <a href="../specs/key-identity-v1.html"><code>specs/key-identity-v1.md</code></a> (&quot;Challenge login&quot;) has the
 statement, the audiences and the limits.</li>
-<li><strong>Key-only signup.</strong> <code>signupWithKey</code> creates the account and signs it in. An instance invite
-bound to an email address gives the account that address (<code>EMAIL_TAKEN</code> when another account
-has it); otherwise the account has no email.</li>
+<li><strong>Key signup.</strong> <code>signupWithKey</code> creates the account with its password
+(<code>passwordRegistration</code>, after <code>passwordRegistrationStart</code>) and signs it in. An instance
+invite bound to an email address gives the account that address (<code>EMAIL_TAKEN</code> when another
+account has it); otherwise the account has no email.</li>
 <li><strong>Password login.</strong> <code>login(input: { username, password })</code>. The username is matched without
 regard to case, since usernames are stored lowercase. An account without a password, such as a
 key-only account or one that enrolled an identity key, cannot sign in this way.</li>
@@ -397,10 +406,50 @@ default workspace from <code>serverInfo</code>.</p>
 session of the account, and so does <code>enrollIdentityKey</code>, which binds the calling session to the
 new device. Each also closes the WebSocket connections of the sessions it ends (see
 &quot;Subscriptions&quot;).</p>
-<p>A session lasts <code>RIM_SESSION_TTL_DAYS</code> days (default 30) from sign-in: the cookie&#39;s <code>Max-Age</code>
-and the server-side expiry are both set from it, and using the session does not extend it. A
-missing, unknown, revoked or expired session cookie makes the request anonymous; a field that
-needs a session then answers <code>UNAUTHENTICATED</code>.</p>
+<p>A session lasts <code>RIM_SESSION_TTL_DAYS</code> days (default 30) from sign-in: the server-side expiry
+is set from it, and so is the cookie&#39;s <code>Max-Age</code> for a kept session (&quot;Keep me signed in&quot;
+below). Using the session does not extend it. A missing, unknown, revoked or expired session
+cookie makes the request anonymous; a field that needs a session then answers
+<code>UNAUTHENTICATED</code>.</p>
+<h3 id="keep-me-signed-in">Keep me signed in <a class="anchor" href="#keep-me-signed-in" aria-label="Link to this section">#</a></h3>
+<p><code>loginWithKey</code> and <code>signupWithKey</code> take <code>keepSignedIn</code> and <code>keepKeyHeld</code> (both <code>Boolean!</code>).
+The other sign-ins (<code>login</code>, <code>signupWithInvite</code>) always keep their session.</p>
+<ul>
+<li><strong>Kept</strong> (<code>keepSignedIn: true</code>): both cookies carry <code>Max-Age</code>, and the session needs nothing
+besides the cookie. For a web client (<code>keepKeyHeld: false</code>) the server makes a keep key, 32
+random bytes, keeps it sealed under the password key and returns it as <code>keepKey</code>; the
+client opens its data key with it. <code>query { sessionKeepKey }</code> returns it again for the same
+session, for the web client at start. A client that holds its own keep key (<code>keepKeyHeld: true</code>, the desktop app) gets none, and <code>sessionKeepKey</code> is <code>null</code> for it.</li>
+<li><strong>Unkept</strong> (<code>keepSignedIn: false</code>; <code>keepKeyHeld</code> is ignored): both cookies have no <code>Max-Age</code>,
+so the browser drops them when it closes. The sign-in returns <code>sessionSecret</code>, 32 random
+bytes as unpadded base64url, of which the server keeps only the SHA-256. The client keeps it
+in memory and sends it in the <code>X-RIM-Session-Secret</code> header of every request and in the
+WebSocket&#39;s <code>connection_init</code>. A request with the cookie and without the right secret is
+anonymous. Three kinds of request need no secret: a batch whose every operation is a
+mutation of only <code>reloadSession</code> and <code>logout</code>, the WebSocket upgrade (the secret comes in
+<code>connection_init</code>), and the plain <code>GET</code> downloads (<code>/api/files/...</code>,
+<code>/api/attachments/{id}/download</code>, <code>/api/plugin-bundles/...</code>, <code>/api/reports/...</code>), which an
+<code>&lt;img&gt;</code> tag or a link makes without headers. Those downloads therefore still answer to the
+cookie alone.</li>
+</ul>
+<p><code>keepKey</code> and <code>sessionSecret</code> travel in the clear, protected by TLS; each is <code>null</code> when the
+other case applies.</p>
+<p><strong>The reload window.</strong> A tab of an unkept session that reloads loses the secret it held in
+memory. Before that, it seals what it keeps in <code>sessionStorage</code> under a reload key that only
+the server holds: <code>setReloadKey</code> (with the secret) makes a new one, stores it in place of the
+previous one and returns it, right after signing in and after each reload. After the reload
+the tab calls <code>reloadSession</code> with the cookie and the CSRF header but without the secret. It
+returns <code>{ reloadKey, nextReloadKey }</code>, the key the data is sealed under and a new one the
+server now holds in its place, only when:</p>
+<ul>
+<li>the session is unkept and live, and holds a reload key;</li>
+<li>its last WebSocket connection closed less than 60 seconds ago, and none opened since.</li>
+</ul>
+<p>The answer is given once: it clears the closing time, so a second call answers
+<code>UNAUTHENTICATED</code> until a connection of the session opens and closes again. Every refusal is
+<code>UNAUTHENTICATED</code>. <code>setReloadKey</code> and <code>reloadSession</code> answer <code>UNAUTHENTICATED</code> for a kept
+session. Signing out or any other end of the session ends its keep key and reload key with
+it.</p>
 <h3 id="handing-over-or-deleting-a-workspace">Handing over or deleting a workspace <a class="anchor" href="#handing-over-or-deleting-a-workspace" aria-label="Link to this section">#</a></h3>
 <p>A workspace has exactly one owner. <code>transferWorkspaceOwnership(input: { serverId, userId })</code>
 makes another member the owner and the caller a moderator, in one step, and answers the
@@ -462,8 +511,9 @@ nested deeper than 32;</li>
 </ul>
 <p>Queries and subscriptions never need it. The mutations used before a session exists are exempt:
 <code>login</code>, <code>logout</code>, <code>signupWithInvite</code>, <code>requestPasswordReset</code>, <code>resetPassword</code>,
-<code>keyLoginChallenge</code>, <code>loginWithKey</code>, <code>signupWithKey</code>, <code>sendDeviceLinkOffer</code> and
-<code>applyRemoteRevocation</code>. <code>rotateIdentityKey</code> and <code>cancelDeviceLink</code> are exempt only when the
+<code>keyLoginChallenge</code>, <code>loginWithKey</code>, <code>signupWithKey</code>, <code>passwordRegistrationStart</code>,
+<code>passwordLoginStart</code>, <code>passwordLoginFinish</code>, <code>passwordResetChallenge</code>, <code>passwordResetStart</code>, <code>passwordResetFinish</code>,
+<code>sendDeviceLinkOffer</code> and <code>applyRemoteRevocation</code>. <code>rotateIdentityKey</code> and <code>cancelDeviceLink</code> are exempt only when the
 request carries no session cookie. A request is exempt only when every root field of its
 mutation is, counting the fields of named and inline fragments at any depth and fields under
 <code>@skip</code> or <code>@include</code> whatever their condition.</p>
@@ -482,9 +532,9 @@ the web client on another port.</li>
 <code>http://tauri.localhost</code> and <code>https://tauri.localhost</code>.</li>
 </ul>
 <p>Origins compare without case and without a default port. The browser may send <code>Content-Type</code>,
-<code>Authorization</code>, <code>X-CSRF-Token</code> and <code>X-Request-Id</code>, with credentials, on <code>GET</code>, <code>POST</code> and
-<code>OPTIONS</code>; a preflight is cached for an hour, and the browser may read the <code>Retry-After</code> header
-of an answer. The discovery document, the probes and <code>/s2s/v1/...</code> are outside this check.</p>
+<code>Authorization</code>, <code>X-CSRF-Token</code>, <code>X-Request-Id</code> and <code>X-RIM-Session-Secret</code>, with credentials, on
+<code>GET</code>, <code>POST</code> and <code>OPTIONS</code>; a preflight is cached for an hour, and the browser may read the
+<code>Retry-After</code> header of an answer. The discovery document, the probes and <code>/s2s/v1/...</code> are outside this check.</p>
 <h2 id="limits">Limits <a class="anchor" href="#limits" aria-label="Link to this section">#</a></h2>
 <p>An operator can limit what one client sends. Every limit is off unless its variable is set to
 a number above 0, so a private server limits nothing but the batch size.</p>
@@ -525,6 +575,11 @@ a number above 0, so a private server limits nothing but the batch size.</p>
 <td><code>RIM_API_MAX_BATCH</code></td>
 <td>GraphQL requests in one batch, default 20, whether sent here or forwarded by another server.</td>
 <td>HTTP 400 and <code>{&quot;error&quot;:&quot;batch_too_large&quot;}</code></td>
+</tr>
+<tr>
+<td>none (fixed)</td>
+<td>Account password tries: every <code>passwordLoginStart</code> and <code>passwordChangeStart</code> counts against the account until a login finishes. Tries 1 to 3 are free; the 4th makes the next wait 1 minute, the 5th 5 minutes, the 6th 15 minutes, the 7th 1 hour, the 8th 4 hours, the 9th 12 hours; the 10th locks the password until a reset with the recovery key. Each <code>passwordLoginStart</code> also counts against the address, sharing the 20 failed key sign-ins per 15 minutes.</td>
+<td><code>RATE_LIMITED</code> with <code>retryAfterSeconds</code> during a wait; <code>PASSWORD_LOCKED</code> once locked</td>
 </tr>
 <tr>
 <td>none (fixed)</td>
@@ -730,7 +785,7 @@ on the message.</p>
 </tr>
 <tr>
 <td><code>FORBIDDEN</code></td>
-<td>The caller may not do this. Also: a session not bound to a device asking for device-only data, a relay-only field on a server that is not a relay, a remote member&#39;s account mutation, a password signup on a server whose signups need a key.</td>
+<td>The caller may not do this. Also: a session not bound to a device asking for device-only data, a relay-only field on a server that is not a relay, a remote member&#39;s account mutation, a password signup on a server whose signups need a key, and every root but <code>setPasswordStart</code>, <code>setPassword</code>, <code>logout</code> and <code>me</code> for a session that must set a password first (&quot;set a password first&quot;).</td>
 <td></td>
 </tr>
 <tr>
@@ -811,6 +866,11 @@ on the message.</p>
 <tr>
 <td><code>REGISTRATION_FULL</code></td>
 <td>The server holds as many accounts as it accepts (<code>RIM_LIMIT_ACCOUNTS</code>) and takes no new one. The message says so and points to running a server or signing up on another one.</td>
+<td></td>
+</tr>
+<tr>
+<td><code>PASSWORD_LOCKED</code></td>
+<td>The account&#39;s password locked after ten tries without a success; only a reset with the recovery phrase (<code>passwordResetStart</code>) opens it.</td>
 <td></td>
 </tr>
 <tr>
@@ -996,7 +1056,7 @@ types from it:</p>
 <pre><code class="language-sh">curl -s http://localhost:8080/api/sdl &gt; ../rim-ui/schema.graphql
 cd ../rim-ui &amp;&amp; npm run codegen</code></pre>
 <p>Enum values appear in <code>SCREAMING_SNAKE</code> and fields in <code>camelCase</code>. The models in <a href="messaging.html"><code>messaging.md</code></a>,
-<a href="search.html"><code>search.md</code></a>, <a href="message-change-feed.html"><code>message-change-feed.md</code></a>, <a href="command_model.html"><code>command_model.md</code></a> and the specs in <a href="https://github.com/rim-platform/rim-server/tree/be96e5bcba8dfa93ab7013875d5e96db4d9f4ab5/docs/specs"><code>specs/</code></a> explain what
+<a href="search.html"><code>search.md</code></a>, <a href="message-change-feed.html"><code>message-change-feed.md</code></a>, <a href="command_model.html"><code>command_model.md</code></a> and the specs in <a href="https://github.com/rim-platform/rim-server/tree/c2a30ae9bfc7d4925af4af4e0f524ad67424086c/docs/specs"><code>specs/</code></a> explain what
 the fields mean.</p>
 <h3 id="profile-picture-refresh">Profile picture refresh <a class="anchor" href="#profile-picture-refresh" aria-label="Link to this section">#</a></h3>
 <p>Avatar uploads use <code>avatars/&lt;user id&gt;/avatar-&lt;16 lowercase SHA-256 hex&gt;.&lt;ext&gt;</code>, so changing
@@ -1179,11 +1239,91 @@ the ones above, plus:</p>
 </tbody></table></div>
 <p>The decision on a remote person&#39;s request reaches them as a <code>JoinRequestDecided</code> relay item;
 <code>myJoinRequests</code> lists only the requests filed on the server answering it.</p>
+<h3 id="account-password">Account password <a class="anchor" href="#account-password" aria-label="Link to this section">#</a></h3>
+<p>Every account of this server has a password besides its device keys, checked with OPAQUE
+(RFC 9807; <a href="../specs/key-identity-v1.html"><code>specs/key-identity-v1.md</code></a>, &quot;Account password&quot;). The server never sees the
+password. Every OPAQUE message travels as an unpadded base64url string, and the client library
+must use the suite of the spec byte for byte.</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Root</th>
+<th>Session</th>
+<th>Does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>passwordRegistrationStart(principalId, request): String!</code></td>
+<td>none</td>
+<td>Answers the <code>RegistrationRequest</code> of a principal no account here holds, before <code>signupWithKey</code>. <code>CONFLICT</code> for a principal an account of this server holds.</td>
+</tr>
+<tr>
+<td><code>signupWithKey(input)</code></td>
+<td>none</td>
+<td>Takes <code>passwordRegistration</code>, the <code>RegistrationUpload</code>, and answers <code>serverShare</code>, the account&#39;s new server share, in the clear.</td>
+</tr>
+<tr>
+<td><code>passwordLoginStart(principalId, request): PasswordLoginStart!</code></td>
+<td>none</td>
+<td>Counts a try and answers <code>{ loginId, response }</code>. A principal without a password here gets an answer of the same shape that no password finishes.</td>
+</tr>
+<tr>
+<td><code>passwordLoginFinish(loginId, credentialFinalization): PasswordLoginFinish!</code></td>
+<td>none</td>
+<td>Checks the password, clears the tries and answers <code>{ ticket, serverShare, rewraps }</code>: a single-use ticket valid for 120 seconds, the server share sealed under the login&#39;s transport key, and the rewraps, newest first. A wrong password or an unknown, used or expired login is <code>UNAUTHENTICATED</code>.</td>
+</tr>
+<tr>
+<td><code>loginWithKey(proof, passwordTicket): LoginPayload!</code></td>
+<td>none</td>
+<td>For an account with a password, requires a ticket of that account, unexpired and unused, consumed with the new session; otherwise <code>UNAUTHENTICATED</code>. Answers <code>mustSetPassword</code>.</td>
+</tr>
+<tr>
+<td><code>passwordChangeStart(credentialRequest, registrationRequest): PasswordChangeStart!</code></td>
+<td>yes</td>
+<td>Counts a try; answers <code>{ loginId, credentialResponse, registrationResponse }</code>. <code>NOT_FOUND</code> without a password.</td>
+</tr>
+<tr>
+<td><code>passwordChangeFinish(loginId, credentialFinalization, registrationUpload, rewrap): PasswordChanged!</code></td>
+<td>yes</td>
+<td>Replaces the password, keeps the server share, stores the rewrap (the newest three are kept) and ends every other session of the account. <code>UNAUTHENTICATED</code> for a wrong current password.</td>
+</tr>
+<tr>
+<td><code>passwordResetChallenge(principalId): KeyLoginChallenge!</code></td>
+<td>none</td>
+<td>A challenge for a <code>password-reset</code> statement, valid 120 seconds, single use.</td>
+</tr>
+<tr>
+<td><code>passwordResetStart(statement, registrationRequest): PasswordResetStart!</code></td>
+<td>none</td>
+<td>Verifies the statement against the recovery key of the account&#39;s key log head and answers <code>{ resetId, registrationResponse }</code>. Every refusal is <code>UNAUTHENTICATED</code>.</td>
+</tr>
+<tr>
+<td><code>passwordResetFinish(resetId, registrationUpload): Boolean!</code></td>
+<td>none</td>
+<td>Replaces the password, keeps the server share, deletes the rewraps, clears the tries and the lock, and ends every session of the account.</td>
+</tr>
+<tr>
+<td><code>setPasswordStart(registrationRequest): String!</code>, <code>setPassword(registrationUpload): SetPasswordPayload!</code></td>
+<td>the account&#39;s</td>
+<td>Registers a first password for an account that has none and lifts <code>mustSetPassword</code> from its sessions; <code>setPassword</code> answers the new <code>serverShare</code>. <code>CONFLICT</code> when the account has a password.</td>
+</tr>
+</tbody></table></div>
+<p><strong>Sign-in.</strong> The client runs the password login first (<code>passwordLoginStart</code>, then
+<code>passwordLoginFinish</code>), opens what it keeps at rest with the server share, signs the <code>login</code>
+statement over a <code>keyLoginChallenge</code>, and sends it with the ticket to <code>loginWithKey</code>. The login
+id and the ticket are each valid for 120 seconds and once. An account of this server without a password (one that enrolled a
+key before passwords existed) signs in with the key alone and gets <code>mustSetPassword: true</code>: its
+session answers <code>FORBIDDEN</code> &quot;set a password first&quot; to every root but <code>setPasswordStart</code>,
+<code>setPassword</code>, <code>logout</code> and <code>me</code>, and to the WebSocket, uploads, downloads and the routes to
+other servers. A person from another server signs in at a host with the key alone; their
+password lives at their own server.</p>
+<p><strong>Tries.</strong> See &quot;Limits&quot;. A wrong password is <code>UNAUTHENTICATED</code>, a wait <code>RATE_LIMITED</code> with
+<code>retryAfterSeconds</code>, and a locked password <code>PASSWORD_LOCKED</code>.</p>
 
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/be96e5bcba8dfa93ab7013875d5e96db4d9f4ab5/docs/api.md">rim-server/docs/api.md</a> at <code>be96e5b</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c2a30ae9bfc7d4925af4af4e0f524ad67424086c/docs/api.md">rim-server/docs/api.md</a> at <code>c2a30ae</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

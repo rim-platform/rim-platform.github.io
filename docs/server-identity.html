@@ -40,6 +40,7 @@
 <li><a href="#commands">Commands</a></li>
 <li><a href="#the-franking-key-file">The franking key file</a></li>
 <li><a href="#the-link-key-file">The link key file</a></li>
+<li><a href="#the-password-key-file">The password key file</a></li>
 <li><a href="#key-login-audiences">Key login audiences</a></li>
 <li><a href="#the-discovery-document">The discovery document</a><ol><li><a href="#handles-and-delegation">Handles and delegation</a></li></ol></li>
 <li><a href="#roles-and-server-to-server-configuration">Roles and server-to-server configuration</a></li>
@@ -178,6 +179,28 @@ refuses a file the group or others can read. The first start creates it. The ser
 start when the file is missing but public links are stored: restore it from a backup. Back it up
 with the server key; the database without it still answers the links, but no Owner can read
 theirs again until they issue a new one.</p>
+<h2 id="the-password-key-file">The password key file <a class="anchor" href="#the-password-key-file" aria-label="Link to this section">#</a></h2>
+<p>Account passwords are checked with OPAQUE, and each account&#39;s server share is sealed, under the
+<strong>password key</strong> (<a href="../specs/key-identity-v1.html"><code>docs/specs/key-identity-v1.md</code></a>, &quot;Account password (OPAQUE)&quot;):</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>What</th>
+<th>Where</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Password key</td>
+<td><code>RIM_PASSWORD_KEY_FILE</code>, default <code>&lt;RIM_DATA_DIR&gt;/password-key.json</code></td>
+</tr>
+</tbody></table></div>
+<p>The file is <code>{&quot;v&quot;:1,&quot;opaqueSetup&quot;:&quot;&lt;base64url, 128 bytes&gt;&quot;,&quot;shareKey&quot;:&quot;&lt;base64url, 32 bytes&gt;&quot;,&quot;createdAt&quot;:&quot;…&quot;}</code>,
+mode <code>0600</code>; the server refuses a file the group or others can read. The first start creates
+it, and <code>/readyz</code> reports <code>passwordKey</code>. The server refuses to start when the file is missing
+but passwords are stored: restore it from a backup. Back it up with the database. Without it no
+password verifies and no server share opens, so every account resets its password with its
+recovery phrase. Whoever holds the file and the database can try passwords offline, each try
+costing an Argon2id run.</p>
 <h2 id="key-login-audiences">Key login audiences <a class="anchor" href="#key-login-audiences" aria-label="Link to this section">#</a></h2>
 <p>A device&#39;s login proof names the server it is meant for (<code>host[:port]</code>), so a proof sent to one
 server cannot be replayed at another. The server accepts the names in <code>RIM_KEY_LOGIN_AUDIENCES</code>
@@ -319,7 +342,7 @@ the checked domain only.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/be96e5bcba8dfa93ab7013875d5e96db4d9f4ab5/docs/server-identity.md">rim-server/docs/server-identity.md</a> at <code>be96e5b</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c2a30ae9bfc7d4925af4af4e0f524ad67424086c/docs/server-identity.md">rim-server/docs/server-identity.md</a> at <code>c2a30ae</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>
