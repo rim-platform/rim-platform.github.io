@@ -64,7 +64,7 @@
 </details></aside>
     <main id="content" class="prose">
 <h1 id="server-to-server-v1">Server-to-server v1</h1>
-<p class="status"><span><b>Server-to-server v1</b></span><span>version 1</span><span>status: implemented, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/c2a30ae9bfc7d4925af4af4e0f524ad67424086c/docs/specs/server-to-server-v1.md">rim-server/docs/specs/server-to-server-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/c2a30ae9bfc7d4925af4af4e0f524ad67424086c">c2a30ae</a></span></p>
+<p class="status"><span><b>Server-to-server v1</b></span><span>version 1</span><span>status: implemented, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/c5a6a52b10286eeee7c4464ce17fed7b2cd68e4c/docs/specs/server-to-server-v1.md">rim-server/docs/specs/server-to-server-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/c5a6a52b10286eeee7c4464ce17fed7b2cd68e4c">c5a6a52</a></span></p>
 <p><em>Status: implemented, normative. Read <a href="key-identity-v1.html"><code>key-identity-v1.md</code></a>, <a href="device-linking-v1.html"><code>device-linking-v1.md</code></a> and
 <a href="e2ee-mls-v1.html"><code>e2ee-mls-v1.md</code></a> first. This document is the contract between servers and between a server and
 its clients: server identity, the signed HTTP API between servers, relays, hosts, and what the
@@ -656,8 +656,8 @@ delegation):</p>
 <td>The card&#39;s <code>displayName</code> cleaned by the display name rules of <a href="../docs/api.html"><code>docs/api.md</code></a> (invisible characters removed but those emoji and scripts need, whitespace runs made one space), cut to 64 characters, updated with each newer card; the <code>username</code> when nothing visible is left or the name is reserved here (<code>RIM_RESERVED_NAMES</code>)</td>
 </tr>
 <tr>
-<td><code>password_hash</code>, <code>email</code></td>
-<td>Null (allowed: <code>principal_id</code> is set)</td>
+<td><code>email</code></td>
+<td>Null</td>
 </tr>
 <tr>
 <td><code>home_relay</code></td>
@@ -669,13 +669,13 @@ delegation):</p>
 </tr>
 </tbody></table></div>
 <p>Key log, devices (with certificates and revocations) and card live in the existing
-<code>key_log_entry</code>, <code>device_key</code> and <code>profile_card</code> tables, as for an enrolled local user. A key-only
-signup for a principal held here as <code>remote</code> turns the row <code>local</code> and keeps its memberships.
+<code>key_log_entry</code>, <code>device_key</code> and <code>profile_card</code> tables, as for a local user. A key signup for a
+principal held here as <code>remote</code> turns the row <code>local</code> and keeps its memberships.
 Usernames stay unique across the table; rejected: a partial unique index on local users only,
-since login and member lookups assume one row per name.</p>
-<p>Remote users may not run mutations that change the account rather than a space (<code>FORBIDDEN</code>, <code>not available to remote members</code>): <code>login</code>, <code>logout</code>, <code>signup*</code>, <code>enrollIdentityKey</code>, <code>addDeviceKey</code>,
-<code>revokeDeviceKey</code>, <code>rotateIdentityKey</code>, <code>publishProfileCard</code>, <code>logoutOtherSessions</code>, password and
-email mutations, <code>createServer</code> and bot mutations. Identity changes arrive by <code>POST /identity</code> and <code>POST /revocations</code>.</p>
+since member lookups assume one row per name.</p>
+<p>Remote users may not run mutations that change the account rather than a space (<code>FORBIDDEN</code>, <code>not available to remote members</code>): <code>logout</code>, <code>loginWithKey</code>, <code>signupWithKey</code>, <code>addDeviceKey</code>,
+<code>revokeDeviceKey</code>, <code>rotateIdentityKey</code>, <code>publishProfileCard</code>, <code>logoutOtherSessions</code>,
+<code>createServer</code> and bot mutations. Identity changes arrive by <code>POST /identity</code> and <code>POST /revocations</code>.</p>
 <p><code>updateMyProfile</code> sets what the host stores per member and the card does not carry: the avatar
 (uploaded with <code>POST /api/files/avatar</code> on the forward path, then named by <code>avatarUrl</code>, which
 takes only the <code>url</code> that upload answered or an empty value), status text and bio. A <code>displayName</code> in it is <code>FORBIDDEN</code> (<code>a remote member's display name comes from their profile card</code>); the name changes with the next card the host receives.</p>
@@ -1202,8 +1202,7 @@ split at the first four <code>:</code> after the scheme (the origin keeps its co
 <li>The challenge has <code>keyLoginChallenge</code>&#39;s shape (120 s, single use) and comes over S2S:
 <code>POST /s2s/v1/join/challenge {&quot;inviteToken&quot;}</code> → <code>{&quot;challengeId&quot;,&quot;nonce&quot;,&quot;expiresAt&quot;,&quot;workspaceId&quot;}</code>.
 It is a join challenge, bound to the relay that asked for it: H consumes it only in that
-relay&#39;s <code>POST /s2s/v1/join</code>, and <code>loginWithKey</code>, <code>signupWithKey</code> and <code>enrollIdentityKey</code> refuse
-it, as the join refuses a challenge from <code>keyLoginChallenge</code> or one issued to another relay.
+relay&#39;s <code>POST /s2s/v1/join</code>, and <code>loginWithKey</code> and <code>signupWithKey</code> refuse it, as the join refuses a challenge from <code>keyLoginChallenge</code> or one issued to another relay.
 So the relay cannot redeem the person&#39;s proof as a session at H.
 The invite link carries no workspace id, and the delegation must name one, so H answers the
 workspace the invite names, checked as <code>previewInviteToken</code> checks it and not used
@@ -1403,8 +1402,7 @@ workspace invite, as in invite-only mode) or <code>proofOfWork</code>, not both:
 <p>starts with <code>powBits</code> zero bits (the descriptor&#39;s, from <code>RIM_REGISTRATION_POW_BITS</code>; 24 to start,
 about 16.7 million hashes on average). It binds the work to this relay and this principal; the
 server checks one hash before any signature; the open-signup per-IP limit applies too, and each
-such signup is audited as <code>relay.registration_pow</code>. Password signups take a token, as in
-invite-only mode; <code>registrationMode</code> answers <code>POW</code>. The check is <code>rim_s2s::pow</code>. Rejected: a
+such signup is audited as <code>relay.registration_pow</code>; <code>registrationMode</code> answers <code>POW</code>. The check is <code>rim_s2s::pow</code>. Rejected: a
 server-issued puzzle (a round trip and stored state for no gain) and memory-hard functions (no
 WebCrypto support).</p>
 <div class="tablewrap"><table>
@@ -1454,8 +1452,8 @@ who is a stranger to an account in probation (<code>RIM_PROBATION_HOURS</code>),
 members of its workspaces. Counters are in memory, per node.</p>
 <p><strong>Abuse hooks</strong> (S5-6), each audited: <code>rim_server principal block &lt;principalId&gt; --reason …</code>,
 <code>principal unblock</code>, <code>principal list</code> (<code>relay_principal_block</code>): the account&#39;s sessions are ended
-and its pending DM requests ignored for every recipient; its logins, signups and enrollments are
-refused (<code>FORBIDDEN</code>), deliveries to it (<code>unknown_principal</code>) and its invites (<code>blocked</code>), key
+and its pending DM requests ignored for every recipient; its logins and signups are refused
+(<code>FORBIDDEN</code>), deliveries to it (<code>unknown_principal</code>) and its invites (<code>blocked</code>), key
 package claims for and by it, its identity (<code>404</code>) and forwarded requests it signs (<code>403</code>).
 <code>rim_server peer block|unblock &lt;serverId&gt;</code> (&quot;Pinning a peer&quot;; like <code>RIM_S2S_DENIED_PEERS</code> without
 a restart). <code>reportDmRequest</code> and the abuse address (<code>rim_server abuse-reports add</code>) feed
@@ -1466,7 +1464,7 @@ yearly <code>server-key rotate</code> and <code>recover</code> on compromise, da
 drill, quotas and how to change them, monitoring (queue bytes, outbox depth per peer, deliver
 failures, <code>401</code>/<code>409</code>/<code>429</code> rates, PoW signups), incident response for spam waves, a hostile peer, a
 stolen server key and a database leak, and the abuse policy text.</p>
-<p><strong>Compose</strong> (<a href="https://github.com/rim-platform/rim-server/blob/c2a30ae9bfc7d4925af4af4e0f524ad67424086c/deploy/compose.yml"><code>deploy/compose.yml</code></a> with the <a href="https://github.com/rim-platform/rim-server/blob/c2a30ae9bfc7d4925af4af4e0f524ad67424086c/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a> override, and
+<p><strong>Compose</strong> (<a href="https://github.com/rim-platform/rim-server/blob/c5a6a52b10286eeee7c4464ce17fed7b2cd68e4c/deploy/compose.yml"><code>deploy/compose.yml</code></a> with the <a href="https://github.com/rim-platform/rim-server/blob/c5a6a52b10286eeee7c4464ce17fed7b2cd68e4c/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a> override, and
 <a href="../docs/deploy/index.html"><code>deploy/README.md</code></a>): rim-server with the <code>RIM_ROLE</code> <code>deploy/.env</code> sets (<code>relay</code>, or <code>both</code> to host
 workspaces too), <code>RIM_PUBLIC_BASE_URL=https://&lt;RIM_DOMAIN&gt;</code>,
 <code>RIM_REGISTRATION_POW_BITS=24</code>, <code>RIM_RELAY_QUEUE_BYTES_PER_USER=67108864</code> and the other quotas
@@ -1837,7 +1835,7 @@ device keys move to hybrid.</p>
 <td>S5-2</td>
 </tr>
 <tr>
-<td>Visibility rules live in <a href="https://github.com/rim-platform/rim-server/blob/c2a30ae9bfc7d4925af4af4e0f524ad67424086c/rim_api/src/subscription.rs"><code>rim_api/src/subscription.rs</code></a></td>
+<td>Visibility rules live in <a href="https://github.com/rim-platform/rim-server/blob/c5a6a52b10286eeee7c4464ce17fed7b2cd68e4c/rim_api/src/subscription.rs"><code>rim_api/src/subscription.rs</code></a></td>
 <td>Moved to <code>rim_services</code> for the outbox writer</td>
 <td>S5-2</td>
 </tr>
@@ -1881,7 +1879,7 @@ without gaps or repeats; outbox order per peer; a relay&#39;s backlog counts onl
 acknowledgement, and a run of failures starts once and ends with a success; <code>received_through</code>
 idempotency; items deleted only once every device acked; cascades; each migration up and down,
 and the refusing <code>down</code>s.</li>
-<li><strong>e2e with two servers</strong> (<a href="https://github.com/rim-platform/rim-server/blob/c2a30ae9bfc7d4925af4af4e0f524ad67424086c/rim_api/tests/s2s_e2e.rs"><code>rim_api/tests/s2s_e2e.rs</code></a>, <code>e2e-tests</code>): two Actix servers in one
+<li><strong>e2e with two servers</strong> (<a href="https://github.com/rim-platform/rim-server/blob/c5a6a52b10286eeee7c4464ce17fed7b2cd68e4c/rim_api/tests/s2s_e2e.rs"><code>rim_api/tests/s2s_e2e.rs</code></a>, <code>e2e-tests</code>): two Actix servers in one
 process with two databases, <code>RIM_S2S_ALLOW_HTTP</code> and <code>RIM_S2S_ALLOW_PRIVATE_ADDRESSES</code>. Flows:
 pinning and rotation; an encrypted DM across relays from creation to edit and read state
 (<code>rim_mls</code> fixtures); a DM request accepted, ignored, blocked; a remote join; channel traffic both
@@ -2009,7 +2007,7 @@ ed25519:waKbDNMuQ460M8gX_H1NKzAMDXF3x4P8hbHoJFPr-pSduvfvQSbXvOcRmK5VcF5F9-sICQmF
 <code>powBits</code> 16: the smallest working counter is 37283, nonce <code>AAAAAAAAkaM</code> (8 bytes big-endian), hash
 <code>00002f63d137749fda27201ccf9d282a4ed846287d49c55fea89a47617e78ed6</code>.</p>
 <h3 id="filled-by-s5-1">Filled by S5-1 <a class="anchor" href="#filled-by-s5-1" aria-label="Link to this section">#</a></h3>
-<p><strong>RFC 9421 appendix B.2.6</strong> through <code>rim_s2s</code> (<a href="https://github.com/rim-platform/rim-server/blob/c2a30ae9bfc7d4925af4af4e0f524ad67424086c/rim_s2s/src/vectors.rs"><code>rim_s2s/src/vectors.rs</code></a>): the RFC&#39;s
+<p><strong>RFC 9421 appendix B.2.6</strong> through <code>rim_s2s</code> (<a href="https://github.com/rim-platform/rim-server/blob/c5a6a52b10286eeee7c4464ce17fed7b2cd68e4c/rim_s2s/src/vectors.rs"><code>rim_s2s/src/vectors.rs</code></a>): the RFC&#39;s
 <code>test-key-ed25519</code> (seed: the last 32 bytes of its PKCS#8 key), the components <code>&quot;date&quot; &quot;@method&quot; &quot;@path&quot; &quot;@authority&quot; &quot;content-type&quot; &quot;content-length&quot;</code> with <code>created=1618884473</code> and
 <code>keyid=&quot;test-key-ed25519&quot;</code> serialize to the RFC&#39;s <code>Signature-Input</code>, the crate builds the RFC&#39;s
 signature base, and signing it gives the RFC&#39;s
@@ -2050,7 +2048,7 @@ having to rejoin; its visibility and <code>w</code>/<code>u:</code> streams matc
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c2a30ae9bfc7d4925af4af4e0f524ad67424086c/docs/specs/server-to-server-v1.md">rim-server/docs/specs/server-to-server-v1.md</a> at <code>c2a30ae</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c5a6a52b10286eeee7c4464ce17fed7b2cd68e4c/docs/specs/server-to-server-v1.md">rim-server/docs/specs/server-to-server-v1.md</a> at <code>c5a6a52</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

@@ -35,7 +35,7 @@
   <div class="page with-toc">
     <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
 <ol>
-<li><a href="#group-invite">Invite (3)</a></li>
+<li><a href="#group-invite">Invite (2)</a></li>
 <li><a href="#group-server">Server (2)</a></li>
 <li><a href="#group-message">Message (9)</a></li>
 <li><a href="#group-conversation">Conversation (11)</a></li>
@@ -50,36 +50,23 @@
 <li><a href="#group-pipeline">Pipeline (4)</a></li>
 <li><a href="#group-report">Report (5)</a></li>
 <li><a href="#group-notification">Notification (2)</a></li>
-<li><a href="#group-key">Key (8)</a></li>
+<li><a href="#group-key">Key (7)</a></li>
 <li><a href="#group-device">Device (7)</a></li>
 <li><a href="#group-relay">Relay (2)</a></li>
-<li><a href="#group-other">Other (56)</a></li>
+<li><a href="#group-other">Other (51)</a></li>
 </ol>
 </details></aside>
     <main id="content" class="prose">
 <h1>Mutation</h1>
-<p class="lede">140 mutations, grouped by the domain their name starts with or names, in the order the schema lists them.</p>
+<p class="lede">133 mutations, grouped by the domain their name starts with or names, in the order the schema lists them.</p>
 <input id="filter" class="search" type="search" placeholder="Filter fields by name" aria-label="Filter fields by name" autocomplete="off">
 <p id="filter-none" class="muted" hidden>Nothing matches.</p>
 <section data-group>
-<h2 id="group-invite">Invite <span class="faint">3</span></h2>
+<h2 id="group-invite">Invite <span class="faint">2</span></h2>
 <section class="entry" id="createInvite" data-name="createInvite">
 <h3><code>createInvite</code></h3>
 <div class="sig">createInvite(input: <a href="inputs.html#CreateInviteInput">CreateInviteInput</a>!): <a href="objects.html#CreateInvitePayload">CreateInvitePayload</a>!</div>
 <div class="desc"><p class="faint">No description in the schema.</p></div>
-
-</section>
-<section class="entry" id="signupWithInvite" data-name="signupWithInvite">
-<h3><code>signupWithInvite</code></h3>
-<div class="sig">signupWithInvite(input: <a href="inputs.html#SignupWithInviteInput">SignupWithInviteInput</a>!): <a href="objects.html#SignupWithInvitePayloadGql">SignupWithInvitePayloadGql</a>!</div>
-<div class="desc"><p>Unified signup mutation for all token-based and open-mode registration paths.</p>
-<p>In invite-only mode, exactly one of <code>instanceInviteToken</code> or <code>workspaceInviteToken</code>
-must be supplied.
-In open mode, all token fields must be absent.
-Refused with <code>FORBIDDEN</code> when <code>serverInfo.signupRequiresKeys</code> is true: new accounts then
-sign up with <a href="mutation.html#signupWithKey"><code>signupWithKey</code></a>.</p>
-<p>On success, sets session and CSRF cookies via <code>AuthIntent</code>.</p>
-</div>
 
 </section>
 <section class="entry" id="revokeInvite" data-name="revokeInvite">
@@ -631,7 +618,7 @@ or before <code>allBefore</code> (exactly one of the two). Returns how many chan
 </section>
 </section>
 <section data-group>
-<h2 id="group-key">Key <span class="faint">8</span></h2>
+<h2 id="group-key">Key <span class="faint">7</span></h2>
 <section class="entry" id="keyLoginChallenge" data-name="keyLoginChallenge">
 <h3><code>keyLoginChallenge</code></h3>
 <div class="sig">keyLoginChallenge: <a href="objects.html#KeyLoginChallenge">KeyLoginChallenge</a>!</div>
@@ -647,29 +634,19 @@ or before <code>allBefore</code> (exactly one of the two). Returns how many chan
   keepSignedIn: <a href="scalars.html#Boolean">Boolean</a>!
   keepKeyHeld: <a href="scalars.html#Boolean">Boolean</a>!
 ): <a href="objects.html#LoginPayload">LoginPayload</a>!</div>
-<div class="desc"><p>Sign in with a <a href="mutation.html#login"><code>login</code></a> statement signed by an enrolled device key. Sets the same session
-cookie as <a href="mutation.html#login"><code>login</code></a>.</p>
-<p>An account of this server with a password also brings <code>passwordTicket</code>, from
-<a href="mutation.html#passwordLoginFinish"><code>passwordLoginFinish</code></a>: single use, valid for 120 seconds, and only for that account.
-Without one, or with one that is used, expired or another account&#39;s, the answer is
-<code>UNAUTHENTICATED</code>, as for a wrong proof. An account of this server without a password
-signs in with the key alone and gets <code>mustSetPassword</code>: its session may only set a
-password, sign out and read <a href="query.html#me"><code>me</code></a>. Accounts of other servers sign in with the key alone.</p>
+<div class="desc"><p>Sign in with a <code>login</code> statement signed by one of the account&#39;s device keys. Sets the
+session and CSRF cookies.</p>
+<p>An account of this server also brings <code>passwordTicket</code>, from <a href="mutation.html#passwordLoginFinish"><code>passwordLoginFinish</code></a>:
+single use, valid for 120 seconds, and only for that account. Without one, with one that
+is used, expired or another account&#39;s, or for an account without a password, the answer
+is <code>UNAUTHENTICATED</code>, as for a wrong proof. Accounts of other servers sign in with the
+key alone.</p>
 <p><code>keepSignedIn</code> (&quot;Keep me signed in&quot;) sets persistent cookies. Unticked, the cookies last
 until the browser closes and the session answers only requests that carry
 <code>sessionSecret</code> (returned here) in the <code>X-RIM-Session-Secret</code> header; plain file
 downloads, <a href="mutation.html#reloadSession"><code>reloadSession</code></a> and <a href="mutation.html#logout"><code>logout</code></a> excepted. A kept session of a client that holds
 its own keep key (<code>keepKeyHeld</code>, the desktop app) gets no <code>keepKey</code>; a web client&#39;s kept
 session gets the keep key the server holds for it.</p>
-</div>
-
-</section>
-<section class="entry" id="enrollIdentityKey" data-name="enrollIdentityKey">
-<h3><code>enrollIdentityKey</code></h3>
-<div class="sig">enrollIdentityKey(input: <a href="inputs.html#EnrollIdentityKeyInput">EnrollIdentityKeyInput</a>!): <a href="objects.html#KeyIdentity">KeyIdentity</a>!</div>
-<div class="desc"><p>Bind a key identity to the signed-in account. The calling session becomes the new
-device&#39;s and every other session of the account ends. Afterwards the password no longer
-signs in.</p>
 </div>
 
 </section>
@@ -683,14 +660,14 @@ session, revokes every device and session, and enrolls the device given with it.
 </section>
 <section class="entry" id="signupWithKey" data-name="signupWithKey">
 <h3><code>signupWithKey</code></h3>
-<div class="sig">signupWithKey(input: <a href="inputs.html#SignupWithKeyInput">SignupWithKeyInput</a>!): <a href="objects.html#SignupWithInvitePayloadGql">SignupWithInvitePayloadGql</a>!</div>
+<div class="sig">signupWithKey(input: <a href="inputs.html#SignupWithKeyInput">SignupWithKeyInput</a>!): <a href="objects.html#SignupWithKeyPayload">SignupWithKeyPayload</a>!</div>
 <div class="desc"><p>Create an account from a key identity and a password: <code>passwordRegistration</code> is the
-OPAQUE <code>RegistrationUpload</code> registered with <a href="mutation.html#passwordRegistrationStart"><code>passwordRegistrationStart</code></a>. The registration mode
-applies as for <a href="mutation.html#signupWithInvite"><code>signupWithInvite</code></a> (exactly one token in invite-only mode, none in open
-mode). An instance invite bound to an email address gives the account that address
-(<code>EMAIL_TAKEN</code> when another account has it); otherwise the account has no email. Signs
-the new account in on the device that signed up, setting the same session and CSRF
-cookies as <a href="mutation.html#signupWithInvite"><code>signupWithInvite</code></a>, and returns the account&#39;s new server share in the clear.</p>
+OPAQUE <code>RegistrationUpload</code> registered with <a href="mutation.html#passwordRegistrationStart"><code>passwordRegistrationStart</code></a>. The registration
+mode decides the tokens (exactly one in invite-only mode, none in open mode, one token or
+<code>proofOfWork</code> in pow mode). An instance invite bound to an email address gives the
+account that address (<code>EMAIL_TAKEN</code> when another account has it); otherwise the account
+has no email. Signs the new account in on the device that signed up, setting the session
+and CSRF cookies, and returns the account&#39;s new server share in the clear.</p>
 </div>
 
 </section>
@@ -794,13 +771,7 @@ contacts and blocks on this relay.</p>
 </section>
 </section>
 <section data-group>
-<h2 id="group-other">Other <span class="faint">56</span></h2>
-<section class="entry" id="login" data-name="login">
-<h3><code>login</code></h3>
-<div class="sig">login(input: <a href="inputs.html#LoginInput">LoginInput</a>!): <a href="objects.html#LoginPayload">LoginPayload</a>!</div>
-<div class="desc"><p class="faint">No description in the schema.</p></div>
-
-</section>
+<h2 id="group-other">Other <span class="faint">51</span></h2>
 <section class="entry" id="logout" data-name="logout">
 <h3><code>logout</code></h3>
 <div class="sig">logout: <a href="scalars.html#Boolean">Boolean</a>!</div>
@@ -845,20 +816,6 @@ throttle window.</p>
 <section class="entry" id="heartbeat" data-name="heartbeat">
 <h3><code>heartbeat</code></h3>
 <div class="sig">heartbeat(input: <a href="inputs.html#HeartbeatInput">HeartbeatInput</a>!): <a href="scalars.html#Boolean">Boolean</a>!</div>
-<div class="desc"><p class="faint">No description in the schema.</p></div>
-
-</section>
-<section class="entry" id="requestPasswordReset" data-name="requestPasswordReset">
-<h3><code>requestPasswordReset</code></h3>
-<div class="sig">requestPasswordReset(username: <a href="scalars.html#String">String</a>!): <a href="scalars.html#Boolean">Boolean</a>!</div>
-<div class="desc"><p><code>FEATURE_DISABLED</code> while the operator has disabled email. Without SMTP the reset mail is
-logged instead of sent.</p>
-</div>
-
-</section>
-<section class="entry" id="resetPassword" data-name="resetPassword">
-<h3><code>resetPassword</code></h3>
-<div class="sig">resetPassword(token: <a href="scalars.html#String">String</a>!, newPassword: <a href="scalars.html#String">String</a>!): <a href="scalars.html#Boolean">Boolean</a>!</div>
 <div class="desc"><p class="faint">No description in the schema.</p></div>
 
 </section>
@@ -1335,24 +1292,6 @@ expired. Returns <code>true</code>.</p>
 </div>
 
 </section>
-<section class="entry" id="setPasswordStart" data-name="setPasswordStart">
-<h3><code>setPasswordStart</code></h3>
-<div class="sig">setPasswordStart(registrationRequest: <a href="scalars.html#String">String</a>!): <a href="scalars.html#String">String</a>!</div>
-<div class="desc"><p>Start setting a password for the signed-in account, which has none (a session with
-<code>mustSetPassword</code>): the OPAQUE <code>RegistrationRequest</code>, answered with the
-<code>RegistrationResponse</code>. <code>CONFLICT</code> when the account has a password.</p>
-</div>
-
-</section>
-<section class="entry" id="setPassword" data-name="setPassword">
-<h3><code>setPassword</code></h3>
-<div class="sig">setPassword(registrationUpload: <a href="scalars.html#String">String</a>!): <a href="objects.html#SetPasswordPayload">SetPasswordPayload</a>!</div>
-<div class="desc"><p>Finish setting a password for the signed-in account with the <code>RegistrationUpload</code>.
-Lifts the limit from the account&#39;s sessions and returns its new server share.
-<code>CONFLICT</code> when the account has a password.</p>
-</div>
-
-</section>
 <section class="entry" id="reloadSession" data-name="reloadSession">
 <h3><code>reloadSession</code></h3>
 <div class="sig">reloadSession: <a href="objects.html#ReloadSessionPayload">ReloadSessionPayload</a>!</div>
@@ -1370,7 +1309,7 @@ device.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Generated from <a href="https://github.com/rim-platform/rim-ui/blob/494da4e3ff7d868a584a6cd0f379917b4c9a6958/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>494da4e</code></span>
+    <span>Generated from <a href="https://github.com/rim-platform/rim-ui/blob/32bb9a20ca32468fc9e1bb8ab2b1c1dfc12ff7ee/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>32bb9a2</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

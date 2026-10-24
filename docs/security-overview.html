@@ -106,8 +106,8 @@ is bound to the relay that asked for it and never signs anyone in, so a relay ca
 join proof into a session at the host. A server bound to a public address refuses to
 start without an audience. Sessions are cookies whose tokens the server stores hashed, and a
 mutation made with a session needs a CSRF token.</li>
-<li><strong>Passwords.</strong> New accounts sign up with a key by default. Once an account has a key, its
-old password no longer signs in and a password reset sends nothing.</li>
+<li><strong>One kind of account.</strong> Every local account signs up with a key and an account password;
+there is no username and password sign-in and no reset by email.</li>
 <li><strong>The account password.</strong> A local account also has a password (a PIN or a passphrase),
 checked with OPAQUE (<a href="../specs/key-identity-v1.html">key identity</a>, &quot;Account password&quot;): the
 server stores a record that checks the password without revealing it, and a sign-in needs the
@@ -119,8 +119,7 @@ key; the client needs it with the password to open its local data. The records n
 password key file <code>&lt;RIM_DATA_DIR&gt;/password-key.json</code> (<code>RIM_PASSWORD_KEY_FILE</code>), which also
 seals the shares, which <code>/readyz</code> checks and which the backups hold; without it every account
 resets its password with its recovery phrase. An account of this server without a password
-signs in with its key alone and may only set one. People from other servers keep their
-password at their own server.</li>
+does not sign in. People from other servers keep their password at their own server.</li>
 <li><strong>Keep me signed in.</strong> A key sign-in chooses it. A kept session has persistent cookies; for
 a web client the server also holds a keep key for it, sealed under the password key file,
 which opens the client&#39;s data key at start. An unkept session has browser-session cookies and
@@ -422,7 +421,7 @@ query strings or bundle contents. This route stores no workspace bundle.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c2a30ae9bfc7d4925af4af4e0f524ad67424086c/docs/security-overview.md">rim-server/docs/security-overview.md</a> at <code>c2a30ae</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c5a6a52b10286eeee7c4464ce17fed7b2cd68e4c/docs/security-overview.md">rim-server/docs/security-overview.md</a> at <code>c5a6a52</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

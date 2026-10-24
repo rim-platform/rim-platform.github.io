@@ -138,7 +138,7 @@ build and metadata were tidied. The documentation and comment pass (C-4) is merg
 </tr>
 <tr>
 <td>Identity</td>
-<td>Key identity: identity and device keys, challenge login, key-only signup, device linking, recovery phrase, identity-key backup; password accounts still work</td>
+<td>Key identity: identity and device keys, challenge login with an OPAQUE account password, key signup, device linking, recovery phrase, identity-key backup; one kind of account, without username and password sign-in</td>
 </tr>
 <tr>
 <td>Encryption</td>
@@ -199,7 +199,7 @@ step that names it as arbitrary code execution.</li>
 <code>feature/initial-code</code> to <code>master</code>; <code>cargo audit</code> blocking; close stale issues; schedule
 the audit retention job once the variant is picked; delete the dead server-side
 <code>plugin_host</code> module; messaging e2e test that walks pagination both ways; split the GraphQL resolvers and types
-by domain (<a href="https://github.com/rim-platform/rim-server/tree/c2a30ae9bfc7d4925af4af4e0f524ad67424086c/rim_api/src/query"><code>rim_api/src/query/</code></a>, <code>mutation/</code>, <code>types/</code>) before more resolvers land.</li>
+by domain (<a href="https://github.com/rim-platform/rim-server/tree/c5a6a52b10286eeee7c4464ce17fed7b2cd68e4c/rim_api/src/query"><code>rim_api/src/query/</code></a>, <code>mutation/</code>, <code>types/</code>) before more resolvers land.</li>
 <li><strong>Done, then superseded</strong> by dropping the vertical from the core (2026-10-10).
 <strong>Make the showcase vertical optional</strong> (S/M): a per-workspace feature flag that hides
 the incident and on-call commands, settings and AI surface. Communities that do not run
@@ -222,7 +222,7 @@ Track 1.5 lands.</li>
 quoting. Markdown remains the format and DOMPurify the backstop; no new content model.</li>
 <li><strong>Reach</strong> (L, lower priority): the web build made installable as a PWA with web push and a
 narrow layout per rim-ui <code>docs/ui-shell.md</code>. Native mobile out of scope. The one-command
-deployment part is done: <a href="https://github.com/rim-platform/rim-server/blob/c2a30ae9bfc7d4925af4af4e0f524ad67424086c/deploy/compose.yml"><code>deploy/compose.yml</code></a> with backup and restore
+deployment part is done: <a href="https://github.com/rim-platform/rim-server/blob/c5a6a52b10286eeee7c4464ce17fed7b2cd68e4c/deploy/compose.yml"><code>deploy/compose.yml</code></a> with backup and restore
 (<a href="self-hosting.html"><code>docs/self-hosting.md</code></a>).</li>
 </ol>
 <h3 id="track-2--the-plugin-platform-bet-2-the-main-investment-xl-total">Track 2 — The plugin platform (bet 2, the main investment, XL total) <a class="anchor" href="#track-2--the-plugin-platform-bet-2-the-main-investment-xl-total" aria-label="Link to this section">#</a></h3>
@@ -297,13 +297,13 @@ hints, the open items in rim-ui <code>docs/ui-shell.md</code>.</li>
 <h3 id="track-6--security-and-sovereignty-bet-5">Track 6 — Security and sovereignty (bet 5) <a class="anchor" href="#track-6--security-and-sovereignty-bet-5" aria-label="Link to this section">#</a></h3>
 <ol>
 <li><strong>Account security — folded into Track 7.2 (Stage 3).</strong> The device list with revoke and
-session rotation come from device keys. TOTP and passkeys are not built for new accounts;
-existing password accounts migrate to a key.</li>
+session rotation come from device keys. TOTP and passkeys are not built: every account signs
+in with a device key and its OPAQUE password.</li>
 <li><strong>Operator features</strong> (M): OIDC login for teams that want it, data export per user and
 per workspace, admin audit views. Audit retention is done: configurable, kept forever by
 default (<a href="operations/audit-retention.html"><code>docs/operations/audit-retention.md</code></a>).</li>
 <li><strong>Privacy posture</strong> (S): metadata minimization pass (what is logged, how long presence is
-kept, what link previews fetch), documented in <a href="https://github.com/rim-platform/rim-server/tree/c2a30ae9bfc7d4925af4af4e0f524ad67424086c/docs/security"><code>docs/security/</code></a>.</li>
+kept, what link previews fetch), documented in <a href="https://github.com/rim-platform/rim-server/tree/c5a6a52b10286eeee7c4464ce17fed7b2cd68e4c/docs/security"><code>docs/security/</code></a>.</li>
 </ol>
 <h3 id="track-7--decentralization-xl-total-stages-1-to-5">Track 7 — Decentralization (XL total, Stages 1 to 5) <a class="anchor" href="#track-7--decentralization-xl-total-stages-1-to-5" aria-label="Link to this section">#</a></h3>
 <p>Rewritten 2026-10-08. The model is decided (the contracts are <a href="../specs/key-identity-v1.html"><code>docs/specs/key-identity-v1.md</code></a>
@@ -587,7 +587,7 @@ and run it, which a decentralized product depends on more than a hosted one.</p>
 </tr>
 <tr>
 <td>First run and docs</td>
-<td>One first-run path that grows per stage: install a plugin (1), choose a drive (2), create a key and write down the phrase (3), pick a relay (5). Docs: plugin guide (1), self-host guide (2), all specs in <a href="https://github.com/rim-platform/rim-server/tree/c2a30ae9bfc7d4925af4af4e0f524ad67424086c/docs/specs"><code>docs/specs/</code></a></td>
+<td>One first-run path that grows per stage: install a plugin (1), choose a drive (2), create a key and write down the phrase (3), pick a relay (5). Docs: plugin guide (1), self-host guide (2), all specs in <a href="https://github.com/rim-platform/rim-server/tree/c5a6a52b10286eeee7c4464ce17fed7b2cd68e4c/docs/specs"><code>docs/specs/</code></a></td>
 <td>Every stage</td>
 </tr>
 <tr>
@@ -915,7 +915,7 @@ repository history.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c2a30ae9bfc7d4925af4af4e0f524ad67424086c/ROADMAP.md">rim-server/ROADMAP.md</a> at <code>c2a30ae</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c5a6a52b10286eeee7c4464ce17fed7b2cd68e4c/ROADMAP.md">rim-server/ROADMAP.md</a> at <code>c5a6a52</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

@@ -36,12 +36,11 @@
 
     <main id="content" class="prose">
 <h1>API</h1>
-<p class="lede">Everything a client does goes through one GraphQL endpoint, <code>POST /api</code>; subscriptions arrive over <code>/api/ws</code>. The server publishes its schema at <code>/api/sdl</code>. This reference is generated from it: 275 types, 69 queries, 140 mutations and 2 subscriptions.</p>
+<p class="lede">Everything a client does goes through one GraphQL endpoint, <code>POST /api</code>; subscriptions arrive over <code>/api/ws</code>. The server publishes its schema at <code>/api/sdl</code>. This reference is generated from it: 271 types, 69 queries, 133 mutations and 2 subscriptions.</p>
 <input id="filter" class="search" type="search" placeholder="Filter the whole schema by name" aria-label="Filter the whole schema by name" autocomplete="off">
 <p id="filter-none" class="muted" hidden>Nothing matches.</p>
 <div data-search-only><ul class="hits">
 <li data-name="createInvite"><a href="mutation.html#createInvite"><code>createInvite</code></a><span class="kind">mutation</span></li>
-<li data-name="signupWithInvite"><a href="mutation.html#signupWithInvite"><code>signupWithInvite</code></a><span class="kind">mutation</span></li>
 <li data-name="revokeInvite"><a href="mutation.html#revokeInvite"><code>revokeInvite</code></a><span class="kind">mutation</span></li>
 <li data-name="joinServerByInvite"><a href="mutation.html#joinServerByInvite"><code>joinServerByInvite</code></a><span class="kind">mutation</span></li>
 <li data-name="createServer"><a href="mutation.html#createServer"><code>createServer</code></a><span class="kind">mutation</span></li>
@@ -109,7 +108,6 @@
 <li data-name="markNotificationsRead"><a href="mutation.html#markNotificationsRead"><code>markNotificationsRead</code></a><span class="kind">mutation</span></li>
 <li data-name="keyLoginChallenge"><a href="mutation.html#keyLoginChallenge"><code>keyLoginChallenge</code></a><span class="kind">mutation</span></li>
 <li data-name="loginWithKey"><a href="mutation.html#loginWithKey"><code>loginWithKey</code></a><span class="kind">mutation</span></li>
-<li data-name="enrollIdentityKey"><a href="mutation.html#enrollIdentityKey"><code>enrollIdentityKey</code></a><span class="kind">mutation</span></li>
 <li data-name="rotateIdentityKey"><a href="mutation.html#rotateIdentityKey"><code>rotateIdentityKey</code></a><span class="kind">mutation</span></li>
 <li data-name="signupWithKey"><a href="mutation.html#signupWithKey"><code>signupWithKey</code></a><span class="kind">mutation</span></li>
 <li data-name="uploadMlsKeyPackages"><a href="mutation.html#uploadMlsKeyPackages"><code>uploadMlsKeyPackages</code></a><span class="kind">mutation</span></li>
@@ -124,7 +122,6 @@
 <li data-name="cancelDeviceLink"><a href="mutation.html#cancelDeviceLink"><code>cancelDeviceLink</code></a><span class="kind">mutation</span></li>
 <li data-name="ackRelayItems"><a href="mutation.html#ackRelayItems"><code>ackRelayItems</code></a><span class="kind">mutation</span></li>
 <li data-name="leaveRelay"><a href="mutation.html#leaveRelay"><code>leaveRelay</code></a><span class="kind">mutation</span></li>
-<li data-name="login"><a href="mutation.html#login"><code>login</code></a><span class="kind">mutation</span></li>
 <li data-name="logout"><a href="mutation.html#logout"><code>logout</code></a><span class="kind">mutation</span></li>
 <li data-name="logoutOtherSessions"><a href="mutation.html#logoutOtherSessions"><code>logoutOtherSessions</code></a><span class="kind">mutation</span></li>
 <li data-name="toggleReaction"><a href="mutation.html#toggleReaction"><code>toggleReaction</code></a><span class="kind">mutation</span></li>
@@ -132,8 +129,6 @@
 <li data-name="markAllAsRead"><a href="mutation.html#markAllAsRead"><code>markAllAsRead</code></a><span class="kind">mutation</span></li>
 <li data-name="startTyping"><a href="mutation.html#startTyping"><code>startTyping</code></a><span class="kind">mutation</span></li>
 <li data-name="heartbeat"><a href="mutation.html#heartbeat"><code>heartbeat</code></a><span class="kind">mutation</span></li>
-<li data-name="requestPasswordReset"><a href="mutation.html#requestPasswordReset"><code>requestPasswordReset</code></a><span class="kind">mutation</span></li>
-<li data-name="resetPassword"><a href="mutation.html#resetPassword"><code>resetPassword</code></a><span class="kind">mutation</span></li>
 <li data-name="updateMyProfile"><a href="mutation.html#updateMyProfile"><code>updateMyProfile</code></a><span class="kind">mutation</span></li>
 <li data-name="setMemberRole"><a href="mutation.html#setMemberRole"><code>setMemberRole</code></a><span class="kind">mutation</span></li>
 <li data-name="kickMember"><a href="mutation.html#kickMember"><code>kickMember</code></a><span class="kind">mutation</span></li>
@@ -177,8 +172,6 @@
 <li data-name="passwordResetChallenge"><a href="mutation.html#passwordResetChallenge"><code>passwordResetChallenge</code></a><span class="kind">mutation</span></li>
 <li data-name="passwordResetStart"><a href="mutation.html#passwordResetStart"><code>passwordResetStart</code></a><span class="kind">mutation</span></li>
 <li data-name="passwordResetFinish"><a href="mutation.html#passwordResetFinish"><code>passwordResetFinish</code></a><span class="kind">mutation</span></li>
-<li data-name="setPasswordStart"><a href="mutation.html#setPasswordStart"><code>setPasswordStart</code></a><span class="kind">mutation</span></li>
-<li data-name="setPassword"><a href="mutation.html#setPassword"><code>setPassword</code></a><span class="kind">mutation</span></li>
 <li data-name="reloadSession"><a href="mutation.html#reloadSession"><code>reloadSession</code></a><span class="kind">mutation</span></li>
 <li data-name="commands"><a href="query.html#commands"><code>commands</code></a><span class="kind">query</span></li>
 <li data-name="commandDiscover"><a href="query.html#commandDiscover"><code>commandDiscover</code></a><span class="kind">query</span></li>
@@ -364,9 +357,8 @@
 <li data-name="ServerInfo"><a href="objects.html#ServerInfo"><code>ServerInfo</code></a><span class="kind">object</span></li>
 <li data-name="ServerLimits"><a href="objects.html#ServerLimits"><code>ServerLimits</code></a><span class="kind">object</span></li>
 <li data-name="ServerMember"><a href="objects.html#ServerMember"><code>ServerMember</code></a><span class="kind">object</span></li>
-<li data-name="SetPasswordPayload"><a href="objects.html#SetPasswordPayload"><code>SetPasswordPayload</code></a><span class="kind">object</span></li>
 <li data-name="SignedStatement"><a href="objects.html#SignedStatement"><code>SignedStatement</code></a><span class="kind">object</span></li>
-<li data-name="SignupWithInvitePayloadGql"><a href="objects.html#SignupWithInvitePayloadGql"><code>SignupWithInvitePayloadGql</code></a><span class="kind">object</span></li>
+<li data-name="SignupWithKeyPayload"><a href="objects.html#SignupWithKeyPayload"><code>SignupWithKeyPayload</code></a><span class="kind">object</span></li>
 <li data-name="StartedDeviceLink"><a href="objects.html#StartedDeviceLink"><code>StartedDeviceLink</code></a><span class="kind">object</span></li>
 <li data-name="StreamHead"><a href="objects.html#StreamHead"><code>StreamHead</code></a><span class="kind">object</span></li>
 <li data-name="Thread"><a href="objects.html#Thread"><code>Thread</code></a><span class="kind">object</span></li>
@@ -411,7 +403,6 @@
 <li data-name="DndWindowInput"><a href="inputs.html#DndWindowInput"><code>DndWindowInput</code></a><span class="kind">input</span></li>
 <li data-name="EditEncryptedMessageInput"><a href="inputs.html#EditEncryptedMessageInput"><code>EditEncryptedMessageInput</code></a><span class="kind">input</span></li>
 <li data-name="EditMessageInput"><a href="inputs.html#EditMessageInput"><code>EditMessageInput</code></a><span class="kind">input</span></li>
-<li data-name="EnrollIdentityKeyInput"><a href="inputs.html#EnrollIdentityKeyInput"><code>EnrollIdentityKeyInput</code></a><span class="kind">input</span></li>
 <li data-name="ExecuteCommandInput"><a href="inputs.html#ExecuteCommandInput"><code>ExecuteCommandInput</code></a><span class="kind">input</span></li>
 <li data-name="ExecuteMacroInput"><a href="inputs.html#ExecuteMacroInput"><code>ExecuteMacroInput</code></a><span class="kind">input</span></li>
 <li data-name="FilterConditionInput"><a href="inputs.html#FilterConditionInput"><code>FilterConditionInput</code></a><span class="kind">input</span></li>
@@ -424,7 +415,6 @@
 <li data-name="JoinRemoteWorkspaceInput"><a href="inputs.html#JoinRemoteWorkspaceInput"><code>JoinRemoteWorkspaceInput</code></a><span class="kind">input</span></li>
 <li data-name="JoinRequestCursorInput"><a href="inputs.html#JoinRequestCursorInput"><code>JoinRequestCursorInput</code></a><span class="kind">input</span></li>
 <li data-name="JoinServerByInviteInput"><a href="inputs.html#JoinServerByInviteInput"><code>JoinServerByInviteInput</code></a><span class="kind">input</span></li>
-<li data-name="LoginInput"><a href="inputs.html#LoginInput"><code>LoginInput</code></a><span class="kind">input</span></li>
 <li data-name="MacroStepInput"><a href="inputs.html#MacroStepInput"><code>MacroStepInput</code></a><span class="kind">input</span></li>
 <li data-name="MarkAllAsReadInput"><a href="inputs.html#MarkAllAsReadInput"><code>MarkAllAsReadInput</code></a><span class="kind">input</span></li>
 <li data-name="MarkAsReadInput"><a href="inputs.html#MarkAsReadInput"><code>MarkAsReadInput</code></a><span class="kind">input</span></li>
@@ -454,7 +444,6 @@
 <li data-name="SendMessageInput"><a href="inputs.html#SendMessageInput"><code>SendMessageInput</code></a><span class="kind">input</span></li>
 <li data-name="SetWorkspaceStateInput"><a href="inputs.html#SetWorkspaceStateInput"><code>SetWorkspaceStateInput</code></a><span class="kind">input</span></li>
 <li data-name="SignedStatementInput"><a href="inputs.html#SignedStatementInput"><code>SignedStatementInput</code></a><span class="kind">input</span></li>
-<li data-name="SignupWithInviteInput"><a href="inputs.html#SignupWithInviteInput"><code>SignupWithInviteInput</code></a><span class="kind">input</span></li>
 <li data-name="SignupWithKeyInput"><a href="inputs.html#SignupWithKeyInput"><code>SignupWithKeyInput</code></a><span class="kind">input</span></li>
 <li data-name="SubmitMlsCommitInput"><a href="inputs.html#SubmitMlsCommitInput"><code>SubmitMlsCommitInput</code></a><span class="kind">input</span></li>
 <li data-name="ToggleReactionInput"><a href="inputs.html#ToggleReactionInput"><code>ToggleReactionInput</code></a><span class="kind">input</span></li>
@@ -538,10 +527,10 @@
 <ul class="cards">
 <li><a href="../docs/api.html"><b>Talking to a server</b><span>The endpoints, the session cookie and CSRF, origins, limits, error codes and pagination: the contract around the schema.</span></a></li>
 <li><a href="query.html"><b>Query</b><span>69 fields, grouped by domain.</span></a></li>
-<li><a href="mutation.html"><b>Mutation</b><span>140 fields, grouped by domain.</span></a></li>
+<li><a href="mutation.html"><b>Mutation</b><span>133 fields, grouped by domain.</span></a></li>
 <li><a href="subscription.html"><b>Subscription</b><span>2 fields, grouped by domain.</span></a></li>
-<li><a href="objects.html"><b>Objects</b><span>133 objects.</span></a></li>
-<li><a href="inputs.html"><b>Inputs</b><span>89 inputs.</span></a></li>
+<li><a href="objects.html"><b>Objects</b><span>132 objects.</span></a></li>
+<li><a href="inputs.html"><b>Inputs</b><span>86 inputs.</span></a></li>
 <li><a href="enums.html"><b>Enums</b><span>51 enums.</span></a></li>
 <li><a href="scalars.html"><b>Scalars</b><span>7 scalars.</span></a></li>
 <li><a href="directives.html"><b>Directives</b><span>3 directives.</span></a></li>
@@ -550,7 +539,7 @@
     </main>
   </div>
   <footer class="site">
-    <span>Generated from <a href="https://github.com/rim-platform/rim-ui/blob/494da4e3ff7d868a584a6cd0f379917b4c9a6958/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>494da4e</code></span>
+    <span>Generated from <a href="https://github.com/rim-platform/rim-ui/blob/32bb9a20ca32468fc9e1bb8ab2b1c1dfc12ff7ee/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>32bb9a2</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

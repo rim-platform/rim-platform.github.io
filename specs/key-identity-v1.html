@@ -39,10 +39,10 @@
 <li><a href="#keys-and-encodings">Keys and encodings</a></li>
 <li><a href="#algorithms-and-statement-versions">Algorithms and statement versions</a></li>
 <li><a href="#signed-statements">Signed statements</a><ol><li><a href="#key-log-and-principal-id">Key log and principal id</a></li><li><a href="#device-certificate">Device certificate</a></li><li><a href="#device-revocation">Device revocation</a></li><li><a href="#profile-card">Profile card</a></li><li><a href="#login-proof">Login proof</a></li></ol></li>
-<li><a href="#server-rules">Server rules</a><ol><li><a href="#enrollment">Enrollment</a></li><li><a href="#signup-policy">Signup policy</a></li><li><a href="#key-only-signup">Key-only signup</a></li><li><a href="#challenge-login">Challenge login</a></li><li><a href="#devices">Devices</a></li><li><a href="#rotation-and-recovery">Rotation and recovery</a></li></ol></li>
+<li><a href="#server-rules">Server rules</a><ol><li><a href="#key-only-signup">Key-only signup</a></li><li><a href="#challenge-login">Challenge login</a></li><li><a href="#devices">Devices</a></li><li><a href="#rotation-and-recovery">Rotation and recovery</a></li></ol></li>
 <li><a href="#storage">Storage</a></li>
 <li><a href="#graphql">GraphQL</a></li>
-<li><a href="#account-password-opaque">Account password (OPAQUE)</a><ol><li><a href="#suite">Suite</a></li><li><a href="#keys-and-derivations">Keys and derivations</a></li><li><a href="#the-password-key">The password key</a></li><li><a href="#registration">Registration</a></li><li><a href="#login-and-tries">Login and tries</a></li><li><a href="#change">Change</a></li><li><a href="#reset-with-the-recovery-key">Reset with the recovery key</a></li><li><a href="#an-account-without-a-password">An account without a password</a></li><li><a href="#audit">Audit</a></li></ol></li>
+<li><a href="#account-password-opaque">Account password (OPAQUE)</a><ol><li><a href="#suite">Suite</a></li><li><a href="#keys-and-derivations">Keys and derivations</a></li><li><a href="#the-password-key">The password key</a></li><li><a href="#registration">Registration</a></li><li><a href="#login-and-tries">Login and tries</a></li><li><a href="#change">Change</a></li><li><a href="#reset-with-the-recovery-key">Reset with the recovery key</a></li><li><a href="#audit">Audit</a></li></ol></li>
 <li><a href="#plugin-principal-ids-rimp0_-to-rimp1_">Plugin principal ids: rimp0_ to rimp1_</a></li>
 <li><a href="#clients-rim-ui">Clients (rim-ui)</a><ol><li><a href="#web-client">Web client</a></li><li><a href="#recovery-kit">Recovery kit</a></li></ol></li>
 <li><a href="#deferred">Deferred</a></li>
@@ -52,7 +52,7 @@
 </details></aside>
     <main id="content" class="prose">
 <h1 id="key-identity-v1">Key identity v1</h1>
-<p class="status"><span><b>Key identity v1</b></span><span>version 1</span><span>status: implemented, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/c2a30ae9bfc7d4925af4af4e0f524ad67424086c/docs/specs/key-identity-v1.md">rim-server/docs/specs/key-identity-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/c2a30ae9bfc7d4925af4af4e0f524ad67424086c">c2a30ae</a></span></p>
+<p class="status"><span><b>Key identity v1</b></span><span>version 1</span><span>status: implemented, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/c5a6a52b10286eeee7c4464ce17fed7b2cd68e4c/docs/specs/key-identity-v1.md">rim-server/docs/specs/key-identity-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/c5a6a52b10286eeee7c4464ce17fed7b2cd68e4c">c5a6a52</a></span></p>
 <p><em>Status: implemented, normative. A user is a key pair, the user id is stable with a signed key
 log, and servers are interchangeable relays. The web app may create and hold an identity, not
 only be a linked device (amended 2026-10-15, keys by default). This document is the contract
@@ -60,27 +60,24 @@ between the server (<code>rim_identity</code>, <code>KeyAuthService</code>) and 
 <p><em>Algorithm agility: statement format version 2 tags every key and signature with its algorithm,
 payload caps fit hybrid post-quantum keys, and the server indexes device keys by a hash.
 Version 1 statements stay valid. See &quot;Algorithms and statement versions&quot;.</em></p>
-<p><em>Key-only signup: <code>signupWithKey</code> creates an account from a key
-identity alone, with no password and no email unless an email-bound invite gives one, so
-<code>user.password_hash</code> and <code>user.email</code> are nullable. See &quot;Key-only signup&quot;.</em></p>
+<p><em>Key-only signup: <code>signupWithKey</code> creates an account from a key identity and an account
+password, with no email unless an email-bound invite gives one, so <code>user.email</code> is nullable.
+See &quot;Key-only signup&quot;.</em></p>
 <p><em>Account password: a local account also has a password, checked with OPAQUE and proved at every
 sign-in together with the device key; the recovery key resets it. See &quot;Account password
 (OPAQUE)&quot;.</em></p>
-<p><em>Keys by default: <code>RIM_SIGNUP_REQUIRE_KEYS</code> (on unless <code>false</code>) refuses every password signup,
-and the desktop and web clients both sign up with a key. See &quot;Signup policy&quot;.</em></p>
+<p><em>One kind of account (amended 2026-10-24): the accounts with a username and an Argon2
+password, their email reset and the enrollment of a key on such an account are gone. Every
+local account signs up with a key identity and an account password.</em></p>
 <h2 id="scope">Scope <a class="anchor" href="#scope" aria-label="Link to this section">#</a></h2>
 <ul>
 <li><strong><code>rim_identity</code></strong>, a dependency-light crate that verifies every signed statement below. It
 has no database, HTTP or GraphQL code, so the Tauri client and later the relay can reuse it.</li>
 <li><strong>Storage</strong>: key columns on the existing <code>user</code> row, plus <code>key_log_entry</code>, <code>device_key</code>,
 <code>profile_card</code> and <code>key_challenge</code> tables, and <code>session.device_key_id</code>.</li>
-<li><strong><code>KeyAuthService</code></strong> with GraphQL mutations to enroll a key on an existing account, add and
-revoke devices, rotate or recover the identity key, publish a profile card, and sign in with a
-device key through a single-use challenge. Key login issues the same session cookie as
-password login.</li>
-<li><strong>Password sign-in and password reset are refused</strong> for an account once it has enrolled a
-key.</li>
-<li><strong>Password signup is refused</strong> while <code>RIM_SIGNUP_REQUIRE_KEYS</code> is on, which is the default.</li>
+<li><strong><code>KeyAuthService</code></strong> with GraphQL mutations to sign up with a key identity, add and revoke
+devices, rotate or recover the identity key, publish a profile card, and sign in with a
+device key and the account password through a single-use challenge.</li>
 </ul>
 <p>Defined elsewhere: device linking (<a href="device-linking-v1.html"><code>device-linking-v1.md</code></a>), plugin manifest signing
 (<a href="workspace-plugins-v1.html"><code>workspace-plugins-v1.md</code></a>) and remote users (<a href="server-to-server-v1.html"><code>server-to-server-v1.md</code></a>). The recovery phrase and
@@ -245,8 +242,8 @@ do not trust client clocks, so nothing depends on them.</p>
 <pre><code>principalId = &quot;rimp1_&quot; + base64url(SHA-256(&quot;rim.principal.v1\0&quot; || inception payload bytes))</code></pre>
 <p>So the id commits to both the first identity key and the recovery key, survives every rotation,
 and cannot be derived for keys other than those in that exact inception. The log and
-certificates are public, so a server additionally requires proof that the enrolling device holds
-its key (see Enrollment) before it lets an account carry a principal id.</p>
+certificates are public, so a server additionally requires proof that the signing-up device holds
+its key (see &quot;Key-only signup&quot;) before it lets an account carry a principal id.</p>
 <p>Every later entry is a <strong>rotation</strong>:</p>
 <pre><code class="language-json">{&quot;v&quot;:2,&quot;type&quot;:&quot;rotate&quot;,&quot;principalId&quot;:&quot;rimp1_…&quot;,&quot;seq&quot;:1,&quot;prev&quot;:&quot;…&quot;,&quot;identityKey&quot;:&quot;ed25519:…&quot;,&quot;recoveryKey&quot;:&quot;ed25519:…&quot;,&quot;signer&quot;:&quot;identity&quot;,&quot;createdAt&quot;:&quot;…&quot;}</code></pre>
 <ul>
@@ -299,100 +296,67 @@ certificate.</p>
 the <code>host[:port]</code> the client connects to (lowercase is safest; servers compare it
 case-insensitively), so a server that receives a proof cannot relay it to another server.</p>
 <p>Each challenge serves one purpose. One from <code>keyLoginChallenge</code> is a login challenge, consumed by
-<code>loginWithKey</code>, <code>signupWithKey</code> or <code>enrollIdentityKey</code>. One a host issues for joining a workspace
-through a relay (<a href="server-to-server-v1.html"><code>server-to-server-v1.md</code></a> §Joining) is a join challenge, bound to that relay and
-consumed only by its join; the three mutations refuse it, although the proof over it has the
+<code>loginWithKey</code> or <code>signupWithKey</code>. One a host issues for joining a workspace through a relay
+(<a href="server-to-server-v1.html"><code>server-to-server-v1.md</code></a> §Joining) is a join challenge, bound to that relay and consumed only
+by its join; the two mutations refuse it, although the proof over it has the
 same format, so a relay never turns a person&#39;s join proof into a session.</p>
 <h2 id="server-rules">Server rules <a class="anchor" href="#server-rules" aria-label="Link to this section">#</a></h2>
-<h3 id="enrollment">Enrollment <a class="anchor" href="#enrollment" aria-label="Link to this section">#</a></h3>
-<p><code>enrollIdentityKey(input: { keyLog, device, proof })</code>, signed in with a password session:</p>
-<ol>
-<li>The whole log (at most 256 entries) is replayed and verified from the inception; the device
-certificate must be signed by the head identity key.</li>
-<li><code>proof</code> is a <code>login</code> statement (same format and context as for challenge login) signed by
-the enrolling device&#39;s key over a fresh <code>keyLoginChallenge</code>, naming this log&#39;s principal id,
-the certificate&#39;s device id and this server&#39;s audience. The challenge is consumed. Without
-it, anyone who had seen a person&#39;s log and a device certificate (every server they use
-holds them) could enroll that principal on another account elsewhere.</li>
-<li>The account must not have a principal id yet, and no other account on this server may have
-this one (both <code>CONFLICT</code>).</li>
-<li>The server stores the log and the device, sets <code>user.principal_id</code> and <code>user.identity_key</code>,
-binds <strong>the enrolling session to the new device</strong>, so revoking that device later ends it,
-and <strong>ends every other session of the account</strong>, all in one transaction, then closes those
-sessions&#39; live connections. None of them is bound to a device at that moment, and the
-password they signed in with no longer signs in (rule 5).</li>
-<li>From then on the password no longer signs in (<code>login</code> answers <code>UNAUTHENTICATED</code>, with the
-same timing as a wrong password), <code>requestPasswordReset</code> sends nothing, and an outstanding
-reset link is refused with <code>FORBIDDEN</code>. A <code>login</code> still checking the password while the
-enrollment commits is refused the same way: it creates its session under the user row lock
-the enrollment holds, after reading the account again.</li>
-</ol>
-<p><code>logoutOtherSessions</code> stays for every account: it ends every session of the account but the
-caller&#39;s and answers how many.</p>
-<h3 id="signup-policy">Signup policy <a class="anchor" href="#signup-policy" aria-label="Link to this section">#</a></h3>
-<p><code>RIM_SIGNUP_REQUIRE_KEYS</code> (boolean, default <code>true</code>) refuses every password signup:
-<code>signupWithInvite</code> answers <code>FORBIDDEN</code> (<code>password signup is turned off on this server; sign up with a key</code>) in every registration mode, whether it carries an instance invite, a workspace
-invite or no token, and spends nothing. <code>serverInfo.signupRequiresKeys</code> reports the setting, so
-a client offers only the key signup. <code>signupWithKey</code> is unaffected, and so is password sign-in:
-an existing password account that has not enrolled a key still signs in with <code>login</code>. <code>false</code>
-accepts password signups again. The registration modes, the proof-of-work of <code>pow</code> mode and the
-token rules are the same either way.</p>
 <h3 id="key-only-signup">Key-only signup <a class="anchor" href="#key-only-signup" aria-label="Link to this section">#</a></h3>
 <p><code>signupWithKey(input: { username, displayName, keyLog, device, proof, passwordRegistration, instanceInviteToken, workspaceInviteToken })</code>, no session needed, creates an account from a key
-identity and an account password (&quot;Account password (OPAQUE)&quot;): no password hash, and no email
-unless an email-bound invite gives one (rule 1).</p>
+identity and an account password (&quot;Account password (OPAQUE)&quot;), with no email unless an
+email-bound invite gives one (rule 1).</p>
 <ol>
-<li>The registration mode applies as for <code>signupWithInvite</code>. In invite-only mode exactly one
-token is required, checked and consumed as by the password signup of its kind: an instance
-invite creates an account with no workspace (<code>serverId</code> null), a workspace invite also joins
-its server. An instance invite bound to an email address gives the new account that
-address; the signup names no address of its own. The address passes the checks of a password
-signup: one an operator blocked is <code>VALIDATION</code> (<code>this email cannot sign up here</code>) and one
-another account holds is <code>EMAIL_TAKEN</code>, and either refusal leaves the invite unspent. In open mode no token may be given, and the signup
-counts against the same per-IP limit as an open password signup. A wrong number of tokens is
+<li>The registration mode decides the token. In invite-only mode exactly one token is required,
+checked before the transaction and consumed inside it: an instance invite creates an account
+with no workspace (<code>serverId</code> null), a workspace invite also joins its server. In pow mode
+the signup gives one token or a proof-of-work. An instance invite bound to an email address
+gives the new account that address; the signup names no address of its own. An address an
+operator blocked is <code>VALIDATION</code> (<code>this email cannot sign up here</code>) and one another account
+holds is <code>EMAIL_TAKEN</code>, and either refusal leaves the invite unspent. In open mode no token
+may be given, and the signup counts against a per-IP limit (20 per 10 minutes). A wrong
+number of tokens is <code>VALIDATION</code>.</li>
+<li>The identity is verified: the whole log, at most 256 entries, replays from the inception;
+the certificate is signed by the head identity key; the proof is a <code>login</code> statement (same
+format and context as for challenge login) signed by that device&#39;s key over a fresh
+<code>keyLoginChallenge</code>, naming this log&#39;s principal id, the certificate&#39;s device id and this
+server&#39;s audience. The challenge is consumed. Without the proof, anyone who had seen a
+person&#39;s log and a device certificate (every server they use holds them) could sign that
+principal up elsewhere. No other account here may hold the principal id (<code>CONFLICT</code>). The
+username is 3 to 32 ASCII letters, digits, <code>_</code> and <code>-</code>, not starting with <code>r_</code> or
+<code>deleted-</code> and not reserved, stored trimmed and in lowercase, and must be free in any case
+(<code>CONFLICT</code>); <code>displayName</code> follows the display name rules (invisible characters removed but
+those emoji and scripts need, whitespace collapsed, at most 64 characters, not reserved;
+<a href="../docs/api.html"><code>docs/api.md</code></a>) and defaults to the username.</li>
+<li>In one transaction the server creates the user with <code>email</code> null or the email-bound
+invite&#39;s address, and <code>principal_id</code> and <code>identity_key</code> set, stores the log and the device,
+consumes the token (or joins the server), stores the account password with a new server
+share, and creates a session <strong>bound to the device</strong>, recording the device&#39;s <code>lastUsedAt</code>.
+It answers <code>{ userId, serverId, serverShare }</code> (the share in the clear) and sets the session
+and CSRF cookies. Of two signups racing for one principal, the unique index refuses the
+second (<code>CONFLICT</code>). <code>passwordRegistration</code> that is not an OPAQUE <code>RegistrationUpload</code> is
 <code>VALIDATION</code>.</li>
-<li>The identity is verified as at enrollment (rules 1 and 2): the whole log, at most 256
-entries, replays from the inception; the certificate is signed by the head identity key; the
-proof is a <code>login</code> statement by that device over a fresh <code>keyLoginChallenge</code>, naming this
-log&#39;s principal id, the certificate&#39;s device id and this server&#39;s audience. The challenge is
-consumed. No other account here may hold the principal id (<code>CONFLICT</code>). The username follows
-the password signup&#39;s rules and must be free (<code>CONFLICT</code>); <code>displayName</code> follows the display
-name rules of every signup (invisible characters removed but those emoji and scripts need,
-whitespace collapsed, at most 64 characters, not reserved; <a href="../docs/api.html"><code>docs/api.md</code></a>) and defaults to
-the username.</li>
-<li>In one transaction the server creates the user with <code>password_hash</code> null, <code>email</code> null or
-the email-bound invite&#39;s address, and <code>principal_id</code> and <code>identity_key</code> set, stores the log
-and the device, consumes the token (or joins the server), stores the account password with a
-new server share, and creates a session <strong>bound to the device</strong>, recording the device&#39;s
-<code>lastUsedAt</code>. It answers <code>{ userId, serverId, serverShare }</code> (the share in the clear) and sets
-the same session and CSRF cookies as <code>signupWithInvite</code>. Of two signups racing for one
-principal, the unique index refuses the second (<code>CONFLICT</code>). <code>passwordRegistration</code> that is
-not an OPAQUE <code>RegistrationUpload</code> is <code>VALIDATION</code>.</li>
-<li>A key account has no password hash. <code>login</code> answers <code>UNAUTHENTICATED</code> with the same timing as
-a wrong password, <code>requestPasswordReset</code> sends nothing, and <code>resetPassword</code> is <code>FORBIDDEN</code>, as
-for an enrolled account. Its account password is the OPAQUE one, which only works together
-with a device key.</li>
 <li>Nothing emails an account without an email address: notification digests skip it.</li>
 </ol>
+<p><code>logoutOtherSessions</code> ends every session of the account but the caller&#39;s and answers how many.</p>
 <h3 id="challenge-login">Challenge login <a class="anchor" href="#challenge-login" aria-label="Link to this section">#</a></h3>
 <ol>
 <li><code>keyLoginChallenge</code> (no session) returns <code>{ challengeId, nonce, expiresAt }</code>: 32 random bytes,
 valid for <strong>120 seconds</strong>, single use. At most 60 challenges per IP per 5 minutes.</li>
 <li>The client signs a login proof with its device key and calls <code>loginWithKey(proof)</code>, with
-<code>passwordTicket</code> for an account of this server that has a password. The ticket comes from
+<code>passwordTicket</code> for an account of this server. The ticket comes from
 <code>passwordLoginFinish</code>, which runs first, so the client holds the server share, and with it
 the keys it keeps at rest, before it signs (&quot;Account password (OPAQUE)&quot;).</li>
 <li>The server finds the account by <code>principalId</code> and the device by <code>deviceId</code>, verifies the
 signature with that device&#39;s key, checks the audience against its accepted audiences, and
 claims the challenge atomically (a login challenge, unused, unexpired, same nonce).</li>
-<li>A local account with a password needs a ticket. Without one the answer is <code>UNAUTHENTICATED</code>,
-as for a wrong proof. A local account without a password signs in with the key alone and
-its session gets <code>mustSetPassword</code>. Someone from another server signs in with the key alone.</li>
+<li>A local account needs a ticket. Without one, or for an account without a password record,
+the answer is <code>UNAUTHENTICATED</code>, as for a wrong proof. Someone from another server signs in
+with the key alone.</li>
 <li>On success it locks the user row, reads the device again (a revocation that committed in the
 meantime refuses the login), consumes the ticket in the same transaction as the session (it
 must be this account&#39;s, unexpired and unused; otherwise <code>UNAUTHENTICATED</code>), creates a session
-bound to the device, records the device&#39;s <code>lastUsedAt</code>, and sets the same session and CSRF
-cookies as <code>login</code>. The payload carries <code>mustSetPassword</code>.</li>
+bound to the device, records the device&#39;s <code>lastUsedAt</code>, and sets the session and CSRF
+cookies.</li>
 <li>Every refusal is <code>UNAUTHENTICATED</code> with no detail, except a valid proof from a <strong>revoked</strong>
 device, which is <code>FORBIDDEN</code> so the client can tell the person to link the device again. A
 proof is valid here only when it passes every check of step 3: revocation is looked at after
@@ -424,14 +388,14 @@ revocation, and <strong>ends every session of that device</strong>.</li>
 <ul>
 <li>An <strong>identity rotation</strong> needs a session of that account. Devices stay enrolled. It is
 refused (<code>VALIDATION</code>, <code>a key log may have at most 256 entries</code>) when the log already has 256
-entries, the same cap as at enrollment, so a log grown by identity rotations can always be
-enrolled on another server.</li>
+entries, the same cap as at signup, so a log grown by identity rotations can always sign up on
+another server.</li>
 <li>A <strong>recovery rotation</strong> works <strong>without a session</strong> (the person lost every device). It must
 come with a certificate for a new device under the new identity key. The server appends the
 entry, <strong>revokes every device and ends every session</strong> of the account, then enrolls the new
 device, which can sign in right away. The 256-entry cap does not stop a recovery: being
 locked out of the account is worse than a log too long to carry elsewhere. A log that
-recoveries took past 256 entries is refused by enrollment on other servers. Anonymous attempts
+recoveries took past 256 entries is refused by a signup on other servers. Anonymous attempts
 count against the same per-IP failure limit as logins, whether they succeed or not. An anonymous rotation for a principal
 this server does not know is <code>UNAUTHENTICATED</code>; other refusals carry the validation reason,
 so they show whether a principal is enrolled here. That is not secret: <code>User.principalId</code> is
@@ -446,7 +410,7 @@ a recovery revoked: their certificates are void, and a host revokes them when it
 recovery entry, ending the person&#39;s direct sessions there and the delegations of those
 devices.</li>
 </ul>
-<p>Every write that depends on the log (enroll, add, revoke, rotate, publish) runs in one
+<p>Every write that depends on the log (add, revoke, rotate, publish) runs in one
 transaction with the user row locked (<code>SELECT … FOR UPDATE</code>), so two of them for one account
 never interleave.</p>
 <h2 id="storage">Storage <a class="anchor" href="#storage" aria-label="Link to this section">#</a></h2>
@@ -463,11 +427,11 @@ never interleave.</p>
 </tr>
 <tr>
 <td><code>user.principal_id</code>, <code>user.identity_key</code></td>
-<td>Null until enrollment, set together; <code>principal_id</code> unique; <code>identity_key</code> is the current identity key in tagged form</td>
+<td>Set together at signup; <code>principal_id</code> unique; <code>identity_key</code> is the current identity key in tagged form. <code>CHECK (principal_id IS NOT NULL OR deleted_at IS NOT NULL)</code>: a live account always has a principal. Migration <code>remove_password_accounts</code> dropped <code>user.password_hash</code> and refuses to run while a live account has no principal</td>
 </tr>
 <tr>
-<td><code>user.password_hash</code>, <code>user.email</code></td>
-<td><code>password_hash</code> is null for a key-only account, and so is <code>email</code> unless an email-bound invite gave one. <code>CHECK (password_hash IS NOT NULL OR principal_id IS NOT NULL)</code>: a key-only account always has a principal. Migration <code>key_only_signup</code>&#39;s <code>down</code> refuses to run while a row has either null</td>
+<td><code>user.email</code></td>
+<td>Null unless an email-bound invite gave one</td>
 </tr>
 <tr>
 <td><code>user.home_relay</code></td>
@@ -491,11 +455,7 @@ never interleave.</p>
 </tr>
 <tr>
 <td><code>session.device_key_id</code></td>
-<td>The device a session belongs to; null for password sessions not bound to a device</td>
-</tr>
-<tr>
-<td><code>session.must_set_password</code></td>
-<td>The session of a local account without a password, which may only set one</td>
+<td>The device a session belongs to</td>
 </tr>
 <tr>
 <td><code>account_password</code></td>
@@ -526,9 +486,8 @@ computed <code>key_hash</code> for existing rows; its <code>down</code> strips t
 while a key of another algorithm is stored. Signed payloads are never rewritten. Keys live on the existing <code>user</code> row, so none of the tables that reference the user
 id move.</p>
 <h2 id="graphql">GraphQL <a class="anchor" href="#graphql" aria-label="Link to this section">#</a></h2>
-<pre><code class="language-graphql">type User { principalId: String … }            # null until the account enrolls a key; set at key-only signup
+<pre><code class="language-graphql">type User { principalId: String … }            # set at signup; null only for a purged account that never had one
 type DeviceKey { publicKey: String … }         # tagged: &quot;ed25519:…&quot;
-type ServerInfo { signupRequiresKeys: Boolean! … }   # true: signupWithInvite is FORBIDDEN
 
 input SignedStatementInput { payload: String!  signature: String! }
 type SignedStatement { payload: String!  signature: String! }
@@ -551,9 +510,8 @@ type Query {
 type Mutation {
   keyLoginChallenge: KeyLoginChallenge!
   loginWithKey(proof: SignedStatementInput!, passwordTicket: String): LoginPayload!
-  # LoginPayload { userId csrfToken mustSetPassword }
-  enrollIdentityKey(input: EnrollIdentityKeyInput!): KeyIdentity!   # ends the account's other sessions
-  signupWithKey(input: SignupWithKeyInput!): SignupWithInvitePayloadGql!   # { userId, serverId, serverShare }
+  # LoginPayload { userId csrfToken sessionSecret keepKey }
+  signupWithKey(input: SignupWithKeyInput!): SignupWithKeyPayload!   # { userId, serverId, serverShare }
   addDeviceKey(certificate: SignedStatementInput!): DeviceKey!
   revokeDeviceKey(revocation: SignedStatementInput!): DeviceKey!
   rotateIdentityKey(input: RotateIdentityKeyInput!): KeyIdentity!
@@ -614,7 +572,7 @@ alone; their password lives at their own server.</p>
 <td>the defaults: the client&#39;s and the server&#39;s public keys</td>
 </tr>
 </tbody></table></div>
-<p>Every message travels as unpadded base64url. <a href="https://github.com/rim-platform/rim-server/blob/c2a30ae9bfc7d4925af4af4e0f524ad67424086c/rim_auth/tests/vectors/opaque-v1.json"><code>rim_auth/tests/vectors/opaque-v1.json</code></a> holds one
+<p>Every message travels as unpadded base64url. <a href="https://github.com/rim-platform/rim-server/blob/c5a6a52b10286eeee7c4464ce17fed7b2cd68e4c/rim_auth/tests/vectors/opaque-v1.json"><code>rim_auth/tests/vectors/opaque-v1.json</code></a> holds one
 registration and one login made with one seeded generator (<code>rand_chacha</code> 0.3 <code>ChaCha20Rng</code>
 seeded with 32 bytes of 0x07, drawn by the setup, the registration start and finish, the login
 start, the server&#39;s login start and the login finish, in that order) for the credential id
@@ -631,8 +589,7 @@ registered, kept across changes and resets, and stored sealed under the password
 <code>&lt;label&gt;</code> <code>&quot;server share&quot;</code> (and later <code>&quot;keep key&quot;</code>, <code>&quot;session secret&quot;</code>). The value is
 AES-256-GCM sealed under T with a random 12-byte nonce and no associated data, sent as
 unpadded base64url of <code>nonce ‖ ciphertext ‖ tag</code>. At a signup or a reset there is no K_s:
-<code>signupWithKey</code> and <code>setPassword</code> return S in the clear, over TLS, to the account&#39;s own new
-session.</li>
+<code>signupWithKey</code> returns S in the clear, over TLS, to the account&#39;s own new session.</li>
 <li>The client derives its unlock key from E and S:
 <code>UK = HKDF-SHA256(ikm = E ‖ S, salt = &quot;rim.unlock.v1&quot;, info = principal id)</code>. A rewrap a change
 leaves is <code>AES-256-GCM(UK_new, nonce, UK_old, aad = &quot;rim.uk-rewrap.v1|&lt;principal id&gt;&quot;)</code>; the
@@ -706,23 +663,17 @@ answers <code>{ resetId, registrationResponse }</code>; the reset is valid for 1
 </li>
 <li><p><code>passwordResetFinish(resetId, registrationUpload)</code>, no session: replaces the record (or
 stores the first one, with a new S, for an account without a password), keeps S, deletes the
-rewraps, clears the tries and the lock, lifts <code>mustSetPassword</code>, and ends every session of the
-account. It answers <code>true</code>. Other devices&#39; wraps of their data key no longer open, since E
-changed: each asks once for the recovery phrase, or starts empty.</p>
+rewraps, clears the tries and the lock, and ends every session of the account. It answers
+<code>true</code>. Other devices&#39; wraps of their data key no longer open, since E changed: each asks
+once for the recovery phrase, or starts empty.</p>
 </li>
 </ol>
-<h3 id="an-account-without-a-password">An account without a password <a class="anchor" href="#an-account-without-a-password" aria-label="Link to this section">#</a></h3>
-<p>A local key account made before passwords existed has none. It signs in with the key alone, and
-the session is marked <code>must_set_password</code>: every root but <code>setPasswordStart</code>, <code>setPassword</code>,
-<code>logout</code> and <code>me</code> answers <code>FORBIDDEN</code> &quot;set a password first&quot;, and so do the WebSocket, uploads,
-downloads and the routes to other servers. <code>setPasswordStart(registrationRequest)</code> and
-<code>setPassword(registrationUpload)</code> register a password with a new S, return S in the clear, and
-lift the mark from the account&#39;s sessions. <code>CONFLICT</code> once the account has a password.</p>
 <h3 id="audit">Audit <a class="anchor" href="#audit" aria-label="Link to this section">#</a></h3>
 <p><code>password_set</code>, <code>password_changed</code>, <code>password_reset</code>, <code>password_login_success</code>,
 <code>password_login_failure</code> (with the count), <code>password_locked</code>, and <code>key_login_failure</code> with
-reason <code>password_missing</code> or <code>password_ticket_invalid</code>, all with <code>target: &quot;audit&quot;</code> and ids only:
-never a password, E, S, K_s, a ticket, a key or an OPAQUE message.</p>
+reason <code>password_record_missing</code>, <code>password_missing</code> or <code>password_ticket_invalid</code>, all with
+<code>target: &quot;audit&quot;</code> and ids only: never a password, E, S, K_s, a ticket, a key or an OPAQUE
+message.</p>
 <h2 id="plugin-principal-ids-rimp0_-to-rimp1_">Plugin principal ids: <code>rimp0_</code> to <code>rimp1_</code> <a class="anchor" href="#plugin-principal-ids-rimp0_-to-rimp1_" aria-label="Link to this section">#</a></h2>
 <p>Plugins see <code>{ principalId, displayName }</code> (<a href="plugin-protocol-v1.html"><code>docs/specs/plugin-protocol-v1.md</code></a>). Until now the
 client computed a <strong>provisional</strong> id, <code>rimp0_</code> + base64url(SHA-256(
@@ -730,7 +681,7 @@ client computed a <strong>provisional</strong> id, <code>rimp0_</code> + base64u
 <code>rim-ui/src-tauri/src/plugin_host/protocol.rs</code>.</p>
 <p>This PR adds <code>User.principalId</code>. The mapping happens <strong>once, in the client</strong>:</p>
 <ol>
-<li>When the signed-in user&#39;s <code>principalId</code> turns non-null (after enrollment on this device, or
+<li>When the signed-in user&#39;s <code>principalId</code> turns non-null (after the signup on this device, or
 on the first fetch on another device), the plugin host computes the account&#39;s old <code>rimp0_</code>
 id the same way as before and records <code>rimp0_… → rimp1_…</code> in its local store.</li>
 <li>It sends running plugins <code>rim.principal.changed</code> with the new principal, plus the old-to-new
@@ -738,7 +689,8 @@ mapping in <code>rim.principals.remapped</code> (plugin-protocol-v1, section 11)
 rewrite stored ids. It sends the mapping again after every handshake, so a plugin that was
 not running at the switch still gets it.</li>
 <li>Other people&#39;s ids map the same way when their <code>User.principalId</code> is first seen non-null. An
-account that never enrolls keeps its <code>rimp0_</code> id.</li>
+account whose <code>principalId</code> stays null (a purged account that never had one) keeps its
+<code>rimp0_</code> id.</li>
 </ol>
 <p>The desktop client does this; the server only exposes <code>principalId</code>.</p>
 <h2 id="clients-rim-ui">Clients (rim-ui) <a class="anchor" href="#clients-rim-ui" aria-label="Link to this section">#</a></h2>
@@ -748,46 +700,42 @@ which every client that offers recovery must read.</p>
 <ul>
 <li><strong>Where keys live.</strong> Every secret goes through the app&#39;s one OS keyring helper
 (<code>src-tauri/src/secret_store.rs</code>), one entry per principal: the device key, and on the device
-that enrolled the identity, the identity key and, until the person confirms they saved the
+that created the identity, the identity key and, until the person confirms they saved the
 recovery kit, the kit&#39;s entropy (&quot;Recovery kit&quot;). The identity key stays on that device until
 device linking can move it off; the device key alone signs in. Keys never reach the webview: it asks the
 Tauri side for a signed statement and sends that.</li>
-<li><strong>Enrollment</strong> (Settings &gt; Security, signed in with a password): the app creates the identity,
-recovery and device keys. The device key, the identity key and the kit&#39;s entropy are written
-to the keyring <strong>before</strong> <code>enrollIdentityKey</code> is sent, so a crash in between never leaves an
-enrolled account without its keys; keys whose principal the server never accepted are
-removed. The recovery key itself is never stored. After the enrollment the app shows the
-recovery kit (&quot;Recovery kit&quot;) and publishes a profile card (display name, this server&#39;s URL,
-the active devices). The server has ended every other session of the account.</li>
-<li><strong>Key-only signup</strong> (the join pages, where it is the form shown first, with the page&#39;s token if
-it has one): the person picks a username, an optional display name and this device&#39;s name; the
-app creates the keys as for enrollment and writes them, with the kit&#39;s entropy, to the
-keyring <strong>before</strong> <code>signupWithKey</code> is sent; it shows the recovery kit once the signup
-succeeds. When it fails, the app reads <code>keyLog</code> for the new principal: an empty log
-means the server refused, so the keys are removed and the draft stays in memory, letting the
-person retry with the same keys or discard them; a log that holds the
-principal means an attempt whose answer was lost created the account, so the app writes the
-draft&#39;s keys back if a failed attempt removed them and signs in with the device key (also when
-the person discards the draft); with no answer the keys stay for a later sign-in. On success the
-keys are confirmed and linked to the returned user id, the profile card is published, and the
-app opens the account as after a password signup (a workspace invite whose answer was lost
-opens the workspace its preview named). Unconfirmed keys whose principal has no key log on the
-server (a signup or enrollment that never reached it) are removed when signing in with them
-fails. Where the server allows password signup (<code>serverInfo.signupRequiresKeys</code> false), the
-password form is a fallback behind &quot;Create account with a password&quot;.</li>
-<li><strong>Other sessions.</strong> Enrollment ends the account&#39;s other sessions itself (&quot;Enrollment&quot;, rule 4).
-Account settings offers &quot;Sign out other sessions&quot; (<code>logoutOtherSessions</code>) for every account,
-on the desktop and the web.</li>
+<li><strong>Key-only signup</strong> (the join pages, the only signup there is, with the page&#39;s token if it has
+one): the person picks a username, an optional display name, this device&#39;s name and the
+account password. The app creates the identity, recovery and device keys and registers the
+password (<code>passwordRegistrationStart</code>, then <code>passwordRegistration</code> in the signup, &quot;Account
+password (OPAQUE)&quot;). The device key, the identity key and the kit&#39;s entropy are written to the
+keyring <strong>before</strong> <code>signupWithKey</code> is sent, so a crash in between never leaves an account
+without its keys; the recovery key itself is never stored. There is no username and password
+form, no signup without a key and no enrollment of a key on an existing account. Once the
+signup succeeds the app shows the recovery kit (&quot;Recovery kit&quot;). When it fails, the app reads
+<code>keyLog</code> for the new principal: an empty log means the server refused, so the keys are
+removed and the draft stays in memory, letting the person retry with the same keys or discard
+them; a log that holds the principal means an attempt whose answer was lost created the
+account, so the app writes the draft&#39;s keys back if a failed attempt removed them and signs in
+with the device key and the password (also when the person discards the draft); with no answer
+the keys stay for a later sign-in. On success the keys are confirmed and linked to the
+returned user id, the profile card (display name, this server&#39;s URL, the active devices) is
+published, and the app opens the account (a workspace invite whose answer was lost opens the
+workspace its preview named). Unconfirmed keys whose principal has no key log on the server
+(a signup that never reached it) are removed when signing in with them fails.</li>
+<li><strong>Other sessions.</strong> Account settings offers &quot;Sign out other sessions&quot; (<code>logoutOtherSessions</code>)
+for every account, on the desktop and the web.</li>
 <li><strong>Audience.</strong> The <code>host[:port]</code> of the GraphQL endpoint URL as written, lowercased, the same
 rule the server applies to <code>RIM_PUBLIC_BASE_URL</code>.</li>
 <li><strong>Sign-in.</strong> On a cold start whose session cookie is gone or refused, the app signs in with the
 device key of the account it was last signed in to. After an explicit sign-out it waits on the
-sign-in screen, which offers &quot;Sign in with this device&quot; for every account this device holds a
-key for on this server. A <code>FORBIDDEN</code> answer says the device was revoked; the
+sign-in screen, which offers every account this device holds a key for on this server, each
+signing in with the device key and the account password, besides linking this device and
+recovering an account. A <code>FORBIDDEN</code> answer says the device was revoked; the
 sign-in screen then offers to remove that device&#39;s keys from this computer.</li>
 <li><strong>Statement version.</strong> The app writes version 2 (tagged keys and signatures) and reads both.
 Keys and signatures are opaque text outside the one module that signs and verifies, so a hybrid
-algorithm is added there alone. A version 1 log (an identity enrolled by an older client) is
+algorithm is added there alone. A version 1 log (an identity an older client created) is
 extended in version 2 by its next rotation.</li>
 <li><strong>Identity rotation</strong> keeps the recovery key and every device. The new identity key is stored as
 pending, with the <code>seq</code> its rotation creates, before <code>rotateIdentityKey</code> is sent. A verified log
@@ -808,27 +756,26 @@ it over with the recovery phrase (&quot;Web client&quot;).</li>
 <li><strong>Profile card.</strong> Lists this server&#39;s URL as the one relay and the account&#39;s active devices. A
 device is listed only if its certificate verifies against the replayed log at its <code>keySeq</code>, so
 a server cannot add a key of its own to the card the identity key signs.</li>
-<li><strong>Enrollment in flight.</strong> While <code>enrollIdentityKey</code> has not answered, the server saying &quot;not
-enrolled&quot; proves nothing, so nothing removes keys on that basis (closing Settings mid-way keeps
-them; a later check removes them if the enrollment never landed).</li>
 </ul>
 <h3 id="web-client">Web client <a class="anchor" href="#web-client" aria-label="Link to this section">#</a></h3>
-<p>The web app may create and hold an identity, not only be a linked device. It signs up
-with a key (<code>signupWithKey</code>) and enrolls a password account (<code>enrollIdentityKey</code>) as the desktop
-does, and follows the desktop&#39;s rules above except:</p>
+<p>The web app may create and hold an identity, not only be a linked device. It signs up with a key
+and a password (<code>signupWithKey</code>) as the desktop does, and follows the desktop&#39;s rules above
+except:</p>
 <ul>
 <li><strong>Keys.</strong> The identity key and the device key are WebCrypto Ed25519 keys generated with
 <code>extractable: false</code> and kept as <code>CryptoKey</code>s in IndexedDB, next to the account record
 (principal id, user id once known, server). Public keys are exported raw and tagged
 <code>ed25519:</code>. A browser without Ed25519 in WebCrypto cannot create an identity; there is no
-fallback to extractable keys. The recovery key is derived from the kit&#39;s entropy only to name
+fallback to extractable keys and no account without one. In place of the signup form it
+shows &quot;This browser can&#39;t create the keys an account needs. Use the desktop app or another
+browser.&quot; The recovery key is derived from the kit&#39;s entropy only to name
 it in the inception, and is not kept.</li>
 <li><strong>Storage.</strong> Before it creates keys, the client requests persistent storage
 (<code>navigator.storage.persist()</code>) and handles a refusal: it tells the person the browser may
 clear this site&#39;s data, which would leave the recovery kit as the only way back, and goes on
 only if they accept. It writes the identity key, the device key, the account record and the
-recovery entropy to IndexedDB <strong>before</strong> the signup or enrollment mutation is sent. A failed
-write aborts the signup or enrollment before any request, so the server never holds a
+recovery entropy to IndexedDB <strong>before</strong> the signup mutation is sent. A failed write aborts
+the signup before any request, so the server never holds a
 principal whose keys the browser lacks.</li>
 <li><strong>A linked device is access, not recovery.</strong> Only the device holding the identity key links
 other devices (<a href="device-linking-v1.html"><code>device-linking-v1.md</code></a>), revokes them, rotates the identity key and publishes
@@ -841,9 +788,9 @@ device. Moving an identity between devices is deferred.</li>
 back only from the history archive.</li>
 </ul>
 <h3 id="recovery-kit">Recovery kit <a class="anchor" href="#recovery-kit" aria-label="Link to this section">#</a></h3>
-<p>Shown after signup or enrollment, as text the person saves, not as a gate before the request
-is sent. The kit saved is the whole kit, account id included. Because the inception commits to
-the recovery key, the kit exists before the signup or enrollment is sent, so the client keeps
+<p>Shown after signup, as text the person saves, not as a gate before the request is sent. The kit
+saved is the whole kit, account id included. Because the inception commits to the recovery key,
+the kit exists before the signup is sent, so the client keeps
 the kit&#39;s 16 entropy bytes next to the identity key (the keyring on the desktop, IndexedDB on
 the web) until the person confirms they saved the kit, then deletes them; until then it can
 show the kit again. Those bytes are the account&#39;s recovery secret, stored temporarily: they are
@@ -853,7 +800,7 @@ kit. Losing this browser&#39;s data can permanently remove your ability to manag
 both versions, as a whole kit or as the bare secret alone (a 12-word phrase or a <code>RK1-</code> key),
 and tell them apart by content, not by the header line. Either way the secret is a 32-byte seed
 used as the Ed25519 recovery key (<code>SigningKey::from_bytes</code>); the key log&#39;s <code>recoveryKey</code> is its
-public key. Nothing is migrated: an account enrolled with a version 1 kit recovers with its
+public key. Nothing is migrated: an identity created with a version 1 kit recovers with its
 <code>RK1-</code> key.</p>
 <p><strong>Version 2, the recovery phrase.</strong></p>
 <pre><code>RIM recovery kit (v2)
@@ -900,7 +847,7 @@ Recovery key: RK1-…   (14 groups of 4 characters)</code></pre>
 recovery seed followed by the first 3 bytes of <code>SHA-256(&quot;rim.recovery-kit.v1\0&quot; || seed)</code>, in
 groups of 4 joined by <code>-</code>. Readers ignore case, spaces and <code>-</code>, read <code>0</code> as <code>O</code> and <code>1</code> as <code>I</code>,
 and refuse a key whose check bytes do not match. Version 2 replaced this format for new
-enrollments; readers keep accepting it. A text holds a version 1 key when a line other than the
+identities; readers keep accepting it. A text holds a version 1 key when a line other than the
 account id&#39;s has a word starting with <code>RK1</code>; a phrase never does.</p>
 <p><strong>Recovering</strong> (signed out, every device lost): the app reads the kit, fetches <code>keyLog</code> for the
 account id, replays it, checks that the head&#39;s <code>recoveryKey</code> is the kit&#39;s, and signs a rotation
@@ -922,7 +869,7 @@ identity stays in the browser that created it and is recovered only with its rec
 (<a href="server-to-server-v1.html"><code>server-to-server-v1.md</code></a>).</li>
 </ul>
 <h2 id="appendix-a-known-answer-vectors-version-1">Appendix A: known-answer vectors (version 1) <a class="anchor" href="#appendix-a-known-answer-vectors-version-1" aria-label="Link to this section">#</a></h2>
-<p>Checked by <a href="https://github.com/rim-platform/rim-server/blob/c2a30ae9bfc7d4925af4af4e0f524ad67424086c/rim_identity/src/vectors.rs"><code>rim_identity/src/vectors.rs</code></a>. Keys are <code>SigningKey::from_bytes([seed; 32])</code>; never
+<p>Checked by <a href="https://github.com/rim-platform/rim-server/blob/c5a6a52b10286eeee7c4464ce17fed7b2cd68e4c/rim_identity/src/vectors.rs"><code>rim_identity/src/vectors.rs</code></a>. Keys are <code>SigningKey::from_bytes([seed; 32])</code>; never
 use these seeds for real keys.</p>
 <div class="tablewrap"><table>
 <thead>
@@ -963,7 +910,7 @@ tt6UNl3tRCwupWIYEfnWzqW9qVqDsJju2dA7d2CdNqdIZ0piVeP_Q6Y1lLfA4YN-26tsdaFea-rM_I8Q
 <pre><code>{&quot;v&quot;:1,&quot;type&quot;:&quot;login&quot;,&quot;challengeId&quot;:&quot;00000000-0000-0000-0000-000000000009&quot;,&quot;nonce&quot;:&quot;bm9uY2U&quot;,&quot;audience&quot;:&quot;localhost:8080&quot;,&quot;principalId&quot;:&quot;rimp1_nz1POml8JmCMcFDECrtu60ibohPKnywhcExmOPMvTUo&quot;,&quot;deviceId&quot;:&quot;00000000-0000-0000-0000-000000000001&quot;}
 jB_BFFAn7e-FMh8wCSWhnCcPzMjoe1fTKwlCoGfE0p1OYkhZWjV4J1c_AgeIhKpWOnLYyB0PqstAEYmaCITXBw</code></pre>
 <h2 id="appendix-b-known-answer-vectors-version-2">Appendix B: known-answer vectors (version 2) <a class="anchor" href="#appendix-b-known-answer-vectors-version-2" aria-label="Link to this section">#</a></h2>
-<p>Checked by <a href="https://github.com/rim-platform/rim-server/blob/c2a30ae9bfc7d4925af4af4e0f524ad67424086c/rim_identity/src/vectors.rs"><code>rim_identity/src/vectors.rs</code></a>. Same keys and fields as appendix A, written as
+<p>Checked by <a href="https://github.com/rim-platform/rim-server/blob/c5a6a52b10286eeee7c4464ce17fed7b2cd68e4c/rim_identity/src/vectors.rs"><code>rim_identity/src/vectors.rs</code></a>. Same keys and fields as appendix A, written as
 version 2 statements. The principal id differs from appendix A because the inception payload
 differs.</p>
 <div class="tablewrap"><table>
@@ -1004,7 +951,7 @@ ed25519:D2moo9U9OjVL9zed4lM0A5cHoGQOVEtUfgKfAmOn0P18x74NEbh4FL4f3PbulQzoVuGAGOEJ
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c2a30ae9bfc7d4925af4af4e0f524ad67424086c/docs/specs/key-identity-v1.md">rim-server/docs/specs/key-identity-v1.md</a> at <code>c2a30ae</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c5a6a52b10286eeee7c4464ce17fed7b2cd68e4c/docs/specs/key-identity-v1.md">rim-server/docs/specs/key-identity-v1.md</a> at <code>c5a6a52</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>
