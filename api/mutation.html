@@ -50,15 +50,15 @@
 <li><a href="#group-pipeline">Pipeline (4)</a></li>
 <li><a href="#group-report">Report (5)</a></li>
 <li><a href="#group-notification">Notification (2)</a></li>
-<li><a href="#group-key">Key (7)</a></li>
+<li><a href="#group-key">Key (8)</a></li>
 <li><a href="#group-device">Device (7)</a></li>
 <li><a href="#group-relay">Relay (2)</a></li>
-<li><a href="#group-other">Other (45)</a></li>
+<li><a href="#group-other">Other (56)</a></li>
 </ol>
 </details></aside>
     <main id="content" class="prose">
 <h1>Mutation</h1>
-<p class="lede">128 mutations, grouped by the domain their name starts with or names, in the order the schema lists them.</p>
+<p class="lede">140 mutations, grouped by the domain their name starts with or names, in the order the schema lists them.</p>
 <input id="filter" class="search" type="search" placeholder="Filter fields by name" aria-label="Filter fields by name" autocomplete="off">
 <p id="filter-none" class="muted" hidden>Nothing matches.</p>
 <section data-group>
@@ -631,7 +631,7 @@ or before <code>allBefore</code> (exactly one of the two). Returns how many chan
 </section>
 </section>
 <section data-group>
-<h2 id="group-key">Key <span class="faint">7</span></h2>
+<h2 id="group-key">Key <span class="faint">8</span></h2>
 <section class="entry" id="keyLoginChallenge" data-name="keyLoginChallenge">
 <h3><code>keyLoginChallenge</code></h3>
 <div class="sig">keyLoginChallenge: <a href="objects.html#KeyLoginChallenge">KeyLoginChallenge</a>!</div>
@@ -641,9 +641,26 @@ or before <code>allBefore</code> (exactly one of the two). Returns how many chan
 </section>
 <section class="entry" id="loginWithKey" data-name="loginWithKey">
 <h3><code>loginWithKey</code></h3>
-<div class="sig">loginWithKey(proof: <a href="inputs.html#SignedStatementInput">SignedStatementInput</a>!): <a href="objects.html#LoginPayload">LoginPayload</a>!</div>
+<div class="sig">loginWithKey(
+  proof: <a href="inputs.html#SignedStatementInput">SignedStatementInput</a>!
+  passwordTicket: <a href="scalars.html#String">String</a>
+  keepSignedIn: <a href="scalars.html#Boolean">Boolean</a>!
+  keepKeyHeld: <a href="scalars.html#Boolean">Boolean</a>!
+): <a href="objects.html#LoginPayload">LoginPayload</a>!</div>
 <div class="desc"><p>Sign in with a <a href="mutation.html#login"><code>login</code></a> statement signed by an enrolled device key. Sets the same session
 cookie as <a href="mutation.html#login"><code>login</code></a>.</p>
+<p>An account of this server with a password also brings <code>passwordTicket</code>, from
+<a href="mutation.html#passwordLoginFinish"><code>passwordLoginFinish</code></a>: single use, valid for 120 seconds, and only for that account.
+Without one, or with one that is used, expired or another account&#39;s, the answer is
+<code>UNAUTHENTICATED</code>, as for a wrong proof. An account of this server without a password
+signs in with the key alone and gets <code>mustSetPassword</code>: its session may only set a
+password, sign out and read <a href="query.html#me"><code>me</code></a>. Accounts of other servers sign in with the key alone.</p>
+<p><code>keepSignedIn</code> (&quot;Keep me signed in&quot;) sets persistent cookies. Unticked, the cookies last
+until the browser closes and the session answers only requests that carry
+<code>sessionSecret</code> (returned here) in the <code>X-RIM-Session-Secret</code> header; plain file
+downloads, <a href="mutation.html#reloadSession"><code>reloadSession</code></a> and <a href="mutation.html#logout"><code>logout</code></a> excepted. A kept session of a client that holds
+its own keep key (<code>keepKeyHeld</code>, the desktop app) gets no <code>keepKey</code>; a web client&#39;s kept
+session gets the keep key the server holds for it.</p>
 </div>
 
 </section>
@@ -667,12 +684,13 @@ session, revokes every device and session, and enrolls the device given with it.
 <section class="entry" id="signupWithKey" data-name="signupWithKey">
 <h3><code>signupWithKey</code></h3>
 <div class="sig">signupWithKey(input: <a href="inputs.html#SignupWithKeyInput">SignupWithKeyInput</a>!): <a href="objects.html#SignupWithInvitePayloadGql">SignupWithInvitePayloadGql</a>!</div>
-<div class="desc"><p>Create an account from a key identity alone, with no password. The registration mode
+<div class="desc"><p>Create an account from a key identity and a password: <code>passwordRegistration</code> is the
+OPAQUE <code>RegistrationUpload</code> registered with <a href="mutation.html#passwordRegistrationStart"><code>passwordRegistrationStart</code></a>. The registration mode
 applies as for <a href="mutation.html#signupWithInvite"><code>signupWithInvite</code></a> (exactly one token in invite-only mode, none in open
 mode). An instance invite bound to an email address gives the account that address
 (<code>EMAIL_TAKEN</code> when another account has it); otherwise the account has no email. Signs
 the new account in on the device that signed up, setting the same session and CSRF
-cookies as <a href="mutation.html#signupWithInvite"><code>signupWithInvite</code></a>.</p>
+cookies as <a href="mutation.html#signupWithInvite"><code>signupWithInvite</code></a>, and returns the account&#39;s new server share in the clear.</p>
 </div>
 
 </section>
@@ -688,6 +706,17 @@ the device&#39;s previous one.</p>
 <h3><code>claimMlsKeyPackages</code></h3>
 <div class="sig">claimMlsKeyPackages(input: <a href="inputs.html#ClaimMlsKeyPackagesInput">ClaimMlsKeyPackagesInput</a>!): [<a href="objects.html#ClaimedKeyPackage">ClaimedKeyPackage</a>!]!</div>
 <div class="desc"><p>One key package per device waiting to be added; devices with none usable are left out.</p>
+</div>
+
+</section>
+<section class="entry" id="setReloadKey" data-name="setReloadKey">
+<h3><code>setReloadKey</code></h3>
+<div class="sig">setReloadKey: <a href="scalars.html#String">String</a>!</div>
+<div class="desc"><p>Make a new reload key for this session, which was signed in without &quot;Keep me signed
+in&quot;, and return it, 32 bytes as unpadded base64url. The tab seals what it stores in
+<code>sessionStorage</code> under it, right after signing in and after each reload. The server
+keeps only this key; the previous one stops opening anything. <code>UNAUTHENTICATED</code> for a
+kept session.</p>
 </div>
 
 </section>
@@ -765,7 +794,7 @@ contacts and blocks on this relay.</p>
 </section>
 </section>
 <section data-group>
-<h2 id="group-other">Other <span class="faint">45</span></h2>
+<h2 id="group-other">Other <span class="faint">56</span></h2>
 <section class="entry" id="login" data-name="login">
 <h3><code>login</code></h3>
 <div class="sig">login(input: <a href="inputs.html#LoginInput">LoginInput</a>!): <a href="objects.html#LoginPayload">LoginPayload</a>!</div>
@@ -1220,12 +1249,128 @@ Moderators only, with the refusals of <a href="mutation.html#acceptJoinRequest">
 </div>
 
 </section>
+<section class="entry" id="passwordRegistrationStart" data-name="passwordRegistrationStart">
+<h3><code>passwordRegistrationStart</code></h3>
+<div class="sig">passwordRegistrationStart(principalId: <a href="scalars.html#String">String</a>!, request: <a href="scalars.html#String">String</a>!): <a href="scalars.html#String">String</a>!</div>
+<div class="desc"><p>Start registering the password of a new account, before <a href="mutation.html#signupWithKey"><code>signupWithKey</code></a>: the OPAQUE
+<code>RegistrationRequest</code> for <code>principalId</code>, answered with the <code>RegistrationResponse</code>. No
+session needed. <code>CONFLICT</code> when an account of this server has the principal;
+<code>RATE_LIMITED</code> when the address asks too often.</p>
+</div>
+
+</section>
+<section class="entry" id="passwordLoginStart" data-name="passwordLoginStart">
+<h3><code>passwordLoginStart</code></h3>
+<div class="sig">passwordLoginStart(principalId: <a href="scalars.html#String">String</a>!, request: <a href="scalars.html#String">String</a>!): <a href="objects.html#PasswordLoginStart">PasswordLoginStart</a>!</div>
+<div class="desc"><p>Start a password login, before <a href="mutation.html#passwordLoginFinish"><code>passwordLoginFinish</code></a>: the OPAQUE <code>CredentialRequest</code> for
+<code>principalId</code>. Every start counts as a wrong try until a login finishes: tries 1 to 3
+are free, the 4th to the 9th make the next one wait (<code>RATE_LIMITED</code> with
+<code>retryAfterSeconds</code>), and the 10th locks the password (<code>PASSWORD_LOCKED</code>) until a reset
+with the recovery phrase. A principal without a password here gets an answer of the same
+shape that no password finishes. No session needed.</p>
+</div>
+
+</section>
+<section class="entry" id="passwordLoginFinish" data-name="passwordLoginFinish">
+<h3><code>passwordLoginFinish</code></h3>
+<div class="sig">passwordLoginFinish(loginId: <a href="scalars.html#ID">ID</a>!, credentialFinalization: <a href="scalars.html#String">String</a>!): <a href="objects.html#PasswordLoginFinish">PasswordLoginFinish</a>!</div>
+<div class="desc"><p>Finish a password login with the OPAQUE <code>CredentialFinalization</code>. On success the tries
+are cleared, and the answer carries a single-use ticket for <a href="mutation.html#loginWithKey"><code>loginWithKey</code></a> (valid for
+120 seconds), the account&#39;s server share sealed under the login&#39;s transport key, and its
+rewraps. The login id is used once, whatever the outcome. No session needed. Every
+refusal is <code>UNAUTHENTICATED</code>: an unknown, used or expired login, or a wrong password.</p>
+</div>
+
+</section>
+<section class="entry" id="passwordChangeStart" data-name="passwordChangeStart">
+<h3><code>passwordChangeStart</code></h3>
+<div class="sig">passwordChangeStart(credentialRequest: <a href="scalars.html#String">String</a>!, registrationRequest: <a href="scalars.html#String">String</a>!): <a href="objects.html#PasswordChangeStart">PasswordChangeStart</a>!</div>
+<div class="desc"><p>Start changing the signed-in account&#39;s password: the OPAQUE <code>CredentialRequest</code> for the
+current password and the <code>RegistrationRequest</code> for the new one. Counts as a try, as for
+<a href="mutation.html#passwordLoginStart"><code>passwordLoginStart</code></a>. <code>NOT_FOUND</code> when the account has no password.</p>
+</div>
+
+</section>
+<section class="entry" id="passwordChangeFinish" data-name="passwordChangeFinish">
+<h3><code>passwordChangeFinish</code></h3>
+<div class="sig">passwordChangeFinish(
+  loginId: <a href="scalars.html#ID">ID</a>!
+  credentialFinalization: <a href="scalars.html#String">String</a>!
+  registrationUpload: <a href="scalars.html#String">String</a>!
+  rewrap: <a href="scalars.html#String">String</a>!
+): <a href="objects.html#PasswordChanged">PasswordChanged</a>!</div>
+<div class="desc"><p>Finish a password change: the <code>CredentialFinalization</code> for the current password, the
+<code>RegistrationUpload</code> for the new one, and the rewrap (the previous unlock key sealed
+under the new one) for the account&#39;s other devices. Keeps the server share, keeps the
+newest three rewraps, and ends every other session of the account. <code>UNAUTHENTICATED</code>
+when the current password does not verify or the login is unknown or expired.</p>
+</div>
+
+</section>
+<section class="entry" id="passwordResetChallenge" data-name="passwordResetChallenge">
+<h3><code>passwordResetChallenge</code></h3>
+<div class="sig">passwordResetChallenge(principalId: <a href="scalars.html#String">String</a>!): <a href="objects.html#KeyLoginChallenge">KeyLoginChallenge</a>!</div>
+<div class="desc"><p>Issue a single-use challenge, valid for 120 seconds, for a <code>password-reset</code> statement
+signed by the recovery key. No session needed.</p>
+</div>
+
+</section>
+<section class="entry" id="passwordResetStart" data-name="passwordResetStart">
+<h3><code>passwordResetStart</code></h3>
+<div class="sig">passwordResetStart(statement: <a href="inputs.html#SignedStatementInput">SignedStatementInput</a>!, registrationRequest: <a href="scalars.html#String">String</a>!): <a href="objects.html#PasswordResetStart">PasswordResetStart</a>!</div>
+<div class="desc"><p>Start a password reset: a <code>password-reset</code> statement over a <a href="mutation.html#passwordResetChallenge"><code>passwordResetChallenge</code></a>,
+signed by the recovery key of the account&#39;s key log head, and the
+<code>RegistrationRequest</code> for the new password. No session needed. <code>UNAUTHENTICATED</code> for
+any statement that does not verify, deliberately not told apart.</p>
+</div>
+
+</section>
+<section class="entry" id="passwordResetFinish" data-name="passwordResetFinish">
+<h3><code>passwordResetFinish</code></h3>
+<div class="sig">passwordResetFinish(resetId: <a href="scalars.html#ID">ID</a>!, registrationUpload: <a href="scalars.html#String">String</a>!): <a href="scalars.html#Boolean">Boolean</a>!</div>
+<div class="desc"><p>Finish a password reset with the <code>RegistrationUpload</code> for the new password. Keeps the
+server share, deletes the rewraps, clears the tries and the lock, and ends every session
+of the account. No session needed. <code>UNAUTHENTICATED</code> when the reset is unknown, used or
+expired. Returns <code>true</code>.</p>
+</div>
+
+</section>
+<section class="entry" id="setPasswordStart" data-name="setPasswordStart">
+<h3><code>setPasswordStart</code></h3>
+<div class="sig">setPasswordStart(registrationRequest: <a href="scalars.html#String">String</a>!): <a href="scalars.html#String">String</a>!</div>
+<div class="desc"><p>Start setting a password for the signed-in account, which has none (a session with
+<code>mustSetPassword</code>): the OPAQUE <code>RegistrationRequest</code>, answered with the
+<code>RegistrationResponse</code>. <code>CONFLICT</code> when the account has a password.</p>
+</div>
+
+</section>
+<section class="entry" id="setPassword" data-name="setPassword">
+<h3><code>setPassword</code></h3>
+<div class="sig">setPassword(registrationUpload: <a href="scalars.html#String">String</a>!): <a href="objects.html#SetPasswordPayload">SetPasswordPayload</a>!</div>
+<div class="desc"><p>Finish setting a password for the signed-in account with the <code>RegistrationUpload</code>.
+Lifts the limit from the account&#39;s sessions and returns its new server share.
+<code>CONFLICT</code> when the account has a password.</p>
+</div>
+
+</section>
+<section class="entry" id="reloadSession" data-name="reloadSession">
+<h3><code>reloadSession</code></h3>
+<div class="sig">reloadSession: <a href="objects.html#ReloadSessionPayload">ReloadSessionPayload</a>!</div>
+<div class="desc"><p>After a reload, hand this session&#39;s tab the reload key its stored data is sealed under,
+and a new one the server keeps instead. It needs the session cookie and the CSRF header,
+but not the session secret, which the tab lost in the reload. It answers once, and only
+while the session is unkept and no WebSocket of it is open, within 60 seconds of its
+WebSocket closing; otherwise <code>UNAUTHENTICATED</code>, and the account is locked on this
+device.</p>
+</div>
+
+</section>
 </section>
 
     </main>
   </div>
   <footer class="site">
-    <span>Generated from <a href="https://github.com/rim-platform/rim-ui/blob/8aa7733e8b6fe5cfee270b572e4ddaf1ec32c432/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>8aa7733</code></span>
+    <span>Generated from <a href="https://github.com/rim-platform/rim-ui/blob/494da4e3ff7d868a584a6cd0f379917b4c9a6958/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>494da4e</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

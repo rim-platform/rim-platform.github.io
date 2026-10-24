@@ -135,6 +135,7 @@ const GROUPS = [
           ["ui", "docs/identity-key-backup.md"],
           ["ui", "docs/device-linking-desktop.md"],
           ["ui", "docs/web-linked-device.md"],
+          ["ui", "docs/account-password.md"],
         ],
       },
       { title: "More from the client", items: [], unassigned: true },

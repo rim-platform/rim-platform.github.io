@@ -849,7 +849,7 @@ signature (<code>ed25519:&lt;base64url&gt;</code> in version 2 statements, bare 
 <tr><td><code>payload</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td></td></tr>
 <tr><td><code>signature</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td></td></tr>
 </tbody></table></div>
-<p class="faint">Used by <a href="inputs.html#AddWorkspacePluginInput">AddWorkspacePluginInput</a>, <a href="inputs.html#EnrollIdentityKeyInput">EnrollIdentityKeyInput</a>, <a href="inputs.html#JoinRemoteWorkspaceInput">JoinRemoteWorkspaceInput</a>, <a href="mutation.html#loginWithKey">Mutation.loginWithKey</a>, <a href="mutation.html#addDeviceKey">Mutation.addDeviceKey</a>, <a href="mutation.html#revokeDeviceKey">Mutation.revokeDeviceKey</a>, <a href="mutation.html#publishProfileCard">Mutation.publishProfileCard</a>, <a href="mutation.html#renewDelegations">Mutation.renewDelegations</a>, <a href="mutation.html#applyRemoteRevocation">Mutation.applyRemoteRevocation</a>, <a href="inputs.html#RequestMlsReaddInput">RequestMlsReaddInput</a>, <a href="inputs.html#RotateIdentityKeyInput">RotateIdentityKeyInput</a>, <a href="inputs.html#SignupWithKeyInput">SignupWithKeyInput</a>, <a href="inputs.html#UpdateWorkspacePluginInput">UpdateWorkspacePluginInput</a></p>
+<p class="faint">Used by <a href="inputs.html#AddWorkspacePluginInput">AddWorkspacePluginInput</a>, <a href="inputs.html#EnrollIdentityKeyInput">EnrollIdentityKeyInput</a>, <a href="inputs.html#JoinRemoteWorkspaceInput">JoinRemoteWorkspaceInput</a>, <a href="mutation.html#loginWithKey">Mutation.loginWithKey</a>, <a href="mutation.html#addDeviceKey">Mutation.addDeviceKey</a>, <a href="mutation.html#revokeDeviceKey">Mutation.revokeDeviceKey</a>, <a href="mutation.html#publishProfileCard">Mutation.publishProfileCard</a>, <a href="mutation.html#renewDelegations">Mutation.renewDelegations</a>, <a href="mutation.html#applyRemoteRevocation">Mutation.applyRemoteRevocation</a>, <a href="mutation.html#passwordResetStart">Mutation.passwordResetStart</a>, <a href="inputs.html#RequestMlsReaddInput">RequestMlsReaddInput</a>, <a href="inputs.html#RotateIdentityKeyInput">RotateIdentityKeyInput</a>, <a href="inputs.html#SignupWithKeyInput">SignupWithKeyInput</a>, <a href="inputs.html#UpdateWorkspacePluginInput">UpdateWorkspacePluginInput</a></p>
 </section>
 <section class="entry" id="SignupWithInviteInput" data-name="SignupWithInviteInput">
 <h3><code>SignupWithInviteInput</code><span class="kind">input</span></h3>
@@ -900,6 +900,9 @@ absent or when nothing visible is left.</p>
 </td></tr>
 <tr><td><code>proof</code></td><td><code><a href="inputs.html#SignedStatementInput">SignedStatementInput</a>!</code></td><td><p>A <a href="mutation.html#login"><code>login</code></a> statement signed by that device over a fresh <a href="mutation.html#keyLoginChallenge"><code>keyLoginChallenge</code></a>.</p>
 </td></tr>
+<tr><td><code>passwordRegistration</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td><p>The OPAQUE <code>RegistrationUpload</code> of the account&#39;s password, unpadded base64url,
+registered for this principal with <a href="mutation.html#passwordRegistrationStart"><code>passwordRegistrationStart</code></a>.</p>
+</td></tr>
 <tr><td><code>instanceInviteToken</code></td><td><code><a href="scalars.html#String">String</a></code></td><td></td></tr>
 <tr><td><code>workspaceInviteToken</code></td><td><code><a href="scalars.html#String">String</a></code></td><td></td></tr>
 <tr><td><code>proofOfWork</code></td><td><code><a href="scalars.html#String">String</a></code></td><td><p>In pow registration mode: an 8-byte nonce, unpadded base64url, such that
@@ -909,6 +912,10 @@ the descriptor&#39;s <code>powBits</code> zero bits.</p>
 <tr><td><code>acceptedTermsUrl</code></td><td><code><a href="scalars.html#String">String</a></code></td><td><p>The terms of service the person accepted, as for <a href="mutation.html#signupWithInvite"><code>signupWithInvite</code></a>.</p>
 </td></tr>
 <tr><td><code>confirmedMinimumAge</code></td><td><code><a href="scalars.html#Int">Int</a></code></td><td><p>The minimum age the person confirmed reaching, as for <a href="mutation.html#signupWithInvite"><code>signupWithInvite</code></a>.</p>
+</td></tr>
+<tr><td><code>keepSignedIn</code></td><td><code><a href="scalars.html#Boolean">Boolean</a>!</code></td><td><p>&quot;Keep me signed in&quot;, as for <a href="mutation.html#loginWithKey"><code>loginWithKey</code></a>.</p>
+</td></tr>
+<tr><td><code>keepKeyHeld</code></td><td><code><a href="scalars.html#Boolean">Boolean</a>!</code></td><td><p>The client holds its own keep key, as for <a href="mutation.html#loginWithKey"><code>loginWithKey</code></a>.</p>
 </td></tr>
 </tbody></table></div>
 <p class="faint">Used by <a href="mutation.html#signupWithKey">Mutation.signupWithKey</a></p>
@@ -1130,7 +1137,7 @@ the link on for the first time issues its token.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Generated from <a href="https://github.com/rim-platform/rim-ui/blob/8aa7733e8b6fe5cfee270b572e4ddaf1ec32c432/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>8aa7733</code></span>
+    <span>Generated from <a href="https://github.com/rim-platform/rim-ui/blob/494da4e3ff7d868a584a6cd0f379917b4c9a6958/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>494da4e</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>
