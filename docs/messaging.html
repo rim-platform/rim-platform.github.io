@@ -216,7 +216,8 @@ recipient here is kept from them as an ignored request is, with no notification.
 <li><strong>Workspace DMs.</strong> In a workspace hosted here, a DM a member whose relay is this server takes
 as a request is held in their request inbox like a DM from outside: until they accept it, it stays out of their
 <code>inboxConversations</code> and <code>workspaceEvents</code>, and its notifications and unread counts out of
-theirs. Like the request inbox it needs server-to-server traffic to be on; without it workspace
+theirs; meanwhile they may read it but post, react and type nothing in it (<a href="relay.html"><code>docs/relay.md</code></a>,
+&quot;The request inbox&quot;). Like the request inbox it needs server-to-server traffic to be on; without it workspace
 DMs arrive directly.</li>
 <li><strong>The default workspace&#39;s groups.</strong> In the server&#39;s default workspace, which every account
 joins, a group is started and grown like a DM with each newcomer: <code>createConversation</code> and
@@ -814,7 +815,7 @@ and the next query, without a scheduled event.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/332b0aac07e86fe4292703ab0f88be585bcc6226/docs/messaging.md">rim-server/docs/messaging.md</a> at <code>332b0aa</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/a1052b78d8d0a729317f4ccb37ea706fb165092e/docs/messaging.md">rim-server/docs/messaging.md</a> at <code>a1052b7</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>
