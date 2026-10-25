@@ -62,7 +62,7 @@
 </details></aside>
     <main id="content" class="prose">
 <h1 id="rim-plugin-protocol-v1">RIM plugin protocol v1</h1>
-<p class="status"><span><b>RIM plugin protocol v1</b></span><span>version 1</span><span>status: frozen, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/c5a6a52b10286eeee7c4464ce17fed7b2cd68e4c/docs/specs/plugin-protocol-v1.md">rim-server/docs/specs/plugin-protocol-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/c5a6a52b10286eeee7c4464ce17fed7b2cd68e4c">c5a6a52</a></span></p>
+<p class="status"><span><b>RIM plugin protocol v1</b></span><span>version 1</span><span>status: frozen, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/8a82bffc239f65c0f271dd4d2520bb35d8fae7ee/docs/specs/plugin-protocol-v1.md">rim-server/docs/specs/plugin-protocol-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/8a82bffc239f65c0f271dd4d2520bb35d8fae7ee">8a82bff</a></span></p>
 <p><strong>Status: frozen, normative.</strong> This is the contract between the RIM desktop host and a plugin
 process. It is written for someone building a plugin from scratch, in any language, without an
 SDK.</p>
@@ -1149,8 +1149,8 @@ handshake, which keeps the same shape in every version.</li>
 <li>Senders emit exactly the frozen shapes; receivers ignore unknown fields rather than fail.</li>
 <li>The host lists every version it speaks in <code>supportedVersions</code>, newest first, and the plugin
 picks one (section 7). When a v2 exists, a host will offer both <code>[2, 1]</code> for as long as it
-supports v1; the RIM roadmap commits to supporting the current and the previous protocol
-version. A v1 plugin keeps working on that host by answering <code>1</code>.</li>
+supports v1; RIM commits to supporting the current and the previous protocol version
+(<a href="../docs/architecture.html"><code>docs/architecture.md</code></a>, &quot;Design Guardrails&quot;). A v1 plugin keeps working on that host by answering <code>1</code>.</li>
 <li>A plugin that only speaks a newer version than the host offers refuses the handshake, as in
 section 7, and the user sees why.</li>
 </ul>
@@ -1483,7 +1483,7 @@ is ignored.</li>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c5a6a52b10286eeee7c4464ce17fed7b2cd68e4c/docs/specs/plugin-protocol-v1.md">rim-server/docs/specs/plugin-protocol-v1.md</a> at <code>c5a6a52</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/8a82bffc239f65c0f271dd4d2520bb35d8fae7ee/docs/specs/plugin-protocol-v1.md">rim-server/docs/specs/plugin-protocol-v1.md</a> at <code>8a82bff</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

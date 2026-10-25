@@ -197,12 +197,12 @@
 
   <section id="what">
     <div class="eyebrow">What RIM is</div>
-    <h2>A communication workspace you program, and where it is heading</h2>
-    <p class="sub">RIM is not a Slack, Discord or Matrix replacement. It is for people who want what those do not offer: a chat workspace they can shape with commands, keybinds, macros and plugins, running on a box they control. The closest relatives are VS Code, Raycast and Obsidian, applied to team communication.</p>
+    <h2>Your own workspace, and where it is heading</h2>
+    <p class="sub">RIM is for teams, organizations and communities that want a workspace of their own: built around how they work, extended with their own plugins, and running where they choose, with their data under their control. Chat is the medium; the product is what you build on top of it, the way VS Code turned a text editor into a platform. <a href="docs/vision.html">The vision</a> says more.</p>
     <div class="grid three">
       <div class="card"><span class="tag">today</span><h3>What it is now</h3><p>A Rust server and a Tauri desktop and web client. Chat with threads, attachments and search; a command registry with macros and pipelines; client plugins; key-based identity; MLS-encrypted DMs and groups; relays and hosts talking over a signed protocol.</p></div>
-      <div class="card"><span class="tag">direction</span><h3>Where it is heading</h3><p>A vanilla core that is a decentralized chat platform plus the programmable layer. Everything domain-specific lives in plugins, bots and pipelines, never in the server. Release readiness, a first-run path, hybrid post-quantum signatures and a mobile web app are next; <a href="docs/roadmap.html">the roadmap</a> has the stages and the open decisions.</p></div>
-      <div class="card"><span class="tag">not</span><h3>What it will not become</h3><p>A platform that dictates how teams work, a race for integrations and user counts, or a product that competes on chat polish alone. It competes on being the most programmable, keyboard-efficient communication environment.</p></div>
+      <div class="card"><span class="tag">direction</span><h3>Where it is heading</h3><p>The first release and the public relay now. Next: bots and incoming webhooks, RIM in Claude Code and other agents acting as you under RIM's confirmation gate, the outside cryptography review and 0.1.0, a first-run path and data export. Voice and video calls later. <a href="docs/roadmap.html">The roadmap</a> has the order.</p></div>
+      <div class="card"><span class="tag">not</span><h3>What it will not become</h3><p>A platform that dictates how teams work, a race for feature parity with Discord or Slack, or a pile of features for one kind of team. Anything domain-specific lives in plugins, bots and pipelines, never in the server, and nothing depends on a central RIM service.</p></div>
     </div>
   </section>
 
@@ -372,7 +372,7 @@ RIM_FEATURES_DISABLED=attachments,email</pre>
     <div class="eyebrow">Where the project is</div>
     <h2>Pre-release, honest about it</h2>
     <div class="status">
-      <div class="card"><h3>Server and clients</h3><p>Version 0.0.1 on every crate and package. Five roadmap stages shipped: plugins, client-held history, key identity, MLS encryption, relays and hosts.</p><span class="pill ok">source available</span></div>
+      <div class="card"><h3>Server and clients</h3><p>Version 0.0.1 on every crate and package. Plugins, client-held history, key identity, MLS encryption, relays and hosts all work on <code>master</code>.</p><span class="pill ok">source available</span></div>
       <div class="card"><h3>Desktop downloads</h3><p>The signed updater is wired but dormant. Linux and Windows installers arrive with the first release; macOS is built from source.</p><span class="pill warm">no builds yet</span></div>
       <div class="card"><h3>Cryptography review</h3><p>An outside review of the identity and MLS layers is prepared, with the brief published. Results and fixes will be posted here.</p><span class="pill warm">pending</span></div>
     </div>

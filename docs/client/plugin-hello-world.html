@@ -50,8 +50,8 @@ process plugin, with one command and a panel that talks to the host through the
 raw postMessage bridge instead of the plugin SDK. It exercises the whole cycle
 of spawn, broker and capability gate.</p>
 <p>It speaks plugin protocol v1, frozen in
-<a href="https://github.com/rim-platform/rim-ui/blob/32bb9a20ca32468fc9e1bb8ab2b1c1dfc12ff7ee/protocol/plugin-protocol-v1.schema.json"><code>protocol/plugin-protocol-v1.schema.json</code></a>.
-The host&#39;s conformance tests (<a href="https://github.com/rim-platform/rim-ui/blob/32bb9a20ca32468fc9e1bb8ab2b1c1dfc12ff7ee/src-tauri/src/plugin_host/protocol/conformance.rs"><code>src-tauri/src/plugin_host/protocol/conformance.rs</code></a>)
+<a href="https://github.com/rim-platform/rim-ui/blob/9c4536f10b5cd7084e6284526e144ec2e0da7a38/protocol/plugin-protocol-v1.schema.json"><code>protocol/plugin-protocol-v1.schema.json</code></a>.
+The host&#39;s conformance tests (<a href="https://github.com/rim-platform/rim-ui/blob/9c4536f10b5cd7084e6284526e144ec2e0da7a38/src-tauri/src/plugin_host/protocol/conformance.rs"><code>src-tauri/src/plugin_host/protocol/conformance.rs</code></a>)
 drive this script through every v1 message, so keep it conforming when you
 change it.</p>
 <h2 id="file-layout">File layout <a class="anchor" href="#file-layout" aria-label="Link to this section">#</a></h2>
@@ -65,7 +65,7 @@ change it.</p>
   README.md                # This file</code></pre>
 <h2 id="prerequisites">Prerequisites <a class="anchor" href="#prerequisites" aria-label="Link to this section">#</a></h2>
 <ul>
-<li>Python 3.8+ on <code>$PATH</code> (the entrypoint is <a href="https://github.com/rim-platform/rim-ui/blob/32bb9a20ca32468fc9e1bb8ab2b1c1dfc12ff7ee/plugins/hello-world/main.py"><code>main.py</code></a> — the OS executes it
+<li>Python 3.8+ on <code>$PATH</code> (the entrypoint is <a href="https://github.com/rim-platform/rim-ui/blob/9c4536f10b5cd7084e6284526e144ec2e0da7a38/plugins/hello-world/main.py"><code>main.py</code></a> — the OS executes it
 directly via its shebang <code>#!/usr/bin/env python3</code>).</li>
 <li>RIM desktop app built and running (<code>npm run tauri dev</code>).</li>
 </ul>
@@ -105,7 +105,7 @@ The bridge (<code>pluginBridge.ts</code>) shows it only to a plugin approved for
 logs a warning. To see it, open the Tauri devtools console and filter for
 <code>[RIM:PluginBridge]</code>:</p>
 <pre><code>[RIM:PluginBridge] dev.example.hello-world denied: requires ui.notify for rim.ui.notification.show</code></pre>
-<p>With <code>&quot;ui.notify&quot;</code> added to <code>capabilities</code> in <a href="https://github.com/rim-platform/rim-ui/blob/32bb9a20ca32468fc9e1bb8ab2b1c1dfc12ff7ee/plugins/hello-world/rim-plugin.json"><code>rim-plugin.json</code></a> before you
+<p>With <code>&quot;ui.notify&quot;</code> added to <code>capabilities</code> in <a href="https://github.com/rim-platform/rim-ui/blob/9c4536f10b5cd7084e6284526e144ec2e0da7a38/plugins/hello-world/rim-plugin.json"><code>rim-plugin.json</code></a> before you
 copy the folder, enabling the plugin asks for that capability, and once it is
 approved the bridge shows the notification as a toast that names the plugin
 (and as a desktop notification while the window is in the background and
@@ -159,7 +159,7 @@ command, gates its panel and stops it.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/32bb9a20ca32468fc9e1bb8ab2b1c1dfc12ff7ee/plugins/hello-world/README.md">rim-ui/plugins/hello-world/README.md</a> at <code>32bb9a2</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/9c4536f10b5cd7084e6284526e144ec2e0da7a38/plugins/hello-world/README.md">rim-ui/plugins/hello-world/README.md</a> at <code>9c4536f</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>
