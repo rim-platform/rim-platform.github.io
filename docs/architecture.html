@@ -36,7 +36,7 @@
     <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
 <ol>
 <li><a href="#product-framing">Product Framing</a></li>
-<li><a href="#architectural-principles">Architectural Principles</a><ol><li><a href="#layered-boundaries">Layered Boundaries</a></li><li><a href="#extensibility-first">Extensibility First</a></li><li><a href="#backend-owned-vs-client-owned-responsibilities">Backend-Owned vs Client-Owned Responsibilities</a></li><li><a href="#security-by-default">Security By Default</a></li></ol></li>
+<li><a href="#architectural-principles">Architectural Principles</a><ol><li><a href="#layered-boundaries">Layered Boundaries</a></li><li><a href="#extensibility-first">Extensibility First</a></li><li><a href="#backend-owned-vs-client-owned-responsibilities">Backend-Owned vs Client-Owned Responsibilities</a></li><li><a href="#security-by-default">Security By Default</a></li><li><a href="#design-guardrails">Design Guardrails</a></li></ol></li>
 <li><a href="#current-crate-responsibilities">Current Crate Responsibilities</a><ol><li><a href="#rim_core">rim_core</a></li><li><a href="#rim_services">rim_services</a></li><li><a href="#rim_infra_db">rim_infra_db</a></li><li><a href="#rim_infra_services">rim_infra_services</a></li><li><a href="#rim_api">rim_api</a></li><li><a href="#rim_server">rim_server</a></li><li><a href="#rim_auth-rim_identity-rim_s2s">rim_auth, rim_identity, rim_s2s</a></li><li><a href="#rim_logging">rim_logging</a></li><li><a href="#entity">entity</a></li><li><a href="#migration">migration</a></li></ol></li>
 <li><a href="#core-domain-model">Core Domain Model</a><ol><li><a href="#workspace--server">Workspace / Server</a></li><li><a href="#conversation">Conversation</a></li><li><a href="#message">Message</a></li><li><a href="#thread">Thread</a></li><li><a href="#attachment">Attachment</a></li><li><a href="#principal">Principal</a></li><li><a href="#command">Command</a></li><li><a href="#keybind">Keybind</a></li><li><a href="#platform-primitives">Platform Primitives</a></li></ol></li>
 <li><a href="#commands-keybinds-plugins-and-context">Commands, Keybinds, Plugins, and Context</a><ol><li><a href="#commands">Commands</a></li><li><a href="#keybinds">Keybinds</a></li><li><a href="#plugins">Plugins</a></li><li><a href="#context">Context</a></li></ol></li>
@@ -76,7 +76,7 @@
 </ul>
 <p>Privacy and security are first-class principles. DMs and private groups are end-to-end encrypted
 with MLS, a person is a key pair rather than an account on one server, and servers act as relays
-and workspace hosts for each other (<a href="https://github.com/rim-platform/rim-server/tree/c5a6a52b10286eeee7c4464ce17fed7b2cd68e4c/docs/specs"><code>docs/specs/</code></a>).</p>
+and workspace hosts for each other (<a href="https://github.com/rim-platform/rim-server/tree/8a82bffc239f65c0f271dd4d2520bb35d8fae7ee/docs/specs"><code>docs/specs/</code></a>).</p>
 <h2 id="architectural-principles">Architectural Principles <a class="anchor" href="#architectural-principles" aria-label="Link to this section">#</a></h2>
 <h3 id="layered-boundaries">Layered Boundaries <a class="anchor" href="#layered-boundaries" aria-label="Link to this section">#</a></h3>
 <p>The system is designed around clean boundaries between:</p>
@@ -124,6 +124,33 @@ and workspace hosts for each other (<a href="https://github.com/rim-platform/rim
 <li>dangerous vs ordinary behavior</li>
 </ul>
 <p>No subsystem should silently gain power just because it exists.</p>
+<h3 id="design-guardrails">Design Guardrails <a class="anchor" href="#design-guardrails" aria-label="Link to this section">#</a></h3>
+<p>Every new server feature answers two questions: what it does when the message content is
+encrypted, and what it does when there is more than one server. These rules keep the answers
+cheap.</p>
+<ul>
+<li><strong>Message identity is global, not server-local.</strong> Ids are UUIDv7, row ids are never exposed,
+and nothing is keyed on &quot;the server&quot;. New tables are designed with an origin column in mind
+even where it is a constant today.</li>
+<li><strong>Content and metadata are separable.</strong> Data derived from message text (search vectors, link
+previews, mention rows) can be absent for an encrypted message without breaking the row. No
+server feature may require reading message text; it may benefit from it.</li>
+<li><strong>The client stays capable.</strong> Commands, macros, keybinds, lenses and plugin logic stay
+evaluable on the client, and server features prefer metadata (membership, timing, structure)
+over content.</li>
+<li><strong>One principal model.</strong> People, bots and the system user are principals; keys and remote
+users add a kind and a key to a principal rather than a new concept. Plugins and new APIs see
+an opaque <code>principalId</code>, never a local UUID or <code>name@domain</code>.</li>
+<li><strong>GraphQL is the client contract.</strong> Server-to-server traffic is a small signed HTTP API, a
+non-GraphQL transport like the upload routes, not federation over GraphQL.</li>
+<li><strong>Versioned contracts overlap.</strong> The plugin protocol, the archive format and the
+server-to-server API each keep serving the previous version while a new one exists.</li>
+<li><strong>Migrations only expand.</strong> A column or table is added in one release and removed at the
+earliest a release later, so a host can roll the binary back (<a href="operations/upgrade.html"><code>docs/operations/upgrade.md</code></a>).</li>
+<li><strong>Single-node stores stay behind traits.</strong> See &quot;Scaling Limits&quot; below.</li>
+<li><strong>No server-only verticals.</strong> A feature for one kind of community is a plugin, a bot or a
+pipeline (<a href="contributing.html"><code>CONTRIBUTING.md</code></a>, &quot;What belongs in the core&quot;).</li>
+</ul>
 <h2 id="current-crate-responsibilities">Current Crate Responsibilities <a class="anchor" href="#current-crate-responsibilities" aria-label="Link to this section">#</a></h2>
 <h3 id="rim_core"><code>rim_core</code> <a class="anchor" href="#rim_core" aria-label="Link to this section">#</a></h3>
 <p>Owns:</p>
@@ -167,13 +194,13 @@ and workspace hosts for each other (<a href="https://github.com/rim-platform/rim
 <li>transport-level validation/mapping</li>
 </ul>
 <p>It should remain an adapter over service traits, not a business-logic owner.</p>
-<p>Layout: resolvers are split per domain under <a href="https://github.com/rim-platform/rim-server/tree/c5a6a52b10286eeee7c4464ce17fed7b2cd68e4c/rim_api/src/query"><code>rim_api/src/query/</code></a> and
-<a href="https://github.com/rim-platform/rim-server/tree/c5a6a52b10286eeee7c4464ce17fed7b2cd68e4c/rim_api/src/mutation"><code>rim_api/src/mutation/</code></a> (one <code>#[Object]</code> per domain, merged into <code>Query</code> and
+<p>Layout: resolvers are split per domain under <a href="https://github.com/rim-platform/rim-server/tree/8a82bffc239f65c0f271dd4d2520bb35d8fae7ee/rim_api/src/query"><code>rim_api/src/query/</code></a> and
+<a href="https://github.com/rim-platform/rim-server/tree/8a82bffc239f65c0f271dd4d2520bb35d8fae7ee/rim_api/src/mutation"><code>rim_api/src/mutation/</code></a> (one <code>#[Object]</code> per domain, merged into <code>Query</code> and
 <code>Mutation</code> with <code>#[derive(MergedObject)]</code> in each <code>mod.rs</code>, in groups of at
 most five to stay under rustc&#39;s recursion limit; member order is the SDL field
 order, so new objects are appended). GraphQL types mirror that split
-under <a href="https://github.com/rim-platform/rim-server/tree/c5a6a52b10286eeee7c4464ce17fed7b2cd68e4c/rim_api/src/types"><code>rim_api/src/types/</code></a> and are all re-exported from <code>types/mod.rs</code>.
-Resolver unit tests live in <a href="https://github.com/rim-platform/rim-server/tree/c5a6a52b10286eeee7c4464ce17fed7b2cd68e4c/rim_api/src/tests"><code>rim_api/src/tests/</code></a> (shared mock fixtures in
+under <a href="https://github.com/rim-platform/rim-server/tree/8a82bffc239f65c0f271dd4d2520bb35d8fae7ee/rim_api/src/types"><code>rim_api/src/types/</code></a> and are all re-exported from <code>types/mod.rs</code>.
+Resolver unit tests live in <a href="https://github.com/rim-platform/rim-server/tree/8a82bffc239f65c0f271dd4d2520bb35d8fae7ee/rim_api/src/tests"><code>rim_api/src/tests/</code></a> (shared mock fixtures in
 <code>mod.rs</code>, one submodule per domain). Shared resolver helpers stay in their own
 modules: <code>auth_context</code> (<code>require_actor</code>, <code>require_session_id</code>,
 <code>require_server_member</code>), <code>auth_intent</code>, <code>errors</code> (<code>map_service_error</code>), <code>ids</code>
@@ -188,7 +215,7 @@ modules: <code>auth_context</code> (<code>require_actor</code>, <code>require_se
 <p>It should stay focused on composition and request orchestration.</p>
 <p>It is also the composition root (<code>app.rs</code>) and serves the transports that are not GraphQL:
 uploads and downloads, plugin bundles, health and metrics, the server-to-server routes and the
-relay&#39;s forwarding route. <a href="https://github.com/rim-platform/rim-server/blob/c5a6a52b10286eeee7c4464ce17fed7b2cd68e4c/CLAUDE.md"><code>CLAUDE.md</code></a> describes these two exceptions to the layer chain.</p>
+relay&#39;s forwarding route. <a href="https://github.com/rim-platform/rim-server/blob/8a82bffc239f65c0f271dd4d2520bb35d8fae7ee/CLAUDE.md"><code>CLAUDE.md</code></a> describes these two exceptions to the layer chain.</p>
 <h3 id="rim_auth-rim_identity-rim_s2s"><code>rim_auth</code>, <code>rim_identity</code>, <code>rim_s2s</code> <a class="anchor" href="#rim_auth-rim_identity-rim_s2s" aria-label="Link to this section">#</a></h3>
 <p>Leaf crates with no database or HTTP code:</p>
 <ul>
@@ -221,7 +248,7 @@ statements and the RFC 9421 signature profile of the server-to-server transport.
 <li>members hold one of four roles: <code>Owner</code>, <code>Moderator</code>, <code>Member</code> (default), <code>Guest</code>
 (restricted to conversations they were added to). Moderation state — bans, timeouts and
 message reports — lives in <code>rim_core::moderation</code> (<code>ModerationRepository</code>) and is managed by
-<code>ModerationService</code> (<a href="https://github.com/rim-platform/rim-server/blob/c5a6a52b10286eeee7c4464ce17fed7b2cd68e4c/rim_infra_services/src/moderation.rs"><code>rim_infra_services/src/moderation.rs</code></a>), which also owns the shared
+<code>ModerationService</code> (<a href="https://github.com/rim-platform/rim-server/blob/8a82bffc239f65c0f271dd4d2520bb35d8fae7ee/rim_infra_services/src/moderation.rs"><code>rim_infra_services/src/moderation.rs</code></a>), which also owns the shared
 moderation audit writer (<code>record_moderation_action</code>). See <a href="messaging.html"><code>docs/messaging.md</code></a>, Roles And
 Moderation.</li>
 </ul>
@@ -232,7 +259,7 @@ Moderation.</li>
 <li>DM</li>
 <li>group chat</li>
 </ul>
-<p>Access rules (<a href="https://github.com/rim-platform/rim-server/blob/c5a6a52b10286eeee7c4464ce17fed7b2cd68e4c/rim_infra_services/src/util.rs"><code>rim_infra_services/src/util.rs</code></a>): <code>ensure_conversation_member_access</code>
+<p>Access rules (<a href="https://github.com/rim-platform/rim-server/blob/8a82bffc239f65c0f271dd4d2520bb35d8fae7ee/rim_infra_services/src/util.rs"><code>rim_infra_services/src/util.rs</code></a>): <code>ensure_conversation_member_access</code>
 lets any workspace member read a public channel; private channels, DMs and groups need a
 <code>conversation_member</code> row (a private-channel non-member gets <code>NotFound</code>, a DM/group non-member
 <code>PermissionDenied</code>). <code>ensure_conversation_writable</code> adds the archive check
@@ -384,7 +411,7 @@ plugin bundles. See <a href="plugin_model.html"><code>docs/plugin_model.md</code
 <p>One server process holds some state in memory behind traits: the event broadcaster, the
 confirmation store, rate limiters, presence and typing. Some background jobs, such as the notification digest, assume one node. Running
 several nodes of one server needs those traits backed by shared stores first; new features must
-not depend on single-node semantics (<a href="roadmap.html"><code>ROADMAP.md</code></a>, &quot;Architecture guardrails&quot;).</p>
+not depend on single-node semantics.</p>
 <h2 id="contributor-rules">Contributor Rules <a class="anchor" href="#contributor-rules" aria-label="Link to this section">#</a></h2>
 <p>When adding new features:</p>
 <ul>
@@ -408,7 +435,7 @@ encrypted, and what it does when the people involved are on more than one server
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c5a6a52b10286eeee7c4464ce17fed7b2cd68e4c/docs/architecture.md">rim-server/docs/architecture.md</a> at <code>c5a6a52</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/8a82bffc239f65c0f271dd4d2520bb35d8fae7ee/docs/architecture.md">rim-server/docs/architecture.md</a> at <code>8a82bff</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

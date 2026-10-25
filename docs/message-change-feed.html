@@ -120,8 +120,10 @@ are assigned&quot;.</li>
 (<code>hasMore</code>), oldest first.</li>
 </ul>
 <h2 id="what-the-feed-does-not-carry">What the feed does not carry <a class="anchor" href="#what-the-feed-does-not-carry" aria-label="Link to this section">#</a></h2>
-<p>Only changes to the message row itself bump a version: creation, text edits, soft delete, and
-<code>hasAttachments</code>. Reactions, pins, mentions, link previews and a message becoming a thread root
+<p>Message creation, text edits, soft delete, <code>hasAttachments</code> and attachment lifecycle writes
+(creation, upload completion, finalization, failure and deletion) bump a version. An attachment
+change advances its parent message even when <code>hasAttachments</code> stays true; it does not set
+<code>editedAt</code>. Reactions, pins, mentions, link previews and a message becoming a thread root
 (<code>rootThreadId</code>) do not; those stay on their own queries and real-time events.</p>
 <h2 id="real-time-events">Real-time events <a class="anchor" href="#real-time-events" aria-label="Link to this section">#</a></h2>
 <p>The WebSocket subscription keeps delivering new, edited and deleted messages as before; its
@@ -136,7 +138,9 @@ database trigger runs before every insert into <code>message</code>, and before 
 <code>text</code>, <code>is_deleted</code> or <code>has_attachments</code>. It upserts the conversation&#39;s counter row and writes
 the new value to <code>version</code>; on a text change it also sets <code>edited_at</code>. Because this lives in the
 database, every write path (send, reply, forward, edit, delete, attachments, and any added later)
-feeds the change log without service code.</p>
+feeds the change log without service code. Attachment repository writes lock the parent message
+and advance the same conversation counter in the transaction that changes the attachment row.
+That covers attachment metadata and upload status changes without requiring a text edit.</p>
 <p>The counter row stays locked until the writing transaction commits. A second writer in the same
 conversation waits, then takes the next number; after a rollback the number is reused. So a
 reader cannot see version N+1 while N is still uncommitted, which is what makes &quot;store the last
@@ -153,7 +157,7 @@ two columns, and clients then re-sync from the beginning once it runs again.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c5a6a52b10286eeee7c4464ce17fed7b2cd68e4c/docs/message-change-feed.md">rim-server/docs/message-change-feed.md</a> at <code>c5a6a52</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/8a82bffc239f65c0f271dd4d2520bb35d8fae7ee/docs/message-change-feed.md">rim-server/docs/message-change-feed.md</a> at <code>8a82bff</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

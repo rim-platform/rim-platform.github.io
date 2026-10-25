@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>RIM — Product Vision · RIM</title>
-<meta name="description" content="The roadmap (ROADMAP.md) owns sequencing; this document owns the product principles.">
+<title>What RIM is for · RIM</title>
+<meta name="description" content="ROADMAP.md says where RIM is heading; this page says what RIM is, why it exists and the principles every change is held to.">
 <link rel="icon" href="../favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
@@ -31,161 +31,98 @@
       <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
     </nav>
   </header>
-  <div class="crumbs"><a href="index.html">Docs</a><span aria-hidden="true">/</span><a href="project.html">Project</a><span aria-hidden="true">/</span><span>RIM — Product Vision</span></div>
+  <div class="crumbs"><a href="index.html">Docs</a><span aria-hidden="true">/</span><a href="project.html">Project</a><span aria-hidden="true">/</span><span>What RIM is for</span></div>
   <div class="page with-toc">
     <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
 <ol>
-<li><a href="#what-rim-is">What RIM Is</a></li>
-<li><a href="#who-rim-is-for">Who RIM Is For</a></li>
-<li><a href="#what-rim-is-not">What RIM Is Not</a></li>
-<li><a href="#core-differentiators">Core Differentiators</a></li>
-<li><a href="#target-users">Target Users</a></li>
-<li><a href="#competitive-landscape">Competitive Landscape</a></li>
-<li><a href="#product-positioning--one-sentence">Product Positioning — One Sentence</a></li>
-<li><a href="#inspirations">Inspirations</a></li>
+<li><a href="#in-one-sentence">In one sentence</a></li>
+<li><a href="#your-own-workspace">Your own workspace</a></li>
+<li><a href="#what-it-does-not-do-yet">What it does not do yet</a></li>
+<li><a href="#what-makes-it-different">What makes it different</a></li>
+<li><a href="#principles">Principles</a></li>
 </ol>
 </details></aside>
     <main id="content" class="prose">
-<h1 id="rim--product-vision">RIM — Product Vision</h1>
-<p><em>The roadmap (<a href="roadmap.html"><code>ROADMAP.md</code></a>) owns sequencing; this document owns the product principles.</em></p>
-<h2 id="what-rim-is">What RIM Is <a class="anchor" href="#what-rim-is" aria-label="Link to this section">#</a></h2>
-<p>RIM is a programmable communication workspace.</p>
-<p>It is not another chat app. Chat is the medium through which work happens, but the
-product is defined by what users can do with that communication context — commands,
-keybinds, macros, plugins, and context actions that turn conversations into workflows.</p>
-<p>The closest analogies are not Slack or Discord. They are:</p>
-<ul>
-<li>VS Code — a command palette, keybinds, and extensions turned a text editor into a
-platform for developer workflows.</li>
-<li>Raycast / Alfred — a keyboard-first launcher that makes every action instant.</li>
-<li>Obsidian — an extensible engine where plugins define the experience.</li>
-</ul>
-<p>RIM applies the same philosophy to team communication: the user builds their own
-workflow instead of adapting to the platform.</p>
-<h2 id="who-rim-is-for">Who RIM Is For <a class="anchor" href="#who-rim-is-for" aria-label="Link to this section">#</a></h2>
-<p>RIM is not trying to replace Discord, Slack or Matrix. It is for people who want something
-those platforms do not offer: a communication workspace they can program. Developer teams,
-open-source communities and privacy-minded groups come first, and each shapes the workspace
-differently through commands, keybinds, macros, pipelines and plugins, without RIM shipping a
-feature for each of them. A developer adds a panel that shows the pods in their Kubernetes
-cluster; an open-source community adds its own commands and automations; a privacy-minded
-group runs it on their own box. Gaming communities fit once a voice bridge plugin exists,
-since RIM does not build voice or video itself.</p>
-<p>Pitch: <em>the self-hosted communication workspace you program.</em> A bring-your-own-model AI agent
-acts through the same command registry under a human confirmation gate, so it can operate
-whatever a workspace has plugged in. Other products&#39; AI suggests; RIM&#39;s acts.</p>
-<p>Two commitments shape the architecture: <strong>end-to-end encryption</strong> for DMs and private groups,
-and <strong>decentralization</strong>, where a person is a key pair and servers are interchangeable relays and
-workspace hosts. Both are built; <a href="roadmap.html"><code>ROADMAP.md</code></a> carries the guardrails that keep new features
-compatible with them.</p>
-<h2 id="what-rim-is-not">What RIM Is Not <a class="anchor" href="#what-rim-is-not" aria-label="Link to this section">#</a></h2>
-<ul>
-<li>RIM is not a Slack/Discord clone with extra features.</li>
-<li>RIM is not trying to win on breadth of integrations or number of users.</li>
-<li>RIM does not compete on having the best chat UX — it competes on having the most
-programmable and keyboard-efficient communication environment.</li>
-<li>RIM is not a platform that dictates how teams work — it is a tool that adapts to how
-they already work.</li>
-</ul>
-<h2 id="core-differentiators">Core Differentiators <a class="anchor" href="#core-differentiators" aria-label="Link to this section">#</a></h2>
-<p>These are the capabilities RIM is built around:</p>
-<ol>
-<li><p><strong>Command palette</strong> — a universal, fuzzy-searchable action launcher for every
-operation in the app. Not a channel switcher. Not slash commands. A true command
-palette like VS Code&#39;s Ctrl+Shift+P.</p>
-</li>
-<li><p><strong>User-defined keybinds</strong> — any action can be bound to any key combination,
-scoped by context (global, composer, message list, thread view, panel).</p>
-</li>
-<li><p><strong>User commands and macros</strong> — users compose multi-step workflows from individual
-commands. A user command bound to a keystroke runs all its steps; a macro runs its
-steps from Settings or <code>/macro</code> in the composer.</p>
-</li>
-<li><p><strong>Client-side plugin system</strong> — plugins extend the application itself (new panels,
-commands, context actions, behaviors), not just post messages into channels.
-Plugins are first-class citizens with capability-based permissions, trust boundaries
-and per-workspace registries of signed plugins.</p>
-</li>
-<li><p><strong>An AI operator, not an AI summarizer</strong> — a bring-your-own-model agent drives the
-workspace through the command registry, with capability checks and per-action human
-confirmation for anything mutating or dangerous. Because plugins register commands in the
-same registry, the agent can operate whatever a workspace has plugged in.</p>
-</li>
-<li><p><strong>Self-hosted, auditable, private</strong> — one box, your data, your model, your audit log;
-end-to-end encrypted DMs and private groups; no central server, since any server can be a
-person&#39;s relay or a workspace&#39;s host.</p>
-</li>
-</ol>
-<p>The Tauri v2 desktop runtime (smaller binary, lower memory than Electron) is a real
-engineering advantage, but users rarely choose a tool for it — treat it as a quality
-attribute, not a headline.</p>
-<h2 id="target-users">Target Users <a class="anchor" href="#target-users" aria-label="Link to this section">#</a></h2>
-<p>RIM is built for people who:</p>
-<ul>
-<li>Spend most of their day in a communication tool and want it to be fast.</li>
-<li>Prefer keyboard over mouse.</li>
-<li>Want to customize their tools (keybinds, macros, workflows).</li>
-<li>Value extensibility and are willing to install or build plugins.</li>
-<li>Care about performance and resource efficiency.</li>
-<li>Run a team or a community and want to shape the tool around it: developer and ops teams,
-open-source communities, privacy-minded groups; gaming communities once a voice bridge
-plugin exists.</li>
-<li>Prefer to self-host their communication, or at least to be able to.</li>
-</ul>
-<p>RIM is not built for people who want the simplest possible chat experience or who
-need an enterprise platform with thousands of pre-built integrations.</p>
-<h2 id="competitive-landscape">Competitive Landscape <a class="anchor" href="#competitive-landscape" aria-label="Link to this section">#</a></h2>
-<p>Most of RIM&#39;s pieces exist somewhere else: Slack ships AI agents and MCP; Mattermost, Zulip
-and Element run on your own server; Mattermost has client plugins; Element encrypts end to end;
-Discord lets users rebind keys. A feature checklist ages with every release, so the difference
-RIM claims is the one that lasts: the four below together, in a workspace its community runs
-and programs itself.</p>
-<div class="tablewrap"><table>
-<thead>
-<tr>
-<th>What lasts</th>
-<th>What it means in RIM</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>Self-hosted</td>
-<td>One box holds the workspace, its data and its audit log; any server can be a person&#39;s relay or a workspace&#39;s host, so none is central. DMs and private groups are end-to-end encrypted. *</td>
-</tr>
-<tr>
-<td>Bring-your-own-model AI</td>
-<td>The agent talks to the provider and model the user picks, with the user&#39;s own key; RIM ships neither a model nor a key.</td>
-</tr>
-<tr>
-<td>Plugins that extend the client</td>
-<td>Plugins add panels, commands, context actions and behaviors to the application itself, under capability-based permissions and per-workspace registries of signed plugins.</td>
-</tr>
-<tr>
-<td>A programmable command registry with a confirmation gate</td>
-<td>Every action is a command that the palette, keybinds, macros, plugins and the agent all call; the agent acts only through it, and anything mutating or dangerous waits for a person to confirm.</td>
-</tr>
-</tbody></table></div>
-<p>* DMs and private groups, with MLS (<a href="../specs/e2ee-mls-v1.html"><code>docs/specs/e2ee-mls-v1.md</code></a>). Channels stay plaintext so
-server search, pipelines and AI grounding keep working there; in encrypted conversations those
-run on the client (see the architecture guardrails in <a href="roadmap.html"><code>ROADMAP.md</code></a>).</p>
-<h2 id="product-positioning--one-sentence">Product Positioning — One Sentence <a class="anchor" href="#product-positioning--one-sentence" aria-label="Link to this section">#</a></h2>
+<h1 id="what-rim-is-for">What RIM is for</h1>
+<p><a href="roadmap.html"><code>ROADMAP.md</code></a> says where RIM is heading; this page says what RIM is, why it exists and the
+principles every change is held to.</p>
+<h2 id="in-one-sentence">In one sentence <a class="anchor" href="#in-one-sentence" aria-label="Link to this section">#</a></h2>
 <blockquote>
 <p>RIM is the self-hosted communication workspace you program: commands, keybinds, macros,
 pipelines, plugins and an AI operator on top of chat, private and decentralized.</p>
 </blockquote>
-<h2 id="inspirations">Inspirations <a class="anchor" href="#inspirations" aria-label="Link to this section">#</a></h2>
+<h2 id="your-own-workspace">Your own workspace <a class="anchor" href="#your-own-workspace" aria-label="Link to this section">#</a></h2>
+<p>RIM is for teams, organizations and communities that want a workspace of their own: built
+around how they work, extended with their own plugins, and running where they choose, with
+their data under their control.</p>
+<p>Chat is the medium. The product is what you build on top of it, the way VS Code turned a text
+editor into a platform with a command palette and extensions. Instead of adapting to a tool
+someone else designed, you shape RIM around your work:</p>
 <ul>
-<li><strong>Superhuman</strong> — command palette UX in a communication app
-(<a href="https://blog.superhuman.com/how-to-build-a-remarkable-command-palette/">https://blog.superhuman.com/how-to-build-a-remarkable-command-palette/</a>)</li>
-<li><strong>Linear</strong> — keyboard-first navigation with G-prefixed shortcuts</li>
-<li><strong>VS Code</strong> — command palette + extensions as a platform strategy</li>
-<li><strong>Obsidian</strong> — community plugin ecosystem that defines the product experience</li>
-<li><strong>Raycast</strong> — instant keyboard-driven access to everything</li>
+<li><strong>Built your way.</strong> Every action is a command. Bind any of them to a key, chain them into
+macros, and let pipelines run them when something happens. The workspace learns your
+workflows instead of you learning its menus.</li>
+<li><strong>Extended with your own plugins.</strong> A plugin adds panels, commands and actions to the app
+itself, so the tools you work with sit next to the conversation about them: the pods running
+in your cluster, the pull requests waiting for review, your own internal systems. An
+organization keeps a signed registry of the plugins its members may install.</li>
+<li><strong>Your data, under your control.</strong> You run the server, on your own hardware or wherever you
+choose; nothing depends on a service run by RIM. Direct messages and private groups are
+end-to-end encrypted, so not even the server&#39;s operator can read them. People are key pairs,
+not accounts on someone&#39;s server, and their history is kept encrypted on their own devices and
+drives.</li>
+<li><strong>An AI assistant on your terms.</strong> Bring your own model provider and key. The agent works only
+through the same commands you use, can operate whatever your plugins add, and waits for a
+person to confirm anything that changes something.</li>
+</ul>
+<p>RIM does not ship a feature per kind of group. A development team, a company, an open-source
+community and an association start from the same core, and each adds what it needs.</p>
+<h2 id="what-it-does-not-do-yet">What it does not do yet <a class="anchor" href="#what-it-does-not-do-yet" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>Calls.</strong> Talking a thing through is sometimes better than writing it, so voice and video
+calls are on the roadmap (<a href="roadmap.html"><code>ROADMAP.md</code></a>, &quot;Later&quot;). Until then a team uses a separate tool for
+them.</li>
+<li><strong>A mobile app.</strong> There is a desktop app and a web app; the web app has no phone layout yet.</li>
+<li><strong>Audited cryptography.</strong> The <code>0.0.x</code> releases come out before the outside review of the
+cryptography (<a href="security-overview.html"><code>docs/security-overview.md</code></a>).</li>
+</ul>
+<h2 id="what-makes-it-different">What makes it different <a class="anchor" href="#what-makes-it-different" aria-label="Link to this section">#</a></h2>
+<p>Most of RIM&#39;s parts exist somewhere: Slack ships AI agents, Mattermost and Zulip run on your own
+server, Mattermost has client plugins, Element encrypts end to end, Discord lets you rebind
+keys. A feature checklist ages with every release of every product. What RIM offers is the four
+above together. One command registry is shared by the palette, keybinds, macros, pipelines,
+plugins and the agent, so a plugin&#39;s command is at once something you can bind, chain and ask
+the agent to do. Plugins extend the client rather than post into a channel, and a local plugin
+runs next to you with your own credentials, which is how a Kubernetes panel can exist at all.
+And the workspace runs on a server you choose, with no central server behind it.</p>
+<h2 id="principles">Principles <a class="anchor" href="#principles" aria-label="Link to this section">#</a></h2>
+<p>The rules a change is measured against. <a href="contributing.html"><code>CONTRIBUTING.md</code></a> turns them into what the core accepts,
+and <a href="architecture.html"><code>docs/architecture.md</code></a> into the design guardrails.</p>
+<ul>
+<li><strong>A platform, not a pile of features.</strong> When a plugin, a bot, a pipeline or a macro can meet a
+need, the core gains the primitive that makes it possible and an example built on it, not the
+feature. No first-party verticals: no gaming pack, no developer pack, no incident tracker in
+the core.</li>
+<li><strong>Enough chat, not parity chat.</strong> A chat feature belongs in the core when people cannot use
+RIM every day without it. The bar is comfort, not Discord or Slack.</li>
+<li><strong>Keyboard first.</strong> Every surface is reachable without a mouse, every command can be bound,
+and the modal Vim layer is there for those who want it, off by default.</li>
+<li><strong>Private by design.</strong> A server feature may benefit from reading message text but may never
+require it, because encrypted conversations have none to read. Plugins see decrypted messages
+only through a grant the person gave that plugin.</li>
+<li><strong>No central server.</strong> Nothing depends on a RIM-run service. The public relay is a
+convenience for trying RIM, and leaving it costs nothing but a move.</li>
+<li><strong>Capabilities are visible.</strong> Running a local process, reaching the network or the
+filesystem, acting as you: each is asked for in words that say exactly what is granted, and
+nothing gains power just because it is installed.</li>
+<li><strong>Prove it on ourselves.</strong> Each platform capability ships with something real built on it:
+the pods panel, the pull-request panel, the poll and release plugins.</li>
 </ul>
 
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/c5a6a52b10286eeee7c4464ce17fed7b2cd68e4c/docs/vision.md">rim-server/docs/vision.md</a> at <code>c5a6a52</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/8a82bffc239f65c0f271dd4d2520bb35d8fae7ee/docs/vision.md">rim-server/docs/vision.md</a> at <code>8a82bff</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>
