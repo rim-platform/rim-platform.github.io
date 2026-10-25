@@ -52,7 +52,7 @@
 <p>A browser set up as a linked device (<a href="web-linked-device.html"><code>web-linked-device.md</code></a>) reads and sends in encrypted DMs and
 groups like the desktop app. It runs the same <code>rim_mls</code> crate (<a href="rim-mls.html"><code>docs/rim-mls.md</code></a>) compiled to
 WebAssembly, keeps its MLS state and the decrypted messages in IndexedDB, and drives the same
-runtime as the desktop (<a href="https://github.com/rim-platform/rim-ui/tree/25f3f4e640d9fdd700a28fb61422c416ec3720f7/src/features/e2ee/runtime"><code>src/features/e2ee/runtime/</code></a>), against a second backend with the Tauri
+runtime as the desktop (<a href="https://github.com/rim-platform/rim-ui/tree/7f52241e1bb689c3584e74bdba093721c8caa1ff/src/features/e2ee/runtime"><code>src/features/e2ee/runtime/</code></a>), against a second backend with the Tauri
 side&#39;s command surface. The contract is rim-server <code>docs/specs/e2ee-mls-v1.md</code> (&quot;The web
 client&quot;); <a href="e2ee-desktop.html"><code>e2ee-desktop.md</code></a> describes the desktop, whose behaviour the web matches.</p>
 <h2 id="what-lives-where">What lives where <a class="anchor" href="#what-lives-where" aria-label="Link to this section">#</a></h2>
@@ -64,31 +64,31 @@ client&quot;); <a href="e2ee-desktop.html"><code>e2ee-desktop.md</code></a> desc
 </tr>
 </thead>
 <tbody><tr>
-<td><a href="https://github.com/rim-platform/rim-ui/tree/25f3f4e640d9fdd700a28fb61422c416ec3720f7/src-tauri/crates/rim_mls_wasm"><code>src-tauri/crates/rim_mls_wasm</code></a></td>
+<td><a href="https://github.com/rim-platform/rim-ui/tree/7f52241e1bb689c3584e74bdba093721c8caa1ff/src-tauri/crates/rim_mls_wasm"><code>src-tauri/crates/rim_mls_wasm</code></a></td>
 <td>The <code>wasm-bindgen</code> facade: an <code>Engine</code> over one account&#39;s journaled <code>MemoryStore</code> (<code>changes</code>, <code>keep</code>, <code>rollback</code>, <code>export</code>), the crate&#39;s operations over base64url bytes and JSON text, a <code>DeviceDirectory</code> over the page&#39;s answers, <code>buildContent</code>, <code>planKeyPackageUpload</code>, <code>verifyReadd</code>, <code>mayHonorReadd</code>. A failure throws an <code>Error</code> named by its code (<code>E2EE_NO_GROUP</code>, …)</td>
 </tr>
 <tr>
-<td><a href="https://github.com/rim-platform/rim-ui/tree/25f3f4e640d9fdd700a28fb61422c416ec3720f7/src/features/e2ee/wasm"><code>src/features/e2ee/wasm/</code></a></td>
+<td><a href="https://github.com/rim-platform/rim-ui/tree/7f52241e1bb689c3584e74bdba093721c8caa1ff/src/features/e2ee/wasm"><code>src/features/e2ee/wasm/</code></a></td>
 <td>Its build (<code>wasm-bindgen --target web</code>), committed: <code>rim_mls_wasm.js</code>, <code>.d.ts</code>, <code>rim_mls_wasm_bg.wasm</code>, and <code>source.json</code> (the hash of the crate sources it was built from and its size)</td>
 </tr>
 <tr>
-<td><a href="https://github.com/rim-platform/rim-ui/tree/25f3f4e640d9fdd700a28fb61422c416ec3720f7/src/features/e2ee/web"><code>src/features/e2ee/web/</code></a></td>
+<td><a href="https://github.com/rim-platform/rim-ui/tree/7f52241e1bb689c3584e74bdba093721c8caa1ff/src/features/e2ee/web"><code>src/features/e2ee/web/</code></a></td>
 <td>The web backend: <code>store.ts</code> (the unit of work), <code>db.ts</code> (IndexedDB), <code>groupState.ts</code>, <code>feed.ts</code> (the client loop), <code>outgoing.ts</code>, <code>directory.ts</code>, <code>attachments.ts</code> (WebCrypto), <code>messageRows.ts</code>, <code>webCommands.ts</code> (the command surface and the cache calls), <code>webSession.ts</code> (whether this browser can take part), <code>mlsModule.ts</code>, <code>webAccount.ts</code></td>
 </tr>
 <tr>
-<td><a href="https://github.com/rim-platform/rim-ui/blob/25f3f4e640d9fdd700a28fb61422c416ec3720f7/src/features/e2ee/api/e2eeCommands.ts"><code>src/features/e2ee/api/e2eeCommands.ts</code></a></td>
+<td><a href="https://github.com/rim-platform/rim-ui/blob/7f52241e1bb689c3584e74bdba093721c8caa1ff/src/features/e2ee/api/e2eeCommands.ts"><code>src/features/e2ee/api/e2eeCommands.ts</code></a></td>
 <td>Routes every command by its account: a web account (<code>{ …, principalId, deviceId, web: true }</code>) goes to <code>webE2eeCommands</code>, any other to the Tauri side. Attachments use WebCrypto outside Tauri</td>
 </tr>
 <tr>
-<td><a href="https://github.com/rim-platform/rim-ui/blob/25f3f4e640d9fdd700a28fb61422c416ec3720f7/src/features/messages/api/messageCache.ts"><code>src/features/messages/api/messageCache.ts</code></a></td>
+<td><a href="https://github.com/rim-platform/rim-ui/blob/7f52241e1bb689c3584e74bdba093721c8caa1ff/src/features/messages/api/messageCache.ts"><code>src/features/messages/api/messageCache.ts</code></a></td>
 <td>Routes the cache calls the same way; <code>encryptedStoreAccount()</code> is the desktop&#39;s cache account or the web store&#39;s account</td>
 </tr>
 <tr>
-<td><a href="https://github.com/rim-platform/rim-ui/tree/25f3f4e640d9fdd700a28fb61422c416ec3720f7/src/features/e2ee/runtime"><code>src/features/e2ee/runtime/</code></a></td>
+<td><a href="https://github.com/rim-platform/rim-ui/tree/7f52241e1bb689c3584e74bdba093721c8caa1ff/src/features/e2ee/runtime"><code>src/features/e2ee/runtime/</code></a></td>
 <td>Shared with the desktop; <code>webReturn.ts</code> handles a browser coming back after 60 days</td>
 </tr>
 <tr>
-<td><a href="https://github.com/rim-platform/rim-ui/blob/25f3f4e640d9fdd700a28fb61422c416ec3720f7/scripts/build-wasm.mjs"><code>scripts/build-wasm.mjs</code></a>, <a href="https://github.com/rim-platform/rim-ui/blob/25f3f4e640d9fdd700a28fb61422c416ec3720f7/scripts/wasm-sources.mjs"><code>scripts/wasm-sources.mjs</code></a></td>
+<td><a href="https://github.com/rim-platform/rim-ui/blob/7f52241e1bb689c3584e74bdba093721c8caa1ff/scripts/build-wasm.mjs"><code>scripts/build-wasm.mjs</code></a>, <a href="https://github.com/rim-platform/rim-ui/blob/7f52241e1bb689c3584e74bdba093721c8caa1ff/scripts/wasm-sources.mjs"><code>scripts/wasm-sources.mjs</code></a></td>
 <td>The build, and the source hash a Vitest test checks</td>
 </tr>
 </tbody></table></div>
@@ -99,10 +99,10 @@ and the web app loads the 2.4 MB module only once a signed-in account has a devi
 cargo install wasm-bindgen-cli --version 0.2.114 --locked   # the version rim_mls_wasm pins
 npm run build:wasm</code></pre>
 <p><code>build:wasm</code> runs <code>cargo build -p rim_mls_wasm --target wasm32-unknown-unknown --profile wasm</code>
-(from <a href="https://github.com/rim-platform/rim-ui/tree/25f3f4e640d9fdd700a28fb61422c416ec3720f7/src-tauri"><code>src-tauri/</code></a>, whose <code>.cargo/config.toml</code> selects getrandom&#39;s WebCrypto backend for that
-target), then <code>wasm-bindgen --target web</code> into <a href="https://github.com/rim-platform/rim-ui/tree/25f3f4e640d9fdd700a28fb61422c416ec3720f7/src/features/e2ee/wasm"><code>src/features/e2ee/wasm/</code></a>, and writes
+(from <a href="https://github.com/rim-platform/rim-ui/tree/7f52241e1bb689c3584e74bdba093721c8caa1ff/src-tauri"><code>src-tauri/</code></a>, whose <code>.cargo/config.toml</code> selects getrandom&#39;s WebCrypto backend for that
+target), then <code>wasm-bindgen --target web</code> into <a href="https://github.com/rim-platform/rim-ui/tree/7f52241e1bb689c3584e74bdba093721c8caa1ff/src/features/e2ee/wasm"><code>src/features/e2ee/wasm/</code></a>, and writes
 <code>source.json</code>. It builds the account password&#39;s module (<a href="account-password.html"><code>account-password.md</code></a>) the same way,
-in a cargo run of its own so the two modules never share features; <a href="https://github.com/rim-platform/rim-ui/blob/25f3f4e640d9fdd700a28fb61422c416ec3720f7/scripts/wasm-sources.mjs"><code>scripts/wasm-sources.mjs</code></a>
+in a cargo run of its own so the two modules never share features; <a href="https://github.com/rim-platform/rim-ui/blob/7f52241e1bb689c3584e74bdba093721c8caa1ff/scripts/wasm-sources.mjs"><code>scripts/wasm-sources.mjs</code></a>
 lists both. The <code>wasm</code> profile inherits <code>release</code> with <code>opt-level = &quot;s&quot;</code>, LTO and one codegen
 unit; the desktop&#39;s <code>release</code> is unchanged. No <code>wasm-opt</code> pass (binaryen is not needed).</p>
 <div class="tablewrap"><table>
@@ -131,8 +131,8 @@ unit; the desktop&#39;s <code>release</code> is unchanged. No <code>wasm-opt</co
 </tbody></table></div>
 <p><strong>The build is committed</strong>, because <code>npm run build</code> must work without a Rust toolchain: CI&#39;s
 build job and the Docker image build the web app with Node only, and Vitest loads the module.
-<a href="https://github.com/rim-platform/rim-ui/blob/25f3f4e640d9fdd700a28fb61422c416ec3720f7/src/features/e2ee/web/wasmArtifact.test.ts"><code>src/features/e2ee/web/wasmArtifact.test.ts</code></a> fails when <code>rim_mls</code> or <code>rim_mls_wasm</code> changed
-since the committed build (and likewise for the password module&#39;s two crates) (it hashes their <code>Cargo.toml</code> and <a href="https://github.com/rim-platform/rim-ui/tree/25f3f4e640d9fdd700a28fb61422c416ec3720f7/src"><code>src/</code></a>): run <code>npm run build:wasm</code>
+<a href="https://github.com/rim-platform/rim-ui/blob/7f52241e1bb689c3584e74bdba093721c8caa1ff/src/features/e2ee/web/wasmArtifact.test.ts"><code>src/features/e2ee/web/wasmArtifact.test.ts</code></a> fails when <code>rim_mls</code> or <code>rim_mls_wasm</code> changed
+since the committed build (and likewise for the password module&#39;s two crates) (it hashes their <code>Cargo.toml</code> and <a href="https://github.com/rim-platform/rim-ui/tree/7f52241e1bb689c3584e74bdba093721c8caa1ff/src"><code>src/</code></a>): run <code>npm run build:wasm</code>
 and commit the result. <code>rim_mls</code> runs in the browser with <code>openmls</code>&#39;s <code>js</code> feature (the clock
 through <code>web-time</code>), getrandom 0.2&#39;s <code>js</code> and 0.3&#39;s <code>wasm_js</code> features, and its <code>sqlite</code> feature
 off; libcrux runs its portable (non-SIMD) code.</p>
@@ -320,7 +320,7 @@ previews in the web app. Plugins search the store by substring (below).</li>
 <p>A web plugin&#39;s <code>rim.chat.*</code> reads (<a href="plugin-chat-methods.html"><code>docs/plugin-chat-methods.md</code></a>) come from this store once the
 browser is set up for encrypted conversations: <code>webChatCache</code> (<code>plugins/chat/appMessageService.ts</code>)
 over <code>web/pluginView.ts</code>, which gives the desktop cache&#39;s plugin shape and leaves out the same rows
-(checked against <a href="https://github.com/rim-platform/rim-ui/blob/25f3f4e640d9fdd700a28fb61422c416ec3720f7/protocol/plugin-chat-vectors.json"><code>protocol/plugin-chat-vectors.json</code></a>). A conversation a plugin asks for that the
+(checked against <a href="https://github.com/rim-platform/rim-ui/blob/7f52241e1bb689c3584e74bdba093721c8caa1ff/protocol/plugin-chat-vectors.json"><code>protocol/plugin-chat-vectors.json</code></a>). A conversation a plugin asks for that the
 store does not hold yet is followed and answers <code>notCached</code> until its history is read; a browser
 not set up answers <code>noCache</code>. Search is a case-insensitive substring match over the stored rows,
 newest first, not the desktop&#39;s word-prefix index. A web plugin&#39;s <code>rim.chat.post_message</code> into an encrypted
@@ -348,7 +348,7 @@ incarnations, leaf checks, attachments against appendix A.3), and <code>npm run 
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/25f3f4e640d9fdd700a28fb61422c416ec3720f7/docs/e2ee-web.md">rim-ui/docs/e2ee-web.md</a> at <code>25f3f4e</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/7f52241e1bb689c3584e74bdba093721c8caa1ff/docs/e2ee-web.md">rim-ui/docs/e2ee-web.md</a> at <code>7f52241</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>
