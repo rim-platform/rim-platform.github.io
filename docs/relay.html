@@ -252,7 +252,13 @@ invite for the local member; until they accept, the
 conversation is left out of their <code>inboxConversations</code>, its events out of their
 <code>workspaceEvents</code>, and its notifications, mentions and unread counts out of the notification
 list, the bell, <code>unreadCounts</code> and the email digest; its first events are held with
-the request. Everything appears once they accept. This needs
+the request. Everything appears once they accept. They may read the conversation before they
+decide, but post nothing into it: while their request for it is pending or ignored, or they
+blocked whoever started it, <code>sendMessage</code>, <code>replyToMessage</code>, <code>forwardMessage</code> into it,
+<code>sendEncryptedMessage</code> and <code>toggleReaction</code> answer <code>FORBIDDEN</code> (&quot;accept the message request
+before posting here&quot;), and <code>startTyping</code> answers <code>false</code> without telling anyone. This server
+enforces it for the conversations it hosts; a reply to a request for a conversation hosted
+elsewhere goes to that host through the forward path, which leaves it to the client. This needs
 server-to-server traffic to be on; with it off, conversations in the direct space are live at
 once.</p>
 <div class="tablewrap"><table>
@@ -369,8 +375,8 @@ subscriptions lapsed. Every 5 seconds it sends revocations due for another attem
 applied from a person&#39;s identity, with the sessions and delegations they ended); <code>host.remote_join</code> and
 <code>host.delegation_accepted</code> are also written to <code>command_audit_log</code> (initiator <code>s2s</code>).</p>
 <h3 id="the-public-relay">The public relay <a class="anchor" href="#the-public-relay" aria-label="Link to this section">#</a></h3>
-<p>A relay anyone may sign up on runs with the settings of <a href="https://github.com/rim-platform/rim-server/blob/332b0aac07e86fe4292703ab0f88be585bcc6226/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a> on top of
-<a href="https://github.com/rim-platform/rim-server/blob/332b0aac07e86fe4292703ab0f88be585bcc6226/deploy/compose.yml"><code>deploy/compose.yml</code></a>, as <code>RIM_ROLE=relay</code>, or <code>both</code> to host workspaces as well, as the
+<p>A relay anyone may sign up on runs with the settings of <a href="https://github.com/rim-platform/rim-server/blob/a1052b78d8d0a729317f4ccb37ea706fb165092e/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a> on top of
+<a href="https://github.com/rim-platform/rim-server/blob/a1052b78d8d0a729317f4ccb37ea706fb165092e/deploy/compose.yml"><code>deploy/compose.yml</code></a>, as <code>RIM_ROLE=relay</code>, or <code>both</code> to host workspaces as well, as the
 project&#39;s relay does. This section says how its registration and blocks behave;
 <a href="operations/relay-public.html"><code>docs/operations/relay-public.md</code></a> has its quotas, the operator&#39;s commands and the abuse policy.</p>
 <p><strong>Registration.</strong> <code>RIM_REGISTRATION_POW_BITS</code> (1 to 40; 24 on the public relay) turns on <code>pow</code>
@@ -538,7 +544,7 @@ mutations are refused on it (<code>FORBIDDEN</code>), as through the relay.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/332b0aac07e86fe4292703ab0f88be585bcc6226/docs/relay.md">rim-server/docs/relay.md</a> at <code>332b0aa</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/a1052b78d8d0a729317f4ccb37ea706fb165092e/docs/relay.md">rim-server/docs/relay.md</a> at <code>a1052b7</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>
