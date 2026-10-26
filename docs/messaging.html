@@ -40,7 +40,7 @@
 <li><a href="#channel-visibility-and-membership">Channel Visibility And Membership</a></li>
 <li><a href="#who-may-start-a-dm">Who May Start A DM</a></li>
 <li><a href="#archived-channels">Archived Channels</a></li>
-<li><a href="#roles-and-moderation">Roles And Moderation</a><ol><li><a href="#roles">Roles</a></li><li><a href="#workspace-invites">Workspace invites</a></li><li><a href="#public-join-link-and-join-requests">Public join link and join requests</a></li><li><a href="#guest-restrictions-enforced-in-the-services">Guest restrictions (enforced in the services)</a></li><li><a href="#kick-ban-timeout">Kick, ban, timeout</a></li><li><a href="#slow-mode">Slow mode</a></li><li><a href="#deleting-messages">Deleting messages</a></li><li><a href="#reports">Reports</a></li><li><a href="#audit">Audit</a></li><li><a href="#realtime-events">Realtime events</a></li></ol></li>
+<li><a href="#roles-and-moderation">Roles And Moderation</a><ol><li><a href="#roles">Roles</a></li><li><a href="#workspace-invites">Workspace invites</a></li><li><a href="#public-join-link-and-join-requests">Public join link and join requests</a></li><li><a href="#guest-restrictions-enforced-in-the-services">Guest restrictions (enforced in the services)</a></li><li><a href="#kick-ban-timeout">Kick, ban, timeout</a></li><li><a href="#slow-mode">Slow mode</a></li><li><a href="#posting-permissions">Posting permissions</a></li><li><a href="#deleting-messages">Deleting messages</a></li><li><a href="#reports">Reports</a></li><li><a href="#audit">Audit</a></li><li><a href="#realtime-events">Realtime events</a></li></ol></li>
 <li><a href="#reactions">Reactions</a></li>
 <li><a href="#notification-rules">Notification Rules</a><ol><li><a href="#settings">Settings</a></li><li><a href="#the-decision-per-member-except-the-author">The decision, per member except the author</a></li><li><a href="#reactions-1">Reactions</a></li><li><a href="#inbox">Inbox</a></li><li><a href="#notificationdue-event">NotificationDue event</a></li></ol></li>
 <li><a href="#titles">Titles</a></li>
@@ -267,11 +267,11 @@ and searchable by whoever could read them before.</li>
 </tr>
 <tr>
 <td><code>MODERATOR</code></td>
-<td>Moderation (kick, ban, timeout, delete any message, slow mode, reports) and channel management (archive, remove members). Changes roles only between <code>MEMBER</code> and <code>GUEST</code>.</td>
+<td>Moderation (kick, ban, timeout, delete any message, slow mode, posting permissions, reports) and channel management (archive, remove members). Changes roles only between <code>MEMBER</code> and <code>GUEST</code>. Posts in every channel they can write in, whatever its posting policy.</td>
 </tr>
 <tr>
 <td><code>MEMBER</code></td>
-<td>The default. Reads and writes wherever they are a member (public channels without joining), creates channels and groups, joins public channels, invites people into conversations. In the server&#39;s default workspace only the Owner and Moderators create channels (<code>FORBIDDEN</code>).</td>
+<td>The default. Reads and writes wherever they are a member (public channels without joining) where the channel&#39;s posting policy lets them, creates channels and groups, joins public channels, invites people into conversations. In the server&#39;s default workspace only the Owner and Moderators create channels (<code>FORBIDDEN</code>).</td>
 </tr>
 <tr>
 <td><code>GUEST</code></td>
@@ -527,6 +527,77 @@ with <code>RATE_LIMITED</code> (extension <code>retryAfterSeconds</code>, rounde
 is younger than the interval. Owner and Moderators are exempt. The check reads the author&#39;s
 last <code>sent_at</code> in the conversation; no in-memory state.</li>
 </ul>
+<h3 id="posting-permissions">Posting permissions <a class="anchor" href="#posting-permissions" aria-label="Link to this section">#</a></h3>
+<ul>
+<li><p><code>setChannelPosting(serverId, conversationId, policy, allowsThreads)</code>: Owner/Moderator, channels
+only (a DM or group is <code>VALIDATION</code>), not on archived channels (<code>CONVERSATION_ARCHIVED</code>).
+<code>policy</code> is <code>EVERYONE</code> (the default) or <code>MODERATORS</code> (the workspace&#39;s Owner and Moderators);
+<code>allowsThreads</code> (default <code>true</code> for a new channel) says whether, under <code>MODERATORS</code>, everyone
+else may still react and reply in threads, and is ignored under <code>EVERYONE</code>. Shown as
+<code>Conversation.postingPolicy</code> and <code>Conversation.postingAllowsThreads</code> (DMs and groups are
+always <code>EVERYONE</code>); changes emit <code>ConversationUpdated</code>. Setting what is already set writes
+nothing. Also the command <code>chat.set_channel_posting</code>.</p>
+</li>
+<li><p>Under <code>MODERATORS</code>, the Owner and Moderators do everything as before. Everyone else (members
+and guests alike) is refused with <code>FORBIDDEN</code> (&quot;only the owner and moderators can post in
+this channel&quot;) as follows:</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Action</th>
+<th><code>allowsThreads: true</code></th>
+<th><code>allowsThreads: false</code></th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>sendMessage</code> (timeline replies with <code>parentMessageId</code> included)</td>
+<td>refused</td>
+<td>refused</td>
+</tr>
+<tr>
+<td><code>forwardMessage</code> into the channel</td>
+<td>refused</td>
+<td>refused</td>
+</tr>
+<tr>
+<td><code>replyToMessage</code> (thread reply)</td>
+<td>allowed</td>
+<td>refused</td>
+</tr>
+<tr>
+<td>adding a reaction</td>
+<td>allowed</td>
+<td>refused</td>
+</tr>
+<tr>
+<td>removing one&#39;s own reaction</td>
+<td>allowed</td>
+<td>allowed</td>
+</tr>
+<tr>
+<td><code>pinMessage</code> / <code>unpinMessage</code></td>
+<td>refused</td>
+<td>refused</td>
+</tr>
+<tr>
+<td>editing or deleting one&#39;s own messages</td>
+<td>allowed</td>
+<td>allowed</td>
+</tr>
+<tr>
+<td>reading, joining, leaving</td>
+<td>allowed</td>
+<td>allowed</td>
+</tr>
+</tbody></table></div>
+</li>
+<li><p>The check runs after the archive and timeout gates and before slow mode, in the services, so
+commands, macros, pipelines and requests forwarded from other servers meet it too. Uploading
+an attachment is not checked; the message that carries it is.</p>
+</li>
+<li><p>The default workspace&#39;s definition file sets it per channel (<a href="self-hosting.html"><code>docs/self-hosting.md</code></a>).</p>
+</li>
+</ul>
 <h3 id="deleting-messages">Deleting messages <a class="anchor" href="#deleting-messages" aria-label="Link to this section">#</a></h3>
 <p><code>deleteMessage</code>: the author, or an Owner/Moderator of the workspace who can read the
 conversation (a moderator outside a private channel gets <code>NOT_FOUND</code>, like any read). A
@@ -564,7 +635,8 @@ change or slow mode.</li>
 <p>Every moderation action writes one <code>command_audit_log</code> row (initiator <code>moderation</code>) through one
 shared helper, whether it came from GraphQL or a command: <code>admin.set_member_role</code>, <code>admin.kick</code>,
 <code>admin.ban</code>, <code>admin.unban</code>, <code>admin.timeout</code>, <code>admin.clear_timeout</code>, <code>chat.set_slow_mode</code>,
-<code>chat.report_message</code>, <code>admin.resolve_report</code>, <code>admin.delete_message</code>. Arguments hold ids and
+<code>chat.set_channel_posting</code>, <code>chat.report_message</code>, <code>admin.resolve_report</code>,
+<code>admin.delete_message</code>. Arguments hold ids and
 flags only, never reasons or message text. An action run as a command also gets the generic
 command-execution row. Refused actions are not audited by the helper.</p>
 <p>The public link writes rows with initiator <code>public_link</code>: <code>public_link.enabled</code>,
@@ -815,7 +887,7 @@ and the next query, without a scheduled event.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/a1052b78d8d0a729317f4ccb37ea706fb165092e/docs/messaging.md">rim-server/docs/messaging.md</a> at <code>a1052b7</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/3543e550d62d0f0b35f2841beef002380fd39d74/docs/messaging.md">rim-server/docs/messaging.md</a> at <code>3543e55</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

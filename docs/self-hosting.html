@@ -42,6 +42,7 @@
 <li><a href="#monitoring">Monitoring</a></li>
 <li><a href="#limits-and-blocking">Limits and blocking</a><ol><li><a href="#instance-limits">Instance limits</a></li></ol></li>
 <li><a href="#optional-features">Optional features</a></li>
+<li><a href="#profile-picture-check">Profile picture check</a></li>
 <li><a href="#notice-and-terms">Notice and terms</a></li>
 <li><a href="#legal-duties-of-an-operator">Legal duties of an operator</a></li>
 <li><a href="#a-default-workspace">A default workspace</a><ol><li><a href="#from-a-definition-file">From a definition file</a></li><li><a href="#a-workspace-made-in-the-app">A workspace made in the app</a></li><li><a href="#either-way">Either way</a></li></ol></li>
@@ -52,13 +53,13 @@
 </details></aside>
     <main id="content" class="prose">
 <h1 id="self-hosting-a-rim-server">Self-hosting a RIM server</h1>
-<p><a href="https://github.com/rim-platform/rim-server/blob/a1052b78d8d0a729317f4ccb37ea706fb165092e/deploy/compose.yml"><code>deploy/compose.yml</code></a> runs one RIM server on one domain: rim-server with <code>RIM_ROLE=both</code> (it
+<p><a href="https://github.com/rim-platform/rim-server/blob/3543e550d62d0f0b35f2841beef002380fd39d74/deploy/compose.yml"><code>deploy/compose.yml</code></a> runs one RIM server on one domain: rim-server with <code>RIM_ROLE=both</code> (it
 hosts workspaces and is its users&#39; relay), PostgreSQL 17, the web client, and Caddy terminating
 TLS. Caddy sends <code>/api</code> (with <code>/api/ws</code>), <code>/.well-known/…</code> and <code>/s2s/…</code> to rim-server and every
 other path to the web client, so the client and the API share one origin, unless the web client
 gets a domain of its own (&quot;The web client on its own domain&quot;). The health probes stay inside
 the compose network.
-A public relay is the same file with <a href="https://github.com/rim-platform/rim-server/blob/a1052b78d8d0a729317f4ccb37ea706fb165092e/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a> on top; <a href="deploy/index.html"><code>deploy/README.md</code></a>
+A public relay is the same file with <a href="https://github.com/rim-platform/rim-server/blob/3543e550d62d0f0b35f2841beef002380fd39d74/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a> on top; <a href="deploy/index.html"><code>deploy/README.md</code></a>
 covers it.</p>
 <p>Everything marked <strong>FILL</strong> is the operator&#39;s choice, recorded here once made.</p>
 <h2 id="before-the-first-start">Before the first start <a class="anchor" href="#before-the-first-start" aria-label="Link to this section">#</a></h2>
@@ -101,16 +102,19 @@ dc pull
 cosign verify ghcr.io/rim-platform/rim-server:$v \
   --certificate-identity https://github.com/rim-platform/rim-server/.github/workflows/release.yaml@refs/tags/v$v \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com
+cosign verify ghcr.io/rim-platform/rim-imagecheck:$v \
+  --certificate-identity https://github.com/rim-platform/rim-server/.github/workflows/release.yaml@refs/tags/v$v \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com
 cosign verify ghcr.io/rim-platform/rim-web:$v \
   --certificate-identity https://github.com/rim-platform/rim-ui/.github/workflows/release.yaml@refs/tags/v$v \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com</code></pre>
 <p>cosign prints the digest it verified, which is also in the GitHub release notes. Setting
-<code>RIM_SERVER_IMAGE</code> and <code>RIM_WEB_IMAGE</code> in <code>deploy/.env</code> to <code>…@sha256:&lt;digest&gt;</code> makes compose run
-exactly those images. Each release also carries the image&#39;s SBOM (SPDX JSON), attested to the
-image: <code>cosign verify-attestation --type spdxjson</code> with the same flags checks it.</p>
+<code>RIM_SERVER_IMAGE</code>, <code>RIM_IMAGECHECK_IMAGE</code> and <code>RIM_WEB_IMAGE</code> in <code>deploy/.env</code> to
+<code>…@sha256:&lt;digest&gt;</code> makes compose run exactly those images. Each release also carries the image&#39;s SBOM (SPDX JSON), attested to the
+image&#39;s digest as a GitHub attestation: <code>gh attestation verify oci://&lt;image&gt;@&lt;digest&gt; --repo &lt;the image's repository&gt; --predicate-type https://spdx.dev/Document/v2.3</code> checks it.</p>
 <h3 id="the-web-clients-endpoint">The web client&#39;s endpoint <a class="anchor" href="#the-web-clients-endpoint" aria-label="Link to this section">#</a></h3>
 <p>The web client finds the API through <code>VITE_GRAPHQL_ENDPOINT</code>, baked in when its image is built.
-The published image is built with <code>/api</code>, and <a href="https://github.com/rim-platform/rim-server/blob/a1052b78d8d0a729317f4ccb37ea706fb165092e/deploy/compose.dev.yml"><code>deploy/compose.dev.yml</code></a> passes
+The published image is built with <code>/api</code>, and <a href="https://github.com/rim-platform/rim-server/blob/3543e550d62d0f0b35f2841beef002380fd39d74/deploy/compose.dev.yml"><code>deploy/compose.dev.yml</code></a> passes
 <code>RIM_WEB_GRAPHQL_ENDPOINT</code>, default <code>/api</code>: the client resolves it against the page&#39;s own
 address, so one image serves any domain and needs no CORS. The image&#39;s
 content security policy allows <code>connect-src 'self'</code>, which covers the API and its WebSocket on
@@ -129,7 +133,7 @@ the web domain&#39;s origin when <code>RIM_WEB_DOMAIN</code> is set (next sectio
 <p><code>RIM_WEB_DOMAIN</code> in <code>deploy/.env</code> serves the web client on a second domain, such as
 <code>chat.example.org</code> next to <code>RIM_DOMAIN=rim.example.org</code>; its DNS records point at the same host.
 <code>RIM_DOMAIN</code> stays the server&#39;s name: <code>RIM_PUBLIC_BASE_URL</code> follows it, apps sign in to it,
-other servers reach it, and the discovery document names it. <a href="https://github.com/rim-platform/rim-server/blob/a1052b78d8d0a729317f4ccb37ea706fb165092e/deploy/Caddyfile"><code>deploy/Caddyfile</code></a> then answers
+other servers reach it, and the discovery document names it. <a href="https://github.com/rim-platform/rim-server/blob/3543e550d62d0f0b35f2841beef002380fd39d74/deploy/Caddyfile"><code>deploy/Caddyfile</code></a> then answers
 for both names:</p>
 <ul>
 <li>on the web domain, <code>/api</code> (with <code>/api/ws</code>) and <code>/.well-known/rim-server</code> go to rim-server and
@@ -208,7 +212,7 @@ release runs on them, started with <code>dc up -d --no-deps rim web</code>, and 
 backup taken before the update. <a href="operations/upgrade.html"><code>docs/operations/upgrade.md</code></a> has the whole procedure, what to
 read in <a href="changelog.html"><code>CHANGELOG.md</code></a> first, and the rollback.</p>
 <h2 id="backups">Backups <a class="anchor" href="#backups" aria-label="Link to this section">#</a></h2>
-<p><a href="https://github.com/rim-platform/rim-server/blob/a1052b78d8d0a729317f4ccb37ea706fb165092e/deploy/backup.sh"><code>deploy/backup.sh</code></a> writes one archive, <code>rim-backup-&lt;project&gt;-&lt;UTC time&gt;.tar</code>, under
+<p><a href="https://github.com/rim-platform/rim-server/blob/3543e550d62d0f0b35f2841beef002380fd39d74/deploy/backup.sh"><code>deploy/backup.sh</code></a> writes one archive, <code>rim-backup-&lt;project&gt;-&lt;UTC time&gt;.tar</code>, under
 <code>RIM_BACKUP_DIR</code> (default <code>./backups</code>, which Git ignores). It holds:</p>
 <div class="tablewrap"><table>
 <thead>
@@ -262,7 +266,7 @@ warning and the backup still succeeds; a URL that is not https stops the script 
 machine) and how long copies are kept. The archive holds the server&#39;s private key and every
 user&#39;s data; treat it like the host itself.</p>
 <h3 id="restore">Restore <a class="anchor" href="#restore" aria-label="Link to this section">#</a></h3>
-<p><a href="https://github.com/rim-platform/rim-server/blob/a1052b78d8d0a729317f4ccb37ea706fb165092e/deploy/restore.sh"><code>deploy/restore.sh</code></a> restores an archive into a stopped stack: it drops and recreates the
+<p><a href="https://github.com/rim-platform/rim-server/blob/3543e550d62d0f0b35f2841beef002380fd39d74/deploy/restore.sh"><code>deploy/restore.sh</code></a> restores an archive into a stopped stack: it drops and recreates the
 database from the dump, empties the data volume and refills it, starts the stack and waits for
 <code>/readyz</code>. It asks for the project name before it replaces anything (<code>RIM_RESTORE_YES=1</code> skips
 that).</p>
@@ -273,7 +277,7 @@ RIM_BACKUP_AGE_IDENTITY=~/rim-backup.key deploy/restore.sh backups/….tar.age</
 or pull the images, and run the same command. A newer image applies its migrations to the
 restored database when it starts.</p>
 <h3 id="the-restore-drill">The restore drill <a class="anchor" href="#the-restore-drill" aria-label="Link to this section">#</a></h3>
-<p>A backup is good once it has been restored. <a href="https://github.com/rim-platform/rim-server/blob/a1052b78d8d0a729317f4ccb37ea706fb165092e/deploy/restore-drill.sh"><code>deploy/restore-drill.sh</code></a> restores the newest archive
+<p>A backup is good once it has been restored. <a href="https://github.com/rim-platform/rim-server/blob/3543e550d62d0f0b35f2841beef002380fd39d74/deploy/restore-drill.sh"><code>deploy/restore-drill.sh</code></a> restores the newest archive
 (or the one given) into a throwaway project, <code>rim-drill</code>, waits for <code>/readyz</code>, prints the server
 key and the row counts of a few tables, and removes the project and its volumes. The drill&#39;s
 server has server-to-server traffic and mail off and publishes no port, so it never speaks for the
@@ -321,7 +325,7 @@ timer, how often, and the setting that changes it.</p>
 <p>A server open to the internet can limit what one client sends: requests per address, mutations
 per session, messages per user, and WebSocket connections and subscriptions. Every limit is off
 until its <code>RIM_RATE_*</code> variable is set in <code>deploy/.env</code> (the &quot;Request limits&quot; block of
-<a href="https://github.com/rim-platform/rim-server/blob/a1052b78d8d0a729317f4ccb37ea706fb165092e/deploy/.env.example"><code>deploy/.env.example</code></a>); <a href="api.html"><code>docs/api.md</code></a> (&quot;Limits&quot;) says what clients see past each one. An
+<a href="https://github.com/rim-platform/rim-server/blob/3543e550d62d0f0b35f2841beef002380fd39d74/deploy/.env.example"><code>deploy/.env.example</code></a>); <a href="api.html"><code>docs/api.md</code></a> (&quot;Limits&quot;) says what clients see past each one. An
 address or range that keeps misbehaving is blocked outright with
 <code>dc exec rim /app/rim-server ip block 203.0.113.0/24 --reason &quot;scraping&quot; --expires-in-days 30</code>:
 it gets 403 <code>{&quot;error&quot;:&quot;blocked&quot;}</code> on every route but <code>/healthz</code>, server-to-server routes
@@ -337,7 +341,7 @@ the first address in <code>X-Forwarded-For</code>, which Caddy replaces with the
 channels per workspace, devices per account, DM requests to strangers per day, macros,
 pipelines and plugins per workspace, invites per user per day, uses per invite and the bytes
 of a message. Each is a <code>RIM_LIMIT_*</code> variable, off until set (the &quot;Instance limits&quot; block of
-<a href="https://github.com/rim-platform/rim-server/blob/a1052b78d8d0a729317f4ccb37ea706fb165092e/deploy/.env.example"><code>deploy/.env.example</code></a> has values for a small test instance); past one a write is refused with
+<a href="https://github.com/rim-platform/rim-server/blob/3543e550d62d0f0b35f2841beef002380fd39d74/deploy/.env.example"><code>deploy/.env.example</code></a> has values for a small test instance); past one a write is refused with
 a message naming the cap, and clients read every cap from <code>serverInfo.limits</code>. Channels count
 while unarchived, and a workspace holds at most five times the channel cap counting archived
 ones. A member who is neither Owner nor Moderator holds at most a fifth of a
@@ -360,22 +364,68 @@ read <code>serverInfo.registrationFull</code> and can say so before anyone tries
 at a time, so two at once never pass it. Lowering it below the accounts there are refuses new
 signups only; nobody loses an account.</p>
 <p><code>RIM_PROBATION_HOURS</code> slows down accounts made to spam: for that many hours after its creation
-an account cannot create a workspace, write a workspace&#39;s shared state, or send a DM request to
-someone it shares no workspace with and does not know (a contact who lists it too, or someone
-either of them accepted a DM request from; adding someone as a contact alone is not enough), and
-with <code>RIM_RATE_PROBATION_MESSAGES_PER_MIN</code> it sends messages at that lower rate. Existing accounts
+an account cannot create a workspace, write a workspace&#39;s shared state, set a profile picture,
+status or bio (it may set its display name), or send a DM request to someone it shares no
+workspace with and does not know (a contact who lists it too, or someone either of them
+accepted a DM request from; adding someone as a contact alone is not enough), and with <code>RIM_RATE_PROBATION_MESSAGES_PER_MIN</code> it sends messages at that lower rate. Existing accounts
 are judged by their age, so turning it on does not hold back anyone older than the setting. The
 default workspace (&quot;A default workspace&quot; below) is left out of the workspaces it shares, since
 every new account joins it, and a DM in it meets probation like one in the direct space. The
 instance operator is never on probation: the account that claims the default workspace with the
 operator role, or one granted it with <code>rim_server operator grant</code>, can create workspaces and
 message anyone from the moment it holds the role.</p>
+<p>Profile pictures are re-encoded by the server: whatever is uploaded (PNG, JPEG, GIF or WebP, at
+most 1 MiB and 4096 pixels a side) is stored as a 256×256 PNG of its first frame with no
+metadata. Two limits per account are on by default, and 0 turns either off:
+<code>RIM_AVATAR_UPLOADS_PER_HOUR</code> (5) and <code>RIM_AVATAR_UPLOADS_PER_DAY</code> (20). Every upload attempt
+counts, a refused one too; removing a picture does not, and an instance operator is exempt. Past
+either the upload is refused with 429 and <code>Retry-After</code>. The counts are kept in the server&#39;s
+memory, so a restart starts them afresh. A profile with an abusive picture, name, status or bio
+is cleared with <code>rim_server principal clear-profile &lt;principal-id&gt; --reason &lt;text&gt;</code>, and
+<code>--lock-days &lt;n&gt;</code> keeps the account from setting them again for that many days
+(<a href="operations/relay-public.html"><code>docs/operations/relay-public.md</code></a>, &quot;An abusive profile&quot;). It clears what this server shows;
+another server keeps showing the display name in its copy of the person&#39;s signed profile card.</p>
 <h2 id="optional-features">Optional features <a class="anchor" href="#optional-features" aria-label="Link to this section">#</a></h2>
 <p>Attachments, link previews, email, custom emoji, workspace plugins, the AI command surface and
 avatars can be switched off with <code>RIM_FEATURES_DISABLED</code> in <code>deploy/.env</code>;
 <a href="operations/features.html"><code>docs/operations/features.md</code></a> lists what each one covers and what clients see.
 <code>RIM_LINK_PREVIEW_CONCURRENCY</code> (default 8) caps the link preview fetches running at once.
 Outgoing requests ignore proxy environment variables.</p>
+<h2 id="profile-picture-check">Profile picture check <a class="anchor" href="#profile-picture-check" aria-label="Link to this section">#</a></h2>
+<p><a href="https://github.com/rim-platform/rim-server/blob/3543e550d62d0f0b35f2841beef002380fd39d74/deploy/compose.yml"><code>deploy/compose.yml</code></a> runs <code>imagecheck</code> next to the server: a small service, built from
+<a href="https://github.com/rim-platform/rim-server/tree/3543e550d62d0f0b35f2841beef002380fd39d74/imagecheck"><code>imagecheck/</code></a> in this repository and published as <code>ghcr.io/rim-platform/rim-imagecheck</code>, that
+scores every uploaded profile picture for sexual content, gore and violence, each from 0 to 1.
+It runs two models on the CPU, a trained nsfw classifier and CLIP, holds them in about 320 MB
+of memory (its limit is 1 GB and 2 CPUs) and takes about a tenth of a second a picture. It is on
+the internal network only and reaches nothing; <a href="https://github.com/rim-platform/rim-server/blob/3543e550d62d0f0b35f2841beef002380fd39d74/imagecheck/README.md"><code>imagecheck/README.md</code></a> describes the models, their
+licences and the scores of ordinary pictures.</p>
+<p>The server holds the highest of the three scores against two thresholds:</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Default</th>
+<th>At or above it</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>RIM_AVATAR_CHECK_BLOCK</code></td>
+<td>0.85</td>
+<td>the upload is refused with 422 and nothing is stored</td>
+</tr>
+<tr>
+<td><code>RIM_AVATAR_CHECK_REPORT</code></td>
+<td>0.60</td>
+<td>the picture is stored and an abuse report is filed for the operators</td>
+</tr>
+</tbody></table></div>
+<p>Both are in (0, 1], and the report threshold is at most the block one, or the server stops at
+boot. Below both the picture is stored. Nobody approves a picture before it is shown.</p>
+<p><code>RIM_AVATAR_CHECK_URL</code> is where the server reaches the service, <code>http://imagecheck:8090</code> in
+<a href="https://github.com/rim-platform/rim-server/blob/3543e550d62d0f0b35f2841beef002380fd39d74/deploy/compose.yml"><code>deploy/compose.yml</code></a>. The server does not wait for the service at start: while it is down,
+picture uploads answer 503 and everything else works. To run without it, set
+<code>RIM_AVATAR_CHECK_URL=</code> (empty) in <code>deploy/.env</code> and leave the <code>imagecheck</code> service stopped;
+pictures are then stored unchecked, and the server logs a warning saying so at every start.</p>
 <h2 id="notice-and-terms">Notice and terms <a class="anchor" href="#notice-and-terms" aria-label="Link to this section">#</a></h2>
 <p><code>RIM_INSTANCE_NOTICE</code> is a short text, at most 500 characters, that clients show people on
 your server, such as who runs it and how to reach you. Once your server has terms of service,
@@ -384,7 +434,7 @@ URL it accepted. The terms come from one of two settings, never both (both set s
 server at boot):</p>
 <ul>
 <li><code>RIM_TERMS_FILE</code>, a Markdown file the server reads at start and serves as a page at
-<code>https://&lt;your domain&gt;/api/terms</code>. <code>compose.yml</code> mounts <a href="https://github.com/rim-platform/rim-server/blob/a1052b78d8d0a729317f4ccb37ea706fb165092e/deploy/terms.md"><code>deploy/terms.md</code></a> at
+<code>https://&lt;your domain&gt;/api/terms</code>. <code>compose.yml</code> mounts <a href="https://github.com/rim-platform/rim-server/blob/3543e550d62d0f0b35f2841beef002380fd39d74/deploy/terms.md"><code>deploy/terms.md</code></a> at
 <code>/config/terms.md</code>; that file is the public RIM server&#39;s terms, so rewrite it for your
 server, then set <code>RIM_TERMS_FILE=/config/terms.md</code>. The page shows headings, paragraphs,
 lists, bold and italic text, code and links (https, http and mailto); any HTML in the file
@@ -402,11 +452,11 @@ show it. Anything else stops the server at boot.</p>
 age: clients show &quot;I am at least 16&quot; beside the terms, and a signup without the confirmation
 is refused. The age is self-declared. Nothing checks it and the account records only the age it
 confirmed, next to its acceptance of the terms.</p>
-<p>All of these are commented out in <a href="https://github.com/rim-platform/rim-server/blob/a1052b78d8d0a729317f4ccb37ea706fb165092e/deploy/.env.example"><code>deploy/.env.example</code></a> and reach the <code>rim</code> service when set;
+<p>All of these are commented out in <a href="https://github.com/rim-platform/rim-server/blob/3543e550d62d0f0b35f2841beef002380fd39d74/deploy/.env.example"><code>deploy/.env.example</code></a> and reach the <code>rim</code> service when set;
 clients read them from <code>serverInfo</code>. A notice over 500 characters or a terms URL that is not an
 absolute http(s) URL stops the server at boot. Changing the terms does not ask existing
 accounts to accept again.</p>
-<p><code>RIM_RESERVED_NAMES</code> (commented out in <a href="https://github.com/rim-platform/rim-server/blob/a1052b78d8d0a729317f4ccb37ea706fb165092e/deploy/.env.example"><code>deploy/.env.example</code></a>) lists usernames and display names
+<p><code>RIM_RESERVED_NAMES</code> (commented out in <a href="https://github.com/rim-platform/rim-server/blob/3543e550d62d0f0b35f2841beef002380fd39d74/deploy/.env.example"><code>deploy/.env.example</code></a>) lists usernames and display names
 that signups and profile edits refuse, ignoring case, invisible characters and lookalike letters
 from other scripts (Cyrillic <code>А</code> for <code>A</code>), so nobody can pose as your maintainers; a person from
 another server whose profile card names one is shown by their username instead. The signup
@@ -453,7 +503,7 @@ it still sends no DM request to someone it shares no other workspace with.</p>
 Setting both stops the server at boot.</p>
 <h3 id="from-a-definition-file">From a definition file <a class="anchor" href="#from-a-definition-file" aria-label="Link to this section">#</a></h3>
 <p><code>RIM_DEFAULT_WORKSPACE_FILE</code> names a JSON file that describes the workspace. <code>compose.yml</code>
-mounts <a href="https://github.com/rim-platform/rim-server/blob/a1052b78d8d0a729317f4ccb37ea706fb165092e/deploy/default-workspace.json"><code>deploy/default-workspace.json</code></a> read-only at <code>/config/default-workspace.json</code>; set the
+mounts <a href="https://github.com/rim-platform/rim-server/blob/3543e550d62d0f0b35f2841beef002380fd39d74/deploy/default-workspace.json"><code>deploy/default-workspace.json</code></a> read-only at <code>/config/default-workspace.json</code>; set the
 variable to that path in <code>deploy/.env</code> (a relay that hosts a workspace does the same,
 <a href="deploy/index.html"><code>deploy/README.md</code></a>). The committed file is the project&#39;s own workspace on the public relay; edit
 it for yours:</p>
@@ -463,7 +513,7 @@ it for yours:</p>
   &quot;dm&quot;: { &quot;outsideFloor&quot;: &quot;REQUESTS&quot;, &quot;memberDefault&quot;: &quot;REQUESTS&quot; },
   &quot;channels&quot;: [
     { &quot;name&quot;: &quot;general&quot;, &quot;topic&quot;: &quot;Anything about RIM&quot; },
-    { &quot;name&quot;: &quot;announcements&quot;, &quot;topic&quot;: &quot;Releases and news from the project&quot; }
+    { &quot;name&quot;: &quot;announcements&quot;, &quot;topic&quot;: &quot;Releases and news from the project&quot;, &quot;posting&quot;: &quot;moderators&quot; }
   ]
 }</code></pre>
 <ul>
@@ -477,7 +527,12 @@ DM or group to anyone else here arrives at once and meets no request limit; <cod
 in the committed file, holds it in the recipient&#39;s request inbox until they accept it, and
 each member can still choose <code>DIRECT</code> for themselves (<code>setMyWorkspaceDmSetting</code>).</li>
 <li><code>channels</code> (optional): each with a <code>name</code> (at most 100 characters, unique in the file), an
-optional <code>topic</code> (at most 512 characters) and <code>private</code> (default <code>false</code>).</li>
+optional <code>topic</code> (at most 512 characters), <code>private</code> (default <code>false</code>), an optional <code>posting</code>
+and an optional <code>postingAllowsThreads</code>. <code>posting</code> is who may post in the channel, as
+<code>setChannelPosting</code> sets it: <code>&quot;everyone&quot;</code> or <code>&quot;moderators&quot;</code> (the Owner and Moderators only, as
+for <code>announcements</code> in the committed file). <code>postingAllowsThreads</code> (default <code>true</code>, only
+together with <code>posting</code>) says whether, under <code>&quot;moderators&quot;</code>, everyone else may still react and
+reply in threads. Without <code>posting</code> the channel&#39;s setting stays as it is.</li>
 </ul>
 <p>The server checks the file at every start; a field it does not take, a missing name, a value out
 of range or a file it cannot read stops it at boot with a message naming the field. The owner is
@@ -489,8 +544,8 @@ that a claim is waiting and names the file, never the link. Each start revokes t
 so a lost or expired link is a restart. Read it and open it in the app:</p>
 <pre><code class="language-sh">dc exec rim cat /data/owner-claim.txt</code></pre>
 <p>The account that signs up through the link, with a key or a password, creates the workspace in
-the same step: the workspace with that account as its Owner, the channels with their topics, the
-DM policy, and the instance operator role when <code>claimGrantsOperator</code> is set. Every local account
+the same step: the workspace with that account as its Owner, the channels with their topics and
+posting policies, the DM policy, and the instance operator role when <code>claimGrantsOperator</code> is set. Every local account
 that already exists joins it as a Member. The link is then used up and the file deleted; nothing
 needs editing and nothing restarts. Only a new signup claims: an account that already exists
 cannot, and nobody can claim by registering a name first, since only someone who can read the
@@ -499,9 +554,9 @@ stands in for the proof-of-work in proof-of-work mode; a server with <code>RIM_O
 whose signups take no invite, refuses to start until the workspace is claimed.</p>
 <p><strong>Every later start</strong> applies the file to the claimed workspace again: it renames the workspace
 when the name changed, creates the channels missing by name (with no members; new accounts join
-the public ones), sets the topics the file gives and the DM policy. It never deletes a channel
-or a member, never changes a channel&#39;s privacy and never moves ownership (the Owner transfers
-it in the app). A channel renamed in the file is a new channel: rename it in the app first, then
+the public ones), sets the topics and posting policies the file gives and the DM policy. It
+never deletes a channel or a member, never changes a channel&#39;s privacy and never moves
+ownership (the Owner transfers it in the app). A channel renamed in the file is a new channel: rename it in the app first, then
 in the file. A channel or topic made in the app and left out of the file stays as it is. A
 channel of a file&#39;s name that someone other than the Owner or a Moderator created is left alone,
 topic included, and the log names it: give the file&#39;s channel another name. When
@@ -509,7 +564,7 @@ the claimed workspace is deleted, the next start offers a new claim. Unsetting t
 stops the default workspace (signups join nothing) and revokes a waiting claim link; the
 workspace itself stays.</p>
 <h3 id="a-workspace-made-in-the-app">A workspace made in the app <a class="anchor" href="#a-workspace-made-in-the-app" aria-label="Link to this section">#</a></h3>
-<p><code>RIM_DEFAULT_WORKSPACE</code> (commented out in <a href="https://github.com/rim-platform/rim-server/blob/a1052b78d8d0a729317f4ccb37ea706fb165092e/deploy/.env.example"><code>deploy/.env.example</code></a>) names a workspace on this server
+<p><code>RIM_DEFAULT_WORKSPACE</code> (commented out in <a href="https://github.com/rim-platform/rim-server/blob/3543e550d62d0f0b35f2841beef002380fd39d74/deploy/.env.example"><code>deploy/.env.example</code></a>) names a workspace on this server
 by its id. Create the workspace in the app, look its id up, set it in <code>deploy/.env</code> and run
 <code>dc up -d</code>:</p>
 <pre><code class="language-sh">dc exec -T postgres psql -U rim -d rim -c &quot;SELECT id, name FROM server WHERE kind = 'workspace'&quot;</code></pre>
@@ -535,7 +590,7 @@ DMs and encrypted groups are untouched, and other servers see an ordinary member
 <p>Everyone here has a handle, <code>@&lt;username&gt;:&lt;domain&gt;</code>, which other servers and their apps show
 for them and which people type to mention or search for them. Usernames are 3 to 32 letters,
 digits, <code>_</code> and <code>-</code>, stored in lowercase: <code>Kuba</code> signs up as <code>kuba</code>, and sign-in and search
-accept any case. The domain is <code>RIM_HANDLE_DOMAIN</code>, commented out in <a href="https://github.com/rim-platform/rim-server/blob/a1052b78d8d0a729317f4ccb37ea706fb165092e/deploy/.env.example"><code>deploy/.env.example</code></a>: by
+accept any case. The domain is <code>RIM_HANDLE_DOMAIN</code>, commented out in <a href="https://github.com/rim-platform/rim-server/blob/3543e550d62d0f0b35f2841beef002380fd39d74/deploy/.env.example"><code>deploy/.env.example</code></a>: by
 default the host of <code>RIM_PUBLIC_BASE_URL</code> (<code>rim.example.org</code> gives <code>@kuba:rim.example.org</code>),
 and the server refuses to start when it is not a DNS name. Handles may use a shorter domain
 than the server&#39;s, say <code>example.org</code> for a server at <code>rim.example.org</code>, when
@@ -543,7 +598,7 @@ than the server&#39;s, say <code>example.org</code> for a server at <code>rim.ex
 <a href="server-identity.html"><code>docs/server-identity.md</code></a>, &quot;Handles and delegation&quot;, has the details. Choose the domain before
 people join: changing it later changes every handle here (keys, contacts and memberships stay).</p>
 <p><code>RIM_DM_INBOUND</code>, <code>RIM_DM_OUTBOUND</code> and <code>RIM_DM_PARTNERS</code> (commented out in
-<a href="https://github.com/rim-platform/rim-server/blob/a1052b78d8d0a729317f4ccb37ea706fb165092e/deploy/.env.example"><code>deploy/.env.example</code></a>) set floors for every account: by default a stranger&#39;s first message is a
+<a href="https://github.com/rim-platform/rim-server/blob/3543e550d62d0f0b35f2841beef002380fd39d74/deploy/.env.example"><code>deploy/.env.example</code></a>) set floors for every account: by default a stranger&#39;s first message is a
 request the recipient accepts, and people here may start DMs with anyone. A company closes its
 server with <code>none</code>, or opens it to named partner servers with <code>partners</code>
 (<a href="operations/closed-company-server.html"><code>docs/operations/closed-company-server.md</code></a>). Workspace owners and each person tighten further
@@ -552,7 +607,7 @@ it at boot.</p>
 <h2 id="deleted-accounts">Deleted accounts <a class="anchor" href="#deleted-accounts" aria-label="Link to this section">#</a></h2>
 <p>People delete their own account from the client. The account is purged once a grace period
 ends, <code>RIM_ACCOUNT_DELETION_GRACE_DAYS</code> days after the request (default 14, 0 to 30; 0 purges at
-the next hourly run; commented out in <a href="https://github.com/rim-platform/rim-server/blob/a1052b78d8d0a729317f4ccb37ea706fb165092e/deploy/.env.example"><code>deploy/.env.example</code></a>); until then the person can cancel.
+the next hourly run; commented out in <a href="https://github.com/rim-platform/rim-server/blob/3543e550d62d0f0b35f2841beef002380fd39d74/deploy/.env.example"><code>deploy/.env.example</code></a>); until then the person can cancel.
 The purge removes the account&#39;s sessions, devices and keys, memberships, plaintext messages with
 their files, every file in its avatar directory (<code>avatars/&lt;user id&gt;/</code> under the uploads), settings
 and personal automations, and deletes the workspaces where it was the only member. What remains is a tombstone row with the same id, named <code>deleted-</code> and the
@@ -582,7 +637,7 @@ address from its first entry and never reads <code>Forwarded</code>;</li>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/a1052b78d8d0a729317f4ccb37ea706fb165092e/docs/self-hosting.md">rim-server/docs/self-hosting.md</a> at <code>a1052b7</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/3543e550d62d0f0b35f2841beef002380fd39d74/docs/self-hosting.md">rim-server/docs/self-hosting.md</a> at <code>3543e55</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

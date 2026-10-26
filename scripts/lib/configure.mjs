@@ -44,6 +44,11 @@ const GROUPS = [
     names: ["RIM_METRICS_ADDR", "RIM_AUDIT_LOG_PATH", "RIM_AUDIT_RETENTION_DAYS", "RIM_AUDIT_LOG_RETENTION_DAYS", "RIM_AUDIT_EXPORT_RETENTION_DAYS", "RIM_FEATURES_DISABLED", "RUST_LOG", "RIM_ENABLE_GRAPHIQL", "RIM_INSTANCE_NOTICE", "RIM_ABUSE_CONTACT", "RIM_LINK_PREVIEW_CONCURRENCY"],
   },
   {
+    title: "Profile pictures",
+    intro: "How many profile pictures an account may upload per hour and per day, and the image check that scores each picture before it is stored: refused at the block threshold, stored and reported to the operators at the report threshold.",
+    names: ["RIM_AVATAR_UPLOADS_PER_HOUR", "RIM_AVATAR_UPLOADS_PER_DAY", "RIM_AVATAR_CHECK_URL", "RIM_AVATAR_CHECK_BLOCK", "RIM_AVATAR_CHECK_REPORT"],
+  },
+  {
     title: "Limits and rate limits",
     intro: "Request, mutation, message and connection limits of the API, and how often open WebSocket connections recheck their session. Each rate limit is off until set.",
     names: ["RIM_API_MAX_BATCH", "RIM_WS_SESSION_RECHECK_SECS"],

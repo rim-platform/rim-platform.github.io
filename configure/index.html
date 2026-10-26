@@ -41,6 +41,7 @@
 <li><a href="#roles-and-federation">Roles and federation</a></li>
 <li><a href="#mail">Mail</a></li>
 <li><a href="#operations">Operations</a></li>
+<li><a href="#profile-pictures">Profile pictures</a></li>
 <li><a href="#limits-and-rate-limits">Limits and rate limits</a></li>
 <li><a href="#instance-limits">Instance limits</a></li>
 <li><a href="#command-line">Command line</a></li>
@@ -48,7 +49,7 @@
 </details></aside>
     <main id="content" class="prose">
 <h1>Configure</h1>
-<p class="lede">The server is configured by environment variables, all prefixed <code>RIM_</code> except <code>DATABASE_URL</code> and the log filter <code>RUST_LOG</code>. In development an untracked <code>.env</code> file works too. This page is generated from <a href="https://github.com/rim-platform/rim-server/blob/a1052b78d8d0a729317f4ccb37ea706fb165092e/rim_server/src/config.rs"><code>rim_server/src/config.rs</code></a>, cross-checked with the variable block of the <a href="https://github.com/rim-platform/rim-server/blob/a1052b78d8d0a729317f4ccb37ea706fb165092e/Dockerfile"><code>Dockerfile</code></a>; the compose stack's own settings are in <a href="https://github.com/rim-platform/rim-server/blob/a1052b78d8d0a729317f4ccb37ea706fb165092e/deploy/.env.example"><code>deploy/.env.example</code></a>.</p>
+<p class="lede">The server is configured by environment variables, all prefixed <code>RIM_</code> except <code>DATABASE_URL</code> and the log filter <code>RUST_LOG</code>. In development an untracked <code>.env</code> file works too. This page is generated from <a href="https://github.com/rim-platform/rim-server/blob/3543e550d62d0f0b35f2841beef002380fd39d74/rim_server/src/config.rs"><code>rim_server/src/config.rs</code></a>, cross-checked with the variable block of the <a href="https://github.com/rim-platform/rim-server/blob/3543e550d62d0f0b35f2841beef002380fd39d74/Dockerfile"><code>Dockerfile</code></a>; the compose stack's own settings are in <a href="https://github.com/rim-platform/rim-server/blob/3543e550d62d0f0b35f2841beef002380fd39d74/deploy/.env.example"><code>deploy/.env.example</code></a>.</p>
 <h2 id="listening">Listening <a class="anchor" href="#listening" aria-label="Link to this section">#</a></h2>
 <p class="muted">Where the server listens, the origin clients reach it at, and how it treats the proxy in front of it.</p>
 <div class="tablewrap"><table class="vars">
@@ -131,9 +132,9 @@ take them.</p>
 <p><code>RIM_RESERVED_NAMES</code>, compared case-insensitively after NFKC normalisation; nothing is
 reserved when it is unset or blank.</p><p class="faint">Refused at boot with a message naming the variable when an entry is empty, as in <code>rim,,admin</code>.</p><p class="faint">Dockerfile: comma-separated usernames and display names signups and profile edits refuse, also followed by -, _, . or a space; an empty entry stops the server at boot.</p></td></tr>
 <tr id="RIM_PROBATION_HOURS"><td><code>RIM_PROBATION_HOURS</code><span class="default">default off</span></td><td><p>Hours after its creation during which an account cannot create a workspace, write a
-workspace&#39;s shared state or send a DM request to a stranger; an instance operator is
-never on probation. Unset or 0 turns
-probation off.</p><p class="faint">Unset, it turns probation off.</p><p class="faint">Dockerfile: hours after creation during which an account creates no workspace, writes no shared workspace state and sends no DM request to a stranger; never an instance operator.</p></td></tr>
+workspace&#39;s shared state, send a DM request to a stranger or set a profile picture,
+status or bio; an instance operator is never on probation. Unset or 0 turns probation
+off.</p><p class="faint">Unset, it turns probation off.</p><p class="faint">Dockerfile: hours after creation during which an account creates no workspace, writes no shared workspace state and sends no DM request to a stranger; never an instance operator.</p></td></tr>
 <tr id="RIM_SESSION_TTL_DAYS"><td><code>RIM_SESSION_TTL_DAYS</code><span class="default">default <code>30</code></span></td><td><p>Session lifetime.</p><p class="note">No doc comment in config.rs; described from the Dockerfile.</p></td></tr>
 <tr id="RIM_TERMS_URL"><td><code>RIM_TERMS_URL</code><span class="default">default none</span></td><td><p>The terms of service every signup accepts, an absolute http(s) URL, for terms hosted
 elsewhere.</p>
@@ -216,7 +217,7 @@ Default: 900 (15 minutes); values below 60 are raised to 60.</p><p class="faint"
 <thead><tr><th>Variable</th><th>What it does</th></tr></thead>
 <tbody>
 <tr id="RIM_METRICS_ADDR"><td><code>RIM_METRICS_ADDR</code><span class="default">default off</span></td><td><p><code>host:port</code> of the Prometheus listener serving <code>GET /metrics</code>; unset turns metrics off.</p><p class="faint">Unset, it turns metrics off.</p><p class="faint">Refused at boot with a message naming the variable when the value is not an <code>ip:port</code> address.</p><p class="faint">Dockerfile: ip:port of the Prometheus /metrics listener. In a container bind 0.0.0.0:9090 and do not publish it: keep it on an internal network, never behind the public proxy.</p></td></tr>
-<tr id="RIM_AUDIT_LOG_PATH"><td><code>RIM_AUDIT_LOG_PATH</code><span class="default">default the working directory</span></td><td><p>Directory of the daily audit files <code>audit.&lt;YYYY-MM-DD&gt;.log</code></p><p class="note">Read by <a href="https://github.com/rim-platform/rim-server/blob/a1052b78d8d0a729317f4ccb37ea706fb165092e/rim_logging/src/logging.rs"><code>rim_logging/src/logging.rs</code></a>, not config.rs.</p></td></tr>
+<tr id="RIM_AUDIT_LOG_PATH"><td><code>RIM_AUDIT_LOG_PATH</code><span class="default">default the working directory</span></td><td><p>Directory of the daily audit files <code>audit.&lt;YYYY-MM-DD&gt;.log</code></p><p class="note">Read by <a href="https://github.com/rim-platform/rim-server/blob/3543e550d62d0f0b35f2841beef002380fd39d74/rim_logging/src/logging.rs"><code>rim_logging/src/logging.rs</code></a>, not config.rs.</p></td></tr>
 <tr id="RIM_AUDIT_RETENTION_DAYS"><td><code>RIM_AUDIT_RETENTION_DAYS</code><span class="default">default forever</span></td><td><p>Days command audit log rows are kept before the daily purge exports and deletes them;
 unset keeps them forever. 1 to 3650.</p><p class="faint">Unset, it keeps them forever.</p><p class="faint">Refused at boot with a message naming the variable when the value is outside 1 to 3650.</p><p class="faint">Dockerfile: days command audit rows are kept, 1-3650; older rows are exported to $RIM_DATA_DIR/audit-exports and deleted daily.</p></td></tr>
 <tr id="RIM_AUDIT_LOG_RETENTION_DAYS"><td><code>RIM_AUDIT_LOG_RETENTION_DAYS</code><span class="default">default <code>90</code></span></td><td><p>Days the daily audit files (<code>audit.&lt;YYYY-MM-DD&gt;.log</code> in the directory of
@@ -241,6 +242,31 @@ bytes.</p><p class="faint">Dockerfile: email address or https URL for abuse repo
 <tr id="RIM_LINK_PREVIEW_CONCURRENCY"><td><code>RIM_LINK_PREVIEW_CONCURRENCY</code><span class="default">default <code>8</code></span></td><td><p>Link preview fetches the process runs at once, 1 to 64; default 8.</p>
 <p><code>RIM_LINK_PREVIEW_CONCURRENCY</code>: the link preview fetches the process runs at once; 8
 when unset.</p><p class="faint">Refused at boot with a message naming the variable when the value is outside 1 to 64.</p><p class="faint">Dockerfile: link preview fetches the server runs at once, 1-64; outside the range stops the server at boot.</p></td></tr>
+</tbody>
+</table></div>
+<h2 id="profile-pictures">Profile pictures <a class="anchor" href="#profile-pictures" aria-label="Link to this section">#</a></h2>
+<p class="muted">How many profile pictures an account may upload per hour and per day, and the image check that scores each picture before it is stored: refused at the block threshold, stored and reported to the operators at the report threshold.</p>
+<div class="tablewrap"><table class="vars">
+<thead><tr><th>Variable</th><th>What it does</th></tr></thead>
+<tbody>
+<tr id="RIM_AVATAR_UPLOADS_PER_HOUR"><td><code>RIM_AVATAR_UPLOADS_PER_HOUR</code><span class="default">default <code>5</code></span></td><td><p>Profile picture uploads one account makes per hour; every upload attempt counts,
+removing a picture does not, and instance operators are exempt. Defaults to
+5; 0 turns the hourly limit off.</p><p class="note">Not in the Dockerfile&#39;s variable block.</p></td></tr>
+<tr id="RIM_AVATAR_UPLOADS_PER_DAY"><td><code>RIM_AVATAR_UPLOADS_PER_DAY</code><span class="default">default <code>20</code></span></td><td><p>Profile picture uploads one account makes per day; every upload attempt counts,
+removing a picture does not, and instance operators are exempt. Defaults to
+20; 0 turns the daily limit off.</p><p class="note">Not in the Dockerfile&#39;s variable block.</p></td></tr>
+<tr id="RIM_AVATAR_CHECK_URL"><td><code>RIM_AVATAR_CHECK_URL</code><span class="default">default none, pictures unchecked</span></td><td><p>Base URL of the image check service every uploaded profile picture is scored by, an
+absolute http(s) URL; unset or blank checks nothing.</p>
+<p>The profile picture check: <code>RIM_AVATAR_CHECK_URL</code>, trimmed, with <code>RIM_AVATAR_CHECK_BLOCK</code>
+and <code>RIM_AVATAR_CHECK_REPORT</code> or their defaults. <code>None</code> when the URL is unset or blank;
+the thresholds are checked either way.</p><p class="faint">Refused at boot with a message naming the variable when the URL is not an absolute <code>http</code> or <code>https</code> URL with
+a host, when a threshold is outside (0, 1], or when the report threshold is above the
+block threshold.</p><p class="faint">Dockerfile: base URL of the image check service (imagecheck/) every uploaded profile picture is scored by; while it is down picture uploads answer 503.</p></td></tr>
+<tr id="RIM_AVATAR_CHECK_BLOCK"><td><code>RIM_AVATAR_CHECK_BLOCK</code><span class="default">default <code>0.85</code></span></td><td><p>The highest category score, in (0, 1], at or above which an uploaded profile picture is
+refused. Defaults to 0.85.</p><p class="faint">Dockerfile: highest score at or above which a picture is refused, in (0, 1].</p></td></tr>
+<tr id="RIM_AVATAR_CHECK_REPORT"><td><code>RIM_AVATAR_CHECK_REPORT</code><span class="default">default <code>0.60</code></span></td><td><p>The highest category score, in (0, 1] and at most the block threshold, at or above
+which an uploaded profile picture is stored and reported to the operators. Defaults to
+0.60.</p><p class="faint">Dockerfile: highest score at or above which a picture is stored and reported to the operators, in (0, 1] and at most the block one; a bad value stops the server at boot.</p></td></tr>
 </tbody>
 </table></div>
 <h2 id="limits-and-rate-limits">Limits and rate limits <a class="anchor" href="#limits-and-rate-limits" aria-label="Link to this section">#</a></h2>
@@ -330,7 +356,7 @@ and IP blocks from the app (<a href="../docs/api.html"><code>docs/api.md</code><
     </main>
   </div>
   <footer class="site">
-    <span>Generated from <a href="https://github.com/rim-platform/rim-server/blob/a1052b78d8d0a729317f4ccb37ea706fb165092e/rim_server/src/config.rs">rim-server/rim_server/src/config.rs</a>, <a href="https://github.com/rim-platform/rim-server/blob/a1052b78d8d0a729317f4ccb37ea706fb165092e/Dockerfile">Dockerfile</a> and <a href="https://github.com/rim-platform/rim-server/blob/a1052b78d8d0a729317f4ccb37ea706fb165092e/README.md">README.md</a> at <code>a1052b7</code></span>
+    <span>Generated from <a href="https://github.com/rim-platform/rim-server/blob/3543e550d62d0f0b35f2841beef002380fd39d74/rim_server/src/config.rs">rim-server/rim_server/src/config.rs</a>, <a href="https://github.com/rim-platform/rim-server/blob/3543e550d62d0f0b35f2841beef002380fd39d74/Dockerfile">Dockerfile</a> and <a href="https://github.com/rim-platform/rim-server/blob/3543e550d62d0f0b35f2841beef002380fd39d74/README.md">README.md</a> at <code>3543e55</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

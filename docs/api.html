@@ -296,13 +296,26 @@ before accepting bytes. After uploading, call <code>finalizeAttachment</code> to
 finalizing an already ready file succeeds again. Attachment creation, finalization and deletion
 emit <code>MESSAGE_UPDATED</code>; attachment writes also advance the parent message&#39;s change-feed version.</li>
 <li><strong><code>POST /api/files/avatar</code></strong> stores the caller&#39;s avatar: a multipart body with one file of
-type <code>image/png</code>, <code>image/jpeg</code>, <code>image/gif</code> or <code>image/webp</code>, at most 2 MiB, whose bytes start
-with that format&#39;s signature (PNG <code>89 50 4E 47 0D 0A 1A 0A</code>, JPEG <code>FF D8 FF</code>, GIF <code>GIF87a</code> or
-<code>GIF89a</code>, WebP <code>RIFF</code> with <code>WEBP</code> at byte 8); another type, or bytes that do not match the
-declared one, is 415. It is stored as <code>avatars/&lt;user id&gt;/avatar.&lt;png|jpeg|gif|webp&gt;</code>, and the
-caller&#39;s other avatar files are deleted. The answer is <code>{&quot;path&quot;,&quot;size_bytes&quot;,&quot;url&quot;}</code>, where
-<code>url</code> is the <code>/api/files/...</code> path to read it back and the only value <code>updateMyProfile</code> takes
-as <code>avatarUrl</code> besides an empty one. Off when the <code>avatars</code> feature is not enabled.</li>
+type <code>image/png</code>, <code>image/jpeg</code>, <code>image/gif</code> or <code>image/webp</code>, at most 1 MiB (413 past it),
+whose bytes start with that format&#39;s signature (PNG <code>89 50 4E 47 0D 0A 1A 0A</code>, JPEG
+<code>FF D8 FF</code>, GIF <code>GIF87a</code> or <code>GIF89a</code>, WebP <code>RIFF</code> with <code>WEBP</code> at byte 8); another type, or
+bytes that do not match the declared one, is 415. The server decodes the file as its declared
+type and re-encodes it: the first frame of an animated GIF or WebP, centre-cropped to a
+square, is stored as a static 256×256 PNG with no metadata. Bytes that do not decode are 415
+(<code>avatar could not be read as an image</code>), an image wider or taller than 4096 pixels 413
+(<code>avatar image must be at most 4096×4096 pixels</code>). When the server runs the profile picture
+check (<code>RIM_AVATAR_CHECK_URL</code>), the re-encoded picture is then scored for sexual content, gore
+and violence: at the block threshold the upload answers 422 (<code>this image isn't allowed as a profile picture</code>), at the report threshold it is stored and reported to the server&#39;s
+operators, and while the check cannot run it answers 503 (<code>profile pictures can't be checked right now; try again later</code>); neither refusal stores anything. It is stored as
+<code>avatars/&lt;user id&gt;/avatar-&lt;16 hex&gt;.png</code>, named by the first eight bytes of the stored PNG&#39;s
+SHA-256, and the caller&#39;s other avatar files are deleted. Before the body is read the upload
+is refused with 403 while this server&#39;s operators lock the caller&#39;s profile, with 400
+(<code>a new account can set a profile picture in … minutes</code>) during probation, and with 429 and
+<code>Retry-After</code> past <code>RIM_AVATAR_UPLOADS_PER_HOUR</code> or <code>RIM_AVATAR_UPLOADS_PER_DAY</code> (see
+&quot;Limits&quot; below); every attempt counts against those. The answer is
+<code>{&quot;path&quot;,&quot;size_bytes&quot;,&quot;url&quot;}</code>, where <code>url</code> is the <code>/api/files/...</code> path to read it back and
+the only value <code>updateMyProfile</code> takes as <code>avatarUrl</code> besides an empty one. Off when the
+<code>avatars</code> feature is not enabled.</li>
 <li><strong><code>GET /api/files/{path}</code></strong> serves a stored avatar to any signed-in user, as an attachment
 with the type its extension implies and <code>X-Content-Type-Options: nosniff</code>. Any path outside
 <code>avatars/</code> is refused with 403. Off when the <code>avatars</code> feature is not enabled.</li>
@@ -684,12 +697,21 @@ direct space or in a workspace, someone it does not know (a contact who lists it
 either of them accepted a DM request from: &quot;Who May Start A DM&quot; in <a href="messaging.html"><code>docs/messaging.md</code></a>) and
 shares no workspace with but the server&#39;s default workspace, which every new account joins
 (<code>serverInfo.defaultWorkspace</code>); an account without a key is known only through a workspace.
-Each answers <code>VALIDATION</code> saying when it can, in minutes rounded up (&quot;a new account can create
-a workspace in 42 minutes&quot;). Its messages follow <code>RIM_RATE_PROBATION_MESSAGES_PER_MIN</code>, with a
+It cannot set a profile picture, status or bio either (<code>updateMyProfile</code> and
+<code>POST /api/files/avatar</code>); it may set its display name and clear any of them. Each answers
+<code>VALIDATION</code> saying when it can, in minutes rounded up (&quot;a new account can create a workspace in
+42 minutes&quot;, &quot;a new account can set a profile picture, bio or status in 42 minutes&quot;). Its
+messages follow <code>RIM_RATE_PROBATION_MESSAGES_PER_MIN</code>, with a
 burst of the same size, instead of <code>RIM_RATE_MESSAGES_PER_MIN_PER_USER</code>; unset, the normal rate
 applies. The <code>probationHours</code> of
 <code>serverInfo.limits</code> reports the setting, null when off, and <code>me { probationEndsAt }</code> tells the
 signed-in caller when theirs ends, null once it has and for an instance operator.</p>
+<p>Profile picture uploads have two limits per account, on by default: <code>RIM_AVATAR_UPLOADS_PER_HOUR</code>
+(5) and <code>RIM_AVATAR_UPLOADS_PER_DAY</code> (20); 0 turns either off. Every upload attempt counts, one
+refused for its content too; removing a picture or setting <code>avatarUrl</code> to an uploaded one does
+not, and an instance operator is exempt. Past either, <code>POST /api/files/avatar</code> answers 429 with
+<code>Retry-After</code> and <code>retryAfterSeconds</code>. The limits are counted in the server&#39;s memory, so a
+restart starts them afresh. <code>serverInfo.limits</code> does not report them.</p>
 <p>An operator can also block an address or range (<code>rim_server ip block</code>). A blocked address is
 answered 403 with <code>{&quot;error&quot;:&quot;blocked&quot;}</code> and nothing else on every route but <code>/healthz</code>: the API,
 the readiness probe, discovery and <code>/s2s/v1/...</code>. The address is found the same way as for the
@@ -740,12 +762,27 @@ user).</p>
 <td><code>instanceUnblockIp(cidr)</code></td>
 <td><code>ip unblock</code></td>
 </tr>
+<tr>
+<td><code>instanceClearProfile(principalId, reason, lockDays)</code></td>
+<td><code>principal clear-profile [--lock-days]</code>; <code>NOT_FOUND</code> when no account here holds the principal</td>
+</tr>
 </tbody></table></div>
 <p>Reports and blocks name the local account holding a principal (<code>subjectUsername</code>, <code>username</code>),
 null when no account here holds it. Each root needs a session and the mutations the CSRF
 header. Anyone but an instance operator gets <code>FORBIDDEN</code>, an app or bot acting for one too.
 Each change writes the same audit line as its command, with the operator&#39;s user id as
 <code>actor_id</code> (<code>cli</code> for the command line).</p>
+<p><code>instanceClearProfile</code> clears the display name, picture, status and bio of the account holding
+a principal here and deletes its stored pictures; its workspaces see the change at once. With
+<code>lockDays</code> (1 to 365) the account cannot set any of the four again until the lock ends:
+<code>updateMyProfile</code> setting one answers <code>FORBIDDEN</code> (&quot;this server&#39;s operators locked your profile
+until …&quot;), clearing one still works, and <code>POST /api/files/avatar</code> answers 403, an operator&#39;s
+too. <code>me { profileLockedUntil }</code> tells the account when its lock ends, null while none holds
+and on every other user. The outcome names the principal, the account (<code>InstanceAccount</code>) and
+<code>lockedUntil</code>, and the audit line is <code>relay.profile_cleared</code> with the reason and the lock&#39;s
+end. It clears what this server shows: a person whose relay is another server keeps their
+display name in the signed profile card that server serves, and other servers keep showing the
+copy of the card they hold.</p>
 <p><code>instanceReports</code> pages from the oldest report: the next page passes the last report&#39;s <code>id</code> as
 <code>after</code>. A user reports a DM request once (<code>reportDmRequest</code> answers <code>CONFLICT</code> the second
 time).</p>
@@ -1046,14 +1083,16 @@ types from it:</p>
 <pre><code class="language-sh">curl -s http://localhost:8080/api/sdl &gt; ../rim-ui/schema.graphql
 cd ../rim-ui &amp;&amp; npm run codegen</code></pre>
 <p>Enum values appear in <code>SCREAMING_SNAKE</code> and fields in <code>camelCase</code>. The models in <a href="messaging.html"><code>messaging.md</code></a>,
-<a href="search.html"><code>search.md</code></a>, <a href="message-change-feed.html"><code>message-change-feed.md</code></a>, <a href="command_model.html"><code>command_model.md</code></a> and the specs in <a href="https://github.com/rim-platform/rim-server/tree/a1052b78d8d0a729317f4ccb37ea706fb165092e/docs/specs"><code>specs/</code></a> explain what
+<a href="search.html"><code>search.md</code></a>, <a href="message-change-feed.html"><code>message-change-feed.md</code></a>, <a href="command_model.html"><code>command_model.md</code></a> and the specs in <a href="https://github.com/rim-platform/rim-server/tree/3543e550d62d0f0b35f2841beef002380fd39d74/docs/specs"><code>specs/</code></a> explain what
 the fields mean.</p>
 <h3 id="profile-picture-refresh">Profile picture refresh <a class="anchor" href="#profile-picture-refresh" aria-label="Link to this section">#</a></h3>
-<p>Avatar uploads use <code>avatars/&lt;user id&gt;/avatar-&lt;16 lowercase SHA-256 hex&gt;.&lt;ext&gt;</code>, so changing
-image bytes changes the URL. Authenticated downloads of these names use
+<p>Avatar uploads are stored as <code>avatars/&lt;user id&gt;/avatar-&lt;16 lowercase SHA-256 hex&gt;.png</code>, the
+hash of the re-encoded PNG, so changing the image changes the URL; files stored before
+re-encoding keep their <code>.jpeg</code>, <code>.gif</code> or <code>.webp</code> name until replaced. Authenticated downloads of these names use
 <code>Cache-Control: private, max-age=31536000, immutable</code>; unversioned avatar names require
 revalidation. <code>updateMyProfile</code> accepts both name forms only for the caller&#39;s own directory.
-Replacement deletes the old avatar file. <code>MemberProfileUpdated</code> identifies a changed profile
+Replacement deletes the old avatar file, and an operator&#39;s <code>instanceClearProfile</code> deletes all
+of them. <code>MemberProfileUpdated</code> identifies a changed profile
 in each workspace; the direct space sends the account&#39;s own change to its other sessions.
 Clients refetch the directory and, for their own user id, <code>me</code> when the event arrives.</p>
 <h3 id="pinned-plugin-link-fetch">Pinned plugin link fetch <a class="anchor" href="#pinned-plugin-link-fetch" aria-label="Link to this section">#</a></h3>
@@ -1306,7 +1345,7 @@ their own server.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/a1052b78d8d0a729317f4ccb37ea706fb165092e/docs/api.md">rim-server/docs/api.md</a> at <code>a1052b7</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/3543e550d62d0f0b35f2841beef002380fd39d74/docs/api.md">rim-server/docs/api.md</a> at <code>3543e55</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>
