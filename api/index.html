@@ -36,7 +36,7 @@
 
     <main id="content" class="prose">
 <h1>API</h1>
-<p class="lede">Everything a client does goes through one GraphQL endpoint, <code>POST /api</code>; subscriptions arrive over <code>/api/ws</code>. The server publishes its schema at <code>/api/sdl</code>. This reference is generated from it: 271 types, 69 queries, 133 mutations and 2 subscriptions.</p>
+<p class="lede">Everything a client does goes through one GraphQL endpoint, <code>POST /api</code>; subscriptions arrive over <code>/api/ws</code>. The server publishes its schema at <code>/api/sdl</code>. This reference is generated from it: 273 types, 69 queries, 135 mutations and 2 subscriptions.</p>
 <input id="filter" class="search" type="search" placeholder="Filter the whole schema by name" aria-label="Filter the whole schema by name" autocomplete="off">
 <p id="filter-none" class="muted" hidden>Nothing matches.</p>
 <div data-search-only><ul class="hits">
@@ -68,6 +68,7 @@
 <li data-name="createChannelLens"><a href="mutation.html#createChannelLens"><code>createChannelLens</code></a><span class="kind">mutation</span></li>
 <li data-name="updateChannelLens"><a href="mutation.html#updateChannelLens"><code>updateChannelLens</code></a><span class="kind">mutation</span></li>
 <li data-name="deleteChannelLens"><a href="mutation.html#deleteChannelLens"><code>deleteChannelLens</code></a><span class="kind">mutation</span></li>
+<li data-name="setChannelPosting"><a href="mutation.html#setChannelPosting"><code>setChannelPosting</code></a><span class="kind">mutation</span></li>
 <li data-name="createAttachment"><a href="mutation.html#createAttachment"><code>createAttachment</code></a><span class="kind">mutation</span></li>
 <li data-name="finalizeAttachment"><a href="mutation.html#finalizeAttachment"><code>finalizeAttachment</code></a><span class="kind">mutation</span></li>
 <li data-name="deleteAttachment"><a href="mutation.html#deleteAttachment"><code>deleteAttachment</code></a><span class="kind">mutation</span></li>
@@ -157,6 +158,7 @@
 <li data-name="instanceUnblockPrincipal"><a href="mutation.html#instanceUnblockPrincipal"><code>instanceUnblockPrincipal</code></a><span class="kind">mutation</span></li>
 <li data-name="instanceBlockIp"><a href="mutation.html#instanceBlockIp"><code>instanceBlockIp</code></a><span class="kind">mutation</span></li>
 <li data-name="instanceUnblockIp"><a href="mutation.html#instanceUnblockIp"><code>instanceUnblockIp</code></a><span class="kind">mutation</span></li>
+<li data-name="instanceClearProfile"><a href="mutation.html#instanceClearProfile"><code>instanceClearProfile</code></a><span class="kind">mutation</span></li>
 <li data-name="setMyDmSettings"><a href="mutation.html#setMyDmSettings"><code>setMyDmSettings</code></a><span class="kind">mutation</span></li>
 <li data-name="updatePublicJoinLink"><a href="mutation.html#updatePublicJoinLink"><code>updatePublicJoinLink</code></a><span class="kind">mutation</span></li>
 <li data-name="reissuePublicJoinLink"><a href="mutation.html#reissuePublicJoinLink"><code>reissuePublicJoinLink</code></a><span class="kind">mutation</span></li>
@@ -281,6 +283,7 @@
 <li data-name="InstancePrincipalBlock"><a href="objects.html#InstancePrincipalBlock"><code>InstancePrincipalBlock</code></a><span class="kind">object</span></li>
 <li data-name="InstancePrincipalBlockOutcome"><a href="objects.html#InstancePrincipalBlockOutcome"><code>InstancePrincipalBlockOutcome</code></a><span class="kind">object</span></li>
 <li data-name="InstancePrincipalUnblockOutcome"><a href="objects.html#InstancePrincipalUnblockOutcome"><code>InstancePrincipalUnblockOutcome</code></a><span class="kind">object</span></li>
+<li data-name="InstanceProfileClearOutcome"><a href="objects.html#InstanceProfileClearOutcome"><code>InstanceProfileClearOutcome</code></a><span class="kind">object</span></li>
 <li data-name="InviteTokenPreviewGql"><a href="objects.html#InviteTokenPreviewGql"><code>InviteTokenPreviewGql</code></a><span class="kind">object</span></li>
 <li data-name="JoinByPublicLinkPayload"><a href="objects.html#JoinByPublicLinkPayload"><code>JoinByPublicLinkPayload</code></a><span class="kind">object</span></li>
 <li data-name="JoinRequest"><a href="objects.html#JoinRequest"><code>JoinRequest</code></a><span class="kind">object</span></li>
@@ -501,6 +504,7 @@
 <li data-name="PluginRuntimeKind"><a href="enums.html#PluginRuntimeKind"><code>PluginRuntimeKind</code></a><span class="kind">enum</span></li>
 <li data-name="PluginSignatureStatus"><a href="enums.html#PluginSignatureStatus"><code>PluginSignatureStatus</code></a><span class="kind">enum</span></li>
 <li data-name="PluginSourceKind"><a href="enums.html#PluginSourceKind"><code>PluginSourceKind</code></a><span class="kind">enum</span></li>
+<li data-name="PostingPolicy"><a href="enums.html#PostingPolicy"><code>PostingPolicy</code></a><span class="kind">enum</span></li>
 <li data-name="PresenceStatus"><a href="enums.html#PresenceStatus"><code>PresenceStatus</code></a><span class="kind">enum</span></li>
 <li data-name="PublicJoinLinkMode"><a href="enums.html#PublicJoinLinkMode"><code>PublicJoinLinkMode</code></a><span class="kind">enum</span></li>
 <li data-name="PublicJoinLinkViewer"><a href="enums.html#PublicJoinLinkViewer"><code>PublicJoinLinkViewer</code></a><span class="kind">enum</span></li>
@@ -527,11 +531,11 @@
 <ul class="cards">
 <li><a href="../docs/api.html"><b>Talking to a server</b><span>The endpoints, the session cookie and CSRF, origins, limits, error codes and pagination: the contract around the schema.</span></a></li>
 <li><a href="query.html"><b>Query</b><span>69 fields, grouped by domain.</span></a></li>
-<li><a href="mutation.html"><b>Mutation</b><span>133 fields, grouped by domain.</span></a></li>
+<li><a href="mutation.html"><b>Mutation</b><span>135 fields, grouped by domain.</span></a></li>
 <li><a href="subscription.html"><b>Subscription</b><span>2 fields, grouped by domain.</span></a></li>
-<li><a href="objects.html"><b>Objects</b><span>132 objects.</span></a></li>
+<li><a href="objects.html"><b>Objects</b><span>133 objects.</span></a></li>
 <li><a href="inputs.html"><b>Inputs</b><span>86 inputs.</span></a></li>
-<li><a href="enums.html"><b>Enums</b><span>51 enums.</span></a></li>
+<li><a href="enums.html"><b>Enums</b><span>52 enums.</span></a></li>
 <li><a href="scalars.html"><b>Scalars</b><span>7 scalars.</span></a></li>
 <li><a href="directives.html"><b>Directives</b><span>3 directives.</span></a></li>
 </ul>
@@ -539,7 +543,7 @@
     </main>
   </div>
   <footer class="site">
-    <span>Generated from <a href="https://github.com/rim-platform/rim-ui/blob/363c7aabf7c8e8d307798e30c44dc069d28b547e/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>363c7aa</code></span>
+    <span>Generated from <a href="https://github.com/rim-platform/rim-ui/blob/667ae3aa3342127f98b233b171398fd541000a3d/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>667ae3a</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

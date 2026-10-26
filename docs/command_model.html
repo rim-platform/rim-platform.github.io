@@ -271,6 +271,13 @@ which now lets an Owner/Moderator delete other people&#39;s messages.</p>
 <td>Owner/Moderator; channels only; <code>conversation_id</code> falls back to the focused conversation</td>
 </tr>
 <tr>
+<td><code>chat.set_channel_posting</code></td>
+<td><code>server_id</code>, <code>conversation_id</code>, <code>policy</code> (<code>everyone</code>/<code>moderators</code>), <code>allows_threads?</code> (default true)</td>
+<td>yes</td>
+<td>no</td>
+<td>Owner/Moderator; channels only; <code>conversation_id</code> falls back to the focused conversation</td>
+</tr>
+<tr>
 <td><code>chat.report_message</code></td>
 <td><code>reason</code></td>
 <td>yes</td>
@@ -415,15 +422,15 @@ an invite token that would pass through the model provider), and <code>chat.mark
 (duplicates <code>notifications.mark_all_read</code>).</p>
 <p>List arguments such as <code>user_ids</code> and <code>member_ids</code> accept a JSON array of ids or one
 comma-separated string, because the agent&#39;s tool schema types every argument as a scalar.</p>
-<p>AI-callable builtins: 41. They are seventeen chat, channel and navigation builtins
+<p>AI-callable builtins: 42. They are seventeen chat, channel and navigation builtins
 (<code>chat.post_message</code>, <code>chat.open_thread</code>, <code>workspace.open_settings</code>,
 <code>workspace.navigate_to_channel</code>, <code>workspace.switch_workspace</code>, <code>chat.list_channels</code>,
 <code>chat.create_channel</code>, <code>chat.list_members</code>, <code>chat.search_messages</code>, <code>chat.get_recent_messages</code>,
 <code>chat.pin_message</code>, <code>chat.toggle_reaction</code> and the five channel membership builtins above),
-<code>admin.timeout</code>, <code>chat.set_slow_mode</code> and <code>chat.report_message</code>, the three <code>notifications.*</code>
-builtins, and the eighteen general builtins above. The set is pinned by
-<code>collect_ai_callable_inventory_matches_reviewed_set</code> (<code>registry/mod.rs</code>) and
-<code>list_commands_ai_surface_returns_forty_one_commands_with_caps</code> (<code>command_tests.rs</code>). The
+<code>admin.timeout</code>, <code>chat.set_slow_mode</code>, <code>chat.set_channel_posting</code> and <code>chat.report_message</code>,
+the three <code>notifications.*</code> builtins, and the eighteen general builtins above. The set is
+pinned by <code>collect_ai_callable_inventory_matches_reviewed_set</code> (<code>registry/mod.rs</code>) and
+<code>list_commands_ai_surface_returns_forty_two_commands_with_caps</code> (<code>command_tests.rs</code>). The
 capability union the AI surface checks is <code>admin.manage_members</code>, <code>chat.read</code> and <code>chat.write</code>;
 the notification and general builtins declare none.</p>
 <h3 id="plugin-provided-commands">Plugin-Provided Commands <a class="anchor" href="#plugin-provided-commands" aria-label="Link to this section">#</a></h3>
@@ -766,8 +773,8 @@ context names a workspace the caller is a member of, their role there may run it
 required capabilities passes the capability gate; a user command needs the role every step
 needs. The role a builtin needs is the one the service behind it enforces: the Owner for
 <code>admin.invite_member</code>; an Owner or Moderator for <code>admin.kick</code>, <code>admin.ban</code>, <code>admin.unban</code>,
-<code>admin.timeout</code>, <code>admin.set_role</code>, <code>chat.set_slow_mode</code>, <code>chat.archive_channel</code> and
-<code>chat.unarchive_channel</code>; a member (not a guest) for <code>chat.create_channel</code>, <code>chat.create_group</code>
+<code>admin.timeout</code>, <code>admin.set_role</code>, <code>chat.set_slow_mode</code>, <code>chat.set_channel_posting</code>,
+<code>chat.archive_channel</code> and <code>chat.unarchive_channel</code>; a member (not a guest) for <code>chat.create_channel</code>, <code>chat.create_group</code>
 and <code>chat.invite_to_conversation</code>; a member, or a guest in the direct space, for
 <code>chat.join_channel</code>; any member, guests included, for the rest. In the direct space, where
 everyone is a guest, a group is started and people are invited through <code>createConversation</code> and
@@ -852,7 +859,7 @@ still need a fresh invite after unban.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/a1052b78d8d0a729317f4ccb37ea706fb165092e/docs/command_model.md">rim-server/docs/command_model.md</a> at <code>a1052b7</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/3543e550d62d0f0b35f2841beef002380fd39d74/docs/command_model.md">rim-server/docs/command_model.md</a> at <code>3543e55</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

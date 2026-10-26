@@ -44,7 +44,7 @@
     <main id="content" class="prose">
 <h1 id="upgrading-a-server">Upgrading a server</h1>
 <p>How a running server moves to a new release, and back. <a href="../self-hosting.html"><code>docs/self-hosting.md</code></a>, &quot;Updates&quot;, is the
-short form for <a href="https://github.com/rim-platform/rim-server/blob/a1052b78d8d0a729317f4ccb37ea706fb165092e/deploy/compose.yml"><code>deploy/compose.yml</code></a>; this page adds what to read first, the rollback and why it
+short form for <a href="https://github.com/rim-platform/rim-server/blob/3543e550d62d0f0b35f2841beef002380fd39d74/deploy/compose.yml"><code>deploy/compose.yml</code></a>; this page adds what to read first, the rollback and why it
 works. The commands use the <code>dc</code> alias from <a href="../self-hosting.html"><code>docs/self-hosting.md</code></a> (a relay: the alias in
 <a href="../deploy/index.html"><code>deploy/README.md</code></a>), from the repository root.</p>
 <p>A release is the git tag <code>v&lt;version&gt;</code> and the images <code>ghcr.io/rim-platform/rim-server:&lt;version&gt;</code>
@@ -65,7 +65,7 @@ the new one, and after a skip that is not the release you ran.</li>
 release before.</li>
 </ol>
 <h2 id="upgrade">Upgrade <a class="anchor" href="#upgrade" aria-label="Link to this section">#</a></h2>
-<p><a href="https://github.com/rim-platform/rim-server/blob/a1052b78d8d0a729317f4ccb37ea706fb165092e/deploy/upgrade.sh"><code>deploy/upgrade.sh</code></a> runs the steps of this section in one go. Put the new release&#39;s files in
+<p><a href="https://github.com/rim-platform/rim-server/blob/3543e550d62d0f0b35f2841beef002380fd39d74/deploy/upgrade.sh"><code>deploy/upgrade.sh</code></a> runs the steps of this section in one go. Put the new release&#39;s files in
 place first, then run it with the version:</p>
 <pre><code class="language-sh">git fetch --tags &amp;&amp; git checkout v&lt;version&gt;      # or copy the tag's deploy/ over yours
 deploy/upgrade.sh --dry-run &lt;version&gt;            # checks the images, prints the rest
@@ -77,7 +77,7 @@ when one is not, it says which, changes nothing and exits 2. rim-ui&#39;s releas
 <code>rim-web</code>, so tag rim-ui first;</li>
 <li>verifies the signatures against the release workflows, as <a href="../self-hosting.html"><code>docs/self-hosting.md</code></a>, &quot;Verify
 the images&quot;, says (cosign must be installed);</li>
-<li>runs <a href="https://github.com/rim-platform/rim-server/blob/a1052b78d8d0a729317f4ccb37ea706fb165092e/deploy/backup.sh"><code>deploy/backup.sh</code></a>, or says there is nothing to back up when the deployment has no
+<li>runs <a href="https://github.com/rim-platform/rim-server/blob/3543e550d62d0f0b35f2841beef002380fd39d74/deploy/backup.sh"><code>deploy/backup.sh</code></a>, or says there is nothing to back up when the deployment has no
 data volume yet (the first start);</li>
 <li>writes <code>RIM_VERSION=&lt;version&gt;</code> into <code>deploy/.env</code>, keeping the file before as
 <code>deploy/.env.previous</code>;</li>
@@ -109,7 +109,7 @@ dc run --rm migrate                           # applies the new migrations, then
 dc up -d
 dc logs -f rim</code></pre>
 <p>Between <code>dc pull</code> and the migrations, verify the new images&#39; signatures as
-<a href="../self-hosting.html"><code>docs/self-hosting.md</code></a>, &quot;Verify the images&quot;, says. With <a href="https://github.com/rim-platform/rim-server/blob/a1052b78d8d0a729317f4ccb37ea706fb165092e/deploy/compose.dev.yml"><code>deploy/compose.dev.yml</code></a>, which builds
+<a href="../self-hosting.html"><code>docs/self-hosting.md</code></a>, &quot;Verify the images&quot;, says. With <a href="https://github.com/rim-platform/rim-server/blob/3543e550d62d0f0b35f2841beef002380fd39d74/deploy/compose.dev.yml"><code>deploy/compose.dev.yml</code></a>, which builds
 the images from checkouts, check out rim-ui&#39;s <code>v&lt;version&gt;</code> next to this repository and run
 <code>dc build</code> in place of <code>dc pull</code>.</p>
 <p><code>dc run --rm migrate</code> runs <code>/app/migration up</code> from the new image against the database while the
@@ -124,6 +124,13 @@ reason <code>N pending</code> means the migrations did not run.</p>
 <p>Without compose the order is the same: run the new build&#39;s migrations while the old server
 keeps serving, <code>DATABASE_URL=… /app/migration up</code> (or <code>cargo run --release -p migration -- up</code>
 from a checkout), then restart <code>rim-server</code> on the new binary.</p>
+<p>While a container restarts, Caddy cannot reach it and answers in its place
+(<code>handle_errors 502 503 504</code> in <a href="https://github.com/rim-platform/rim-server/blob/3543e550d62d0f0b35f2841beef002380fd39d74/deploy/Caddyfile"><code>deploy/Caddyfile</code></a> and <a href="https://github.com/rim-platform/rim-server/blob/3543e550d62d0f0b35f2841beef002380fd39d74/deploy/Caddyfile.relay"><code>deploy/Caddyfile.relay</code></a>): <code>503</code> with
+<code>Retry-After: 30</code> and <code>Cache-Control: no-store</code>. Requests to <code>/api</code>, <code>/s2s/</code> and <code>/.well-known/</code>
+get JSON (<code>{&quot;error&quot;:&quot;unavailable&quot;,&quot;message&quot;:&quot;The server is being updated. …&quot;}</code>), which the
+apps read as the server being unreachable and other servers retry; a browser gets a page saying
+RIM is being updated, which reloads itself every 30 seconds. <code>/healthz</code> and <code>/readyz</code> stay
+<code>404</code> from outside. The same answer covers any other time rim-server or the web client is down.</p>
 <h2 id="rolling-back">Rolling back <a class="anchor" href="#rolling-back" aria-label="Link to this section">#</a></h2>
 <p><strong>The binary, to the release before.</strong> Migrations stay applied; the previous release&#39;s server
 runs on the newer schema. The previous image&#39;s <code>migrate</code> service does not: it refuses a database
@@ -159,7 +166,7 @@ it that the backup is their only way back.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/a1052b78d8d0a729317f4ccb37ea706fb165092e/docs/operations/upgrade.md">rim-server/docs/operations/upgrade.md</a> at <code>a1052b7</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/3543e550d62d0f0b35f2841beef002380fd39d74/docs/operations/upgrade.md">rim-server/docs/operations/upgrade.md</a> at <code>3543e55</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>
