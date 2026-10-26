@@ -831,6 +831,12 @@ included.</p>
 <li><code>None</code> for thread replies</li>
 </ul>
 </li>
+<li><code>threadReplyCount</code><ul>
+<li>the number of replies in the thread a timeline message is the root of, deleted replies not
+counted; <code>0</code> once every reply is deleted</li>
+<li><code>null</code> wherever <code>root_thread_id</code> is <code>None</code>: ordinary timeline messages and thread replies</li>
+</ul>
+</li>
 </ul>
 <p>This lets clients render the timeline normally while also knowing whether a timeline message can open an existing thread.</p>
 <h2 id="attachments">Attachments <a class="anchor" href="#attachments" aria-label="Link to this section">#</a></h2>
@@ -887,7 +893,7 @@ and the next query, without a scheduled event.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/3543e550d62d0f0b35f2841beef002380fd39d74/docs/messaging.md">rim-server/docs/messaging.md</a> at <code>3543e55</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/b0969112656b8e76460ba27670d0a05f955bf4cd/docs/messaging.md">rim-server/docs/messaging.md</a> at <code>b096911</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

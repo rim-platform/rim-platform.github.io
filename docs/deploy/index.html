@@ -46,7 +46,7 @@
 </details></aside>
     <main id="content" class="prose">
 <h1 id="deploying-a-public-relay">Deploying a public relay</h1>
-<p><a href="https://github.com/rim-platform/rim-server/blob/3543e550d62d0f0b35f2841beef002380fd39d74/deploy/compose.relay.yml"><code>compose.relay.yml</code></a> turns <a href="https://github.com/rim-platform/rim-server/blob/3543e550d62d0f0b35f2841beef002380fd39d74/deploy/compose.yml"><code>compose.yml</code></a> into a public relay: rim-server with the public relay&#39;s
+<p><a href="https://github.com/rim-platform/rim-server/blob/b0969112656b8e76460ba27670d0a05f955bf4cd/deploy/compose.relay.yml"><code>compose.relay.yml</code></a> turns <a href="https://github.com/rim-platform/rim-server/blob/b0969112656b8e76460ba27670d0a05f955bf4cd/deploy/compose.yml"><code>compose.yml</code></a> into a public relay: rim-server with the public relay&#39;s
 quotas and proof-of-work signups, PostgreSQL 17 and Caddy terminating TLS, and no web client
 unless the operator adds it. The relay holds its users&#39; accounts, devices and cards, queues what
 other servers send them and forwards their requests; it hosts no workspaces unless the operator
@@ -54,7 +54,7 @@ turns that on (&quot;A relay that hosts a workspace&quot;). This page brings a r
 time. The operator&#39;s runbook (<a href="../operations/relay-public.html"><code>docs/operations/relay-public.md</code></a>) covers running it: keys,
 backups, quotas, monitoring, incidents, the abuse policy and every command. <a href="../relay.html"><code>docs/relay.md</code></a>
 explains what a relay does, and <a href="../../specs/server-to-server-v1.html"><code>docs/specs/server-to-server-v1.md</code></a> is the protocol.</p>
-<p>A server that hosts workspaces uses <a href="https://github.com/rim-platform/rim-server/blob/3543e550d62d0f0b35f2841beef002380fd39d74/deploy/compose.yml"><code>compose.yml</code></a> alone: <a href="../self-hosting.html"><code>docs/self-hosting.md</code></a> covers it, and
+<p>A server that hosts workspaces uses <a href="https://github.com/rim-platform/rim-server/blob/b0969112656b8e76460ba27670d0a05f955bf4cd/deploy/compose.yml"><code>compose.yml</code></a> alone: <a href="../self-hosting.html"><code>docs/self-hosting.md</code></a> covers it, and
 its sections on updates, backups and monitoring apply to the relay too.</p>
 <p>The project&#39;s public relay is <code>relay.rim-platform.org</code>, with its web client on
 <code>chat.rim-platform.org</code>; yours uses your own domain. <code>RIM_DOMAIN</code> is the relay&#39;s host name, such
@@ -66,7 +66,7 @@ set), so the apex of the domain can serve a website from elsewhere.</p>
 records of your domain pointing at it. Caddy gets the certificate from Let&#39;s Encrypt on the
 first request.</p>
 </li>
-<li><p>Create <code>deploy/.env</code> (Git ignores it; <a href="https://github.com/rim-platform/rim-server/blob/3543e550d62d0f0b35f2841beef002380fd39d74/deploy/.env.example"><code>deploy/.env.example</code></a> lists every setting):</p>
+<li><p>Create <code>deploy/.env</code> (Git ignores it; <a href="https://github.com/rim-platform/rim-server/blob/b0969112656b8e76460ba27670d0a05f955bf4cd/deploy/.env.example"><code>deploy/.env.example</code></a> lists every setting):</p>
 <pre><code class="language-sh">cat &gt; deploy/.env &lt;&lt;EOF
 POSTGRES_PASSWORD=$(openssl rand -base64 32 | tr -d '/+=')
 RIM_DOMAIN=relay.example.org
@@ -121,7 +121,7 @@ RIM_DEFAULT_WORKSPACE_FILE=/config/default-workspace.json</code></pre>
 the API, discovery or server-to-server to the web client, and the <code>web</code> profile starts it.
 <code>dc config --services</code> then lists <code>web</code> too. To serve the web client on a domain of its own,
 as <code>chat.rim-platform.org</code> is, add <code>RIM_WEB_DOMAIN</code> (&quot;The web client on its own domain&quot; below).</p>
-<p><code>RIM_DEFAULT_WORKSPACE_FILE</code> makes <a href="https://github.com/rim-platform/rim-server/blob/3543e550d62d0f0b35f2841beef002380fd39d74/deploy/default-workspace.json"><code>deploy/default-workspace.json</code></a> (mounted read-only at
+<p><code>RIM_DEFAULT_WORKSPACE_FILE</code> makes <a href="https://github.com/rim-platform/rim-server/blob/b0969112656b8e76460ba27670d0a05f955bf4cd/deploy/default-workspace.json"><code>deploy/default-workspace.json</code></a> (mounted read-only at
 <code>/config/default-workspace.json</code>) the server&#39;s default workspace; edit the file for your own.
 Until somebody claims it, every start writes a single-use owner claim link to
 <code>/data/owner-claim.txt</code> and logs that a claim is waiting. The first run, in short: start the
@@ -166,7 +166,7 @@ project&#39;s relay that directory is <code>/srv/rim-server</code>. Every five m
 that is not a pre-release. When that version is not <code>RIM_VERSION</code> in <code>.env</code>, it first checks
 with cosign that the version&#39;s <code>rim-server</code> image carries the signature of that tag&#39;s release
 workflow, since the tag&#39;s files run as root: a tag without an approved release run installs
-nothing. Then it downloads the tag&#39;s source tarball, copies its <a href="https://github.com/rim-platform/rim-server/tree/3543e550d62d0f0b35f2841beef002380fd39d74/deploy"><code>deploy/</code></a> files over the directory, writes <code>SOURCE</code> (the tag,
+nothing. Then it downloads the tag&#39;s source tarball, copies its <a href="https://github.com/rim-platform/rim-server/tree/b0969112656b8e76460ba27670d0a05f955bf4cd/deploy"><code>deploy/</code></a> files over the directory, writes <code>SOURCE</code> (the tag,
 the time and the tarball&#39;s SHA-256) and runs the tag&#39;s <code>upgrade.sh &lt;version&gt;</code> there
 (<a href="../operations/upgrade.html"><code>docs/operations/upgrade.md</code></a>): the signatures, the backup, the migrations, the start and the
 rollback are its steps. Nothing in GitHub reaches the host, and no git runs on it. A release is
@@ -195,7 +195,7 @@ directory.</p>
 <code>systemctl list-timers rim-deploy.timer</code> shows the next check. Each check logs one line when
 there is nothing to do.</li>
 <li><strong>Not yet published images.</strong> When an image of the version is not out yet, such as <code>rim-web</code>
-because rim-ui was not tagged first, <a href="https://github.com/rim-platform/rim-server/blob/3543e550d62d0f0b35f2841beef002380fd39d74/deploy/upgrade.sh"><code>upgrade.sh</code></a> exits 2 before changing anything; the check
+because rim-ui was not tagged first, <a href="https://github.com/rim-platform/rim-server/blob/b0969112656b8e76460ba27670d0a05f955bf4cd/deploy/upgrade.sh"><code>upgrade.sh</code></a> exits 2 before changing anything; the check
 puts the files back, ends quietly, and the next one tries again.</li>
 <li><strong>Brakes.</strong> A release marked <strong>pre-release</strong> on GitHub is never deployed by the timer, which is
 how a release is published without deploying it. <code>touch /srv/rim-server/HOLD</code> stops the timer
@@ -203,33 +203,33 @@ deploying anything until the file is removed. A deploy that fails writes its ver
 <code>FAILED</code>, and the timer leaves that version alone until the file is removed; the next release
 deploys as usual.</li>
 <li><strong>By hand.</strong> <code>rim-deploy &lt;version&gt;</code> deploys that version without asking the API, forward or
-back, whether <code>HOLD</code> or <code>FAILED</code> exist or not; with <a href="https://github.com/rim-platform/rim-server/blob/3543e550d62d0f0b35f2841beef002380fd39d74/deploy/upgrade.sh"><code>upgrade.sh</code></a>, a version older than the
+back, whether <code>HOLD</code> or <code>FAILED</code> exist or not; with <a href="https://github.com/rim-platform/rim-server/blob/b0969112656b8e76460ba27670d0a05f955bf4cd/deploy/upgrade.sh"><code>upgrade.sh</code></a>, a version older than the
 running one is a binary rollback. Touch <code>HOLD</code> before rolling back, or the next check deploys
 the latest release again.</li>
 <li><strong>The unit</strong> runs as root, because it runs docker, with no new privileges, a read-only
 <code>/usr</code>, <code>/boot</code>, <code>/etc</code> and home directories, and a private <code>/tmp</code>; cosign and the docker
 client keep their caches in <code>/var/lib/rim-deploy</code>. A <code>v*</code> tag starts the whole chain, and
 only the maintainer may push one to rim-server and rim-ui; an image the release workflows did
-not sign does not verify, and <a href="https://github.com/rim-platform/rim-server/blob/3543e550d62d0f0b35f2841beef002380fd39d74/deploy/upgrade.sh"><code>upgrade.sh</code></a> stops before it changes anything.</li>
+not sign does not verify, and <a href="https://github.com/rim-platform/rim-server/blob/b0969112656b8e76460ba27670d0a05f955bf4cd/deploy/upgrade.sh"><code>upgrade.sh</code></a> stops before it changes anything.</li>
 </ul>
 <h2 id="metrics-to-grafana-cloud">Metrics to Grafana Cloud <a class="anchor" href="#metrics-to-grafana-cloud" aria-label="Link to this section">#</a></h2>
-<p><a href="https://github.com/rim-platform/rim-server/blob/3543e550d62d0f0b35f2841beef002380fd39d74/deploy/compose.monitoring.yml"><code>compose.monitoring.yml</code></a> on top turns on the server&#39;s metrics listener and adds a Grafana Alloy
-collector (<a href="https://github.com/rim-platform/rim-server/blob/3543e550d62d0f0b35f2841beef002380fd39d74/deploy/monitoring.alloy"><code>monitoring.alloy</code></a>): every 15 seconds it scrapes the server&#39;s metrics (job <code>rim</code>),
+<p><a href="https://github.com/rim-platform/rim-server/blob/b0969112656b8e76460ba27670d0a05f955bf4cd/deploy/compose.monitoring.yml"><code>compose.monitoring.yml</code></a> on top turns on the server&#39;s metrics listener and adds a Grafana Alloy
+collector (<a href="https://github.com/rim-platform/rim-server/blob/b0969112656b8e76460ba27670d0a05f955bf4cd/deploy/monitoring.alloy"><code>monitoring.alloy</code></a>): every 15 seconds it scrapes the server&#39;s metrics (job <code>rim</code>),
 probes <code>/readyz</code> (job <code>rim-readyz</code>) and reads the host&#39;s CPU, memory and filesystems (job
 <code>node</code>), and remote-writes them to Grafana Cloud. Nothing new is published; the collector only
-connects out. Add the three settings <a href="https://github.com/rim-platform/rim-server/blob/3543e550d62d0f0b35f2841beef002380fd39d74/deploy/.env.example"><code>deploy/.env.example</code></a> describes under &quot;Monitoring&quot; to
+connects out. Add the three settings <a href="https://github.com/rim-platform/rim-server/blob/b0969112656b8e76460ba27670d0a05f955bf4cd/deploy/.env.example"><code>deploy/.env.example</code></a> describes under &quot;Monitoring&quot; to
 <code>deploy/.env</code>, then put the overlay in the alias:</p>
 <pre><code class="language-sh">alias dc='docker compose -f deploy/compose.yml -f deploy/compose.relay.yml -f deploy/compose.monitoring.yml'
 dc up -d
 dc logs alloy          # no &quot;level=error&quot; once it scrapes and sends</code></pre>
 <p>Each compose service&#39;s CPU and memory use (job <code>cadvisor</code>) comes from a second overlay,
-<a href="https://github.com/rim-platform/rim-server/blob/3543e550d62d0f0b35f2841beef002380fd39d74/deploy/compose.monitoring-containers.yml"><code>compose.monitoring-containers.yml</code></a>, on rootful Docker on Linux. It runs cAdvisor behind a
+<a href="https://github.com/rim-platform/rim-server/blob/b0969112656b8e76460ba27670d0a05f955bf4cd/deploy/compose.monitoring-containers.yml"><code>compose.monitoring-containers.yml</code></a>, on rootful Docker on Linux. It runs cAdvisor behind a
 Docker socket proxy and a containerd socket proxy that let it make only read-only calls;
 <a href="../operations/metrics.html"><code>docs/operations/metrics.md</code></a>, &quot;Container metrics&quot;, says which and what they still expose. It
 covers the containerd image store, the default of a new Docker 29 install; on the older
 <code>overlay2</code> storage driver (<code>docker info --format '{{.Driver}}'</code>) add
-<a href="https://github.com/rim-platform/rim-server/blob/3543e550d62d0f0b35f2841beef002380fd39d74/deploy/compose.monitoring-containers-overlay2.yml"><code>compose.monitoring-containers-overlay2.yml</code></a> after it. Set <code>DOCKER_GID</code> in <code>deploy/.env</code> and
-add the overlay after <a href="https://github.com/rim-platform/rim-server/blob/3543e550d62d0f0b35f2841beef002380fd39d74/deploy/compose.monitoring.yml"><code>compose.monitoring.yml</code></a>:</p>
+<a href="https://github.com/rim-platform/rim-server/blob/b0969112656b8e76460ba27670d0a05f955bf4cd/deploy/compose.monitoring-containers-overlay2.yml"><code>compose.monitoring-containers-overlay2.yml</code></a> after it. Set <code>DOCKER_GID</code> in <code>deploy/.env</code> and
+add the overlay after <a href="https://github.com/rim-platform/rim-server/blob/b0969112656b8e76460ba27670d0a05f955bf4cd/deploy/compose.monitoring.yml"><code>compose.monitoring.yml</code></a>:</p>
 <pre><code class="language-sh">echo &quot;DOCKER_GID=$(stat -c %g /var/run/docker.sock)&quot; &gt;&gt; deploy/.env
 alias dc='docker compose -f deploy/compose.yml -f deploy/compose.relay.yml -f deploy/compose.monitoring.yml -f deploy/compose.monitoring-containers.yml'
 dc up -d</code></pre>
@@ -274,7 +274,7 @@ server never reads for the address (the Caddyfiles use <code>header_up -Forwarde
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/3543e550d62d0f0b35f2841beef002380fd39d74/deploy/README.md">rim-server/deploy/README.md</a> at <code>3543e55</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/b0969112656b8e76460ba27670d0a05f955bf4cd/deploy/README.md">rim-server/deploy/README.md</a> at <code>b096911</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

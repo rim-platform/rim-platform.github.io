@@ -139,11 +139,12 @@ untouched. The client shows the commands verbatim and retries only on confirm.</
 <p>Plugin UI panels are hosted in sandboxed iframes that load the frame shell web plugins use
 (see <a href="../specs/web-plugins-v1.html"><code>docs/specs/web-plugins-v1.md</code></a>), at <code>rim-plugin://shell/v1/local-panel.html</code>. The desktop
 host reads the panel folder <code>panels/{panel_id}/</code> of an enabled plugin that declares that panel
-(the <code>plugin_panel_files</code> command) and hands the files to the shell, which runs them as <code>blob:</code>
-URLs; the scheme serves no plugin file itself. <code>local-panel.html</code> is sent with a policy header
-that closes the network (<code>connect-src 'none'</code>, images, fonts and media only from <code>blob:</code>/<code>data:</code>):
-a local panel reaches the network only through its plugin&#39;s process. Only the files <code>index.html</code>
-names are mapped to the panel&#39;s own files; inline event handlers do not run.</p>
+and holds <code>ui.panel</code> (the <code>plugin_panel_files</code> command) and hands the files to the shell, which
+runs them as <code>blob:</code> URLs; the scheme serves no plugin file itself. <code>local-panel.html</code> is sent
+with a policy header that closes the network (<code>connect-src 'none'</code>, images, fonts and media
+only from <code>blob:</code>/<code>data:</code>): a local panel reaches the network only through its plugin&#39;s
+process. Only the files <code>index.html</code> names are mapped to the panel&#39;s own files; inline event
+handlers do not run.</p>
 <p>Sandbox attributes: <code>allow-scripts</code> only. No <code>allow-same-origin</code>, no <code>allow-top-navigation</code>,
 no <code>allow-popups</code>.</p>
 <h3 id="postmessage-bridge">PostMessage Bridge <a class="anchor" href="#postmessage-bridge" aria-label="Link to this section">#</a></h3>
@@ -223,7 +224,7 @@ Retry and Close buttons. Other plugins and the host UI are not affected.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/3543e550d62d0f0b35f2841beef002380fd39d74/docs/local_plugin_host.md">rim-server/docs/local_plugin_host.md</a> at <code>3543e55</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/b0969112656b8e76460ba27670d0a05f955bf4cd/docs/local_plugin_host.md">rim-server/docs/local_plugin_host.md</a> at <code>b096911</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>
