@@ -123,8 +123,9 @@ are assigned&quot;.</li>
 <p>Message creation, text edits, soft delete, <code>hasAttachments</code> and attachment lifecycle writes
 (creation, upload completion, finalization, failure and deletion) bump a version. An attachment
 change advances its parent message even when <code>hasAttachments</code> stays true; it does not set
-<code>editedAt</code>. Reactions, pins, mentions, link previews and a message becoming a thread root
-(<code>rootThreadId</code>) do not; those stay on their own queries and real-time events.</p>
+<code>editedAt</code>. Reactions, pins, mentions, link previews, a message becoming a thread root
+(<code>rootThreadId</code>) and its thread&#39;s reply count (<code>threadReplyCount</code>) do not; those stay on their
+own queries and real-time events.</p>
 <h2 id="real-time-events">Real-time events <a class="anchor" href="#real-time-events" aria-label="Link to this section">#</a></h2>
 <p>The WebSocket subscription keeps delivering new, edited and deleted messages as before; its
 events carry no <code>version</code>. A client cache treats an event as a hint: it may show the message
@@ -157,7 +158,7 @@ two columns, and clients then re-sync from the beginning once it runs again.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/3543e550d62d0f0b35f2841beef002380fd39d74/docs/message-change-feed.md">rim-server/docs/message-change-feed.md</a> at <code>3543e55</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/b0969112656b8e76460ba27670d0a05f955bf4cd/docs/message-change-feed.md">rim-server/docs/message-change-feed.md</a> at <code>b096911</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

@@ -143,7 +143,7 @@ unavailable.</p>
 <pre><code class="language-text">RIM_FEATURES_DISABLED: unknown feature: atachments (known: attachments, link_previews, email, custom_emoji, workspace_plugins, ai_commands, avatars)</code></pre>
 <p>The switches are read at boot; change the variable and restart. At boot the server logs the
 disabled and unavailable features:</p>
-<pre><code class="language-json">{&quot;level&quot;:&quot;INFO&quot;,&quot;fields&quot;:{&quot;message&quot;:&quot;instance features (RIM_FEATURES_DISABLED)&quot;,&quot;disabled&quot;:&quot;[\&quot;attachments\&quot;, \&quot;custom_emoji\&quot;]&quot;,&quot;unavailable&quot;:&quot;[\&quot;email: SMTP is not configured: set RIM_SMTP_HOST and RIM_SMTP_FROM\&quot;]&quot;},&quot;target&quot;:&quot;rim_server::app&quot;}</code></pre>
+<pre><code class="language-json">{&quot;level&quot;:&quot;INFO&quot;,&quot;fields&quot;:{&quot;message&quot;:&quot;instance features (RIM_FEATURES_DISABLED)&quot;,&quot;disabled&quot;:&quot;[\&quot;attachments\&quot;, \&quot;custom_emoji\&quot;]&quot;,&quot;unavailable&quot;:&quot;[\&quot;email: no mail server is set up\&quot;]&quot;},&quot;target&quot;:&quot;rim_server::app&quot;}</code></pre>
 <p>Switching a feature off deletes nothing. Stored attachments, emoji, plugin entries, bundles,
 link previews and avatars stay in the database and on disk, and come back when the feature is
 enabled again. While <code>attachments</code> is off, messages still list their attachments, but downloads
@@ -208,7 +208,7 @@ apply to every command are the security boundary, not this switch.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/3543e550d62d0f0b35f2841beef002380fd39d74/docs/operations/features.md">rim-server/docs/operations/features.md</a> at <code>3543e55</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/b0969112656b8e76460ba27670d0a05f955bf4cd/docs/operations/features.md">rim-server/docs/operations/features.md</a> at <code>b096911</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

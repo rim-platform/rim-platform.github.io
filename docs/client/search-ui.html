@@ -38,7 +38,7 @@
 <li><a href="#recency-ordering-not-relevance">Recency ordering, not relevance</a></li>
 <li><a href="#flat-list-not-grouped-by-conversation">Flat list, not grouped by conversation</a></li>
 <li><a href="#pagination-ux">Pagination UX</a></li>
-<li><a href="#snippet-rendering--dompurify-mark-only-sanitization-security-critical">Snippet rendering — DOMPurify mark-only sanitization (security-critical)</a></li>
+<li><a href="#snippet-rendering--dompurify-mark-only-parse-plain-text-out-security-critical">Snippet rendering — DOMPurify mark-only parse, plain text out (security-critical)</a></li>
 <li><a href="#local-search-desktop-app">Local search (desktop app)</a></li>
 <li><a href="#operator-discovery">Operator discovery</a></li>
 </ol>
@@ -85,24 +85,46 @@ the next page instead of jumping to a message.</li>
 not when a page is appended — resetting on every page load would fight in-progress
 keyboard navigation.</li>
 </ul>
-<h2 id="snippet-rendering--dompurify-mark-only-sanitization-security-critical">Snippet rendering — DOMPurify <code>mark</code>-only sanitization (security-critical) <a class="anchor" href="#snippet-rendering--dompurify-mark-only-sanitization-security-critical" aria-label="Link to this section">#</a></h2>
-<p><code>SearchResultMessage.headline</code> is a server-generated <code>ts_headline</code> snippet
-containing literal <code>&lt;mark&gt;…&lt;/mark&gt;</code> tags around matched terms — but the <em>surrounding
-text</em> is raw, unsanitized user message content, which may itself contain arbitrary
-markup an attacker embedded in a message (<code>&lt;img onerror=...&gt;</code>, <code>&lt;script&gt;</code>, etc.).
-<code>SearchSnippet</code> (<a href="https://github.com/rim-platform/rim-ui/blob/667ae3aa3342127f98b233b171398fd541000a3d/src/features/messages/components/SearchSnippet.tsx"><code>src/features/messages/components/SearchSnippet.tsx</code></a>) sanitizes with:</p>
-<pre><code class="language-ts">DOMPurify.sanitize(headline, { ALLOWED_TAGS: [&quot;mark&quot;], ALLOWED_ATTR: [] });</code></pre>
-<p>This strips every tag except a bare <code>&lt;mark&gt;</code> and strips all attributes (including on
-<code>&lt;mark&gt;</code> itself, so an attacker can&#39;t smuggle <code>onclick</code> or similar through it),
-neutralizing injection while preserving the highlight markers. This is the one
-sanctioned DOMPurify-for-HTML pattern applied to search snippets — see
-<a href="https://github.com/rim-platform/rim-ui/blob/667ae3aa3342127f98b233b171398fd541000a3d/CLAUDE.md"><code>CLAUDE.md</code></a>&#39;s &quot;DOMPurify on all user-generated HTML&quot; rule and
-<a href="https://github.com/rim-platform/rim-ui/blob/667ae3aa3342127f98b233b171398fd541000a3d/src/shared/ui/MarkdownRenderer.tsx"><code>src/shared/ui/MarkdownRenderer.tsx</code></a> for the sibling pattern used for message bodies.</p>
-<p>There is <strong>no client-side substring highlighting</strong> — the server headline is the
-single source of truth for match highlighting. When <code>headline</code> is <code>null</code> (a purely
-operator-based query with no free-text component, e.g. <code>from:@alice</code>), <code>SearchSnippet</code>
-falls back to the plain <code>text</code>, rendered as ordinary React children (auto-escaped, no
-highlight — there&#39;s nothing server-side to highlight).</p>
+<h2 id="snippet-rendering--dompurify-mark-only-parse-plain-text-out-security-critical">Snippet rendering — DOMPurify <code>mark</code>-only parse, plain text out (security-critical) <a class="anchor" href="#snippet-rendering--dompurify-mark-only-parse-plain-text-out-security-critical" aria-label="Link to this section">#</a></h2>
+<p>A snippet comes from one of two sources, both with literal <code>&lt;mark&gt;…&lt;/mark&gt;</code> tags around the
+matched terms: the server&#39;s <code>SearchResultMessage.headline</code>, a <code>ts_headline</code> over the raw
+message text, and the desktop cache&#39;s FTS5 snippet, whose text is HTML-escaped before the marks
+go in. In both, the <em>surrounding text</em> is user message content, which may contain arbitrary
+markup an attacker embedded in a message (<code>&lt;img onerror=...&gt;</code>, <code>&lt;script&gt;</code>, etc.) and Markdown
+syntax (code fences, emphasis, links). <code>SearchSnippet</code>
+(<a href="https://github.com/rim-platform/rim-ui/blob/03221d7074eb3f9205a847e92aeb18fc66716bbf/src/features/messages/components/SearchSnippet.tsx"><code>src/features/messages/components/SearchSnippet.tsx</code></a>) handles both the same way:</p>
+<ol>
+<li><p><strong>Parse.</strong> DOMPurify parses the headline into a DOM fragment:</p>
+<pre><code class="language-ts">DOMPurify.sanitize(headline, {
+  ALLOWED_TAGS: [&quot;mark&quot;],
+  ALLOWED_ATTR: [],
+  RETURN_DOM_FRAGMENT: true,
+});</code></pre>
+<p>Every tag except a bare <code>&lt;mark&gt;</code> and every attribute is stripped, and HTML entities decode,
+so the desktop cache&#39;s <code>&amp;lt;b&amp;gt;</code> reads as <code>&lt;b&gt;</code> like the server&#39;s raw text does.</p>
+</li>
+<li><p><strong>Flatten.</strong> Only the fragment&#39;s text is read. Each <code>&lt;mark&gt;</code>&#39;s text is wrapped in two
+private-use characters (U+E000 and U+E001) and any such characters in the message text
+itself are dropped, so the highlights survive as plain text.</p>
+</li>
+<li><p><strong>Strip Markdown.</strong> <code>plainSnippet</code> (<a href="https://github.com/rim-platform/rim-ui/blob/03221d7074eb3f9205a847e92aeb18fc66716bbf/src/features/messages/utils/snippetText.ts"><code>src/features/messages/utils/snippetText.ts</code></a>) removes
+code fences with their info string, backticks, <code>**</code>, <code>__</code>, <code>~~</code>, single <code>*</code> and <code>_</code> at word
+edges (so <code>snake_case</code> stays), heading, quote and list markers at the start of a line, and
+link and image syntax (keeping their text), then collapses whitespace to single spaces.</p>
+</li>
+<li><p><strong>Render.</strong> The text splits on the highlight characters into React text and <code>&lt;mark&gt;</code> nodes;
+an empty mark is dropped. No HTML from the snippet ever reaches the page and there is no
+<code>dangerouslySetInnerHTML</code>.</p>
+</li>
+</ol>
+<p>This is the DOMPurify pattern applied to search snippets — see <a href="https://github.com/rim-platform/rim-ui/blob/03221d7074eb3f9205a847e92aeb18fc66716bbf/CLAUDE.md"><code>CLAUDE.md</code></a>&#39;s &quot;DOMPurify on all
+user-generated HTML&quot; rule and <a href="https://github.com/rim-platform/rim-ui/blob/03221d7074eb3f9205a847e92aeb18fc66716bbf/src/shared/ui/MarkdownRenderer.tsx"><code>src/shared/ui/MarkdownRenderer.tsx</code></a> for the sibling pattern used
+for message bodies.</p>
+<p>There is <strong>no client-side substring highlighting</strong> — the snippet is the single source of
+truth for match highlighting. When <code>headline</code> is <code>null</code> (a purely operator-based query with no
+free-text component, e.g. <code>from:@alice</code>), <code>SearchSnippet</code> falls back to the message <code>text</code> with
+its Markdown removed the same way, rendered as ordinary React children (auto-escaped, no
+highlight — there&#39;s nothing to highlight).</p>
 <h2 id="local-search-desktop-app">Local search (desktop app) <a class="anchor" href="#local-search-desktop-app" aria-label="Link to this section">#</a></h2>
 <p>The desktop app also searches its encrypted local message cache (<a href="local-message-cache.html"><code>docs/local-message-cache.md</code></a>,
 &quot;Local search&quot;). The behaviour, kept deliberately simple:</p>
@@ -154,7 +176,7 @@ comment above <code>conversationId</code> in <code>SearchOverlay.tsx</code>.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/667ae3aa3342127f98b233b171398fd541000a3d/docs/search-ui.md">rim-ui/docs/search-ui.md</a> at <code>667ae3a</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/03221d7074eb3f9205a847e92aeb18fc66716bbf/docs/search-ui.md">rim-ui/docs/search-ui.md</a> at <code>03221d7</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

@@ -56,7 +56,7 @@
 </details></aside>
     <main id="content" class="prose">
 <h1 id="web-plugins-v1">Web plugins v1</h1>
-<p class="status"><span><b>Web plugins v1</b></span><span>version 1</span><span>status: implemented, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/3543e550d62d0f0b35f2841beef002380fd39d74/docs/specs/web-plugins-v1.md">rim-server/docs/specs/web-plugins-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/3543e550d62d0f0b35f2841beef002380fd39d74">3543e55</a></span></p>
+<p class="status"><span><b>Web plugins v1</b></span><span>version 1</span><span>status: implemented, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/b0969112656b8e76460ba27670d0a05f955bf4cd/docs/specs/web-plugins-v1.md">rim-server/docs/specs/web-plugins-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/b0969112656b8e76460ba27670d0a05f955bf4cd">b096911</a></span></p>
 <p><em>Status: implemented, normative. Extends <a href="plugin-protocol-v1.html"><code>docs/specs/plugin-protocol-v1.md</code></a> (read it first:
 the messages, the handshake, capabilities and the dangerous-command gate are defined there and do
 not change). This document is the contract between the RIM host, on the desktop and on the web,
@@ -226,8 +226,9 @@ a process. On the web, where installs belong to an account, signing out stops ev
 and signing in starts that account&#39;s; on the desktop it keeps running and gets
 <code>rim.principal.changed</code>, as a process does.</li>
 <li><strong>A panel frame</strong>, one per open panel, created when the panel is shown and removed when it
-closes, has no port. It speaks the existing panel bridge (<a href="../docs/local_plugin_host.html"><code>docs/local_plugin_host.md</code></a>,
-&quot;PostMessage Bridge&quot;) through <code>window.parent</code>, exactly as a local-process plugin&#39;s panel does.</li>
+closes, has no port. A panel is shown only for a running plugin that holds <code>ui.panel</code>. It
+speaks the existing panel bridge (<a href="../docs/local_plugin_host.html"><code>docs/local_plugin_host.md</code></a>, &quot;PostMessage Bridge&quot;) through
+<code>window.parent</code>, exactly as a local-process plugin&#39;s panel does.</li>
 </ul>
 <p>This is the split <code>panel_relay.rs</code> already makes: logic apart from views, the host relaying state
 between them. Commands work from the palette, keybinds and the agent with no panel open, panels
@@ -916,7 +917,7 @@ bundles return 422, and exhausted attempt budgets return 429.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/3543e550d62d0f0b35f2841beef002380fd39d74/docs/specs/web-plugins-v1.md">rim-server/docs/specs/web-plugins-v1.md</a> at <code>3543e55</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/b0969112656b8e76460ba27670d0a05f955bf4cd/docs/specs/web-plugins-v1.md">rim-server/docs/specs/web-plugins-v1.md</a> at <code>b096911</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

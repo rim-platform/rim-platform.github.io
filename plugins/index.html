@@ -174,8 +174,10 @@ capability <code>&lt;key&gt;</code>, which the manifest&#39;s capabilities do no
 <p>Every install ends in the <strong>Plugin Permissions</strong> dialog, described under
 <a href="#trust-and-permissions">Trust and permissions</a>. After an install its button reads <strong>Approve and
 turn on</strong>: approving grants the checked permissions and starts the plugin. <strong>Cancel</strong> leaves it
-installed and turned off, to turn on later with the switch on its row. If the plugin does not
-start, the dialog says why and its permissions stay saved.</p>
+installed and turned off, to turn on later with the switch on its row. That switch opens the
+same dialog, with <strong>Approve and turn on</strong>, whenever a permission the plugin asks for is not
+granted, and turns the plugin on only once it is approved. If the plugin does not start, the
+dialog says why and its permissions stay saved.</p>
 <h3 id="workspace-registry">Workspace registry <a class="anchor" href="#workspace-registry" aria-label="Link to this section">#</a></h3>
 <p>Each workspace keeps a registry of plugins it recommends or requires, managed by its Owners and
 Moderators. An entry pins one exact version through a statement its publisher signed with their
@@ -268,20 +270,25 @@ next. It receives a secret setting&#39;s value too, in plain form, as it needs i
 token; other plugins never do. A plugin&#39;s panel can open this form, for example from a
 &quot;Configure&quot; button, which shows it over the panel in the same way, but never sees the values.</li>
 <li><strong>Turning it on.</strong> The switch on the plugin&#39;s row in Settings → Plugins starts it, and the row
-shows Running, Stopped, Crashed or Timed out. On the desktop a plugin left on starts again
-with the app. On the web, plugins are turned on per account in that browser: signing out
-stops them and signing in starts those the account turned on.</li>
+shows Running, Stopped, Crashed or Timed out. When a permission the plugin asks for is not
+granted, the switch first opens <strong>Plugin Permissions</strong>, and <strong>Cancel</strong> leaves the plugin off.
+On the desktop a plugin left on starts again with the app. On the web, plugins are turned on
+per account in that browser: signing out stops them and signing in starts those the account
+turned on.</li>
 <li><strong>Panels.</strong> The side rail&#39;s <strong>Plugins</strong> entry opens a menu with one row per panel of every
-running plugin, showing the plugin&#39;s name and the panel&#39;s title, and below them, set apart,
-<strong>Manage plugins…</strong>, which opens Settings → Plugins. Choosing a row opens the panel; with no
-running plugin that has a panel, the menu says so above <strong>Manage plugins…</strong>. A plugin&#39;s
+running plugin granted Render UI Panels, showing the plugin&#39;s name and the panel&#39;s title, and
+below them, set apart, <strong>Manage plugins…</strong>, which opens Settings → Plugins. Choosing a row
+opens the panel; with no such plugin that has a panel, the menu says so above <strong>Manage
+plugins…</strong>. A panel left open stops showing when its plugin loses that permission. A plugin&#39;s
 settings are not in this menu: they open from the places listed under <strong>Settings</strong>. The entry
 stays marked while a plugin panel is open. A panel opens next to the tool panel or, like the
 Pods panel, in place of the conversation. Its header shows the panel&#39;s title, the plugin&#39;s
-name, its kind and where it came from, and a close button. <a href="../docs/client/ui-shell.html">UI shell</a> describes
-the menu&#39;s keys.</li>
-<li><strong>&quot;Open &lt;panel&gt;&quot; commands.</strong> Each panel of a running plugin also has an &quot;Open &lt;panel&gt;&quot;
-command in the palette, such as &quot;Open Pull requests&quot;, which a keybind can run too.</li>
+name, its kind and where it came from, and a close button. The title stays whole; the rest is
+shortened when the panel is narrow and shows in full on hover. <a href="../docs/client/ui-shell.html">UI shell</a>
+describes the menu&#39;s keys.</li>
+<li><strong>&quot;Open &lt;panel&gt;&quot; commands.</strong> Each panel of a running plugin granted Render UI Panels also
+has an &quot;Open &lt;panel&gt;&quot; command in the palette, such as &quot;Open Pull requests&quot;, which a keybind
+can run too.</li>
 <li><strong>Commands.</strong> The palette lists a plugin&#39;s commands under the plugin&#39;s name. A command that
 needs arguments is not listed; its plugin&#39;s panel runs it. A dangerous command opens
 <strong>&lt;command&gt;?</strong>, which says &quot;&lt;plugin&gt; marks this command as dangerous. It runs only if you
@@ -438,7 +445,7 @@ permissions, data, settings and files. To use it again, install it again.</li>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/667ae3aa3342127f98b233b171398fd541000a3d/docs/plugins.md">rim-ui/docs/plugins.md</a> at <code>667ae3a</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/03221d7074eb3f9205a847e92aeb18fc66716bbf/docs/plugins.md">rim-ui/docs/plugins.md</a> at <code>03221d7</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>
