@@ -92,7 +92,7 @@ message text, and the desktop cache&#39;s FTS5 snippet, whose text is HTML-escap
 go in. In both, the <em>surrounding text</em> is user message content, which may contain arbitrary
 markup an attacker embedded in a message (<code>&lt;img onerror=...&gt;</code>, <code>&lt;script&gt;</code>, etc.) and Markdown
 syntax (code fences, emphasis, links). <code>SearchSnippet</code>
-(<a href="https://github.com/rim-platform/rim-ui/blob/03221d7074eb3f9205a847e92aeb18fc66716bbf/src/features/messages/components/SearchSnippet.tsx"><code>src/features/messages/components/SearchSnippet.tsx</code></a>) handles both the same way:</p>
+(<a href="https://github.com/rim-platform/rim-ui/blob/7d57e1c2b5b0f208c8dd144f52e1ae19da2922e1/src/features/messages/components/SearchSnippet.tsx"><code>src/features/messages/components/SearchSnippet.tsx</code></a>) handles both the same way:</p>
 <ol>
 <li><p><strong>Parse.</strong> DOMPurify parses the headline into a DOM fragment:</p>
 <pre><code class="language-ts">DOMPurify.sanitize(headline, {
@@ -107,7 +107,7 @@ so the desktop cache&#39;s <code>&amp;lt;b&amp;gt;</code> reads as <code>&lt;b&g
 private-use characters (U+E000 and U+E001) and any such characters in the message text
 itself are dropped, so the highlights survive as plain text.</p>
 </li>
-<li><p><strong>Strip Markdown.</strong> <code>plainSnippet</code> (<a href="https://github.com/rim-platform/rim-ui/blob/03221d7074eb3f9205a847e92aeb18fc66716bbf/src/features/messages/utils/snippetText.ts"><code>src/features/messages/utils/snippetText.ts</code></a>) removes
+<li><p><strong>Strip Markdown.</strong> <code>plainSnippet</code> (<a href="https://github.com/rim-platform/rim-ui/blob/7d57e1c2b5b0f208c8dd144f52e1ae19da2922e1/src/features/messages/utils/snippetText.ts"><code>src/features/messages/utils/snippetText.ts</code></a>) removes
 code fences with their info string, backticks, <code>**</code>, <code>__</code>, <code>~~</code>, single <code>*</code> and <code>_</code> at word
 edges (so <code>snake_case</code> stays), heading, quote and list markers at the start of a line, and
 link and image syntax (keeping their text), then collapses whitespace to single spaces.</p>
@@ -117,8 +117,8 @@ an empty mark is dropped. No HTML from the snippet ever reaches the page and the
 <code>dangerouslySetInnerHTML</code>.</p>
 </li>
 </ol>
-<p>This is the DOMPurify pattern applied to search snippets — see <a href="https://github.com/rim-platform/rim-ui/blob/03221d7074eb3f9205a847e92aeb18fc66716bbf/CLAUDE.md"><code>CLAUDE.md</code></a>&#39;s &quot;DOMPurify on all
-user-generated HTML&quot; rule and <a href="https://github.com/rim-platform/rim-ui/blob/03221d7074eb3f9205a847e92aeb18fc66716bbf/src/shared/ui/MarkdownRenderer.tsx"><code>src/shared/ui/MarkdownRenderer.tsx</code></a> for the sibling pattern used
+<p>This is the DOMPurify pattern applied to search snippets — see <a href="https://github.com/rim-platform/rim-ui/blob/7d57e1c2b5b0f208c8dd144f52e1ae19da2922e1/CLAUDE.md"><code>CLAUDE.md</code></a>&#39;s &quot;DOMPurify on all
+user-generated HTML&quot; rule and <a href="https://github.com/rim-platform/rim-ui/blob/7d57e1c2b5b0f208c8dd144f52e1ae19da2922e1/src/shared/ui/MarkdownRenderer.tsx"><code>src/shared/ui/MarkdownRenderer.tsx</code></a> for the sibling pattern used
 for message bodies.</p>
 <p>There is <strong>no client-side substring highlighting</strong> — the snippet is the single source of
 truth for match highlighting. When <code>headline</code> is <code>null</code> (a purely operator-based query with no
@@ -176,7 +176,7 @@ comment above <code>conversationId</code> in <code>SearchOverlay.tsx</code>.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/03221d7074eb3f9205a847e92aeb18fc66716bbf/docs/search-ui.md">rim-ui/docs/search-ui.md</a> at <code>03221d7</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/7d57e1c2b5b0f208c8dd144f52e1ae19da2922e1/docs/search-ui.md">rim-ui/docs/search-ui.md</a> at <code>7d57e1c</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

@@ -53,7 +53,7 @@ npm run lint:fix       # eslint . --fix — apply auto-fixes
 npm run format         # prettier --write . — reformat everything
 npm run format:check   # prettier --check . — CI-safe, no writes</code></pre>
 <h2 id="flat-config-rationale">Flat-config rationale <a class="anchor" href="#flat-config-rationale" aria-label="Link to this section">#</a></h2>
-<p><a href="https://github.com/rim-platform/rim-ui/blob/03221d7074eb3f9205a847e92aeb18fc66716bbf/eslint.config.js"><code>eslint.config.js</code></a> is ESM (the package is <code>&quot;type&quot;: &quot;module&quot;</code>), composed in this order:</p>
+<p><a href="https://github.com/rim-platform/rim-ui/blob/7d57e1c2b5b0f208c8dd144f52e1ae19da2922e1/eslint.config.js"><code>eslint.config.js</code></a> is ESM (the package is <code>&quot;type&quot;: &quot;module&quot;</code>), composed in this order:</p>
 <ol>
 <li><code>js.configs.recommended</code> — core ESLint correctness rules.</li>
 <li><code>tseslint.configs.recommended</code> (typescript-eslint v8) — <strong>not</strong>
@@ -66,8 +66,8 @@ upgrade&quot; below.</li>
 <li><code>eslint-plugin-react-refresh</code>&#39;s <code>vite</code> preset (Vite HMR hygiene, warn-level).</li>
 <li><code>eslint-config-prettier</code> — <strong>last</strong>, disables every stylistic rule that would
 fight Prettier.</li>
-<li>Global <code>ignores</code>: <code>dist/</code>, <code>coverage/</code>, <code>node_modules/</code>, <a href="https://github.com/rim-platform/rim-ui/tree/03221d7074eb3f9205a847e92aeb18fc66716bbf/src-tauri"><code>src-tauri/</code></a>,
-<a href="https://github.com/rim-platform/rim-ui/tree/03221d7074eb3f9205a847e92aeb18fc66716bbf/src/core/graphql/generated"><code>src/core/graphql/generated/</code></a>, <a href="https://github.com/rim-platform/rim-ui/tree/03221d7074eb3f9205a847e92aeb18fc66716bbf/sdk/plugin-sdk/src/generated"><code>sdk/plugin-sdk/src/generated/</code></a> and <code>*.config.js</code>.</li>
+<li>Global <code>ignores</code>: <code>dist/</code>, <code>coverage/</code>, <code>node_modules/</code>, <a href="https://github.com/rim-platform/rim-ui/tree/7d57e1c2b5b0f208c8dd144f52e1ae19da2922e1/src-tauri"><code>src-tauri/</code></a>,
+<a href="https://github.com/rim-platform/rim-ui/tree/7d57e1c2b5b0f208c8dd144f52e1ae19da2922e1/src/core/graphql/generated"><code>src/core/graphql/generated/</code></a>, <a href="https://github.com/rim-platform/rim-ui/tree/7d57e1c2b5b0f208c8dd144f52e1ae19da2922e1/sdk/plugin-sdk/src/generated"><code>sdk/plugin-sdk/src/generated/</code></a> and <code>*.config.js</code>.</li>
 </ol>
 <p><code>.prettierrc.json</code> matches the codebase&#39;s existing conventions (verified against the
 code, not assumed): double quotes, semicolons, trailing commas, 100-column width.</p>
@@ -116,7 +116,7 @@ that includes the files being linted — including tests, which the current
 <ol>
 <li>Either widen <code>tsconfig.json</code>&#39;s <code>include</code>/remove the test exclusions, or add a
 second tsconfig (e.g. <code>tsconfig.eslint.json</code>) that includes tests, referenced only
-from <a href="https://github.com/rim-platform/rim-ui/blob/03221d7074eb3f9205a847e92aeb18fc66716bbf/eslint.config.js"><code>eslint.config.js</code></a>.</li>
+from <a href="https://github.com/rim-platform/rim-ui/blob/7d57e1c2b5b0f208c8dd144f52e1ae19da2922e1/eslint.config.js"><code>eslint.config.js</code></a>.</li>
 <li>Swap <code>tseslint.configs.recommended</code> for <code>tseslint.configs.recommendedTypeChecked</code>
 and add <code>languageOptions.parserOptions.project</code>.</li>
 <li>Expect a new round of violations; triage warn-vs-error again per the same
@@ -131,7 +131,7 @@ change (owned separately).</p>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/03221d7074eb3f9205a847e92aeb18fc66716bbf/docs/eslint-prettier.md">rim-ui/docs/eslint-prettier.md</a> at <code>03221d7</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/7d57e1c2b5b0f208c8dd144f52e1ae19da2922e1/docs/eslint-prettier.md">rim-ui/docs/eslint-prettier.md</a> at <code>7d57e1c</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

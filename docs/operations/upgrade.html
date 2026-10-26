@@ -38,18 +38,22 @@
 <li><a href="#before">Before</a></li>
 <li><a href="#upgrade">Upgrade</a></li>
 <li><a href="#rolling-back">Rolling back</a></li>
+<li><a href="#the-web-client">The web client</a></li>
 <li><a href="#why-migrations-only-go-forward">Why migrations only go forward</a></li>
 </ol>
 </details></aside>
     <main id="content" class="prose">
 <h1 id="upgrading-a-server">Upgrading a server</h1>
 <p>How a running server moves to a new release, and back. <a href="../self-hosting.html"><code>docs/self-hosting.md</code></a>, &quot;Updates&quot;, is the
-short form for <a href="https://github.com/rim-platform/rim-server/blob/b0969112656b8e76460ba27670d0a05f955bf4cd/deploy/compose.yml"><code>deploy/compose.yml</code></a>; this page adds what to read first, the rollback and why it
+short form for <a href="https://github.com/rim-platform/rim-server/blob/048faa33edc68a6a7dc5b751fe5ec06bef6d4d5b/deploy/compose.yml"><code>deploy/compose.yml</code></a>; this page adds what to read first, the rollback and why it
 works. The commands use the <code>dc</code> alias from <a href="../self-hosting.html"><code>docs/self-hosting.md</code></a> (a relay: the alias in
 <a href="../deploy/index.html"><code>deploy/README.md</code></a>), from the repository root.</p>
-<p>A release is the git tag <code>v&lt;version&gt;</code> and the images <code>ghcr.io/rim-platform/rim-server:&lt;version&gt;</code>
-and <code>ghcr.io/rim-platform/rim-web:&lt;version&gt;</code> its release workflows publish. rim-server and
-rim-ui release under the same version, so <code>RIM_VERSION</code> in <code>deploy/.env</code> names both images.
+<p>A server release is the git tag <code>v&lt;version&gt;</code> and the images
+<code>ghcr.io/rim-platform/rim-server:&lt;version&gt;</code> and <code>ghcr.io/rim-platform/rim-imagecheck:&lt;version&gt;</code>
+its release workflow publishes; <code>RIM_VERSION</code> in <code>deploy/.env</code> names them. The web client is
+rim-ui&#39;s own release, versioned on its own: <code>RIM_WEB_VERSION</code> names its image
+<code>ghcr.io/rim-platform/rim-web:&lt;version&gt;</code> (unset, it is <code>RIM_VERSION</code>). A server upgrade leaves
+the web client at its version, and the web client moves alone (&quot;The web client&quot; below).
 <a href="../changelog.html"><code>CHANGELOG.md</code></a> lists what each release changes, and a
 line starting with <strong>Upgrade:</strong> is something the operator does before or after the upgrade.</p>
 <h2 id="before">Before <a class="anchor" href="#before" aria-label="Link to this section">#</a></h2>
@@ -65,22 +69,25 @@ the new one, and after a skip that is not the release you ran.</li>
 release before.</li>
 </ol>
 <h2 id="upgrade">Upgrade <a class="anchor" href="#upgrade" aria-label="Link to this section">#</a></h2>
-<p><a href="https://github.com/rim-platform/rim-server/blob/b0969112656b8e76460ba27670d0a05f955bf4cd/deploy/upgrade.sh"><code>deploy/upgrade.sh</code></a> runs the steps of this section in one go. Put the new release&#39;s files in
+<p><a href="https://github.com/rim-platform/rim-server/blob/048faa33edc68a6a7dc5b751fe5ec06bef6d4d5b/deploy/upgrade.sh"><code>deploy/upgrade.sh</code></a> runs the steps of this section in one go. Put the new release&#39;s files in
 place first, then run it with the version:</p>
 <pre><code class="language-sh">git fetch --tags &amp;&amp; git checkout v&lt;version&gt;      # or copy the tag's deploy/ over yours
 deploy/upgrade.sh --dry-run &lt;version&gt;            # checks the images, prints the rest
 deploy/upgrade.sh &lt;version&gt;</code></pre>
 <p>In order, it:</p>
 <ol>
-<li>checks that the version&#39;s images are published (<code>rim-web</code> only when the web client runs);
-when one is not, it says which, changes nothing and exits 2. rim-ui&#39;s release publishes
-<code>rim-web</code>, so tag rim-ui first;</li>
+<li>checks that the version&#39;s images are published, and <code>rim-web</code> at the web client&#39;s version
+when the web client runs; when one is not, it says which, changes nothing and exits 2;</li>
 <li>verifies the signatures against the release workflows, as <a href="../self-hosting.html"><code>docs/self-hosting.md</code></a>, &quot;Verify
-the images&quot;, says (cosign must be installed);</li>
-<li>runs <a href="https://github.com/rim-platform/rim-server/blob/b0969112656b8e76460ba27670d0a05f955bf4cd/deploy/backup.sh"><code>deploy/backup.sh</code></a>, or says there is nothing to back up when the deployment has no
+the images&quot;, says (cosign must be installed): <code>rim-web</code> against rim-ui&#39;s of the tag
+<code>v&lt;web client version&gt;</code>;</li>
+<li>runs <a href="https://github.com/rim-platform/rim-server/blob/048faa33edc68a6a7dc5b751fe5ec06bef6d4d5b/deploy/backup.sh"><code>deploy/backup.sh</code></a>, or says there is nothing to back up when the deployment has no
 data volume yet (the first start);</li>
 <li>writes <code>RIM_VERSION=&lt;version&gt;</code> into <code>deploy/.env</code>, keeping the file before as
-<code>deploy/.env.previous</code>;</li>
+<code>deploy/.env.previous</code>. When the web client runs and <code>RIM_WEB_VERSION</code> is unset, it writes
+<code>RIM_WEB_VERSION</code> too: the version that ran before, so the web client stays as it is, or on
+the first start <code>&lt;version&gt;</code>. A <code>RIM_WEB_IMAGE</code> of <code>ghcr.io/rim-platform/rim-web:&lt;version&gt;</code>
+becomes <code>RIM_WEB_VERSION=&lt;version&gt;</code> in the same write;</li>
 <li>pulls the images, runs the migrations (<code>dc run --rm migrate</code>) and <code>dc up -d</code>;</li>
 <li>waits up to 90 seconds (<code>RIM_UPGRADE_TIMEOUT</code>) for <code>/readyz</code>, then as long for
 <code>https://&lt;RIM_DOMAIN&gt;/.well-known/rim-server</code> from the host;</li>
@@ -97,9 +104,11 @@ their dependencies.</li>
 <p>It reads <code>COMPOSE_FILE</code> from the environment or from <code>deploy/.env</code>, as the backup scripts do, so
 a relay sets it once in <code>deploy/.env</code> (<code>COMPOSE_FILE=deploy/compose.yml:deploy/compose.relay.yml</code>,
 relative to the directory the scripts run from). It touches no git, and refuses to run while
-<code>RIM_SERVER_IMAGE</code> or <code>RIM_WEB_IMAGE</code> is set, since those override the version. A server that
-runs published images only can leave all of this to <code>rim-deploy</code>, which installs each release as
-it is published (<a href="../deploy/index.html"><code>deploy/README.md</code></a>, &quot;Unattended upgrades from releases&quot;).</p>
+<code>RIM_SERVER_IMAGE</code> or <code>RIM_IMAGECHECK_IMAGE</code> is set, since those override the version. Any
+other <code>RIM_WEB_IMAGE</code> than a published <code>rim-web</code> is a custom web client: the script says so and
+neither checks nor changes it. A server that runs published images only can leave all of this
+to <code>rim-deploy</code>, which installs each release of rim-server and of rim-ui as it is published
+(<a href="../deploy/index.html"><code>deploy/README.md</code></a>, &quot;Unattended upgrades from releases&quot;).</p>
 <p>The same steps by hand:</p>
 <pre><code class="language-sh">deploy/backup.sh
 git fetch --tags &amp;&amp; git checkout v&lt;version&gt;
@@ -109,9 +118,9 @@ dc run --rm migrate                           # applies the new migrations, then
 dc up -d
 dc logs -f rim</code></pre>
 <p>Between <code>dc pull</code> and the migrations, verify the new images&#39; signatures as
-<a href="../self-hosting.html"><code>docs/self-hosting.md</code></a>, &quot;Verify the images&quot;, says. With <a href="https://github.com/rim-platform/rim-server/blob/b0969112656b8e76460ba27670d0a05f955bf4cd/deploy/compose.dev.yml"><code>deploy/compose.dev.yml</code></a>, which builds
-the images from checkouts, check out rim-ui&#39;s <code>v&lt;version&gt;</code> next to this repository and run
-<code>dc build</code> in place of <code>dc pull</code>.</p>
+<a href="../self-hosting.html"><code>docs/self-hosting.md</code></a>, &quot;Verify the images&quot;, says. With <a href="https://github.com/rim-platform/rim-server/blob/048faa33edc68a6a7dc5b751fe5ec06bef6d4d5b/deploy/compose.dev.yml"><code>deploy/compose.dev.yml</code></a>, which builds
+the images from checkouts, check out the rim-ui release the web client runs next to this
+repository and run <code>dc build</code> in place of <code>dc pull</code>.</p>
 <p><code>dc run --rm migrate</code> runs <code>/app/migration up</code> from the new image against the database while the
 old server is still serving; that is safe because a release&#39;s migrations only add (below). <code>dc up -d</code> alone also runs it before it starts the new server; running it first shows the migrations
 succeed before anything restarts.</p>
@@ -125,7 +134,7 @@ reason <code>N pending</code> means the migrations did not run.</p>
 keeps serving, <code>DATABASE_URL=… /app/migration up</code> (or <code>cargo run --release -p migration -- up</code>
 from a checkout), then restart <code>rim-server</code> on the new binary.</p>
 <p>While a container restarts, Caddy cannot reach it and answers in its place
-(<code>handle_errors 502 503 504</code> in <a href="https://github.com/rim-platform/rim-server/blob/b0969112656b8e76460ba27670d0a05f955bf4cd/deploy/Caddyfile"><code>deploy/Caddyfile</code></a> and <a href="https://github.com/rim-platform/rim-server/blob/b0969112656b8e76460ba27670d0a05f955bf4cd/deploy/Caddyfile.relay"><code>deploy/Caddyfile.relay</code></a>): <code>503</code> with
+(<code>handle_errors 502 503 504</code> in <a href="https://github.com/rim-platform/rim-server/blob/048faa33edc68a6a7dc5b751fe5ec06bef6d4d5b/deploy/Caddyfile"><code>deploy/Caddyfile</code></a> and <a href="https://github.com/rim-platform/rim-server/blob/048faa33edc68a6a7dc5b751fe5ec06bef6d4d5b/deploy/Caddyfile.relay"><code>deploy/Caddyfile.relay</code></a>): <code>503</code> with
 <code>Retry-After: 30</code> and <code>Cache-Control: no-store</code>. Requests to <code>/api</code>, <code>/s2s/</code> and <code>/.well-known/</code>
 get JSON (<code>{&quot;error&quot;:&quot;unavailable&quot;,&quot;message&quot;:&quot;The server is being updated. …&quot;}</code>), which the
 apps read as the server being unreachable and other servers retry; a browser gets a page saying
@@ -139,18 +148,31 @@ holding migrations it does not know,</p>
 <p>and <code>rim</code> waits for <code>migrate</code> to succeed. So start the old server without its dependencies:</p>
 <pre><code class="language-sh">git checkout v&lt;previous version&gt;
 $EDITOR deploy/.env                           # RIM_VERSION=&lt;previous version&gt;
-dc pull rim web
-dc up -d --no-deps rim web</code></pre>
-<p>A relay has no web client: <code>dc pull rim</code> and <code>dc up -d --no-deps rim</code>. From the previous release&#39;s
+dc pull rim imagecheck
+dc up -d --no-deps rim imagecheck</code></pre>
+<p>The web client keeps its own version. From the previous release&#39;s
 checkout, <code>deploy/upgrade.sh &lt;previous version&gt;</code> does the same after a backup. The old server&#39;s
 <code>/readyz</code> passes: it counts only the migrations it knows as pending. Until the next upgrade, a plain
 <code>dc up -d</code> stops at the failing <code>migrate</code>; use <code>--no-deps</code> as above. When you upgrade again there is
 no migration left to run.</p>
 <p><strong>Further back.</strong> Restore the backup taken before the upgrade (<a href="../self-hosting.html"><code>docs/self-hosting.md</code></a>,
 &quot;Restore&quot;). Everything written since that backup is lost.</p>
+<p><strong>The web client</strong> goes back as it goes forward, alone (below).</p>
 <p><strong>Never <code>migrate down</code> a server with data.</strong> Each migration has a <code>down</code>, for development and
 tests: on a real database it drops tables and columns with their rows, and some refuse to run
 once there are rows to lose.</p>
+<h2 id="the-web-client">The web client <a class="anchor" href="#the-web-client" aria-label="Link to this section">#</a></h2>
+<p>The web client is static files: a rim-ui release moves it forward or back with no migration
+and no backup, and the server keeps running. Verify the image as <a href="../self-hosting.html"><code>docs/self-hosting.md</code></a>,
+&quot;Verify the images&quot;, says, with the rim-ui release in place of <code>$v</code>, then:</p>
+<pre><code class="language-sh">$EDITOR deploy/.env                           # RIM_WEB_VERSION=&lt;rim-ui version&gt;
+dc pull web
+dc up -d --no-deps web
+dc ps web                                     # web: healthy</code></pre>
+<p>Back is the same with the version before. On a host that <code>rim-deploy</code> runs,
+<code>rim-deploy web &lt;version&gt;</code> does these steps, checks the signature, and puts the env file back
+when the container does not become healthy. An <strong>Upgrade:</strong> line in the changelogs says when a
+web client needs a newer server, which then goes first.</p>
 <h2 id="why-migrations-only-go-forward">Why migrations only go forward <a class="anchor" href="#why-migrations-only-go-forward" aria-label="Link to this section">#</a></h2>
 <p>A release&#39;s migrations expand the schema: new tables, new columns that are nullable or have a
 default, new indexes. The previous release&#39;s server ignores what it does not know, so it keeps
@@ -166,7 +188,7 @@ it that the backup is their only way back.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/b0969112656b8e76460ba27670d0a05f955bf4cd/docs/operations/upgrade.md">rim-server/docs/operations/upgrade.md</a> at <code>b096911</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/048faa33edc68a6a7dc5b751fe5ec06bef6d4d5b/docs/operations/upgrade.md">rim-server/docs/operations/upgrade.md</a> at <code>048faa3</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>
