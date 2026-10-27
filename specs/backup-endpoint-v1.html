@@ -51,13 +51,13 @@
 </details></aside>
     <main id="content" class="prose">
 <h1 id="backup-endpoint-version-1">Backup endpoint, version 1</h1>
-<p class="status"><span><b>Backup endpoint, version 1</b></span><span>version 1</span><span><a href="https://github.com/rim-platform/rim-ui/blob/f2f75cc79f1a5c245be584e291d1374ff052985e/docs/specs/backup-endpoint-v1.md">rim-ui/docs/specs/backup-endpoint-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-ui/commit/f2f75cc79f1a5c245be584e291d1374ff052985e">f2f75cc</a></span></p>
+<p class="status"><span><b>Backup endpoint, version 1</b></span><span>version 1</span><span><a href="https://github.com/rim-platform/rim-ui/blob/85116cc1ce7e2db2a553e044894b45edcec8f6af/docs/specs/backup-endpoint-v1.md">rim-ui/docs/specs/backup-endpoint-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-ui/commit/85116cc1ce7e2db2a553e044894b45edcec8f6af">85116cc</a></span></p>
 <p>The desktop app keeps its history archive (<a href="history-archive-v1.html"><code>history-archive-v1.md</code></a>) in a folder, in Google Drive
 or Dropbox, or on a service the user runs: the <strong>backup endpoint</strong>. This document is that
 service&#39;s protocol, so anyone can write one. It is one URL answering <code>GET</code> and <code>POST</code>; the files
 it stores are the archive&#39;s, already encrypted, and it never needs to understand them.</p>
-<p>The device side is <a href="https://github.com/rim-platform/rim-ui/blob/f2f75cc79f1a5c245be584e291d1374ff052985e/src-tauri/src/history_archive/cloud/endpoint.rs"><code>src-tauri/src/history_archive/cloud/endpoint.rs</code></a>. A reference service ships
-next to this document: <a href="https://github.com/rim-platform/rim-ui/blob/f2f75cc79f1a5c245be584e291d1374ff052985e/docs/specs/backup-endpoint-reference.py"><code>backup-endpoint-reference.py</code></a>, a single Python 3 file using only the
+<p>The device side is <a href="https://github.com/rim-platform/rim-ui/blob/85116cc1ce7e2db2a553e044894b45edcec8f6af/src-tauri/src/history_archive/cloud/endpoint.rs"><code>src-tauri/src/history_archive/cloud/endpoint.rs</code></a>. A reference service ships
+next to this document: <a href="https://github.com/rim-platform/rim-ui/blob/85116cc1ce7e2db2a553e044894b45edcec8f6af/docs/specs/backup-endpoint-reference.py"><code>backup-endpoint-reference.py</code></a>, a single Python 3 file using only the
 standard library, which keeps the files under one directory. The app&#39;s tests run the endpoint
 provider against it.</p>
 <p>A write-only webhook is deliberately not the protocol: restoring on a new device, and several
@@ -363,7 +363,7 @@ it.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/f2f75cc79f1a5c245be584e291d1374ff052985e/docs/specs/backup-endpoint-v1.md">rim-ui/docs/specs/backup-endpoint-v1.md</a> at <code>f2f75cc</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/85116cc1ce7e2db2a553e044894b45edcec8f6af/docs/specs/backup-endpoint-v1.md">rim-ui/docs/specs/backup-endpoint-v1.md</a> at <code>85116cc</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>
