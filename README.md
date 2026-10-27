@@ -54,7 +54,7 @@ with the commits it names in each page's footer.
 the public server (rim-server's `docs/server-identity.md`, "Handles and delegation"). `.nojekyll`
 lets Pages serve the dot directory, and the checks fail when the file says anything else.
 
-Pull requests and pushes to `master` check the committed pages in CI using Node 22.
+Pull requests and pushes to `master` check the committed pages in CI using Node 24.
 Rebuild locally from the intended source commits before submitting generated changes; CI
 checks the HTML that Pages will serve without fetching newer application sources.
 
