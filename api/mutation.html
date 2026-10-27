@@ -181,14 +181,21 @@ the same id and envelope again answers the stored message.</p>
 <div class="sig">addConversationMembers(
   serverId: <a href="scalars.html#ID">ID</a>!
   conversationId: <a href="scalars.html#ID">ID</a>!
-  userIds: [<a href="scalars.html#ID">ID</a>!]!
+  userIds: [<a href="scalars.html#ID">ID</a>!]! = []
+  remoteMembers: [<a href="inputs.html#RemoteMemberInput">RemoteMemberInput</a>!]
 ): <a href="objects.html#Conversation">Conversation</a>!</div>
-<div class="desc"><p>Add (invite) workspace members to a channel or group the caller belongs to. In the
-server&#39;s default workspace a channel takes them from an Owner, a Moderator or a private
-channel&#39;s creator, a group as a DM with each would be started, and one call names at
-most 50.</p>
+<div class="desc"><p>Add (invite) people to a channel or group the caller belongs to: workspace members by
+<code>userIds</code>, and in the direct space anyone by principal id in <code>remoteMembers</code>, here or on
+another server, as <a href="mutation.html#createConversation"><code>createConversation</code></a> names them. In the server&#39;s default workspace a
+channel takes them from an Owner, a Moderator or a private channel&#39;s creator, a group as a
+DM with each would be started, and one call names at most 50.</p>
 </div>
-
+<div class="tablewrap"><table class="fields"><thead><tr><th>Argument</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>serverId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>conversationId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>userIds</code></td><td><code>[<a href="scalars.html#ID">ID</a>!]!</code> <span class="faint">= []</span></td><td></td></tr>
+<tr><td><code>remoteMembers</code></td><td><code>[<a href="inputs.html#RemoteMemberInput">RemoteMemberInput</a>!]</code></td><td></td></tr>
+</tbody></table></div>
 </section>
 <section class="entry" id="removeConversationMember" data-name="removeConversationMember">
 <h3><code>removeConversationMember</code></h3>
@@ -1346,7 +1353,7 @@ device.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Generated from <a href="https://github.com/rim-platform/rim-ui/blob/f2f75cc79f1a5c245be584e291d1374ff052985e/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>f2f75cc</code></span>
+    <span>Generated from <a href="https://github.com/rim-platform/rim-ui/blob/85116cc1ce7e2db2a553e044894b45edcec8f6af/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>85116cc</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

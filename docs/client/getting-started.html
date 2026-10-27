@@ -210,13 +210,19 @@ people who joined with it stay, and open requests stay open.</p>
 <kbd>Ctrl+Shift+C</kbd>) asks for a <strong>Channel name</strong>. The <strong>Private</strong> switch says &quot;Only invited
 members can see this channel. This cannot be changed later.&quot; <strong>Add members (optional)</strong> picks
 people to add, and <strong>Create</strong> opens the channel. <strong>Browse channels</strong>, the compass beside
-<strong>New channel</strong>, lists the public channels you can join.</p>
+<strong>New channel</strong>, lists the public channels you can join. In the server&#39;s default workspace only
+its Owner and Moderators create channels, and only they see <strong>New channel</strong>.</p>
+<p>A channel&#39;s topic under its name is changed by the Owner and Moderators, and in a private
+channel by its creator; everyone else reads it.</p>
 <h2 id="talk">Talk <a class="anchor" href="#talk" aria-label="Link to this section">#</a></h2>
 <p><strong>Channels.</strong> A public channel is readable by every member of the workspace. The tool panel lists
 the channels you joined; one you have not joined shows <strong>Join channel</strong> above its timeline.</p>
+<p><strong>Replies.</strong> <strong>Reply</strong> in a message&#39;s menu, the reply arrow on hover, or <kbd>r</kbd> on a
+selected message quotes it above the composer; what you send next shows that quote, and choosing
+the quote jumps to the original. <strong>Cancel reply</strong> (the ×) or <kbd>Esc</kbd> drops it.</p>
 <p><strong>Threads.</strong> Replies live in threads. Hover a message and choose <strong>Open thread</strong>, choose <strong>Reply
-in thread</strong> in its context menu (right-click), or select it and press <kbd>r</kbd> or <kbd>t</kbd>.
-The thread opens in a pane on the right; the message stays in the timeline and its replies stay in
+in thread</strong> in its context menu (right-click), or select it and press <kbd>t</kbd>. The thread
+opens in a pane on the right; the message stays in the timeline and its replies stay in
 the thread. A message with a thread shows how many replies it has under it (<strong>3 replies</strong>), or
 <strong>View thread</strong> on a server that does not report the count; choose it, or <strong>Open thread</strong> on
 hover, to open the pane. The thread&#39;s reply box works like the composer: <code>@</code> mentions, <code>:</code> emoji,
@@ -226,9 +232,13 @@ hover, to open the pane. The thread&#39;s reply box works like the composer: <co
 group, then choose <strong>Start conversation</strong> or <strong>Start group</strong> (or press <kbd>Ctrl+Enter</kbd>). A
 DM opens as a draft and is created when you send its first message. A group is named
 after the people in it, as you see them: &quot;Alice and Bob&quot;, or &quot;Alice, Bob, Carol and 2 others&quot;
-past three. In Direct messages
+past three. <strong>Add people…</strong> in a group&#39;s menu, or <strong>Add people</strong> in its members panel, adds
+someone; in Direct messages it lists your contacts and the people in your workspaces, and an
+encrypted group takes only people with a device set up for encryption. In Direct messages
 the picker lists your contacts instead. Settings &gt; Contacts shows your contact link and adds
-someone from theirs; a workspace&#39;s member list has <strong>Add as contact</strong>.</p>
+someone from theirs; a workspace&#39;s member list has <strong>Add as contact</strong>. A DM or group started
+from a workspace opens in Direct messages; its header then offers <strong>Back to &lt;workspace&gt;</strong>
+(<kbd>Alt+←</kbd>), which returns to the workspace and the conversation you were in.</p>
 <p><strong>DM requests.</strong> A first DM from someone can arrive as a request, which you see before the
 conversation joins your list. Settings &gt; Direct messages decides who reaches you how:</p>
 <ul>
@@ -266,6 +276,8 @@ commands, and <code>:</code> followed by the start of a name suggests emoji. A w
 written as <code>:name:</code> show as their images. <strong>Insert emoji</strong> and <strong>Attach file</strong> sit beside the
 field; a server can turn attachments off. <kbd>Escape</kbd> moves from the composer to the message
 list, where the arrow keys move between messages and <kbd>e</kbd> edits your own.</p>
+<p>An edited message shows <strong>(edited)</strong> after its text; hover or focus it to see when. A server older
+than edit times shows it only in encrypted conversations.</p>
 <p><strong>Inbox and notifications.</strong> <strong>Inbox</strong> on the side rail shows the conversation list in the tool
 panel, with the number of unread messages in the open workspace. The bell, <strong>Notifications</strong>,
 lists your mentions, DMs, thread replies, reactions and keyword matches in the open workspace,
@@ -397,7 +409,7 @@ default workspace for new accounts.</li>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/f2f75cc79f1a5c245be584e291d1374ff052985e/docs/getting-started.md">rim-ui/docs/getting-started.md</a> at <code>f2f75cc</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/85116cc1ce7e2db2a553e044894b45edcec8f6af/docs/getting-started.md">rim-ui/docs/getting-started.md</a> at <code>85116cc</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

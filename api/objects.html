@@ -886,6 +886,10 @@ otherwise.</p>
 </td></tr>
 <tr><td><code>isDeleted</code></td><td><code><a href="scalars.html#Boolean">Boolean</a>!</code></td><td></td></tr>
 <tr><td><code>sentAt</code></td><td><code><a href="scalars.html#DateTime">DateTime</a>!</code></td><td></td></tr>
+<tr><td><code>editedAt</code></td><td><code><a href="scalars.html#DateTime">DateTime</a></code></td><td><p>When the text last changed, the value <code>MessageChange.editedAt</code> carries; null for a
+never-edited message and for a deleted one. Listed in <code>serverInfo.capabilities</code> as
+<code>message_edited_at</code>.</p>
+</td></tr>
 <tr><td><code>author</code></td><td><code><a href="objects.html#User">User</a></code></td><td></td></tr>
 <tr><td><code>reactions</code></td><td><code>[<a href="objects.html#ReactionGroup">ReactionGroup</a>!]!</code></td><td></td></tr>
 <tr><td><code>isPinned</code></td><td><code><a href="scalars.html#Boolean">Boolean</a>!</code></td><td></td></tr>
@@ -1788,6 +1792,9 @@ operator names none (<code>RIM_ABUSE_CONTACT</code>).</p>
 server asks for none (<code>RIM_MINIMUM_AGE</code>). A signup sends it back as
 <code>confirmedMinimumAge</code>.</p>
 </td></tr>
+<tr><td><code>capabilities</code></td><td><code>[<a href="scalars.html#String">String</a>!]!</code></td><td><p>API additions this server has that an older server lacks, by name: <code>message_edited_at</code>
+(<code>Message.editedAt</code>). A client ignores names it does not know.</p>
+</td></tr>
 </tbody></table></div>
 <p class="faint">Used by <a href="query.html#serverInfo">Query.serverInfo</a></p>
 </section>
@@ -2167,7 +2174,7 @@ shares no conversation with them.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Generated from <a href="https://github.com/rim-platform/rim-ui/blob/f2f75cc79f1a5c245be584e291d1374ff052985e/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>f2f75cc</code></span>
+    <span>Generated from <a href="https://github.com/rim-platform/rim-ui/blob/85116cc1ce7e2db2a553e044894b45edcec8f6af/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>85116cc</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

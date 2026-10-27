@@ -38,6 +38,7 @@
 <li><a href="#where-a-key-goes">Where a key goes</a></li>
 <li><a href="#keybind-profiles">Keybind profiles</a></li>
 <li><a href="#timeline-navigation">Timeline navigation</a></li>
+<li><a href="#back-from-a-direct-message">Back from a direct message</a></li>
 <li><a href="#vim-mode">Vim mode</a></li>
 </ol>
 </details></aside>
@@ -74,7 +75,7 @@ focused item, as a right click does (<a href="ui-shell.html"><code>ui-shell.md</
 <p>The keyboard shortcuts panel (<code>?</code> or <code>Ctrl+/</code>, or Settings, Keyboard) lists the bindings this
 resolution produces, so it always matches what the keys do.</p>
 <h2 id="keybind-profiles">Keybind profiles <a class="anchor" href="#keybind-profiles" aria-label="Link to this section">#</a></h2>
-<p>A profile is the default binding set of a device plus the Vim switch. Three are built in:</p>
+<p>A profile is a set of default bindings of a device plus the Vim switch. Three are built in:</p>
 <div class="tablewrap"><table>
 <thead>
 <tr>
@@ -96,12 +97,17 @@ resolution produces, so it always matches what the keys do.</p>
 <tr>
 <td>Mouse-friendly</td>
 <td>off</td>
-<td>The default set without <code>Ctrl+R</code>, <code>Ctrl+B</code>, <code>Ctrl+E</code>, <code>Ctrl+D</code>, <code>Ctrl+L</code>, <code>Ctrl+Shift+Z</code>, <code>Ctrl+ArrowLeft</code> and <code>Ctrl+ArrowRight</code></td>
+<td>The default set without <code>Ctrl+R</code>, <code>Ctrl+B</code>, <code>Ctrl+E</code>, <code>Ctrl+D</code>, <code>Ctrl+L</code>, <code>Ctrl+Shift+Z</code>, <code>Ctrl+ArrowLeft</code>, <code>Ctrl+ArrowRight</code> and <code>Alt+ArrowLeft</code></td>
 </tr>
 </tbody></table></div>
 <p>Mouse-friendly leaves those keys to the browser and the text field: reload, bold, the search bar,
-bookmark, the address bar, redo and word jumps.</p>
-<p>Settings, Keyboard exports the active profile and imports one. The file:</p>
+bookmark, the address bar, redo, word jumps and browser back.</p>
+<p>Settings, Keyboard exports the bindings in force and imports a profile file. Importing asks
+how: <strong>Merge</strong> (the usual choice) keeps every default and lets each binding of the file take
+the place of the default on the same keystroke and context, adding the rest; <strong>Replace all</strong>
+uses the file&#39;s bindings alone. The device keeps the choice, and a merged profile picks up
+defaults that later versions add.</p>
+<p>The file:</p>
 <pre><code class="language-json">{
   &quot;format&quot;: &quot;rim.keybind-profile&quot;,
   &quot;version&quot;: 1,
@@ -118,7 +124,8 @@ bookmark, the address bar, redo and word jumps.</p>
 <li><code>keystroke</code>: modifiers <code>Ctrl</code>, <code>Shift</code>, <code>Alt</code> (or <code>Meta</code> or <code>Cmd</code>, read as <code>Ctrl</code>), in any
 case, joined by <code>+</code>, then a key name as the browser reports it (<code>K</code>, <code>ArrowDown</code>, <code>Escape</code>,
 <code>?</code>). Import puts it in canonical form.</li>
-<li><code>commandId</code>: any command id, or <code>null</code> to free the keystroke so no lower layer binds it.</li>
+<li><code>commandId</code>: any command id, or <code>null</code> to free the keystroke: under Merge it removes the
+default on those keys, and either way no lower layer binds them.</li>
 <li><code>context</code>: <code>GLOBAL</code> (the default), <code>COMPOSER</code>, <code>MESSAGE_LIST</code>, <code>THREAD_VIEW</code>,
 <code>CONVERSATION_VIEW</code>, <code>PANEL</code> or <code>COMMAND_PALETTE</code>.</li>
 </ul>
@@ -130,6 +137,10 @@ NAVIGATE and a bar over the bottom of the timeline lists the keys for the select
 timeline leaves room for the bar under the newest message. Entering it with the keyboard selects
 the newest message; clicking into the list selects the message clicked, without scrolling.
 Focusing the composer or a thread&#39;s reply box shows COMPOSE.</p>
+<h2 id="back-from-a-direct-message">Back from a direct message <a class="anchor" href="#back-from-a-direct-message" aria-label="Link to this section">#</a></h2>
+<p><kbd>Alt+ArrowLeft</kbd> (<strong>Back to Workspace</strong>) returns from a DM or group opened in a
+workspace to that workspace and its conversation. On macOS a text field keeps Option+Arrow
+for word jumps, so press it outside the composer there.</p>
 <h2 id="vim-mode">Vim mode <a class="anchor" href="#vim-mode" aria-label="Link to this section">#</a></h2>
 <p>Off by default. Normal mode is any focus outside a text field; insert mode is a focused text
 field or plugin frame. The status bar shows the mode.</p>
@@ -177,12 +188,13 @@ field or plugin frame. The status bar shows the mode.</p>
 <td>Leave the text field for its pane</td>
 </tr>
 </tbody></table></div>
-<p>The timeline keeps its own message keys (<code>r</code>, <code>e</code>, <code>p</code> to pin, <code>d</code>, <code>c</code>, <code>f</code>) in both modes.</p>
+<p>The timeline keeps its own message keys (<code>r</code> to reply, <code>t</code> for the thread, <code>e</code>, <code>p</code> to pin, <code>d</code>,
+<code>c</code>, <code>f</code>) in both modes; <code>r</code>, <code>t</code> and <code>p</code> only where the conversation lets you.</p>
 
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/f2f75cc79f1a5c245be584e291d1374ff052985e/docs/keyboard.md">rim-ui/docs/keyboard.md</a> at <code>f2f75cc</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/85116cc1ce7e2db2a553e044894b45edcec8f6af/docs/keyboard.md">rim-ui/docs/keyboard.md</a> at <code>85116cc</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

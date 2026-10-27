@@ -85,10 +85,15 @@ with <code>VALIDATION</code>.</li>
 by the client with <code>addConversationMembers</code> right after creation.</li>
 <li><code>addConversationMembers</code> (invite): the caller must be a member of the channel or group (for a
 public channel: join first, <code>FORBIDDEN</code> otherwise); targets must be workspace members;
-existing members are skipped. Not valid for DMs. In the server&#39;s default workspace, which
-every account joins, only an Owner or Moderator, or the creator of a private channel, adds
-people to a channel (<code>FORBIDDEN</code> otherwise), and one call names at most 50 people
-(<code>VALIDATION</code>). A group holds at most 100 members, plaintext or encrypted (<code>VALIDATION</code>).</li>
+existing members are skipped. In the direct space it also takes <code>remoteMembers</code> (principal id
+and relays), resolved as <code>createConversation</code> resolves them; <code>userIds</code> may then be left out.
+Every member of a group there adds people, guests included. A plaintext group of the direct
+space takes nobody from another server (<code>VALIDATION</code>, &quot;conversations with people on other
+servers are encrypted&quot;), and an encrypted one only people with a device set up for encryption.
+Not valid for DMs. In the server&#39;s default workspace, which every account joins, only an Owner
+or Moderator, or the creator of a private channel, adds people to a channel (<code>FORBIDDEN</code>
+otherwise), and one call names at most 50 people (<code>VALIDATION</code>). A group holds at most 100
+members, plaintext or encrypted (<code>VALIDATION</code>).</li>
 <li>A channel&#39;s topic (<code>updateConversationTopic</code>) is changed by an Owner or Moderator, or by the
 creator of a private channel; anyone else gets <code>FORBIDDEN</code>. In a DM or group any member
 changes it. Anyone who may write pins a message; a message someone else pinned in a channel is
@@ -477,7 +482,8 @@ deletes its requests. A banned person cannot file one.</li>
 <h3 id="guest-restrictions-enforced-in-the-services">Guest restrictions (enforced in the services) <a class="anchor" href="#guest-restrictions-enforced-in-the-services" aria-label="Link to this section">#</a></h3>
 <ul>
 <li>Creating a channel or a group, joining a channel, inviting into a conversation
-(<code>addConversationMembers</code>) and creating workspace invites: <code>FORBIDDEN</code>. Guests may open DMs.</li>
+(<code>addConversationMembers</code>) outside the direct space and creating workspace invites:
+<code>FORBIDDEN</code>. Guests may open DMs.</li>
 <li>A public channel the guest has not been added to behaves like a private channel: <code>NOT_FOUND</code>
 on every read and write, absent from <code>channels</code> (a guest&#39;s channel list is always the joined
 list, whatever <code>joinedOnly</code> says), and from <code>searchMessages</code>, and its realtime
@@ -807,6 +813,10 @@ included.</p>
 <li>Creating a thread from a timeline message is optional.</li>
 <li>The root message remains in the main timeline after a thread is created.</li>
 <li>Replies inside the thread live only in the thread view; they do not appear in the main timeline listing.</li>
+<li><code>Message.editedAt</code> is when the text last changed (for an encrypted message, its envelope), null
+for a never-edited or deleted message, the value <code>MessageChange.editedAt</code> carries.
+<code>MessageUpdated</code> events carry it as <code>message.edited_at</code>. A server with it lists
+<code>message_edited_at</code> in <code>serverInfo.capabilities</code>.</li>
 </ul>
 <h2 id="reply-semantics">Reply Semantics <a class="anchor" href="#reply-semantics" aria-label="Link to this section">#</a></h2>
 <ul>
@@ -893,7 +903,7 @@ and the next query, without a scheduled event.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/53e55099532cb3c44499e9aba37dc05e684af41c/docs/messaging.md">rim-server/docs/messaging.md</a> at <code>53e5509</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/2adb62f6df2cc0694fd08de1e9f8da0a209f60ec/docs/messaging.md">rim-server/docs/messaging.md</a> at <code>2adb62f</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>
