@@ -46,12 +46,12 @@
     <main id="content" class="prose">
 <h1 id="in-app-updates">In-app updates</h1>
 <p>The desktop app can check for, download and install new versions of itself with Tauri&#39;s updater
-plugin. It ships dormant: <a href="https://github.com/rim-platform/rim-ui/blob/7d57e1c2b5b0f208c8dd144f52e1ae19da2922e1/src-tauri/updater.json"><code>src-tauri/updater.json</code></a> is committed empty, and an app built from it
+plugin. It ships dormant: <a href="https://github.com/rim-platform/rim-ui/blob/f2f75cc79f1a5c245be584e291d1374ff052985e/src-tauri/updater.json"><code>src-tauri/updater.json</code></a> is committed empty, and an app built from it
 never contacts an update server. Settings → About then says &quot;Updates are not configured in this
 build&quot;.</p>
 <h2 id="how-it-works">How it works <a class="anchor" href="#how-it-works" aria-label="Link to this section">#</a></h2>
 <ul>
-<li><a href="https://github.com/rim-platform/rim-ui/blob/7d57e1c2b5b0f208c8dd144f52e1ae19da2922e1/src-tauri/updater.json"><code>src-tauri/updater.json</code></a> is compiled into the binary (<a href="https://github.com/rim-platform/rim-ui/blob/7d57e1c2b5b0f208c8dd144f52e1ae19da2922e1/src-tauri/src/updater.rs"><code>src-tauri/src/updater.rs</code></a>). At startup
+<li><a href="https://github.com/rim-platform/rim-ui/blob/f2f75cc79f1a5c245be584e291d1374ff052985e/src-tauri/updater.json"><code>src-tauri/updater.json</code></a> is compiled into the binary (<a href="https://github.com/rim-platform/rim-ui/blob/f2f75cc79f1a5c245be584e291d1374ff052985e/src-tauri/src/updater.rs"><code>src-tauri/src/updater.rs</code></a>). At startup
 the app reads it; with a public key and at least one endpoint it registers the updater and
 process plugins and hands them the endpoints and key. <code>tauri.conf.json</code> carries no updater
 configuration; a release build passes the public key to the bundler in a config overlay (see
@@ -63,7 +63,7 @@ field is logged as a warning and treated the same way, so a bad file never stops
 raises a toast that opens Settings → About, where the user sees the version and release notes,
 downloads it with a progress bar and confirms &quot;Restart to update&quot;. Nothing is installed before
 that confirmation.</li>
-<li>The main window&#39;s capability (<a href="https://github.com/rim-platform/rim-ui/blob/7d57e1c2b5b0f208c8dd144f52e1ae19da2922e1/src-tauri/capabilities/default.json"><code>src-tauri/capabilities/default.json</code></a>) grants <code>updater:default</code>
+<li>The main window&#39;s capability (<a href="https://github.com/rim-platform/rim-ui/blob/f2f75cc79f1a5c245be584e291d1374ff052985e/src-tauri/capabilities/default.json"><code>src-tauri/capabilities/default.json</code></a>) grants <code>updater:default</code>
 (check, download, install) and <code>process:allow-restart</code>. Nothing else may call them.</li>
 <li>The web build has no updater: the runtime capability <code>updater</code> is off there and the About page
 shows only the version.</li>
@@ -148,13 +148,13 @@ product name, <code>RIM</code>: <code>RIM_&lt;version&gt;_amd64.AppImage</code>,
 <code>RIM-&lt;version&gt;-1.x86_64.rpm</code>, <code>RIM_&lt;version&gt;_x64-setup.exe</code> and
 <code>RIM_&lt;version&gt;_x64_en-US.msi</code>. Before the build, <code>npm run licenses</code> writes the third-party
 licence notices the app bundles, <code>src-tauri/resources/THIRD-PARTY-LICENSES.txt</code>.</p>
-<p><a href="https://github.com/rim-platform/rim-ui/blob/7d57e1c2b5b0f208c8dd144f52e1ae19da2922e1/src-tauri/tauri.release.conf.json"><code>src-tauri/tauri.release.conf.json</code></a> replaces the development content security policy. Its
+<p><a href="https://github.com/rim-platform/rim-ui/blob/f2f75cc79f1a5c245be584e291d1374ff052985e/src-tauri/tauri.release.conf.json"><code>src-tauri/tauri.release.conf.json</code></a> replaces the development content security policy. Its
 <code>connect-src</code> allows any <code>https:</code> and <code>wss:</code> origin, and <code>http:</code> and <code>ws:</code> on <code>localhost</code> and
 <code>127.0.0.1</code>, because the installed app talks to whichever server the person signs in to,
 including one running on their own machine.</p>
 </li>
 <li><p>Creates the GitHub release as a draft and writes <code>latest.json</code> with
-<a href="https://github.com/rim-platform/rim-ui/blob/7d57e1c2b5b0f208c8dd144f52e1ae19da2922e1/scripts/release-assets.mjs"><code>scripts/release-assets.mjs</code></a>:</p>
+<a href="https://github.com/rim-platform/rim-ui/blob/f2f75cc79f1a5c245be584e291d1374ff052985e/scripts/release-assets.mjs"><code>scripts/release-assets.mjs</code></a>:</p>
 <pre><code class="language-json">{
   &quot;version&quot;: &quot;0.0.2&quot;,
   &quot;notes&quot;: &quot;https://github.com/rim-platform/rim-ui/releases/tag/v0.0.2&quot;,
@@ -220,7 +220,7 @@ would refuse.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/7d57e1c2b5b0f208c8dd144f52e1ae19da2922e1/docs/updater.md">rim-ui/docs/updater.md</a> at <code>7d57e1c</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/f2f75cc79f1a5c245be584e291d1374ff052985e/docs/updater.md">rim-ui/docs/updater.md</a> at <code>f2f75cc</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

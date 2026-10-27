@@ -113,11 +113,11 @@ run waits for your confirmation:</p>
 </tbody></table></div>
 <p>A command can also be marked dangerous, such as kicking, banning or changing someone&#39;s role. It
 always asks first, whoever runs it, and the palette tags it <strong>dangerous</strong>. The confirmation
-dialog reads &quot;Confirm:&quot; and the command&#39;s title, lists the arguments, and offers <strong>Cancel</strong> and
-a button that follows the tier: <strong>Run anyway</strong> for a mutating command, <strong>I understand —
-execute</strong> for a restricted one, <strong>Confirm</strong> otherwise. A restricted command first asks you to
-type its verb, as in <code>Type &quot;delete&quot; to confirm</code>. A confirmation expires; the app then says
-&quot;Confirmation expired. Run the command again.&quot;</p>
+dialog reads &quot;Confirm:&quot; and the command&#39;s title, is drawn in red for a dangerous command and says
+so, lists the arguments, and offers <strong>Cancel</strong> and a button that follows the tier: <strong>Run
+anyway</strong> for a mutating command, <strong>I understand — execute</strong> for a restricted one, <strong>Confirm</strong>
+otherwise. A restricted command first asks you to type its verb, as in <code>Type &quot;delete&quot; to confirm</code>. A confirmation expires; the app then says &quot;Confirmation expired. Run the command
+again.&quot;</p>
 <p><strong>Capabilities.</strong> A command declares what it needs, such as <code>chat.write</code> or
 <code>admin.manage_members</code>, and the server lists only the commands your role in the workspace may
 run; a plugin&#39;s command acts only within the permissions you granted the plugin.</p>
@@ -135,17 +135,31 @@ Workspace plugins, the registry&#39;s plugins this device has not installed, as 
 (<a href="../../plugins/index.html#workspace-registry">Workspace registry</a>). With one, the groups follow their best
 match.</p>
 <p>Each row shows where the command comes from (built in, plugin or yours), its category and its
-keybind. Left out are a plugin command that needs arguments, which its plugin&#39;s panel runs, a
-plugin command that needs a conversation while none is open, and macros, which run from
-Settings → Macros or <code>/macro</code>. Running a command closes the palette at once; a toast gives its
-title on success or &quot;&lt;title&gt;: &lt;message&gt;&quot; on failure, and a plugin command answers in its words.</p>
+keybind. Left out are a command that needs an argument the palette cannot fill, such as <strong>Kick
+Member</strong> (the member) or <strong>Set State</strong> (the key), and a conversation&#39;s command such as <strong>Mark as
+Read</strong> while no conversation is open; a plugin command that needs arguments, which its plugin&#39;s
+panel runs, or a conversation while none is open; and macros, which run from Settings → Macros or
+<code>/macro</code>. <strong>Leave Conversation</strong> and <strong>Archive Channel</strong> ask first, as the conversation&#39;s menu
+does: &quot;Archive &lt;channel&gt;?&quot; always, &quot;Leave &lt;name&gt;?&quot; for a group or a private channel; a
+public channel, which you can join again, is left at once. Running a command closes the palette
+at once; a toast gives its title and the result&#39;s message on success, such as &quot;List Channels: 3
+channels found.&quot;, or &quot;&lt;title&gt;: &lt;message&gt;&quot; on failure, and a plugin command answers in its
+words.
+<strong>Search Messages</strong> run from the palette or a keybind without a <code>query</code> opens the search box,
+as <strong>Open Search</strong> does; with a <code>query</code>, such as a keybind&#39;s preset argument, or as a pipe stage,
+the server runs the search.</p>
 <p><strong>Pipes.</strong> Typing <kbd>|</kbd> locks the text before it as a stage: a command id, optionally
-followed by <code>key=value</code> arguments with no spaces in the values. Pick the last command from the
-list, or press <kbd>Enter</kbd> on an empty search to run the chain. Each stage&#39;s result is
-merged into the next stage&#39;s arguments. A chain has at most 10 stages, all of them commands the
-server runs. The palette then shows each stage&#39;s result, or &quot;Pipe failed at stage &lt;n&gt;: …&quot;.
-<kbd>Backspace</kbd> in an empty search reopens the last stage, and <kbd>Esc</kbd> clears the
-chain.</p>
+followed by <code>key=value</code> arguments with no spaces in the values. The list then offers only the
+commands that can be the next stage: those the server runs whose arguments come from where you
+are. <kbd>Enter</kbd> on an empty search runs the chain; with a search, <kbd>Enter</kbd> adds the
+highlighted command as the last stage and runs the chain, and <kbd>Tab</kbd> or a click does the
+same. Each stage&#39;s result is merged into the next stage&#39;s arguments. A chain has at most 10
+stages, all of them commands the server runs. A stage that runs only in the app stops the chain
+before it is sent: &quot;Pipe stage &lt;n&gt;: &lt;title&gt; runs only in this app, so it cannot be part of a
+pipe.&quot; When a stage is dangerous, the confirmation (&quot;Confirm: Run pipe&quot;) is drawn in red and
+names it: &quot;Includes a dangerous command: &lt;title&gt;.&quot; The palette then shows each stage&#39;s
+result, or &quot;Pipe failed at stage &lt;n&gt;: …&quot;. <kbd>Backspace</kbd> in an empty search reopens the
+last stage, and <kbd>Esc</kbd> clears the chain.</p>
 <h2 id="keybinds">Keybinds <a class="anchor" href="#keybinds" aria-label="Link to this section">#</a></h2>
 <p>A keybind runs one command, sometimes with fixed arguments. These are the default bindings of a
 new device:</p>
@@ -178,7 +192,7 @@ new device:</p>
 </tr>
 <tr>
 <td><kbd>Ctrl+Shift+A</kbd></td>
-<td>Open the AI agent</td>
+<td>Open the AI agent (desktop app)</td>
 </tr>
 <tr>
 <td><kbd>Ctrl+Shift+C</kbd></td>
@@ -238,7 +252,7 @@ new device:</p>
 </tr>
 <tr>
 <td><kbd>Escape</kbd></td>
-<td>Close the open plugin panel, thread or Settings page</td>
+<td>Close the open panel: a plugin panel, the thread, a page such as Settings, or the notifications or a members list in the tool panel</td>
 </tr>
 <tr>
 <td><kbd>?</kbd>, <kbd>Ctrl+/</kbd></td>
@@ -252,13 +266,21 @@ Thread view, Conversation view, Panel (the rails, the tool panel and plugin pane
 palette. It works where its context has focus; a global one works everywhere. In a text field,
 keys that type a character and the editing chords stay with the field, unless a binding is made
 for that very context.</p>
-<p><strong>Settings → Keybinds</strong> lists the server&#39;s defaults, your bindings and this device&#39;s, grouped
-into Navigation, Chat, Panels, Agent, Plugins and Other, with &quot;Search keybinds...&quot; above them.</p>
+<p><strong>Settings → Keybinds</strong> lists every default binding (the server&#39;s and the active keyboard
+profile&#39;s), your bindings and this device&#39;s, grouped into Navigation, Chat, Panels, Agent,
+Plugins and Other, with &quot;Search keybinds...&quot; above them. Each row names its context: Global,
+Composer, Message list and so on.</p>
 <ul>
 <li><strong>Add keybind</strong> opens a form: press the keys in &quot;Press a key combination...&quot;, pick the
-command and the context, then <strong>Save</strong>.</li>
+command and the context, then <strong>Save</strong>. The field records any keys, even ones already bound,
+and runs nothing while it has focus; <kbd>Escape</kbd> alone stops recording and keeps the
+earlier keys. Keys already bound in the chosen context show &quot;Already used by &lt;command&gt; —
+saving will reassign it.&quot;, and <strong>Save</strong> moves them to the new command; keys a workspace
+keybind holds cannot be taken.</li>
 <li>On a binding of your own, the pencil changes its command or context, clicking the keys records
-new ones, the switch turns it off, and the bin deletes it after &quot;Delete keybind?&quot;.</li>
+new ones, the switch turns it off, and the bin deletes it after &quot;Delete keybind?&quot;. Keys
+recorded there that another binding holds wait under the row with the same note, <strong>Save</strong> and
+<strong>Cancel</strong>.</li>
 <li>The default rows carry the <strong>Default</strong> tag and cannot be edited, turned off or deleted here.
 A binding of yours on the same keys and context takes their place: <strong>Override</strong> opens the add
 form with the default&#39;s keys, command and context filled in, ready to change and save. A
@@ -283,7 +305,7 @@ by the workspace&#39;s Owner through the API; Settings has no form for them.
 device starts with; Vim, the same with Vim mode on; or Mouse-friendly, which leaves Ctrl+R, B, E,
 D, L, Ctrl+Shift+Z and the Ctrl arrows to the browser and the text field. <strong>Export profile</strong> and
 <strong>Import profile</strong> share one (<a href="keyboard.html#keybind-profiles">Keybind profiles</a>).</p>
-<p><strong>Vim mode.</strong> The <strong>Vim mode</strong> switch in Settings → Keyboard, or the &quot;Toggle Vim mode&quot; command,
+<p><strong>Vim mode.</strong> The <strong>Vim mode</strong> switch in Settings → Keyboard, or the &quot;Toggle Vim Mode&quot; command,
 adds a modal layer: <kbd>h</kbd> <kbd>j</kbd> <kbd>k</kbd> <kbd>l</kbd> move in normal mode, and
 a text field is insert mode (<a href="keyboard.html#vim-mode">Vim mode</a>).</p>
 <p><strong>The shortcuts panel.</strong> <kbd>?</kbd> outside a text field, <kbd>Ctrl+/</kbd>, or <strong>Show
@@ -293,11 +315,13 @@ grouped by context, with &quot;Vim normal mode&quot; while Vim is on, and &quot;
 <p>Both run a sequence of commands as one, and both are yours alone: nobody else in the workspace
 sees or runs them.</p>
 <p><strong>User commands</strong> appear in the palette and can be bound to keys. Settings → Commands, <strong>New
-command</strong>, asks for a <strong>Command ID</strong> (saved as <code>user.&lt;id&gt;</code>), a <strong>Title</strong>, a <strong>Description</strong> and
-the <strong>Steps</strong>: <strong>+ Add step</strong> picks a command the server runs, and the arrows reorder. <strong>Create</strong>
-saves it. Its steps take no arguments here, so each one uses the context. A user command can be
-bound when all its steps can, is dangerous when one step is, and can include other user
-commands, eight levels deep at most. The list shows each one&#39;s id and number of steps. The
+command</strong>, asks for a <strong>Command ID</strong> (saved as <code>user.&lt;id&gt;</code>, in lowercase letters, numbers, dots,
+dashes and underscores), a <strong>Title</strong>, a <strong>Description</strong> and the <strong>Steps</strong>: <strong>+ Add step</strong> picks
+a command the server runs, and the arrows reorder. <strong>Create</strong> saves it. Its steps take no
+arguments here, so each one uses the context, and <strong>+ Add step</strong> offers only commands the
+context can fill: none that needs other arguments. A user command can be bound when all its
+steps can, is dangerous when one step is, and can include other user commands, eight levels
+deep at most. The list shows each one&#39;s id and number of steps. The
 pencil loads the saved command into the form, its title, description and steps in order, with
 a step&#39;s arguments shown under it. Changing a step&#39;s command drops its arguments; <strong>Save</strong>
 stays off until a step is chosen, and the steps on the form replace the saved ones. A command
@@ -307,9 +331,11 @@ cannot be edited.&quot;</p>
 Macro&quot;: a <strong>Name</strong>, a <strong>Description</strong> and up to 20 <strong>Steps</strong>. Each step has a command, found with
 &quot;Search commands...&quot;, and an arguments field that takes JSON, such as
 <code>{&quot;conversation_id&quot;: &quot;…&quot;, &quot;text&quot;: &quot;…&quot;}</code>. The search leaves out commands that only run in the app,
-and a step typed as one is marked as failing. <strong>Save</strong> stores it. On the desktop, <strong>Build with
-AI</strong> turns a description into steps with the provider set in Settings → AI Agent: <strong>Generate</strong>,
-check the preview, then <strong>Use these steps</strong> opens them in the editor.</p>
+and a step typed as one is marked as failing. A step whose text is not a command id is marked
+&quot;Unknown command: &lt;id&gt;&quot; and the macro is not saved until it is fixed. <strong>Save</strong> stores it. On
+the desktop, <strong>Build with AI</strong> turns a description into steps with the provider set in
+Settings → AI Agent: <strong>Generate</strong>, check the preview, then <strong>Use these steps</strong> opens them in the
+editor.</p>
 <p>A macro runs from the play button on its row (&quot;Run macro&quot;), or from the composer: send
 <code>/macro &lt;name&gt;</code> (&quot;Run Macro&quot;). It runs on the server, step by step, in the open workspace, the
 open conversation and the thread open beside it, read when the run starts:</p>
@@ -322,7 +348,7 @@ on the open one, or on the one its <code>conversation_id</code> names, which win
 or make irreversible changes.&quot; A dangerous step below the restricted tier, such as kicking a
 member, cannot be confirmed inside a macro, and the macro stops there.</li>
 <li><strong>A failing step</strong> stops the macro. The steps before it stay done, and the toast says
-&quot;Macro failed: macro `&lt;name&gt;` failed on a step&quot;. A macro that finishes says
+<code>Macro &quot;&lt;name&gt;&quot; failed</code>, with the server&#39;s reason under it. A macro that finishes says
 <code>Macro &quot;&lt;name&gt;&quot; executed</code>.</li>
 <li><strong>Limits.</strong> A macro cannot contain another macro, and its name has at most 128 characters. You
 can keep 50 macros per workspace, and the page shows the server&#39;s own cap when it sets one.</li>
@@ -360,10 +386,12 @@ its creator, an Owner or a Moderator can change, toggle or delete it.</p>
 confirmation: every mutating, restricted or dangerous command, which includes posting a message,
 reacting and writing workspace state. Safe and sensitive server commands run. The editor&#39;s
 command search offers only these, and says why above the actions; an action set to a command the
-pipeline would skip, or to one that only runs in the app, is marked. A pipeline reacts
+pipeline would skip, or to one that only runs in the app, is marked, and one whose text is not
+a command id is marked &quot;Unknown command: &lt;id&gt;&quot; and not saved. A pipeline reacts
 only to events its creator may see: a message in a private channel its creator is not in fires
 nothing. On every firing, its creator, with the workspace open, sees &quot;Pipeline &quot;&lt;name&gt;&quot;
-fired&quot;, with the number of actions that ran; skipped actions are not counted.</p>
+fired&quot;, with how many of the pipeline&#39;s actions ran, such as &quot;1 of 2 actions ran&quot;; skipped
+actions are not counted, and the toast is a warning when some did not run.</p>
 <p><strong>Limits.</strong> The cooldown stops a pipeline from firing again until it has passed. A pipeline that
 fires more than 10 times in 60 seconds is switched off, with &quot;Pipeline &quot;&lt;name&gt;&quot; suspended&quot;;
 the power button turns it back on. You can create 50 pipelines per workspace, and the page shows
@@ -399,7 +427,9 @@ and no user command or macro made in Settings. A call that changes anything wait
 confirmation dialog, headed &quot;Agent wants to:&quot;, and the agent runs at most three such actions per
 run. Settings → AI Agent sets its provider and key, and
 <a href="../../plugins/index.html#using-a-plugin">Using a plugin</a> covers approving a plugin&#39;s commands for it. A
-server&#39;s operator can turn its access off.</p>
+server&#39;s operator can turn its access off. In the web app it is not offered: the palette, the
+keybind, the <code>/agent</code> suggestion and <strong>Build with AI</strong> are left out, and <code>/agent</code> typed in full
+shows &quot;The AI agent is available in the desktop app.&quot;</p>
 <h2 id="next">Next <a class="anchor" href="#next" aria-label="Link to this section">#</a></h2>
 <ul>
 <li><a href="keyboard.html">Keyboard</a>: how a key is resolved, the profile file and the Vim layer in full.</li>
@@ -411,7 +441,7 @@ sensitivity, confirmations, macros and what the agent may call.</li>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/7d57e1c2b5b0f208c8dd144f52e1ae19da2922e1/docs/commands-and-automation.md">rim-ui/docs/commands-and-automation.md</a> at <code>7d57e1c</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/f2f75cc79f1a5c245be584e291d1374ff052985e/docs/commands-and-automation.md">rim-ui/docs/commands-and-automation.md</a> at <code>f2f75cc</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

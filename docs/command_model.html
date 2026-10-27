@@ -389,7 +389,7 @@ mutating-call cap. Palette and keybind still run them in one step.</p>
 <td><code>server_id</code>, <code>conversation_id</code></td>
 <td><code>Mutating</code></td>
 <td>yes</td>
-<td></td>
+<td><code>conversation_id</code> falls back to the focused conversation</td>
 </tr>
 <tr>
 <td><code>chat.create_group</code></td>
@@ -433,6 +433,12 @@ pinned by <code>collect_ai_callable_inventory_matches_reviewed_set</code> (<code
 <code>list_commands_ai_surface_returns_forty_two_commands_with_caps</code> (<code>command_tests.rs</code>). The
 capability union the AI surface checks is <code>admin.manage_members</code>, <code>chat.read</code> and <code>chat.write</code>;
 the notification and general builtins declare none.</p>
+<p><code>chat.post_message</code>, <code>chat.get_recent_messages</code>, <code>chat.pin_message</code> and
+<code>chat.toggle_reaction</code> take <code>conversation_id</code> from the focused conversation
+(<code>context.conversation_id</code>) when it is not given, and <code>chat.pin_message</code> and
+<code>chat.toggle_reaction</code> take <code>message_id</code> from the selected message
+(<code>context.selected_message_id</code>); an argument that is given wins. <code>chat.search_messages</code> has
+no such fallback: without <code>conversation_id</code> it searches the workspace.</p>
 <h3 id="plugin-provided-commands">Plugin-Provided Commands <a class="anchor" href="#plugin-provided-commands" aria-label="Link to this section">#</a></h3>
 <ul>
 <li>Registered by plugins.</li>
@@ -468,7 +474,10 @@ commands in the same shape, enabled or not, sorted by id.</p>
 <ul>
 <li>a <strong>user command</strong> (<code>createUserCommand</code>, id <code>user.&lt;key&gt;</code>) is a command: it is listed with the
 others, so it shows in the palette and a keybind can name it; its steps run in order, each
-with its own arguments, in the context the user command runs in</li>
+with its own arguments, in the context the user command runs in. <code>&lt;key&gt;</code> is one or more
+lowercase letters, numbers, dots, dashes or underscores; <code>createUserCommand</code> refuses any other
+id with <code>VALIDATION</code> (&quot;a user command id may use only lowercase letters, numbers, dots, dashes
+or underscores after <code>user.</code>&quot;), and user commands saved before this rule keep their ids</li>
 <li>a <strong>macro</strong> (<code>createMacro</code>, <code>MacroDef</code>) is a list of up to 20 steps, each a builtin command id
 with its own arguments; a step may not name another macro or a user command, so one run
 performs at most 20 builtin steps. It is not in the command registry, so the palette does not
@@ -505,7 +514,13 @@ disabled user command does not run: <code>executeCommand</code> answers <code>NO
 that names no command.</p>
 <p><code>createMacro</code> and <code>updateMacro</code> refuse a step naming a user command with a <code>VALIDATION</code> error,
 &quot;macro steps must not reference user commands&quot;; <code>executeMacro</code> refuses a stored macro with such
-a step the same way, before any of its steps runs.</p>
+a step the same way, before any of its steps runs. A step must name a builtin command:
+<code>createMacro</code> and <code>updateMacro</code> refuse any other id, a plugin command included, since plugin
+commands run only in the client, with <code>VALIDATION</code> &quot;Unknown command: &lt;id&gt;&quot;. A step that fails
+stops the run: later steps do not run, and <code>executeMacro</code> answers <code>ERROR</code> with the message
+<code>Step &lt;n&gt; (&lt;title&gt;) failed: &lt;reason&gt;</code>, where <code>n</code> counts from 1, the title is the command&#39;s
+registry title (its id when the registry has none) and the reason is the step&#39;s own error. A
+macro saved before the check with an unknown step fails at that step the same way.</p>
 <p>A macro run asks for one confirmation up front when the macro&#39;s own <code>sensitivity</code> is
 <code>Restricted</code> or when any step needs one under the confirmation gate below, judged with the
 run&#39;s initiator: a dangerous step, a <code>Restricted</code> one, or a <code>Mutating</code> one the agent or a plugin
@@ -551,8 +566,10 @@ as <code>{&quot;truncated&quot;: true, &quot;bytes&quot;: &lt;size&gt;, &quot;pr
 <p>A pipeline action may not name a user command or a macro: each action runs as its own command
 call with its own budget of 100 builtin steps, and a pipeline fires on events other people cause.
 <code>createPipeline</code> and <code>updatePipeline</code> refuse such an action with &quot;pipeline actions must not
-reference user commands or macros&quot;. A pipeline saved before these limits runs at most its first
-10 actions and skips an action naming a user command or a macro.</p>
+reference user commands or macros&quot;. An action must name a builtin command: <code>createPipeline</code> and
+<code>updatePipeline</code> refuse any other id, a plugin command included, with <code>VALIDATION</code> &quot;Unknown
+command: &lt;id&gt;&quot;. A pipeline saved before these limits runs at most its first 10 actions and skips
+an action naming a user command or a macro.</p>
 <p>The server keeps at most 32 unanswered confirmation challenges per user; issuing one more drops
 that user&#39;s challenge closest to expiry, which then answers <code>CONFIRMATION_STALE</code>. A pipeline&#39;s
 action that needs a confirmation issues a challenge nobody answers, and this keeps such
@@ -859,7 +876,7 @@ still need a fresh invite after unban.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/048faa33edc68a6a7dc5b751fe5ec06bef6d4d5b/docs/command_model.md">rim-server/docs/command_model.md</a> at <code>048faa3</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/53e55099532cb3c44499e9aba37dc05e684af41c/docs/command_model.md">rim-server/docs/command_model.md</a> at <code>53e5509</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

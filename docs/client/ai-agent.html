@@ -58,7 +58,9 @@ commands and their sensitivity, and rim-server&#39;s
 <li><strong>It runs commands, nothing else.</strong> Every read and every change is a command that the server
 checks against your role in the workspace, as if you ran it. The agent cannot do more than you.</li>
 <li><strong>It is in the desktop app only.</strong> The web app has no agent; its Settings → AI Agent says &quot;Key
-storage is only available in the desktop app.&quot;</li>
+storage is only available in the desktop app.&quot; It does not offer the agent&#39;s command, its
+keybind, the <code>/agent</code> suggestion or <strong>Build with AI</strong>, and shows &quot;The AI agent is available in
+the desktop app.&quot; if the agent is opened another way.</li>
 <li><strong>You bring the model and the key.</strong> It talks to Anthropic or OpenAI with your own API key, and
 the provider bills you for what it uses. RIM ships neither a model nor a key.</li>
 <li><strong>It never acts on its own.</strong> It runs only when you send it a prompt, and stops when it has
@@ -158,8 +160,7 @@ dialog:</p>
 <ul>
 <li><strong>Header</strong>: the <strong>RIM</strong> badge (&quot;Verified RIM system dialog&quot;) and &quot;Confirm command&quot;.</li>
 <li><strong>Title</strong>: &quot;Agent wants to:&quot; and the command&#39;s id, with the command&#39;s description under it.</li>
-<li><strong>Chips</strong>: the sensitivity in capitals, MUTATING or RESTRICTED, and <strong>AGENT</strong> for who started
-it.</li>
+<li><strong>Chip</strong>: <strong>AGENT</strong> when the agent proposed it.</li>
 <li><strong>Destination</strong>: when the command names another conversation than the open one, &quot;Destination
 differs from active conversation&quot; with &quot;Will post in conversation&quot; and the first eight
 characters of its id.</li>
@@ -175,8 +176,9 @@ that looks like a secret, or sits under a name such as password, token, key or s
 <li><strong>Buttons</strong>: <strong>Cancel</strong>, and <strong>Run anyway</strong> for a Mutating command or <strong>I understand —
 execute</strong> for a Restricted one. A Restricted command first asks you to type its verb, the word
 after the dot in its id, as in <code>Type &quot;delete&quot; to confirm</code>; so does a Mutating command under the
-warning. <kbd>Ctrl+Enter</kbd> confirms; <kbd>Esc</kbd>, the close button and <strong>Cancel</strong>
-cancel. A click outside the dialog does nothing.</li>
+warning. <kbd>Ctrl+Enter</kbd> (<kbd>⌘ Return</kbd> on macOS, as the button shows) confirms;
+<kbd>Esc</kbd>, the close button and <strong>Cancel</strong> cancel. A click outside the dialog does
+nothing.</li>
 <li><strong>Expiry</strong>: the server&#39;s confirmation is valid for 60 seconds. When it runs out, the dialog
 closes and counts as cancelled. If it lapses as you confirm, the dialog opens once more.</li>
 </ul>
@@ -214,8 +216,9 @@ without their tool results, in the app&#39;s local storage; the settings; and th
 <p>The RIM server runs the agent&#39;s built-in commands as it runs yours and records each in its audit
 log with the initiator <code>agent</code>. Arguments that look secret are stored as <code>[REDACTED]</code>, by the same
 rules as the dialog. The <strong>Audit log</strong> in the side rail shows your own entries, and a workspace&#39;s
-Owners and Moderators see all of the workspace&#39;s. Masking keeps values out of the dialog and the
-log, not out of the provider: the model wrote those arguments. Plugin commands run on this device;
+Owners and Moderators see all of the workspace&#39;s. Each entry names who ran it and, for an action
+on a member, that member. Masking keeps values out of the dialog and the log, not out of the
+provider: the model wrote those arguments. Plugin commands run on this device;
 <code>rim.log</code> records each one the agent calls by plugin and command id, and the saving, removal or
 absence of a provider key, never the key itself.</p>
 <h2 id="troubleshooting">Troubleshooting <a class="anchor" href="#troubleshooting" aria-label="Link to this section">#</a></h2>
@@ -253,7 +256,7 @@ confirmations and the AI-callable set.</li>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/7d57e1c2b5b0f208c8dd144f52e1ae19da2922e1/docs/ai-agent.md">rim-ui/docs/ai-agent.md</a> at <code>7d57e1c</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/f2f75cc79f1a5c245be584e291d1374ff052985e/docs/ai-agent.md">rim-ui/docs/ai-agent.md</a> at <code>f2f75cc</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

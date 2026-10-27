@@ -46,7 +46,8 @@
 <p>Everything in the shell is reachable without a mouse. This page describes how keys are
 resolved, the keybind profile file, and the opt-in Vim layer.</p>
 <h2 id="where-a-key-goes">Where a key goes <a class="anchor" href="#where-a-key-goes" aria-label="Link to this section">#</a></h2>
-<p>A keydown passes through, in order:</p>
+<p>A key pressed in a keystroke recorder (Settings → Keybinds) goes to the recorder only. Any
+other keydown passes through, in order:</p>
 <ol>
 <li><p><strong>The Vim layer</strong> (only while Vim mode is on). It takes unmodified keys outside text fields
 and <code>Ctrl+[</code>. Keys in a text field, a select or a plugin frame pass through untouched.</p>
@@ -114,9 +115,9 @@ bookmark, the address bar, redo and word jumps.</p>
   ]
 }</code></pre>
 <ul>
-<li><code>keystroke</code>: modifiers <code>Ctrl</code>, <code>Shift</code>, <code>Alt</code> (or <code>Meta</code>, read as <code>Ctrl</code>) joined by <code>+</code>, then
-a key name as the browser reports it (<code>K</code>, <code>ArrowDown</code>, <code>Escape</code>, <code>?</code>). Import puts it in
-canonical form.</li>
+<li><code>keystroke</code>: modifiers <code>Ctrl</code>, <code>Shift</code>, <code>Alt</code> (or <code>Meta</code> or <code>Cmd</code>, read as <code>Ctrl</code>), in any
+case, joined by <code>+</code>, then a key name as the browser reports it (<code>K</code>, <code>ArrowDown</code>, <code>Escape</code>,
+<code>?</code>). Import puts it in canonical form.</li>
 <li><code>commandId</code>: any command id, or <code>null</code> to free the keystroke so no lower layer binds it.</li>
 <li><code>context</code>: <code>GLOBAL</code> (the default), <code>COMPOSER</code>, <code>MESSAGE_LIST</code>, <code>THREAD_VIEW</code>,
 <code>CONVERSATION_VIEW</code>, <code>PANEL</code> or <code>COMMAND_PALETTE</code>.</li>
@@ -125,7 +126,9 @@ canonical form.</li>
 version is refused with a message saying so.</p>
 <h2 id="timeline-navigation">Timeline navigation <a class="anchor" href="#timeline-navigation" aria-label="Link to this section">#</a></h2>
 <p>Escape in the composer, or focusing the message list, enters NAVIGATE: the status bar shows
-NAVIGATE and a bar over the bottom of the timeline lists the keys for the selected message.
+NAVIGATE and a bar over the bottom of the timeline lists the keys for the selected message; the
+timeline leaves room for the bar under the newest message. Entering it with the keyboard selects
+the newest message; clicking into the list selects the message clicked, without scrolling.
 Focusing the composer or a thread&#39;s reply box shows COMPOSE.</p>
 <h2 id="vim-mode">Vim mode <a class="anchor" href="#vim-mode" aria-label="Link to this section">#</a></h2>
 <p>Off by default. Normal mode is any focus outside a text field; insert mode is a focused text
@@ -179,7 +182,7 @@ field or plugin frame. The status bar shows the mode.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/7d57e1c2b5b0f208c8dd144f52e1ae19da2922e1/docs/keyboard.md">rim-ui/docs/keyboard.md</a> at <code>7d57e1c</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/f2f75cc79f1a5c245be584e291d1374ff052985e/docs/keyboard.md">rim-ui/docs/keyboard.md</a> at <code>f2f75cc</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

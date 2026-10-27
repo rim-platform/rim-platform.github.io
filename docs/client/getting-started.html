@@ -76,7 +76,8 @@ invite to a workspace on another server (<code>rim-invite:1:…</code>) is joine
 with <strong>Join with an invite code</strong>.</li>
 <li><strong>Username</strong>: 3 to 32 characters, lowercase letters, digits, <code>_</code> and <code>-</code>, free on this server.
 Capitals are folded to lowercase, so <code>Kuba</code> signs up as <code>kuba</code>. It cannot start with <code>r_</code> or
-<code>deleted-</code>. With the server&#39;s domain it makes your handle (below).</li>
+<code>deleted-</code>. The form checks these rules before it sends anything and shows the username it will
+save, such as &quot;Saved as kuba.&quot; With the server&#39;s domain it makes your handle (below).</li>
 <li><strong>Display name (optional)</strong>: at most 64 characters. Left blank, your username is shown.</li>
 <li><strong>Name of this device</strong>: up to 64 characters, filled in with the computer&#39;s name or, in a
 browser, a name such as &quot;Firefox on Linux&quot;. It names this device in your device list.</li>
@@ -135,7 +136,12 @@ Its badge counts unread messages before you open it. The rail shows once a works
 <h2 id="join-or-create-a-workspace">Join or create a workspace <a class="anchor" href="#join-or-create-a-workspace" aria-label="Link to this section">#</a></h2>
 <ul>
 <li><strong>Join with an invite link.</strong> Opened in a browser while you are signed in, the link says &quot;You
-have been invited to join &lt;workspace&gt;&quot;; <strong>Join workspace</strong> joins it. In the app,
+have been invited to join &lt;workspace&gt;&quot;; <strong>Join workspace</strong> joins it, and when you are already
+a member it says &quot;You&#39;re already a member of &lt;workspace&gt;.&quot; with <strong>Open &lt;workspace&gt;</strong>. Signed
+out, it offers <strong>Sign in as &lt;name&gt;</strong> for each account this browser or computer holds keys
+for, or else a <strong>Sign in</strong> link that comes back to the invite, above the signup. A revoked,
+expired or unknown link says &quot;This invite link is no longer valid. Ask the person who sent it
+for a new one.&quot; with <strong>Go to RIM</strong>. In the app,
 <strong>Join with an invite code</strong> on the welcome screen, or <strong>Add workspace</strong> (the <strong>+</strong> at the bottom
 of the workspace rail) and then <strong>Join Existing</strong>, takes the invite code: the whole invite link,
 the part of it that starts with <code>rim_inv_</code>, or a whole <code>rim-invite:1:…</code> link for a workspace on
@@ -150,7 +156,7 @@ rail) or &quot;… was declined.&quot; (you can ask again after 24 hours), as yo
 allow. Signed out, the page offers <strong>Sign in</strong> and <strong>Create an account</strong>: the link never
 creates an account, so that is the server&#39;s own signup, and once you are signed in the app
 opens the link again. A member is told &quot;You&#39;re already a member&quot; with <strong>Open workspace</strong>, and
-someone banned there &quot;You are banned from this workspace.&quot; A wrong, old or switched-off link
+someone banned there &quot;You are banned from this workspace.&quot;, with <strong>Open RIM</strong>. A wrong, old or switched-off link
 says &quot;This link isn&#39;t valid.&quot;, the same in every case; after many of those from one network
 the page says how many minutes to wait. Pasted into <strong>Add workspace</strong>, the link opens the same
 page, and <strong>Add workspace</strong> lists your open requests under <strong>Waiting for approval</strong>, each with
@@ -181,6 +187,7 @@ creates channels, starts groups and adds people to conversations.</li>
 <p>The Owner invites people with <strong>Invite member</strong> in a conversation&#39;s header: choose <strong>Member</strong> or
 <strong>Guest</strong> under <strong>Joins as</strong>, how long the link lasts under <strong>Expires after</strong> (1 day, 7 days, the
 default, or 30 days; no invite lasts longer), then <strong>Generate invite link</strong>, and send the link.
+Up to 10 people can join with one link, fewer when the server&#39;s operator set a lower cap.
 Settings → Workspace → <strong>Invites</strong> lists every invite of the workspace to its Owner, newest
 first: its role, how many of its uses are taken, when it expires and who created it, marked
 Active, Expired, Used up or Revoked. <strong>Revoke</strong> on an active invite, after its confirmation,
@@ -212,10 +219,12 @@ in thread</strong> in its context menu (right-click), or select it and press <kb
 The thread opens in a pane on the right; the message stays in the timeline and its replies stay in
 the thread. A message with a thread shows how many replies it has under it (<strong>3 replies</strong>), or
 <strong>View thread</strong> on a server that does not report the count; choose it, or <strong>Open thread</strong> on
-hover, to open the pane.</p>
+hover, to open the pane. The thread&#39;s reply box works like the composer: <code>@</code> mentions, <code>:</code> emoji,
+<strong>Insert emoji</strong> and <strong>Attach file</strong>. Commands with <code>/</code> run from the conversation&#39;s composer only.</p>
 <p><strong>DMs and groups.</strong> <strong>New message</strong> (the <strong>+</strong> at the top of the tool panel, or
 <kbd>Ctrl+Shift+G</kbd>) lists the workspace&#39;s members. Pick one person for a DM or several for a
-group. A DM opens as a draft and is created when you send its first message. A group is named
+group, then choose <strong>Start conversation</strong> or <strong>Start group</strong> (or press <kbd>Ctrl+Enter</kbd>). A
+DM opens as a draft and is created when you send its first message. A group is named
 after the people in it, as you see them: &quot;Alice and Bob&quot;, or &quot;Alice, Bob, Carol and 2 others&quot;
 past three. In Direct messages
 the picker lists your contacts instead. Settings &gt; Contacts shows your contact link and adds
@@ -231,11 +240,12 @@ a workspace can turn requests from outside off for you.</li>
 <p>Requests sit at the top of Notifications, and the bell counts them. &quot;Requests (n)&quot; also heads the
 conversation list of the workspace they came from, or the Direct messages list for those from
 outside. Each request shows the sender&#39;s verified name and fingerprint, with <strong>Accept</strong>, <strong>Read
-first</strong>, <strong>Ignore</strong>, <strong>Block</strong> and <strong>Report</strong>. <strong>Read first</strong> opens the conversation without
-deciding: in place of the composer it says who wants to message you, with <strong>Accept</strong>, <strong>Ignore</strong>,
-<strong>Block</strong> and <strong>Report</strong>. You reply once you accept; until then the sender sees nothing from
-you, not even that you read it. The sender sees &quot;Sent as a request; &lt;name&gt; has not accepted
-yet.&quot; above their composer. rim-server&#39;s
+first</strong>, <strong>Ignore</strong>, <strong>Block</strong> and <strong>Report</strong>. <strong>Block</strong> asks first; the person is not told.
+Settings &gt; Direct messages lists the people you blocked under <strong>Blocked people</strong>, each with
+<strong>Unblock</strong>. <strong>Read first</strong> opens the conversation without deciding: in place of the composer it
+says who wants to message you, with <strong>Accept</strong>, <strong>Ignore</strong>, <strong>Block</strong> and <strong>Report</strong>. You reply
+once you accept; until then the sender sees nothing from you, not even that you read it. The
+sender sees &quot;Sent as a request; &lt;name&gt; has not accepted yet.&quot; above their composer. rim-server&#39;s
 <a href="../messaging.html#who-may-start-a-dm">Messaging</a> has the full rules.</p>
 <p><strong>Reactions.</strong> Hover a message and choose <strong>Add reaction</strong> to pick an emoji. Clicking a reaction
 under a message adds or removes yours.</p>
@@ -247,11 +257,15 @@ server&#39;s domain, such as <code>@kuba:rim-platform.org</code>. People of your
 <code>@username</code>, people from other servers with their domain. <strong>Copy @username</strong> copies the whole
 handle, which names the person on any server. The app learns the handle of someone from another
 server from their messages; until then their card shows no handle, only their name.</p>
-<p><strong>The composer.</strong> &quot;Write a message...&quot; takes Markdown. <kbd>Enter</kbd> sends and
-<kbd>Shift+Enter</kbd> starts a new line. <code>/</code> at the start lists commands, and <code>:</code> followed by the
-start of a name suggests emoji. <strong>Insert emoji</strong> and <strong>Attach file</strong> sit beside the field; a
-server can turn attachments off. <kbd>Escape</kbd> moves from the composer to the message list,
-where the arrow keys move between messages and <kbd>e</kbd> edits your own.</p>
+<p><strong>The composer.</strong> &quot;Write a message...&quot; takes Markdown. An image from another site shows as a link
+marked &quot;image&quot;: the app loads images only from its own server. A single line break shows as one.
+Besides bold, italics, code, lists, quotes and links, a message can hold <del>strikethrough</del>, tables,
+horizontal rules (<code>---</code>) and task lists (<code>- [ ]</code>, <code>- [x]</code>), whose boxes are read-only.
+<kbd>Enter</kbd> sends and <kbd>Shift+Enter</kbd> starts a new line. <code>/</code> at the start lists
+commands, and <code>:</code> followed by the start of a name suggests emoji. A workspace&#39;s custom emoji
+written as <code>:name:</code> show as their images. <strong>Insert emoji</strong> and <strong>Attach file</strong> sit beside the
+field; a server can turn attachments off. <kbd>Escape</kbd> moves from the composer to the message
+list, where the arrow keys move between messages and <kbd>e</kbd> edits your own.</p>
 <p><strong>Inbox and notifications.</strong> <strong>Inbox</strong> on the side rail shows the conversation list in the tool
 panel, with the number of unread messages in the open workspace. The bell, <strong>Notifications</strong>,
 lists your mentions, DMs, thread replies, reactions and keyword matches in the open workspace,
@@ -383,7 +397,7 @@ default workspace for new accounts.</li>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/7d57e1c2b5b0f208c8dd144f52e1ae19da2922e1/docs/getting-started.md">rim-ui/docs/getting-started.md</a> at <code>7d57e1c</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/f2f75cc79f1a5c245be584e291d1374ff052985e/docs/getting-started.md">rim-ui/docs/getting-started.md</a> at <code>f2f75cc</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

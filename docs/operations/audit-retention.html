@@ -70,7 +70,7 @@
 </tbody></table></div>
 <p>With <code>RIM_AUDIT_RETENTION_DAYS</code> unset the table keeps every row forever, and with
 <code>RIM_AUDIT_EXPORT_RETENTION_DAYS</code> unset every export is kept. The public relay&#39;s overlay,
-<a href="https://github.com/rim-platform/rim-server/blob/048faa33edc68a6a7dc5b751fe5ec06bef6d4d5b/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a>, sets both to 90, so a command audit row is gone completely about
+<a href="https://github.com/rim-platform/rim-server/blob/53e55099532cb3c44499e9aba37dc05e684af41c/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a>, sets both to 90, so a command audit row is gone completely about
 180 days after it was written.</p>
 <p>The admin audit view shows the retention in force. It reads <code>serverInfo.auditRetentionDays</code>,
 readable without a session: the configured days, or null when rows are kept forever.</p>
@@ -205,7 +205,7 @@ files hold IP addresses: the signup, login and rate-limit events carry the clien
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/048faa33edc68a6a7dc5b751fe5ec06bef6d4d5b/docs/operations/audit-retention.md">rim-server/docs/operations/audit-retention.md</a> at <code>048faa3</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/53e55099532cb3c44499e9aba37dc05e684af41c/docs/operations/audit-retention.md">rim-server/docs/operations/audit-retention.md</a> at <code>53e5509</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>
