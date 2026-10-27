@@ -54,12 +54,12 @@
 <li><a href="#group-relay">Relay (2)</a></li>
 <li><a href="#group-report">Report (1)</a></li>
 <li><a href="#group-user">User (2)</a></li>
-<li><a href="#group-other">Other (18)</a></li>
+<li><a href="#group-other">Other (19)</a></li>
 </ol>
 </details></aside>
     <main id="content" class="prose">
 <h1>Query</h1>
-<p class="lede">69 queries, grouped by the domain their name starts with or names, in the order the schema lists them.</p>
+<p class="lede">70 queries, grouped by the domain their name starts with or names, in the order the schema lists them.</p>
 <input id="filter" class="search" type="search" placeholder="Filter fields by name" aria-label="Filter fields by name" autocomplete="off">
 <p id="filter-none" class="muted" hidden>Nothing matches.</p>
 <section data-group>
@@ -599,7 +599,7 @@ built-in id, another user&#39;s command and an unknown one all answer null.</p>
 </section>
 </section>
 <section data-group>
-<h2 id="group-other">Other <span class="faint">18</span></h2>
+<h2 id="group-other">Other <span class="faint">19</span></h2>
 <section class="entry" id="thread" data-name="thread">
 <h3><code>thread</code></h3>
 <div class="sig">thread(
@@ -672,6 +672,13 @@ and cached for 24 hours.</p>
 <h3><code>dmRequests</code></h3>
 <div class="sig">dmRequests(status: <a href="enums.html#DmRequestStatus">DmRequestStatus</a>): [<a href="objects.html#DmRequest">DmRequest</a>!]!</div>
 <div class="desc"><p>The caller&#39;s DM requests, newest first.</p>
+</div>
+
+</section>
+<section class="entry" id="myBlockedPrincipals" data-name="myBlockedPrincipals">
+<h3><code>myBlockedPrincipals</code></h3>
+<div class="sig">myBlockedPrincipals: [<a href="objects.html#BlockedPrincipal">BlockedPrincipal</a>!]!</div>
+<div class="desc"><p>The principals the caller blocked, newest first.</p>
 </div>
 
 </section>
@@ -759,7 +766,7 @@ and Moderators only: anyone else gets <code>FORBIDDEN</code>.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Generated from <a href="https://github.com/rim-platform/rim-ui/blob/7d57e1c2b5b0f208c8dd144f52e1ae19da2922e1/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>7d57e1c</code></span>
+    <span>Generated from <a href="https://github.com/rim-platform/rim-ui/blob/f2f75cc79f1a5c245be584e291d1374ff052985e/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>f2f75cc</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

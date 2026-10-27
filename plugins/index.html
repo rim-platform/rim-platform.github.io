@@ -153,10 +153,10 @@ nothing.</li>
 <li><strong>Install from link</strong> (desktop and web) takes a link of the form
 <code>https://&lt;host&gt;/&lt;name&gt;.rimbundle#sha256=&lt;hash&gt;</code>, then <strong>Install</strong>. The bundle is fetched
 without credentials, must hash to the value after <code>#sha256=</code> and must pass the manifest rules
-before anything is installed. The desktop app fetches the link itself, so a link to a GitHub
-release asset installs; it follows redirects only to other <code>https://</code> links and stops reading
-past 8 MiB. The web app fetches from the browser, so there the bundle&#39;s host must allow
-cross-origin requests (<a href="../docs/client/web-plugins.html#installing-from-a-link">web plugins</a>). A link to a
+before anything is installed. The desktop app fetches the link itself; the web app asks the
+RIM server to fetch it (<a href="../docs/client/web-plugins.html#installing-from-a-link">web plugins</a>). Either way a
+link to a GitHub release asset installs; only public <code>https://</code> hosts are fetched, redirects
+only to other <code>https://</code> links, and reading stops past 8 MiB. A link to a
 plugin already installed opens <strong>Replace &lt;name&gt;?</strong>, which shows the version change and the
 permissions added or dropped; the permissions are approved again afterwards.</li>
 </ul>
@@ -184,9 +184,8 @@ Moderators. An entry pins one exact version through a statement its publisher si
 identity key. Every client verifies that statement against the publisher&#39;s key log before it
 offers the plugin, so the server is not trusted for what the plugin is, and checks a bundle&#39;s
 size and SHA-256 before asking for any consent. A bundle an entry keeps on another host, such
-as a GitHub release asset, is fetched by the desktop app itself, as <strong>Install from link</strong> does;
-the web app needs that host to allow cross-origin requests. An instance can switch the registry
-off.
+as a GitHub release asset, is fetched by the desktop app itself, and by the RIM server for the
+web app, as <strong>Install from link</strong> does. An instance can switch the registry off.
 <a href="../docs/client/workspace-plugins.html">Workspace plugins</a> has the details.</p>
 <ul>
 <li><strong>The palette&#39;s &quot;Workspace plugins&quot; section</strong> lists the entries this device has not
@@ -282,10 +281,10 @@ opens the panel; with no such plugin that has a panel, the menu says so above <s
 plugins…</strong>. A panel left open stops showing when its plugin loses that permission. A plugin&#39;s
 settings are not in this menu: they open from the places listed under <strong>Settings</strong>. The entry
 stays marked while a plugin panel is open. A panel opens next to the tool panel or, like the
-Pods panel, in place of the conversation. Its header shows the panel&#39;s title, the plugin&#39;s
-name, its kind and where it came from, and a close button. The title stays whole; the rest is
-shortened when the panel is narrow and shows in full on hover. <a href="../docs/client/ui-shell.html">UI shell</a>
-describes the menu&#39;s keys.</li>
+Pods panel, in place of the conversation. Its header shows the panel&#39;s title and a close
+button, and under them the plugin&#39;s name, its kind and where it came from, in full. A long
+title is shortened and shows in full on hover. <a href="../docs/client/ui-shell.html">UI shell</a> describes the menu&#39;s
+keys.</li>
 <li><strong>&quot;Open &lt;panel&gt;&quot; commands.</strong> Each panel of a running plugin granted Render UI Panels also
 has an &quot;Open &lt;panel&gt;&quot; command in the palette, such as &quot;Open Pull requests&quot;, which a keybind
 can run too.</li>
@@ -445,7 +444,7 @@ permissions, data, settings and files. To use it again, install it again.</li>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/7d57e1c2b5b0f208c8dd144f52e1ae19da2922e1/docs/plugins.md">rim-ui/docs/plugins.md</a> at <code>7d57e1c</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/f2f75cc79f1a5c245be584e291d1374ff052985e/docs/plugins.md">rim-ui/docs/plugins.md</a> at <code>f2f75cc</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

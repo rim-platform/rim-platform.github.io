@@ -36,7 +36,7 @@
 
     <main id="content" class="prose">
 <h1>API</h1>
-<p class="lede">Everything a client does goes through one GraphQL endpoint, <code>POST /api</code>; subscriptions arrive over <code>/api/ws</code>. The server publishes its schema at <code>/api/sdl</code>. This reference is generated from it: 273 types, 69 queries, 135 mutations and 2 subscriptions.</p>
+<p class="lede">Everything a client does goes through one GraphQL endpoint, <code>POST /api</code>; subscriptions arrive over <code>/api/ws</code>. The server publishes its schema at <code>/api/sdl</code>. This reference is generated from it: 274 types, 70 queries, 135 mutations and 2 subscriptions.</p>
 <input id="filter" class="search" type="search" placeholder="Filter the whole schema by name" aria-label="Filter the whole schema by name" autocomplete="off">
 <p id="filter-none" class="muted" hidden>Nothing matches.</p>
 <div data-search-only><ul class="hits">
@@ -235,6 +235,7 @@
 <li data-name="remoteIdentity"><a href="query.html#remoteIdentity"><code>remoteIdentity</code></a><span class="kind">query</span></li>
 <li data-name="contacts"><a href="query.html#contacts"><code>contacts</code></a><span class="kind">query</span></li>
 <li data-name="dmRequests"><a href="query.html#dmRequests"><code>dmRequests</code></a><span class="kind">query</span></li>
+<li data-name="myBlockedPrincipals"><a href="query.html#myBlockedPrincipals"><code>myBlockedPrincipals</code></a><span class="kind">query</span></li>
 <li data-name="streamHeads"><a href="query.html#streamHeads"><code>streamHeads</code></a><span class="kind">query</span></li>
 <li data-name="remoteSubscriptions"><a href="query.html#remoteSubscriptions"><code>remoteSubscriptions</code></a><span class="kind">query</span></li>
 <li data-name="instancePrincipalBlocks"><a href="query.html#instancePrincipalBlocks"><code>instancePrincipalBlocks</code></a><span class="kind">query</span></li>
@@ -251,6 +252,7 @@
 <li data-name="AuditLogEntry"><a href="objects.html#AuditLogEntry"><code>AuditLogEntry</code></a><span class="kind">object</span></li>
 <li data-name="AuditLogPage"><a href="objects.html#AuditLogPage"><code>AuditLogPage</code></a><span class="kind">object</span></li>
 <li data-name="AuditLogPageInfo"><a href="objects.html#AuditLogPageInfo"><code>AuditLogPageInfo</code></a><span class="kind">object</span></li>
+<li data-name="BlockedPrincipal"><a href="objects.html#BlockedPrincipal"><code>BlockedPrincipal</code></a><span class="kind">object</span></li>
 <li data-name="ChannelCursorOutput"><a href="objects.html#ChannelCursorOutput"><code>ChannelCursorOutput</code></a><span class="kind">object</span></li>
 <li data-name="ChannelLens"><a href="objects.html#ChannelLens"><code>ChannelLens</code></a><span class="kind">object</span></li>
 <li data-name="ChannelPage"><a href="objects.html#ChannelPage"><code>ChannelPage</code></a><span class="kind">object</span></li>
@@ -530,10 +532,10 @@
 </ul></div>
 <ul class="cards">
 <li><a href="../docs/api.html"><b>Talking to a server</b><span>The endpoints, the session cookie and CSRF, origins, limits, error codes and pagination: the contract around the schema.</span></a></li>
-<li><a href="query.html"><b>Query</b><span>69 fields, grouped by domain.</span></a></li>
+<li><a href="query.html"><b>Query</b><span>70 fields, grouped by domain.</span></a></li>
 <li><a href="mutation.html"><b>Mutation</b><span>135 fields, grouped by domain.</span></a></li>
 <li><a href="subscription.html"><b>Subscription</b><span>2 fields, grouped by domain.</span></a></li>
-<li><a href="objects.html"><b>Objects</b><span>133 objects.</span></a></li>
+<li><a href="objects.html"><b>Objects</b><span>134 objects.</span></a></li>
 <li><a href="inputs.html"><b>Inputs</b><span>86 inputs.</span></a></li>
 <li><a href="enums.html"><b>Enums</b><span>52 enums.</span></a></li>
 <li><a href="scalars.html"><b>Scalars</b><span>7 scalars.</span></a></li>
@@ -543,7 +545,7 @@
     </main>
   </div>
   <footer class="site">
-    <span>Generated from <a href="https://github.com/rim-platform/rim-ui/blob/7d57e1c2b5b0f208c8dd144f52e1ae19da2922e1/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>7d57e1c</code></span>
+    <span>Generated from <a href="https://github.com/rim-platform/rim-ui/blob/f2f75cc79f1a5c245be584e291d1374ff052985e/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>f2f75cc</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

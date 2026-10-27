@@ -138,7 +138,9 @@ globally available everywhere.</p>
 member, private channels, DMs and groups for their members. Commands that take a
 <code>conversation_id</code> fall back to <code>context.conversation_id</code>, and the service re-checks access, so a
 stale or forged context id for a private channel resolves to <code>NOT_FOUND</code>, exactly like an
-unknown id.</p>
+unknown id. A command that takes a <code>message_id</code> of the message the user acts on
+(<code>chat.pin_message</code>, <code>chat.toggle_reaction</code>) falls back to <code>context.selected_message_id</code> the
+same way.</p>
 <h2 id="decisions">Decisions <a class="anchor" href="#decisions" aria-label="Link to this section">#</a></h2>
 <ul>
 <li>selected text should be first-class context from the beginning</li>
@@ -322,7 +324,7 @@ not by mutating context directly.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/048faa33edc68a6a7dc5b751fe5ec06bef6d4d5b/docs/context_model.md">rim-server/docs/context_model.md</a> at <code>048faa3</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/53e55099532cb3c44499e9aba37dc05e684af41c/docs/context_model.md">rim-server/docs/context_model.md</a> at <code>53e5509</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

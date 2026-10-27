@@ -102,7 +102,8 @@ it (see &quot;Visibility&quot; below).</p>
 <p>Search results are <strong>paginated by recency</strong> (<code>sentAt</code>, <code>id</code> — the same cursor contract as every
 other message list; see <a href="pagination.html"><code>docs/pagination.md</code></a>), not by relevance. Each result also carries a <code>rank</code>
 (<code>ts_rank</code> score) and an optional <code>headline</code> (<code>ts_headline</code> snippet with <code>&lt;mark&gt;...&lt;/mark&gt;</code>
-highlights) for client-side display or secondary sort.</p>
+highlights: the whole text of a message up to 300 characters, otherwise one excerpt around the
+matches) for client-side display or secondary sort.</p>
 <p>This is a deliberate tradeoff: cursor pagination requires a stable total order with a unique
 tie-breaker. <code>ts_rank</code> is neither unique nor stable across concurrent inserts, so paginating by
 rank would produce skips and duplicates across pages. Pagination by <code>(sentAt, id)</code> avoids that at
@@ -118,7 +119,7 @@ explicit <code>conversationId</code> scope is given) before ever calling the rep
 itself is intentionally visibility-agnostic: it only ever searches the conversation ids it&#39;s
 handed, and an empty set yields zero rows — never &quot;search everything&quot;. See the doc comments on
 <code>MessageSearchParams</code> (<code>rim_core::message::repository</code>) and the db-tests in
-<a href="https://github.com/rim-platform/rim-server/blob/048faa33edc68a6a7dc5b751fe5ec06bef6d4d5b/rim_infra_db/tests/message_search_fts.rs"><code>rim_infra_db/tests/message_search_fts.rs</code></a> for the enforced guarantees.</p>
+<a href="https://github.com/rim-platform/rim-server/blob/53e55099532cb3c44499e9aba37dc05e684af41c/rim_infra_db/tests/message_search_fts.rs"><code>rim_infra_db/tests/message_search_fts.rs</code></a> for the enforced guarantees.</p>
 <h2 id="underlying-storage">Underlying storage <a class="anchor" href="#underlying-storage" aria-label="Link to this section">#</a></h2>
 <p><code>message.search_tsv</code> is a <code>GENERATED ALWAYS ... STORED</code> <code>tsvector</code> column
 (<code>to_tsvector('english', coalesce(text, ''))</code>) with a GIN index, added in migration
@@ -154,7 +155,7 @@ codegen must be re-run against the updated schema.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/048faa33edc68a6a7dc5b751fe5ec06bef6d4d5b/docs/search.md">rim-server/docs/search.md</a> at <code>048faa3</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/53e55099532cb3c44499e9aba37dc05e684af41c/docs/search.md">rim-server/docs/search.md</a> at <code>53e5509</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

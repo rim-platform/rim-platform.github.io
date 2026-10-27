@@ -70,7 +70,7 @@ numbered items already fixed.</li>
 <li><input disabled="" type="checkbox"> A public operating profile is chosen, set in the deployment&#39;s <code>deploy/.env</code> and tested with
 the packaged client, including how the client shows a refusal and retries. Each of these is
 off when unset or 0 (the message burst follows the per-minute rate), and
-<a href="https://github.com/rim-platform/rim-server/blob/048faa33edc68a6a7dc5b751fe5ec06bef6d4d5b/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a> sets none of them:
+<a href="https://github.com/rim-platform/rim-server/blob/53e55099532cb3c44499e9aba37dc05e684af41c/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a> sets none of them:
 - API rates: <code>RIM_RATE_REQUESTS_PER_MIN_PER_IP</code>, <code>RIM_RATE_MUTATIONS_PER_MIN_PER_SESSION</code>,
   <code>RIM_RATE_MESSAGES_PER_MIN_PER_USER</code>, <code>RIM_RATE_MESSAGES_BURST</code>.
 - WebSocket and subscriptions: <code>RIM_RATE_WS_CONNECTIONS_PER_USER</code>,
@@ -84,7 +84,7 @@ off when unset or 0 (the message burst follows the per-minute rate), and
   (the public relay&#39;s is in <a href="relay-public.html"><code>docs/operations/relay-public.md</code></a>, &quot;The account cap&quot;).
 - Probation: <code>RIM_PROBATION_HOURS</code>, <code>RIM_RATE_PROBATION_MESSAGES_PER_MIN</code>.
 
-<a href="https://github.com/rim-platform/rim-server/blob/048faa33edc68a6a7dc5b751fe5ec06bef6d4d5b/deploy/.env.example"><code>deploy/.env.example</code></a>, &quot;Request limits&quot; and &quot;Instance limits&quot;, says what each one limits.</li>
+<a href="https://github.com/rim-platform/rim-server/blob/53e55099532cb3c44499e9aba37dc05e684af41c/deploy/.env.example"><code>deploy/.env.example</code></a>, &quot;Request limits&quot; and &quot;Instance limits&quot;, says what each one limits.</li>
 <li><input disabled="" type="checkbox"> The packaged desktop client and the web client are run by hand against the HTTPS
 deployment being released, and every finding is fixed or filed as an issue.</li>
 <li><input disabled="" type="checkbox"> The upgrade, rollback and restore drill of section 4 ran for this release, with its date
@@ -120,7 +120,7 @@ the file, but rewriting history did not revoke them.</li>
 line; <code>git log --oneline v&lt;previous&gt;..master</code> shows what may be missing.</li>
 <li><input disabled="" type="checkbox"> Pick the version by Semantic Versioning. While the version is <code>0.0.x</code>, every release raises
 the patch and any change may break, including the GraphQL schema, the server-to-server
-protocol and the specs in <a href="https://github.com/rim-platform/rim-server/tree/048faa33edc68a6a7dc5b751fe5ec06bef6d4d5b/docs/specs"><code>docs/specs/</code></a>; a breaking change still gets its <strong>Upgrade:</strong>
+protocol and the specs in <a href="https://github.com/rim-platform/rim-server/tree/53e55099532cb3c44499e9aba37dc05e684af41c/docs/specs"><code>docs/specs/</code></a>; a breaking change still gets its <strong>Upgrade:</strong>
 line. <code>0.1.0</code> follows once the outside cryptographic review is signed off. From then, while
 the major version is 0, a breaking change raises the minor version and anything else
 raises the patch.</li>
@@ -129,7 +129,7 @@ raises the patch.</li>
 changes; a server release neither waits for one nor needs one, and the web client keeps
 the version it runs (<code>RIM_WEB_VERSION</code>).</li>
 <li><input disabled="" type="checkbox"> If a GraphQL field or argument was removed or changed meaning, <code>API_VERSION</code> in
-<a href="https://github.com/rim-platform/rim-server/blob/048faa33edc68a6a7dc5b751fe5ec06bef6d4d5b/rim_api/src/types/server_info.rs"><code>rim_api/src/types/server_info.rs</code></a> goes up by one.</li>
+<a href="https://github.com/rim-platform/rim-server/blob/53e55099532cb3c44499e9aba37dc05e684af41c/rim_api/src/types/server_info.rs"><code>rim_api/src/types/server_info.rs</code></a> goes up by one.</li>
 </ul>
 <h2 id="2-check-the-migrations">2. Check the migrations <a class="anchor" href="#2-check-the-migrations" aria-label="Link to this section">#</a></h2>
 <ul>
@@ -158,16 +158,16 @@ docker build -t rim-server:release-check .</code></pre>
 </ul>
 <h2 id="4-test-the-upgrade-and-the-rollback">4. Test the upgrade and the rollback <a class="anchor" href="#4-test-the-upgrade-and-the-rollback" aria-label="Link to this section">#</a></h2>
 <p>On a scratch host or compose project, never the production one. The release is not published
-yet, so the new images are built from the release commits with <a href="https://github.com/rim-platform/rim-server/blob/048faa33edc68a6a7dc5b751fe5ec06bef6d4d5b/deploy/compose.dev.yml"><code>deploy/compose.dev.yml</code></a>:</p>
+yet, so the new images are built from the release commits with <a href="https://github.com/rim-platform/rim-server/blob/53e55099532cb3c44499e9aba37dc05e684af41c/deploy/compose.dev.yml"><code>deploy/compose.dev.yml</code></a>:</p>
 <ul>
 <li><input disabled="" type="checkbox"> Start the previous release (<a href="../self-hosting.html"><code>docs/self-hosting.md</code></a>), sign up, write messages in a channel
-and an encrypted conversation, upload a file, and take a backup with <a href="https://github.com/rim-platform/rim-server/blob/048faa33edc68a6a7dc5b751fe5ec06bef6d4d5b/deploy/backup.sh"><code>deploy/backup.sh</code></a>.</li>
+and an encrypted conversation, upload a file, and take a backup with <a href="https://github.com/rim-platform/rim-server/blob/53e55099532cb3c44499e9aba37dc05e684af41c/deploy/backup.sh"><code>deploy/backup.sh</code></a>.</li>
 <li><input disabled="" type="checkbox"> Upgrade to the release commit as <a href="upgrade.html"><code>docs/operations/upgrade.md</code></a> says. <code>/readyz</code> answers 200
 and the data is there.</li>
 <li><input disabled="" type="checkbox"> Roll the binary back to the previous release with <code>dc up -d --no-deps rim imagecheck</code>.
 <code>/readyz</code> answers 200 and the web client still works.</li>
 <li><input disabled="" type="checkbox"> Upgrade again: <code>migrate</code> has nothing to run and the server starts.</li>
-<li><input disabled="" type="checkbox"> <a href="https://github.com/rim-platform/rim-server/blob/048faa33edc68a6a7dc5b751fe5ec06bef6d4d5b/deploy/restore-drill.sh"><code>deploy/restore-drill.sh</code></a> on the latest nightly backup of the public relay
+<li><input disabled="" type="checkbox"> <a href="https://github.com/rim-platform/rim-server/blob/53e55099532cb3c44499e9aba37dc05e684af41c/deploy/restore-drill.sh"><code>deploy/restore-drill.sh</code></a> on the latest nightly backup of the public relay
 <code>relay.rim-platform.org</code>, with the image built from the release commit: the new image
 applies its migrations to real data and reaches <code>/readyz</code>. The backup is encrypted with
 <code>age</code>, and the identity that decrypts it is held offline by the maintainer, never on the
@@ -193,12 +193,12 @@ lists goes into the changelog as an <strong>Upgrade:</strong> line (servers befo
 <h2 id="6-version-changelog-pull-request">6. Version, changelog, pull request <a class="anchor" href="#6-version-changelog-pull-request" aria-label="Link to this section">#</a></h2>
 <ul>
 <li><input disabled="" type="checkbox"> Run <code>scripts/release/set-version.sh &lt;version&gt;</code>. It sets <code>version</code> under
-<code>[workspace.package]</code> in the root <code>Cargo.toml</code>, refreshes <a href="https://github.com/rim-platform/rim-server/blob/048faa33edc68a6a7dc5b751fe5ec06bef6d4d5b/Cargo.lock"><code>Cargo.lock</code></a> for the workspace
+<code>[workspace.package]</code> in the root <code>Cargo.toml</code>, refreshes <a href="https://github.com/rim-platform/rim-server/blob/53e55099532cb3c44499e9aba37dc05e684af41c/Cargo.lock"><code>Cargo.lock</code></a> for the workspace
 crates only, and cuts <a href="../changelog.html"><code>CHANGELOG.md</code></a>: <code>Unreleased</code> becomes <code>[&lt;version&gt;] - &lt;YYYY-MM-DD&gt;</code>
 (today in UTC) under a new empty <code>Unreleased</code>, and the links at the bottom compare with the
 previous release (the first release links to <code>…/releases/tag/v&lt;version&gt;</code>). It refuses an
 invalid version, a version the changelog already has and an empty <code>Unreleased</code>, before it
-changes anything. <a href="https://github.com/rim-platform/rim-server/blob/048faa33edc68a6a7dc5b751fe5ec06bef6d4d5b/scripts/release/test-set-version.sh"><code>scripts/release/test-set-version.sh</code></a> tests it; CI&#39;s lint job runs that.</li>
+changes anything. <a href="https://github.com/rim-platform/rim-server/blob/53e55099532cb3c44499e9aba37dc05e684af41c/scripts/release/test-set-version.sh"><code>scripts/release/test-set-version.sh</code></a> tests it; CI&#39;s lint job runs that.</li>
 <li><input disabled="" type="checkbox"> rim-ui&#39;s version, changelog and tag are its own release, cut in rim-ui with
 <code>npm run version:set -- &lt;rim-ui version&gt;</code> when rim-ui releases; nothing here changes them.</li>
 <li><input disabled="" type="checkbox"> Open the pull request &quot;Release &lt;version&gt;&quot;: the scripts&#39; diff, with this list ticked and
@@ -233,7 +233,7 @@ job checks the tag against the version in <code>Cargo.toml</code> (rim-ui: <code
 changelog&#39;s section for it, builds the image for <code>linux/amd64</code>, pushes the tags <code>&lt;version&gt;</code>,
 <code>&lt;major&gt;.&lt;minor&gt;</code>, <code>sha-&lt;short sha&gt;</code> and <code>latest</code>, signs the digest with cosign keyless and
 attests an SPDX SBOM to it. rim-server&#39;s job does the same for a second image, the profile
-picture check <code>ghcr.io/rim-platform/rim-imagecheck</code> built from <a href="https://github.com/rim-platform/rim-server/tree/048faa33edc68a6a7dc5b751fe5ec06bef6d4d5b/imagecheck"><code>imagecheck/</code></a>, with the same
+picture check <code>ghcr.io/rim-platform/rim-imagecheck</code> built from <a href="https://github.com/rim-platform/rim-server/tree/53e55099532cb3c44499e9aba37dc05e684af41c/imagecheck"><code>imagecheck/</code></a>, with the same
 tags. The next job creates the GitHub release with the changelog section and the SBOMs. rim-ui&#39;s workflow also builds the desktop installers, one leg for Linux x86_64 and
 one for Windows x86_64, and attaches them to its release with <code>latest.json</code> for the updater,
 <code>SHA256SUMS</code> signed with cosign keyless and a build-provenance attestation for each bundle.</p>
@@ -267,7 +267,7 @@ rim-platform/&lt;repository&gt; --predicate-type https://spdx.dev/Document/v2.3`
 <a href="../contributing.html"><code>CONTRIBUTING.md</code></a>, &quot;Who can merge and publish&quot;, lists.</p>
 </li>
 <li><p><input disabled="" type="checkbox"> The first release that publishes <code>rim-imagecheck</code>: set that package public too. Until it
-is, <a href="https://github.com/rim-platform/rim-server/blob/048faa33edc68a6a7dc5b751fe5ec06bef6d4d5b/deploy/upgrade.sh"><code>deploy/upgrade.sh</code></a> and every self-hosted deployment fail to pull it.</p>
+is, <a href="https://github.com/rim-platform/rim-server/blob/53e55099532cb3c44499e9aba37dc05e684af41c/deploy/upgrade.sh"><code>deploy/upgrade.sh</code></a> and every self-hosted deployment fail to pull it.</p>
 </li>
 <li><p><input disabled="" type="checkbox"> Desktop builds: wait for both legs of rim-ui&#39;s run. The release is published only when
 every asset is attached; until then it is not the <code>latest</code> the updater reads.</p>
@@ -310,7 +310,7 @@ request so the page shows the release.</li>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/048faa33edc68a6a7dc5b751fe5ec06bef6d4d5b/docs/operations/release-checklist.md">rim-server/docs/operations/release-checklist.md</a> at <code>048faa3</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/53e55099532cb3c44499e9aba37dc05e684af41c/docs/operations/release-checklist.md">rim-server/docs/operations/release-checklist.md</a> at <code>53e5509</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>
