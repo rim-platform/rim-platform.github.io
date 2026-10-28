@@ -203,7 +203,8 @@ The count is in memory, per node.</p>
 <p>A relay stores each envelope once and one item per recipient. Each device reads its user&#39;s items
 above its cursor; a device added later starts at the newest item queued before it. An item is
 deleted once every non-revoked device of its user has acknowledged it, and after the retention
-period regardless. Over the per-user byte cap the oldest items go first and the devices online get
+period regardless; an item a DM request holds is kept as long as the request, and one released by
+accepting it for at least the retention period from then. Over the per-user byte cap the oldest items go first and the devices online get
 a <code>QueueOverflow</code> notice; a device offline at the time sees the gap in the stream&#39;s <code>seq</code>. Items a
 DM request holds are not counted toward that cap and are never dropped for it; the request
 inbox&#39;s own limits bound them. A relay pulls what a host still holds for it
@@ -245,22 +246,22 @@ from it: here when this server hosts it, and for a conversation hosted elsewhere
 <code>MemberRemovedFromConversation</code> names the user, which the relay recognizes once an event of that
 host on the user&#39;s own stream (a Welcome, a read state, a notification) told it the host&#39;s id
 for them.</p>
-<p>The same rule covers conversations of this server&#39;s own direct space whose creator is someone
-else (a person from another relay creating a DM with a local user through the forward path, or a
-local user), and DMs between members of a workspace this server hosts. The server files its own
-invite for the local member; until they accept, the
-conversation is left out of their <code>inboxConversations</code>, its events out of their
-<code>workspaceEvents</code>, and its notifications, mentions and unread counts out of the notification
-list, the bell, <code>unreadCounts</code> and the email digest; its first events are held with
-the request. Everything appears once they accept. They may read the conversation before they
-decide, but post nothing into it: while their request for it is pending or ignored, or they
-blocked whoever started it, <code>sendMessage</code>, <code>replyToMessage</code>, <code>forwardMessage</code> into it,
-<code>sendEncryptedMessage</code> and <code>toggleReaction</code> answer <code>FORBIDDEN</code> (&quot;accept the message request
-before posting here&quot;), and <code>startTyping</code> answers <code>false</code> without telling anyone. This server
-enforces it for the conversations it hosts; a reply to a request for a conversation hosted
-elsewhere goes to that host through the forward path, which leaves it to the client. This needs
-server-to-server traffic to be on; with it off, conversations in the direct space are live at
-once.</p>
+<p>The same rule covers conversations of this server&#39;s own direct space whose creator is someone else
+(a person from another relay creating a DM with a local user through the forward path, or a local
+user), and DMs between members of a workspace this server hosts. The server files its own invite for
+the local member; until they accept, the conversation is left out of their <code>inboxConversations</code>, its
+events out of their <code>workspaceEvents</code>, and its notifications, mentions and unread counts out of the
+notification list, the bell, <code>unreadCounts</code> and the email digest; its first events are held with the
+request. Everything appears once they accept. They may read the conversation before they decide, but
+post nothing into it: while their request for it is pending or ignored, or they blocked whoever
+started it (in any space here, for DMs and groups: &quot;What a blocked person started&quot;), <code>sendMessage</code>, <code>replyToMessage</code>, <code>forwardMessage</code> into it, <code>sendEncryptedMessage</code> and
+<code>toggleReaction</code> answer <code>FORBIDDEN</code> (&quot;accept the message request before posting here&quot;), and
+<code>startTyping</code> answers <code>false</code> without telling anyone. Someone the other member of a DM blocked posts
+nothing into it either: the same mutations answer <code>FORBIDDEN</code> (&quot;they do not take direct messages
+from you&quot;), so nothing they write while blocked is stored here. This server enforces it for the
+conversations it hosts; a reply to a request for a conversation hosted elsewhere goes to that host
+through the forward path, which leaves it to the client. This needs server-to-server traffic to be
+on; with it off, conversations in the direct space are live at once.</p>
 <div class="tablewrap"><table>
 <thead>
 <tr>
@@ -274,11 +275,15 @@ once.</p>
 </tr>
 <tr>
 <td><code>ignoreDmRequest</code></td>
-<td>Held items deleted but the invite, which stays with the request; later items dropped; the request expires after 30 days</td>
+<td>Held items deleted but the invite, which stays with the request; later items dropped; the request expires after 30 days (for a conversation this server hosts, the request is cleared instead, below)</td>
 </tr>
 <tr>
 <td><code>blockPrincipal</code></td>
-<td>Pending requests from the principal ignored as above; its invites (<code>blocked</code>) and key package claims refused</td>
+<td>Pending requests from the principal ignored as above; its invites (<code>blocked</code>) and key package claims refused; what they started is hidden and silenced (below)</td>
+</tr>
+<tr>
+<td><code>unblockPrincipal</code></td>
+<td>The block lifted; every ignored request from the principal that still keeps its invite, ignored by hand or by the block, is cleared: listed and counted nowhere, until the next item of its conversation files it again as a new pending request holding that item. Nothing dropped while it was ignored comes back. A conversation hosted elsewhere keeps at its host what they wrote meanwhile, which reading it there shows. Unblocking someone not blocked changes nothing. Nothing is cleared while the operator blocks the principal.</td>
 </tr>
 <tr>
 <td><code>reportDmRequest</code></td>
@@ -286,9 +291,37 @@ once.</p>
 </tr>
 <tr>
 <td>Nothing</td>
-<td>Expires after the retention period; from then on accepting, ignoring or reporting it is <code>NOT_FOUND</code>, as for an unknown request</td>
+<td>Expires after the retention period; from then on accepting, ignoring or reporting it is <code>NOT_FOUND</code>, as for an unknown request; for a conversation this server hosts, see below</td>
 </tr>
 </tbody></table></div>
+<p><strong>What a blocked person started.</strong> DMs and groups someone the user blocked started are hidden and
+silenced until the unblock, wherever they are hosted. Channels are not.</p>
+<p><strong>Here,</strong> in any space this server hosts (the direct space, a workspace or the default
+workspace), the conversation&#39;s creator decides. It is left out of the user&#39;s <code>inboxConversations</code>
+and <code>workspaceEvents</code>, and out of their notifications, bell, digest and unread counts. The user
+posts nothing into it: the posting mutations answer <code>FORBIDDEN</code> as for an undecided request, and
+<code>startTyping</code> answers <code>false</code>. The person they blocked still sees the conversation. In a group
+they still post, for its other members. In a DM their posts are refused (&quot;they do not take
+direct messages from you&quot;).</p>
+<p><strong>On another server,</strong> the relay does not know who created a conversation, only who sent the
+user&#39;s invite. That is its creator, or for a group the member who added the user later. It drops
+every item of an accepted conversation whose invite came from someone the user blocked, and
+acknowledges it, so the host does not send it again. So a group someone else started is silenced
+if the blocked person added the user to it, and one the blocked person started is not silenced
+if someone else added the user. The conversation&#39;s history stays at its host, which keeps
+listing it for the user; the app leaves it out of Direct messages while the person is blocked.</p>
+<p>A DM or group someone else started is not affected, wherever it is hosted.</p>
+<p>A request of a conversation this server hosts never lapses into a conversation. Its recipient is
+a member from the start, and only the request keeps the conversation out of their view. When such
+a request expires, unanswered or 30 days after an Ignore, while its recipient is still a member,
+the relay clears it instead of deleting it. A cleared request is listed and counted nowhere and
+holds nothing. It still keeps the conversation out of their view, and their posts out of it. The
+conversation&#39;s next event first sends its <code>DmInvite</code> again, from whoever sent the first, and the
+request is filed anew holding that invite and the event, with a <code>DmRequestReceived</code> notice. A
+request from someone the user or the operator blocked is not cleared: it stays ignored for another
+retention period. The recipient takes a cleared conversation back by posting into it (the
+mutations above), which accepts it. A request of a conversation hosted elsewhere is deleted when
+it expires; its host sends the invite again with the next item.</p>
 <p>Limits: 100 pending requests per recipient, <code>RIM_RELAY_DM_REQUESTS_PER_DAY</code> (20) per sender
 principal per day on this relay, 1,000 per delivering host per day whichever principals it names,
 and 16 MiB of held items per recipient, the invites ignored requests keep included; past them
@@ -365,19 +398,22 @@ identity from their relays, waiting up to 10 seconds, and issues a session of 24
 mutations stay refused on it.</p>
 <h3 id="cleanup-and-audit">Cleanup and audit <a class="anchor" href="#cleanup-and-audit" aria-label="Link to this section">#</a></h3>
 <p>Every minute the server deletes acknowledged and expired items, envelopes no item uses, expired
-requests, outbox rows over 7 days (delivered or not) and accepted <code>seq</code> values out of the window, ends expired
-delegations and those of revoked devices or departed members, and marks this relay&#39;s expired
-subscriptions lapsed. Every 5 seconds it sends revocations due for another attempt. Audit events
-(target <code>audit</code>, ids only): <code>relay.principal_blocked</code> (<code>scope</code> <code>user</code> for a user&#39;s block,
-<code>server</code> for an operator&#39;s), <code>relay.principal_unblocked</code>, <code>relay.blocked_principal_refused</code>,
+requests, outbox rows over 7 days (delivered or not) and accepted <code>seq</code> values out of the window,
+ends expired delegations and those of revoked devices or departed members, and marks this relay&#39;s
+expired subscriptions lapsed. Every 5 seconds it sends revocations due for another attempt. Audit
+events (target <code>audit</code>, ids only): <code>relay.principal_blocked</code> (<code>scope</code> <code>user</code> for a user&#39;s block,
+<code>server</code> for an operator&#39;s), <code>relay.principal_unblocked</code> (<code>scope</code> <code>user</code> with <code>cleared_requests</code> for
+a user&#39;s unblock, <code>server</code> for an operator&#39;s, with <code>cleared_requests</code> too),
+<code>relay.blocked_principal_refused</code>,
 <code>relay.dm_request_reported</code>, <code>relay.abuse_report_filed</code>, <code>relay.abuse_report_resolved</code>,
-<code>blocked_email_refused</code> (<code>action</code> <code>signup</code>), <code>relay.registration_pow</code>, <code>relay.left</code>, <code>key_identity_adopted</code>, <code>host.revocation_applied</code>,
-<code>host.recovery_applied</code> and <code>host.identity_revocations_applied</code> (a recovery or revocations
-applied from a person&#39;s identity, with the sessions and delegations they ended); <code>host.remote_join</code> and
-<code>host.delegation_accepted</code> are also written to <code>command_audit_log</code> (initiator <code>s2s</code>).</p>
+<code>blocked_email_refused</code> (<code>action</code> <code>signup</code>), <code>relay.registration_pow</code>, <code>relay.left</code>,
+<code>key_identity_adopted</code>, <code>host.revocation_applied</code>, <code>host.recovery_applied</code> and
+<code>host.identity_revocations_applied</code> (a recovery or revocations applied from a person&#39;s identity,
+with the sessions and delegations they ended); <code>host.remote_join</code> and <code>host.delegation_accepted</code> are
+also written to <code>command_audit_log</code> (initiator <code>s2s</code>).</p>
 <h3 id="the-public-relay">The public relay <a class="anchor" href="#the-public-relay" aria-label="Link to this section">#</a></h3>
-<p>A relay anyone may sign up on runs with the settings of <a href="https://github.com/rim-platform/rim-server/blob/2adb62f6df2cc0694fd08de1e9f8da0a209f60ec/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a> on top of
-<a href="https://github.com/rim-platform/rim-server/blob/2adb62f6df2cc0694fd08de1e9f8da0a209f60ec/deploy/compose.yml"><code>deploy/compose.yml</code></a>, as <code>RIM_ROLE=relay</code>, or <code>both</code> to host workspaces as well, as the
+<p>A relay anyone may sign up on runs with the settings of <a href="https://github.com/rim-platform/rim-server/blob/64c6dea61fb8900d3bab83232f291e0e0415eded/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a> on top of
+<a href="https://github.com/rim-platform/rim-server/blob/64c6dea61fb8900d3bab83232f291e0e0415eded/deploy/compose.yml"><code>deploy/compose.yml</code></a>, as <code>RIM_ROLE=relay</code>, or <code>both</code> to host workspaces as well, as the
 project&#39;s relay does. This section says how its registration and blocks behave;
 <a href="operations/relay-public.html"><code>docs/operations/relay-public.md</code></a> has its quotas, the operator&#39;s commands and the abuse policy.</p>
 <p><strong>Registration.</strong> <code>RIM_REGISTRATION_POW_BITS</code> (1 to 40; 24 on the public relay) turns on <code>pow</code>
@@ -411,7 +447,10 @@ accounts the blocked one&#39;s invites created; <code>--cascade</code> blocks th
 the reason followed by &quot;(invited by &lt;username&gt;)&quot;. An account without a key identity is blocked
 by its email alone. <code>principal show &lt;principalId&gt;</code> prints the account, its inviter, the tree of
 accounts its invites created, its invites, its open reports and its block. <code>principal unblock</code>
-lifts the principal&#39;s block and its email&#39;s, not the sessions or invites that ended.</p>
+lifts the principal&#39;s block and its email&#39;s, not the sessions or invites that ended. It clears the
+DM requests the block ignored, for every recipient who has not blocked the principal themselves,
+so the next item of such a conversation files it again as a request (&quot;The request inbox&quot;); it
+prints how many and audits them as <code>cleared_requests</code>.</p>
 <p><strong>Blocking a peer.</strong> <code>rim_server peer block &lt;serverId&gt;</code> sets the pinned peer&#39;s status to
 <code>blocked</code>, which the request check reads on every request: its requests get
 <code>403 peer_not_allowed</code> and nothing is sent to it. <code>peer unblock</code> makes it <code>active</code> again. A
@@ -468,7 +507,8 @@ host-signed envelopes to read before deciding, the <code>DmInvite</code> first; 
 conversation&#39;s space to its home before reading or leaving it.</li>
 <li><code>myBlockedPrincipals</code> lists the caller&#39;s blocks newest first: <code>principalId</code>, <code>blockedAt</code>, and
 <code>userId</code>, <code>username</code> and <code>displayName</code> of the account on this server holding the principal
-(null when none does). <code>unblockPrincipal</code> takes one off.</li>
+(null when none does). <code>unblockPrincipal</code> takes one off and clears the requests ignored from
+that person (&quot;The request inbox&quot;).</li>
 <li><code>relayStream(after)</code> on the existing WebSocket yields the session device&#39;s items above <code>after</code>
 (its cursor when omitted), then live ones, as JSON strings:
 <code>{&quot;type&quot;:&quot;RelayItem&quot;,&quot;id&quot;,&quot;hostServerId&quot;,&quot;workspaceId&quot;,&quot;envelope&quot;:{&quot;payload&quot;,&quot;signature&quot;}}</code>, plus
@@ -550,7 +590,7 @@ mutations are refused on it (<code>FORBIDDEN</code>), as through the relay.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/2adb62f6df2cc0694fd08de1e9f8da0a209f60ec/docs/relay.md">rim-server/docs/relay.md</a> at <code>2adb62f</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/64c6dea61fb8900d3bab83232f291e0e0415eded/docs/relay.md">rim-server/docs/relay.md</a> at <code>64c6dea</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

@@ -36,7 +36,7 @@
     <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
 <ol>
 <li><a href="#endpoints">Endpoints</a><ol><li><a href="#graphql-post-api">GraphQL: POST /api</a></li><li><a href="#subscriptions-get-apiws">Subscriptions: GET /api/ws</a></li><li><a href="#the-schema-get-apisdl">The schema: GET /api/sdl</a></li><li><a href="#discovery-get-well-knownrim-server">Discovery: GET /.well-known/rim-server</a></li><li><a href="#probes-healthz-and-readyz">Probes: /healthz and /readyz</a></li><li><a href="#metrics-metrics">Metrics: /metrics</a></li><li><a href="#files">Files</a></li><li><a href="#spaces-on-another-server-apiremotehost_server_idtail">Spaces on another server: /api/remote/{host_server_id}/{tail}</a></li><li><a href="#server-to-server-s2sv1">Server to server: /s2s/v1/...</a></li></ol></li>
-<li><a href="#sessions-and-csrf">Sessions and CSRF</a><ol><li><a href="#the-session-cookie">The session cookie</a></li><li><a href="#keep-me-signed-in">Keep me signed in</a></li><li><a href="#handing-over-or-deleting-a-workspace">Handing over or deleting a workspace</a></li><li><a href="#deleting-an-account">Deleting an account</a></li><li><a href="#the-csrf-token">The CSRF token</a></li></ol></li>
+<li><a href="#sessions-and-csrf">Sessions and CSRF</a><ol><li><a href="#the-session-cookie">The session cookie</a></li><li><a href="#keep-me-signed-in">Keep me signed in</a></li><li><a href="#leaving-or-renaming-a-workspace">Leaving or renaming a workspace</a></li><li><a href="#handing-over-or-deleting-a-workspace">Handing over or deleting a workspace</a></li><li><a href="#deleting-an-account">Deleting an account</a></li><li><a href="#the-csrf-token">The CSRF token</a></li></ol></li>
 <li><a href="#origins">Origins</a></li>
 <li><a href="#limits">Limits</a></li>
 <li><a href="#instance-moderation">Instance moderation</a></li>
@@ -467,6 +467,25 @@ server now holds in its place, only when:</p>
 <code>UNAUTHENTICATED</code>. <code>setReloadKey</code> and <code>reloadSession</code> answer <code>UNAUTHENTICATED</code> for a kept
 session. Signing out or any other end of the session ends its keep key and reload key with
 it.</p>
+<h3 id="leaving-or-renaming-a-workspace">Leaving or renaming a workspace <a class="anchor" href="#leaving-or-renaming-a-workspace" aria-label="Link to this section">#</a></h3>
+<p><code>leaveWorkspace(serverId)</code> takes the caller out of a workspace, as <code>kickMember</code> removes a
+member: from every conversation of it, with their macros, pipelines and notifications there;
+their messages stay, and encrypted conversations they were in get their devices removed
+(<code>MlsMembershipChanged</code>). It answers <code>true</code>. Members get <code>MemberLeft</code> with cause <code>left</code> and the
+caller&#39;s event stream for the workspace ends. Anyone but the owner may leave, guests included;
+the owner hands the workspace over or deletes it first (<code>VALIDATION</code>). Nobody leaves the direct
+space or the server&#39;s default workspace (<code>VALIDATION</code>); a non-member gets <code>FORBIDDEN</code>. Coming
+back takes a new invite or the public link. A person from another server leaves the same way,
+through their relay&#39;s forward path; the host ends their delegations and their relay ends the
+subscription.</p>
+<p><code>renameWorkspace(serverId, name)</code> is the owner&#39;s (<code>FORBIDDEN</code> for anyone else). The name follows
+<code>createServer</code>&#39;s rules: trimmed, 1 to 128 characters (<code>VALIDATION</code>), and not the name of another
+workspace the owner owns, ignoring case (<code>CONFLICT</code>). It answers the workspace, and every member
+gets <code>WorkspaceUpdated</code>. The current name changes nothing. The direct space has no name to change
+(<code>VALIDATION</code>). A default workspace described by <code>RIM_DEFAULT_WORKSPACE_FILE</code> gets the file&#39;s
+name back at the next start.</p>
+<p>Both are audited with initiator <code>workspace</code> (<code>workspace.leave</code>, <code>workspace.rename</code>), and listed
+in <code>serverInfo.capabilities</code> as <code>workspace_leave</code> and <code>workspace_rename</code>.</p>
 <h3 id="handing-over-or-deleting-a-workspace">Handing over or deleting a workspace <a class="anchor" href="#handing-over-or-deleting-a-workspace" aria-label="Link to this section">#</a></h3>
 <p>A workspace has exactly one owner. <code>transferWorkspaceOwnership(input: { serverId, userId })</code>
 makes another member the owner and the caller a moderator, in one step, and answers the
@@ -1071,7 +1090,8 @@ value (<a href="../specs/server-to-server-v1.html"><code>specs/server-to-server-
 13 to 21), or null when the server asks for none. A client shows &quot;I am at least N&quot; at signup
 and sends N back as <code>confirmedMinimumAge</code>.</li>
 <li><strong><code>capabilities</code></strong>: the API additions this server has that an older one lacks, by name
-(<code>message_edited_at</code>: <code>Message.editedAt</code>). A client asks for such a field only when its name
+(<code>message_edited_at</code>: <code>Message.editedAt</code>; <code>workspace_leave</code>: <code>leaveWorkspace</code>;
+<code>workspace_rename</code>: <code>renameWorkspace</code>). A client asks for such a field only when its name
 is listed, so it keeps working against older servers; it ignores names it does not know.</li>
 </ul>
 <p>The discovery document carries the same <code>features</code>, and <code>registrationFull</code> as
@@ -1095,7 +1115,7 @@ types from it:</p>
 <pre><code class="language-sh">curl -s http://localhost:8080/api/sdl &gt; ../rim-ui/schema.graphql
 cd ../rim-ui &amp;&amp; npm run codegen</code></pre>
 <p>Enum values appear in <code>SCREAMING_SNAKE</code> and fields in <code>camelCase</code>. The models in <a href="messaging.html"><code>messaging.md</code></a>,
-<a href="search.html"><code>search.md</code></a>, <a href="message-change-feed.html"><code>message-change-feed.md</code></a>, <a href="command_model.html"><code>command_model.md</code></a> and the specs in <a href="https://github.com/rim-platform/rim-server/tree/2adb62f6df2cc0694fd08de1e9f8da0a209f60ec/docs/specs"><code>specs/</code></a> explain what
+<a href="search.html"><code>search.md</code></a>, <a href="message-change-feed.html"><code>message-change-feed.md</code></a>, <a href="command_model.html"><code>command_model.md</code></a> and the specs in <a href="https://github.com/rim-platform/rim-server/tree/64c6dea61fb8900d3bab83232f291e0e0415eded/docs/specs"><code>specs/</code></a> explain what
 the fields mean.</p>
 <h3 id="profile-picture-refresh">Profile picture refresh <a class="anchor" href="#profile-picture-refresh" aria-label="Link to this section">#</a></h3>
 <p>Avatar uploads are stored as <code>avatars/&lt;user id&gt;/avatar-&lt;16 lowercase SHA-256 hex&gt;.png</code>, the
@@ -1357,7 +1377,7 @@ their own server.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/2adb62f6df2cc0694fd08de1e9f8da0a209f60ec/docs/api.md">rim-server/docs/api.md</a> at <code>2adb62f</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/64c6dea61fb8900d3bab83232f291e0e0415eded/docs/api.md">rim-server/docs/api.md</a> at <code>64c6dea</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

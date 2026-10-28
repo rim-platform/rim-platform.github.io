@@ -44,7 +44,7 @@
 <li><a href="#group-command">Command (1)</a></li>
 <li><a href="#group-user">User (3)</a></li>
 <li><a href="#group-keybind">Keybind (3)</a></li>
-<li><a href="#group-workspace">Workspace (11)</a></li>
+<li><a href="#group-workspace">Workspace (13)</a></li>
 <li><a href="#group-emoji">Emoji (2)</a></li>
 <li><a href="#group-macro">Macro (4)</a></li>
 <li><a href="#group-pipeline">Pipeline (4)</a></li>
@@ -58,7 +58,7 @@
 </details></aside>
     <main id="content" class="prose">
 <h1>Mutation</h1>
-<p class="lede">135 mutations, grouped by the domain their name starts with or names, in the order the schema lists them.</p>
+<p class="lede">137 mutations, grouped by the domain their name starts with or names, in the order the schema lists them.</p>
 <input id="filter" class="search" type="search" placeholder="Filter fields by name" aria-label="Filter fields by name" autocomplete="off">
 <p id="filter-none" class="muted" hidden>Nothing matches.</p>
 <section data-group>
@@ -378,7 +378,7 @@ not on an archived channel. Audited (<code>chat.set_channel_posting</code>).</p>
 </section>
 </section>
 <section data-group>
-<h2 id="group-workspace">Workspace <span class="faint">11</span></h2>
+<h2 id="group-workspace">Workspace <span class="faint">13</span></h2>
 <section class="entry" id="joinDefaultWorkspace" data-name="joinDefaultWorkspace">
 <h3><code>joinDefaultWorkspace</code></h3>
 <div class="sig">joinDefaultWorkspace: <a href="scalars.html#ID">ID</a>!</div>
@@ -481,6 +481,39 @@ workspace&#39;s Owner only; anyone else gets <code>FORBIDDEN</code>.</p>
 <div class="sig">setMyWorkspaceDmSetting(workspaceId: <a href="scalars.html#ID">ID</a>!, members: <a href="enums.html#DmMembers">DmMembers</a>!): <a href="objects.html#MyDmSettings">MyDmSettings</a>!</div>
 <div class="desc"><p>Set how a DM from the members of one of the caller&#39;s workspaces arrives, whatever the
 workspace&#39;s default. <code>NOT_FOUND</code> unless the caller is a member.</p>
+</div>
+
+</section>
+<section class="entry" id="leaveWorkspace" data-name="leaveWorkspace">
+<h3><code>leaveWorkspace</code></h3>
+<div class="sig">leaveWorkspace(serverId: <a href="scalars.html#ID">ID</a>!): <a href="scalars.html#Boolean">Boolean</a>!</div>
+<div class="desc"><p>Leave the workspace: the caller is removed from it and from every conversation of it,
+with their macros and pipelines there; their messages stay. Members get <code>MemberLeft</code>
+with cause <code>left</code> and the caller&#39;s event stream for the workspace ends. They come back
+only with a new invite or the public link.</p>
+<h4>Errors</h4>
+<ul>
+<li><code>UNAUTHENTICATED</code>: no session.</li>
+<li><code>FORBIDDEN</code>: the caller is not a member.</li>
+<li><code>VALIDATION</code>: the direct space, the server&#39;s default workspace, or the caller is the
+owner, who transfers ownership or deletes the workspace instead.</li>
+</ul>
+</div>
+
+</section>
+<section class="entry" id="renameWorkspace" data-name="renameWorkspace">
+<h3><code>renameWorkspace</code></h3>
+<div class="sig">renameWorkspace(serverId: <a href="scalars.html#ID">ID</a>!, name: <a href="scalars.html#String">String</a>!): <a href="objects.html#Server">Server</a>!</div>
+<div class="desc"><p>Rename the workspace: trimmed, 1 to 128 characters, not the name of another workspace
+the owner owns (ignoring case). Every member gets <code>WorkspaceUpdated</code>. Returns the
+workspace.</p>
+<h4>Errors</h4>
+<ul>
+<li><code>UNAUTHENTICATED</code>: no session.</li>
+<li><code>FORBIDDEN</code>: the caller is not the owner.</li>
+<li><code>VALIDATION</code>: the direct space, or a blank or overlong name.</li>
+<li><code>CONFLICT</code>: the owner owns another workspace of that name.</li>
+</ul>
 </div>
 
 </section>
@@ -1353,7 +1386,7 @@ device.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Generated from <a href="https://github.com/rim-platform/rim-ui/blob/132ab0b900c7ab4a294905c9d7ae3695702b5d56/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>132ab0b</code></span>
+    <span>Generated from <a href="https://github.com/rim-platform/rim-ui/blob/1a02b9d26ea19a571347f465d406e8409457674c/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>1a02b9d</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

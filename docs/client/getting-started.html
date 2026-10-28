@@ -174,6 +174,12 @@ accounts from other servers says so.</li>
 <li><strong>Create one.</strong> <strong>+ Create workspace</strong> on the welcome screen, or <strong>Add workspace</strong>, then <strong>Create
 New</strong>, asks for a name. <strong>Create</strong> opens the new workspace with you as its Owner.</li>
 </ul>
+<p><strong>Leave workspace…</strong> in a workspace&#39;s menu on the rail (right-click it) or in the command palette
+takes you out of it, after a confirmation: you leave its channels and conversations, and what you
+wrote stays. The Owner hands the workspace over or deletes it instead (Settings → Workspace), and
+nobody leaves the server&#39;s default workspace. The Owner renames a workspace with <strong>Rename
+workspace…</strong> in the same menu, the palette or Settings → Workspace → <strong>Name</strong>; everyone sees the
+new name. Both need a server that supports them; on an older one they are not offered.</p>
 <p>Every workspace member has one role:</p>
 <ul>
 <li><strong>Owner</strong>: one per workspace, the person who created it. Can do everything, including inviting
@@ -252,10 +258,12 @@ conversation list of the workspace they came from, or the Direct messages list f
 outside. Each request shows the sender&#39;s verified name and fingerprint, with <strong>Accept</strong>, <strong>Read
 first</strong>, <strong>Ignore</strong>, <strong>Block</strong> and <strong>Report</strong>. <strong>Block</strong> asks first; the person is not told.
 Settings &gt; Direct messages lists the people you blocked under <strong>Blocked people</strong>, each with
-<strong>Unblock</strong>. <strong>Read first</strong> opens the conversation without deciding: in place of the composer it
-says who wants to message you, with <strong>Accept</strong>, <strong>Ignore</strong>, <strong>Block</strong> and <strong>Report</strong>. You reply
-once you accept; until then the sender sees nothing from you, not even that you read it. The
-sender sees &quot;Sent as a request; &lt;name&gt; has not accepted yet.&quot; above their composer. rim-server&#39;s
+<strong>Unblock</strong>. Unblocking lets them reach you again: a conversation you blocked them from comes back
+as a new request when they next write in it. While someone is blocked, the conversations they started, DMs and groups on any server, are hidden and raise no notification; unblocking brings them back with everything written in them. <strong>Send message</strong> to someone you blocked asks you to unblock them first. <strong>Read first</strong> opens the conversation without deciding:
+in place of the composer it says who wants to message you, with <strong>Accept</strong>, <strong>Ignore</strong>, <strong>Block</strong>
+and <strong>Report</strong>. You reply once you accept; until then the sender sees nothing from you, not even
+that you read it. The sender sees &quot;Sent as a request; &lt;name&gt; has not accepted yet.&quot; above their
+composer. rim-server&#39;s
 <a href="../messaging.html#who-may-start-a-dm">Messaging</a> has the full rules.</p>
 <p><strong>Reactions.</strong> Hover a message and choose <strong>Add reaction</strong> to pick an emoji. Clicking a reaction
 under a message adds or removes yours.</p>
@@ -409,7 +417,7 @@ default workspace for new accounts.</li>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/132ab0b900c7ab4a294905c9d7ae3695702b5d56/docs/getting-started.md">rim-ui/docs/getting-started.md</a> at <code>132ab0b</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/1a02b9d26ea19a571347f465d406e8409457674c/docs/getting-started.md">rim-ui/docs/getting-started.md</a> at <code>1a02b9d</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

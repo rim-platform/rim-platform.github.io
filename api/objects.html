@@ -1713,7 +1713,7 @@ null in the direct space, which has no rules. Every member sees it.</p>
 space. Every member sees it.</p>
 </td></tr>
 </tbody></table></div>
-<p class="faint">Used by <a href="mutation.html#createServer">Mutation.createServer</a>, <a href="mutation.html#transferWorkspaceOwnership">Mutation.transferWorkspaceOwnership</a>, <a href="query.html#myServers">Query.myServers</a>, <a href="query.html#server">Query.server</a></p>
+<p class="faint">Used by <a href="mutation.html#createServer">Mutation.createServer</a>, <a href="mutation.html#transferWorkspaceOwnership">Mutation.transferWorkspaceOwnership</a>, <a href="mutation.html#renameWorkspace">Mutation.renameWorkspace</a>, <a href="query.html#myServers">Query.myServers</a>, <a href="query.html#server">Query.server</a></p>
 </section>
 <section class="entry" id="ServerBan" data-name="ServerBan">
 <h3><code>ServerBan</code><span class="kind">object</span></h3>
@@ -1793,7 +1793,8 @@ server asks for none (<code>RIM_MINIMUM_AGE</code>). A signup sends it back as
 <code>confirmedMinimumAge</code>.</p>
 </td></tr>
 <tr><td><code>capabilities</code></td><td><code>[<a href="scalars.html#String">String</a>!]!</code></td><td><p>API additions this server has that an older server lacks, by name: <code>message_edited_at</code>
-(<code>Message.editedAt</code>). A client ignores names it does not know.</p>
+(<code>Message.editedAt</code>), <code>workspace_leave</code> (<a href="mutation.html#leaveWorkspace"><code>leaveWorkspace</code></a>), <code>workspace_rename</code>
+(<a href="mutation.html#renameWorkspace"><code>renameWorkspace</code></a>). A client ignores names it does not know.</p>
 </td></tr>
 </tbody></table></div>
 <p class="faint">Used by <a href="query.html#serverInfo">Query.serverInfo</a></p>
@@ -2174,7 +2175,7 @@ shares no conversation with them.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Generated from <a href="https://github.com/rim-platform/rim-ui/blob/132ab0b900c7ab4a294905c9d7ae3695702b5d56/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>132ab0b</code></span>
+    <span>Generated from <a href="https://github.com/rim-platform/rim-ui/blob/1a02b9d26ea19a571347f465d406e8409457674c/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>1a02b9d</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>
