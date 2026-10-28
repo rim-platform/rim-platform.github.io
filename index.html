@@ -103,6 +103,9 @@
   .card .tag { font-family: var(--font-mono); font-size: 11px; color: var(--accent); }
   a.card { display: block; color: var(--fg); }
   a.card:hover { text-decoration: none; border-color: var(--accent); }
+  .dl { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 8px; }
+  .dl li { display: flex; flex-direction: column; font-size: 14px; }
+  .dl li span { color: var(--muted); font-size: 12px; }
   .speclist li a { color: var(--fg); }
   .speclist li a:hover { color: var(--accent); }
 
@@ -243,13 +246,28 @@
   <section id="download">
     <div class="eyebrow">Download</div>
     <h2>The desktop app, for the machine you work on</h2>
-    <p class="sub">Linux and Windows installers, with signed checksums and signed in-app updates; on macOS you build it from source for now. Point it at your own server or at a relay. The web client needs no download: your server serves it on the same domain.</p>
+    <p class="sub">Linux and Windows installers, with signed checksums and signed in-app updates; on macOS you build it from source for now. Point it at your own server or at a relay.</p>
+    <!-- downloads:start -->
     <div class="grid three">
-      <div class="card"><h3>Linux</h3><p>AppImage, .deb and .rpm for x86_64. Your keys stay in RIM's encrypted vault, unlocked through the desktop keyring.</p><a class="pill warm" href="docs/client/install.html#linux" style="display:inline-block;margin-top:10px;font-family:var(--font-mono);font-size:11px;padding:2px 8px;border:1px solid var(--warm);border-radius:999px;color:var(--warm)">with the first release</a></div>
-      <div class="card"><h3>macOS</h3><p>No download until signed and notarized builds exist. Build the app from source; it runs on the Mac that built it.</p><a class="pill warm" href="docs/client/install.html#macos" style="display:inline-block;margin-top:10px;font-family:var(--font-mono);font-size:11px;padding:2px 8px;border:1px solid var(--warm);border-radius:999px;color:var(--warm)">built from source</a></div>
-      <div class="card"><h3>Windows</h3><p>A setup .exe and an .msi for x86_64. The installers are unsigned, so SmartScreen asks once per version; the install guide shows the two clicks past it.</p><a class="pill warm" href="docs/client/install.html#windows" style="display:inline-block;margin-top:10px;font-family:var(--font-mono);font-size:11px;padding:2px 8px;border:1px solid var(--warm);border-radius:999px;color:var(--warm)">with the first release</a></div>
+      <div class="card"><span class="tag">v0.0.6</span><h3>Windows 10 and 11</h3>
+        <ul class="dl">
+          <li><a href="https://github.com/rim-platform/rim-ui/releases/download/v0.0.6/RIM_0.0.6_x64-setup.exe" rel="noopener">Installer (.exe)</a> <span>for one user, no administrator needed</span></li>
+          <li><a href="https://github.com/rim-platform/rim-ui/releases/download/v0.0.6/RIM_0.0.6_x64_en-US.msi" rel="noopener">Installer (.msi)</a> <span>for managed installs</span></li>
+        </ul>
+        <p>The installers are not code-signed yet, so SmartScreen warns on each new version.</p></div>
+      <div class="card"><span class="tag">v0.0.6</span><h3>Linux, x86-64</h3>
+        <ul class="dl">
+          <li><a href="https://github.com/rim-platform/rim-ui/releases/download/v0.0.6/RIM_0.0.6_amd64.deb" rel="noopener">Debian, Ubuntu (.deb)</a></li>
+          <li><a href="https://github.com/rim-platform/rim-ui/releases/download/v0.0.6/RIM-0.0.6-1.x86_64.rpm" rel="noopener">Fedora, openSUSE (.rpm)</a></li>
+          <li><a href="https://github.com/rim-platform/rim-ui/releases/download/v0.0.6/RIM_0.0.6_amd64.AppImage" rel="noopener">Any distribution (.AppImage)</a></li>
+        </ul>
+        <p>The packages pull in what the app needs; the AppImage carries it.</p></div>
+      <div class="card"><span class="tag">source</span><h3>macOS</h3>
+        <p>No download until signed and notarized builds exist. <a href="docs/client/install.html#build-from-source">Build it from source</a>; it runs on the Mac that built it.</p></div>
     </div>
-    <p class="sub" style="margin-top:18px">No release exists yet. The <a href="docs/client/install.html">install guide</a> has the downloads and how to verify them, and the steps to <a href="docs/client/install.html#build-from-source">build from source</a> on each platform.</p>
+    <!-- downloads:end -->
+    <p class="sub" style="margin-top:18px">Or use it in the browser, with nothing to install: <a href="https://chat.rim-platform.org" rel="noopener">chat.rim-platform.org</a>. Your own server serves the web client on its own domain.</p>
+    <p class="sub" style="margin-top:10px">The <a href="docs/client/install.html">install guide</a> says what each file is and what Linux needs. <a href="docs/client/install.html#verify-a-download">Verify a download</a> against the cosign-signed checksums. All files and older versions are on the <a href="https://github.com/rim-platform/rim-ui/releases" rel="noopener">releases page</a>.</p>
   </section>
 
   <section id="selfhost">
@@ -372,8 +390,8 @@ RIM_FEATURES_DISABLED=attachments,email</pre>
     <div class="eyebrow">Where the project is</div>
     <h2>Pre-release, honest about it</h2>
     <div class="status">
-      <div class="card"><h3>Server and clients</h3><p>Version 0.0.1 on every crate and package. Plugins, client-held history, key identity, MLS encryption, relays and hosts all work on <code>master</code>.</p><span class="pill ok">source available</span></div>
-      <div class="card"><h3>Desktop downloads</h3><p>The signed updater is wired but dormant. Linux and Windows installers arrive with the first release; macOS is built from source.</p><span class="pill warm">no builds yet</span></div>
+      <div class="card"><h3>Server and clients</h3><p>Early 0.0.x releases of the server and the clients. Plugins, client-held history, key identity, MLS encryption, relays and hosts all work in the released builds.</p><span class="pill ok">released</span></div>
+      <div class="card"><h3>Desktop downloads</h3><p>Linux and Windows installers come with every release, with signed checksums and signed in-app updates. The Windows ones are not code-signed yet; macOS is built from source.</p><span class="pill warm">Windows unsigned</span></div>
       <div class="card"><h3>Cryptography review</h3><p>An outside review of the identity and MLS layers is prepared, with the brief published. Results and fixes will be posted here.</p><span class="pill warm">pending</span></div>
     </div>
   </section>

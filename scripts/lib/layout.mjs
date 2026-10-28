@@ -12,6 +12,7 @@ const TEMPLATE = readFileSync(path.join(SITE_ROOT, "templates", "layout.html"), 
 const NAV = [
   { key: "what", text: "What RIM is", href: "index.html#what" },
   { key: "how", text: "How it works", href: "index.html#how" },
+  { key: "download", text: "Download", href: "index.html#download" },
   { key: "selfhost", text: "Self-host", href: "docs/self-hosting.html" },
   { key: "configure", text: "Configure", href: "configure/index.html" },
   { key: "plugins", text: "Plugins", href: "plugins/index.html" },

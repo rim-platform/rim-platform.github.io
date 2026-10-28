@@ -7,6 +7,7 @@ import { copyFileSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 import { OUTPUT_DIRS, check } from "./check.mjs";
+import { writeDownloads, releaseOf } from "./lib/downloads.mjs";
 import { renderApi } from "./lib/graphql.mjs";
 import { renderConfigure } from "./lib/configure.mjs";
 import { planDocs, renderDocIndexes, renderDocs, renderSpecIndex, renderedFrom } from "./lib/docs.mjs";
@@ -52,6 +53,8 @@ for (const p of pages) {
   mkdirSync(path.dirname(file), { recursive: true });
   writeFileSync(file, renderPage(p));
 }
+const release = releaseOf(sources.ui);
+writeDownloads(release);
 copyFileSync(path.join(SITE_ROOT, "templates", "site.css"), path.join(SITE_ROOT, "assets", "site.css"));
 
 const count = (prefix) => pages.filter((p) => p.out.startsWith(prefix)).length;
@@ -76,7 +79,7 @@ console.log(`  root fields in "other": ${ar.other} (first word only: ${ar.strict
 list("other", ar.otherFields);
 for (const w of linker.warnings) console.warn(`warning: ${w}`);
 
-const result = check();
+const result = check(undefined, release);
 for (const e of result.errors) console.error(`error: ${e}`);
 console.log(`check: ${result.files.length} pages, ${(result.bytes / 1024).toFixed(0)} KiB, ${result.errors.length} errors`);
 if (result.errors.length) process.exit(1);

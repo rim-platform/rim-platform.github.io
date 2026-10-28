@@ -6,7 +6,8 @@ import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
-import { SITE_ROOT } from "./lib/sources.mjs";
+import { checkDownloads, releaseOf } from "./lib/downloads.mjs";
+import { SITE_ROOT, loadUiSource } from "./lib/sources.mjs";
 
 export const OUTPUT_DIRS = ["docs", "plugins", "specs", "configure", "api"];
 const MAX_BYTES = 1024 * 1024;
@@ -58,8 +59,12 @@ export function tagBalance(html) {
   return problems;
 }
 
-/** Runs every check over the site; returns errors, warnings, the page count and total size. */
-export function check(root = SITE_ROOT) {
+/**
+ * Runs every check over the site; returns errors, warnings, the page count and total size.
+ * `release` is the rim-ui release the downloads block must name; without it the block is only
+ * checked against its own links.
+ */
+export function check(root = SITE_ROOT, release) {
   const files = siteFiles(root);
   const errors = [];
   const warnings = [];
@@ -108,6 +113,7 @@ export function check(root = SITE_ROOT) {
     }
   }
   errors.push(...checkDelegation(root));
+  errors.push(...checkDownloads(release, root));
   return { files, errors, warnings, bytes };
 }
 
@@ -129,7 +135,8 @@ export function checkDelegation(root = SITE_ROOT) {
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  const r = check();
+  // With RIM_UI_DIR set the block is checked against that repository at RIM_UI_REF.
+  const r = check(SITE_ROOT, process.env.RIM_UI_DIR ? releaseOf(loadUiSource()) : undefined);
   for (const w of r.warnings) console.warn(`warning: ${w}`);
   for (const e of r.errors) console.error(`error: ${e}`);
   console.log(`${r.files.length} pages, ${(r.bytes / 1024).toFixed(0)} KiB, ${r.errors.length} errors`);
