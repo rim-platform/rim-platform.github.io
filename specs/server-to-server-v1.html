@@ -64,7 +64,7 @@
 </details></aside>
     <main id="content" class="prose">
 <h1 id="server-to-server-v1">Server-to-server v1</h1>
-<p class="status"><span><b>Server-to-server v1</b></span><span>version 1</span><span>status: implemented, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/2adb62f6df2cc0694fd08de1e9f8da0a209f60ec/docs/specs/server-to-server-v1.md">rim-server/docs/specs/server-to-server-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/2adb62f6df2cc0694fd08de1e9f8da0a209f60ec">2adb62f</a></span></p>
+<p class="status"><span><b>Server-to-server v1</b></span><span>version 1</span><span>status: implemented, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/64c6dea61fb8900d3bab83232f291e0e0415eded/docs/specs/server-to-server-v1.md">rim-server/docs/specs/server-to-server-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/64c6dea61fb8900d3bab83232f291e0e0415eded">64c6dea</a></span></p>
 <p><em>Status: implemented, normative. Read <a href="key-identity-v1.html"><code>key-identity-v1.md</code></a>, <a href="device-linking-v1.html"><code>device-linking-v1.md</code></a> and
 <a href="e2ee-mls-v1.html"><code>e2ee-mls-v1.md</code></a> first. This document is the contract between servers and between a server and
 its clients: server identity, the signed HTTP API between servers, relays, hosts, and what the
@@ -840,7 +840,7 @@ entity of a remote space by (host server id, id).</p>
 </tr>
 <tr>
 <td><code>w</code></td>
-<td>Other space-wide events (<code>MemberJoined</code>, <code>MemberLeft</code>, <code>MemberRoleChanged</code>, <code>WorkspacePluginChanged</code>, pipeline and workspace-state events), to non-guests</td>
+<td>Other space-wide events (<code>MemberJoined</code>, <code>MemberLeft</code>, <code>MemberRoleChanged</code>, <code>WorkspacePluginChanged</code>, <code>WorkspaceUpdated</code>, pipeline and workspace-state events), to non-guests</td>
 <td>1, 2, …</td>
 </tr>
 <tr>
@@ -1159,7 +1159,11 @@ Once accepted it is an ordinary conversation of the space he uses directly.</p>
 </tr>
 <tr>
 <td><code>blockPrincipal(principalId)</code></td>
-<td>Pending requests from it ignored; its <code>DmInvite</code>s refused (<code>blocked</code>) and its claims refused; the app leaves the conversation through the home</td>
+<td>Pending requests from it ignored; its <code>DmInvite</code>s refused (<code>blocked</code>) and its claims refused; the app leaves a group&#39;s conversation through the home (a DM cannot be left)</td>
+</tr>
+<tr>
+<td><code>unblockPrincipal(principalId)</code></td>
+<td>Block lifted; requests ignored from it cleared: the next item of such a conversation files it again as a pending request</td>
 </tr>
 <tr>
 <td>Nothing</td>
@@ -1301,12 +1305,15 @@ A relay&#39;s subscription for (user, workspace) lives while one of the user&#39
 delegation there.
 <code>POST /s2s/v1/subscriptions/cancel {&quot;subscriptions&quot;:[{&quot;workspaceId&quot;,&quot;principalId&quot;}]}</code> (at most 64)
 ends the presenting relay&#39;s delegations for them → <code>{&quot;cancelled&quot;:&lt;n&gt;}</code>.
-Leaving, a kick or a ban ends the user&#39;s delegations for the workspace after <code>MemberLeft</code> is sent;
-the departed member gets that <code>MemberLeft</code> on their <code>u:</code> stream, being no member of <code>w</code> any more.
-<code>MemberLeft</code> may carry <code>cause</code> (<code>kick</code>, <code>ban</code>, <code>workspace_deleted</code>, <code>account_deleted</code>) and,
-for a temporary ban, <code>until</code>. A kick or ban&#39;s optional <code>reason</code> is private: it appears only
+Leaving (<code>leaveWorkspace</code>, forwarded like any request of the space), a kick or a ban ends the
+user&#39;s delegations for the workspace after <code>MemberLeft</code> is sent; the departed member gets that
+<code>MemberLeft</code> on their <code>u:</code> stream, being no member of <code>w</code> any more.
+<code>MemberLeft</code> may carry <code>cause</code> (<code>left</code>, <code>kick</code>, <code>ban</code>, <code>workspace_deleted</code>, <code>account_deleted</code>)
+and, for a temporary ban, <code>until</code>. A kick or ban&#39;s optional <code>reason</code> is private: it appears only
 on the removed member&#39;s <code>u:</code> stream and never on <code>w</code> or another member&#39;s stream. Clients may
 keep the reason visible until dismissed.
+A relay that queues a <code>MemberLeft</code> on a subscriber&#39;s own <code>u:</code> stream ends that subscription
+(<code>ended</code>); a later join records it again.
 <code>join</code>, <code>join/challenge</code>, <code>subscriptions</code> and <code>subscriptions/cancel</code> are workspace host endpoints: a
 server running only <code>relay</code> answers <code>503 role_disabled</code>. <code>presence</code> and <code>revocations</code> are served by
 every role (a relay is the home of DMs). A relay delivers items of a workspace a user holds an
@@ -1464,7 +1471,7 @@ yearly <code>server-key rotate</code> and <code>recover</code> on compromise, da
 drill, quotas and how to change them, monitoring (queue bytes, outbox depth per peer, deliver
 failures, <code>401</code>/<code>409</code>/<code>429</code> rates, PoW signups), incident response for spam waves, a hostile peer, a
 stolen server key and a database leak, and the abuse policy text.</p>
-<p><strong>Compose</strong> (<a href="https://github.com/rim-platform/rim-server/blob/2adb62f6df2cc0694fd08de1e9f8da0a209f60ec/deploy/compose.yml"><code>deploy/compose.yml</code></a> with the <a href="https://github.com/rim-platform/rim-server/blob/2adb62f6df2cc0694fd08de1e9f8da0a209f60ec/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a> override, and
+<p><strong>Compose</strong> (<a href="https://github.com/rim-platform/rim-server/blob/64c6dea61fb8900d3bab83232f291e0e0415eded/deploy/compose.yml"><code>deploy/compose.yml</code></a> with the <a href="https://github.com/rim-platform/rim-server/blob/64c6dea61fb8900d3bab83232f291e0e0415eded/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a> override, and
 <a href="../docs/deploy/index.html"><code>deploy/README.md</code></a>): rim-server with the <code>RIM_ROLE</code> <code>deploy/.env</code> sets (<code>relay</code>, or <code>both</code> to host
 workspaces too), <code>RIM_PUBLIC_BASE_URL=https://&lt;RIM_DOMAIN&gt;</code>,
 <code>RIM_REGISTRATION_POW_BITS=24</code>, <code>RIM_RELAY_QUEUE_BYTES_PER_USER=67108864</code> and the other quotas
@@ -1750,7 +1757,7 @@ database, so correctness never depends on one node. Audit (ids only):
 <code>s2s.peer_unblocked</code>, <code>host.remote_join</code>, <code>host.delegation_accepted</code>, <code>host.revocation_applied</code>,
 <code>host.recovery_applied</code>, <code>host.identity_revocations_applied</code>,
 <code>relay.principal_blocked</code> (<code>scope</code> <code>user</code> for <code>blockPrincipal</code>, <code>server</code> for the operator&#39;s),
-<code>relay.principal_unblocked</code>, <code>relay.blocked_principal_refused</code>, <code>relay.dm_request_reported</code>,
+<code>relay.principal_unblocked</code> (<code>scope</code> <code>user</code> for <code>unblockPrincipal</code>, with <code>cleared_requests</code>; <code>server</code> for the operator&#39;s), <code>relay.blocked_principal_refused</code>, <code>relay.dm_request_reported</code>,
 <code>relay.abuse_report_filed</code>, <code>relay.abuse_report_resolved</code>, <code>relay.registration_pow</code>,
 <code>server_key.created</code>, <code>server_key.rotated</code>, <code>server_key.recovered</code>, <code>s2s.peer_reset</code>,
 <code>s2s.peer_forgotten</code>. Events with an acting user and workspace go to <code>command_audit_log</code>; the server
@@ -1836,7 +1843,7 @@ device keys move to hybrid.</p>
 <td>S5-2</td>
 </tr>
 <tr>
-<td>Visibility rules live in <a href="https://github.com/rim-platform/rim-server/blob/2adb62f6df2cc0694fd08de1e9f8da0a209f60ec/rim_api/src/subscription.rs"><code>rim_api/src/subscription.rs</code></a></td>
+<td>Visibility rules live in <a href="https://github.com/rim-platform/rim-server/blob/64c6dea61fb8900d3bab83232f291e0e0415eded/rim_api/src/subscription.rs"><code>rim_api/src/subscription.rs</code></a></td>
 <td>Moved to <code>rim_services</code> for the outbox writer</td>
 <td>S5-2</td>
 </tr>
@@ -1880,7 +1887,7 @@ without gaps or repeats; outbox order per peer; a relay&#39;s backlog counts onl
 acknowledgement, and a run of failures starts once and ends with a success; <code>received_through</code>
 idempotency; items deleted only once every device acked; cascades; each migration up and down,
 and the refusing <code>down</code>s.</li>
-<li><strong>e2e with two servers</strong> (<a href="https://github.com/rim-platform/rim-server/blob/2adb62f6df2cc0694fd08de1e9f8da0a209f60ec/rim_api/tests/s2s_e2e.rs"><code>rim_api/tests/s2s_e2e.rs</code></a>, <code>e2e-tests</code>): two Actix servers in one
+<li><strong>e2e with two servers</strong> (<a href="https://github.com/rim-platform/rim-server/blob/64c6dea61fb8900d3bab83232f291e0e0415eded/rim_api/tests/s2s_e2e.rs"><code>rim_api/tests/s2s_e2e.rs</code></a>, <code>e2e-tests</code>): two Actix servers in one
 process with two databases, <code>RIM_S2S_ALLOW_HTTP</code> and <code>RIM_S2S_ALLOW_PRIVATE_ADDRESSES</code>. Flows:
 pinning and rotation; an encrypted DM across relays from creation to edit and read state
 (<code>rim_mls</code> fixtures); a DM request accepted, ignored, blocked; a remote join; channel traffic both
@@ -2008,7 +2015,7 @@ ed25519:waKbDNMuQ460M8gX_H1NKzAMDXF3x4P8hbHoJFPr-pSduvfvQSbXvOcRmK5VcF5F9-sICQmF
 <code>powBits</code> 16: the smallest working counter is 37283, nonce <code>AAAAAAAAkaM</code> (8 bytes big-endian), hash
 <code>00002f63d137749fda27201ccf9d282a4ed846287d49c55fea89a47617e78ed6</code>.</p>
 <h3 id="filled-by-s5-1">Filled by S5-1 <a class="anchor" href="#filled-by-s5-1" aria-label="Link to this section">#</a></h3>
-<p><strong>RFC 9421 appendix B.2.6</strong> through <code>rim_s2s</code> (<a href="https://github.com/rim-platform/rim-server/blob/2adb62f6df2cc0694fd08de1e9f8da0a209f60ec/rim_s2s/src/vectors.rs"><code>rim_s2s/src/vectors.rs</code></a>): the RFC&#39;s
+<p><strong>RFC 9421 appendix B.2.6</strong> through <code>rim_s2s</code> (<a href="https://github.com/rim-platform/rim-server/blob/64c6dea61fb8900d3bab83232f291e0e0415eded/rim_s2s/src/vectors.rs"><code>rim_s2s/src/vectors.rs</code></a>): the RFC&#39;s
 <code>test-key-ed25519</code> (seed: the last 32 bytes of its PKCS#8 key), the components <code>&quot;date&quot; &quot;@method&quot; &quot;@path&quot; &quot;@authority&quot; &quot;content-type&quot; &quot;content-length&quot;</code> with <code>created=1618884473</code> and
 <code>keyid=&quot;test-key-ed25519&quot;</code> serialize to the RFC&#39;s <code>Signature-Input</code>, the crate builds the RFC&#39;s
 signature base, and signing it gives the RFC&#39;s
@@ -2049,7 +2056,7 @@ having to rejoin; its visibility and <code>w</code>/<code>u:</code> streams matc
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/2adb62f6df2cc0694fd08de1e9f8da0a209f60ec/docs/specs/server-to-server-v1.md">rim-server/docs/specs/server-to-server-v1.md</a> at <code>2adb62f</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/64c6dea61fb8900d3bab83232f291e0e0415eded/docs/specs/server-to-server-v1.md">rim-server/docs/specs/server-to-server-v1.md</a> at <code>64c6dea</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>
