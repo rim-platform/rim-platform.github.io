@@ -369,7 +369,13 @@ calls them.</p>
 <h3 id="the-session-cookie">The session cookie <a class="anchor" href="#the-session-cookie" aria-label="Link to this section">#</a></h3>
 <p>A session is the <code>rim_session</code> cookie: <code>HttpOnly</code>, <code>SameSite=Lax</code>, <code>Path=/</code>, and <code>Secure</code> when
 <code>RIM_FORCE_SECURE_COOKIES=true</code> or when a trusted proxy (<code>RIM_TRUST_FORWARDED_HEADERS=true</code>)
-reports <code>https</code>. These mutations set it, and need no session or CSRF header:</p>
+reports <code>https</code>. The packaged desktop app is the exception: its page (<code>tauri://localhost</code>,
+<code>http://tauri.localhost</code>) is on another site than the server, so every request it makes is
+cross-site, and a browser engine keeps and sends a <code>Lax</code> cookie on such a request only for a
+top-level navigation. When the request that signs in or out carries one of those origins and
+the cookies are <code>Secure</code>, the <code>rim_session</code> and <code>rim_csrf</code> cookies are <code>SameSite=None</code>. Without
+<code>Secure</code> they stay <code>Lax</code>, since a browser refuses <code>SameSite=None</code> without it. These mutations
+set it, and need no session or CSRF header:</p>
 <ul>
 <li><strong>Key login.</strong> <code>keyLoginChallenge</code> returns <code>{ challengeId, nonce, expiresAt }</code>. The client
 signs a <code>login</code> statement over the nonce with its device key and calls <code>loginWithKey(proof)</code>.
@@ -1116,7 +1122,7 @@ types from it:</p>
 <pre><code class="language-sh">curl -s http://localhost:8080/api/sdl &gt; ../rim-ui/schema.graphql
 cd ../rim-ui &amp;&amp; npm run codegen</code></pre>
 <p>Enum values appear in <code>SCREAMING_SNAKE</code> and fields in <code>camelCase</code>. The models in <a href="messaging.html"><code>messaging.md</code></a>,
-<a href="search.html"><code>search.md</code></a>, <a href="message-change-feed.html"><code>message-change-feed.md</code></a>, <a href="command_model.html"><code>command_model.md</code></a> and the specs in <a href="https://github.com/rim-platform/rim-server/tree/64c6dea61fb8900d3bab83232f291e0e0415eded/docs/specs"><code>specs/</code></a> explain what
+<a href="search.html"><code>search.md</code></a>, <a href="message-change-feed.html"><code>message-change-feed.md</code></a>, <a href="command_model.html"><code>command_model.md</code></a> and the specs in <a href="https://github.com/rim-platform/rim-server/tree/a6da5ec1039b957adaf7fe6d8662da873c02c445/docs/specs"><code>specs/</code></a> explain what
 the fields mean.</p>
 <h3 id="profile-picture-refresh">Profile picture refresh <a class="anchor" href="#profile-picture-refresh" aria-label="Link to this section">#</a></h3>
 <p>Avatar uploads are stored as <code>avatars/&lt;user id&gt;/avatar-&lt;16 lowercase SHA-256 hex&gt;.png</code>, the
@@ -1378,7 +1384,7 @@ their own server.</p>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/64c6dea61fb8900d3bab83232f291e0e0415eded/docs/api.md">rim-server/docs/api.md</a> at <code>64c6dea</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/a6da5ec1039b957adaf7fe6d8662da873c02c445/docs/api.md">rim-server/docs/api.md</a> at <code>a6da5ec</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>
