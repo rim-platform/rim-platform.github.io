@@ -47,7 +47,11 @@ viewport meta, a duplicate id or an unbalanced tag. A build of the same commits 
 same files, so a rebuild without upstream changes leaves no diff. Commit the output together
 with the commits it names in each page's footer.
 
-`index.html` is written by hand and is not touched by the build; the checks cover its links.
+`index.html` is written by hand. The build touches only
+the block between `downloads:start` and `downloads:end` in `index.html`: the installer links,
+written from the rim-ui version at `RIM_UI_REF` (links to the latest release when that is not a
+`v*` tag). `npm run check` fails when the block is stale against `RIM_UI_REF` (when `RIM_UI_DIR` is
+set) or when its own links disagree; the rest of the checks cover the links.
 
 `.well-known/rim-server` is written by hand too: the discovery document of the handle domain,
 `{"delegate":"https://relay.rim-platform.org"}`, which hands `@name:rim-platform.org` handles to

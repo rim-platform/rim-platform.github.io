@@ -69,20 +69,27 @@ function envName(key, what) {
   return `RIM_${key.toUpperCase()}_${what}`;
 }
 
+/** One repository, from `RIM_<KEY>_DIR` (default: a sibling of the site) at `RIM_<KEY>_REF`. */
+function make(key, name, folder) {
+  return new Source({
+    key,
+    name,
+    dir: path.resolve(process.env[envName(key, "DIR")] ?? path.join(path.dirname(SITE_ROOT), folder)),
+    ref: process.env[envName(key, "REF")] ?? "origin/master",
+  });
+}
+
 /** The two repositories, from `RIM_SERVER_DIR`/`RIM_UI_DIR` (default: siblings of the site). */
 export function loadSources() {
-  const parent = path.dirname(SITE_ROOT);
-  const make = (key, name, folder) =>
-    new Source({
-      key,
-      name,
-      dir: path.resolve(process.env[envName(key, "DIR")] ?? path.join(parent, folder)),
-      ref: process.env[envName(key, "REF")] ?? "origin/master",
-    });
   return {
     server: make("server", "rim-platform/rim-server", "rim-server"),
     ui: make("ui", "rim-platform/rim-ui", "rim-ui"),
   };
+}
+
+/** Only rim-ui, for the checks that need its version. */
+export function loadUiSource() {
+  return make("ui", "rim-platform/rim-ui", "rim-ui");
 }
 
 export { SITE_ROOT };
