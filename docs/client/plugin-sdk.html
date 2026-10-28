@@ -55,12 +55,12 @@
 app starts and talks to over stdio (<code>DesktopLocalProcess</code>), or a bundle that runs in a
 sandboxed frame of the app, on the desktop and on the web, and talks over a
 <code>MessagePort</code> (<code>WebSandboxed</code>). The SDK speaks
-<a href="https://github.com/rim-platform/rim-ui/blob/d659040b43e2a0fb23eea2fbb3f901c82acefbe7/protocol/plugin-protocol-v1.schema.json">plugin protocol v1</a> for you over either
+<a href="https://github.com/rim-platform/rim-ui/blob/2f8805020c08ca5d8034095788b809b2d03aaeed/protocol/plugin-protocol-v1.schema.json">plugin protocol v1</a> for you over either
 transport: the handshake and version negotiation, heartbeats, the dangerous-command
 gate, errors and shutdown.</p>
 <p>The SDK is developed in rim-ui and released to npm on its own, with the tag
 <code>plugin-sdk-v&lt;version&gt;</code>; it keeps a version of its own, apart from the app&#39;s. Start from
-<a href="https://github.com/rim-platform/rim-ui/tree/d659040b43e2a0fb23eea2fbb3f901c82acefbe7/plugins/template-ts"><code>plugins/template-ts</code></a>, which uses it.</p>
+<a href="https://github.com/rim-platform/rim-ui/tree/2f8805020c08ca5d8034095788b809b2d03aaeed/plugins/template-ts"><code>plugins/template-ts</code></a>, which uses it.</p>
 <h2 id="install">Install <a class="anchor" href="#install" aria-label="Link to this section">#</a></h2>
 <pre><code class="language-sh">npm install --save-dev @rim-platform/plugin-sdk esbuild</code></pre>
 <p>The package ships JavaScript and type declarations, the in-memory test host
@@ -385,16 +385,16 @@ the release for <strong>Install from link</strong>. <code>npx rim-plugin-bundle 
 <code>main.mjs</code> as it is; once <code>--check</code> passes, that is byte for byte the bundle
 <code>npx rim-plugin-bundle --entry src/main.ts .</code> builds from the sources.</p>
 <p>For a WebSandboxed plugin the desktop takes <code>rim-plugin.json</code>, the entrypoint and
-<code>panels/</code> from the checkout and ignores the rest: the sources, <a href="https://github.com/rim-platform/rim-ui/blob/d659040b43e2a0fb23eea2fbb3f901c82acefbe7/sdk/plugin-sdk/package.json"><code>package.json</code></a> and the
+<code>panels/</code> from the checkout and ignores the rest: the sources, <a href="https://github.com/rim-platform/rim-ui/blob/2f8805020c08ca5d8034095788b809b2d03aaeed/sdk/plugin-sdk/package.json"><code>package.json</code></a> and the
 README stay in the checkout and never reach the plugin&#39;s frame. Those three parts follow
 the bundle rules (names starting with <code>.</code> are skipped, and any other name under <code>panels/</code>
 must be a bundle path), and signing an installed web plugin gives the same bundle hash as
-its <code>.rimbundle</code>. A local-process plugin&#39;s <a href="https://github.com/rim-platform/rim-ui/blob/d659040b43e2a0fb23eea2fbb3f901c82acefbe7/sdk/plugin-sdk/package.json"><code>package.json</code></a> asks for <code>npm install</code> only when
+its <code>.rimbundle</code>. A local-process plugin&#39;s <a href="https://github.com/rim-platform/rim-ui/blob/2f8805020c08ca5d8034095788b809b2d03aaeed/sdk/plugin-sdk/package.json"><code>package.json</code></a> asks for <code>npm install</code> only when
 it lists <code>dependencies</code>, <code>optionalDependencies</code> or <code>peerDependencies</code>; a committed,
 self-contained <code>main.mjs</code> with only <code>devDependencies</code> installs without that step.</p>
 <h2 id="working-on-the-sdk">Working on the SDK <a class="anchor" href="#working-on-the-sdk" aria-label="Link to this section">#</a></h2>
 <ul>
-<li><a href="https://github.com/rim-platform/rim-ui/blob/d659040b43e2a0fb23eea2fbb3f901c82acefbe7/sdk/plugin-sdk/src/generated/protocol.ts"><code>src/generated/protocol.ts</code></a> is generated from the schema: run <code>npm run sdk:generate</code>
+<li><a href="https://github.com/rim-platform/rim-ui/blob/2f8805020c08ca5d8034095788b809b2d03aaeed/sdk/plugin-sdk/src/generated/protocol.ts"><code>src/generated/protocol.ts</code></a> is generated from the schema: run <code>npm run sdk:generate</code>
 after the schema changes. A test fails while it is stale.</li>
 <li><code>npm run sdk:build</code> builds the package into <code>dist/</code>: the JavaScript, the type
 declarations and the bundler. The plugins in rim-ui import <code>@rim-platform/plugin-sdk</code>
@@ -409,15 +409,15 @@ the copy there. <a href="release-sdk.html"><code>docs/release-sdk.md</code></a> 
 <li><code>npm test</code> runs the SDK tests, including the template over real stdio, both from
 source and bundled, and over a <code>MessageChannel</code>. The app&#39;s web host runs the
 template&#39;s browser build over a port in its own conformance test
-(<a href="https://github.com/rim-platform/rim-ui/blob/d659040b43e2a0fb23eea2fbb3f901c82acefbe7/src/features/plugins/web/conformance.test.ts"><code>src/features/plugins/web/conformance.test.ts</code></a>). The Rust conformance tests
-(<a href="https://github.com/rim-platform/rim-ui/blob/d659040b43e2a0fb23eea2fbb3f901c82acefbe7/src-tauri/src/plugin_host/protocol/conformance.rs"><code>src-tauri/src/plugin_host/protocol/conformance.rs</code></a>) run the template against the
+(<a href="https://github.com/rim-platform/rim-ui/blob/2f8805020c08ca5d8034095788b809b2d03aaeed/src/features/plugins/web/conformance.test.ts"><code>src/features/plugins/web/conformance.test.ts</code></a>). The Rust conformance tests
+(<a href="https://github.com/rim-platform/rim-ui/blob/2f8805020c08ca5d8034095788b809b2d03aaeed/src-tauri/src/plugin_host/protocol/conformance.rs"><code>src-tauri/src/plugin_host/protocol/conformance.rs</code></a>) run the template against the
 schema and through the host&#39;s own start-up and command path.</li>
 </ul>
 
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/d659040b43e2a0fb23eea2fbb3f901c82acefbe7/sdk/plugin-sdk/README.md">rim-ui/sdk/plugin-sdk/README.md</a> at <code>d659040</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/2f8805020c08ca5d8034095788b809b2d03aaeed/sdk/plugin-sdk/README.md">rim-ui/sdk/plugin-sdk/README.md</a> at <code>2f88050</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>

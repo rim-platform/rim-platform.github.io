@@ -77,17 +77,17 @@ how to try it.</p>
 </tbody></table></div>
 <p>The code:</p>
 <ul>
-<li><a href="https://github.com/rim-platform/rim-ui/blob/d659040b43e2a0fb23eea2fbb3f901c82acefbe7/src-tauri/src/key_identity/backup.rs"><code>src-tauri/src/key_identity/backup.rs</code></a>: the backup record&#39;s plaintext, the archive key wrap
+<li><a href="https://github.com/rim-platform/rim-ui/blob/2f8805020c08ca5d8034095788b809b2d03aaeed/src-tauri/src/key_identity/backup.rs"><code>src-tauri/src/key_identity/backup.rs</code></a>: the backup record&#39;s plaintext, the archive key wrap
 key, and the takeover against the replayed key log. <code>recovery_kit.rs</code> derives the backup key
 from a phrase or a <code>RK1-</code> key.</li>
-<li><a href="https://github.com/rim-platform/rim-ui/blob/d659040b43e2a0fb23eea2fbb3f901c82acefbe7/src-tauri/src/history_archive/identity.rs"><code>src-tauri/src/history_archive/identity.rs</code></a>: writes and reads the backup files and the wrap
+<li><a href="https://github.com/rim-platform/rim-ui/blob/2f8805020c08ca5d8034095788b809b2d03aaeed/src-tauri/src/history_archive/identity.rs"><code>src-tauri/src/history_archive/identity.rs</code></a>: writes and reads the backup files and the wrap
 files, and unlocks the archive from a wrap.</li>
-<li><a href="https://github.com/rim-platform/rim-ui/tree/d659040b43e2a0fb23eea2fbb3f901c82acefbe7/src-tauri/src/identity_backup"><code>src-tauri/src/identity_backup/</code></a>: joins the two and holds the <code>identity_backup_*</code> commands. The
+<li><a href="https://github.com/rim-platform/rim-ui/tree/2f8805020c08ca5d8034095788b809b2d03aaeed/src-tauri/src/identity_backup"><code>src-tauri/src/identity_backup/</code></a>: joins the two and holds the <code>identity_backup_*</code> commands. The
 webview passes the server&#39;s key log and, for a takeover or turning the backup on, the phrase
 once; seeds, the backup key and the wrap key never reach it.</li>
-<li><a href="https://github.com/rim-platform/rim-ui/blob/d659040b43e2a0fb23eea2fbb3f901c82acefbe7/src/features/key-identity/api/identityBackup.ts"><code>src/features/key-identity/api/identityBackup.ts</code></a> and <code>components/IdentityKeyBackup.tsx</code>:
+<li><a href="https://github.com/rim-platform/rim-ui/blob/2f8805020c08ca5d8034095788b809b2d03aaeed/src/features/key-identity/api/identityBackup.ts"><code>src/features/key-identity/api/identityBackup.ts</code></a> and <code>components/IdentityKeyBackup.tsx</code>:
 Settings &gt; Security, &quot;Identity key backup&quot;.</li>
-<li><a href="https://github.com/rim-platform/rim-ui/blob/d659040b43e2a0fb23eea2fbb3f901c82acefbe7/src/features/history-archive/components/HistoryArchiveSettings.tsx"><code>src/features/history-archive/components/HistoryArchiveSettings.tsx</code></a>: &quot;Unlock with this
+<li><a href="https://github.com/rim-platform/rim-ui/blob/2f8805020c08ca5d8034095788b809b2d03aaeed/src/features/history-archive/components/HistoryArchiveSettings.tsx"><code>src/features/history-archive/components/HistoryArchiveSettings.tsx</code></a>: &quot;Unlock with this
 device&#39;s keys&quot; when the archive is locked here and this computer&#39;s identity key opens a wrap,
 and a backup right after the archive is set up or unlocked.</li>
 </ul>
@@ -130,7 +130,7 @@ them replaces it.</li>
     </main>
   </div>
   <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/d659040b43e2a0fb23eea2fbb3f901c82acefbe7/docs/identity-key-backup.md">rim-ui/docs/identity-key-backup.md</a> at <code>d659040</code></span>
+    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/2f8805020c08ca5d8034095788b809b2d03aaeed/docs/identity-key-backup.md">rim-ui/docs/identity-key-backup.md</a> at <code>2f88050</code></span>
     <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
   </footer>
 </div>
