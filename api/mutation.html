@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="documentation-page">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,38 +7,43 @@
 <meta name="description" content="Every field of the RIM GraphQL Mutation type.">
 <link rel="icon" href="../favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;550;600;650;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<meta name="theme-color" content="#050910">
+<link rel="stylesheet" href="../assets/site-chrome.css">
 <link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/site.js" defer></script>
 </head>
 <body>
 <a class="skip" href="#content">Skip to content</a>
-<div class="wrap">
-  <header class="nav">
-    <a class="brand" href="../index.html" aria-label="RIM home">
-      <picture><source srcset="../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
-      RIM
-    </a>
-    <nav aria-label="Site">
-      <a href="../index.html#what">What RIM is</a>
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="../index.html" aria-label="RIM home"><img src="../assets/rim-mark-inverse.svg" alt="" width="32" height="32">RIM</a>
+    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-navigation">Menu</button>
+    <nav class="site-nav" id="site-navigation" data-open="false" aria-label="Main navigation">
+      <a href="../index.html#privacy">Privacy</a>
       <a href="../index.html#how">How it works</a>
+      <a href="../index.html#capabilities">Capabilities</a>
+      <a href="../index.html#community">Community</a>
       <a href="../index.html#download">Download</a>
-      <a href="../docs/self-hosting.html">Self-host</a>
-      <a href="../configure/index.html">Configure</a>
-      <a href="../plugins/index.html">Plugins</a>
-      <a href="../docs/index.html">Docs</a>
-      <a href="index.html" aria-current="page">API</a>
-      <a href="../specs/index.html">Specs</a>
-      <a href="../docs/contributing.html">Contribute</a>
-      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+      <a href="../docs/client/getting-started.html">Get started</a>
+      <a href="../docs/index.html" aria-current="location">Docs</a>
     </nav>
-  </header>
+  </div>
+</header>
+<div class="docs-navigation"><nav class="container docs-links" aria-label="Documentation"><span>Documentation</span><a href="../docs/index.html">Overview</a>
+<a href="../docs/self-hosting.html">Self-host</a>
+<a href="../configure/index.html">Configure</a>
+<a href="../plugins/index.html">Plugins</a>
+<a href="index.html">API</a>
+<a href="../specs/index.html">Specs</a></nav></div>
+<div class="container docs-wrap">
   <div class="crumbs"><a href="index.html">API</a><span aria-hidden="true">/</span><span>Mutation</span></div>
   <div class="page with-toc">
     <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
 <ol>
 <li><a href="#group-invite">Invite (2)</a></li>
 <li><a href="#group-server">Server (2)</a></li>
-<li><a href="#group-message">Message (9)</a></li>
+<li><a href="#group-message">Message (11)</a></li>
 <li><a href="#group-conversation">Conversation (11)</a></li>
 <li><a href="#group-channel">Channel (5)</a></li>
 <li><a href="#group-attachment">Attachment (3)</a></li>
@@ -59,7 +64,7 @@
 </details></aside>
     <main id="content" class="prose">
 <h1>Mutation</h1>
-<p class="lede">137 mutations, grouped by the domain their name starts with or names, in the order the schema lists them.</p>
+<p class="lede">139 mutations, grouped by the domain their name starts with or names, in the order the schema lists them.</p>
 <input id="filter" class="search" type="search" placeholder="Filter fields by name" aria-label="Filter fields by name" autocomplete="off">
 <p id="filter-none" class="muted" hidden>Nothing matches.</p>
 <section data-group>
@@ -97,7 +102,7 @@ revoked invite returns it unchanged.</p>
 </section>
 </section>
 <section data-group>
-<h2 id="group-message">Message <span class="faint">9</span></h2>
+<h2 id="group-message">Message <span class="faint">11</span></h2>
 <section class="entry" id="sendMessage" data-name="sendMessage">
 <h3><code>sendMessage</code></h3>
 <div class="sig">sendMessage(input: <a href="inputs.html#SendMessageInput">SendMessageInput</a>!): <a href="objects.html#Message">Message</a>!</div>
@@ -138,6 +143,39 @@ revoked invite returns it unchanged.</p>
 <h3><code>unpinMessage</code></h3>
 <div class="sig">unpinMessage(input: <a href="inputs.html#UnpinMessageInput">UnpinMessageInput</a>!): <a href="scalars.html#Boolean">Boolean</a>!</div>
 <div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+<section class="entry" id="clearMessageFlag" data-name="clearMessageFlag">
+<h3><code>clearMessageFlag</code></h3>
+<div class="sig">clearMessageFlag(
+  serverId: <a href="scalars.html#ID">ID</a>!
+  conversationId: <a href="scalars.html#ID">ID</a>!
+  messageId: <a href="scalars.html#ID">ID</a>!
+): <a href="scalars.html#Boolean">Boolean</a>!</div>
+<div class="desc"><p>Clear the automatic text art check&#39;s flag on a message (Owner/Moderator); true when the
+message is not flagged afterwards, whether or not it was. Audited
+(<code>admin.clear_message_flag</code>) when a flag was cleared. Listed in <code>serverInfo.capabilities</code>
+as <code>message_flag</code>.</p>
+</div>
+
+</section>
+<section class="entry" id="deleteMemberMessages" data-name="deleteMemberMessages">
+<h3><code>deleteMemberMessages</code></h3>
+<div class="sig">deleteMemberMessages(
+  serverId: <a href="scalars.html#ID">ID</a>!
+  userId: <a href="scalars.html#ID">ID</a>!
+  since: <a href="scalars.html#DateTime">DateTime</a>
+  includeUnjoinedPrivate: <a href="scalars.html#Boolean">Boolean</a>!
+): <a href="objects.html#DeletedMemberMessages">DeletedMemberMessages</a>!</div>
+<div class="desc"><p>Delete a person&#39;s messages in the workspace&#39;s channels, thread replies included, sent at
+or after <code>since</code> (all of them when null); private channels the caller is not in only
+with <code>includeUnjoinedPrivate</code>. Owner/Moderator, with the targeting rules of <a href="mutation.html#kickMember"><code>kickMember</code></a>;
+works for a former member. Never touches DMs, groups, the direct space, encrypted or
+archived conversations. Deletes at most 1000 messages per call: call again while
+<code>hasMore</code>. Each channel gets one <code>MessagesDeleted</code> event; audited
+(<code>admin.delete_member_messages</code>) when any was deleted. Listed in
+<code>serverInfo.capabilities</code> as <code>delete_member_messages</code>.</p>
+</div>
 
 </section>
 <section class="entry" id="sendEncryptedMessage" data-name="sendEncryptedMessage">
@@ -1386,11 +1424,9 @@ device.</p>
 
     </main>
   </div>
-  <footer class="site">
-    <span>Generated from <a href="https://github.com/rim-platform/rim-ui/blob/2f8805020c08ca5d8034095788b809b2d03aaeed/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>2f88050</code></span>
-    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
-  </footer>
 </div>
+<footer class="site-footer container"><span class="footer-brand"><img src="../assets/rim-mark-inverse.svg" alt="" width="21" height="21"> RIM · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
+<p class="source-provenance container">Generated from <a href="https://github.com/rim-platform/rim-ui/blob/ebf6175e7f425ad0eb9d52f94d66c00f363255ef/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>ebf6175</code></p>
 <script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
 <script>
 (() => {

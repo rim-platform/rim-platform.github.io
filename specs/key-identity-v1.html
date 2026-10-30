@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="documentation-page">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,31 +7,36 @@
 <meta name="description" content="Status: implemented, normative. A user is a key pair, the user id is stable with a signed key log, and servers are interchangeable relays. The web app may create and hold an identity, not only be a linked device …">
 <link rel="icon" href="../favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;550;600;650;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<meta name="theme-color" content="#050910">
+<link rel="stylesheet" href="../assets/site-chrome.css">
 <link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/site.js" defer></script>
 </head>
 <body>
 <a class="skip" href="#content">Skip to content</a>
-<div class="wrap">
-  <header class="nav">
-    <a class="brand" href="../index.html" aria-label="RIM home">
-      <picture><source srcset="../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
-      RIM
-    </a>
-    <nav aria-label="Site">
-      <a href="../index.html#what">What RIM is</a>
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="../index.html" aria-label="RIM home"><img src="../assets/rim-mark-inverse.svg" alt="" width="32" height="32">RIM</a>
+    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-navigation">Menu</button>
+    <nav class="site-nav" id="site-navigation" data-open="false" aria-label="Main navigation">
+      <a href="../index.html#privacy">Privacy</a>
       <a href="../index.html#how">How it works</a>
+      <a href="../index.html#capabilities">Capabilities</a>
+      <a href="../index.html#community">Community</a>
       <a href="../index.html#download">Download</a>
-      <a href="../docs/self-hosting.html">Self-host</a>
-      <a href="../configure/index.html">Configure</a>
-      <a href="../plugins/index.html">Plugins</a>
-      <a href="../docs/index.html">Docs</a>
-      <a href="../api/index.html">API</a>
-      <a href="index.html" aria-current="page">Specs</a>
-      <a href="../docs/contributing.html">Contribute</a>
-      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+      <a href="../docs/client/getting-started.html">Get started</a>
+      <a href="../docs/index.html" aria-current="location">Docs</a>
     </nav>
-  </header>
+  </div>
+</header>
+<div class="docs-navigation"><nav class="container docs-links" aria-label="Documentation"><span>Documentation</span><a href="../docs/index.html">Overview</a>
+<a href="../docs/self-hosting.html">Self-host</a>
+<a href="../configure/index.html">Configure</a>
+<a href="../plugins/index.html">Plugins</a>
+<a href="../api/index.html">API</a>
+<a href="index.html">Specs</a></nav></div>
+<div class="container docs-wrap">
   <div class="crumbs"><a href="index.html">Specs</a><span aria-hidden="true">/</span><span>Key identity v1</span></div>
   <div class="page with-toc">
     <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
@@ -53,7 +58,7 @@
 </details></aside>
     <main id="content" class="prose">
 <h1 id="key-identity-v1">Key identity v1</h1>
-<p class="status"><span><b>Key identity v1</b></span><span>version 1</span><span>status: implemented, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/a6da5ec1039b957adaf7fe6d8662da873c02c445/docs/specs/key-identity-v1.md">rim-server/docs/specs/key-identity-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/a6da5ec1039b957adaf7fe6d8662da873c02c445">a6da5ec</a></span></p>
+<p class="status"><span><b>Key identity v1</b></span><span>version 1</span><span>status: implemented, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/5e070440da6038995ae225231281f2525b4addef/docs/specs/key-identity-v1.md">rim-server/docs/specs/key-identity-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/5e070440da6038995ae225231281f2525b4addef">5e07044</a></span></p>
 <p><em>Status: implemented, normative. A user is a key pair, the user id is stable with a signed key
 log, and servers are interchangeable relays. The web app may create and hold an identity, not
 only be a linked device (amended 2026-10-15, keys by default). This document is the contract
@@ -573,7 +578,7 @@ alone; their password lives at their own server.</p>
 <td>the defaults: the client&#39;s and the server&#39;s public keys</td>
 </tr>
 </tbody></table></div>
-<p>Every message travels as unpadded base64url. <a href="https://github.com/rim-platform/rim-server/blob/a6da5ec1039b957adaf7fe6d8662da873c02c445/rim_auth/tests/vectors/opaque-v1.json"><code>rim_auth/tests/vectors/opaque-v1.json</code></a> holds one
+<p>Every message travels as unpadded base64url. <a href="https://github.com/rim-platform/rim-server/blob/5e070440da6038995ae225231281f2525b4addef/rim_auth/tests/vectors/opaque-v1.json"><code>rim_auth/tests/vectors/opaque-v1.json</code></a> holds one
 registration and one login made with one seeded generator (<code>rand_chacha</code> 0.3 <code>ChaCha20Rng</code>
 seeded with 32 bytes of 0x07, drawn by the setup, the registration start and finish, the login
 start, the server&#39;s login start and the login finish, in that order) for the credential id
@@ -870,7 +875,7 @@ identity stays in the browser that created it and is recovered only with its rec
 (<a href="server-to-server-v1.html"><code>server-to-server-v1.md</code></a>).</li>
 </ul>
 <h2 id="appendix-a-known-answer-vectors-version-1">Appendix A: known-answer vectors (version 1) <a class="anchor" href="#appendix-a-known-answer-vectors-version-1" aria-label="Link to this section">#</a></h2>
-<p>Checked by <a href="https://github.com/rim-platform/rim-server/blob/a6da5ec1039b957adaf7fe6d8662da873c02c445/rim_identity/src/vectors.rs"><code>rim_identity/src/vectors.rs</code></a>. Keys are <code>SigningKey::from_bytes([seed; 32])</code>; never
+<p>Checked by <a href="https://github.com/rim-platform/rim-server/blob/5e070440da6038995ae225231281f2525b4addef/rim_identity/src/vectors.rs"><code>rim_identity/src/vectors.rs</code></a>. Keys are <code>SigningKey::from_bytes([seed; 32])</code>; never
 use these seeds for real keys.</p>
 <div class="tablewrap"><table>
 <thead>
@@ -911,7 +916,7 @@ tt6UNl3tRCwupWIYEfnWzqW9qVqDsJju2dA7d2CdNqdIZ0piVeP_Q6Y1lLfA4YN-26tsdaFea-rM_I8Q
 <pre><code>{&quot;v&quot;:1,&quot;type&quot;:&quot;login&quot;,&quot;challengeId&quot;:&quot;00000000-0000-0000-0000-000000000009&quot;,&quot;nonce&quot;:&quot;bm9uY2U&quot;,&quot;audience&quot;:&quot;localhost:8080&quot;,&quot;principalId&quot;:&quot;rimp1_nz1POml8JmCMcFDECrtu60ibohPKnywhcExmOPMvTUo&quot;,&quot;deviceId&quot;:&quot;00000000-0000-0000-0000-000000000001&quot;}
 jB_BFFAn7e-FMh8wCSWhnCcPzMjoe1fTKwlCoGfE0p1OYkhZWjV4J1c_AgeIhKpWOnLYyB0PqstAEYmaCITXBw</code></pre>
 <h2 id="appendix-b-known-answer-vectors-version-2">Appendix B: known-answer vectors (version 2) <a class="anchor" href="#appendix-b-known-answer-vectors-version-2" aria-label="Link to this section">#</a></h2>
-<p>Checked by <a href="https://github.com/rim-platform/rim-server/blob/a6da5ec1039b957adaf7fe6d8662da873c02c445/rim_identity/src/vectors.rs"><code>rim_identity/src/vectors.rs</code></a>. Same keys and fields as appendix A, written as
+<p>Checked by <a href="https://github.com/rim-platform/rim-server/blob/5e070440da6038995ae225231281f2525b4addef/rim_identity/src/vectors.rs"><code>rim_identity/src/vectors.rs</code></a>. Same keys and fields as appendix A, written as
 version 2 statements. The principal id differs from appendix A because the inception payload
 differs.</p>
 <div class="tablewrap"><table>
@@ -951,11 +956,9 @@ ed25519:D2moo9U9OjVL9zed4lM0A5cHoGQOVEtUfgKfAmOn0P18x74NEbh4FL4f3PbulQzoVuGAGOEJ
 
     </main>
   </div>
-  <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/a6da5ec1039b957adaf7fe6d8662da873c02c445/docs/specs/key-identity-v1.md">rim-server/docs/specs/key-identity-v1.md</a> at <code>a6da5ec</code></span>
-    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
-  </footer>
 </div>
+<footer class="site-footer container"><span class="footer-brand"><img src="../assets/rim-mark-inverse.svg" alt="" width="21" height="21"> RIM · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-server/blob/5e070440da6038995ae225231281f2525b4addef/docs/specs/key-identity-v1.md">rim-server/docs/specs/key-identity-v1.md</a> at <code>5e07044</code></p>
 <script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
 </body>
 </html>

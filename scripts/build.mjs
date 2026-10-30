@@ -7,6 +7,7 @@ import { copyFileSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 import { OUTPUT_DIRS, check } from "./check.mjs";
+import { writeHomepageChrome } from "./lib/chrome.mjs";
 import { writeDownloads, releaseOf } from "./lib/downloads.mjs";
 import { renderApi } from "./lib/graphql.mjs";
 import { renderConfigure } from "./lib/configure.mjs";
@@ -54,6 +55,7 @@ for (const p of pages) {
   writeFileSync(file, renderPage(p));
 }
 const release = releaseOf(sources.ui);
+writeHomepageChrome();
 writeDownloads(release);
 copyFileSync(path.join(SITE_ROOT, "templates", "site.css"), path.join(SITE_ROOT, "assets", "site.css"));
 

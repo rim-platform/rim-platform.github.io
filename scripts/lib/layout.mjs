@@ -5,22 +5,9 @@ import path from "node:path";
 
 import { esc, rel } from "./html.mjs";
 import { SITE_ROOT } from "./sources.mjs";
+import { renderHeader, renderDocsNav, renderFooter } from "./chrome.mjs";
 
 const TEMPLATE = readFileSync(path.join(SITE_ROOT, "templates", "layout.html"), "utf8");
-
-/** The site nav, the landing page's sections plus the rendered sections. */
-const NAV = [
-  { key: "what", text: "What RIM is", href: "index.html#what" },
-  { key: "how", text: "How it works", href: "index.html#how" },
-  { key: "download", text: "Download", href: "index.html#download" },
-  { key: "selfhost", text: "Self-host", href: "docs/self-hosting.html" },
-  { key: "configure", text: "Configure", href: "configure/index.html" },
-  { key: "plugins", text: "Plugins", href: "plugins/index.html" },
-  { key: "docs", text: "Docs", href: "docs/index.html" },
-  { key: "api", text: "API", href: "api/index.html" },
-  { key: "specs", text: "Specs", href: "specs/index.html" },
-  { key: "contribute", text: "Contribute", href: "docs/contributing.html" },
-];
 
 /** Headings needed before a page gets a table of contents. */
 const TOC_MIN = 4;
@@ -44,12 +31,6 @@ function tocHtml(headings) {
 export function renderPage(page) {
   const root = page.root ?? prefixToRoot(page.out);
   const link = (href) => (page.root ? page.root + href : rel(page.out, href));
-  const nav = NAV.map((n) => {
-    const current = n.key === page.section ? ' aria-current="page"' : "";
-    return `      <a href="${link(n.href)}"${current}>${n.text}</a>`;
-  })
-    .concat('      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>')
-    .join("\n");
   const crumbs = page.crumbs?.length
     ? `  <div class="crumbs">${page.crumbs
         .map((c) => (c.href ? `<a href="${link(c.href)}">${esc(c.text)}</a>` : `<span>${esc(c.text)}</span>`))
@@ -73,12 +54,13 @@ export function renderPage(page) {
     title: esc(title),
     description: esc(page.description ?? page.title),
     root,
-    nav,
+    header: renderHeader(link, true),
+    docsNav: renderDocsNav(link, page.out),
     crumbs,
     layoutClass: withToc ? " with-toc" : "",
     toc,
     content: page.content,
-    footer: page.footer ?? "",
+    footer: renderFooter(link, page.footer ?? ""),
     scripts,
   };
   return TEMPLATE.replace(/\{\{(\w+)\}\}/g, (_, k) => {

@@ -49,6 +49,11 @@ const GROUPS = [
     names: ["RIM_AVATAR_UPLOADS_PER_HOUR", "RIM_AVATAR_UPLOADS_PER_DAY", "RIM_AVATAR_CHECK_URL", "RIM_AVATAR_CHECK_BLOCK", "RIM_AVATAR_CHECK_REPORT"],
   },
   {
+    title: "Text art checks",
+    intro: "The score at which the imagecheck service flags text art for review by moderators and operators.",
+    names: ["RIM_TEXT_ART_CHECK_FLAG"],
+  },
+  {
     title: "Limits and rate limits",
     intro: "Request, mutation, message and connection limits of the API, and how often open WebSocket connections recheck their session. Each rate limit is off until set.",
     names: ["RIM_API_MAX_BATCH", "RIM_WS_SESSION_RECHECK_SECS"],

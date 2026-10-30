@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="documentation-page">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,31 +7,36 @@
 <meta name="description" content="The desktop app can check for, download and install new versions of itself with Tauri's updater plugin. It ships dormant: src-tauri/updater.json is committed empty, and an app built from it never contacts an update …">
 <link rel="icon" href="../../favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;550;600;650;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<meta name="theme-color" content="#050910">
+<link rel="stylesheet" href="../../assets/site-chrome.css">
 <link rel="stylesheet" href="../../assets/site.css">
+<script src="../../assets/site.js" defer></script>
 </head>
 <body>
 <a class="skip" href="#content">Skip to content</a>
-<div class="wrap">
-  <header class="nav">
-    <a class="brand" href="../../index.html" aria-label="RIM home">
-      <picture><source srcset="../../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
-      RIM
-    </a>
-    <nav aria-label="Site">
-      <a href="../../index.html#what">What RIM is</a>
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="../../index.html" aria-label="RIM home"><img src="../../assets/rim-mark-inverse.svg" alt="" width="32" height="32">RIM</a>
+    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-navigation">Menu</button>
+    <nav class="site-nav" id="site-navigation" data-open="false" aria-label="Main navigation">
+      <a href="../../index.html#privacy">Privacy</a>
       <a href="../../index.html#how">How it works</a>
+      <a href="../../index.html#capabilities">Capabilities</a>
+      <a href="../../index.html#community">Community</a>
       <a href="../../index.html#download">Download</a>
-      <a href="../self-hosting.html">Self-host</a>
-      <a href="../../configure/index.html">Configure</a>
-      <a href="../../plugins/index.html">Plugins</a>
-      <a href="../index.html" aria-current="page">Docs</a>
-      <a href="../../api/index.html">API</a>
-      <a href="../../specs/index.html">Specs</a>
-      <a href="../contributing.html">Contribute</a>
-      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+      <a href="getting-started.html">Get started</a>
+      <a href="../index.html" aria-current="location">Docs</a>
     </nav>
-  </header>
+  </div>
+</header>
+<div class="docs-navigation"><nav class="container docs-links" aria-label="Documentation"><span>Documentation</span><a href="../index.html">Overview</a>
+<a href="../self-hosting.html">Self-host</a>
+<a href="../../configure/index.html">Configure</a>
+<a href="../../plugins/index.html">Plugins</a>
+<a href="../../api/index.html">API</a>
+<a href="../../specs/index.html">Specs</a></nav></div>
+<div class="container docs-wrap">
   <div class="crumbs"><a href="../index.html">Docs</a><span aria-hidden="true">/</span><a href="../using-rim.html">Using RIM</a><span aria-hidden="true">/</span><span>In-app updates</span></div>
   <div class="page with-toc">
     <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
@@ -47,12 +52,12 @@
     <main id="content" class="prose">
 <h1 id="in-app-updates">In-app updates</h1>
 <p>The desktop app can check for, download and install new versions of itself with Tauri&#39;s updater
-plugin. It ships dormant: <a href="https://github.com/rim-platform/rim-ui/blob/2f8805020c08ca5d8034095788b809b2d03aaeed/src-tauri/updater.json"><code>src-tauri/updater.json</code></a> is committed empty, and an app built from it
+plugin. It ships dormant: <a href="https://github.com/rim-platform/rim-ui/blob/ebf6175e7f425ad0eb9d52f94d66c00f363255ef/src-tauri/updater.json"><code>src-tauri/updater.json</code></a> is committed empty, and an app built from it
 never contacts an update server. Settings → About then says &quot;Updates are not configured in this
 build&quot;.</p>
 <h2 id="how-it-works">How it works <a class="anchor" href="#how-it-works" aria-label="Link to this section">#</a></h2>
 <ul>
-<li><a href="https://github.com/rim-platform/rim-ui/blob/2f8805020c08ca5d8034095788b809b2d03aaeed/src-tauri/updater.json"><code>src-tauri/updater.json</code></a> is compiled into the binary (<a href="https://github.com/rim-platform/rim-ui/blob/2f8805020c08ca5d8034095788b809b2d03aaeed/src-tauri/src/updater.rs"><code>src-tauri/src/updater.rs</code></a>). At startup
+<li><a href="https://github.com/rim-platform/rim-ui/blob/ebf6175e7f425ad0eb9d52f94d66c00f363255ef/src-tauri/updater.json"><code>src-tauri/updater.json</code></a> is compiled into the binary (<a href="https://github.com/rim-platform/rim-ui/blob/ebf6175e7f425ad0eb9d52f94d66c00f363255ef/src-tauri/src/updater.rs"><code>src-tauri/src/updater.rs</code></a>). At startup
 the app reads it; with a public key and at least one endpoint it registers the updater and
 process plugins and hands them the endpoints and key. <code>tauri.conf.json</code> carries no updater
 configuration; a release build passes the public key to the bundler in a config overlay (see
@@ -64,7 +69,7 @@ field is logged as a warning and treated the same way, so a bad file never stops
 raises a toast that opens Settings → About, where the user sees the version and release notes,
 downloads it with a progress bar and confirms &quot;Restart to update&quot;. Nothing is installed before
 that confirmation.</li>
-<li>The main window&#39;s capability (<a href="https://github.com/rim-platform/rim-ui/blob/2f8805020c08ca5d8034095788b809b2d03aaeed/src-tauri/capabilities/default.json"><code>src-tauri/capabilities/default.json</code></a>) grants <code>updater:default</code>
+<li>The main window&#39;s capability (<a href="https://github.com/rim-platform/rim-ui/blob/ebf6175e7f425ad0eb9d52f94d66c00f363255ef/src-tauri/capabilities/default.json"><code>src-tauri/capabilities/default.json</code></a>) grants <code>updater:default</code>
 (check, download, install) and <code>process:allow-restart</code>. Nothing else may call them.</li>
 <li>The web build has no updater: the runtime capability <code>updater</code> is off there and the About page
 shows only the version.</li>
@@ -149,13 +154,13 @@ product name, <code>RIM</code>: <code>RIM_&lt;version&gt;_amd64.AppImage</code>,
 <code>RIM-&lt;version&gt;-1.x86_64.rpm</code>, <code>RIM_&lt;version&gt;_x64-setup.exe</code> and
 <code>RIM_&lt;version&gt;_x64_en-US.msi</code>. Before the build, <code>npm run licenses</code> writes the third-party
 licence notices the app bundles, <code>src-tauri/resources/THIRD-PARTY-LICENSES.txt</code>.</p>
-<p><a href="https://github.com/rim-platform/rim-ui/blob/2f8805020c08ca5d8034095788b809b2d03aaeed/src-tauri/tauri.release.conf.json"><code>src-tauri/tauri.release.conf.json</code></a> replaces the development content security policy. Its
+<p><a href="https://github.com/rim-platform/rim-ui/blob/ebf6175e7f425ad0eb9d52f94d66c00f363255ef/src-tauri/tauri.release.conf.json"><code>src-tauri/tauri.release.conf.json</code></a> replaces the development content security policy. Its
 <code>connect-src</code> allows any <code>https:</code> and <code>wss:</code> origin, and <code>http:</code> and <code>ws:</code> on <code>localhost</code> and
 <code>127.0.0.1</code>, because the installed app talks to whichever server the person signs in to,
 including one running on their own machine.</p>
 </li>
 <li><p>Creates the GitHub release as a draft and writes <code>latest.json</code> with
-<a href="https://github.com/rim-platform/rim-ui/blob/2f8805020c08ca5d8034095788b809b2d03aaeed/scripts/release-assets.mjs"><code>scripts/release-assets.mjs</code></a>:</p>
+<a href="https://github.com/rim-platform/rim-ui/blob/ebf6175e7f425ad0eb9d52f94d66c00f363255ef/scripts/release-assets.mjs"><code>scripts/release-assets.mjs</code></a>:</p>
 <pre><code class="language-json">{
   &quot;version&quot;: &quot;0.0.2&quot;,
   &quot;notes&quot;: &quot;https://github.com/rim-platform/rim-ui/releases/tag/v0.0.2&quot;,
@@ -220,11 +225,9 @@ would refuse.</p>
 
     </main>
   </div>
-  <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/2f8805020c08ca5d8034095788b809b2d03aaeed/docs/updater.md">rim-ui/docs/updater.md</a> at <code>2f88050</code></span>
-    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
-  </footer>
 </div>
+<footer class="site-footer container"><span class="footer-brand"><img src="../../assets/rim-mark-inverse.svg" alt="" width="21" height="21"> RIM · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/ebf6175e7f425ad0eb9d52f94d66c00f363255ef/docs/updater.md">rim-ui/docs/updater.md</a> at <code>ebf6175</code></p>
 <script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
 </body>
 </html>

@@ -4,7 +4,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
-import { SITE_ROOT } from "./sources.mjs";
+import { SITE_ROOT, Source } from "./sources.mjs";
 
 const RELEASES = "https://github.com/rim-platform/rim-ui/releases";
 const START = "<!-- downloads:start -->";
@@ -21,9 +21,13 @@ const ASSETS = {
 
 /**
  * The release the links point at: `{ version }` for a `v*` tag, `{ version: null }` for any
- * other ref, whose links go to the latest release.
+ * other ref, whose links go to the latest release. RIM_UI_RELEASE_REF may select a release
+ * independently of the client documentation ref.
  */
 export function releaseOf(ui) {
+  if (process.env.RIM_UI_RELEASE_REF && process.env.RIM_UI_RELEASE_REF !== ui.ref) {
+    ui = new Source({ key: ui.key, name: ui.name, dir: ui.dir, ref: process.env.RIM_UI_RELEASE_REF });
+  }
   if (!/^v\d/.test(ui.ref)) return { version: null };
   const version = JSON.parse(ui.read("package.json")).version;
   if (`v${version}` !== ui.ref) {

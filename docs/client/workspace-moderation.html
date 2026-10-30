@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="documentation-page">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,31 +7,36 @@
 <meta name="description" content="A removal notice shows the workspace name, cause, end date and reason sent for this account. It remains visible across reloads until dismissed, scoped to the server and signed-in account. Moderators are told that the …">
 <link rel="icon" href="../../favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;550;600;650;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<meta name="theme-color" content="#050910">
+<link rel="stylesheet" href="../../assets/site-chrome.css">
 <link rel="stylesheet" href="../../assets/site.css">
+<script src="../../assets/site.js" defer></script>
 </head>
 <body>
 <a class="skip" href="#content">Skip to content</a>
-<div class="wrap">
-  <header class="nav">
-    <a class="brand" href="../../index.html" aria-label="RIM home">
-      <picture><source srcset="../../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
-      RIM
-    </a>
-    <nav aria-label="Site">
-      <a href="../../index.html#what">What RIM is</a>
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="../../index.html" aria-label="RIM home"><img src="../../assets/rim-mark-inverse.svg" alt="" width="32" height="32">RIM</a>
+    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-navigation">Menu</button>
+    <nav class="site-nav" id="site-navigation" data-open="false" aria-label="Main navigation">
+      <a href="../../index.html#privacy">Privacy</a>
       <a href="../../index.html#how">How it works</a>
+      <a href="../../index.html#capabilities">Capabilities</a>
+      <a href="../../index.html#community">Community</a>
       <a href="../../index.html#download">Download</a>
-      <a href="../self-hosting.html">Self-host</a>
-      <a href="../../configure/index.html">Configure</a>
-      <a href="../../plugins/index.html">Plugins</a>
-      <a href="../index.html" aria-current="page">Docs</a>
-      <a href="../../api/index.html">API</a>
-      <a href="../../specs/index.html">Specs</a>
-      <a href="../contributing.html">Contribute</a>
-      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+      <a href="getting-started.html">Get started</a>
+      <a href="../index.html" aria-current="location">Docs</a>
     </nav>
-  </header>
+  </div>
+</header>
+<div class="docs-navigation"><nav class="container docs-links" aria-label="Documentation"><span>Documentation</span><a href="../index.html">Overview</a>
+<a href="../self-hosting.html">Self-host</a>
+<a href="../../configure/index.html">Configure</a>
+<a href="../../plugins/index.html">Plugins</a>
+<a href="../../api/index.html">API</a>
+<a href="../../specs/index.html">Specs</a></nav></div>
+<div class="container docs-wrap">
   <div class="crumbs"><a href="../index.html">Docs</a><span aria-hidden="true">/</span><a href="../using-rim.html">Using RIM</a><span aria-hidden="true">/</span><span>Workspace removals and bans</span></div>
   <div class="page">
 
@@ -61,14 +66,55 @@ default workspace have no public link and no join requests.</p>
 <p>The person is told when their request is accepted or declined, through the direct space&#39;s
 connection, since they are not a member yet; a withdrawn request, or one a ban cancelled, is not
 announced.</p>
+<h1 id="flagged-messages">Flagged messages</h1>
+<p>A server that lists <code>message_flag</code> in <code>serverInfo.capabilities</code> checks the messages it can read
+for sexual text art and flags those that score high. The client covers a flagged message&#39;s
+text, attachments and link previews with &quot;Hidden: the automatic check flagged this message.&quot;
+and <strong>Show anyway</strong>; the author line, the reply quote, the reactions and the thread summary stay
+visible. Show anyway uncovers the message for this viewer for the rest of the session, under the
+label &quot;Flagged by the automatic check&quot; with <strong>Hide</strong> to cover it again. A message being edited is
+not covered.</p>
+<p>The workspace&#39;s Owner and Moderators also get <strong>Clear flag</strong>, on the cover and on the label: it
+clears the flag for everyone, and the message shows uncovered for every reader as soon as the
+server announces it. Each flag the check sets files a report, which Settings → Moderation lists
+with <strong>Automatic check</strong> as the reporter. The reported text is covered there too, with <strong>Show
+anyway</strong>, and once shown it keeps its lines unwrapped and folds when tall, so the drawing reads
+as drawn. Against an older server nothing is covered and the reports list is unchanged.</p>
+<h1 id="deleting-a-persons-messages">Deleting a person&#39;s messages</h1>
+<p>An Owner or a Moderator can delete one person&#39;s messages in the workspace&#39;s channels, thread
+replies included, in one go:</p>
+<ul>
+<li><strong>While banning.</strong> The ban dialog asks <strong>Delete their messages from:</strong> with <strong>Don&#39;t delete</strong>
+(the default), <strong>Last hour</strong>, <strong>Last 24 hours</strong>, <strong>Last 7 days</strong> and <strong>Everything</strong>.</li>
+<li><strong>Delete messages…</strong> in the person&#39;s menu, in the Moderation section before <strong>Kick…</strong> and
+<strong>Ban…</strong>. Its dialog starts on <strong>Last hour</strong> and has no <strong>Don&#39;t delete</strong>. It is also offered on
+someone who has left the workspace, as the only moderation item, and on each row of Settings →
+Moderation → <strong>Bans</strong>, since a banned person is in no member list any more.</li>
+</ul>
+<p>Before anything is deleted the dialog counts the chosen period, for example &quot;38 messages in 3
+channels&quot;, and the confirm button names the total (&quot;Ban and delete 42 messages&quot;, &quot;Delete 42
+messages&quot;). Messages in private channels you are not a member of are counted apart, as numbers
+only, with a checkbox <strong>Also private channels you&#39;re not in</strong> that is checked by default and
+shown only when those channels hold any of them. A period with nothing in it says &quot;Nothing to
+delete.&quot;; the ban dialog then only bans, and the Delete messages dialog cannot be confirmed.</p>
+<p>Direct messages, groups, encrypted channels and archived channels are never touched. Deleted
+messages read as deleted for everyone, as after a single delete, and their pins and unread
+notifications go with them.</p>
+<p>The ban dialog bans first and deletes after. When the ban fails nothing is deleted and the dialog
+offers Retry; when the ban goes through but the delete fails, the dialog closes and says
+&quot;Banned … but deleting their messages failed&quot; with the server&#39;s reason.</p>
+<p>The server deletes at most 1,000 messages per call; the client calls again while more remain,
+up to 50,000 messages per run. When more remain after that, it says so: run <strong>Delete messages…</strong>
+again.</p>
+<p>Against a server that does not list <code>delete_member_messages</code> in <code>serverInfo.capabilities</code>, none of
+this shows: the ban dialog has no message choice and the menus and the bans list have no
+<strong>Delete messages…</strong>.</p>
 
     </main>
   </div>
-  <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/2f8805020c08ca5d8034095788b809b2d03aaeed/docs/workspace-moderation.md">rim-ui/docs/workspace-moderation.md</a> at <code>2f88050</code></span>
-    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
-  </footer>
 </div>
+<footer class="site-footer container"><span class="footer-brand"><img src="../../assets/rim-mark-inverse.svg" alt="" width="21" height="21"> RIM · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/ebf6175e7f425ad0eb9d52f94d66c00f363255ef/docs/workspace-moderation.md">rim-ui/docs/workspace-moderation.md</a> at <code>ebf6175</code></p>
 
 </body>
 </html>

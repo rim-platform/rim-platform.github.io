@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="documentation-page">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,31 +7,36 @@
 <meta name="description" content="A desktop client lives longer than the server it talks to: users update the app when they choose, and an operator updates the server when they choose. A client release that sends a field or a mutation an older server …">
 <link rel="icon" href="../../favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;550;600;650;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<meta name="theme-color" content="#050910">
+<link rel="stylesheet" href="../../assets/site-chrome.css">
 <link rel="stylesheet" href="../../assets/site.css">
+<script src="../../assets/site.js" defer></script>
 </head>
 <body>
 <a class="skip" href="#content">Skip to content</a>
-<div class="wrap">
-  <header class="nav">
-    <a class="brand" href="../../index.html" aria-label="RIM home">
-      <picture><source srcset="../../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
-      RIM
-    </a>
-    <nav aria-label="Site">
-      <a href="../../index.html#what">What RIM is</a>
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="../../index.html" aria-label="RIM home"><img src="../../assets/rim-mark-inverse.svg" alt="" width="32" height="32">RIM</a>
+    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-navigation">Menu</button>
+    <nav class="site-nav" id="site-navigation" data-open="false" aria-label="Main navigation">
+      <a href="../../index.html#privacy">Privacy</a>
       <a href="../../index.html#how">How it works</a>
+      <a href="../../index.html#capabilities">Capabilities</a>
+      <a href="../../index.html#community">Community</a>
       <a href="../../index.html#download">Download</a>
-      <a href="../self-hosting.html">Self-host</a>
-      <a href="../../configure/index.html">Configure</a>
-      <a href="../../plugins/index.html">Plugins</a>
-      <a href="../index.html" aria-current="page">Docs</a>
-      <a href="../../api/index.html">API</a>
-      <a href="../../specs/index.html">Specs</a>
-      <a href="../contributing.html">Contribute</a>
-      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+      <a href="getting-started.html">Get started</a>
+      <a href="../index.html" aria-current="location">Docs</a>
     </nav>
-  </header>
+  </div>
+</header>
+<div class="docs-navigation"><nav class="container docs-links" aria-label="Documentation"><span>Documentation</span><a href="../index.html">Overview</a>
+<a href="../self-hosting.html">Self-host</a>
+<a href="../../configure/index.html">Configure</a>
+<a href="../../plugins/index.html">Plugins</a>
+<a href="../../api/index.html">API</a>
+<a href="../../specs/index.html">Specs</a></nav></div>
+<div class="container docs-wrap">
   <div class="crumbs"><a href="../index.html">Docs</a><span aria-hidden="true">/</span><a href="../using-rim.html">Using RIM</a><span aria-hidden="true">/</span><span>Version skew between client and server</span></div>
   <div class="page">
 
@@ -45,7 +50,7 @@ that field.</p>
 <pre><code class="language-sh">npm run skew:check -- &lt;git ref&gt;   # e.g. v0.3.0, origin/release, HEAD~30
 npm run skew:check                # the most recent rim-ui v* tag</code></pre>
 <p>It takes <code>schema.graphql</code> as committed at the ref (the SDL exported from the server that the
-client was built against then), collects every <code>gql</code> document under <a href="https://github.com/rim-platform/rim-ui/tree/2f8805020c08ca5d8034095788b809b2d03aaeed/src"><code>src/</code></a> with its fragments
+client was built against then), collects every <code>gql</code> document under <a href="https://github.com/rim-platform/rim-ui/tree/ebf6175e7f425ad0eb9d52f94d66c00f363255ef/src"><code>src/</code></a> with its fragments
 resolved the way the client sends it, validates each against that schema with <code>graphql</code>&#39;s
 <code>validate</code>, and prints the operations that fail, grouped by file. It exits 1 when any would be
 refused, 0 when none would, and 2 when it cannot run (no such ref, no <code>schema.graphql</code> there).
@@ -70,23 +75,22 @@ older server for.</li>
 not have at all: a bug today, not skew.</p>
 <h2 id="gating-a-new-field">Gating a new field <a class="anchor" href="#gating-a-new-field" aria-label="Link to this section">#</a></h2>
 <p>A field an older server lacks is asked for only when <code>serverInfo.capabilities</code> names it.
-<code>serverHasCapability</code> (<a href="https://github.com/rim-platform/rim-ui/blob/2f8805020c08ca5d8034095788b809b2d03aaeed/src/features/updater/api/serverCapabilities.ts"><code>src/features/updater/api/serverCapabilities.ts</code></a>) reads the cached server
+<code>serverHasCapability</code> (<a href="https://github.com/rim-platform/rim-ui/blob/ebf6175e7f425ad0eb9d52f94d66c00f363255ef/src/features/updater/api/serverCapabilities.ts"><code>src/features/updater/api/serverCapabilities.ts</code></a>) reads the cached server
 info; the read keeps a second document with the field (<code>MessagesWithEdits</code> beside <code>Messages</code>),
-built from the same constants, and picks one per request. <a href="https://github.com/rim-platform/rim-ui/blob/2f8805020c08ca5d8034095788b809b2d03aaeed/scripts/skew-check.test.mjs"><code>scripts/skew-check.test.mjs</code></a> checks
+built from the same constants, and picks one per request. <a href="https://github.com/rim-platform/rim-ui/blob/ebf6175e7f425ad0eb9d52f94d66c00f363255ef/scripts/skew-check.test.mjs"><code>scripts/skew-check.test.mjs</code></a> checks
 that only the gated documents fail against a schema without the field. <code>npm run skew:check</code>
 lists the gated documents; each listed one must be gated or have a fallback.</p>
 <p>A control that runs a new mutation is shown only when the capability names it: Leave workspace
-(<code>workspace_leave</code>) and Rename workspace (<code>workspace_rename</code>). A workspace on another server is
-gated by the relay&#39;s capabilities; its host, if older, refuses the document, and the app says the
+(<code>workspace_leave</code>), Rename workspace (<code>workspace_rename</code>), and Delete messages, with the ban
+dialog&#39;s message deletion (<code>delete_member_messages</code>). A workspace on another server is gated by
+the relay&#39;s capabilities; its host, if older, refuses the document, and the app says the
 workspace&#39;s server does not support it yet.</p>
 
     </main>
   </div>
-  <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/2f8805020c08ca5d8034095788b809b2d03aaeed/docs/version-skew.md">rim-ui/docs/version-skew.md</a> at <code>2f88050</code></span>
-    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
-  </footer>
 </div>
+<footer class="site-footer container"><span class="footer-brand"><img src="../../assets/rim-mark-inverse.svg" alt="" width="21" height="21"> RIM · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/ebf6175e7f425ad0eb9d52f94d66c00f363255ef/docs/version-skew.md">rim-ui/docs/version-skew.md</a> at <code>ebf6175</code></p>
 
 </body>
 </html>

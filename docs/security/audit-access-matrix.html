@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="documentation-page">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,31 +7,36 @@
 <meta name="description" content="This document is the reference for which actor can read which rows of the command audit log (command_audit_log, GraphQL listAuditLog) under which conditions. Anyone changing list_entries in …">
 <link rel="icon" href="../../favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;550;600;650;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<meta name="theme-color" content="#050910">
+<link rel="stylesheet" href="../../assets/site-chrome.css">
 <link rel="stylesheet" href="../../assets/site.css">
+<script src="../../assets/site.js" defer></script>
 </head>
 <body>
 <a class="skip" href="#content">Skip to content</a>
-<div class="wrap">
-  <header class="nav">
-    <a class="brand" href="../../index.html" aria-label="RIM home">
-      <picture><source srcset="../../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
-      RIM
-    </a>
-    <nav aria-label="Site">
-      <a href="../../index.html#what">What RIM is</a>
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="../../index.html" aria-label="RIM home"><img src="../../assets/rim-mark-inverse.svg" alt="" width="32" height="32">RIM</a>
+    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-navigation">Menu</button>
+    <nav class="site-nav" id="site-navigation" data-open="false" aria-label="Main navigation">
+      <a href="../../index.html#privacy">Privacy</a>
       <a href="../../index.html#how">How it works</a>
+      <a href="../../index.html#capabilities">Capabilities</a>
+      <a href="../../index.html#community">Community</a>
       <a href="../../index.html#download">Download</a>
-      <a href="../self-hosting.html">Self-host</a>
-      <a href="../../configure/index.html">Configure</a>
-      <a href="../../plugins/index.html">Plugins</a>
-      <a href="../index.html" aria-current="page">Docs</a>
-      <a href="../../api/index.html">API</a>
-      <a href="../../specs/index.html">Specs</a>
-      <a href="../contributing.html">Contribute</a>
-      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+      <a href="../client/getting-started.html">Get started</a>
+      <a href="../index.html" aria-current="location">Docs</a>
     </nav>
-  </header>
+  </div>
+</header>
+<div class="docs-navigation"><nav class="container docs-links" aria-label="Documentation"><span>Documentation</span><a href="../index.html">Overview</a>
+<a href="../self-hosting.html">Self-host</a>
+<a href="../../configure/index.html">Configure</a>
+<a href="../../plugins/index.html">Plugins</a>
+<a href="../../api/index.html">API</a>
+<a href="../../specs/index.html">Specs</a></nav></div>
+<div class="container docs-wrap">
   <div class="crumbs"><a href="../index.html">Docs</a><span aria-hidden="true">/</span><a href="../project.html">Project</a><span aria-hidden="true">/</span><span>Audit Log Access Matrix</span></div>
   <div class="page with-toc">
     <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
@@ -50,8 +55,8 @@
 <h1 id="audit-log-access-matrix">Audit Log Access Matrix</h1>
 <p>This document is the reference for which actor can read which rows of the command audit log
 (<code>command_audit_log</code>, GraphQL <code>listAuditLog</code>) under which conditions. Anyone changing
-<code>list_entries</code> in <a href="https://github.com/rim-platform/rim-server/blob/a6da5ec1039b957adaf7fe6d8662da873c02c445/rim_infra_services/src/audit/mod.rs"><code>rim_infra_services/src/audit/mod.rs</code></a> or <code>check</code> in
-<a href="https://github.com/rim-platform/rim-server/blob/a6da5ec1039b957adaf7fe6d8662da873c02c445/rim_infra_services/src/capability.rs"><code>rim_infra_services/src/capability.rs</code></a> reads this first. Section 6 lists the bypasses that were
+<code>list_entries</code> in <a href="https://github.com/rim-platform/rim-server/blob/5e070440da6038995ae225231281f2525b4addef/rim_infra_services/src/audit/mod.rs"><code>rim_infra_services/src/audit/mod.rs</code></a> or <code>check</code> in
+<a href="https://github.com/rim-platform/rim-server/blob/5e070440da6038995ae225231281f2525b4addef/rim_infra_services/src/capability.rs"><code>rim_infra_services/src/capability.rs</code></a> reads this first. Section 6 lists the bypasses that were
 closed, so they are not reintroduced.</p>
 <hr>
 <h2 id="1-actors">1. Actors <a class="anchor" href="#1-actors" aria-label="Link to this section">#</a></h2>
@@ -143,7 +148,7 @@ has the details.</p>
 <hr>
 <h2 id="3-required-capabilities">3. Required capabilities <a class="anchor" href="#3-required-capabilities" aria-label="Link to this section">#</a></h2>
 <p>Two capabilities gate audit reads. Both are seeded at startup from <code>builtin_capabilities()</code> in
-<a href="https://github.com/rim-platform/rim-server/blob/a6da5ec1039b957adaf7fe6d8662da873c02c445/rim_infra_services/src/capability.rs"><code>rim_infra_services/src/capability.rs</code></a>.</p>
+<a href="https://github.com/rim-platform/rim-server/blob/5e070440da6038995ae225231281f2525b4addef/rim_infra_services/src/capability.rs"><code>rim_infra_services/src/capability.rs</code></a>.</p>
 <div class="tablewrap"><table>
 <thead>
 <tr>
@@ -185,7 +190,7 @@ command executor, the macro executor, the moderation audit helper and the remote
 It is never exposed to clients.</p>
 <hr>
 <h2 id="4-filters-enforced-at-the-service-layer">4. Filters enforced at the service layer <a class="anchor" href="#4-filters-enforced-at-the-service-layer" aria-label="Link to this section">#</a></h2>
-<p>The resolver (<code>list_audit_log</code> in <a href="https://github.com/rim-platform/rim-server/blob/a6da5ec1039b957adaf7fe6d8662da873c02c445/rim_api/src/query/audit.rs"><code>rim_api/src/query/audit.rs</code></a>) passes the client&#39;s filter
+<p>The resolver (<code>list_audit_log</code> in <a href="https://github.com/rim-platform/rim-server/blob/5e070440da6038995ae225231281f2525b4addef/rim_api/src/query/audit.rs"><code>rim_api/src/query/audit.rs</code></a>) passes the client&#39;s filter
 values through unchanged. The service is the only trust boundary.</p>
 <h3 id="41-workspace-scope-is-required-for-non-self-reads">4.1 Workspace scope is required for non-self reads <a class="anchor" href="#41-workspace-scope-is-required-for-non-self-reads" aria-label="Link to this section">#</a></h3>
 <p><code>list_entries</code> matches on <code>(actor_user_id, server_id)</code> together:</p>
@@ -212,7 +217,7 @@ workspace is refused first.</p>
 <hr>
 <h2 id="5-outcome-values">5. Outcome values <a class="anchor" href="#5-outcome-values" aria-label="Link to this section">#</a></h2>
 <p>Every audit row carries one of seven outcomes, the <code>AuditOutcome</code> enum in
-<a href="https://github.com/rim-platform/rim-server/blob/a6da5ec1039b957adaf7fe6d8662da873c02c445/rim_services/src/audit/dto.rs"><code>rim_services/src/audit/dto.rs</code></a>. Writers use the enum, never string literals; the conversion to
+<a href="https://github.com/rim-platform/rim-server/blob/5e070440da6038995ae225231281f2525b4addef/rim_services/src/audit/dto.rs"><code>rim_services/src/audit/dto.rs</code></a>. Writers use the enum, never string literals; the conversion to
 the <code>text</code> column happens at the repository boundary (<code>AuditOutcome::as_str</code>,
 <code>TryFrom&lt;&amp;str&gt;</code>).</p>
 <div class="tablewrap"><table>
@@ -267,7 +272,7 @@ the <code>text</code> column happens at the repository boundary (<code>AuditOutc
 <td>A macro ran some steps before one failed</td>
 </tr>
 </tbody></table></div>
-<p>The GraphQL type is <code>AuditOutcomeGql</code> in <a href="https://github.com/rim-platform/rim-server/blob/a6da5ec1039b957adaf7fe6d8662da873c02c445/rim_api/src/types/audit.rs"><code>rim_api/src/types/audit.rs</code></a>. The database column has a
+<p>The GraphQL type is <code>AuditOutcomeGql</code> in <a href="https://github.com/rim-platform/rim-server/blob/5e070440da6038995ae225231281f2525b4addef/rim_api/src/types/audit.rs"><code>rim_api/src/types/audit.rs</code></a>. The database column has a
 CHECK constraint from migration <code>m20260427_000001_audit_outcome_widen_check</code>.</p>
 <p><code>StepError</code> and <code>MacroPartialFailure</code> appear on the child rows written for macro steps.
 <code>parent_audit_id</code> links a child row to the top-level macro row; <code>None</code> marks a top-level row.</p>
@@ -305,28 +310,28 @@ Guest of W. They keep <code>audit.read.self</code> for their own rows.</p>
 </tr>
 </thead>
 <tbody><tr>
-<td><a href="https://github.com/rim-platform/rim-server/blob/a6da5ec1039b957adaf7fe6d8662da873c02c445/rim_infra_services/src/audit/mod.rs"><code>rim_infra_services/src/audit/mod.rs</code></a></td>
+<td><a href="https://github.com/rim-platform/rim-server/blob/5e070440da6038995ae225231281f2525b4addef/rim_infra_services/src/audit/mod.rs"><code>rim_infra_services/src/audit/mod.rs</code></a></td>
 <td>Unit tests of the whole matrix in section 2, including the regressions for the first two bypasses of section 6, and the role outcome of every arm through the real capability gate</td>
 </tr>
 <tr>
-<td><a href="https://github.com/rim-platform/rim-server/blob/a6da5ec1039b957adaf7fe6d8662da873c02c445/rim_infra_services/src/capability.rs"><code>rim_infra_services/src/capability.rs</code></a></td>
+<td><a href="https://github.com/rim-platform/rim-server/blob/5e070440da6038995ae225231281f2525b4addef/rim_infra_services/src/capability.rs"><code>rim_infra_services/src/capability.rs</code></a></td>
 <td>Unit tests of the capability gate: strict default-deny, <code>check</code> / <code>check_many</code> with a workspace-scoped capability and no workspace (the third bypass), and the Owner/Moderator requirement of <code>audit.read</code> (the fourth)</td>
 </tr>
 <tr>
-<td><a href="https://github.com/rim-platform/rim-server/blob/a6da5ec1039b957adaf7fe6d8662da873c02c445/rim_api/src/tests/audit.rs"><code>rim_api/src/tests/audit.rs</code></a></td>
+<td><a href="https://github.com/rim-platform/rim-server/blob/5e070440da6038995ae225231281f2525b4addef/rim_api/src/tests/audit.rs"><code>rim_api/src/tests/audit.rs</code></a></td>
 <td><code>listAuditLog</code> refuses an unauthenticated caller; an authenticated query returns a page and maps <code>AuditOutcome::Success</code> to <code>SUCCESS</code></td>
 </tr>
 <tr>
-<td><a href="https://github.com/rim-platform/rim-server/blob/a6da5ec1039b957adaf7fe6d8662da873c02c445/rim_api/tests/moderation_e2e.rs"><code>rim_api/tests/moderation_e2e.rs</code></a></td>
+<td><a href="https://github.com/rim-platform/rim-server/blob/5e070440da6038995ae225231281f2525b4addef/rim_api/tests/moderation_e2e.rs"><code>rim_api/tests/moderation_e2e.rs</code></a></td>
 <td><code>listAuditLog</code> through GraphQL and Postgres under <code>--features e2e-tests</code>: Owners and Moderators read the workspace log, Members and Guests are <code>FORBIDDEN</code> and still read their own rows</td>
 </tr>
 <tr>
-<td><a href="https://github.com/rim-platform/rim-server/blob/a6da5ec1039b957adaf7fe6d8662da873c02c445/rim_infra_db/tests/audit_log_repo.rs"><code>rim_infra_db/tests/audit_log_repo.rs</code></a></td>
+<td><a href="https://github.com/rim-platform/rim-server/blob/5e070440da6038995ae225231281f2525b4addef/rim_infra_db/tests/audit_log_repo.rs"><code>rim_infra_db/tests/audit_log_repo.rs</code></a></td>
 <td>Repository insert and list under <code>--features db-tests</code>; all seven outcomes written and read back</td>
 </tr>
 </tbody></table></div>
-<p>A test asserting that this matrix holds end to end belongs in <a href="https://github.com/rim-platform/rim-server/blob/a6da5ec1039b957adaf7fe6d8662da873c02c445/rim_infra_services/src/audit/mod.rs"><code>rim_infra_services/src/audit/mod.rs</code></a>
-(the service gate) and <a href="https://github.com/rim-platform/rim-server/blob/a6da5ec1039b957adaf7fe6d8662da873c02c445/rim_api/src/tests/audit.rs"><code>rim_api/src/tests/audit.rs</code></a> (the GraphQL surface). The repository tests
+<p>A test asserting that this matrix holds end to end belongs in <a href="https://github.com/rim-platform/rim-server/blob/5e070440da6038995ae225231281f2525b4addef/rim_infra_services/src/audit/mod.rs"><code>rim_infra_services/src/audit/mod.rs</code></a>
+(the service gate) and <a href="https://github.com/rim-platform/rim-server/blob/5e070440da6038995ae225231281f2525b4addef/rim_api/src/tests/audit.rs"><code>rim_api/src/tests/audit.rs</code></a> (the GraphQL surface). The repository tests
 cover persistence, not access control.</p>
 <hr>
 <h2 id="8-retention">8. Retention <a class="anchor" href="#8-retention" aria-label="Link to this section">#</a></h2>
@@ -356,16 +361,14 @@ and then daily; it exports the rows to the data directory before deleting them.<
 <td><code>serverInfo.auditRetentionDays</code>, null when rows are kept forever</td>
 </tr>
 </tbody></table></div>
-<p>Source: <a href="https://github.com/rim-platform/rim-server/blob/a6da5ec1039b957adaf7fe6d8662da873c02c445/rim_infra_services/src/audit_retention.rs"><code>rim_infra_services/src/audit_retention.rs</code></a>. Operator view, the export format and the
+<p>Source: <a href="https://github.com/rim-platform/rim-server/blob/5e070440da6038995ae225231281f2525b4addef/rim_infra_services/src/audit_retention.rs"><code>rim_infra_services/src/audit_retention.rs</code></a>. Operator view, the export format and the
 <code>audit purge</code> command: <a href="../operations/audit-retention.html"><code>docs/operations/audit-retention.md</code></a>.</p>
 
     </main>
   </div>
-  <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/a6da5ec1039b957adaf7fe6d8662da873c02c445/docs/security/audit-access-matrix.md">rim-server/docs/security/audit-access-matrix.md</a> at <code>a6da5ec</code></span>
-    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
-  </footer>
 </div>
+<footer class="site-footer container"><span class="footer-brand"><img src="../../assets/rim-mark-inverse.svg" alt="" width="21" height="21"> RIM · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-server/blob/5e070440da6038995ae225231281f2525b4addef/docs/security/audit-access-matrix.md">rim-server/docs/security/audit-access-matrix.md</a> at <code>5e07044</code></p>
 <script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
 </body>
 </html>

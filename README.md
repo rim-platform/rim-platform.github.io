@@ -47,11 +47,24 @@ viewport meta, a duplicate id or an unbalanced tag. A build of the same commits 
 same files, so a rebuild without upstream changes leaves no diff. Commit the output together
 with the commits it names in each page's footer.
 
-`index.html` is written by hand. The build touches only
-the block between `downloads:start` and `downloads:end` in `index.html`: the installer links,
+`index.html` contains the handwritten homepage content, with its stylesheet and progressive enhancement in
+`assets/home.css` and `assets/home.js`. All pages share the header and footer rendered by
+`scripts/lib/chrome.mjs`, styled by `assets/site-chrome.css`, with the mobile navigation in
+`assets/site.js`. Documentation pages add a local navigation bar, breadcrumbs and a table of
+contents through `templates/layout.html` and `templates/site.css`. The homepage's application images are real local
+captures; `assets/screenshots/README.md` records their source revisions and reproduction steps.
+The workflow gallery, screenshot enlargement and mobile menu use small optional scripts;
+the content and navigation remain available without JavaScript. In `index.html`, the build
+updates the blocks between `site-header:start` / `site-header:end` and `site-footer:start` /
+`site-footer:end`, keeping navigation consistent with the generated pages. It also updates
+the block between `downloads:start` and `downloads:end`: the installer links,
 written from the rim-ui version at `RIM_UI_REF` (links to the latest release when that is not a
 `v*` tag). `npm run check` fails when the block is stale against `RIM_UI_REF` (when `RIM_UI_DIR` is
 set) or when its own links disagree; the rest of the checks cover the links.
+
+When rendering corrected client docs from a branch, set `RIM_UI_RELEASE_REF=v0.0.8` to keep
+the download links on that published release independently of `RIM_UI_REF`. Use the same
+release ref for `npm run build` and `npm run check`.
 
 `.well-known/rim-server` is written by hand too: the discovery document of the handle domain,
 `{"delegate":"https://relay.rim-platform.org"}`, which hands `@name:rim-platform.org` handles to

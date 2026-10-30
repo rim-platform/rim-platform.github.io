@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="documentation-page">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,37 +7,42 @@
 <meta name="description" content="The RIM GraphQL API reference and the HTTP contract around it.">
 <link rel="icon" href="../favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;550;600;650;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<meta name="theme-color" content="#050910">
+<link rel="stylesheet" href="../assets/site-chrome.css">
 <link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/site.js" defer></script>
 </head>
 <body>
 <a class="skip" href="#content">Skip to content</a>
-<div class="wrap">
-  <header class="nav">
-    <a class="brand" href="../index.html" aria-label="RIM home">
-      <picture><source srcset="../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
-      RIM
-    </a>
-    <nav aria-label="Site">
-      <a href="../index.html#what">What RIM is</a>
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="../index.html" aria-label="RIM home"><img src="../assets/rim-mark-inverse.svg" alt="" width="32" height="32">RIM</a>
+    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-navigation">Menu</button>
+    <nav class="site-nav" id="site-navigation" data-open="false" aria-label="Main navigation">
+      <a href="../index.html#privacy">Privacy</a>
       <a href="../index.html#how">How it works</a>
+      <a href="../index.html#capabilities">Capabilities</a>
+      <a href="../index.html#community">Community</a>
       <a href="../index.html#download">Download</a>
-      <a href="../docs/self-hosting.html">Self-host</a>
-      <a href="../configure/index.html">Configure</a>
-      <a href="../plugins/index.html">Plugins</a>
-      <a href="../docs/index.html">Docs</a>
-      <a href="index.html" aria-current="page">API</a>
-      <a href="../specs/index.html">Specs</a>
-      <a href="../docs/contributing.html">Contribute</a>
-      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+      <a href="../docs/client/getting-started.html">Get started</a>
+      <a href="../docs/index.html" aria-current="location">Docs</a>
     </nav>
-  </header>
+  </div>
+</header>
+<div class="docs-navigation"><nav class="container docs-links" aria-label="Documentation"><span>Documentation</span><a href="../docs/index.html">Overview</a>
+<a href="../docs/self-hosting.html">Self-host</a>
+<a href="../configure/index.html">Configure</a>
+<a href="../plugins/index.html">Plugins</a>
+<a href="index.html" aria-current="page">API</a>
+<a href="../specs/index.html">Specs</a></nav></div>
+<div class="container docs-wrap">
 
   <div class="page">
 
     <main id="content" class="prose">
 <h1>API</h1>
-<p class="lede">Everything a client does goes through one GraphQL endpoint, <code>POST /api</code>; subscriptions arrive over <code>/api/ws</code>. The server publishes its schema at <code>/api/sdl</code>. This reference is generated from it: 274 types, 70 queries, 137 mutations and 2 subscriptions.</p>
+<p class="lede">Everything a client does goes through one GraphQL endpoint, <code>POST /api</code>; subscriptions arrive over <code>/api/ws</code>. The server publishes its schema at <code>/api/sdl</code>. This reference is generated from it: 277 types, 71 queries, 139 mutations and 2 subscriptions.</p>
 <input id="filter" class="search" type="search" placeholder="Filter the whole schema by name" aria-label="Filter the whole schema by name" autocomplete="off">
 <p id="filter-none" class="muted" hidden>Nothing matches.</p>
 <div data-search-only><ul class="hits">
@@ -52,6 +57,8 @@
 <li data-name="deleteMessage"><a href="mutation.html#deleteMessage"><code>deleteMessage</code></a><span class="kind">mutation</span></li>
 <li data-name="pinMessage"><a href="mutation.html#pinMessage"><code>pinMessage</code></a><span class="kind">mutation</span></li>
 <li data-name="unpinMessage"><a href="mutation.html#unpinMessage"><code>unpinMessage</code></a><span class="kind">mutation</span></li>
+<li data-name="clearMessageFlag"><a href="mutation.html#clearMessageFlag"><code>clearMessageFlag</code></a><span class="kind">mutation</span></li>
+<li data-name="deleteMemberMessages"><a href="mutation.html#deleteMemberMessages"><code>deleteMemberMessages</code></a><span class="kind">mutation</span></li>
 <li data-name="sendEncryptedMessage"><a href="mutation.html#sendEncryptedMessage"><code>sendEncryptedMessage</code></a><span class="kind">mutation</span></li>
 <li data-name="editEncryptedMessage"><a href="mutation.html#editEncryptedMessage"><code>editEncryptedMessage</code></a><span class="kind">mutation</span></li>
 <li data-name="createConversation"><a href="mutation.html#createConversation"><code>createConversation</code></a><span class="kind">mutation</span></li>
@@ -195,6 +202,7 @@
 <li data-name="pinnedMessages"><a href="query.html#pinnedMessages"><code>pinnedMessages</code></a><span class="kind">query</span></li>
 <li data-name="messageReports"><a href="query.html#messageReports"><code>messageReports</code></a><span class="kind">query</span></li>
 <li data-name="messageReport"><a href="query.html#messageReport"><code>messageReport</code></a><span class="kind">query</span></li>
+<li data-name="memberMessageCounts"><a href="query.html#memberMessageCounts"><code>memberMessageCounts</code></a><span class="kind">query</span></li>
 <li data-name="searchMessages"><a href="query.html#searchMessages"><code>searchMessages</code></a><span class="kind">query</span></li>
 <li data-name="myServers"><a href="query.html#myServers"><code>myServers</code></a><span class="kind">query</span></li>
 <li data-name="server"><a href="query.html#server"><code>server</code></a><span class="kind">query</span></li>
@@ -273,6 +281,7 @@
 <li data-name="CreateInvitePayload"><a href="objects.html#CreateInvitePayload"><code>CreateInvitePayload</code></a><span class="kind">object</span></li>
 <li data-name="CustomEmoji"><a href="objects.html#CustomEmoji"><code>CustomEmoji</code></a><span class="kind">object</span></li>
 <li data-name="DeleteWorkspacePayload"><a href="objects.html#DeleteWorkspacePayload"><code>DeleteWorkspacePayload</code></a><span class="kind">object</span></li>
+<li data-name="DeletedMemberMessages"><a href="objects.html#DeletedMemberMessages"><code>DeletedMemberMessages</code></a><span class="kind">object</span></li>
 <li data-name="DeviceKey"><a href="objects.html#DeviceKey"><code>DeviceKey</code></a><span class="kind">object</span></li>
 <li data-name="DeviceLink"><a href="objects.html#DeviceLink"><code>DeviceLink</code></a><span class="kind">object</span></li>
 <li data-name="DmFloorSource"><a href="objects.html#DmFloorSource"><code>DmFloorSource</code></a><span class="kind">object</span></li>
@@ -303,6 +312,7 @@
 <li data-name="LoginPayload"><a href="objects.html#LoginPayload"><code>LoginPayload</code></a><span class="kind">object</span></li>
 <li data-name="MacroDef"><a href="objects.html#MacroDef"><code>MacroDef</code></a><span class="kind">object</span></li>
 <li data-name="MacroStep"><a href="objects.html#MacroStep"><code>MacroStep</code></a><span class="kind">object</span></li>
+<li data-name="MemberMessageCounts"><a href="objects.html#MemberMessageCounts"><code>MemberMessageCounts</code></a><span class="kind">object</span></li>
 <li data-name="MemberTimeout"><a href="objects.html#MemberTimeout"><code>MemberTimeout</code></a><span class="kind">object</span></li>
 <li data-name="Message"><a href="objects.html#Message"><code>Message</code></a><span class="kind">object</span></li>
 <li data-name="MessageChange"><a href="objects.html#MessageChange"><code>MessageChange</code></a><span class="kind">object</span></li>
@@ -312,6 +322,7 @@
 <li data-name="MessageReport"><a href="objects.html#MessageReport"><code>MessageReport</code></a><span class="kind">object</span></li>
 <li data-name="MessageReportCursorOutput"><a href="objects.html#MessageReportCursorOutput"><code>MessageReportCursorOutput</code></a><span class="kind">object</span></li>
 <li data-name="MessageReportPage"><a href="objects.html#MessageReportPage"><code>MessageReportPage</code></a><span class="kind">object</span></li>
+<li data-name="MessageTally"><a href="objects.html#MessageTally"><code>MessageTally</code></a><span class="kind">object</span></li>
 <li data-name="MlsCommit"><a href="objects.html#MlsCommit"><code>MlsCommit</code></a><span class="kind">object</span></li>
 <li data-name="MlsCommitPage"><a href="objects.html#MlsCommitPage"><code>MlsCommitPage</code></a><span class="kind">object</span></li>
 <li data-name="MlsDevice"><a href="objects.html#MlsDevice"><code>MlsDevice</code></a><span class="kind">object</span></li>
@@ -535,10 +546,10 @@
 </ul></div>
 <ul class="cards">
 <li><a href="../docs/api.html"><b>Talking to a server</b><span>The endpoints, the session cookie and CSRF, origins, limits, error codes and pagination: the contract around the schema.</span></a></li>
-<li><a href="query.html"><b>Query</b><span>70 fields, grouped by domain.</span></a></li>
-<li><a href="mutation.html"><b>Mutation</b><span>137 fields, grouped by domain.</span></a></li>
+<li><a href="query.html"><b>Query</b><span>71 fields, grouped by domain.</span></a></li>
+<li><a href="mutation.html"><b>Mutation</b><span>139 fields, grouped by domain.</span></a></li>
 <li><a href="subscription.html"><b>Subscription</b><span>2 fields, grouped by domain.</span></a></li>
-<li><a href="objects.html"><b>Objects</b><span>134 objects.</span></a></li>
+<li><a href="objects.html"><b>Objects</b><span>137 objects.</span></a></li>
 <li><a href="inputs.html"><b>Inputs</b><span>86 inputs.</span></a></li>
 <li><a href="enums.html"><b>Enums</b><span>52 enums.</span></a></li>
 <li><a href="scalars.html"><b>Scalars</b><span>7 scalars.</span></a></li>
@@ -547,11 +558,9 @@
 
     </main>
   </div>
-  <footer class="site">
-    <span>Generated from <a href="https://github.com/rim-platform/rim-ui/blob/2f8805020c08ca5d8034095788b809b2d03aaeed/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>2f88050</code></span>
-    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
-  </footer>
 </div>
+<footer class="site-footer container"><span class="footer-brand"><img src="../assets/rim-mark-inverse.svg" alt="" width="21" height="21"> RIM · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
+<p class="source-provenance container">Generated from <a href="https://github.com/rim-platform/rim-ui/blob/ebf6175e7f425ad0eb9d52f94d66c00f363255ef/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>ebf6175</code></p>
 <script>
 (() => {
   const q = document.getElementById("filter");
