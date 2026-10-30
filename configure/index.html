@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="documentation-page">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,31 +7,36 @@
 <meta name="description" content="Every RIM server setting: the RIM_ environment variables with their defaults, and the command line.">
 <link rel="icon" href="../favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;550;600;650;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<meta name="theme-color" content="#050910">
+<link rel="stylesheet" href="../assets/site-chrome.css">
 <link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/site.js" defer></script>
 </head>
 <body>
 <a class="skip" href="#content">Skip to content</a>
-<div class="wrap">
-  <header class="nav">
-    <a class="brand" href="../index.html" aria-label="RIM home">
-      <picture><source srcset="../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
-      RIM
-    </a>
-    <nav aria-label="Site">
-      <a href="../index.html#what">What RIM is</a>
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="../index.html" aria-label="RIM home"><img src="../assets/rim-mark-inverse.svg" alt="" width="32" height="32">RIM</a>
+    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-navigation">Menu</button>
+    <nav class="site-nav" id="site-navigation" data-open="false" aria-label="Main navigation">
+      <a href="../index.html#privacy">Privacy</a>
       <a href="../index.html#how">How it works</a>
+      <a href="../index.html#capabilities">Capabilities</a>
+      <a href="../index.html#community">Community</a>
       <a href="../index.html#download">Download</a>
-      <a href="../docs/self-hosting.html">Self-host</a>
-      <a href="index.html" aria-current="page">Configure</a>
-      <a href="../plugins/index.html">Plugins</a>
-      <a href="../docs/index.html">Docs</a>
-      <a href="../api/index.html">API</a>
-      <a href="../specs/index.html">Specs</a>
-      <a href="../docs/contributing.html">Contribute</a>
-      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+      <a href="../docs/client/getting-started.html">Get started</a>
+      <a href="../docs/index.html" aria-current="location">Docs</a>
     </nav>
-  </header>
+  </div>
+</header>
+<div class="docs-navigation"><nav class="container docs-links" aria-label="Documentation"><span>Documentation</span><a href="../docs/index.html">Overview</a>
+<a href="../docs/self-hosting.html">Self-host</a>
+<a href="index.html" aria-current="page">Configure</a>
+<a href="../plugins/index.html">Plugins</a>
+<a href="../api/index.html">API</a>
+<a href="../specs/index.html">Specs</a></nav></div>
+<div class="container docs-wrap">
 
   <div class="page with-toc">
     <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
@@ -43,6 +48,7 @@
 <li><a href="#mail">Mail</a></li>
 <li><a href="#operations">Operations</a></li>
 <li><a href="#profile-pictures">Profile pictures</a></li>
+<li><a href="#text-art-checks">Text art checks</a></li>
 <li><a href="#limits-and-rate-limits">Limits and rate limits</a></li>
 <li><a href="#instance-limits">Instance limits</a></li>
 <li><a href="#command-line">Command line</a></li>
@@ -50,7 +56,7 @@
 </details></aside>
     <main id="content" class="prose">
 <h1>Configure</h1>
-<p class="lede">The server is configured by environment variables, all prefixed <code>RIM_</code> except <code>DATABASE_URL</code> and the log filter <code>RUST_LOG</code>. In development an untracked <code>.env</code> file works too. This page is generated from <a href="https://github.com/rim-platform/rim-server/blob/a6da5ec1039b957adaf7fe6d8662da873c02c445/rim_server/src/config.rs"><code>rim_server/src/config.rs</code></a>, cross-checked with the variable block of the <a href="https://github.com/rim-platform/rim-server/blob/a6da5ec1039b957adaf7fe6d8662da873c02c445/Dockerfile"><code>Dockerfile</code></a>; the compose stack's own settings are in <a href="https://github.com/rim-platform/rim-server/blob/a6da5ec1039b957adaf7fe6d8662da873c02c445/deploy/.env.example"><code>deploy/.env.example</code></a>.</p>
+<p class="lede">The server is configured by environment variables, all prefixed <code>RIM_</code> except <code>DATABASE_URL</code> and the log filter <code>RUST_LOG</code>. In development an untracked <code>.env</code> file works too. This page is generated from <a href="https://github.com/rim-platform/rim-server/blob/5e070440da6038995ae225231281f2525b4addef/rim_server/src/config.rs"><code>rim_server/src/config.rs</code></a>, cross-checked with the variable block of the <a href="https://github.com/rim-platform/rim-server/blob/5e070440da6038995ae225231281f2525b4addef/Dockerfile"><code>Dockerfile</code></a>; the compose stack's own settings are in <a href="https://github.com/rim-platform/rim-server/blob/5e070440da6038995ae225231281f2525b4addef/deploy/.env.example"><code>deploy/.env.example</code></a>.</p>
 <h2 id="listening">Listening <a class="anchor" href="#listening" aria-label="Link to this section">#</a></h2>
 <p class="muted">Where the server listens, the origin clients reach it at, and how it treats the proxy in front of it.</p>
 <div class="tablewrap"><table class="vars">
@@ -218,7 +224,7 @@ Default: 900 (15 minutes); values below 60 are raised to 60.</p><p class="faint"
 <thead><tr><th>Variable</th><th>What it does</th></tr></thead>
 <tbody>
 <tr id="RIM_METRICS_ADDR"><td><code>RIM_METRICS_ADDR</code><span class="default">default off</span></td><td><p><code>host:port</code> of the Prometheus listener serving <code>GET /metrics</code>; unset turns metrics off.</p><p class="faint">Unset, it turns metrics off.</p><p class="faint">Refused at boot with a message naming the variable when the value is not an <code>ip:port</code> address.</p><p class="faint">Dockerfile: ip:port of the Prometheus /metrics listener. In a container bind 0.0.0.0:9090 and do not publish it: keep it on an internal network, never behind the public proxy.</p></td></tr>
-<tr id="RIM_AUDIT_LOG_PATH"><td><code>RIM_AUDIT_LOG_PATH</code><span class="default">default the working directory</span></td><td><p>Directory of the daily audit files <code>audit.&lt;YYYY-MM-DD&gt;.log</code></p><p class="note">Read by <a href="https://github.com/rim-platform/rim-server/blob/a6da5ec1039b957adaf7fe6d8662da873c02c445/rim_logging/src/logging.rs"><code>rim_logging/src/logging.rs</code></a>, not config.rs.</p></td></tr>
+<tr id="RIM_AUDIT_LOG_PATH"><td><code>RIM_AUDIT_LOG_PATH</code><span class="default">default the working directory</span></td><td><p>Directory of the daily audit files <code>audit.&lt;YYYY-MM-DD&gt;.log</code></p><p class="note">Read by <a href="https://github.com/rim-platform/rim-server/blob/5e070440da6038995ae225231281f2525b4addef/rim_logging/src/logging.rs"><code>rim_logging/src/logging.rs</code></a>, not config.rs.</p></td></tr>
 <tr id="RIM_AUDIT_RETENTION_DAYS"><td><code>RIM_AUDIT_RETENTION_DAYS</code><span class="default">default forever</span></td><td><p>Days command audit log rows are kept before the daily purge exports and deletes them;
 unset keeps them forever. 1 to 3650.</p><p class="faint">Unset, it keeps them forever.</p><p class="faint">Refused at boot with a message naming the variable when the value is outside 1 to 3650.</p><p class="faint">Dockerfile: days command audit rows are kept, 1-3650; older rows are exported to $RIM_DATA_DIR/audit-exports and deleted daily.</p></td></tr>
 <tr id="RIM_AUDIT_LOG_RETENTION_DAYS"><td><code>RIM_AUDIT_LOG_RETENTION_DAYS</code><span class="default">default <code>90</code></span></td><td><p>Days the daily audit files (<code>audit.&lt;YYYY-MM-DD&gt;.log</code> in the directory of
@@ -268,6 +274,20 @@ refused. Defaults to 0.85.</p><p class="faint">Dockerfile: highest score at or a
 <tr id="RIM_AVATAR_CHECK_REPORT"><td><code>RIM_AVATAR_CHECK_REPORT</code><span class="default">default <code>0.60</code></span></td><td><p>The highest category score, in (0, 1] and at most the block threshold, at or above
 which an uploaded profile picture is stored and reported to the operators. Defaults to
 0.60.</p><p class="faint">Dockerfile: highest score at or above which a picture is stored and reported to the operators, in (0, 1] and at most the block one; a bad value stops the server at boot.</p></td></tr>
+</tbody>
+</table></div>
+<h2 id="text-art-checks">Text art checks <a class="anchor" href="#text-art-checks" aria-label="Link to this section">#</a></h2>
+<p class="muted">The score at which the imagecheck service flags text art for review by moderators and operators.</p>
+<div class="tablewrap"><table class="vars">
+<thead><tr><th>Variable</th><th>What it does</th></tr></thead>
+<tbody>
+<tr id="RIM_TEXT_ART_CHECK_FLAG"><td><code>RIM_TEXT_ART_CHECK_FLAG</code><span class="default">default <code>0.60</code></span></td><td><p>The sexual score, in (0, 1], at or above which a workspace message that looks like text
+art is flagged and reported, scored by the service at <code>RIM_AVATAR_CHECK_URL</code>. Defaults to
+0.60.</p>
+<p>The text art check: the image check service of <code>avatar_check</code> with
+<code>RIM_TEXT_ART_CHECK_FLAG</code> or its default. <code>None</code> when <code>RIM_AVATAR_CHECK_URL</code> is unset or
+blank; the threshold is checked either way.</p><p class="faint">Refused at boot with a message naming the variable when the threshold is outside (0, 1], or the message of
+<code>avatar_check</code>.</p><p class="faint">Dockerfile: sexual score at or above which a workspace message that looks like text art is flagged and reported, scored by the service at RIM_AVATAR_CHECK_URL, in (0, 1]; a bad value stops the server at boot.</p></td></tr>
 </tbody>
 </table></div>
 <h2 id="limits-and-rate-limits">Limits and rate limits <a class="anchor" href="#limits-and-rate-limits" aria-label="Link to this section">#</a></h2>
@@ -356,11 +376,9 @@ and IP blocks from the app (<a href="../docs/api.html"><code>docs/api.md</code><
 
     </main>
   </div>
-  <footer class="site">
-    <span>Generated from <a href="https://github.com/rim-platform/rim-server/blob/a6da5ec1039b957adaf7fe6d8662da873c02c445/rim_server/src/config.rs">rim-server/rim_server/src/config.rs</a>, <a href="https://github.com/rim-platform/rim-server/blob/a6da5ec1039b957adaf7fe6d8662da873c02c445/Dockerfile">Dockerfile</a> and <a href="https://github.com/rim-platform/rim-server/blob/a6da5ec1039b957adaf7fe6d8662da873c02c445/README.md">README.md</a> at <code>a6da5ec</code></span>
-    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
-  </footer>
 </div>
+<footer class="site-footer container"><span class="footer-brand"><img src="../assets/rim-mark-inverse.svg" alt="" width="21" height="21"> RIM · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
+<p class="source-provenance container">Generated from <a href="https://github.com/rim-platform/rim-server/blob/5e070440da6038995ae225231281f2525b4addef/rim_server/src/config.rs">rim-server/rim_server/src/config.rs</a>, <a href="https://github.com/rim-platform/rim-server/blob/5e070440da6038995ae225231281f2525b4addef/Dockerfile">Dockerfile</a> and <a href="https://github.com/rim-platform/rim-server/blob/5e070440da6038995ae225231281f2525b4addef/README.md">README.md</a> at <code>5e07044</code></p>
 <script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
 </body>
 </html>

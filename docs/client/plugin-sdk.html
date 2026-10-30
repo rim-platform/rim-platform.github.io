@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="documentation-page">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,31 +7,36 @@
 <meta name="description" content="Write a RIM plugin in TypeScript. A plugin is either a local process the RIM desktop app starts and talks to over stdio (DesktopLocalProcess), or a bundle that runs in a sandboxed frame of the app, on the desktop and on …">
 <link rel="icon" href="../../favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;550;600;650;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<meta name="theme-color" content="#050910">
+<link rel="stylesheet" href="../../assets/site-chrome.css">
 <link rel="stylesheet" href="../../assets/site.css">
+<script src="../../assets/site.js" defer></script>
 </head>
 <body>
 <a class="skip" href="#content">Skip to content</a>
-<div class="wrap">
-  <header class="nav">
-    <a class="brand" href="../../index.html" aria-label="RIM home">
-      <picture><source srcset="../../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
-      RIM
-    </a>
-    <nav aria-label="Site">
-      <a href="../../index.html#what">What RIM is</a>
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="../../index.html" aria-label="RIM home"><img src="../../assets/rim-mark-inverse.svg" alt="" width="32" height="32">RIM</a>
+    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-navigation">Menu</button>
+    <nav class="site-nav" id="site-navigation" data-open="false" aria-label="Main navigation">
+      <a href="../../index.html#privacy">Privacy</a>
       <a href="../../index.html#how">How it works</a>
+      <a href="../../index.html#capabilities">Capabilities</a>
+      <a href="../../index.html#community">Community</a>
       <a href="../../index.html#download">Download</a>
-      <a href="../self-hosting.html">Self-host</a>
-      <a href="../../configure/index.html">Configure</a>
-      <a href="../../plugins/index.html">Plugins</a>
-      <a href="../index.html" aria-current="page">Docs</a>
-      <a href="../../api/index.html">API</a>
-      <a href="../../specs/index.html">Specs</a>
-      <a href="../contributing.html">Contribute</a>
-      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+      <a href="getting-started.html">Get started</a>
+      <a href="../index.html" aria-current="location">Docs</a>
     </nav>
-  </header>
+  </div>
+</header>
+<div class="docs-navigation"><nav class="container docs-links" aria-label="Documentation"><span>Documentation</span><a href="../index.html">Overview</a>
+<a href="../self-hosting.html">Self-host</a>
+<a href="../../configure/index.html">Configure</a>
+<a href="../../plugins/index.html">Plugins</a>
+<a href="../../api/index.html">API</a>
+<a href="../../specs/index.html">Specs</a></nav></div>
+<div class="container docs-wrap">
   <div class="crumbs"><a href="../index.html">Docs</a><span aria-hidden="true">/</span><a href="../plugin-authors.html">Plugin authors</a><span aria-hidden="true">/</span><span>@rim-platform/plugin-sdk</span></div>
   <div class="page with-toc">
     <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
@@ -55,12 +60,12 @@
 app starts and talks to over stdio (<code>DesktopLocalProcess</code>), or a bundle that runs in a
 sandboxed frame of the app, on the desktop and on the web, and talks over a
 <code>MessagePort</code> (<code>WebSandboxed</code>). The SDK speaks
-<a href="https://github.com/rim-platform/rim-ui/blob/2f8805020c08ca5d8034095788b809b2d03aaeed/protocol/plugin-protocol-v1.schema.json">plugin protocol v1</a> for you over either
+<a href="https://github.com/rim-platform/rim-ui/blob/ebf6175e7f425ad0eb9d52f94d66c00f363255ef/protocol/plugin-protocol-v1.schema.json">plugin protocol v1</a> for you over either
 transport: the handshake and version negotiation, heartbeats, the dangerous-command
 gate, errors and shutdown.</p>
 <p>The SDK is developed in rim-ui and released to npm on its own, with the tag
 <code>plugin-sdk-v&lt;version&gt;</code>; it keeps a version of its own, apart from the app&#39;s. Start from
-<a href="https://github.com/rim-platform/rim-ui/tree/2f8805020c08ca5d8034095788b809b2d03aaeed/plugins/template-ts"><code>plugins/template-ts</code></a>, which uses it.</p>
+<a href="https://github.com/rim-platform/rim-ui/tree/ebf6175e7f425ad0eb9d52f94d66c00f363255ef/plugins/template-ts"><code>plugins/template-ts</code></a>, which uses it.</p>
 <h2 id="install">Install <a class="anchor" href="#install" aria-label="Link to this section">#</a></h2>
 <pre><code class="language-sh">npm install --save-dev @rim-platform/plugin-sdk esbuild</code></pre>
 <p>The package ships JavaScript and type declarations, the in-memory test host
@@ -385,16 +390,16 @@ the release for <strong>Install from link</strong>. <code>npx rim-plugin-bundle 
 <code>main.mjs</code> as it is; once <code>--check</code> passes, that is byte for byte the bundle
 <code>npx rim-plugin-bundle --entry src/main.ts .</code> builds from the sources.</p>
 <p>For a WebSandboxed plugin the desktop takes <code>rim-plugin.json</code>, the entrypoint and
-<code>panels/</code> from the checkout and ignores the rest: the sources, <a href="https://github.com/rim-platform/rim-ui/blob/2f8805020c08ca5d8034095788b809b2d03aaeed/sdk/plugin-sdk/package.json"><code>package.json</code></a> and the
+<code>panels/</code> from the checkout and ignores the rest: the sources, <a href="https://github.com/rim-platform/rim-ui/blob/ebf6175e7f425ad0eb9d52f94d66c00f363255ef/sdk/plugin-sdk/package.json"><code>package.json</code></a> and the
 README stay in the checkout and never reach the plugin&#39;s frame. Those three parts follow
 the bundle rules (names starting with <code>.</code> are skipped, and any other name under <code>panels/</code>
 must be a bundle path), and signing an installed web plugin gives the same bundle hash as
-its <code>.rimbundle</code>. A local-process plugin&#39;s <a href="https://github.com/rim-platform/rim-ui/blob/2f8805020c08ca5d8034095788b809b2d03aaeed/sdk/plugin-sdk/package.json"><code>package.json</code></a> asks for <code>npm install</code> only when
+its <code>.rimbundle</code>. A local-process plugin&#39;s <a href="https://github.com/rim-platform/rim-ui/blob/ebf6175e7f425ad0eb9d52f94d66c00f363255ef/sdk/plugin-sdk/package.json"><code>package.json</code></a> asks for <code>npm install</code> only when
 it lists <code>dependencies</code>, <code>optionalDependencies</code> or <code>peerDependencies</code>; a committed,
 self-contained <code>main.mjs</code> with only <code>devDependencies</code> installs without that step.</p>
 <h2 id="working-on-the-sdk">Working on the SDK <a class="anchor" href="#working-on-the-sdk" aria-label="Link to this section">#</a></h2>
 <ul>
-<li><a href="https://github.com/rim-platform/rim-ui/blob/2f8805020c08ca5d8034095788b809b2d03aaeed/sdk/plugin-sdk/src/generated/protocol.ts"><code>src/generated/protocol.ts</code></a> is generated from the schema: run <code>npm run sdk:generate</code>
+<li><a href="https://github.com/rim-platform/rim-ui/blob/ebf6175e7f425ad0eb9d52f94d66c00f363255ef/sdk/plugin-sdk/src/generated/protocol.ts"><code>src/generated/protocol.ts</code></a> is generated from the schema: run <code>npm run sdk:generate</code>
 after the schema changes. A test fails while it is stale.</li>
 <li><code>npm run sdk:build</code> builds the package into <code>dist/</code>: the JavaScript, the type
 declarations and the bundler. The plugins in rim-ui import <code>@rim-platform/plugin-sdk</code>
@@ -409,18 +414,16 @@ the copy there. <a href="release-sdk.html"><code>docs/release-sdk.md</code></a> 
 <li><code>npm test</code> runs the SDK tests, including the template over real stdio, both from
 source and bundled, and over a <code>MessageChannel</code>. The app&#39;s web host runs the
 template&#39;s browser build over a port in its own conformance test
-(<a href="https://github.com/rim-platform/rim-ui/blob/2f8805020c08ca5d8034095788b809b2d03aaeed/src/features/plugins/web/conformance.test.ts"><code>src/features/plugins/web/conformance.test.ts</code></a>). The Rust conformance tests
-(<a href="https://github.com/rim-platform/rim-ui/blob/2f8805020c08ca5d8034095788b809b2d03aaeed/src-tauri/src/plugin_host/protocol/conformance.rs"><code>src-tauri/src/plugin_host/protocol/conformance.rs</code></a>) run the template against the
+(<a href="https://github.com/rim-platform/rim-ui/blob/ebf6175e7f425ad0eb9d52f94d66c00f363255ef/src/features/plugins/web/conformance.test.ts"><code>src/features/plugins/web/conformance.test.ts</code></a>). The Rust conformance tests
+(<a href="https://github.com/rim-platform/rim-ui/blob/ebf6175e7f425ad0eb9d52f94d66c00f363255ef/src-tauri/src/plugin_host/protocol/conformance.rs"><code>src-tauri/src/plugin_host/protocol/conformance.rs</code></a>) run the template against the
 schema and through the host&#39;s own start-up and command path.</li>
 </ul>
 
     </main>
   </div>
-  <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/2f8805020c08ca5d8034095788b809b2d03aaeed/sdk/plugin-sdk/README.md">rim-ui/sdk/plugin-sdk/README.md</a> at <code>2f88050</code></span>
-    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
-  </footer>
 </div>
+<footer class="site-footer container"><span class="footer-brand"><img src="../../assets/rim-mark-inverse.svg" alt="" width="21" height="21"> RIM · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/ebf6175e7f425ad0eb9d52f94d66c00f363255ef/sdk/plugin-sdk/README.md">rim-ui/sdk/plugin-sdk/README.md</a> at <code>ebf6175</code></p>
 <script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
 </body>
 </html>

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="documentation-page">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,31 +7,36 @@
 <meta name="description" content="As a linked device, the web app holds no identity key. It gets a device key of its own by pasting a link code shown on the desktop app (Settings &gt; Security &gt; Link a device), and signs in with that key; linking other …">
 <link rel="icon" href="../../favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;550;600;650;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<meta name="theme-color" content="#050910">
+<link rel="stylesheet" href="../../assets/site-chrome.css">
 <link rel="stylesheet" href="../../assets/site.css">
+<script src="../../assets/site.js" defer></script>
 </head>
 <body>
 <a class="skip" href="#content">Skip to content</a>
-<div class="wrap">
-  <header class="nav">
-    <a class="brand" href="../../index.html" aria-label="RIM home">
-      <picture><source srcset="../../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
-      RIM
-    </a>
-    <nav aria-label="Site">
-      <a href="../../index.html#what">What RIM is</a>
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="../../index.html" aria-label="RIM home"><img src="../../assets/rim-mark-inverse.svg" alt="" width="32" height="32">RIM</a>
+    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-navigation">Menu</button>
+    <nav class="site-nav" id="site-navigation" data-open="false" aria-label="Main navigation">
+      <a href="../../index.html#privacy">Privacy</a>
       <a href="../../index.html#how">How it works</a>
+      <a href="../../index.html#capabilities">Capabilities</a>
+      <a href="../../index.html#community">Community</a>
       <a href="../../index.html#download">Download</a>
-      <a href="../self-hosting.html">Self-host</a>
-      <a href="../../configure/index.html">Configure</a>
-      <a href="../../plugins/index.html">Plugins</a>
-      <a href="../index.html" aria-current="page">Docs</a>
-      <a href="../../api/index.html">API</a>
-      <a href="../../specs/index.html">Specs</a>
-      <a href="../contributing.html">Contribute</a>
-      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+      <a href="getting-started.html">Get started</a>
+      <a href="../index.html" aria-current="location">Docs</a>
     </nav>
-  </header>
+  </div>
+</header>
+<div class="docs-navigation"><nav class="container docs-links" aria-label="Documentation"><span>Documentation</span><a href="../index.html">Overview</a>
+<a href="../self-hosting.html">Self-host</a>
+<a href="../../configure/index.html">Configure</a>
+<a href="../../plugins/index.html">Plugins</a>
+<a href="../../api/index.html">API</a>
+<a href="../../specs/index.html">Specs</a></nav></div>
+<div class="container docs-wrap">
   <div class="crumbs"><a href="../index.html">Docs</a><span aria-hidden="true">/</span><a href="../using-rim.html">Using RIM</a><span aria-hidden="true">/</span><span>The web app as a linked device</span></div>
   <div class="page with-toc">
     <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
@@ -57,13 +62,13 @@ rules — New device&quot;, appendix A) and <code>../rim-server/docs/specs/key-i
 <a href="device-linking-desktop.html"><code>device-linking-desktop.md</code></a> describes the desktop side.</p>
 <h2 id="what-lives-where">What lives where <a class="anchor" href="#what-lives-where" aria-label="Link to this section">#</a></h2>
 <ul>
-<li><a href="https://github.com/rim-platform/rim-ui/blob/2f8805020c08ca5d8034095788b809b2d03aaeed/src/features/key-identity/api/keyBackend.ts"><code>src/features/key-identity/api/keyBackend.ts</code></a>: the <code>KeyBackend</code> interface for the key work of
+<li><a href="https://github.com/rim-platform/rim-ui/blob/ebf6175e7f425ad0eb9d52f94d66c00f363255ef/src/features/key-identity/api/keyBackend.ts"><code>src/features/key-identity/api/keyBackend.ts</code></a>: the <code>KeyBackend</code> interface for the key work of
 signing in and of becoming a new device (list local accounts, default device name, sign a login
 proof, settle, forget, link offer / open answer / accept / end), with the Tauri implementation
 (<code>tauriKeyBackend</code>, the <code>key_identity_*</code> commands) and <code>keyBackend()</code>, which picks the Tauri one
 inside the desktop app and the browser one otherwise. <code>linkNewDevice</code> (<code>deviceLink.ts</code>) and
 <code>signInWithDeviceKey</code> (<code>keyIdentity.ts</code>) are the same code on both platforms.</li>
-<li><a href="https://github.com/rim-platform/rim-ui/tree/2f8805020c08ca5d8034095788b809b2d03aaeed/src/features/key-identity/browser"><code>src/features/key-identity/browser/</code></a>:<ul>
+<li><a href="https://github.com/rim-platform/rim-ui/tree/ebf6175e7f425ad0eb9d52f94d66c00f363255ef/src/features/key-identity/browser"><code>src/features/key-identity/browser/</code></a>:<ul>
 <li><code>bytes.ts</code>: strict unpadded base64url (no padding, no other alphabet, canonical trailing
 bits), base32, SHA-256.</li>
 <li><code>statements.ts</code>: the login proof (statement version 2, fields in the vectors&#39; order, signed
@@ -84,7 +89,7 @@ as the old device.</li>
 <code>audience</code>, the default device name (&quot;Firefox on Linux&quot;).</li>
 </ul>
 </li>
-<li><a href="https://github.com/rim-platform/rim-ui/blob/2f8805020c08ca5d8034095788b809b2d03aaeed/src/core/runtime/ed25519.ts"><code>src/core/runtime/ed25519.ts</code></a>: probes once per page whether the browser can generate a
+<li><a href="https://github.com/rim-platform/rim-ui/blob/ebf6175e7f425ad0eb9d52f94d66c00f363255ef/src/core/runtime/ed25519.ts"><code>src/core/runtime/ed25519.ts</code></a>: probes once per page whether the browser can generate a
 non-extractable Ed25519 key and has IndexedDB. <code>RuntimeProvider</code> exposes the answer as
 <code>deviceKeyStore</code> (<code>checking</code>, <code>browser</code>, <code>unsupported</code>) and turns <code>capabilities.deviceKeys</code> on
 for the web when it is <code>browser</code>. <code>capabilities.identityKeys</code>, on the web also whenever
@@ -194,15 +199,13 @@ its keys.</li>
 </ol>
 <p>The automated tests run the same flow in Vitest against Node&#39;s WebCrypto and <code>fake-indexeddb</code>,
 with the old device simulated from the known-answer keys
-(<a href="https://github.com/rim-platform/rim-ui/blob/2f8805020c08ca5d8034095788b809b2d03aaeed/src/features/key-identity/browser/browserKeyBackend.test.ts"><code>src/features/key-identity/browser/browserKeyBackend.test.ts</code></a>).</p>
+(<a href="https://github.com/rim-platform/rim-ui/blob/ebf6175e7f425ad0eb9d52f94d66c00f363255ef/src/features/key-identity/browser/browserKeyBackend.test.ts"><code>src/features/key-identity/browser/browserKeyBackend.test.ts</code></a>).</p>
 
     </main>
   </div>
-  <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/2f8805020c08ca5d8034095788b809b2d03aaeed/docs/web-linked-device.md">rim-ui/docs/web-linked-device.md</a> at <code>2f88050</code></span>
-    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
-  </footer>
 </div>
+<footer class="site-footer container"><span class="footer-brand"><img src="../../assets/rim-mark-inverse.svg" alt="" width="21" height="21"> RIM · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/ebf6175e7f425ad0eb9d52f94d66c00f363255ef/docs/web-linked-device.md">rim-ui/docs/web-linked-device.md</a> at <code>ebf6175</code></p>
 <script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
 </body>
 </html>

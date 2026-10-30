@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="documentation-page">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,50 +7,55 @@
 <meta name="description" content="The plugin SDK in sdk/plugin-sdk is published to npm as @rim-platform/plugin-sdk. It keeps a version of its own, in sdk/plugin-sdk/package.json, and is released apart from the app: a tag plugin-sdk-v&lt;version&gt; publishes …">
 <link rel="icon" href="../../favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;550;600;650;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<meta name="theme-color" content="#050910">
+<link rel="stylesheet" href="../../assets/site-chrome.css">
 <link rel="stylesheet" href="../../assets/site.css">
+<script src="../../assets/site.js" defer></script>
 </head>
 <body>
 <a class="skip" href="#content">Skip to content</a>
-<div class="wrap">
-  <header class="nav">
-    <a class="brand" href="../../index.html" aria-label="RIM home">
-      <picture><source srcset="../../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
-      RIM
-    </a>
-    <nav aria-label="Site">
-      <a href="../../index.html#what">What RIM is</a>
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="../../index.html" aria-label="RIM home"><img src="../../assets/rim-mark-inverse.svg" alt="" width="32" height="32">RIM</a>
+    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-navigation">Menu</button>
+    <nav class="site-nav" id="site-navigation" data-open="false" aria-label="Main navigation">
+      <a href="../../index.html#privacy">Privacy</a>
       <a href="../../index.html#how">How it works</a>
+      <a href="../../index.html#capabilities">Capabilities</a>
+      <a href="../../index.html#community">Community</a>
       <a href="../../index.html#download">Download</a>
-      <a href="../self-hosting.html">Self-host</a>
-      <a href="../../configure/index.html">Configure</a>
-      <a href="../../plugins/index.html">Plugins</a>
-      <a href="../index.html" aria-current="page">Docs</a>
-      <a href="../../api/index.html">API</a>
-      <a href="../../specs/index.html">Specs</a>
-      <a href="../contributing.html">Contribute</a>
-      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+      <a href="getting-started.html">Get started</a>
+      <a href="../index.html" aria-current="location">Docs</a>
     </nav>
-  </header>
+  </div>
+</header>
+<div class="docs-navigation"><nav class="container docs-links" aria-label="Documentation"><span>Documentation</span><a href="../index.html">Overview</a>
+<a href="../self-hosting.html">Self-host</a>
+<a href="../../configure/index.html">Configure</a>
+<a href="../../plugins/index.html">Plugins</a>
+<a href="../../api/index.html">API</a>
+<a href="../../specs/index.html">Specs</a></nav></div>
+<div class="container docs-wrap">
   <div class="crumbs"><a href="../index.html">Docs</a><span aria-hidden="true">/</span><a href="../plugin-authors.html">Plugin authors</a><span aria-hidden="true">/</span><span>Publishing the plugin SDK</span></div>
   <div class="page">
 
     <main id="content" class="prose">
 <h1 id="publishing-the-plugin-sdk">Publishing the plugin SDK</h1>
-<p>The plugin SDK in <a href="https://github.com/rim-platform/rim-ui/tree/2f8805020c08ca5d8034095788b809b2d03aaeed/sdk/plugin-sdk"><code>sdk/plugin-sdk</code></a> is published to npm as <code>@rim-platform/plugin-sdk</code>. It keeps a
-version of its own, in <a href="https://github.com/rim-platform/rim-ui/blob/2f8805020c08ca5d8034095788b809b2d03aaeed/sdk/plugin-sdk/package.json"><code>sdk/plugin-sdk/package.json</code></a>, and is released apart from the app: a tag
+<p>The plugin SDK in <a href="https://github.com/rim-platform/rim-ui/tree/ebf6175e7f425ad0eb9d52f94d66c00f363255ef/sdk/plugin-sdk"><code>sdk/plugin-sdk</code></a> is published to npm as <code>@rim-platform/plugin-sdk</code>. It keeps a
+version of its own, in <a href="https://github.com/rim-platform/rim-ui/blob/ebf6175e7f425ad0eb9d52f94d66c00f363255ef/sdk/plugin-sdk/package.json"><code>sdk/plugin-sdk/package.json</code></a>, and is released apart from the app: a tag
 <code>plugin-sdk-v&lt;version&gt;</code> publishes the SDK, and an app tag <code>v&lt;version&gt;</code> publishes no SDK.</p>
 <h2 id="what-a-release-does">What a release does <a class="anchor" href="#what-a-release-does" aria-label="Link to this section">#</a></h2>
 <p>The tag <code>plugin-sdk-v&lt;version&gt;</code> starts <code>.github/workflows/sdk-release.yaml</code>. Its one job runs in
 the <code>npm</code> environment and waits for the maintainer&#39;s approval. It:</p>
 <ol>
-<li>fails when the tag does not name the version in <a href="https://github.com/rim-platform/rim-ui/blob/2f8805020c08ca5d8034095788b809b2d03aaeed/sdk/plugin-sdk/package.json"><code>sdk/plugin-sdk/package.json</code></a>, when that
+<li>fails when the tag does not name the version in <a href="https://github.com/rim-platform/rim-ui/blob/ebf6175e7f425ad0eb9d52f94d66c00f363255ef/sdk/plugin-sdk/package.json"><code>sdk/plugin-sdk/package.json</code></a>, when that
 version is not <code>&lt;major&gt;.&lt;minor&gt;.&lt;patch&gt;[-&lt;pre-release&gt;]</code>, or when the tagged commit is not on
 <code>master</code>;</li>
 <li>publishes nothing, with a notice, when npm already has that version;</li>
 <li>otherwise builds the SDK, runs <code>npm run sdk:smoke</code> (the tarball installed into a copy of the
 template plugin outside the repository), and runs <code>npm publish --provenance --access public</code>
-from <a href="https://github.com/rim-platform/rim-ui/tree/2f8805020c08ca5d8034095788b809b2d03aaeed/sdk/plugin-sdk"><code>sdk/plugin-sdk</code></a>. A pre-release version goes out under the dist-tag <code>next</code>, so
+from <a href="https://github.com/rim-platform/rim-ui/tree/ebf6175e7f425ad0eb9d52f94d66c00f363255ef/sdk/plugin-sdk"><code>sdk/plugin-sdk</code></a>. A pre-release version goes out under the dist-tag <code>next</code>, so
 <code>npm install</code> keeps the last release.</li>
 </ol>
 <p>The job holds no npm token: npm trusts this workflow as the package&#39;s publisher (trusted
@@ -60,11 +65,11 @@ failed publish is retried with &quot;Re-run failed jobs&quot; on the run&#39;s p
 <ol>
 <li><p>In a pull request, set the version:</p>
 <pre><code class="language-sh">npm version &lt;version&gt; --workspace sdk/plugin-sdk --no-git-tag-version</code></pre>
-<p>This writes <a href="https://github.com/rim-platform/rim-ui/blob/2f8805020c08ca5d8034095788b809b2d03aaeed/sdk/plugin-sdk/package.json"><code>sdk/plugin-sdk/package.json</code></a> and the workspace&#39;s entry in <a href="https://github.com/rim-platform/rim-ui/blob/2f8805020c08ca5d8034095788b809b2d03aaeed/package-lock.json"><code>package-lock.json</code></a>.
+<p>This writes <a href="https://github.com/rim-platform/rim-ui/blob/ebf6175e7f425ad0eb9d52f94d66c00f363255ef/sdk/plugin-sdk/package.json"><code>sdk/plugin-sdk/package.json</code></a> and the workspace&#39;s entry in <a href="https://github.com/rim-platform/rim-ui/blob/ebf6175e7f425ad0eb9d52f94d66c00f363255ef/package-lock.json"><code>package-lock.json</code></a>.
 The SDK follows semantic versioning on its own: a change a plugin has to adapt to is a new
 major version (a new minor one while it is <code>0.x</code>).</p>
 </li>
-<li><p>Add the <a href="https://github.com/rim-platform/rim-ui/blob/2f8805020c08ca5d8034095788b809b2d03aaeed/CHANGELOG.md"><code>CHANGELOG.md</code></a> lines naming the changed functions or types.</p>
+<li><p>Add the <a href="https://github.com/rim-platform/rim-ui/blob/ebf6175e7f425ad0eb9d52f94d66c00f363255ef/CHANGELOG.md"><code>CHANGELOG.md</code></a> lines naming the changed functions or types.</p>
 </li>
 <li><p>Once the pull request is merged, tag the merge on <code>master</code> and push the tag:</p>
 <pre><code class="language-sh">git switch master &amp;&amp; git pull
@@ -122,7 +127,7 @@ before packing.</p>
 disallow tokens. The workflow still publishes; a leaked token cannot.</p>
 </li>
 <li><p>On GitHub, the <code>npm</code> environment and the ruleset on <code>plugin-sdk-v*</code> tags that
-<a href="https://github.com/rim-platform/rim-ui/blob/2f8805020c08ca5d8034095788b809b2d03aaeed/CONTRIBUTING.md"><code>CONTRIBUTING.md</code></a> lists under Repository settings.</p>
+<a href="https://github.com/rim-platform/rim-ui/blob/ebf6175e7f425ad0eb9d52f94d66c00f363255ef/CONTRIBUTING.md"><code>CONTRIBUTING.md</code></a> lists under Repository settings.</p>
 </li>
 </ol>
 <p>A run whose workflow file or environment npm does not trust fails at <code>npm publish</code> with a 404
@@ -130,11 +135,9 @@ or an authentication error and publishes nothing; fix the Trusted Publisher entr
 
     </main>
   </div>
-  <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/2f8805020c08ca5d8034095788b809b2d03aaeed/docs/release-sdk.md">rim-ui/docs/release-sdk.md</a> at <code>2f88050</code></span>
-    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
-  </footer>
 </div>
+<footer class="site-footer container"><span class="footer-brand"><img src="../../assets/rim-mark-inverse.svg" alt="" width="21" height="21"> RIM · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/ebf6175e7f425ad0eb9d52f94d66c00f363255ef/docs/release-sdk.md">rim-ui/docs/release-sdk.md</a> at <code>ebf6175</code></p>
 
 </body>
 </html>

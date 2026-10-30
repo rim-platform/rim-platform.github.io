@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="documentation-page">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,31 +7,36 @@
 <meta name="description" content="A plugin adds commands, panels and keybinds to RIM. This page is for the person using the app: what a plugin can do, the official plugins, and how to install, use, trust and remove one. How the client hosts plugins is …">
 <link rel="icon" href="../favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;550;600;650;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<meta name="theme-color" content="#050910">
+<link rel="stylesheet" href="../assets/site-chrome.css">
 <link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/site.js" defer></script>
 </head>
 <body>
 <a class="skip" href="#content">Skip to content</a>
-<div class="wrap">
-  <header class="nav">
-    <a class="brand" href="../index.html" aria-label="RIM home">
-      <picture><source srcset="../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
-      RIM
-    </a>
-    <nav aria-label="Site">
-      <a href="../index.html#what">What RIM is</a>
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="../index.html" aria-label="RIM home"><img src="../assets/rim-mark-inverse.svg" alt="" width="32" height="32">RIM</a>
+    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-navigation">Menu</button>
+    <nav class="site-nav" id="site-navigation" data-open="false" aria-label="Main navigation">
+      <a href="../index.html#privacy">Privacy</a>
       <a href="../index.html#how">How it works</a>
+      <a href="../index.html#capabilities">Capabilities</a>
+      <a href="../index.html#community">Community</a>
       <a href="../index.html#download">Download</a>
-      <a href="../docs/self-hosting.html">Self-host</a>
-      <a href="../configure/index.html">Configure</a>
-      <a href="index.html" aria-current="page">Plugins</a>
-      <a href="../docs/index.html">Docs</a>
-      <a href="../api/index.html">API</a>
-      <a href="../specs/index.html">Specs</a>
-      <a href="../docs/contributing.html">Contribute</a>
-      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+      <a href="../docs/client/getting-started.html">Get started</a>
+      <a href="../docs/index.html" aria-current="location">Docs</a>
     </nav>
-  </header>
+  </div>
+</header>
+<div class="docs-navigation"><nav class="container docs-links" aria-label="Documentation"><span>Documentation</span><a href="../docs/index.html">Overview</a>
+<a href="../docs/self-hosting.html">Self-host</a>
+<a href="../configure/index.html">Configure</a>
+<a href="index.html" aria-current="page">Plugins</a>
+<a href="../api/index.html">API</a>
+<a href="../specs/index.html">Specs</a></nav></div>
+<div class="container docs-wrap">
   <div class="crumbs"><a href="../docs/index.html">Docs</a><span aria-hidden="true">/</span><a href="../docs/using-rim.html">Using RIM</a><span aria-hidden="true">/</span><span>Plugins</span></div>
   <div class="page with-toc">
     <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
@@ -105,7 +110,7 @@ README lists the plugin&#39;s commands and the ways to install it.</p>
 </tr>
 <tr>
 <td>GitHub Pull Requests</td>
-<td>Lists the open pull requests of up to 10 public GitHub repositories</td>
+<td>Lists the open pull requests of up to 10 GitHub repositories; public repositories without a token</td>
 <td>Sandboxed</td>
 <td><code>ui.panel</code>, <code>network.fetch</code> for <code>api.github.com</code> and <code>avatars.githubusercontent.com</code></td>
 <td><a href="https://github.com/rim-platform/plugin-github-prs">plugin-github-prs</a></td>
@@ -119,7 +124,7 @@ README lists the plugin&#39;s commands and the ways to install it.</p>
 </tr>
 <tr>
 <td>Releases</td>
-<td>Watches the GitHub releases of up to 10 public repositories and posts them into a conversation when asked</td>
+<td>Watches GitHub releases and posts one into an unencrypted conversation when asked</td>
 <td>Sandboxed</td>
 <td><code>ui.panel</code>, <code>network.fetch</code> for <code>api.github.com</code>, <code>chat.write</code></td>
 <td><a href="https://github.com/rim-platform/plugin-releases">plugin-releases</a></td>
@@ -129,12 +134,17 @@ README lists the plugin&#39;s commands and the ways to install it.</p>
 <li><strong>Poll</strong> needs the two encrypted permissions to work in encrypted DMs and groups; without them
 it works in plaintext channels only. On the web it reads messages only in a browser set up as
 a <a href="../docs/client/web-linked-device.html">linked device</a>.</li>
-<li><strong>GitHub Pull Requests</strong> and <strong>Releases</strong> use no token, so they see public repositories only.
-GitHub allows 60 requests an hour per IP address without one.</li>
+<li><strong>GitHub Pull Requests</strong> and <strong>Releases</strong> can use an optional GitHub token on desktop, kept
+in the secret vault. Without one, including in the web app, they see public repositories only
+and share GitHub’s unauthenticated rate limit. Pull Requests can read selected private
+repositories when its token permits it; their titles and authors appear in the panel. For
+Releases, use a public-only token: posting a release shares its details with everyone in the
+conversation. Each plugin’s README explains the token permissions.</li>
 <li><strong>Kubernetes Pods</strong> needs the desktop app, Node.js 22 or newer and <code>kubectl</code>, which it runs
 with your own kubeconfig. Four of its commands can be called by the AI agent once approved in
-Settings → Plugin AI; <strong>Pods: Restart pod</strong> is dangerous, so it runs only after you confirm,
-also when the agent asks for it. It suggests <kbd>Ctrl+Alt+P</kbd> for <strong>Pods: Refresh</strong>.</li>
+Settings → Plugin AI; <strong>Pods: Restart pod</strong> is dangerous, so the agent can only propose it.
+Run it manually from the plugin and confirm that run. It suggests <kbd>Ctrl+Alt+P</kbd> for
+<strong>Pods: Refresh</strong>.</li>
 </ul>
 <h2 id="installing">Installing <a class="anchor" href="#installing" aria-label="Link to this section">#</a></h2>
 <p>Settings → Plugins has three install buttons.</p>
@@ -444,11 +454,9 @@ permissions, data, settings and files. To use it again, install it again.</li>
 
     </main>
   </div>
-  <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/2f8805020c08ca5d8034095788b809b2d03aaeed/docs/plugins.md">rim-ui/docs/plugins.md</a> at <code>2f88050</code></span>
-    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
-  </footer>
 </div>
+<footer class="site-footer container"><span class="footer-brand"><img src="../assets/rim-mark-inverse.svg" alt="" width="21" height="21"> RIM · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/ebf6175e7f425ad0eb9d52f94d66c00f363255ef/docs/plugins.md">rim-ui/docs/plugins.md</a> at <code>ebf6175</code></p>
 <script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
 </body>
 </html>

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="documentation-page">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,31 +7,36 @@
 <meta name="description" content="This document describes the backend contract for conversations, messages, threads, and attachments.">
 <link rel="icon" href="../favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;550;600;650;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<meta name="theme-color" content="#050910">
+<link rel="stylesheet" href="../assets/site-chrome.css">
 <link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/site.js" defer></script>
 </head>
 <body>
 <a class="skip" href="#content">Skip to content</a>
-<div class="wrap">
-  <header class="nav">
-    <a class="brand" href="../index.html" aria-label="RIM home">
-      <picture><source srcset="../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
-      RIM
-    </a>
-    <nav aria-label="Site">
-      <a href="../index.html#what">What RIM is</a>
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="../index.html" aria-label="RIM home"><img src="../assets/rim-mark-inverse.svg" alt="" width="32" height="32">RIM</a>
+    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-navigation">Menu</button>
+    <nav class="site-nav" id="site-navigation" data-open="false" aria-label="Main navigation">
+      <a href="../index.html#privacy">Privacy</a>
       <a href="../index.html#how">How it works</a>
+      <a href="../index.html#capabilities">Capabilities</a>
+      <a href="../index.html#community">Community</a>
       <a href="../index.html#download">Download</a>
-      <a href="self-hosting.html">Self-host</a>
-      <a href="../configure/index.html">Configure</a>
-      <a href="../plugins/index.html">Plugins</a>
-      <a href="index.html" aria-current="page">Docs</a>
-      <a href="../api/index.html">API</a>
-      <a href="../specs/index.html">Specs</a>
-      <a href="contributing.html">Contribute</a>
-      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+      <a href="client/getting-started.html">Get started</a>
+      <a href="index.html" aria-current="location">Docs</a>
     </nav>
-  </header>
+  </div>
+</header>
+<div class="docs-navigation"><nav class="container docs-links" aria-label="Documentation"><span>Documentation</span><a href="index.html">Overview</a>
+<a href="self-hosting.html">Self-host</a>
+<a href="../configure/index.html">Configure</a>
+<a href="../plugins/index.html">Plugins</a>
+<a href="../api/index.html">API</a>
+<a href="../specs/index.html">Specs</a></nav></div>
+<div class="container docs-wrap">
   <div class="crumbs"><a href="index.html">Docs</a><span aria-hidden="true">/</span><a href="client-authors.html">Client authors</a><span aria-hidden="true">/</span><span>Messaging Contract</span></div>
   <div class="page with-toc">
     <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
@@ -41,7 +46,7 @@
 <li><a href="#channel-visibility-and-membership">Channel Visibility And Membership</a></li>
 <li><a href="#who-may-start-a-dm">Who May Start A DM</a></li>
 <li><a href="#archived-channels">Archived Channels</a></li>
-<li><a href="#roles-and-moderation">Roles And Moderation</a><ol><li><a href="#roles">Roles</a></li><li><a href="#workspace-invites">Workspace invites</a></li><li><a href="#public-join-link-and-join-requests">Public join link and join requests</a></li><li><a href="#guest-restrictions-enforced-in-the-services">Guest restrictions (enforced in the services)</a></li><li><a href="#kick-ban-timeout">Kick, ban, timeout</a></li><li><a href="#slow-mode">Slow mode</a></li><li><a href="#posting-permissions">Posting permissions</a></li><li><a href="#deleting-messages">Deleting messages</a></li><li><a href="#reports">Reports</a></li><li><a href="#audit">Audit</a></li><li><a href="#realtime-events">Realtime events</a></li></ol></li>
+<li><a href="#roles-and-moderation">Roles And Moderation</a><ol><li><a href="#roles">Roles</a></li><li><a href="#workspace-invites">Workspace invites</a></li><li><a href="#public-join-link-and-join-requests">Public join link and join requests</a></li><li><a href="#guest-restrictions-enforced-in-the-services">Guest restrictions (enforced in the services)</a></li><li><a href="#kick-ban-timeout">Kick, ban, timeout</a></li><li><a href="#slow-mode">Slow mode</a></li><li><a href="#posting-permissions">Posting permissions</a></li><li><a href="#deleting-messages">Deleting messages</a></li><li><a href="#flagged-messages">Flagged messages</a></li><li><a href="#reports">Reports</a></li><li><a href="#audit">Audit</a></li><li><a href="#realtime-events">Realtime events</a></li></ol></li>
 <li><a href="#reactions">Reactions</a></li>
 <li><a href="#notification-rules">Notification Rules</a><ol><li><a href="#settings">Settings</a></li><li><a href="#the-decision-per-member-except-the-author">The decision, per member except the author</a></li><li><a href="#reactions-1">Reactions</a></li><li><a href="#inbox">Inbox</a></li><li><a href="#notificationdue-event">NotificationDue event</a></li></ol></li>
 <li><a href="#titles">Titles</a></li>
@@ -496,9 +501,10 @@ events do not reach the guest.</li>
 <li>Inside a conversation they belong to, a guest can do everything a member can.</li>
 </ul>
 <h3 id="kick-ban-timeout">Kick, ban, timeout <a class="anchor" href="#kick-ban-timeout" aria-label="Link to this section">#</a></h3>
-<p>Who may target whom (kick, ban, timeout, clear timeout): the actor must be Owner or Moderator;
-nobody can target the Owner; a Moderator cannot target another Moderator; nobody targets
-themselves (<code>VALIDATION</code>). Otherwise <code>FORBIDDEN</code>.</p>
+<p>Who may target whom (kick, ban, timeout, clear timeout, deleting a person&#39;s messages): the actor
+must be Owner or Moderator; nobody can target the Owner; a Moderator cannot target another
+Moderator; nobody targets themselves (<code>VALIDATION</code>). Otherwise <code>FORBIDDEN</code>. A person who is no
+longer a member may be targeted by the Owner or any Moderator (a ban, deleting their messages).</p>
 <ul>
 <li><code>kickMember</code>: removes the member from the workspace and from every conversation of it, deletes
 their macros and pipelines there, emits <code>MemberLeft</code>. They can re-join with a new invite.</li>
@@ -613,6 +619,56 @@ an attachment is not checked; the message that carries it is.</p>
 conversation (a moderator outside a private channel gets <code>NOT_FOUND</code>, like any read). A
 moderator delete writes an <code>admin.delete_message</code> audit row with the message id and author (no
 text). <code>MessageDeleted</code> is unchanged.</p>
+<p><code>deleteMemberMessages</code> deletes one person&#39;s messages in the workspace&#39;s channels at once, for
+the Owner or a Moderator under the targeting rules above; the person need not be a member any
+more. It reaches timeline messages and thread replies in channels, never DMs, groups, the direct
+space, encrypted messages or conversations, or archived channels. <code>memberMessageCounts</code> first
+tells the caller how many it would reach, split into channels the caller reads (public channels
+and private channels the caller is a member of) and private channels the caller is not in, as
+numbers only: the names of those channels are not shown. <code>includeUnjoinedPrivate</code> decides
+whether the latter are touched. <code>since</code> limits both to messages sent at or after it (null: all of
+them). One call deletes at most 1,000 messages, newest first channel by channel, and answers
+<code>hasMore</code> while matching messages remain; the client calls again until it is false. Each message
+gets the same tombstone as <code>deleteMessage</code>: it reads as deleted, its unread notifications go,
+and its pins, reactions, attachments, reports and flag stay hidden behind the deleted message. Each
+channel gets one <code>MessagesDeleted</code> event instead of a <code>MessageDeleted</code> per message, and no
+<code>MESSAGE_DELETED</code> pipeline runs for a bulk delete.</p>
+<h3 id="flagged-messages">Flagged messages <a class="anchor" href="#flagged-messages" aria-label="Link to this section">#</a></h3>
+<p>The server checks the messages it can read for sexual text art (drawings made of braille,
+block, box-drawing or ASCII characters), and flags those that score high.</p>
+<ul>
+<li><strong>What is checked.</strong> A message of a workspace whose text the server stores: never an encrypted
+message (the server cannot read it), never a message of the direct space (DMs and groups), and
+only text that holds an art block. The art block is the longest run of text art lines in the
+message (the first when two are equally long). A line is text art when it has at least 8
+non-whitespace characters and fewer than half of them are letters or digits; blank lines and
+short lines of symbols (fewer than 8 characters, like <code>||</code>) stay inside a run, and a line of
+mostly letters or digits ends it. A run counts when it has at least 6 non-blank lines and
+at least 120 non-whitespace characters. Code, logs and prose are mostly letters and are not
+checked; a picture inside a longer message is found and the words around it are ignored.</li>
+<li><strong>When.</strong> After the message is stored, whatever stored it: <code>sendMessage</code>, a command, a
+forward, or a request forwarded from another server. Sending never waits for the check. An
+edit is checked again.</li>
+<li><strong>How.</strong> Only the art block is sent to the image check service the operator runs next to the
+server (<a href="self-hosting.html"><code>docs/self-hosting.md</code></a>, &quot;Content check&quot;), which scores how sexual it looks from 0 to<ol>
+<li>At or above <code>RIM_TEXT_ART_CHECK_FLAG</code> (0.60) the message is flagged.</li>
+</ol>
+</li>
+<li><strong>What a flag does.</strong> <code>Message.flagged</code> is true; clients cover the message until the reader
+chooses to show it. <code>MessageFlagChanged</code> reaches the conversation&#39;s readers. The workspace&#39;s
+Owner and Moderators get an automatic report (see &quot;Reports&quot;), and the instance operators an
+abuse report (<a href="operations/relay-public.html"><code>docs/operations/relay-public.md</code></a>). Nothing is refused or deleted. A message
+that was flagged once keeps its first flag time until the flag is cleared.</li>
+<li><strong>Clearing.</strong> <code>clearMessageFlag(serverId, conversationId, messageId)</code>: Owner/Moderator
+(<code>FORBIDDEN</code> otherwise; <code>NOT_FOUND</code> for a conversation outside the workspace or a message
+outside the conversation). It answers <code>true</code>, and clearing a message that is not flagged
+succeeds too. An edit that is no longer text art, or scores below the threshold, clears the
+flag as well. Clearing leaves the reports as they are.</li>
+<li><strong>Fail open.</strong> When the service is unavailable, slow or busy, the message stays unflagged and
+the server logs a warning; it is not checked again until it is edited. <code>text_art_check</code> in
+<code>RIM_FEATURES_DISABLED</code>, or no image check service, turns the check off.</li>
+<li>A deleted message reads as not flagged.</li>
+</ul>
 <h3 id="reports">Reports <a class="anchor" href="#reports" aria-label="Link to this section">#</a></h3>
 <ul>
 <li><code>reportMessage(serverId, conversationId, messageId, reason)</code>: any member who can read the
@@ -627,6 +683,10 @@ conversation (<code>messageReadable</code>); for a private channel they are not 
 reporter&#39;s reason are shown.</li>
 <li><code>resolveReport(serverId, reportId, outcome: RESOLVED | DISMISSED)</code>: Owner/Moderator; a report
 that is no longer open is <code>CONFLICT</code>.</li>
+<li>The automatic text art check (see &quot;Flagged messages&quot;) files a report when it flags a message:
+at most one per message, beside any member&#39;s reports, with a null <code>reporterUserId</code>,
+<code>automatic: true</code> and the reason <code>automatic text art check: sexual 0.80</code> (the score, two
+decimals). Moderators list and resolve it like any other.</li>
 <li>The direct space has no Owner or Moderator: everyone there is a guest. Its reports (of DMs and
 groups) go to the instance operators instead (<a href="api.html"><code>docs/api.md</code></a>, &quot;Instance moderation&quot;):
 <code>messageReports</code>, <code>messageReport</code> and <code>resolveReport</code> with the direct space&#39;s id
@@ -646,8 +706,11 @@ change or slow mode.</li>
 shared helper, whether it came from GraphQL or a command: <code>admin.set_member_role</code>, <code>admin.kick</code>,
 <code>admin.ban</code>, <code>admin.unban</code>, <code>admin.timeout</code>, <code>admin.clear_timeout</code>, <code>chat.set_slow_mode</code>,
 <code>chat.set_channel_posting</code>, <code>chat.report_message</code>, <code>admin.resolve_report</code>,
-<code>admin.delete_message</code>. Arguments hold ids and
-flags only, never reasons or message text. An action run as a command also gets the generic
+<code>admin.delete_message</code>, <code>admin.clear_message_flag</code> (only when a flag was cleared),
+<code>admin.delete_member_messages</code> (only when at least one message was deleted; with <code>user_id</code>,
+<code>since</code>, <code>include_unjoined_private</code>, the <code>deleted</code> and <code>channels</code> counts, <code>has_more</code>,
+<code>was_member</code> and <code>complete</code>, false when an error stopped the call part way). Arguments hold ids
+and flags only, never reasons or message text. An action run as a command also gets the generic
 command-execution row. Refused actions are not audited by the helper.</p>
 <p>The public link writes rows with initiator <code>public_link</code>: <code>public_link.enabled</code>,
 <code>public_link.disabled</code>, <code>public_link.reissued</code> and <code>public_link.settings_changed</code> (the Owner&#39;s
@@ -657,6 +720,9 @@ changes, with the mode, role and <code>allow_remote</code>), <code>join_request.
 joiner&#39;s row, with the role and the accepted request&#39;s id). Never the token.</p>
 <p>A member&#39;s own workspace actions write rows with initiator <code>workspace</code>: <code>workspace.leave</code> (with
 the role they left) and <code>workspace.rename</code> (the Owner&#39;s; no name text).</p>
+<p>The automatic text art check writes <code>target: &quot;audit&quot;</code> log lines, not rows: <code>message.flagged</code>
+(message, conversation, workspace, author and score) and <code>message.flag_cleared</code> with
+<code>by = &quot;check&quot;</code> when an edit clears a flag.</p>
 <h3 id="realtime-events">Realtime events <a class="anchor" href="#realtime-events" aria-label="Link to this section">#</a></h3>
 <p>Two new <code>WorkspaceEvent</code> variants (snake_case fields, like every other variant):</p>
 <ul>
@@ -671,6 +737,13 @@ is <code>owner</code>, <code>moderator</code>, <code>member</code> or <code>gues
 own role changes to or from <code>guest</code> gets the matching visibility from the next event on.</li>
 <li><code>{&quot;type&quot;: &quot;WorkspaceUpdated&quot;, &quot;workspace_id&quot;: &quot;…&quot;, &quot;name&quot;: &quot;…&quot;}</code>: the workspace was renamed.
 Delivered to every member, guests included.</li>
+<li><code>{&quot;type&quot;: &quot;MessageFlagChanged&quot;, &quot;workspace_id&quot;: &quot;…&quot;, &quot;conversation_id&quot;: &quot;…&quot;, &quot;message_id&quot;: &quot;…&quot;, &quot;flagged&quot;: true}</code>: the automatic text art check flagged a message (<code>true</code>), or an
+Owner, a Moderator or a later check cleared its flag (<code>false</code>). Delivered to everyone who
+reads the conversation, like the message events: a private channel&#39;s to its members only.</li>
+<li><code>{&quot;type&quot;: &quot;MessagesDeleted&quot;, &quot;workspace_id&quot;: &quot;…&quot;, &quot;conversation_id&quot;: &quot;…&quot;, &quot;conversation_type&quot;: &quot;Channel&quot;, &quot;message_ids&quot;: [&quot;…&quot;], &quot;thread_ids&quot;: [&quot;…&quot;]}</code>: <code>deleteMemberMessages</code> deleted these
+messages of one channel; <code>thread_ids</code> are the distinct threads of the deleted replies. Same
+visibility as <code>MessageDeleted</code>. A client marks the messages deleted and refreshes the counts of
+the threads named.</li>
 </ul>
 <p>Join requests:</p>
 <ul>
@@ -910,11 +983,9 @@ and the next query, without a scheduled event.</p>
 
     </main>
   </div>
-  <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/a6da5ec1039b957adaf7fe6d8662da873c02c445/docs/messaging.md">rim-server/docs/messaging.md</a> at <code>a6da5ec</code></span>
-    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
-  </footer>
 </div>
+<footer class="site-footer container"><span class="footer-brand"><img src="../assets/rim-mark-inverse.svg" alt="" width="21" height="21"> RIM · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-server/blob/5e070440da6038995ae225231281f2525b4addef/docs/messaging.md">rim-server/docs/messaging.md</a> at <code>5e07044</code></p>
 <script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
 </body>
 </html>

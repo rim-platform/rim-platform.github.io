@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="documentation-page">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,31 +7,36 @@
 <meta name="description" content="The change feed lets a client ask &quot;what changed in these channels since I last synced&quot; and get every message created, edited or deleted since then, in order, with a cursor it can store. It is the server half of the …">
 <link rel="icon" href="../favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;550;600;650;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<meta name="theme-color" content="#050910">
+<link rel="stylesheet" href="../assets/site-chrome.css">
 <link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/site.js" defer></script>
 </head>
 <body>
 <a class="skip" href="#content">Skip to content</a>
-<div class="wrap">
-  <header class="nav">
-    <a class="brand" href="../index.html" aria-label="RIM home">
-      <picture><source srcset="../assets/rim-mark.svg" media="(prefers-color-scheme: light)"><img src="../assets/rim-mark-inverse.svg" alt="" width="28" height="28"></picture>
-      RIM
-    </a>
-    <nav aria-label="Site">
-      <a href="../index.html#what">What RIM is</a>
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="../index.html" aria-label="RIM home"><img src="../assets/rim-mark-inverse.svg" alt="" width="32" height="32">RIM</a>
+    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-navigation">Menu</button>
+    <nav class="site-nav" id="site-navigation" data-open="false" aria-label="Main navigation">
+      <a href="../index.html#privacy">Privacy</a>
       <a href="../index.html#how">How it works</a>
+      <a href="../index.html#capabilities">Capabilities</a>
+      <a href="../index.html#community">Community</a>
       <a href="../index.html#download">Download</a>
-      <a href="self-hosting.html">Self-host</a>
-      <a href="../configure/index.html">Configure</a>
-      <a href="../plugins/index.html">Plugins</a>
-      <a href="index.html" aria-current="page">Docs</a>
-      <a href="../api/index.html">API</a>
-      <a href="../specs/index.html">Specs</a>
-      <a href="contributing.html">Contribute</a>
-      <a href="https://github.com/rim-platform" rel="noopener">GitHub</a>
+      <a href="client/getting-started.html">Get started</a>
+      <a href="index.html" aria-current="location">Docs</a>
     </nav>
-  </header>
+  </div>
+</header>
+<div class="docs-navigation"><nav class="container docs-links" aria-label="Documentation"><span>Documentation</span><a href="index.html">Overview</a>
+<a href="self-hosting.html">Self-host</a>
+<a href="../configure/index.html">Configure</a>
+<a href="../plugins/index.html">Plugins</a>
+<a href="../api/index.html">API</a>
+<a href="../specs/index.html">Specs</a></nav></div>
+<div class="container docs-wrap">
   <div class="crumbs"><a href="index.html">Docs</a><span aria-hidden="true">/</span><a href="client-authors.html">Client authors</a><span aria-hidden="true">/</span><span>Message Change Feed</span></div>
   <div class="page with-toc">
     <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
@@ -122,10 +127,11 @@ are assigned&quot;.</li>
 (<code>hasMore</code>), oldest first.</li>
 </ul>
 <h2 id="what-the-feed-does-not-carry">What the feed does not carry <a class="anchor" href="#what-the-feed-does-not-carry" aria-label="Link to this section">#</a></h2>
-<p>Message creation, text edits, soft delete, <code>hasAttachments</code> and attachment lifecycle writes
-(creation, upload completion, finalization, failure and deletion) bump a version. An attachment
-change advances its parent message even when <code>hasAttachments</code> stays true; it does not set
-<code>editedAt</code>. Reactions, pins, mentions, link previews, a message becoming a thread root
+<p>Message creation, text edits, soft delete, <code>hasAttachments</code>, a change of <code>flagged</code> (the
+automatic text art check flagging the message, or its flag being cleared) and attachment
+lifecycle writes (creation, upload completion, finalization, failure and deletion) bump a
+version. An attachment change advances its parent message even when <code>hasAttachments</code> stays
+true, and a flag change is not an edit either; neither sets <code>editedAt</code>. Reactions, pins, mentions, link previews, a message becoming a thread root
 (<code>rootThreadId</code>) and its thread&#39;s reply count (<code>threadReplyCount</code>) do not; those stay on their
 own queries and real-time events.</p>
 <h2 id="real-time-events">Real-time events <a class="anchor" href="#real-time-events" aria-label="Link to this section">#</a></h2>
@@ -133,12 +139,16 @@ own queries and real-time events.</p>
 events carry no <code>version</code>. A client cache treats an event as a hint: it may show the message
 right away, and it then calls <code>messageChanges</code> with the conversation&#39;s stored cursor to record
 the change at its version. A client that reconnects after a gap does the same for every cached
-conversation, so a missed event never leaves the cache behind.</p>
+conversation, so a missed event never leaves the cache behind. A bulk delete
+(<code>deleteMemberMessages</code>) sends one <code>MessagesDeleted</code> per conversation instead of one
+<code>MessageDeleted</code> per message, a hint like the others: each deleted message is in the feed at its
+new version.</p>
 <h2 id="how-versions-are-assigned">How versions are assigned <a class="anchor" href="#how-versions-are-assigned" aria-label="Link to this section">#</a></h2>
 <p>Migration <code>m20261008_211159_add_message_change_feed</code> adds <code>message.version</code>,
 <code>message.edited_at</code> and a <code>message_change_seq</code> table holding one counter per conversation. A
 database trigger runs before every insert into <code>message</code>, and before every update that changes
-<code>text</code>, <code>is_deleted</code> or <code>has_attachments</code>. It upserts the conversation&#39;s counter row and writes
+<code>text</code>, <code>is_deleted</code>, <code>has_attachments</code>, the ciphertext of an encrypted message or <code>flagged_at</code>
+(migration <code>m20261029_084741_add_message_flag</code>). It upserts the conversation&#39;s counter row and writes
 the new value to <code>version</code>; on a text change it also sets <code>edited_at</code>. Because this lives in the
 database, every write path (send, reply, forward, edit, delete, attachments, and any added later)
 feeds the change log without service code. Attachment repository writes lock the parent message
@@ -148,7 +158,9 @@ That covers attachment metadata and upload status changes without requiring a te
 conversation waits, then takes the next number; after a rollback the number is reused. So a
 reader cannot see version N+1 while N is still uncommitted, which is what makes &quot;store the last
 cursor&quot; safe. A global sequence would not give this: it hands out numbers at insert time, so a
-later number can commit and become visible first.</p>
+later number can commit and become visible first. A bulk delete changes one conversation per
+statement, each committed on its own, so it holds one counter row at a time and never blocks
+writers in other conversations while it works.</p>
 <p>Deleting a conversation while a message is being written into it can deadlock (the delete
 cascades to the counter row while the send holds it and waits on the conversation row);
 Postgres aborts one of the two and nothing else is affected.</p>
@@ -159,11 +171,9 @@ two columns, and clients then re-sync from the beginning once it runs again.</p>
 
     </main>
   </div>
-  <footer class="site">
-    <span>Rendered from <a href="https://github.com/rim-platform/rim-server/blob/a6da5ec1039b957adaf7fe6d8662da873c02c445/docs/message-change-feed.md">rim-server/docs/message-change-feed.md</a> at <code>a6da5ec</code></span>
-    <span>RIM · Apache-2.0 · <a class="mono" href="https://github.com/rim-platform">github.com/rim-platform</a></span>
-  </footer>
 </div>
+<footer class="site-footer container"><span class="footer-brand"><img src="../assets/rim-mark-inverse.svg" alt="" width="21" height="21"> RIM · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-server/blob/5e070440da6038995ae225231281f2525b4addef/docs/message-change-feed.md">rim-server/docs/message-change-feed.md</a> at <code>5e07044</code></p>
 <script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
 </body>
 </html>

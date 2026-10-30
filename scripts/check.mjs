@@ -114,7 +114,41 @@ export function check(root = SITE_ROOT, release) {
   }
   errors.push(...checkDelegation(root));
   errors.push(...checkDownloads(release, root));
+  errors.push(...checkNavigation(html));
   return { files, errors, warnings, bytes };
+}
+
+/** Main links agree across pages, and homepage section links follow their reading order. */
+function checkNavigation(pages) {
+  const errors = [];
+  const base = "https://rim-platform.org/";
+  const linksOf = (file, html) => {
+    const nav = html.match(/<nav\b[^>]*aria-label="Main navigation"[^>]*>([\s\S]*?)<\/nav>/)?.[1];
+    if (!nav) {
+      errors.push(`${file}: no shared main navigation`);
+      return [];
+    }
+    return [...nav.matchAll(/<a\b[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/g)].map((match) => ({
+      href: new URL(match[1], new URL(file, base)).href,
+      text: match[2].replace(/<[^>]*>/g, "").trim(),
+    }));
+  };
+  const home = pages.get("index.html") ?? "";
+  const reference = linksOf("index.html", home);
+  for (const [file, html] of pages) {
+    if (file !== "index.html" && JSON.stringify(linksOf(file, html)) !== JSON.stringify(reference)) {
+      errors.push(`${file}: main navigation differs from the homepage`);
+    }
+  }
+  let previous = -1;
+  for (const link of reference) {
+    const target = new URL(link.href);
+    if (target.pathname !== "/index.html" || !target.hash) continue;
+    const offset = home.indexOf(`id="${decodeURIComponent(target.hash.slice(1))}"`);
+    if (offset < previous) errors.push(`index.html: navigation link "${link.text}" is out of page order`);
+    previous = offset;
+  }
+  return errors;
 }
 
 /** Problems with the handle delegation file: it must be exactly `{"delegate": DELEGATE}`. */
