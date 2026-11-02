@@ -62,7 +62,7 @@ written from the rim-ui version at `RIM_UI_REF` (links to the latest release whe
 `v*` tag). `npm run check` fails when the block is stale against `RIM_UI_REF` (when `RIM_UI_DIR` is
 set) or when its own links disagree; the rest of the checks cover the links.
 
-When rendering corrected client docs from a branch, set `RIM_UI_RELEASE_REF=v0.0.8` to keep
+When rendering corrected client docs from a branch, set `RIM_UI_RELEASE_REF=v0.0.9` to keep
 the download links on that published release independently of `RIM_UI_REF`. Use the same
 release ref for `npm run build` and `npm run check`.
 
