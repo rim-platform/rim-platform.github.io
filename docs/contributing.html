@@ -41,6 +41,7 @@
   <div class="page with-toc">
     <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
 <ol>
+<li><a href="#ai-assistants-and-automated-accounts">AI assistants and automated accounts</a></li>
 <li><a href="#pull-requests">Pull requests</a></li>
 <li><a href="#what-belongs-in-the-core">What belongs in the core</a></li>
 <li><a href="#gates">Gates</a></li>
@@ -56,9 +57,22 @@
 and contributions are accepted under the same license.</p>
 <p>Everyone taking part follows the code of conduct in <a href="code-of-conduct.html"><code>CODE_OF_CONDUCT.md</code></a>. A vulnerability is
 not reported as an issue or a pull request: <a href="security.html"><code>SECURITY.md</code></a> says how to report it privately.</p>
+<h2 id="ai-assistants-and-automated-accounts">AI assistants and automated accounts <a class="anchor" href="#ai-assistants-and-automated-accounts" aria-label="Link to this section">#</a></h2>
+<p>RIM is written with the help of AI coding agents, and you are welcome to use them too. What every
+pull request needs is a person behind it:</p>
+<ul>
+<li>Say in the pull request which tools helped and how, for example &quot;written with an AI assistant,
+reviewed and tested by me&quot;.</li>
+<li>You opened it, you understand the change, and you answer the review. You are responsible for it
+as if you had typed every line.</li>
+<li>Pull requests from accounts that open them automatically, across many projects, with no person
+following up, are closed without review.</li>
+<li>Good first issues are kept for people new to RIM. Say on the issue that you are taking it before
+you start, so that two people do not do the same work.</li>
+</ul>
 <h2 id="pull-requests">Pull requests <a class="anchor" href="#pull-requests" aria-label="Link to this section">#</a></h2>
-<p>Use whatever tools you like to write the code, including AI assistants. The pull request has to
-describe what it implements and why, in your words. A diff without that is sent back unread.</p>
+<p>The pull request has to describe what it implements and why, in your words. A diff without that
+is sent back unread.</p>
 <p>Every pull request against <code>master</code> says:</p>
 <ul>
 <li><strong>What changes, and for whom</strong>: the behaviour a user, an operator or a client author sees
@@ -67,8 +81,8 @@ after it merges.</li>
 them.</li>
 <li><strong>How it was tested</strong>: the commands you ran and the tail of their output (see &quot;Gates&quot; below).
 If a suite could not run, say which and why.</li>
-<li><strong>Which spec or doc it changes</strong>: a change to a contract in <a href="https://github.com/rim-platform/rim-server/tree/20d776452177da9c76336e2a5a6c14291574053b/docs/specs"><code>docs/specs/</code></a> or to a page in
-<a href="https://github.com/rim-platform/rim-server/tree/20d776452177da9c76336e2a5a6c14291574053b/docs"><code>docs/</code></a> is part of the same pull request as the code.</li>
+<li><strong>Which spec or doc it changes</strong>: a change to a contract in <a href="https://github.com/rim-platform/rim-server/tree/7bc08f0c95e01769408e4756d418efea30c5b70b/docs/specs"><code>docs/specs/</code></a> or to a page in
+<a href="https://github.com/rim-platform/rim-server/tree/7bc08f0c95e01769408e4756d418efea30c5b70b/docs"><code>docs/</code></a> is part of the same pull request as the code.</li>
 </ul>
 <p>A change an operator, a user or a client author sees adds its line under <code>Unreleased</code> in
 <a href="changelog.html"><code>CHANGELOG.md</code></a>; the top of that file says how.</p>
@@ -91,16 +105,16 @@ request.</p>
 cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace
 cargo audit --deny unsound</code></pre>
-<p>A change to the shell scripts in <a href="https://github.com/rim-platform/rim-server/tree/20d776452177da9c76336e2a5a6c14291574053b/deploy"><code>deploy/</code></a> or <a href="https://github.com/rim-platform/rim-server/tree/20d776452177da9c76336e2a5a6c14291574053b/scripts"><code>scripts/</code></a> also passes these, which CI runs in
+<p>A change to the shell scripts in <a href="https://github.com/rim-platform/rim-server/tree/7bc08f0c95e01769408e4756d418efea30c5b70b/deploy"><code>deploy/</code></a> or <a href="https://github.com/rim-platform/rim-server/tree/7bc08f0c95e01769408e4756d418efea30c5b70b/scripts"><code>scripts/</code></a> also passes these, which CI runs in
 the <code>Lint &amp; Format</code> job:</p>
 <pre><code class="language-sh">shellcheck -x deploy/*.sh scripts/release/*.sh scripts/deploy/*.sh
 scripts/release/test-set-version.sh
 scripts/deploy/test-deploy.sh                # upgrade.sh and rim-deploy.sh with stub commands</code></pre>
 <p><code>cargo audit --deny unsound</code> fails on a known vulnerability or an unsoundness advisory in
-<a href="https://github.com/rim-platform/rim-server/blob/20d776452177da9c76336e2a5a6c14291574053b/Cargo.lock"><code>Cargo.lock</code></a>. An advisory that cannot be fixed yet goes in <code>.cargo/audit.toml</code> with why it does
+<a href="https://github.com/rim-platform/rim-server/blob/7bc08f0c95e01769408e4756d418efea30c5b70b/Cargo.lock"><code>Cargo.lock</code></a>. An advisory that cannot be fixed yet goes in <code>.cargo/audit.toml</code> with why it does
 not apply and when the entry comes out.</p>
 <p><code>cargo test --workspace</code> includes <code>cargo test -p migration</code>, which checks that every migration
-file is registered in <a href="https://github.com/rim-platform/rim-server/blob/20d776452177da9c76336e2a5a6c14291574053b/migration/src/lib.rs"><code>migration/src/lib.rs</code></a> and that every migration has a <code>down</code> that undoes
+file is registered in <a href="https://github.com/rim-platform/rim-server/blob/7bc08f0c95e01769408e4756d418efea30c5b70b/migration/src/lib.rs"><code>migration/src/lib.rs</code></a> and that every migration has a <code>down</code> that undoes
 its <code>up</code>. <code>sea migrate generate</code> has dropped registrations when it rewrites that file, so run it
 after generating a migration.</p>
 <p>Three feature-gated suites need a running PostgreSQL 17 and <code>DATABASE_URL</code>. They fail loudly
@@ -109,19 +123,19 @@ when <code>DATABASE_URL</code> is unset; leave the feature flag off to skip them
 cargo test -p rim_api --features e2e-tests -- --test-threads=1
 cargo test -p rim_infra_services --features infra-db-tests -- --test-threads=1</code></pre>
 <p>The <code>rim_api</code> end-to-end suite also runs two servers in one process
-(<a href="https://github.com/rim-platform/rim-server/blob/20d776452177da9c76336e2a5a6c14291574053b/rim_api/tests/s2s_e2e.rs"><code>rim_api/tests/s2s_e2e.rs</code></a>) to test server-to-server traffic over loopback. The second server
+(<a href="https://github.com/rim-platform/rim-server/blob/7bc08f0c95e01769408e4756d418efea30c5b70b/rim_api/tests/s2s_e2e.rs"><code>rim_api/tests/s2s_e2e.rs</code></a>) to test server-to-server traffic over loopback. The second server
 uses a second database named like the one in <code>DATABASE_URL</code> with <code>b</code> appended
 (<code>rim_test</code> and <code>rim_testb</code>); the suite creates it when it is missing, so the database user
 needs the right to create databases.</p>
 <p>Run suites that share a database with <code>--test-threads=1</code>.</p>
 <h2 id="code-conventions">Code conventions <a class="anchor" href="#code-conventions" aria-label="Link to this section">#</a></h2>
-<p><a href="https://github.com/rim-platform/rim-server/blob/20d776452177da9c76336e2a5a6c14291574053b/CLAUDE.md"><code>CLAUDE.md</code></a> describes the layering, the patterns and the conventions; the points reviewers check
+<p><a href="https://github.com/rim-platform/rim-server/blob/7bc08f0c95e01769408e4756d418efea30c5b70b/CLAUDE.md"><code>CLAUDE.md</code></a> describes the layering, the patterns and the conventions; the points reviewers check
 most:</p>
 <ul>
 <li><strong>Layers.</strong> <code>rim_api</code> and the non-GraphQL transports in <code>rim_server</code> call service traits from
 <code>rim_services</code>, never their implementations, and only services reach repositories. The
-composition root in <a href="https://github.com/rim-platform/rim-server/blob/20d776452177da9c76336e2a5a6c14291574053b/rim_server/src/app.rs"><code>rim_server/src/app.rs</code></a> is the one place that builds the implementations;
-<a href="https://github.com/rim-platform/rim-server/blob/20d776452177da9c76336e2a5a6c14291574053b/CLAUDE.md"><code>CLAUDE.md</code></a> describes both exceptions to the layer chain.</li>
+composition root in <a href="https://github.com/rim-platform/rim-server/blob/7bc08f0c95e01769408e4756d418efea30c5b70b/rim_server/src/app.rs"><code>rim_server/src/app.rs</code></a> is the one place that builds the implementations;
+<a href="https://github.com/rim-platform/rim-server/blob/7bc08f0c95e01769408e4756d418efea30c5b70b/CLAUDE.md"><code>CLAUDE.md</code></a> describes both exceptions to the layer chain.</li>
 <li><strong>Errors.</strong> No <code>unwrap</code> or <code>expect</code> in library code; <code>ServiceResult</code> at service boundaries.</li>
 <li><strong>Imports.</strong> <code>std</code>, then external crates, then local modules, separated by blank lines.</li>
 <li><strong>Visibility.</strong> New modules are <code>pub(crate)</code> unless something outside the crate uses them.</li>
@@ -148,7 +162,7 @@ the server running locally:</p>
 cd ../rim-ui &amp;&amp; npm run codegen</code></pre>
 <p>Enum variants become <code>SCREAMING_SNAKE</code> and fields <code>camelCase</code> in the schema. New resolvers go
 into the last <code>QueryGroupN</code> or <code>MutationGroupN</code> (or into an existing domain object) so the field
-order of the existing schema does not change; <a href="https://github.com/rim-platform/rim-server/blob/20d776452177da9c76336e2a5a6c14291574053b/CLAUDE.md"><code>CLAUDE.md</code></a> explains why.</p>
+order of the existing schema does not change; <a href="https://github.com/rim-platform/rim-server/blob/7bc08f0c95e01769408e4756d418efea30c5b70b/CLAUDE.md"><code>CLAUDE.md</code></a> explains why.</p>
 <h2 id="who-can-merge-and-publish">Who can merge and publish <a class="anchor" href="#who-can-merge-and-publish" aria-label="Link to this section">#</a></h2>
 <ul>
 <li><p><strong>Every change is a pull request.</strong> Nobody pushes to <code>master</code> directly, the maintainer
@@ -210,7 +224,7 @@ Actions access&quot; only this repository, with the write role.</li>
   </div>
 </div>
 <footer class="site-footer container"><span class="footer-brand"><img src="../assets/rim-mark-inverse.svg" alt="" width="21" height="21"> RIM · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
-<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-server/blob/20d776452177da9c76336e2a5a6c14291574053b/CONTRIBUTING.md">rim-server/CONTRIBUTING.md</a> at <code>20d7764</code></p>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-server/blob/7bc08f0c95e01769408e4756d418efea30c5b70b/CONTRIBUTING.md">rim-server/CONTRIBUTING.md</a> at <code>7bc08f0</code></p>
 <script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
 </body>
 </html>

@@ -124,6 +124,9 @@ so, lists the arguments, and offers <strong>Cancel</strong> and a button that fo
 anyway</strong> for a mutating command, <strong>I understand — execute</strong> for a restricted one, <strong>Confirm</strong>
 otherwise. A restricted command first asks you to type its verb, as in <code>Type &quot;delete&quot; to confirm</code>. A confirmation expires; the app then says &quot;Confirmation expired. Run the command
 again.&quot;</p>
+<p>The <strong>Audit log</strong> shows each entry&#39;s sensitivity, marks dangerous commands with a warning sign,
+and labels a pipe&#39;s entry <strong>Pipe</strong>; a pipe is recorded with the strictest sensitivity of its
+stages.</p>
 <p><strong>Capabilities.</strong> A command declares what it needs, such as <code>chat.write</code> or
 <code>admin.manage_members</code>, and the server lists only the commands your role in the workspace may
 run; a plugin&#39;s command acts only within the permissions you granted the plugin.</p>
@@ -165,9 +168,10 @@ same. Each stage&#39;s result is merged into the next stage&#39;s arguments. A c
 stages, all of them commands the server runs. A stage that runs only in the app stops the chain
 before it is sent: &quot;Pipe stage &lt;n&gt;: &lt;title&gt; runs only in this app, so it cannot be part of a
 pipe.&quot; When a stage is dangerous, the confirmation (&quot;Confirm: Run pipe&quot;) is drawn in red and
-names it: &quot;Includes a dangerous command: &lt;title&gt;.&quot; The palette then shows each stage&#39;s
-result, or &quot;Pipe failed at stage &lt;n&gt;: …&quot;. <kbd>Backspace</kbd> in an empty search reopens the
-last stage, and <kbd>Esc</kbd> clears the chain.</p>
+names it: &quot;Includes a dangerous command: &lt;title&gt;.&quot; While the chain runs, &quot;Executing pipe: stage
+1/&lt;n&gt;...&quot; shows; a chain that asks for a confirmation shows it only after <strong>Run anyway</strong>. The
+palette then shows each stage&#39;s result, or &quot;Pipe failed at stage &lt;n&gt;: …&quot;. <kbd>Backspace</kbd>
+in an empty search reopens the last stage, and <kbd>Esc</kbd> clears the chain.</p>
 <h2 id="keybinds">Keybinds <a class="anchor" href="#keybinds" aria-label="Link to this section">#</a></h2>
 <p>A keybind runs one command, sometimes with fixed arguments. These are the default bindings of a
 new device:</p>
@@ -286,9 +290,10 @@ Composer, Message list and so on.</p>
 <li><strong>Add keybind</strong> opens a form: press the keys in &quot;Press a key combination...&quot;, pick the
 command and the context, then <strong>Save</strong>. The field records any keys, even ones already bound,
 and runs nothing while it has focus; <kbd>Escape</kbd> alone stops recording and keeps the
-earlier keys. Keys already bound in the chosen context show &quot;Already used by &lt;command&gt; —
-saving will reassign it.&quot;, and <strong>Save</strong> moves them to the new command; keys a workspace
-keybind holds cannot be taken.</li>
+earlier keys. Keys already bound in the chosen context show &quot;&lt;keys&gt; is used by &lt;command&gt;.
+Saving moves it here and leaves &lt;command&gt; without a key.&quot; (or &quot;…; &lt;command&gt; keeps its other
+keys.&quot;), and <strong>Save</strong> moves them to the new command; keys a workspace keybind holds cannot be
+taken: &quot;&lt;keys&gt; is used by &lt;command&gt;, a workspace keybind. Choose other keys.&quot;</li>
 <li>On a binding of your own, the pencil changes its command or context, clicking the keys records
 new ones, the switch turns it off, and the bin deletes it after &quot;Delete keybind?&quot;. Keys
 recorded there that another binding holds wait under the row with the same note, <strong>Save</strong> and
@@ -296,7 +301,9 @@ recorded there that another binding holds wait under the row with the same note,
 <li>The default rows carry the <strong>Default</strong> tag and cannot be edited, turned off or deleted here.
 A binding of yours on the same keys and context takes their place: <strong>Override</strong> opens the add
 form with the default&#39;s keys, command and context filled in, ready to change and save. A
-profile can free a key altogether.</li>
+profile can free a key altogether.
+A command whose only keys a binding of yours took stays listed with <strong>No key</strong>; <strong>Set key</strong>
+opens the add form with that command and context.</li>
 <li>A second binding of yours on the same keys and context is refused with &quot;keybind already exists
 for this scope/context/keystroke&quot;. You can have up to 200.</li>
 <li>Bindings to plugin commands, to &quot;Open &lt;panel&gt;&quot; commands and to the app&#39;s own commands, such
@@ -455,7 +462,7 @@ sensitivity, confirmations, macros and what the agent may call.</li>
   </div>
 </div>
 <footer class="site-footer container"><span class="footer-brand"><img src="../../assets/rim-mark-inverse.svg" alt="" width="21" height="21"> RIM · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
-<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/b60562537ff6776fa89185fa419a78ee292d4d87/docs/commands-and-automation.md">rim-ui/docs/commands-and-automation.md</a> at <code>b605625</code></p>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/d39b8dead670c746f1e31398ba83f0a36c26c8ed/docs/commands-and-automation.md">rim-ui/docs/commands-and-automation.md</a> at <code>d39b8de</code></p>
 <script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
 </body>
 </html>

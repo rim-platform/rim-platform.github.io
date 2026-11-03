@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Workspace removals and bans · RIM</title>
-<meta name="description" content="A removal notice shows the workspace name, cause, end date and reason sent for this account. It remains visible across reloads until dismissed, scoped to the server and signed-in account. Moderators are told that the …">
+<meta name="description" content="A removal notice shows the workspace name, cause, end date and reason sent for this account. It remains visible across reloads until dismissed, or until you are a member of that workspace again, scoped to the server and …">
 <link rel="icon" href="../../favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;550;600;650;700&family=JetBrains+Mono:wght@400;500&display=swap">
@@ -43,7 +43,8 @@
     <main id="content" class="prose">
 <h1 id="workspace-removals-and-bans">Workspace removals and bans</h1>
 <p>A removal notice shows the workspace name, cause, end date and reason sent for this account.
-It remains visible across reloads until dismissed, scoped to the server and signed-in account.
+It remains visible across reloads until dismissed, or until you are a member of that workspace
+again, scoped to the server and signed-in account.
 Moderators are told that the member will see the reason they enter.</p>
 <p>Message authors retain their readable names. Active bans have a muted marker; hover cards
 show a reason only when the server grants access to it. Ban changes refresh author views,
@@ -54,6 +55,18 @@ local membership in the current default workspace and its public channels; other
 still require an invitation.</p>
 <p>Deploy the corresponding server update before this client. Older servers reject the new
 message-author ban fields, so message queries require a server that provides them.</p>
+<h1 id="timeouts-and-removals-from-a-channel">Timeouts and removals from a channel</h1>
+<p>A timed-out member&#39;s open app learns of it at once: the composer locks and says &quot;You are timed
+out until 20:37: &lt;reason&gt;&quot;, or without the reason when the moderator gave none. Only the member
+sees the reason; the timeout dialog says so. The composer unlocks when a moderator clears the
+timeout or when it ends, without a reload, and the timeout marker in member lists follows.</p>
+<p>When an Owner or Moderator removes someone from a channel, the channel shows a line where it
+happened: &quot;Bob was removed by Alice&quot; (&quot;You were removed by Alice&quot; for the person removed, &quot;Bob
+was removed by you&quot; for the moderator). Leaving a channel, groups, and removals from the
+workspace show no line. A channel shows its latest 50 removals.</p>
+<p>Both need a server that lists <code>member_timeout_changed</code> and <code>conversation_member_removals</code> in its
+capabilities; against an older server the banner shows without the reason and only after a
+reload, and channels show no removal lines.</p>
 <h1 id="join-requests">Join requests</h1>
 <p>A workspace whose public link is set to <strong>Ask to join</strong> collects requests. Settings → Moderation
 → <strong>Join requests</strong>, for the Owner and the Moderators, lists the open ones newest first, with
@@ -114,7 +127,7 @@ this shows: the ban dialog has no message choice and the menus and the bans list
   </div>
 </div>
 <footer class="site-footer container"><span class="footer-brand"><img src="../../assets/rim-mark-inverse.svg" alt="" width="21" height="21"> RIM · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
-<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/b60562537ff6776fa89185fa419a78ee292d4d87/docs/workspace-moderation.md">rim-ui/docs/workspace-moderation.md</a> at <code>b605625</code></p>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/d39b8dead670c746f1e31398ba83f0a36c26c8ed/docs/workspace-moderation.md">rim-ui/docs/workspace-moderation.md</a> at <code>d39b8de</code></p>
 
 </body>
 </html>

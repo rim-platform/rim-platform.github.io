@@ -43,7 +43,7 @@
 <ol>
 <li><a href="#group-command">Command (2)</a></li>
 <li><a href="#group-keybind">Keybind (1)</a></li>
-<li><a href="#group-conversation">Conversation (3)</a></li>
+<li><a href="#group-conversation">Conversation (4)</a></li>
 <li><a href="#group-channel">Channel (3)</a></li>
 <li><a href="#group-message">Message (9)</a></li>
 <li><a href="#group-search">Search (1)</a></li>
@@ -65,7 +65,7 @@
 </details></aside>
     <main id="content" class="prose">
 <h1>Query</h1>
-<p class="lede">71 queries, grouped by the domain their name starts with or names, in the order the schema lists them.</p>
+<p class="lede">72 queries, grouped by the domain their name starts with or names, in the order the schema lists them.</p>
 <input id="filter" class="search" type="search" placeholder="Filter fields by name" aria-label="Filter fields by name" autocomplete="off">
 <p id="filter-none" class="muted" hidden>Nothing matches.</p>
 <section data-group>
@@ -118,7 +118,7 @@ macros.</p>
 </section>
 </section>
 <section data-group>
-<h2 id="group-conversation">Conversation <span class="faint">3</span></h2>
+<h2 id="group-conversation">Conversation <span class="faint">4</span></h2>
 <section class="entry" id="conversation" data-name="conversation">
 <h3><code>conversation</code></h3>
 <div class="sig">conversation(serverId: <a href="scalars.html#ID">ID</a>!, conversationId: <a href="scalars.html#ID">ID</a>!): <a href="objects.html#Conversation">Conversation</a>!</div>
@@ -134,6 +134,19 @@ macros.</p>
   limit: <a href="scalars.html#Int">Int</a>!
 ): <a href="objects.html#ConversationPage">ConversationPage</a>!</div>
 <div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+<section class="entry" id="conversationMemberRemovals" data-name="conversationMemberRemovals">
+<h3><code>conversationMemberRemovals</code></h3>
+<div class="sig">conversationMemberRemovals(
+  serverId: <a href="scalars.html#ID">ID</a>!
+  conversationId: <a href="scalars.html#ID">ID</a>!
+  limit: <a href="scalars.html#Int">Int</a>
+): [<a href="objects.html#ConversationMemberRemoval">ConversationMemberRemoval</a>!]!</div>
+<div class="desc"><p>A channel&#39;s latest removals (someone removed by an Owner or Moderator), newest first:
+at most <code>limit</code>, 50 by default and at most 100. Empty for a group or DM. Errors as for
+<a href="query.html#conversation"><code>conversation</code></a>. Listed in <code>serverInfo.capabilities</code> as <code>conversation_member_removals</code>.</p>
+</div>
 
 </section>
 <section class="entry" id="mutedConversations" data-name="mutedConversations">
@@ -788,7 +801,7 @@ and Moderators only: anyone else gets <code>FORBIDDEN</code>.</p>
   </div>
 </div>
 <footer class="site-footer container"><span class="footer-brand"><img src="../assets/rim-mark-inverse.svg" alt="" width="21" height="21"> RIM · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
-<p class="source-provenance container">Generated from <a href="https://github.com/rim-platform/rim-ui/blob/b60562537ff6776fa89185fa419a78ee292d4d87/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>b605625</code></p>
+<p class="source-provenance container">Generated from <a href="https://github.com/rim-platform/rim-ui/blob/d39b8dead670c746f1e31398ba83f0a36c26c8ed/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>d39b8de</code></p>
 <script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
 <script>
 (() => {

@@ -108,7 +108,17 @@ unpinned by an Owner, a Moderator or a private channel&#39;s creator (<code>FORB
 is a no-op. Leaving a private channel as its last member is allowed; it then stays invisible to
 everyone, and only an Owner/Moderator can archive it, by id (from the audit log).</li>
 <li><code>removeConversationMember</code>: Owner/Moderator may remove anyone (also from a private channel
-they are not in); everyone else only themselves.</li>
+they are not in); everyone else only themselves. When an Owner or Moderator removes someone
+else from a channel, the removal is recorded with who removed them and when.
+<code>conversationMemberRemovals(serverId, conversationId, limit)</code> lists a channel&#39;s latest
+removals, newest first (<code>limit</code> 50 by default, at most 100), to anyone who can read the
+channel, with the errors of <code>conversation</code>; a group or DM answers an empty list. Clients show
+each as a line in the channel (&quot;Bob was removed by Alice&quot;) and read the list again on
+<code>MemberRemovedFromConversation</code>, which reaches the channel&#39;s members and the removed person;
+other readers see a new line the next time they open the channel. Leaving, removing oneself,
+declining an invitation, a kick or a ban, and removals from groups are not recorded. A removal
+stays listed after either account is deleted, named as the deleted account. Listed in
+<code>serverInfo.capabilities</code> as <code>conversation_member_removals</code>.</li>
 <li>DMs and groups are unchanged: non-members get <code>FORBIDDEN</code>.</li>
 <li>Mentions (<code>&lt;@user&gt;</code>) are stored and notified (<code>UserMentioned</code>) only for users who can read the
 conversation: any workspace member but a guest for a public channel, members otherwise. A
@@ -531,7 +541,10 @@ editing, forwarding, reactions, pins, topic, attachments (REST upload: 403 with 
 joining, inviting, creating conversations, and <code>executeCommand</code> of
 any <code>Mutating</code> (or stricter) command in that workspace. Reads continue, and a timed-out author
 may still delete their own messages over GraphQL. Expired timeouts are ignored;
-<code>clearTimeout</code> ends one early.</li>
+<code>clearTimeout</code> ends one early. Setting a timeout, and clearing one that is in force, emits
+<code>MemberTimeoutChanged</code> (see Realtime events); its end sends nothing, and a client unlocks at
+<code>until</code>. The member reads the reason on their own <code>ServerMember.timeoutReason</code>, null on every
+other entry and for every other viewer.</li>
 </ul>
 <h3 id="slow-mode">Slow mode <a class="anchor" href="#slow-mode" aria-label="Link to this section">#</a></h3>
 <ul>
@@ -735,6 +748,11 @@ receive no reason. The removed member may keep this explanation until they dismi
 <li><code>{&quot;type&quot;: &quot;MemberRoleChanged&quot;, &quot;workspace_id&quot;: &quot;…&quot;, &quot;user_id&quot;: &quot;…&quot;, &quot;role&quot;: &quot;member&quot;}</code> — <code>role</code>
 is <code>owner</code>, <code>moderator</code>, <code>member</code> or <code>guest</code>. Same visibility as <code>MemberLeft</code>. A subscriber whose
 own role changes to or from <code>guest</code> gets the matching visibility from the next event on.</li>
+<li><code>{&quot;type&quot;: &quot;MemberTimeoutChanged&quot;, &quot;workspace_id&quot;: &quot;…&quot;, &quot;user_id&quot;: &quot;…&quot;, &quot;until&quot;: &quot;…&quot;}</code> — a
+moderator timed the member out until <code>until</code>, or cleared the timeout early (<code>until</code> null).
+Same visibility as <code>MemberLeft</code>; only the timed-out member&#39;s own delivery includes the
+moderator&#39;s <code>reason</code>. Listed in <code>serverInfo.capabilities</code> as <code>member_timeout_changed</code>, with
+<code>ServerMember.timeoutReason</code>.</li>
 <li><code>{&quot;type&quot;: &quot;WorkspaceUpdated&quot;, &quot;workspace_id&quot;: &quot;…&quot;, &quot;name&quot;: &quot;…&quot;}</code>: the workspace was renamed.
 Delivered to every member, guests included.</li>
 <li><code>{&quot;type&quot;: &quot;MessageFlagChanged&quot;, &quot;workspace_id&quot;: &quot;…&quot;, &quot;conversation_id&quot;: &quot;…&quot;, &quot;message_id&quot;: &quot;…&quot;, &quot;flagged&quot;: true}</code>: the automatic text art check flagged a message (<code>true</code>), or an
@@ -985,7 +1003,7 @@ and the next query, without a scheduled event.</p>
   </div>
 </div>
 <footer class="site-footer container"><span class="footer-brand"><img src="../assets/rim-mark-inverse.svg" alt="" width="21" height="21"> RIM · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
-<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-server/blob/20d776452177da9c76336e2a5a6c14291574053b/docs/messaging.md">rim-server/docs/messaging.md</a> at <code>20d7764</code></p>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-server/blob/7bc08f0c95e01769408e4756d418efea30c5b70b/docs/messaging.md">rim-server/docs/messaging.md</a> at <code>7bc08f0</code></p>
 <script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
 </body>
 </html>
