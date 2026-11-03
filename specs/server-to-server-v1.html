@@ -70,7 +70,7 @@
 </details></aside>
     <main id="content" class="prose">
 <h1 id="server-to-server-v1">Server-to-server v1</h1>
-<p class="status"><span><b>Server-to-server v1</b></span><span>version 1</span><span>status: implemented, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/20d776452177da9c76336e2a5a6c14291574053b/docs/specs/server-to-server-v1.md">rim-server/docs/specs/server-to-server-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/20d776452177da9c76336e2a5a6c14291574053b">20d7764</a></span></p>
+<p class="status"><span><b>Server-to-server v1</b></span><span>version 1</span><span>status: implemented, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/7bc08f0c95e01769408e4756d418efea30c5b70b/docs/specs/server-to-server-v1.md">rim-server/docs/specs/server-to-server-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/7bc08f0c95e01769408e4756d418efea30c5b70b">7bc08f0</a></span></p>
 <p><em>Status: implemented, normative. Read <a href="key-identity-v1.html"><code>key-identity-v1.md</code></a>, <a href="device-linking-v1.html"><code>device-linking-v1.md</code></a> and
 <a href="e2ee-mls-v1.html"><code>e2ee-mls-v1.md</code></a> first. This document is the contract between servers and between a server and
 its clients: server identity, the signed HTTP API between servers, relays, hosts, and what the
@@ -846,7 +846,7 @@ entity of a remote space by (host server id, id).</p>
 </tr>
 <tr>
 <td><code>w</code></td>
-<td>Other space-wide events (<code>MemberJoined</code>, <code>MemberLeft</code>, <code>MemberRoleChanged</code>, <code>WorkspacePluginChanged</code>, <code>WorkspaceUpdated</code>, pipeline and workspace-state events), to non-guests</td>
+<td>Other space-wide events (<code>MemberJoined</code>, <code>MemberLeft</code>, <code>MemberRoleChanged</code>, <code>MemberTimeoutChanged</code>, <code>WorkspacePluginChanged</code>, <code>WorkspaceUpdated</code>, pipeline and workspace-state events), to non-guests</td>
 <td>1, 2, …</td>
 </tr>
 <tr>
@@ -1165,11 +1165,11 @@ Once accepted it is an ordinary conversation of the space he uses directly.</p>
 </tr>
 <tr>
 <td><code>blockPrincipal(principalId)</code></td>
-<td>Pending requests from it ignored; its <code>DmInvite</code>s refused (<code>blocked</code>) and its claims refused; the app leaves a group&#39;s conversation through the home (a DM cannot be left)</td>
+<td>Pending requests from it ignored; it leaves the user&#39;s contacts; its <code>DmInvite</code>s refused (<code>blocked</code>) and its claims refused; the app leaves a group&#39;s conversation through the home (a DM cannot be left)</td>
 </tr>
 <tr>
 <td><code>unblockPrincipal(principalId)</code></td>
-<td>Block lifted; requests ignored from it cleared: the next item of such a conversation files it again as a pending request</td>
+<td>Block lifted; requests ignored from it cleared, and conversations of this server it started that the user accepted: the next item or event of such a conversation files it again as a pending request</td>
 </tr>
 <tr>
 <td>Nothing</td>
@@ -1477,7 +1477,7 @@ yearly <code>server-key rotate</code> and <code>recover</code> on compromise, da
 drill, quotas and how to change them, monitoring (queue bytes, outbox depth per peer, deliver
 failures, <code>401</code>/<code>409</code>/<code>429</code> rates, PoW signups), incident response for spam waves, a hostile peer, a
 stolen server key and a database leak, and the abuse policy text.</p>
-<p><strong>Compose</strong> (<a href="https://github.com/rim-platform/rim-server/blob/20d776452177da9c76336e2a5a6c14291574053b/deploy/compose.yml"><code>deploy/compose.yml</code></a> with the <a href="https://github.com/rim-platform/rim-server/blob/20d776452177da9c76336e2a5a6c14291574053b/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a> override, and
+<p><strong>Compose</strong> (<a href="https://github.com/rim-platform/rim-server/blob/7bc08f0c95e01769408e4756d418efea30c5b70b/deploy/compose.yml"><code>deploy/compose.yml</code></a> with the <a href="https://github.com/rim-platform/rim-server/blob/7bc08f0c95e01769408e4756d418efea30c5b70b/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a> override, and
 <a href="../docs/deploy/index.html"><code>deploy/README.md</code></a>): rim-server with the <code>RIM_ROLE</code> <code>deploy/.env</code> sets (<code>relay</code>, or <code>both</code> to host
 workspaces too), <code>RIM_PUBLIC_BASE_URL=https://&lt;RIM_DOMAIN&gt;</code>,
 <code>RIM_REGISTRATION_POW_BITS=24</code>, <code>RIM_RELAY_QUEUE_BYTES_PER_USER=67108864</code> and the other quotas
@@ -1762,8 +1762,8 @@ database, so correctness never depends on one node. Audit (ids only):
 <code>s2s.peer_pinned</code>, <code>s2s.peer_rotated</code>, <code>s2s.peer_forked</code>, <code>s2s.peer_blocked</code>, <code>s2s.peer_handle_domain</code>,
 <code>s2s.peer_unblocked</code>, <code>host.remote_join</code>, <code>host.delegation_accepted</code>, <code>host.revocation_applied</code>,
 <code>host.recovery_applied</code>, <code>host.identity_revocations_applied</code>,
-<code>relay.principal_blocked</code> (<code>scope</code> <code>user</code> for <code>blockPrincipal</code>, <code>server</code> for the operator&#39;s),
-<code>relay.principal_unblocked</code> (<code>scope</code> <code>user</code> for <code>unblockPrincipal</code>, with <code>cleared_requests</code>; <code>server</code> for the operator&#39;s), <code>relay.blocked_principal_refused</code>, <code>relay.dm_request_reported</code>,
+<code>relay.principal_blocked</code> (<code>scope</code> <code>user</code> for <code>blockPrincipal</code>, with <code>removed_contact</code>; <code>server</code> for the operator&#39;s),
+<code>relay.principal_unblocked</code> (<code>scope</code> <code>user</code> for <code>unblockPrincipal</code>, with <code>cleared_requests</code> and <code>cleared_conversations</code>; <code>server</code> for the operator&#39;s), <code>relay.blocked_principal_refused</code>, <code>relay.dm_request_reported</code>,
 <code>relay.abuse_report_filed</code>, <code>relay.abuse_report_resolved</code>, <code>relay.registration_pow</code>,
 <code>server_key.created</code>, <code>server_key.rotated</code>, <code>server_key.recovered</code>, <code>s2s.peer_reset</code>,
 <code>s2s.peer_forgotten</code>. Events with an acting user and workspace go to <code>command_audit_log</code>; the server
@@ -1849,7 +1849,7 @@ device keys move to hybrid.</p>
 <td>S5-2</td>
 </tr>
 <tr>
-<td>Visibility rules live in <a href="https://github.com/rim-platform/rim-server/blob/20d776452177da9c76336e2a5a6c14291574053b/rim_api/src/subscription.rs"><code>rim_api/src/subscription.rs</code></a></td>
+<td>Visibility rules live in <a href="https://github.com/rim-platform/rim-server/blob/7bc08f0c95e01769408e4756d418efea30c5b70b/rim_api/src/subscription.rs"><code>rim_api/src/subscription.rs</code></a></td>
 <td>Moved to <code>rim_services</code> for the outbox writer</td>
 <td>S5-2</td>
 </tr>
@@ -1893,7 +1893,7 @@ without gaps or repeats; outbox order per peer; a relay&#39;s backlog counts onl
 acknowledgement, and a run of failures starts once and ends with a success; <code>received_through</code>
 idempotency; items deleted only once every device acked; cascades; each migration up and down,
 and the refusing <code>down</code>s.</li>
-<li><strong>e2e with two servers</strong> (<a href="https://github.com/rim-platform/rim-server/blob/20d776452177da9c76336e2a5a6c14291574053b/rim_api/tests/s2s_e2e.rs"><code>rim_api/tests/s2s_e2e.rs</code></a>, <code>e2e-tests</code>): two Actix servers in one
+<li><strong>e2e with two servers</strong> (<a href="https://github.com/rim-platform/rim-server/blob/7bc08f0c95e01769408e4756d418efea30c5b70b/rim_api/tests/s2s_e2e.rs"><code>rim_api/tests/s2s_e2e.rs</code></a>, <code>e2e-tests</code>): two Actix servers in one
 process with two databases, <code>RIM_S2S_ALLOW_HTTP</code> and <code>RIM_S2S_ALLOW_PRIVATE_ADDRESSES</code>. Flows:
 pinning and rotation; an encrypted DM across relays from creation to edit and read state
 (<code>rim_mls</code> fixtures); a DM request accepted, ignored, blocked; a remote join; channel traffic both
@@ -2021,7 +2021,7 @@ ed25519:waKbDNMuQ460M8gX_H1NKzAMDXF3x4P8hbHoJFPr-pSduvfvQSbXvOcRmK5VcF5F9-sICQmF
 <code>powBits</code> 16: the smallest working counter is 37283, nonce <code>AAAAAAAAkaM</code> (8 bytes big-endian), hash
 <code>00002f63d137749fda27201ccf9d282a4ed846287d49c55fea89a47617e78ed6</code>.</p>
 <h3 id="filled-by-s5-1">Filled by S5-1 <a class="anchor" href="#filled-by-s5-1" aria-label="Link to this section">#</a></h3>
-<p><strong>RFC 9421 appendix B.2.6</strong> through <code>rim_s2s</code> (<a href="https://github.com/rim-platform/rim-server/blob/20d776452177da9c76336e2a5a6c14291574053b/rim_s2s/src/vectors.rs"><code>rim_s2s/src/vectors.rs</code></a>): the RFC&#39;s
+<p><strong>RFC 9421 appendix B.2.6</strong> through <code>rim_s2s</code> (<a href="https://github.com/rim-platform/rim-server/blob/7bc08f0c95e01769408e4756d418efea30c5b70b/rim_s2s/src/vectors.rs"><code>rim_s2s/src/vectors.rs</code></a>): the RFC&#39;s
 <code>test-key-ed25519</code> (seed: the last 32 bytes of its PKCS#8 key), the components <code>&quot;date&quot; &quot;@method&quot; &quot;@path&quot; &quot;@authority&quot; &quot;content-type&quot; &quot;content-length&quot;</code> with <code>created=1618884473</code> and
 <code>keyid=&quot;test-key-ed25519&quot;</code> serialize to the RFC&#39;s <code>Signature-Input</code>, the crate builds the RFC&#39;s
 signature base, and signing it gives the RFC&#39;s
@@ -2058,12 +2058,15 @@ A.1 to A.8 reproduces byte for byte in <code>rim_s2s</code>&#39;s tests; A.8&#39
 <p><code>MemberBanChanged {workspace_id, user_id}</code> is a directory event carrying no ban reason. It
 follows a ban or unban, allowing clients to refresh message-author status without the user
 having to rejoin; its visibility and <code>w</code>/<code>u:</code> streams match <code>MemberRoleChanged</code>.</p>
+<p><code>MemberTimeoutChanged {workspace_id, user_id, until}</code> is a directory event: members get it on
+<code>w</code> without a reason, guests only about themselves on their <code>u:</code> stream, and the timed-out
+member on their own <code>u:</code> stream with the moderator&#39;s <code>reason</code>.</p>
 
     </main>
   </div>
 </div>
 <footer class="site-footer container"><span class="footer-brand"><img src="../assets/rim-mark-inverse.svg" alt="" width="21" height="21"> RIM · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
-<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-server/blob/20d776452177da9c76336e2a5a6c14291574053b/docs/specs/server-to-server-v1.md">rim-server/docs/specs/server-to-server-v1.md</a> at <code>20d7764</code></p>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-server/blob/7bc08f0c95e01769408e4756d418efea30c5b70b/docs/specs/server-to-server-v1.md">rim-server/docs/specs/server-to-server-v1.md</a> at <code>7bc08f0</code></p>
 <script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
 </body>
 </html>

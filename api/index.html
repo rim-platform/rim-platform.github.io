@@ -42,7 +42,7 @@
 
     <main id="content" class="prose">
 <h1>API</h1>
-<p class="lede">Everything a client does goes through one GraphQL endpoint, <code>POST /api</code>; subscriptions arrive over <code>/api/ws</code>. The server publishes its schema at <code>/api/sdl</code>. This reference is generated from it: 277 types, 71 queries, 139 mutations and 2 subscriptions.</p>
+<p class="lede">Everything a client does goes through one GraphQL endpoint, <code>POST /api</code>; subscriptions arrive over <code>/api/ws</code>. The server publishes its schema at <code>/api/sdl</code>. This reference is generated from it: 278 types, 72 queries, 139 mutations and 2 subscriptions.</p>
 <input id="filter" class="search" type="search" placeholder="Filter the whole schema by name" aria-label="Filter the whole schema by name" autocomplete="off">
 <p id="filter-none" class="muted" hidden>Nothing matches.</p>
 <div data-search-only><ul class="hits">
@@ -190,6 +190,7 @@
 <li data-name="resolvedKeybinds"><a href="query.html#resolvedKeybinds"><code>resolvedKeybinds</code></a><span class="kind">query</span></li>
 <li data-name="conversation"><a href="query.html#conversation"><code>conversation</code></a><span class="kind">query</span></li>
 <li data-name="inboxConversations"><a href="query.html#inboxConversations"><code>inboxConversations</code></a><span class="kind">query</span></li>
+<li data-name="conversationMemberRemovals"><a href="query.html#conversationMemberRemovals"><code>conversationMemberRemovals</code></a><span class="kind">query</span></li>
 <li data-name="mutedConversations"><a href="query.html#mutedConversations"><code>mutedConversations</code></a><span class="kind">query</span></li>
 <li data-name="channels"><a href="query.html#channels"><code>channels</code></a><span class="kind">query</span></li>
 <li data-name="channelLenses"><a href="query.html#channelLenses"><code>channelLenses</code></a><span class="kind">query</span></li>
@@ -274,6 +275,7 @@
 <li data-name="ConfirmationChallenge"><a href="objects.html#ConfirmationChallenge"><code>ConfirmationChallenge</code></a><span class="kind">object</span></li>
 <li data-name="Contact"><a href="objects.html#Contact"><code>Contact</code></a><span class="kind">object</span></li>
 <li data-name="Conversation"><a href="objects.html#Conversation"><code>Conversation</code></a><span class="kind">object</span></li>
+<li data-name="ConversationMemberRemoval"><a href="objects.html#ConversationMemberRemoval"><code>ConversationMemberRemoval</code></a><span class="kind">object</span></li>
 <li data-name="ConversationMessageChanges"><a href="objects.html#ConversationMessageChanges"><code>ConversationMessageChanges</code></a><span class="kind">object</span></li>
 <li data-name="ConversationNotificationLevel"><a href="objects.html#ConversationNotificationLevel"><code>ConversationNotificationLevel</code></a><span class="kind">object</span></li>
 <li data-name="ConversationPage"><a href="objects.html#ConversationPage"><code>ConversationPage</code></a><span class="kind">object</span></li>
@@ -546,10 +548,10 @@
 </ul></div>
 <ul class="cards">
 <li><a href="../docs/api.html"><b>Talking to a server</b><span>The endpoints, the session cookie and CSRF, origins, limits, error codes and pagination: the contract around the schema.</span></a></li>
-<li><a href="query.html"><b>Query</b><span>71 fields, grouped by domain.</span></a></li>
+<li><a href="query.html"><b>Query</b><span>72 fields, grouped by domain.</span></a></li>
 <li><a href="mutation.html"><b>Mutation</b><span>139 fields, grouped by domain.</span></a></li>
 <li><a href="subscription.html"><b>Subscription</b><span>2 fields, grouped by domain.</span></a></li>
-<li><a href="objects.html"><b>Objects</b><span>137 objects.</span></a></li>
+<li><a href="objects.html"><b>Objects</b><span>138 objects.</span></a></li>
 <li><a href="inputs.html"><b>Inputs</b><span>86 inputs.</span></a></li>
 <li><a href="enums.html"><b>Enums</b><span>52 enums.</span></a></li>
 <li><a href="scalars.html"><b>Scalars</b><span>7 scalars.</span></a></li>
@@ -560,7 +562,7 @@
   </div>
 </div>
 <footer class="site-footer container"><span class="footer-brand"><img src="../assets/rim-mark-inverse.svg" alt="" width="21" height="21"> RIM · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
-<p class="source-provenance container">Generated from <a href="https://github.com/rim-platform/rim-ui/blob/b60562537ff6776fa89185fa419a78ee292d4d87/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>b605625</code></p>
+<p class="source-provenance container">Generated from <a href="https://github.com/rim-platform/rim-ui/blob/d39b8dead670c746f1e31398ba83f0a36c26c8ed/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>d39b8de</code></p>
 <script>
 (() => {
   const q = document.getElementById("filter");
