@@ -62,13 +62,13 @@ rules — New device&quot;, appendix A) and <code>../rim-server/docs/specs/key-i
 <a href="device-linking-desktop.html"><code>device-linking-desktop.md</code></a> describes the desktop side.</p>
 <h2 id="what-lives-where">What lives where <a class="anchor" href="#what-lives-where" aria-label="Link to this section">#</a></h2>
 <ul>
-<li><a href="https://github.com/rim-platform/rim-ui/blob/d39b8dead670c746f1e31398ba83f0a36c26c8ed/src/features/key-identity/api/keyBackend.ts"><code>src/features/key-identity/api/keyBackend.ts</code></a>: the <code>KeyBackend</code> interface for the key work of
+<li><a href="https://github.com/rim-platform/rim-ui/blob/625c78e7c352dd2300217ff4cf692350e410fa7e/src/features/key-identity/api/keyBackend.ts"><code>src/features/key-identity/api/keyBackend.ts</code></a>: the <code>KeyBackend</code> interface for the key work of
 signing in and of becoming a new device (list local accounts, default device name, sign a login
 proof, settle, forget, link offer / open answer / accept / end), with the Tauri implementation
 (<code>tauriKeyBackend</code>, the <code>key_identity_*</code> commands) and <code>keyBackend()</code>, which picks the Tauri one
 inside the desktop app and the browser one otherwise. <code>linkNewDevice</code> (<code>deviceLink.ts</code>) and
 <code>signInWithDeviceKey</code> (<code>keyIdentity.ts</code>) are the same code on both platforms.</li>
-<li><a href="https://github.com/rim-platform/rim-ui/tree/d39b8dead670c746f1e31398ba83f0a36c26c8ed/src/features/key-identity/browser"><code>src/features/key-identity/browser/</code></a>:<ul>
+<li><a href="https://github.com/rim-platform/rim-ui/tree/625c78e7c352dd2300217ff4cf692350e410fa7e/src/features/key-identity/browser"><code>src/features/key-identity/browser/</code></a>:<ul>
 <li><code>bytes.ts</code>: strict unpadded base64url (no padding, no other alphabet, canonical trailing
 bits), base32, SHA-256.</li>
 <li><code>statements.ts</code>: the login proof (statement version 2, fields in the vectors&#39; order, signed
@@ -89,7 +89,7 @@ as the old device.</li>
 <code>audience</code>, the default device name (&quot;Firefox on Linux&quot;).</li>
 </ul>
 </li>
-<li><a href="https://github.com/rim-platform/rim-ui/blob/d39b8dead670c746f1e31398ba83f0a36c26c8ed/src/core/runtime/ed25519.ts"><code>src/core/runtime/ed25519.ts</code></a>: probes once per page whether the browser can generate a
+<li><a href="https://github.com/rim-platform/rim-ui/blob/625c78e7c352dd2300217ff4cf692350e410fa7e/src/core/runtime/ed25519.ts"><code>src/core/runtime/ed25519.ts</code></a>: probes once per page whether the browser can generate a
 non-extractable Ed25519 key and has IndexedDB. <code>RuntimeProvider</code> exposes the answer as
 <code>deviceKeyStore</code> (<code>checking</code>, <code>browser</code>, <code>unsupported</code>) and turns <code>capabilities.deviceKeys</code> on
 for the web when it is <code>browser</code>. <code>capabilities.identityKeys</code>, on the web also whenever
@@ -199,13 +199,13 @@ its keys.</li>
 </ol>
 <p>The automated tests run the same flow in Vitest against Node&#39;s WebCrypto and <code>fake-indexeddb</code>,
 with the old device simulated from the known-answer keys
-(<a href="https://github.com/rim-platform/rim-ui/blob/d39b8dead670c746f1e31398ba83f0a36c26c8ed/src/features/key-identity/browser/browserKeyBackend.test.ts"><code>src/features/key-identity/browser/browserKeyBackend.test.ts</code></a>).</p>
+(<a href="https://github.com/rim-platform/rim-ui/blob/625c78e7c352dd2300217ff4cf692350e410fa7e/src/features/key-identity/browser/browserKeyBackend.test.ts"><code>src/features/key-identity/browser/browserKeyBackend.test.ts</code></a>).</p>
 
     </main>
   </div>
 </div>
 <footer class="site-footer container"><span class="footer-brand"><img src="../../assets/rim-mark-inverse.svg" alt="" width="21" height="21"> RIM · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
-<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/d39b8dead670c746f1e31398ba83f0a36c26c8ed/docs/web-linked-device.md">rim-ui/docs/web-linked-device.md</a> at <code>d39b8de</code></p>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/625c78e7c352dd2300217ff4cf692350e410fa7e/docs/web-linked-device.md">rim-ui/docs/web-linked-device.md</a> at <code>625c78e</code></p>
 <script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
 </body>
 </html>
