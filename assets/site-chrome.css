@@ -1,17 +1,20 @@
 :root {
   color-scheme: dark;
-  --bg: #050910;
-  --panel: #0b121e;
-  --panel-soft: #101d2b;
-  --fg: #edf3f7;
-  --muted: #a0afc0;
-  --faint: #778a9f;
-  --line: #1b2a3a;
-  --accent: #39dce5;
-  --accent-strong: #27b7c7;
-  --green: #8fe5bc;
-  --ok: #8fe5bc;
-  --warm: #f5bb70;
+  /* The app's colour tokens (rim-ui src/styles/globals.css), so the site and RIM read as one. */
+  --bg: #0b0c10;
+  --panel: #111318;
+  --panel-soft: #181b22;
+  --fg: #edeef0;
+  --muted: #9ba1ad;
+  --faint: #8a909c;
+  --line: #262a33;
+  --line-strong: #3a404d;
+  --accent: #9cc3ff;
+  --accent-strong: #6ea8fe;
+  --green: #3dd68c;
+  --ok: #3dd68c;
+  --warm: #f5c46b;
+  --signal: #f2541b;
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
   --site-header-height: 81px;
@@ -27,7 +30,7 @@ a, button { -webkit-tap-highlight-color: transparent; }
 .container { width: min(1200px, calc(100% - 96px)); margin-inline: auto; }
 .skip { position: absolute; left: 24px; top: -90px; z-index: 100; padding: 10px 20px; background: var(--accent); color: var(--bg); }
 .skip:focus { top: 12px; }
-.site-header { position: sticky; top: 0; z-index: 20; background: rgb(5 9 16 / 95%); border-bottom: 1px solid rgb(27 42 58 / 80%); backdrop-filter: blur(16px); }
+.site-header { position: sticky; top: 0; z-index: 20; background: color-mix(in srgb, var(--bg) 95%, transparent); border-bottom: 1px solid var(--line); backdrop-filter: blur(16px); }
 .header-inner { display: flex; align-items: center; justify-content: space-between; min-height: 80px; gap: 28px; }
 .brand { display: inline-flex; align-items: center; gap: 11px; font-size: 22px; font-weight: 700; letter-spacing: .08em; color: var(--fg); text-decoration: none; }
 .brand img { display: block; width: 32px; height: 32px; }
