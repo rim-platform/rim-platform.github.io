@@ -59,8 +59,8 @@ export function checkSelfhost(release, root = SITE_ROOT) {
   if (!found) return ["index.html: no selfhost:start/selfhost:end block"];
   let want = release;
   if (!want) {
-    const server = found.match(/RIM_VERSION=([0-9][^\s]*?) /)?.[1];
-    const web = found.match(/RIM_WEB_VERSION=([0-9][^\s]*?)\./)?.[1];
+    const server = found.match(/RIM_VERSION=(\S+) and /)?.[1];
+    const web = found.match(/RIM_WEB_VERSION=(\S+?)\.<\/code>/)?.[1];
     if (!server || !web) return ["index.html: the selfhost block names no RIM_VERSION or RIM_WEB_VERSION"];
     const downloads = html.match(/\/releases\/download\/v([^/]+)\//)?.[1];
     if (downloads && downloads !== web) {
