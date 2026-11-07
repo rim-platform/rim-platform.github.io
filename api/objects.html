@@ -8,7 +8,7 @@
 <link rel="icon" href="../favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;550;600;650;700&family=JetBrains+Mono:wght@400;500&display=swap">
-<meta name="theme-color" content="#050910">
+<meta name="theme-color" content="#0b0c10">
 <link rel="stylesheet" href="../assets/site-chrome.css">
 <link rel="stylesheet" href="../assets/site.css">
 <script src="../assets/site.js" defer></script>
@@ -20,11 +20,11 @@
     <a class="brand" href="../index.html" aria-label="RIM home"><img src="../assets/rim-mark-inverse.svg" alt="" width="32" height="32">RIM</a>
     <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-navigation">Menu</button>
     <nav class="site-nav" id="site-navigation" data-open="false" aria-label="Main navigation">
+      <a href="../index.html#uses">What it's for</a>
       <a href="../index.html#privacy">Privacy</a>
-      <a href="../index.html#how">How it works</a>
-      <a href="../index.html#capabilities">Capabilities</a>
-      <a href="../index.html#community">Community</a>
+      <a href="../how-it-works/index.html">How it works</a>
       <a href="../index.html#download">Download</a>
+      <a href="../index.html#community">Community</a>
       <a href="../docs/client/getting-started.html">Get started</a>
       <a href="../docs/index.html" aria-current="location">Docs</a>
     </nav>
@@ -41,12 +41,12 @@
   <div class="page with-toc">
     <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
 <ol>
-<li><a href="#AccountDeletionSchedule">AccountDeletionSchedule</a><ol><li><a href="#Attachment">Attachment</a></li><li><a href="#AuditLogEntry">AuditLogEntry</a></li><li><a href="#AuditLogPage">AuditLogPage</a></li><li><a href="#AuditLogPageInfo">AuditLogPageInfo</a></li><li><a href="#BlockedPrincipal">BlockedPrincipal</a></li><li><a href="#ChannelCursorOutput">ChannelCursorOutput</a></li><li><a href="#ChannelLens">ChannelLens</a></li><li><a href="#ChannelPage">ChannelPage</a></li><li><a href="#ClaimedKeyPackage">ClaimedKeyPackage</a></li><li><a href="#Command">Command</a></li><li><a href="#CommandArgument">CommandArgument</a></li><li><a href="#CommandResult">CommandResult</a></li><li><a href="#ConfirmationChallenge">ConfirmationChallenge</a></li><li><a href="#Contact">Contact</a></li><li><a href="#Conversation">Conversation</a></li><li><a href="#ConversationMemberRemoval">ConversationMemberRemoval</a></li><li><a href="#ConversationMessageChanges">ConversationMessageChanges</a></li><li><a href="#ConversationNotificationLevel">ConversationNotificationLevel</a></li><li><a href="#ConversationPage">ConversationPage</a></li><li><a href="#ConversationPredecessor">ConversationPredecessor</a></li><li><a href="#CreateInvitePayload">CreateInvitePayload</a></li><li><a href="#CustomEmoji">CustomEmoji</a></li><li><a href="#DeleteWorkspacePayload">DeleteWorkspacePayload</a></li><li><a href="#DeletedMemberMessages">DeletedMemberMessages</a></li><li><a href="#DeviceKey">DeviceKey</a></li><li><a href="#DeviceLink">DeviceLink</a></li><li><a href="#DmFloorSource">DmFloorSource</a></li><li><a href="#DmRequest">DmRequest</a></li><li><a href="#DndWindow">DndWindow</a></li><li><a href="#FilterConditionGql">FilterConditionGql</a></li><li><a href="#FilterSpecGql">FilterSpecGql</a></li><li><a href="#InboxCursorOutput">InboxCursorOutput</a></li><li><a href="#InstanceAbuseReport">InstanceAbuseReport</a></li><li><a href="#InstanceAccount">InstanceAccount</a></li><li><a href="#InstanceIpBlock">InstanceIpBlock</a></li><li><a href="#InstanceIpBlockOutcome">InstanceIpBlockOutcome</a></li><li><a href="#InstancePrincipalBlock">InstancePrincipalBlock</a></li><li><a href="#InstancePrincipalBlockOutcome">InstancePrincipalBlockOutcome</a></li><li><a href="#InstancePrincipalUnblockOutcome">InstancePrincipalUnblockOutcome</a></li><li><a href="#InstanceProfileClearOutcome">InstanceProfileClearOutcome</a></li><li><a href="#InviteTokenPreviewGql">InviteTokenPreviewGql</a></li><li><a href="#JoinByPublicLinkPayload">JoinByPublicLinkPayload</a></li><li><a href="#JoinRequest">JoinRequest</a></li><li><a href="#JoinRequestCursorOutput">JoinRequestCursorOutput</a></li><li><a href="#JoinRequestPage">JoinRequestPage</a></li><li><a href="#JoinServerByInvitePayload">JoinServerByInvitePayload</a></li><li><a href="#KeyIdentity">KeyIdentity</a></li><li><a href="#KeyLogEntry">KeyLogEntry</a></li><li><a href="#KeyLoginChallenge">KeyLoginChallenge</a></li><li><a href="#Keybind">Keybind</a></li><li><a href="#LinkPreview">LinkPreview</a></li><li><a href="#LoginPayload">LoginPayload</a></li><li><a href="#MacroDef">MacroDef</a></li><li><a href="#MacroStep">MacroStep</a></li><li><a href="#MemberMessageCounts">MemberMessageCounts</a></li><li><a href="#MemberTimeout">MemberTimeout</a></li><li><a href="#Message">Message</a></li><li><a href="#MessageChange">MessageChange</a></li><li><a href="#MessageCursorOutput">MessageCursorOutput</a></li><li><a href="#MessageEncryption">MessageEncryption</a></li><li><a href="#MessagePage">MessagePage</a></li><li><a href="#MessageReport">MessageReport</a></li><li><a href="#MessageReportCursorOutput">MessageReportCursorOutput</a></li><li><a href="#MessageReportPage">MessageReportPage</a></li><li><a href="#MessageTally">MessageTally</a></li><li><a href="#MlsCommit">MlsCommit</a></li><li><a href="#MlsCommitPage">MlsCommitPage</a></li><li><a href="#MlsDevice">MlsDevice</a></li><li><a href="#MlsGroup">MlsGroup</a></li><li><a href="#MlsKeyPackageStatus">MlsKeyPackageStatus</a></li><li><a href="#MlsPendingDevice">MlsPendingDevice</a></li><li><a href="#MlsReaddRequest">MlsReaddRequest</a></li><li><a href="#MlsWelcome">MlsWelcome</a></li><li><a href="#MutedConversation">MutedConversation</a></li><li><a href="#MyDmSettings">MyDmSettings</a></li><li><a href="#Notification">Notification</a></li><li><a href="#NotificationCursorOutput">NotificationCursorOutput</a></li><li><a href="#NotificationPage">NotificationPage</a></li><li><a href="#NotificationSettings">NotificationSettings</a></li><li><a href="#PageInfo">PageInfo</a></li><li><a href="#PasswordChangeStart">PasswordChangeStart</a></li><li><a href="#PasswordChanged">PasswordChanged</a></li><li><a href="#PasswordLoginFinish">PasswordLoginFinish</a></li><li><a href="#PasswordLoginStart">PasswordLoginStart</a></li><li><a href="#PasswordResetStart">PasswordResetStart</a></li><li><a href="#PipeStageResult">PipeStageResult</a></li><li><a href="#PipelineActionGql">PipelineActionGql</a></li><li><a href="#PipelineFilterConditionGql">PipelineFilterConditionGql</a></li><li><a href="#PipelineFilterGql">PipelineFilterGql</a></li><li><a href="#PipelineGql">PipelineGql</a></li><li><a href="#PipelineTriggerGql">PipelineTriggerGql</a></li><li><a href="#PluginSource">PluginSource</a></li><li><a href="#PrincipalDevice">PrincipalDevice</a></li><li><a href="#PrincipalDevices">PrincipalDevices</a></li><li><a href="#ProfileCard">ProfileCard</a></li><li><a href="#PublicJoinLink">PublicJoinLink</a></li><li><a href="#PublicJoinLinkPreview">PublicJoinLinkPreview</a></li><li><a href="#ReactionGroup">ReactionGroup</a></li><li><a href="#RelayInfo">RelayInfo</a></li><li><a href="#RelayItem">RelayItem</a></li><li><a href="#RelayItemPage">RelayItemPage</a></li><li><a href="#ReloadSessionPayload">ReloadSessionPayload</a></li><li><a href="#RemoteIdentity">RemoteIdentity</a></li><li><a href="#RemoteJoinChallenge">RemoteJoinChallenge</a></li><li><a href="#RemoteJoinResult">RemoteJoinResult</a></li><li><a href="#RemotePrincipalDevice">RemotePrincipalDevice</a></li><li><a href="#RemoteServer">RemoteServer</a></li><li><a href="#RemoteSubscription">RemoteSubscription</a></li><li><a href="#RevocationFanout">RevocationFanout</a></li><li><a href="#SealedMessage">SealedMessage</a></li><li><a href="#SearchResultMessage">SearchResultMessage</a></li><li><a href="#SearchResultPage">SearchResultPage</a></li><li><a href="#Server">Server</a></li><li><a href="#ServerBan">ServerBan</a></li><li><a href="#ServerFeatureInfo">ServerFeatureInfo</a></li><li><a href="#ServerInfo">ServerInfo</a></li><li><a href="#ServerLimits">ServerLimits</a></li><li><a href="#ServerMember">ServerMember</a></li><li><a href="#SignedStatement">SignedStatement</a></li><li><a href="#SignupWithKeyPayload">SignupWithKeyPayload</a></li><li><a href="#StartedDeviceLink">StartedDeviceLink</a></li><li><a href="#StreamHead">StreamHead</a></li><li><a href="#Thread">Thread</a></li><li><a href="#UnreadCount">UnreadCount</a></li><li><a href="#UploadTicket">UploadTicket</a></li><li><a href="#User">User</a></li><li><a href="#UserCommand">UserCommand</a></li><li><a href="#UserCommandStep">UserCommandStep</a></li><li><a href="#UserPresenceGql">UserPresenceGql</a></li><li><a href="#WorkspaceDmPolicy">WorkspaceDmPolicy</a></li><li><a href="#WorkspaceDmSetting">WorkspaceDmSetting</a></li><li><a href="#WorkspaceInvite">WorkspaceInvite</a></li><li><a href="#WorkspaceInviteCursorOutput">WorkspaceInviteCursorOutput</a></li><li><a href="#WorkspaceInvitePage">WorkspaceInvitePage</a></li><li><a href="#WorkspaceInvitePreviewGql">WorkspaceInvitePreviewGql</a></li><li><a href="#WorkspacePlugin">WorkspacePlugin</a></li><li><a href="#WorkspaceStateEntryGql">WorkspaceStateEntryGql</a></li></ol></li>
+<li><a href="#AccountDeletionSchedule">AccountDeletionSchedule</a><ol><li><a href="#Attachment">Attachment</a></li><li><a href="#AuditLogEntry">AuditLogEntry</a></li><li><a href="#AuditLogPage">AuditLogPage</a></li><li><a href="#AuditLogPageInfo">AuditLogPageInfo</a></li><li><a href="#BlockedPrincipal">BlockedPrincipal</a></li><li><a href="#Bot">Bot</a></li><li><a href="#BotInfo">BotInfo</a></li><li><a href="#BotToken">BotToken</a></li><li><a href="#ChannelCursorOutput">ChannelCursorOutput</a></li><li><a href="#ChannelLens">ChannelLens</a></li><li><a href="#ChannelPage">ChannelPage</a></li><li><a href="#ClaimedKeyPackage">ClaimedKeyPackage</a></li><li><a href="#Command">Command</a></li><li><a href="#CommandArgument">CommandArgument</a></li><li><a href="#CommandResult">CommandResult</a></li><li><a href="#ConfirmationChallenge">ConfirmationChallenge</a></li><li><a href="#Contact">Contact</a></li><li><a href="#Conversation">Conversation</a></li><li><a href="#ConversationMemberRemoval">ConversationMemberRemoval</a></li><li><a href="#ConversationMessageChanges">ConversationMessageChanges</a></li><li><a href="#ConversationNotificationLevel">ConversationNotificationLevel</a></li><li><a href="#ConversationPage">ConversationPage</a></li><li><a href="#ConversationPredecessor">ConversationPredecessor</a></li><li><a href="#CreateInvitePayload">CreateInvitePayload</a></li><li><a href="#CreatedBot">CreatedBot</a></li><li><a href="#CreatedBotToken">CreatedBotToken</a></li><li><a href="#CreatedIncomingWebhook">CreatedIncomingWebhook</a></li><li><a href="#CustomEmoji">CustomEmoji</a></li><li><a href="#DeleteWorkspacePayload">DeleteWorkspacePayload</a></li><li><a href="#DeletedMemberMessages">DeletedMemberMessages</a></li><li><a href="#DeviceKey">DeviceKey</a></li><li><a href="#DeviceLink">DeviceLink</a></li><li><a href="#DmFloorSource">DmFloorSource</a></li><li><a href="#DmRequest">DmRequest</a></li><li><a href="#DndWindow">DndWindow</a></li><li><a href="#FilterConditionGql">FilterConditionGql</a></li><li><a href="#FilterSpecGql">FilterSpecGql</a></li><li><a href="#HomeLayout">HomeLayout</a></li><li><a href="#HomeLayoutSaved">HomeLayoutSaved</a></li><li><a href="#InboxCursorOutput">InboxCursorOutput</a></li><li><a href="#IncomingWebhook">IncomingWebhook</a></li><li><a href="#InstanceAbuseReport">InstanceAbuseReport</a></li><li><a href="#InstanceAccount">InstanceAccount</a></li><li><a href="#InstanceIpBlock">InstanceIpBlock</a></li><li><a href="#InstanceIpBlockOutcome">InstanceIpBlockOutcome</a></li><li><a href="#InstancePrincipalBlock">InstancePrincipalBlock</a></li><li><a href="#InstancePrincipalBlockOutcome">InstancePrincipalBlockOutcome</a></li><li><a href="#InstancePrincipalUnblockOutcome">InstancePrincipalUnblockOutcome</a></li><li><a href="#InstanceProfileClearOutcome">InstanceProfileClearOutcome</a></li><li><a href="#InviteTokenPreviewGql">InviteTokenPreviewGql</a></li><li><a href="#JoinByPublicLinkPayload">JoinByPublicLinkPayload</a></li><li><a href="#JoinRequest">JoinRequest</a></li><li><a href="#JoinRequestCursorOutput">JoinRequestCursorOutput</a></li><li><a href="#JoinRequestPage">JoinRequestPage</a></li><li><a href="#JoinServerByInvitePayload">JoinServerByInvitePayload</a></li><li><a href="#KeyIdentity">KeyIdentity</a></li><li><a href="#KeyLogEntry">KeyLogEntry</a></li><li><a href="#KeyLoginChallenge">KeyLoginChallenge</a></li><li><a href="#Keybind">Keybind</a></li><li><a href="#LinkPreview">LinkPreview</a></li><li><a href="#LoginPayload">LoginPayload</a></li><li><a href="#MacroDef">MacroDef</a></li><li><a href="#MacroStep">MacroStep</a></li><li><a href="#MemberMessageCounts">MemberMessageCounts</a></li><li><a href="#MemberTimeout">MemberTimeout</a></li><li><a href="#Message">Message</a></li><li><a href="#MessageChange">MessageChange</a></li><li><a href="#MessageCursorOutput">MessageCursorOutput</a></li><li><a href="#MessageEncryption">MessageEncryption</a></li><li><a href="#MessagePage">MessagePage</a></li><li><a href="#MessageReport">MessageReport</a></li><li><a href="#MessageReportCursorOutput">MessageReportCursorOutput</a></li><li><a href="#MessageReportPage">MessageReportPage</a></li><li><a href="#MessageTally">MessageTally</a></li><li><a href="#MlsCommit">MlsCommit</a></li><li><a href="#MlsCommitPage">MlsCommitPage</a></li><li><a href="#MlsDevice">MlsDevice</a></li><li><a href="#MlsGroup">MlsGroup</a></li><li><a href="#MlsKeyPackageStatus">MlsKeyPackageStatus</a></li><li><a href="#MlsPendingDevice">MlsPendingDevice</a></li><li><a href="#MlsReaddRequest">MlsReaddRequest</a></li><li><a href="#MlsWelcome">MlsWelcome</a></li><li><a href="#MutedConversation">MutedConversation</a></li><li><a href="#MyDmSettings">MyDmSettings</a></li><li><a href="#Notification">Notification</a></li><li><a href="#NotificationCursorOutput">NotificationCursorOutput</a></li><li><a href="#NotificationDueEvent">NotificationDueEvent</a></li><li><a href="#NotificationPage">NotificationPage</a></li><li><a href="#NotificationSettings">NotificationSettings</a></li><li><a href="#PageInfo">PageInfo</a></li><li><a href="#PasswordChangeStart">PasswordChangeStart</a></li><li><a href="#PasswordChanged">PasswordChanged</a></li><li><a href="#PasswordLoginFinish">PasswordLoginFinish</a></li><li><a href="#PasswordLoginStart">PasswordLoginStart</a></li><li><a href="#PasswordResetStart">PasswordResetStart</a></li><li><a href="#PipeStageResult">PipeStageResult</a></li><li><a href="#PipelineActionGql">PipelineActionGql</a></li><li><a href="#PipelineFilterConditionGql">PipelineFilterConditionGql</a></li><li><a href="#PipelineFilterGql">PipelineFilterGql</a></li><li><a href="#PipelineGql">PipelineGql</a></li><li><a href="#PipelinePostAsBotGql">PipelinePostAsBotGql</a></li><li><a href="#PipelineTriggerGql">PipelineTriggerGql</a></li><li><a href="#PluginSource">PluginSource</a></li><li><a href="#PrincipalDevice">PrincipalDevice</a></li><li><a href="#PrincipalDevices">PrincipalDevices</a></li><li><a href="#ProfileCard">ProfileCard</a></li><li><a href="#PublicJoinLink">PublicJoinLink</a></li><li><a href="#PublicJoinLinkPreview">PublicJoinLinkPreview</a></li><li><a href="#ReactionGroup">ReactionGroup</a></li><li><a href="#RelayInfo">RelayInfo</a></li><li><a href="#RelayItem">RelayItem</a></li><li><a href="#RelayItemPage">RelayItemPage</a></li><li><a href="#ReloadSessionPayload">ReloadSessionPayload</a></li><li><a href="#RemoteIdentity">RemoteIdentity</a></li><li><a href="#RemoteJoinChallenge">RemoteJoinChallenge</a></li><li><a href="#RemoteJoinResult">RemoteJoinResult</a></li><li><a href="#RemotePrincipalDevice">RemotePrincipalDevice</a></li><li><a href="#RemoteServer">RemoteServer</a></li><li><a href="#RemoteSubscription">RemoteSubscription</a></li><li><a href="#RevocationFanout">RevocationFanout</a></li><li><a href="#SealedMessage">SealedMessage</a></li><li><a href="#SearchResultMessage">SearchResultMessage</a></li><li><a href="#SearchResultPage">SearchResultPage</a></li><li><a href="#Server">Server</a></li><li><a href="#ServerBan">ServerBan</a></li><li><a href="#ServerFeatureInfo">ServerFeatureInfo</a></li><li><a href="#ServerInfo">ServerInfo</a></li><li><a href="#ServerLimits">ServerLimits</a></li><li><a href="#ServerMember">ServerMember</a></li><li><a href="#SignedStatement">SignedStatement</a></li><li><a href="#SignupWithKeyPayload">SignupWithKeyPayload</a></li><li><a href="#StartedDeviceLink">StartedDeviceLink</a></li><li><a href="#StreamHead">StreamHead</a></li><li><a href="#Thread">Thread</a></li><li><a href="#UnreadCount">UnreadCount</a></li><li><a href="#UploadTicket">UploadTicket</a></li><li><a href="#User">User</a></li><li><a href="#UserCommand">UserCommand</a></li><li><a href="#UserCommandStep">UserCommandStep</a></li><li><a href="#UserPresenceGql">UserPresenceGql</a></li><li><a href="#WebhookFormatInfo">WebhookFormatInfo</a></li><li><a href="#WebhookFormatPreview">WebhookFormatPreview</a></li><li><a href="#WebhookHeader">WebhookHeader</a></li><li><a href="#WebhookTestDeliveries">WebhookTestDeliveries</a></li><li><a href="#WebhookTestDelivery">WebhookTestDelivery</a></li><li><a href="#WebhookTestSession">WebhookTestSession</a></li><li><a href="#WorkspaceDmPolicy">WorkspaceDmPolicy</a></li><li><a href="#WorkspaceDmSetting">WorkspaceDmSetting</a></li><li><a href="#WorkspaceInvite">WorkspaceInvite</a></li><li><a href="#WorkspaceInviteCursorOutput">WorkspaceInviteCursorOutput</a></li><li><a href="#WorkspaceInvitePage">WorkspaceInvitePage</a></li><li><a href="#WorkspaceInvitePreviewGql">WorkspaceInvitePreviewGql</a></li><li><a href="#WorkspacePlugin">WorkspacePlugin</a></li><li><a href="#WorkspaceStateEntryGql">WorkspaceStateEntryGql</a></li></ol></li>
 </ol>
 </details></aside>
     <main id="content" class="prose">
 <h1>Objects</h1>
-<p class="lede">138 objects, in the order the schema defines them.</p>
+<p class="lede">155 objects, in the order the schema defines them.</p>
 <input id="filter" class="search" type="search" placeholder="Filter objects by name" aria-label="Filter objects by name" autocomplete="off">
 <p id="filter-none" class="muted" hidden>Nothing matches.</p>
 <section class="entry" id="AccountDeletionSchedule" data-name="AccountDeletionSchedule">
@@ -92,6 +92,9 @@ before and <a href="mutation.html#cancelAccountDeletion"><code>cancelAccountDele
 <tr><td><code>errorKind</code></td><td><code><a href="scalars.html#String">String</a></code></td><td></td></tr>
 <tr><td><code>capabilityCheckOutcome</code></td><td><code><a href="scalars.html#String">String</a></code></td><td></td></tr>
 <tr><td><code>confirmationOutcome</code></td><td><code><a href="scalars.html#String">String</a></code></td><td></td></tr>
+<tr><td><code>runId</code></td><td><code><a href="scalars.html#String">String</a></code></td><td><p>The identifier the desktop app gave the stretch of an agent&#39;s calls this entry belongs to.
+Null unless the initiator was <code>AGENT</code>.</p>
+</td></tr>
 <tr><td><code>createdAt</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td></td></tr>
 </tbody></table></div>
 <p class="faint">Used by <a href="objects.html#AuditLogPage">AuditLogPage</a></p>
@@ -135,6 +138,57 @@ principal.</p>
 </td></tr>
 </tbody></table></div>
 <p class="faint">Used by <a href="query.html#myBlockedPrincipals">Query.myBlockedPrincipals</a></p>
+</section>
+<section class="entry" id="Bot" data-name="Bot">
+<h3><code>Bot</code><span class="kind">object</span></h3>
+<div class="desc"><p>A bot account of a workspace.</p>
+</div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>userId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>serverId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>name</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td></td></tr>
+<tr><td><code>runBy</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td><p>Who runs it, as the person who added it says.</p>
+</td></tr>
+<tr><td><code>readsGoTo</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td><p>Where what it reads goes, as the person who added it says.</p>
+</td></tr>
+<tr><td><code>addedByName</code></td><td><code><a href="scalars.html#String">String</a></code></td><td><p>Who added it.</p>
+</td></tr>
+<tr><td><code>createdAt</code></td><td><code><a href="scalars.html#DateTime">DateTime</a>!</code></td><td></td></tr>
+<tr><td><code>deactivatedAt</code></td><td><code><a href="scalars.html#DateTime">DateTime</a></code></td><td><p>When it was deactivated; null while it is active.</p>
+</td></tr>
+<tr><td><code>seesMemberJoins</code></td><td><code><a href="scalars.html#Boolean">Boolean</a>!</code></td><td><p>Whether an Owner or Moderator let it see members joining the workspace.</p>
+</td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="objects.html#CreatedBot">CreatedBot</a>, <a href="mutation.html#updateBot">Mutation.updateBot</a>, <a href="mutation.html#deactivateBot">Mutation.deactivateBot</a>, <a href="query.html#bots">Query.bots</a></p>
+</section>
+<section class="entry" id="BotInfo" data-name="BotInfo">
+<h3><code>BotInfo</code><span class="kind">object</span></h3>
+<div class="desc"><p>What the person who added a bot says about it. RIM cannot check it.</p>
+</div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>runBy</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td><p>Who runs it.</p>
+</td></tr>
+<tr><td><code>readsGoTo</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td><p>Where what it reads goes.</p>
+</td></tr>
+<tr><td><code>addedByName</code></td><td><code><a href="scalars.html#String">String</a></code></td><td><p>Who added it.</p>
+</td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="objects.html#ServerMember">ServerMember</a>, <a href="objects.html#User">User</a></p>
+</section>
+<section class="entry" id="BotToken" data-name="BotToken">
+<h3><code>BotToken</code><span class="kind">object</span></h3>
+<div class="desc"><p>A bot&#39;s token, without its secret, which is shown once when it is created.</p>
+</div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>id</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>label</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td></td></tr>
+<tr><td><code>createdAt</code></td><td><code><a href="scalars.html#DateTime">DateTime</a>!</code></td><td></td></tr>
+<tr><td><code>lastUsedAt</code></td><td><code><a href="scalars.html#DateTime">DateTime</a></code></td><td><p>When it was last used, to the minute; null when it never was.</p>
+</td></tr>
+<tr><td><code>revokedAt</code></td><td><code><a href="scalars.html#DateTime">DateTime</a></code></td><td><p>When it was revoked; null while it works.</p>
+</td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="objects.html#CreatedBotToken">CreatedBotToken</a>, <a href="mutation.html#revokeBotToken">Mutation.revokeBotToken</a>, <a href="query.html#botTokens">Query.botTokens</a></p>
 </section>
 <section class="entry" id="ChannelCursorOutput" data-name="ChannelCursorOutput">
 <h3><code>ChannelCursorOutput</code><span class="kind">object</span></h3>
@@ -410,6 +464,43 @@ and channels.</p>
 </tbody></table></div>
 <p class="faint">Used by <a href="mutation.html#createInvite">Mutation.createInvite</a></p>
 </section>
+<section class="entry" id="CreatedBot" data-name="CreatedBot">
+<h3><code>CreatedBot</code><span class="kind">object</span></h3>
+<div class="desc"><p>A new bot and its first token.</p>
+</div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>bot</code></td><td><code><a href="objects.html#Bot">Bot</a>!</code></td><td></td></tr>
+<tr><td><code>token</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td><p><code>rimbot_…</code>, shown this once.</p>
+</td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="mutation.html#createBot">Mutation.createBot</a></p>
+</section>
+<section class="entry" id="CreatedBotToken" data-name="CreatedBotToken">
+<h3><code>CreatedBotToken</code><span class="kind">object</span></h3>
+<div class="desc"><p>A new token of a bot.</p>
+</div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>botToken</code></td><td><code><a href="objects.html#BotToken">BotToken</a>!</code></td><td></td></tr>
+<tr><td><code>token</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td><p><code>rimbot_…</code>, shown this once.</p>
+</td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="mutation.html#createBotToken">Mutation.createBotToken</a></p>
+</section>
+<section class="entry" id="CreatedIncomingWebhook" data-name="CreatedIncomingWebhook">
+<h3><code>CreatedIncomingWebhook</code><span class="kind">object</span></h3>
+<div class="desc"><p>A new incoming webhook and its token.</p>
+</div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>webhook</code></td><td><code><a href="objects.html#IncomingWebhook">IncomingWebhook</a>!</code></td><td></td></tr>
+<tr><td><code>token</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td><p><code>rimhook_…</code>, shown this once. The URL is <code>/api/hooks/</code> and this on the server&#39;s address, and
+it is a secret. The empty string when <code>keptTestUrl</code> is true: the client already has the URL,
+and the server held only its hash.</p>
+</td></tr>
+<tr><td><code>keptTestUrl</code></td><td><code><a href="scalars.html#Boolean">Boolean</a>!</code></td><td><p>Whether the webhook kept the token of the test session named in <code>testSessionId</code>.</p>
+</td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="mutation.html#createIncomingWebhook">Mutation.createIncomingWebhook</a></p>
+</section>
 <section class="entry" id="CustomEmoji" data-name="CustomEmoji">
 <h3><code>CustomEmoji</code><span class="kind">object</span></h3>
 <div class="desc"></div>
@@ -538,6 +629,33 @@ and channels.</p>
 </tbody></table></div>
 <p class="faint">Used by <a href="objects.html#ChannelLens">ChannelLens</a></p>
 </section>
+<section class="entry" id="HomeLayout" data-name="HomeLayout">
+<h3><code>HomeLayout</code><span class="kind">object</span></h3>
+<div class="desc"><p>The signed-in person&#39;s Home layout, kept on their home server.</p>
+</div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>layout</code></td><td><code><a href="scalars.html#JSON">JSON</a>!</code></td><td><p>The layout: <code>{ &quot;version&quot;: 1, &quot;boxes&quot;: [{ &quot;id&quot;, &quot;kind&quot;, &quot;width&quot;, &quot;settings&quot;? }] }</code>.</p>
+</td></tr>
+<tr><td><code>editedAt</code></td><td><code><a href="scalars.html#DateTime">DateTime</a>!</code></td><td><p>When the person made the edit, never later than the server&#39;s clock when it was stored.</p>
+</td></tr>
+<tr><td><code>updatedAt</code></td><td><code><a href="scalars.html#DateTime">DateTime</a>!</code></td><td><p>When the server stored it.</p>
+</td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="objects.html#HomeLayoutSaved">HomeLayoutSaved</a>, <a href="query.html#homeLayout">Query.homeLayout</a></p>
+</section>
+<section class="entry" id="HomeLayoutSaved" data-name="HomeLayoutSaved">
+<h3><code>HomeLayoutSaved</code><span class="kind">object</span></h3>
+<div class="desc"><p>The answer to <a href="mutation.html#saveHomeLayout"><code>saveHomeLayout</code></a>.</p>
+</div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>kept</code></td><td><code><a href="scalars.html#Boolean">Boolean</a>!</code></td><td><p>True when the layout sent was stored; false when the stored layout had a later
+<code>editedAt</code> and was kept instead.</p>
+</td></tr>
+<tr><td><code>layout</code></td><td><code><a href="objects.html#HomeLayout">HomeLayout</a>!</code></td><td><p>The layout just stored, or the stored one that was kept.</p>
+</td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="mutation.html#saveHomeLayout">Mutation.saveHomeLayout</a></p>
+</section>
 <section class="entry" id="InboxCursorOutput" data-name="InboxCursorOutput">
 <h3><code>InboxCursorOutput</code><span class="kind">object</span></h3>
 <div class="desc"></div>
@@ -546,6 +664,26 @@ and channels.</p>
 <tr><td><code>conversationId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
 </tbody></table></div>
 <p class="faint">Used by <a href="objects.html#ConversationPage">ConversationPage</a></p>
+</section>
+<section class="entry" id="IncomingWebhook" data-name="IncomingWebhook">
+<h3><code>IncomingWebhook</code><span class="kind">object</span></h3>
+<div class="desc"><p>A URL that posts to one channel as one bot, without its token, which is shown once.</p>
+</div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>id</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>conversationId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>botUserId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td><p>The bot it posts as.</p>
+</td></tr>
+<tr><td><code>preset</code></td><td><code><a href="enums.html#WebhookPreset">WebhookPreset</a>!</code></td><td></td></tr>
+<tr><td><code>template</code></td><td><code><a href="scalars.html#JSON">JSON</a></code></td><td><p>Its own format; null for a webhook that follows its preset, such as an unedited GitHub one.</p>
+</td></tr>
+<tr><td><code>createdAt</code></td><td><code><a href="scalars.html#DateTime">DateTime</a>!</code></td><td></td></tr>
+<tr><td><code>lastUsedAt</code></td><td><code><a href="scalars.html#DateTime">DateTime</a></code></td><td><p>When it was last used, to the minute; null when it never was.</p>
+</td></tr>
+<tr><td><code>revokedAt</code></td><td><code><a href="scalars.html#DateTime">DateTime</a></code></td><td><p>When it was revoked; null until then.</p>
+</td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="objects.html#CreatedIncomingWebhook">CreatedIncomingWebhook</a>, <a href="mutation.html#revokeIncomingWebhook">Mutation.revokeIncomingWebhook</a>, <a href="mutation.html#updateIncomingWebhookFormat">Mutation.updateIncomingWebhookFormat</a>, <a href="query.html#incomingWebhooks">Query.incomingWebhooks</a></p>
 </section>
 <section class="entry" id="InstanceAbuseReport" data-name="InstanceAbuseReport">
 <h3><code>InstanceAbuseReport</code><span class="kind">object</span></h3>
@@ -1266,6 +1404,31 @@ conversation or the message is gone.</p>
 </tbody></table></div>
 <p class="faint">Used by <a href="objects.html#NotificationPage">NotificationPage</a></p>
 </section>
+<section class="entry" id="NotificationDueEvent" data-name="NotificationDueEvent">
+<h3><code>NotificationDueEvent</code><span class="kind">object</span></h3>
+<div class="desc"><p>A notification the server just stored for the viewer, from any workspace on this server.</p>
+</div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>workspaceId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td><p>The workspace the notification belongs to.</p>
+</td></tr>
+<tr><td><code>notificationId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td><p>The stored notification, as in the inbox.</p>
+</td></tr>
+<tr><td><code>conversationId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td><p>The conversation of the message.</p>
+</td></tr>
+<tr><td><code>messageId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td><p>The message the notification is about.</p>
+</td></tr>
+<tr><td><code>reason</code></td><td><code><a href="enums.html#NotificationReason">NotificationReason</a>!</code></td><td><p>Why the viewer was notified.</p>
+</td></tr>
+<tr><td><code>quiet</code></td><td><code><a href="scalars.html#Boolean">Boolean</a>!</code></td><td><p>True inside the viewer&#39;s do-not-disturb window or pause: record it without a toast or a
+sound.</p>
+</td></tr>
+<tr><td><code>reactionEmoji</code></td><td><code><a href="scalars.html#String">String</a></code></td><td><p>The emoji of the reaction; null unless <code>reason</code> is <code>REACTION</code>.</p>
+</td></tr>
+<tr><td><code>reactionBy</code></td><td><code><a href="scalars.html#ID">ID</a></code></td><td><p>Who added the reaction; null unless <code>reason</code> is <code>REACTION</code>.</p>
+</td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="subscription.html#notificationEvents">Subscription.notificationEvents</a></p>
+</section>
 <section class="entry" id="NotificationPage" data-name="NotificationPage">
 <h3><code>NotificationPage</code><span class="kind">object</span></h3>
 <div class="desc"><p>Notifications ordered <code>createdAt DESC, id DESC</code> (newest first), with the standard cursor
@@ -1389,8 +1552,13 @@ account only.</p>
 <div class="desc"></div>
 <div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
 <tr><td><code>actionType</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td></td></tr>
-<tr><td><code>commandId</code></td><td><code><a href="scalars.html#String">String</a></code></td><td></td></tr>
-<tr><td><code>args</code></td><td><code><a href="scalars.html#JSON">JSON</a></code></td><td></td></tr>
+<tr><td><code>commandId</code></td><td><code><a href="scalars.html#String">String</a></code></td><td><p>For a Post as bot action, <code>chat.post_message</code>, the command it runs.</p>
+</td></tr>
+<tr><td><code>args</code></td><td><code><a href="scalars.html#JSON">JSON</a></code></td><td><p>For a Post as bot action, the bot, channel and text, as a client that does not know
+<code>postAsBot</code> shows them.</p>
+</td></tr>
+<tr><td><code>postAsBot</code></td><td><code><a href="objects.html#PipelinePostAsBotGql">PipelinePostAsBotGql</a></code></td><td><p>The bot, channel and text of a Post as bot action; null for any other.</p>
+</td></tr>
 </tbody></table></div>
 <p class="faint">Used by <a href="objects.html#PipelineGql">PipelineGql</a></p>
 </section>
@@ -1433,6 +1601,18 @@ account only.</p>
 <tr><td><code>updatedAt</code></td><td><code><a href="scalars.html#DateTime">DateTime</a>!</code></td><td></td></tr>
 </tbody></table></div>
 <p class="faint">Used by <a href="mutation.html#createPipeline">Mutation.createPipeline</a>, <a href="mutation.html#updatePipeline">Mutation.updatePipeline</a>, <a href="mutation.html#togglePipeline">Mutation.togglePipeline</a>, <a href="query.html#pipelines">Query.pipelines</a></p>
+</section>
+<section class="entry" id="PipelinePostAsBotGql" data-name="PipelinePostAsBotGql">
+<h3><code>PipelinePostAsBotGql</code><span class="kind">object</span></h3>
+<div class="desc"><p>A message a bot posts when someone joins.</p>
+</div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>botUserId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>conversationId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>text</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td><p>The text as saved, with its placeholders.</p>
+</td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="objects.html#PipelineActionGql">PipelineActionGql</a></p>
 </section>
 <section class="entry" id="PipelineTriggerGql" data-name="PipelineTriggerGql">
 <h3><code>PipelineTriggerGql</code><span class="kind">object</span></h3>
@@ -1809,7 +1989,7 @@ space. Every member sees it.</p>
 <div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
 <tr><td><code>key</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td><p>The feature&#39;s name, as <code>RIM_FEATURES_DISABLED</code> takes it: <code>attachments</code>, <code>link_previews</code>,
 <code>email</code>, <code>custom_emoji</code>, <code>workspace_plugins</code>, <code>ai_commands</code>, <code>avatars</code>, <code>plugin_link_fetch</code>,
-<code>text_art_check</code> or <code>avatar_check</code>. A client ignores a name it does not know.</p>
+<code>text_art_check</code>, <code>avatar_check</code> or <a href="query.html#bots"><code>bots</code></a>. A client ignores a name it does not know.</p>
 </td></tr>
 <tr><td><code>state</code></td><td><code><a href="enums.html#ServerFeatureState">ServerFeatureState</a>!</code></td><td></td></tr>
 <tr><td><code>reason</code></td><td><code><a href="scalars.html#String">String</a></code></td><td><p>Why an unavailable feature is unavailable; null otherwise.</p>
@@ -1868,8 +2048,14 @@ server asks for none (<code>RIM_MINIMUM_AGE</code>). A signup sends it back as
 <a href="mutation.html#clearMessageFlag"><code>clearMessageFlag</code></a>), <code>delete_member_messages</code> (<a href="query.html#memberMessageCounts"><code>memberMessageCounts</code></a>,
 <a href="mutation.html#deleteMemberMessages"><code>deleteMemberMessages</code></a>, the <code>MessagesDeleted</code> event), <code>member_timeout_changed</code>
 (<code>ServerMember.timeoutReason</code>, the <code>MemberTimeoutChanged</code> event),
-<code>conversation_member_removals</code> (<a href="query.html#conversationMemberRemovals"><code>conversationMemberRemovals</code></a>). A client ignores names it
-does not know.</p>
+<code>conversation_member_removals</code> (<a href="query.html#conversationMemberRemovals"><code>conversationMemberRemovals</code></a>), <code>notification_events</code>
+(<a href="subscription.html#notificationEvents"><code>notificationEvents</code></a>), <code>bot_disclosure</code> (<code>User.isBot</code>, <code>User.bot</code>, <code>ServerMember.isBot</code>,
+<code>ServerMember.bot</code>), <code>command_run_id</code> (<code>ExecuteCommandInput.runId</code>, <code>AuditLogEntry.runId</code>),
+<code>read_marker</code> (<code>UnreadCount.unreadAfter</code>, <a href="mutation.html#markAsUnread"><code>markAsUnread</code></a>, the <code>ReadMarkerRewound</code> event),
+<code>bot_events</code> (<code>Bot.seesMemberJoins</code>, the same field of <a href="inputs.html#CreateBotInput"><code>CreateBotInput</code></a> and <a href="inputs.html#UpdateBotInput"><code>UpdateBotInput</code></a>,
+and <code>/api/bot/v1/events</code>), <code>pipeline_post_as_bot</code> (<code>PipelineActionGql.postAsBot</code>,
+<code>PipelineActionInput.postAsBot</code>).
+A client ignores names it does not know.</p>
 </td></tr>
 </tbody></table></div>
 <p class="faint">Used by <a href="query.html#serverInfo">Query.serverInfo</a></p>
@@ -1942,6 +2128,10 @@ is in force; null for every other member and when no reason was given.</p>
 <tr><td><code>banned</code></td><td><code><a href="scalars.html#Boolean">Boolean</a>!</code></td><td><p>Whether this member is banned in this workspace.</p>
 </td></tr>
 <tr><td><code>bannedUntil</code></td><td><code><a href="scalars.html#DateTime">DateTime</a></code></td><td><p>End of the active ban; null for a permanent ban or no ban.</p>
+</td></tr>
+<tr><td><code>isBot</code></td><td><code><a href="scalars.html#Boolean">Boolean</a>!</code></td><td><p>Whether this member is a bot, an account nobody signs in to.</p>
+</td></tr>
+<tr><td><code>bot</code></td><td><code><a href="objects.html#BotInfo">BotInfo</a></code></td><td><p>What the person who added this bot says about it; null for anyone but a bot.</p>
 </td></tr>
 </tbody></table></div>
 <p class="faint">Used by <a href="mutation.html#setMemberRole">Mutation.setMemberRole</a>, <a href="query.html#serverMembers">Query.serverMembers</a></p>
@@ -2020,6 +2210,8 @@ session, unpadded base64url, in the clear. <code>null</code> otherwise.</p>
 <div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
 <tr><td><code>conversationId</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
 <tr><td><code>count</code></td><td><code><a href="scalars.html#Int">Int</a>!</code></td><td></td></tr>
+<tr><td><code>unreadAfter</code></td><td><code><a href="scalars.html#DateTime">DateTime</a>!</code></td><td><p>Messages sent after this time count as unread.</p>
+</td></tr>
 </tbody></table></div>
 <p class="faint">Used by <a href="query.html#unreadCounts">Query.unreadCounts</a></p>
 </section>
@@ -2068,13 +2260,17 @@ everyone else.</p>
 handle domain, or a person from another server&#39;s username at their home server and that
 server&#39;s handle domain. Null when it is not known (a person from another server whose
 home server did not say, or whose handle domain does not point back at it) and for a
-deleted account.</p>
+deleted account or a bot.</p>
+</td></tr>
+<tr><td><code>isBot</code></td><td><code><a href="scalars.html#Boolean">Boolean</a>!</code></td><td><p>Whether this account is a bot, which nobody signs in to.</p>
 </td></tr>
 <tr><td><code>banned</code></td><td><code><a href="scalars.html#Boolean">Boolean</a>!</code></td><td><p>Whether this message&#39;s author is banned in its workspace; false outside message authors.</p>
 </td></tr>
 <tr><td><code>bannedUntil</code></td><td><code><a href="scalars.html#DateTime">DateTime</a></code></td><td><p>End of the active workspace ban; null for a permanent ban or no ban.</p>
 </td></tr>
 <tr><td><code>banReason</code></td><td><code><a href="scalars.html#String">String</a></code></td><td><p>The active ban&#39;s reason, readable only by workspace moderators.</p>
+</td></tr>
+<tr><td><code>bot</code></td><td><code><a href="objects.html#BotInfo">BotInfo</a></code></td><td><p>What the person who added this bot says about it; null for anyone but a bot.</p>
 </td></tr>
 </tbody></table></div>
 <p class="faint">Used by <a href="objects.html#ConversationMemberRemoval">ConversationMemberRemoval</a>, <a href="objects.html#JoinRequest">JoinRequest</a>, <a href="objects.html#Message">Message</a>, <a href="mutation.html#updateMyProfile">Mutation.updateMyProfile</a>, <a href="objects.html#Notification">Notification</a>, <a href="objects.html#PublicJoinLink">PublicJoinLink</a>, <a href="query.html#me">Query.me</a>, <a href="objects.html#SearchResultMessage">SearchResultMessage</a>, <a href="objects.html#Server">Server</a>, <a href="objects.html#ServerBan">ServerBan</a>, <a href="objects.html#WorkspaceInvite">WorkspaceInvite</a>, <a href="objects.html#WorkspacePlugin">WorkspacePlugin</a></p>
@@ -2114,6 +2310,91 @@ deleted account.</p>
 <tr><td><code>lastSeenAt</code></td><td><code><a href="scalars.html#DateTime">DateTime</a>!</code></td><td></td></tr>
 </tbody></table></div>
 <p class="faint">Used by <a href="query.html#workspacePresence">Query.workspacePresence</a></p>
+</section>
+<section class="entry" id="WebhookFormatInfo" data-name="WebhookFormatInfo">
+<h3><code>WebhookFormatInfo</code><span class="kind">object</span></h3>
+<div class="desc"><p>A ready-made webhook format RIM ships, the same for everyone.</p>
+</div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>key</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td><p>A short name that stays the same, such as <code>github</code>.</p>
+</td></tr>
+<tr><td><code>name</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td></td></tr>
+<tr><td><code>setupNote</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td><p>What to set up on the service&#39;s side.</p>
+</td></tr>
+<tr><td><code>format</code></td><td><code><a href="scalars.html#JSON">JSON</a>!</code></td><td></td></tr>
+<tr><td><code>sampleHeaders</code></td><td><code>[<a href="objects.html#WebhookHeader">WebhookHeader</a>!]!</code></td><td></td></tr>
+<tr><td><code>sampleBody</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td><p>A delivery&#39;s body as the service sends it.</p>
+</td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="query.html#webhookFormats">Query.webhookFormats</a></p>
+</section>
+<section class="entry" id="WebhookFormatPreview" data-name="WebhookFormatPreview">
+<h3><code>WebhookFormatPreview</code><span class="kind">object</span></h3>
+<div class="desc"><p>What a sample delivery would come to under a format. Nothing is posted or stored.</p>
+</div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>outcome</code></td><td><code><a href="enums.html#WebhookPreviewOutcome">WebhookPreviewOutcome</a>!</code></td><td></td></tr>
+<tr><td><code>rule</code></td><td><code><a href="scalars.html#Int">Int</a></code></td><td><p>The rule that decides or that a refusal is about, counted from 1.</p>
+</td></tr>
+<tr><td><code>text</code></td><td><code><a href="scalars.html#String">String</a></code></td><td><p>What would post, without the link.</p>
+</td></tr>
+<tr><td><code>link</code></td><td><code><a href="scalars.html#String">String</a></code></td><td><p>The link after the text, when it passes its check.</p>
+</td></tr>
+<tr><td><code>placeholder</code></td><td><code><a href="scalars.html#String">String</a></code></td><td><p>The placeholder with no value, as written between its braces.</p>
+</td></tr>
+<tr><td><code>reason</code></td><td><code><a href="scalars.html#String">String</a></code></td><td><p>Why the body or the format would be refused.</p>
+</td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="query.html#previewWebhookFormat">Query.previewWebhookFormat</a></p>
+</section>
+<section class="entry" id="WebhookHeader" data-name="WebhookHeader">
+<h3><code>WebhookHeader</code><span class="kind">object</span></h3>
+<div class="desc"><p>A header of a sample delivery.</p>
+</div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>name</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td></td></tr>
+<tr><td><code>value</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="objects.html#WebhookFormatInfo">WebhookFormatInfo</a>, <a href="objects.html#WebhookTestDelivery">WebhookTestDelivery</a></p>
+</section>
+<section class="entry" id="WebhookTestDeliveries" data-name="WebhookTestDeliveries">
+<h3><code>WebhookTestDeliveries</code><span class="kind">object</span></h3>
+<div class="desc"><p>The deliveries a read of a test session answers, and when it now expires.</p>
+</div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>deliveries</code></td><td><code>[<a href="objects.html#WebhookTestDelivery">WebhookTestDelivery</a>!]!</code></td><td></td></tr>
+<tr><td><code>expiresAt</code></td><td><code><a href="scalars.html#DateTime">DateTime</a>!</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="query.html#webhookTestDeliveries">Query.webhookTestDeliveries</a></p>
+</section>
+<section class="entry" id="WebhookTestDelivery" data-name="WebhookTestDelivery">
+<h3><code>WebhookTestDelivery</code><span class="kind">object</span></h3>
+<div class="desc"><p>A delivery a test session holds.</p>
+</div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>id</code></td><td><code><a href="scalars.html#Int">Int</a>!</code></td><td><p>Its place in the session, counted from 1; pass the last one read as <code>after</code>.</p>
+</td></tr>
+<tr><td><code>receivedAt</code></td><td><code><a href="scalars.html#DateTime">DateTime</a>!</code></td><td></td></tr>
+<tr><td><code>contentType</code></td><td><code><a href="scalars.html#String">String</a></code></td><td></td></tr>
+<tr><td><code>headers</code></td><td><code>[<a href="objects.html#WebhookHeader">WebhookHeader</a>!]!</code></td><td><p>The <code>x-</code> headers a format may use.</p>
+</td></tr>
+<tr><td><code>bodyState</code></td><td><code><a href="enums.html#WebhookTestBodyState">WebhookTestBodyState</a>!</code></td><td></td></tr>
+<tr><td><code>body</code></td><td><code><a href="scalars.html#String">String</a></code></td><td><p>The body, for <code>TEXT</code> alone. A client shows it as plain text.</p>
+</td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="objects.html#WebhookTestDeliveries">WebhookTestDeliveries</a></p>
+</section>
+<section class="entry" id="WebhookTestSession" data-name="WebhookTestSession">
+<h3><code>WebhookTestSession</code><span class="kind">object</span></h3>
+<div class="desc"><p>A webhook test session just started.</p>
+</div>
+<div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>id</code></td><td><code><a href="scalars.html#ID">ID</a>!</code></td><td></td></tr>
+<tr><td><code>token</code></td><td><code><a href="scalars.html#String">String</a></code></td><td><p><code>rimhook_…</code> for an unbound session&#39;s URL, shown this once; null for a bound session.</p>
+</td></tr>
+<tr><td><code>expiresAt</code></td><td><code><a href="scalars.html#DateTime">DateTime</a>!</code></td><td></td></tr>
+</tbody></table></div>
+<p class="faint">Used by <a href="mutation.html#startWebhookTestSession">Mutation.startWebhookTestSession</a></p>
 </section>
 <section class="entry" id="WorkspaceDmPolicy" data-name="WorkspaceDmPolicy">
 <h3><code>WorkspaceDmPolicy</code><span class="kind">object</span></h3>
@@ -2254,7 +2535,7 @@ shares no conversation with them.</p>
   </div>
 </div>
 <footer class="site-footer container"><span class="footer-brand"><img src="../assets/rim-mark-inverse.svg" alt="" width="21" height="21"> RIM · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
-<p class="source-provenance container">Generated from <a href="https://github.com/rim-platform/rim-ui/blob/625c78e7c352dd2300217ff4cf692350e410fa7e/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>625c78e</code></p>
+<p class="source-provenance container">Generated from <a href="https://github.com/rim-platform/rim-ui/blob/f02e7945f773e010eb37a2b331c82978e7c4c7b3/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>f02e794</code></p>
 <script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
 <script>
 (() => {

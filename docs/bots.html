@@ -1,0 +1,657 @@
+<!doctype html>
+<html lang="en" class="documentation-page">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bots · RIM</title>
+<meta name="description" content="A bot is an account of one workspace that software runs instead of a person. An Owner or a Moderator creates it, and it reads and writes only in the channels they add it to. The contract is specs/bots-v1.md; this page …">
+<link rel="icon" href="../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;550;600;650;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<meta name="theme-color" content="#0b0c10">
+<link rel="stylesheet" href="../assets/site-chrome.css">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/site.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="../index.html" aria-label="RIM home"><img src="../assets/rim-mark-inverse.svg" alt="" width="32" height="32">RIM</a>
+    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-navigation">Menu</button>
+    <nav class="site-nav" id="site-navigation" data-open="false" aria-label="Main navigation">
+      <a href="../index.html#uses">What it's for</a>
+      <a href="../index.html#privacy">Privacy</a>
+      <a href="../how-it-works/index.html">How it works</a>
+      <a href="../index.html#download">Download</a>
+      <a href="../index.html#community">Community</a>
+      <a href="client/getting-started.html">Get started</a>
+      <a href="index.html" aria-current="location">Docs</a>
+    </nav>
+  </div>
+</header>
+<div class="docs-navigation"><nav class="container docs-links" aria-label="Documentation"><span>Documentation</span><a href="index.html">Overview</a>
+<a href="self-hosting.html">Self-host</a>
+<a href="../configure/index.html">Configure</a>
+<a href="../plugins/index.html">Plugins</a>
+<a href="../api/index.html">API</a>
+<a href="../specs/index.html">Specs</a></nav></div>
+<div class="container docs-wrap">
+  <div class="crumbs"><a href="index.html">Docs</a><span aria-hidden="true">/</span><a href="client-authors.html">Client authors</a><span aria-hidden="true">/</span><span>Bots</span></div>
+  <div class="page with-toc">
+    <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
+<ol>
+<li><a href="#what-a-bot-is">What a bot is</a></li>
+<li><a href="#creating-and-changing-one">Creating and changing one</a></li>
+<li><a href="#disclosure">Disclosure</a></li>
+<li><a href="#tokens">Tokens</a></li>
+<li><a href="#the-api">The API</a></li>
+<li><a href="#incoming-webhooks">Incoming webhooks</a></li>
+<li><a href="#webhook-formats">Webhook formats</a></li>
+<li><a href="#seeing-what-a-service-sends">Seeing what a service sends</a></li>
+<li><a href="#welcoming-people-from-a-pipeline">Welcoming people from a pipeline</a></li>
+<li><a href="#audit">Audit</a></li>
+<li><a href="#switching-it-off">Switching it off</a></li>
+</ol>
+</details></aside>
+    <main id="content" class="prose">
+<h1 id="bots">Bots</h1>
+<p>A bot is an account of one workspace that software runs instead of a person. An Owner or a Moderator
+creates it, and it reads and writes only in the channels they add it to. The contract is
+<a href="../specs/bots-v1.html"><code>specs/bots-v1.md</code></a>; this page says how the accounts work.</p>
+<p>RIM runs nothing behind a bot and cannot see what does. Whoever runs one chooses that, with their
+own model and key.</p>
+<h2 id="what-a-bot-is">What a bot is <a class="anchor" href="#what-a-bot-is" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>A <code>user</code> row of the kind <code>bot</code>, with a name and no email, key, password, device or session. It cannot
+sign in.</li>
+<li>A <code>GUEST</code> of its workspace, and that role cannot change. Creating it adds it to no channel.</li>
+<li>Only in channels. A direct message, a group or an encrypted conversation with a bot is refused, and
+channels are plaintext.</li>
+<li>Marked as a bot wherever it shows: <code>User.isBot</code> and <code>ServerMember.isBot</code>.</li>
+<li>On the server that hosts its workspace, and nowhere else. It has no handle and no home relay, and
+it is not offered to other servers. A member from another server sees it as they see anything
+from that host.</li>
+</ul>
+<p>A workspace holds at most 25 bots that are not deactivated. It cannot have one in the direct space,
+and each bot counts as a member against <code>RIM_LIMIT_MEMBERS_PER_WORKSPACE</code>. A bot that was kicked or
+banned keeps its row and counts against the limit until it&#39;s deactivated.</p>
+<p>An Owner or Moderator adds a bot to a public channel without joining it, and to a private channel only
+if they are in it, since they can&#39;t give it what they can&#39;t read.</p>
+<h2 id="creating-and-changing-one">Creating and changing one <a class="anchor" href="#creating-and-changing-one" aria-label="Link to this section">#</a></h2>
+<p>An Owner or Moderator calls <code>createBot</code> with a name and a disclosure. The name follows the rules of
+a display name. <code>updateBot</code> changes any of these later.</p>
+<p><code>seesMemberJoins</code>, on either, says whether the bot is told about members joining the workspace (see
+&quot;Polling for events&quot;). It is off unless someone turns it on, <code>Bot.seesMemberJoins</code> shows it to any member,
+and a change to it is in the <code>bot.update</code> audit entry.</p>
+<p><code>deactivateBot</code> is the way to stop a bot. Its tokens stop working, its webhooks are revoked and it leaves
+the workspace and every channel. Its messages stay, shown with its name. Deactivating is final, and its messages stay; create a new
+bot instead.</p>
+<h2 id="disclosure">Disclosure <a class="anchor" href="#disclosure" aria-label="Link to this section">#</a></h2>
+<p>Every bot has two statements, each 1 to 200 characters of plain text:</p>
+<ul>
+<li><code>runBy</code>: who runs it.</li>
+<li><code>readsGoTo</code>: where what it reads goes.</li>
+</ul>
+<p>Everyone who can see the bot can see both, and who added it: <code>User.bot</code> and <code>ServerMember.bot</code>, for
+every member, including from another server. They are what the person who added the bot says. RIM
+cannot check them, and a client says so where it shows them.</p>
+<p><code>bots</code> lists a workspace&#39;s bots for any of its members.</p>
+<h2 id="tokens">Tokens <a class="anchor" href="#tokens" aria-label="Link to this section">#</a></h2>
+<p>A token is <code>rimbot_</code> and 43 base64url characters. It is shown once, when it is created, and only its
+SHA-256 is stored, so a lost token cannot be shown again: revoke it and make another.</p>
+<p><code>createBot</code> makes the first one, labelled <code>default</code>. <code>createBotToken</code> makes more, up to 5 that are not
+revoked. <code>botTokens</code> lists them with when each was created, last used and revoked, for an Owner or
+Moderator. The last use is kept to the minute. Tokens do not expire on their own.</p>
+<p><code>revokeBotToken</code> ends one. A caller who does not moderate the bot&#39;s workspace gets <code>NOT_FOUND</code>, the
+same as for an unknown id.</p>
+<p>A token stops working when it is revoked, when its bot is deactivated, kicked or banned, when its
+workspace is deleted, and while the <code>bots</code> feature is off.</p>
+<h2 id="the-api">The API <a class="anchor" href="#the-api" aria-label="Link to this section">#</a></h2>
+<p>A bot&#39;s token works on <code>/api/bot/v1</code> and nowhere else, and a session cookie does not work there. The
+contract is <a href="../specs/bots-v1.html"><code>specs/bots-v1.md</code></a>. A bot reaches nothing but these calls:</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Call</th>
+<th>What it answers</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET /me</code></td>
+<td><code>{ untrusted, id, name, workspaceId, runBy, readsGoTo, seesMemberJoins }</code></td>
+</tr>
+<tr>
+<td><code>GET /channels</code></td>
+<td><code>{ untrusted, channels: [{ id, name, private }] }</code>: the channels it was added to, archived ones left out</td>
+</tr>
+<tr>
+<td><code>GET /channels/{id}/messages?before=&amp;limit=</code></td>
+<td><code>{ untrusted, messages, cursor }</code>: a page, oldest first. <code>limit</code> is 1 to 100, 50 when left out. To go further back, pass <code>cursor</code> as <code>before</code>; it is null on the oldest page</td>
+</tr>
+<tr>
+<td><code>GET /channels/{id}/search?q=&amp;limit=</code></td>
+<td><code>{ untrusted, messages }</code>, newest first. <code>q</code> is 1 to 500 characters, and takes the operators of <a href="search.html"><code>search.md</code></a> but for <code>in:</code>, which answers <code>400</code>. <code>limit</code> is 1 to 100, and a search answers at most 50 even when <code>limit</code> is higher. No cursor</td>
+</tr>
+<tr>
+<td><code>POST /channels/{id}/messages</code></td>
+<td>Body <code>{&quot;text&quot;: &quot;...&quot;}</code>. Answers <code>201</code> and <code>{ id, channelId }</code></td>
+</tr>
+<tr>
+<td><code>GET /mentions?after=&amp;limit=</code></td>
+<td><code>{ untrusted, mentions, cursor }</code>: oldest first, <code>limit</code> as above</td>
+</tr>
+<tr>
+<td><code>GET /events?after=&amp;limit=</code></td>
+<td><code>{ untrusted, events, cursor }</code>: oldest first, <code>limit</code> as above</td>
+</tr>
+</tbody></table></div>
+<p>A message is <code>{ id, channelId, threadId, authorId, authorName, authorIsBot, text, sentAt, editedAt }</code>.
+A cursor means nothing to a bot except as the value to pass back.</p>
+<pre><code class="language-sh">RIM=https://rim.example/api/bot/v1
+AUTH=&quot;Authorization: Bearer $RIM_BOT_TOKEN&quot;
+
+curl -H &quot;$AUTH&quot; &quot;$RIM/me&quot;
+curl -H &quot;$AUTH&quot; &quot;$RIM/channels&quot;
+curl -H &quot;$AUTH&quot; &quot;$RIM/channels/$CHANNEL/messages?limit=20&quot;
+curl -H &quot;$AUTH&quot; -G --data-urlencode 'q=deploy failed' &quot;$RIM/channels/$CHANNEL/search&quot;
+curl -H &quot;$AUTH&quot; -H 'Content-Type: application/json' -d '{&quot;text&quot;:&quot;The deploy is done.&quot;}' \
+  &quot;$RIM/channels/$CHANNEL/messages&quot;</code></pre>
+<p><strong>Polling for mentions.</strong> The server makes no call to a bot, so whatever runs it can sit behind a
+router. Without <code>after</code>, <code>/mentions</code> starts from the last 24 hours; each answer has a <code>cursor</code> for the
+next call, the same one when nothing new came. Keep it between runs, or a restart repeats up to a day
+of mentions.</p>
+<pre><code class="language-sh">cursor=&quot;&quot;
+while true; do
+  page=$(curl -sS -H &quot;$AUTH&quot; -G --data-urlencode &quot;after=$cursor&quot; &quot;$RIM/mentions&quot;) || { sleep 30; continue; }
+  echo &quot;$page&quot; | jq -c '.mentions[] // empty'
+  cursor=$(echo &quot;$page&quot; | jq -r '.cursor // &quot;&quot;')
+  sleep 10
+done</code></pre>
+<p>A <code>&lt;@id&gt;</code> in a message mentions a bot when it is in that channel, and not otherwise. A bot&#39;s own mention
+of itself is dropped, as for anyone. A channel it has left and a deleted message are left out. A bot gets no
+notifications, digests or pushes: <code>/mentions</code> is how it learns of a mention.</p>
+<p><strong>Polling for events.</strong> <code>/events</code> tells a program what happened, so it can react without being mentioned.
+Without <code>after</code> it starts from now, with an empty page and a cursor, so a new bot doesn&#39;t welcome everyone who
+joined yesterday. Each answer has a <code>cursor</code> for the next call, the same one when nothing new came. Keep it
+between runs: a restart with no cursor skips whatever happened while it was down, and an old cursor pages
+forward from where it stood.</p>
+<pre><code class="language-sh">cursor=&quot;&quot;
+while true; do
+  page=$(curl -sS -H &quot;$AUTH&quot; -G --data-urlencode &quot;after=$cursor&quot; &quot;$RIM/events&quot;) || { sleep 30; continue; }
+  echo &quot;$page&quot; | jq -c '.events[] // empty'
+  cursor=$(echo &quot;$page&quot; | jq -r '.cursor // &quot;&quot;')
+  sleep 5
+done</code></pre>
+<pre><code class="language-json">{ &quot;untrusted&quot;: true,
+  &quot;events&quot;: [
+    { &quot;type&quot;: &quot;message&quot;, &quot;channelId&quot;: &quot;...&quot;, &quot;mentioned&quot;: false, &quot;message&quot;: { &quot;id&quot;: &quot;...&quot;, &quot;text&quot;: &quot;...&quot; } },
+    { &quot;type&quot;: &quot;member_joined&quot;, &quot;at&quot;: &quot;2026-11-07T10:00:00+00:00&quot;,
+      &quot;user&quot;: { &quot;id&quot;: &quot;...&quot;, &quot;name&quot;: &quot;Ada&quot;, &quot;isBot&quot;: false } }
+  ],
+  &quot;cursor&quot;: &quot;...&quot; }</code></pre>
+<p>Ignore a <code>type</code> you don&#39;t know: new ones can be added.</p>
+<ul>
+<li><strong><code>message</code></strong> is a message as <code>/channels/{id}/messages</code> has it, so a reply in a thread and a deleted message
+are left out. A mention in a thread is on <code>/mentions</code> and not here. <code>mentioned</code> says whether it mentions the
+bot. It comes from channels the bot is in at the time of the poll, not archived, and from since it was last
+added to each: being added doesn&#39;t hand over the channel&#39;s history, which <code>/channels/{id}/messages</code> reads. The
+bot&#39;s own messages are left out, so it can&#39;t react to itself. Other bots&#39; messages are not, so check
+<code>authorIsBot</code> before answering one.</li>
+<li><strong><code>member_joined</code></strong> comes only while an Owner or Moderator has <code>seesMemberJoins</code> on for the bot, and <code>/me</code> says
+whether they do. It holds the person&#39;s id and name, whether they are a bot and when they joined: no email, key,
+device or how they joined. A bot joining counts, and so does a member from another server. Someone who left and
+came back is a new event, and someone already gone by the time of the poll isn&#39;t one. A bot sees joins only
+from when it was allowed to, whatever the cursor: turning it on starts from that moment, turning it on again
+changes nothing, and turning it off stops them at once. Off and on again starts from the second time, so the
+joins between never show. It never lists the bot itself.</li>
+<li><strong>Not yet:</strong> edits, deletes, reactions and presence.</li>
+</ul>
+<p>A row is handed over once it is 2 seconds old, by the database&#39;s clock, so a message reaches a bot at least that
+late. A row is stamped when its transaction starts and can be seen only when that commits, so anything younger
+could appear behind a cursor already past it. A transaction running longer than that can be missed, so treat this
+as what happened and not as a delivery guarantee. Polling every few seconds is fine, inside the limit below.</p>
+<p><strong>Text is untrusted.</strong> Any answer holding text somebody else wrote carries <code>&quot;untrusted&quot;: true</code>. Whoever
+can post in a channel can write what a model behind a bot reads, so treat it as data: never as
+instructions, and never let it choose what the bot does next without a check of your own. Whether a
+model sees it at all, and where it runs, is the choice of whoever runs the bot. Its <code>readsGoTo</code> says
+what they chose.</p>
+<p><strong>A channel it cannot see.</strong> A channel the bot was not added to, one that does not exist and a malformed
+id all answer the same <code>404</code>, public or private.</p>
+<p><strong>Refusals</strong> have one shape, <code>{&quot;refusal&quot;: &quot;DENIED&quot; | &quot;FAILED&quot; | &quot;EXPIRED&quot; | &quot;INVALID&quot;, &quot;message&quot;: &quot;...&quot;, &quot;retrySafe&quot;: bool}</code>, with the kinds of <a href="command_model.html"><code>command_model.md</code></a>, &quot;Refusals&quot;:</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Status</th>
+<th>When</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>400</code></td>
+<td>A bad limit, cursor, query or body, or text a command refuses. A body is at most 128 KiB, and the text&#39;s own limit is the command&#39;s.</td>
+</tr>
+<tr>
+<td><code>401</code></td>
+<td>No token, or one that does not work: unknown, revoked, of a deactivated, kicked or banned bot, or the feature off. The same bytes every time.</td>
+</tr>
+<tr>
+<td><code>403</code></td>
+<td>A moderation timeout, an archived channel, or posting restricted to moderators. Each applies to a bot as to a person.</td>
+</tr>
+<tr>
+<td><code>404</code></td>
+<td>As above.</td>
+</tr>
+<tr>
+<td><code>429</code></td>
+<td>Over a limit, with <code>Retry-After</code>: the bot&#39;s own 120 calls a minute per token, slow mode in the channel, or the bot&#39;s message budget.</td>
+</tr>
+<tr>
+<td><code>5xx</code></td>
+<td><code>&quot;RIM could not do this.&quot;</code> <code>retrySafe</code> says whether repeating the call cannot change anything twice.</td>
+</tr>
+</tbody></table></div>
+<p><strong>Limits.</strong> Each token has 120 calls a minute. The per-address limit of <code>/api</code> applies too, and the
+author&#39;s message budget (<code>RIM_RATE_MESSAGES_PER_MIN_PER_USER</code>) applies to what a bot posts. Two bots that
+mention each other in a loop are limited only by those budgets and by slow mode, so whoever runs a bot
+should have it ignore other bots (<code>authorIsBot</code>).</p>
+<p><strong>Across servers.</strong> A bot lives on the server hosting its workspace, and its token works there alone.
+A member from another server gets its messages, with its name, as they get anything from that host.
+That member&#39;s messages and their joining the workspace reach <code>/events</code> like anyone&#39;s.</p>
+<p><strong>Encrypted conversations.</strong> <code>/events</code> has channels alone, and they are plaintext. A direct message, a group or an
+encrypted conversation never reaches it.</p>
+<h2 id="incoming-webhooks">Incoming webhooks <a class="anchor" href="#incoming-webhooks" aria-label="Link to this section">#</a></h2>
+<p>An incoming webhook is a URL that posts to one channel as one bot, so a service that can call a URL
+can post without running anything that holds a bot token. The server only receives: it calls nothing
+back, and a webhook reads nothing.</p>
+<p><strong>The URL is a secret.</strong> Anyone holding it can post to that channel as that bot, within the limit, and
+no signature is checked (<a href="../specs/bots-v1.html"><code>specs/bots-v1.md</code></a>). Keep it as you keep a password. If it leaks, revoke the
+webhook and create another; the old URL stops working at once. Deactivating a bot revokes its webhooks, so
+their channels can have new ones.</p>
+<p><strong>Creating one.</strong> An Owner or Moderator calls <code>createIncomingWebhook</code> with the channel, a bot of the
+workspace and a preset, <code>PLAIN</code> or <code>GITHUB</code>, or <code>PLAIN</code> and a format (see &quot;Webhook formats&quot;). A channel
+has one webhook that is not revoked; a second is <code>CONFLICT</code>, so revoke the first. Creating it adds the bot to the channel if it was not there, under the
+rule for adding a bot. An Owner or Moderator creates one on a private channel only if they are in it,
+since they can&#39;t post where they can&#39;t read, even when the bot is there already. Only a plaintext channel
+that is not archived can have one.</p>
+<p>The answer holds <code>token</code>, <code>rimhook_</code> and 43 base64url characters, shown once; only its SHA-256 is
+stored. The URL is <code>POST /api/hooks/&lt;token&gt;</code> on the address of your server.</p>
+<p><code>incomingWebhooks</code> lists a workspace&#39;s webhooks with when each was created, last used and revoked and
+its format, for an Owner or Moderator. The last use is kept to the minute. <code>revokeIncomingWebhook</code> ends
+one. A caller who does not moderate its workspace gets <code>NOT_FOUND</code>, the same as for an unknown id.</p>
+<p><strong>Plain.</strong> The body is JSON with a string <code>text</code>, at most 4,000 characters after trimming. Markdown in
+it stays as you wrote it.</p>
+<pre><code class="language-sh">curl -H 'Content-Type: application/json' -d '{&quot;text&quot;:&quot;The deploy is **done**.&quot;}' \
+  &quot;https://rim.example/api/hooks/$RIM_WEBHOOK_TOKEN&quot;</code></pre>
+<p><strong>GitHub.</strong> A webhook with the preset <code>GITHUB</code> takes what a repository or organization sends, through a
+format RIM ships. In the repository&#39;s <strong>Settings</strong>, <strong>Webhooks</strong>, <strong>Add webhook</strong>:</p>
+<ol>
+<li><strong>Payload URL</strong>: the webhook&#39;s URL.</li>
+<li><strong>Content type</strong>: <code>application/json</code>. The form-encoded default cannot be read.</li>
+<li><strong>Secret</strong>: leave it empty. RIM does not check signatures, because that would take keeping a secret
+readable on the server.</li>
+<li><strong>Which events</strong>: choose <strong>Let me select individual events</strong> and tick <strong>Releases</strong>, <strong>Pull requests</strong>
+and <strong>Issues</strong>. Anything else is answered and ignored, so more events do no harm but count against
+the limit.</li>
+</ol>
+<p>GitHub then sends a <code>ping</code>, which answers <code>202</code> and posts nothing. What posts, one line each, with the
+repository, who did it, the title and the link:</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Event</th>
+<th>Action</th>
+<th>Line</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>release</code></td>
+<td><code>published</code></td>
+<td><code>acme/widgets: ada published release v1.2.0</code></td>
+</tr>
+<tr>
+<td><code>pull_request</code></td>
+<td><code>opened</code>, <code>closed</code></td>
+<td><code>acme/widgets: ada opened pull request #7: Fix it</code>, or <code>closed</code>, or <code>merged</code> when it was merged</td>
+</tr>
+<tr>
+<td><code>issues</code></td>
+<td><code>opened</code>, <code>closed</code></td>
+<td><code>acme/widgets: ada opened issue #9: It broke</code>, or <code>closed</code></td>
+</tr>
+</tbody></table></div>
+<p>Markdown in what GitHub sent is escaped, a line is at most 1,000 characters and a link is kept only when
+it points at <code>https://github.com/</code>. Any other event or action, or a handled one missing a field the line
+needs, answers <code>202</code> and posts nothing.</p>
+<p><strong>A webhook mentions nobody.</strong> <code>&lt;@id&gt;</code>, <code>@channel</code> and <code>@here</code> in what it receives are made plain text
+under every format. People whose notification level is <code>ALL</code> hear of the post as of any other message.</p>
+<p><strong>Answers.</strong></p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Body</th>
+<th>When</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>200</code></td>
+<td><code>{&quot;ok&quot;:true}</code></td>
+<td>It was posted.</td>
+</tr>
+<tr>
+<td><code>202</code></td>
+<td><code>{&quot;ok&quot;:true,&quot;ignored&quot;:true}</code></td>
+<td>Nothing to post.</td>
+</tr>
+<tr>
+<td><code>400</code></td>
+<td>A refusal, as in &quot;The API&quot;</td>
+<td>A body the webhook&#39;s format cannot read, or text a command refuses.</td>
+</tr>
+<tr>
+<td><code>401</code></td>
+<td><code>{&quot;ok&quot;:false}</code></td>
+<td>The URL does not work: unknown, wrong shape or revoked, its bot deactivated, kicked, banned or out of the channel, or the feature off. The same bytes every time.</td>
+</tr>
+<tr>
+<td><code>403</code></td>
+<td>A refusal</td>
+<td>The bot is timed out, the channel is archived or posting is restricted to moderators.</td>
+</tr>
+<tr>
+<td><code>413</code></td>
+<td>A refusal</td>
+<td>The body is over 1 MiB.</td>
+</tr>
+<tr>
+<td><code>429</code></td>
+<td>A refusal, with <code>Retry-After</code></td>
+<td>Over a limit.</td>
+</tr>
+<tr>
+<td><code>5xx</code></td>
+<td>A refusal</td>
+<td><code>&quot;RIM could not do this.&quot;</code></td>
+</tr>
+</tbody></table></div>
+<p><strong>Limits.</strong> Each webhook has 30 calls a minute, ignored ones counted, and one over the limit posts
+nothing. The per-address limit of <code>/api</code>, the bot&#39;s message budget and slow mode also apply.</p>
+<p><strong>How a post runs.</strong> It runs <code>chat.post_message</code> as the bot with the initiator <code>bot</code>, so the same gates
+and audit log apply as to a post from the bot API, and moderating the bot stops its webhook. The audit
+entry holds no text. RIM writes the token to no log, audit entry or metric. A reverse proxy&#39;s access log
+can hold the URL, so <a href="self-hosting.html"><code>self-hosting.md</code></a> says to keep it private.</p>
+<p><strong>Across servers.</strong> A webhook lives on the server hosting its workspace and posts there as the bot. A
+member from another server gets those messages as they get anything from that host.</p>
+<h2 id="webhook-formats">Webhook formats <a class="anchor" href="#webhook-formats" aria-label="Link to this section">#</a></h2>
+<p>A format says how what a service sends becomes a message, so a service RIM knows nothing about can post
+without any code. An Owner or Moderator gives one to <code>createIncomingWebhook</code> as <code>template</code>, with the
+preset <code>PLAIN</code>, or changes a webhook&#39;s with <code>updateIncomingWebhookFormat</code>. The URL stays the same. The
+contract is <a href="../specs/bots-v1.html"><code>specs/bots-v1.md</code></a>.</p>
+<p><strong>A format doesn&#39;t say who sent something.</strong> Anyone holding the URL can send any header and any body, and
+no signature is checked, so the URL is still the only thing to protect. A condition chooses what to post,
+and it keeps nobody out. Don&#39;t put a secret in a format: every Owner and Moderator of the workspace can
+read it.</p>
+<p><strong>A small one.</strong> A backup script that posts when it finishes:</p>
+<pre><code class="language-json">{
+  &quot;version&quot;: 1,
+  &quot;rules&quot;: [
+    {
+      &quot;when&quot;: [{ &quot;field&quot;: &quot;status&quot;, &quot;equals&quot;: &quot;failed&quot; }],
+      &quot;post&quot;: &quot;**Backup failed** on {host}: {reason}&quot;
+    },
+    {
+      &quot;when&quot;: [{ &quot;field&quot;: &quot;status&quot;, &quot;equals&quot;: &quot;ok&quot; }],
+      &quot;post&quot;: &quot;Backup finished on {host}.&quot;
+    }
+  ]
+}</code></pre>
+<pre><code class="language-sh">curl -H 'Content-Type: application/json' -d '{&quot;status&quot;:&quot;failed&quot;,&quot;host&quot;:&quot;db-1&quot;,&quot;reason&quot;:&quot;disk full&quot;}' \
+  &quot;https://rim.example/api/hooks/$RIM_WEBHOOK_TOKEN&quot;</code></pre>
+<p>That posts <code>**Backup failed** on db-1: disk full</code>. A <code>status</code> of anything else matches no rule, so it
+answers <code>202</code> and posts nothing.</p>
+<p><strong>GitHub&#39;s, in the same language.</strong> The preset <code>GITHUB</code> reads a format RIM ships, and <code>webhookFormats</code>
+shows it. This is its rule for a merged pull request. It comes before the rule for a closed one, because
+the first rule that holds decides:</p>
+<pre><code class="language-json">{
+  &quot;when&quot;: [
+    { &quot;header&quot;: &quot;X-GitHub-Event&quot;, &quot;equals&quot;: &quot;pull_request&quot; },
+    { &quot;field&quot;: &quot;action&quot;, &quot;equals&quot;: &quot;closed&quot; },
+    { &quot;field&quot;: &quot;pull_request.merged&quot;, &quot;equals&quot;: &quot;true&quot; }
+  ],
+  &quot;post&quot;: &quot;{repository.full_name}: {sender.login} merged pull request #{pull_request.number}: {pull_request.title}&quot;,
+  &quot;link&quot;: { &quot;value&quot;: &quot;{pull_request.html_url}&quot;, &quot;origin&quot;: &quot;https://github.com/&quot; }
+}</code></pre>
+<p><strong>Rules.</strong> The first rule whose conditions all hold decides, and the rest aren&#39;t read. A rule with no
+conditions always holds.</p>
+<p><strong>Conditions.</strong> Each is a <code>header</code> or a <code>field</code> with <code>equals</code>, always a string, so <code>&quot;true&quot;</code> and not <code>true</code>.
+There is no regular expression, &quot;contains&quot; or &quot;not&quot;. For more than this, run a bot on the events feed.</p>
+<ul>
+<li>A field compares as text: a string exactly, a number in decimal, a boolean as <code>true</code> or <code>false</code>. An
+object, an array, <code>null</code> or a missing field doesn&#39;t hold.</li>
+<li>A header&#39;s name matches in any case and its value exactly. Only names starting <code>x-</code> work, and none
+containing <code>token</code>, <code>secret</code>, <code>signature</code>, <code>auth</code>, <code>cookie</code> or <code>key</code>, which are refused by name when you
+save. Those are the usual places for a shared secret. RIM can&#39;t recognise one anywhere else.</li>
+</ul>
+<p><strong>Paths.</strong> Keys with dots between them, and a number for a place in an array: <code>alerts.0.labels.alertname</code>.
+Each part is letters, digits, <code>_</code> and <code>-</code>. A key with a dot in it can&#39;t be reached.</p>
+<p><strong>The text.</strong> <code>post</code> is your text with <code>{path}</code> placeholders. It keeps its Markdown and line breaks.</p>
+<ul>
+<li><code>{release.name|release.tag_name}</code> takes the first that has a value. <code>{{</code> and <code>}}</code> are literal braces, and
+anything else in braces is refused when you save.</li>
+<li>A value is put on one line: whitespace and control characters become single spaces, and format characters
+are removed, so a bidi override can&#39;t reorder the message and a joined emoji can come apart. Its Markdown is
+escaped. It is never expanded again, so a title of <code>{sender.login}</code> shows as that text. A header can&#39;t be a
+placeholder, so a format can&#39;t print one.</li>
+<li><code>&lt;@id&gt;</code>, <code>@channel</code> and <code>@here</code> are made plain text in the whole post, your own text included, and the
+post is cut to 1,000 characters, counting the link.</li>
+</ul>
+<p><strong>The link.</strong> <code>link</code> is optional: a <code>value</code> written like <code>post</code> and an <code>origin</code> such as
+<code>https://github.com/</code>. It&#39;s added after the text only when it starts with the origin and holds nothing odd
+(<code>&lt;</code>, <code>&gt;</code>, brackets, quotes, a backtick, a backslash, <code>*</code>, <code>|</code>), up to 512 characters. Otherwise the message
+posts without it.</p>
+<p><strong>What it answers.</strong></p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>What happened</th>
+<th>Answer</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>A rule held and all its placeholders had values</td>
+<td><code>200</code>, posted</td>
+</tr>
+<tr>
+<td>No rule held</td>
+<td><code>202</code>, nothing posted</td>
+</tr>
+<tr>
+<td>The rule that held has a placeholder with no value: missing, blank, <code>null</code>, an object or an array</td>
+<td><code>202</code>, nothing posted, and later rules aren&#39;t tried</td>
+</tr>
+<tr>
+<td>The link has no value, or fails its check</td>
+<td><code>200</code>, posted without the link</td>
+</tr>
+<tr>
+<td>The body had to be read and isn&#39;t JSON</td>
+<td><code>400</code> &quot;The body must be JSON.&quot;</td>
+</tr>
+</tbody></table></div>
+<p>Headers are checked first, and the body is read only when a rule that could still hold needs a field or a
+placeholder. So an event nobody handles answers <code>202</code> whatever its body. The rest of &quot;Answers&quot; above applies
+as to any webhook.</p>
+<p><strong>Limits,</strong> refused when you save, with the rule&#39;s number:</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>What</th>
+<th>At most</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Rules</td>
+<td>20</td>
+</tr>
+<tr>
+<td>Conditions in a rule</td>
+<td>5</td>
+</tr>
+<tr>
+<td><code>post</code> as written</td>
+<td>1,000 characters</td>
+</tr>
+<tr>
+<td>Placeholders in a rule</td>
+<td>30</td>
+</tr>
+<tr>
+<td>A path</td>
+<td>256 characters</td>
+</tr>
+<tr>
+<td>A header name</td>
+<td>64 characters</td>
+</tr>
+<tr>
+<td>The whole format as JSON</td>
+<td>16 KiB</td>
+</tr>
+</tbody></table></div>
+<p>A key RIM doesn&#39;t know is refused too, so a typo like <code>equal</code> can&#39;t quietly make a rule always hold. When a
+delivery comes in, a header value over 64 characters counts as missing, and at most 50 <code>x-</code> headers are read.</p>
+<p><strong>Ready-made formats.</strong> <code>webhookFormats</code> lists them with a setup note and a sample: GitHub and Grafana. A
+GitHub webhook left as it is gets the fixes of each release. Anything else is a copy that belongs to its
+webhook, so it stays as it is when RIM ships a newer one. That includes Grafana&#39;s, and GitHub&#39;s once you&#39;ve
+edited it. To share a format, copy its JSON. <code>updateIncomingWebhookFormat</code> with <code>GITHUB</code> or <code>PLAIN</code> and no
+<code>template</code> goes back to that preset.</p>
+<p><strong>Trying one.</strong> <code>previewWebhookFormat</code> takes a format, sample headers and a sample body of at most 256 KiB, and
+says which rule would decide and what it would post, or why nothing would. It runs what a delivery runs, and it
+posts and stores nothing.</p>
+<p><strong>An older app</strong> shows a webhook with a format as Plain, and revoking it still works.</p>
+<p><strong>Rolling the server back</strong> to a release without formats leaves a webhook with one acting as plain: a body with
+a string <code>text</code> posts that text, and any other body answers <code>400</code>. It still lists and can be revoked, and the
+next upgrade brings its format back. Migrating down drops the formats (<a href="operations/upgrade.html"><code>operations/upgrade.md</code></a>).</p>
+<p><strong>Encrypted conversations and other servers.</strong> A webhook is only ever on a plaintext channel, so a format never
+reaches an encrypted conversation. A format lives with its webhook on the server hosting the workspace, and runs
+there. An Owner or Moderator from another server changes it through the same GraphQL on that host.</p>
+<h2 id="seeing-what-a-service-sends">Seeing what a service sends <a class="anchor" href="#seeing-what-a-service-sends" aria-label="Link to this section">#</a></h2>
+<p>A format is easiest to write against a real delivery. A test session holds what arrives, in memory, for a short
+time, and only the person who started it can read it. The contract is <a href="../specs/bots-v1.html"><code>specs/bots-v1.md</code></a>, &quot;Webhook test
+sessions&quot;.</p>
+<p><strong>For a new webhook.</strong> <code>startWebhookTestSession(serverId)</code> answers an id, a token and an expiry. Paste
+<code>/api/hooks/&lt;token&gt;</code> on your server&#39;s address into the service. A delivery to it posts nothing and answers
+<code>{&quot;ok&quot;:true,&quot;test&quot;:true}</code>. When you save, pass the session&#39;s id as <code>testSessionId</code> to
+<code>createIncomingWebhook</code>, and the webhook keeps that token: the URL in the service starts posting, with nothing
+to change. The answer then has <code>keptTestUrl</code> true and an empty <code>token</code>, since RIM holds only the token&#39;s hash and
+you already have the URL. If the session ran out first, <code>keptTestUrl</code> is false and <code>token</code> is a new one, shown
+once: put that URL in the service instead.</p>
+<p><strong>For an existing webhook.</strong> <code>startWebhookTestSession(serverId, webhookId)</code> has no URL of its own. The webhook
+keeps posting under its saved format, and the session gets a copy of each delivery while it is open.</p>
+<p><strong>Reading it.</strong> <code>webhookTestDeliveries(sessionId, after)</code> answers what arrived after <code>after</code>, oldest first. Each
+delivery has when it arrived, its <code>Content-Type</code>, its <code>x-</code> headers and its body as text. A form-encoded
+<code>Content-Type</code> is the usual reason a body isn&#39;t JSON: choose <code>application/json</code> in the service&#39;s settings. To see
+what a delivery would post, give it to <code>previewWebhookFormat</code> with the format you&#39;re writing.</p>
+<p><strong>What isn&#39;t kept.</strong> No address, <code>Authorization</code>, cookie or header but the <code>x-</code> ones, and none of those whose name
+a format refuses, such as <code>x-gitlab-token</code>. A body over 256 KiB is held as too large without its bytes, and one
+that isn&#39;t UTF-8 as not text. Nothing a session holds reaches the database, a log line, an audit entry or a
+metric. The audit log has <code>bot.webhook.test_session.start</code> and <code>bot.webhook.test_session.end</code>, with ids alone.</p>
+<p><strong>Limits.</strong></p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>What</th>
+<th>At most</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Deliveries held</td>
+<td>20 a session, the oldest dropped</td>
+</tr>
+<tr>
+<td>What a session holds</td>
+<td>1 MiB, the oldest dropped</td>
+</tr>
+<tr>
+<td>Open sessions</td>
+<td>3 a workspace, 20 on the server. Past that, starting one is <code>RATE_LIMITED</code></td>
+</tr>
+<tr>
+<td>Deliveries to a new webhook&#39;s test URL</td>
+<td>30 a minute, then <code>429</code></td>
+</tr>
+<tr>
+<td>How long it lasts</td>
+<td>15 minutes from the start or the last read, never more than an hour</td>
+</tr>
+</tbody></table></div>
+<p><code>endWebhookTestSession</code> ends one at once, saving ends an unbound one, and revoking a webhook ends its sessions. A
+restart of the server ends them all. A bound session takes nothing from the webhook&#39;s own limit.</p>
+<p><strong>Who.</strong> Starting one takes what creating a webhook takes, and for an existing webhook what changing its format
+takes, including being in its private channel. Nobody else can read it, and its owner can&#39;t either once they lose
+that standing.</p>
+<p><strong>Encrypted conversations and other servers.</strong> A test URL posts nowhere, and a webhook is only ever on a plaintext
+channel. A session lives on the server hosting the workspace, in its memory.</p>
+<h2 id="welcoming-people-from-a-pipeline">Welcoming people from a pipeline <a class="anchor" href="#welcoming-people-from-a-pipeline" aria-label="Link to this section">#</a></h2>
+<p>A pipeline on the Member Joined trigger can post as a bot with no program behind it. An Owner or Moderator
+adds a Post as bot action to <code>createPipeline</code> or <code>updatePipeline</code>, in <code>PipelineActionInput</code>:</p>
+<pre><code class="language-json">{ &quot;commandId&quot;: &quot;chat.post_message&quot;,
+  &quot;postAsBot&quot;: { &quot;botUserId&quot;: &quot;...&quot;, &quot;conversationId&quot;: &quot;...&quot;, &quot;text&quot;: &quot;Welcome, {name}!&quot; } }</code></pre>
+<ul>
+<li><strong>The bot posts without asking anyone,</strong> each time someone joins, so only an Owner or Moderator can add or
+change this, and only on a pipeline created by one. Anyone who may change the pipeline can keep it unchanged.</li>
+<li><strong>The bot and channel.</strong> An active bot of the workspace, and a plaintext channel that isn&#39;t archived with the
+bot already in it: adding a bot to a channel stays its own step. For a private channel, the person saving and
+the pipeline&#39;s creator must be in it.</li>
+<li><strong>The text</strong> is 1 to 10,000 characters and takes <code>{username}</code> and <code>{name}</code>. Anything else in braces is refused
+by name, so a typo doesn&#39;t get posted to everyone. <code>{username}</code> is the person&#39;s username, at their home server
+if they are from another one. <code>{name}</code> is their display name, or their username without one.</li>
+<li><strong>A name can&#39;t do anything.</strong> A display name is written by whoever&#39;s joining, so control and format characters
+are removed from it and its Markdown is escaped. <code>&lt;@id&gt;</code>, <code>@channel</code> and <code>@here</code> are made plain text in the
+whole post, your own text included, so a welcome mentions nobody. People whose notification level is <code>ALL</code>
+hear of the post as of any other message.</li>
+<li><strong>It&#39;s checked again each time it fires:</strong> the creator is still an Owner or Moderator, the bot is active and in
+the channel, and the channel is still plaintext and not archived. If not, it posts nothing and the server logs a
+warning with the pipeline and the reason. A bot joining doesn&#39;t fire it, so bots can&#39;t welcome each other. A
+pipeline with other actions runs those for a bot too.</li>
+<li><strong>It&#39;s the bot&#39;s post.</strong> Its badge, message budget, slow mode, moderation and audit entry all apply, and the entry
+holds no text.</li>
+<li><strong>Past a limit, a welcome is skipped, not queued.</strong> That is the pipeline&#39;s cooldown or the bot&#39;s budget. As for
+any pipeline, more than 10 firings in a minute switches it off and tells its creator, so a rush of people joining
+can stop your welcomes until someone turns it back on.</li>
+<li><strong>Every member can see it,</strong> as they see every pipeline: <code>PipelineActionGql.postAsBot</code> has the text, the bot and
+the channel&#39;s id. Don&#39;t put anything in the text you wouldn&#39;t show them. Saying which channel is the client&#39;s
+job, and it doesn&#39;t name one the member can&#39;t see.</li>
+<li><strong>An older app</strong> shows the action as the command <code>chat.post_message</code> with its <code>args</code>, and warns it would be skipped,
+which isn&#39;t so. Saving the pipeline from there keeps the action. Changing those <code>args</code> is refused, and removing
+the action works.</li>
+<li><strong>Rolling the server back</strong> to a release without this action can&#39;t read a pipeline that has one, and the workspace&#39;s
+pipelines stop firing and listing. Remove these actions first.</li>
+<li><strong>Encrypted conversations and other servers.</strong> It never posts into an encrypted conversation. A member from
+another server joining fires it on the server hosting the workspace, like anyone joining.</li>
+</ul>
+<h2 id="audit">Audit <a class="anchor" href="#audit" aria-label="Link to this section">#</a></h2>
+<p>Each management call writes an entry to the workspace&#39;s audit log: <code>bot.create</code>, <code>bot.update</code>,
+<code>bot.deactivate</code>, <code>bot.token.create</code>, <code>bot.token.revoke</code>, <code>bot.webhook.create</code>, <code>bot.webhook.update</code>,
+<code>bot.webhook.revoke</code>, <code>bot.webhook.test_session.start</code> and <code>bot.webhook.test_session.end</code>. An entry holds the bot&#39;s id and, for a token, its id and label, and for a webhook,
+its id and channel. It never holds a token or its hash, or the text of a format.</p>
+<p>Each call of the bot API writes one too, with the initiator <code>bot</code>: <code>bot.me</code>, <code>chat.list_channels</code>,
+<code>chat.get_recent_messages</code>, <code>chat.search_messages</code>, <code>chat.post_message</code>, <code>bot.mentions</code> and <code>bot.events</code>. A
+call refused for its token, its limit or a channel the bot cannot see runs nothing and writes no entry. A
+poll for mentions or events that returned nothing writes none either, since nothing was handed over. A
+<code>bot.events</code> entry holds how many messages and joins it handed over, and no text or name.</p>
+<h2 id="switching-it-off">Switching it off <a class="anchor" href="#switching-it-off" aria-label="Link to this section">#</a></h2>
+<p><code>RIM_FEATURES_DISABLED=bots</code> switches bots off for the whole instance (<a href="operations/features.html"><code>operations/features.md</code></a>).
+Nothing can be created or managed, and tokens and webhooks are refused. A bot can&#39;t be added to a
+channel, and it can still be removed. Bots that exist stay members, still marked as bots with their
+disclosure.</p>
+
+    </main>
+  </div>
+</div>
+<footer class="site-footer container"><span class="footer-brand"><img src="../assets/rim-mark-inverse.svg" alt="" width="21" height="21"> RIM · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-server/blob/4111cb89af23b2b7d062186c0031964901f40630/docs/bots.md">rim-server/docs/bots.md</a> at <code>4111cb8</code></p>
+<script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
+</body>
+</html>

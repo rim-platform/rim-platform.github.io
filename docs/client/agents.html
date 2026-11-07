@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en" class="documentation-page">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Connect an AI agent · RIM</title>
+<meta name="description" content="An outside agent is a program on your computer that works with its own AI model, such as Claude Code. You can connect it to the RIM desktop app, choose which channels it may read, and approve each message before it …">
+<link rel="icon" href="../../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;550;600;650;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<meta name="theme-color" content="#0b0c10">
+<link rel="stylesheet" href="../../assets/site-chrome.css">
+<link rel="stylesheet" href="../../assets/site.css">
+<script src="../../assets/site.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="../../index.html" aria-label="RIM home"><img src="../../assets/rim-mark-inverse.svg" alt="" width="32" height="32">RIM</a>
+    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-navigation">Menu</button>
+    <nav class="site-nav" id="site-navigation" data-open="false" aria-label="Main navigation">
+      <a href="../../index.html#uses">What it's for</a>
+      <a href="../../index.html#privacy">Privacy</a>
+      <a href="../../how-it-works/index.html">How it works</a>
+      <a href="../../index.html#download">Download</a>
+      <a href="../../index.html#community">Community</a>
+      <a href="getting-started.html">Get started</a>
+      <a href="../index.html" aria-current="location">Docs</a>
+    </nav>
+  </div>
+</header>
+<div class="docs-navigation"><nav class="container docs-links" aria-label="Documentation"><span>Documentation</span><a href="../index.html">Overview</a>
+<a href="../self-hosting.html">Self-host</a>
+<a href="../../configure/index.html">Configure</a>
+<a href="../../plugins/index.html">Plugins</a>
+<a href="../../api/index.html">API</a>
+<a href="../../specs/index.html">Specs</a></nav></div>
+<div class="container docs-wrap">
+  <div class="crumbs"><a href="../index.html">Docs</a><span aria-hidden="true">/</span><a href="../using-rim.html">Using RIM</a><span aria-hidden="true">/</span><span>Connect an AI agent</span></div>
+  <div class="page with-toc">
+    <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
+<ol>
+<li><a href="#before-you-start">Before you start</a></li>
+<li><a href="#turn-it-on">Turn it on</a></li>
+<li><a href="#connect-claude-code">Connect Claude Code</a></li>
+<li><a href="#choose-what-it-can-read">Choose what it can read</a></li>
+<li><a href="#when-it-wants-to-post">When it wants to post</a></li>
+<li><a href="#plugin-commands">Plugin commands</a></li>
+<li><a href="#see-what-it-was-given">See what it was given</a></li>
+<li><a href="#disconnect-it">Disconnect it</a></li>
+<li><a href="#what-rim-cant-promise">What RIM can't promise</a></li>
+<li><a href="#next">Next</a></li>
+</ol>
+</details></aside>
+    <main id="content" class="prose">
+<h1 id="connect-an-ai-agent">Connect an AI agent</h1>
+<p>An outside agent is a program on your computer that works with its own AI model, such as Claude
+Code. You can connect it to the RIM desktop app, choose which channels it may read, and approve
+each message before it posts. This page shows how. It is for the person using RIM.</p>
+<p>RIM also has an agent of its own, built into the desktop app, that runs with your API key. That
+one is <a href="ai-agent.html">The AI agent</a>. The two are separate: what you allow one doesn&#39;t carry over to
+the other.</p>
+<h2 id="before-you-start">Before you start <a class="anchor" href="#before-you-start" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>You need the desktop app.</strong> The web app can&#39;t connect agents.</li>
+<li><strong>The agent runs on the same computer</strong> as the app. Nothing on another computer can connect.</li>
+<li><strong>It&#39;s optional, and off until you turn it on.</strong> RIM works the same without it.</li>
+<li><strong>Your account must be unlocked</strong> while you connect an agent.</li>
+</ul>
+<h2 id="turn-it-on">Turn it on <a class="anchor" href="#turn-it-on" aria-label="Link to this section">#</a></h2>
+<p>Open <strong>Settings &gt; Agents</strong> and turn on <strong>Let agents on this computer connect</strong>. The app then
+listens on a port that only this computer can reach. If another program already uses that port,
+the tab says so.</p>
+<p>While the switch is off, nothing listens. Agents you connected earlier stay in the list, but they
+can&#39;t reach RIM until you turn it on again.</p>
+<h2 id="connect-claude-code">Connect Claude Code <a class="anchor" href="#connect-claude-code" aria-label="Link to this section">#</a></h2>
+<p>RIM ships a plugin for Claude Code. Install it once:</p>
+<pre><code class="language-sh">claude plugin marketplace add rim-platform/rim-ui
+claude plugin install rim@rim-platform</code></pre>
+<p>Then:</p>
+<ol>
+<li>In Claude Code, say &quot;connect to RIM&quot;.</li>
+<li>Claude Code shows a code. RIM comes to the front and shows a dialog with a code too.</li>
+<li>Check that the two codes are the same. Then choose <strong>The code matches, connect</strong>.</li>
+<li>Restart Claude Code, or run <code>/mcp</code> in it.</li>
+</ol>
+<p>If the codes differ, or you didn&#39;t ask for this, choose <strong>Don&#39;t connect</strong>. Closing the dialog or
+pressing Escape also refuses. A request nobody answers ends after two minutes.</p>
+<p>The name in the dialog is what the program calls itself. RIM can&#39;t check it, so the code is what
+tells you it&#39;s the program you started.</p>
+<p>Claude Code keeps its token in <code>~/.claude.json</code>, which any program running as you can read. The
+<a href="https://github.com/rim-platform/rim-ui/blob/f02e7945f773e010eb37a2b331c82978e7c4c7b3/integrations/claude-code/README.md">plugin&#39;s README</a> has the details.</p>
+<p><strong>Other agents.</strong> Any program that speaks the Model Context Protocol over HTTP can connect the same
+way, but RIM has a ready-made setup only for Claude Code. The plugin&#39;s <code>scripts/pair.sh</code> shows the
+steps.</p>
+<h2 id="choose-what-it-can-read">Choose what it can read <a class="anchor" href="#choose-what-it-can-read" aria-label="Link to this section">#</a></h2>
+<p>A new agent can read nothing. In <strong>Settings &gt; Agents</strong>, pick the agent, then <strong>Choose what it can
+read</strong>:</p>
+<ul>
+<li>tick channels of a workspace one by one, or</li>
+<li>tick <strong>All channels you can see</strong> in a workspace. That includes private channels you&#39;re in, and
+channels you join later.</li>
+</ul>
+<p>The agent reads these without asking you each time. You can change the choice whenever you like,
+and the change applies to its next request.</p>
+<p><strong>What stays closed, always:</strong></p>
+<ul>
+<li>Direct messages and groups.</li>
+<li>Encrypted conversations.</li>
+<li>Channels and workspaces you haven&#39;t chosen.</li>
+</ul>
+<p>There is no setting that opens direct messages, groups or encrypted conversations to an agent.</p>
+<p><strong>Workspaces on other servers</strong> can&#39;t be chosen yet. Only workspaces on your own server are
+offered.</p>
+<p><strong>Where it reads from.</strong> The messages stored on this computer. A channel that isn&#39;t stored yet is
+refused with a note to try again shortly, and RIM starts storing it. An agent can never read more than
+you can: a channel you leave or lose access to closes for it too, within about 30 seconds.</p>
+<p><strong>Text people wrote is marked as untrusted</strong> when RIM hands it to the agent. That makes it harder
+for a message to steer the agent. It can&#39;t make it impossible.</p>
+<h2 id="when-it-wants-to-post">When it wants to post <a class="anchor" href="#when-it-wants-to-post" aria-label="Link to this section">#</a></h2>
+<p>An agent can ask to post a message in a channel you let it read, and nowhere else. RIM then comes
+to the front with an approval card:</p>
+<ul>
+<li>the agent&#39;s name, &quot;wants to:&quot;, and &quot;Initiated by a program outside RIM&quot;;</li>
+<li>the workspace and the channel;</li>
+<li>the whole message, with its length. Invisible characters and characters that change text
+direction are shown by name, so nothing is hidden.</li>
+</ul>
+<p>Read the text before you send it. The agent may have read something meant to steer it.</p>
+<ul>
+<li><strong>Send</strong> posts it. The button waits one second before it works, so a key press meant for
+something else can&#39;t send it.</li>
+<li><strong>Cancel</strong>, the close button or Escape throw it away. It never leaves your computer.</li>
+<li>If you don&#39;t answer within 60 seconds, the card closes and nothing is sent.</li>
+</ul>
+<p>After you throw a message away, or let it expire, the same agent can&#39;t ask again for 10 seconds.</p>
+<p>The message goes out under your name. Other people in the channel aren&#39;t told that a program wrote
+it. The workspace&#39;s audit log records that an agent started it, and the workspace&#39;s Owner and
+Moderators can read that log.</p>
+<p>On a server whose operator switched off AI commands, posting is refused before you&#39;re asked.</p>
+<h2 id="plugin-commands">Plugin commands <a class="anchor" href="#plugin-commands" aria-label="Link to this section">#</a></h2>
+<p>An agent can also run commands of your plugins, but only the ones you tick. Pick the agent, then
+<strong>Choose its plugin commands</strong>. Nothing is ticked at first, and what you approved for the built-in
+agent doesn&#39;t count here.</p>
+<ul>
+<li><strong>A command its plugin marks as read-only</strong> runs without asking. That mark is the plugin&#39;s own
+claim, and RIM can&#39;t check it.</li>
+<li><strong>Any other command</strong> you ticked shows an approval card first, like the one for posting, with
+every argument in full. Values that look like secrets are hidden.</li>
+<li><strong>A dangerous command</strong> never runs from an agent. The agent can only suggest it, and you run it
+yourself.</li>
+</ul>
+<p>A plugin can read whatever its own permissions allow. A plugin allowed to read conversations can
+read every one you can and hand it to the agent, whatever channels you chose above. Encrypted
+conversations take a separate permission. The screen warns you when a plugin has either. When a
+plugin changes, its ticks stop working until you choose again.</p>
+<h2 id="see-what-it-was-given">See what it was given <a class="anchor" href="#see-what-it-was-given" aria-label="Link to this section">#</a></h2>
+<p>Each agent&#39;s page in <strong>Settings &gt; Agents</strong> lists the channels it read, how many messages, and when.
+Two buttons show more:</p>
+<ul>
+<li><strong>What it was given</strong>: every request, with the time, the tool, the channel, the message ids,
+what it asked to post or run and how that ended, and what RIM refused. It never holds message
+text, search text, or a command&#39;s arguments or results.</li>
+<li><strong>Its runs</strong>: the same record, grouped. A run is that agent&#39;s requests with no more than 15
+minutes between them. It&#39;s a grouping by time: RIM can&#39;t see where the agent&#39;s task starts or
+ends, or what it does between requests.</li>
+</ul>
+<p><strong>What agents were given</strong> and <strong>All runs</strong>, under the list, show the same for every agent,
+including ones you disconnected. Home can show the newest runs too, in the <strong>Your agents&#39; runs</strong>
+box (<a href="home.html">Home</a>).</p>
+<p>The record stays on this computer for 30 days. <strong>Clear the whole record</strong> empties it for every
+agent and leaves one line saying you did.</p>
+<p>A channel&#39;s header says &quot;your agent can read this&quot; when one of your agents may read that channel.</p>
+<h2 id="disconnect-it">Disconnect it <a class="anchor" href="#disconnect-it" aria-label="Link to this section">#</a></h2>
+<p>Pick the agent in <strong>Settings &gt; Agents</strong> and choose <strong>Disconnect</strong>. From then on it can&#39;t reach RIM.</p>
+<p>Disconnecting can&#39;t take anything back. What the agent already read stays with it.</p>
+<p>Removing RIM from Claude Code doesn&#39;t end its access, and neither does connecting it again: the
+older entry keeps working. <strong>Disconnect</strong> in RIM is what ends it.</p>
+<h2 id="what-rim-cant-promise">What RIM can&#39;t promise <a class="anchor" href="#what-rim-cant-promise" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>Where the content goes after RIM hands it over.</strong> What an agent reads goes to its model. A
+model on your computer keeps it there, and a cloud provider receives it. RIM can&#39;t see or limit
+that step.</li>
+<li><strong>Protection from harmful programs.</strong> Connecting stops an ordinary program reaching RIM by
+accident. It isn&#39;t a wall against malware: another program running as you can do what you can.
+Connect only programs you trust.</li>
+<li><strong>That a modified app follows these rules.</strong> The desktop app enforces them. Your server doesn&#39;t
+know about agents, their channels or their record.</li>
+</ul>
+<p>The rules RIM follows are written down in rim-server&#39;s
+<a href="../../specs/agent-data-flow-v1.html">agent data flow contract</a>. The
+<a href="ai-agent.html#agents-on-this-computer">agents section of The AI agent</a> has every detail of the
+screens.</p>
+<h2 id="next">Next <a class="anchor" href="#next" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><a href="ai-agent.html">The AI agent</a>: the agent built into the desktop app.</li>
+<li><a href="../../plugins/index.html">Plugins</a>: installing and trusting plugins.</li>
+<li><a href="webhooks.html">Post alerts from other services</a>: webhooks, for services that post on their own.</li>
+</ul>
+
+    </main>
+  </div>
+</div>
+<footer class="site-footer container"><span class="footer-brand"><img src="../../assets/rim-mark-inverse.svg" alt="" width="21" height="21"> RIM · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/f02e7945f773e010eb37a2b331c82978e7c4c7b3/docs/agents.md">rim-ui/docs/agents.md</a> at <code>f02e794</code></p>
+<script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
+</body>
+</html>

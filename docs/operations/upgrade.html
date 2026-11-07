@@ -8,7 +8,7 @@
 <link rel="icon" href="../../favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;550;600;650;700&family=JetBrains+Mono:wght@400;500&display=swap">
-<meta name="theme-color" content="#050910">
+<meta name="theme-color" content="#0b0c10">
 <link rel="stylesheet" href="../../assets/site-chrome.css">
 <link rel="stylesheet" href="../../assets/site.css">
 <script src="../../assets/site.js" defer></script>
@@ -20,11 +20,11 @@
     <a class="brand" href="../../index.html" aria-label="RIM home"><img src="../../assets/rim-mark-inverse.svg" alt="" width="32" height="32">RIM</a>
     <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-navigation">Menu</button>
     <nav class="site-nav" id="site-navigation" data-open="false" aria-label="Main navigation">
+      <a href="../../index.html#uses">What it's for</a>
       <a href="../../index.html#privacy">Privacy</a>
-      <a href="../../index.html#how">How it works</a>
-      <a href="../../index.html#capabilities">Capabilities</a>
-      <a href="../../index.html#community">Community</a>
+      <a href="../../how-it-works/index.html">How it works</a>
       <a href="../../index.html#download">Download</a>
+      <a href="../../index.html#community">Community</a>
       <a href="../client/getting-started.html">Get started</a>
       <a href="../index.html" aria-current="location">Docs</a>
     </nav>
@@ -51,7 +51,7 @@
     <main id="content" class="prose">
 <h1 id="upgrading-a-server">Upgrading a server</h1>
 <p>How a running server moves to a new release, and back. <a href="../self-hosting.html"><code>docs/self-hosting.md</code></a>, &quot;Updates&quot;, is the
-short form for <a href="https://github.com/rim-platform/rim-server/blob/7bc08f0c95e01769408e4756d418efea30c5b70b/deploy/compose.yml"><code>deploy/compose.yml</code></a>; this page adds what to read first, the rollback and why it
+short form for <a href="https://github.com/rim-platform/rim-server/blob/4111cb89af23b2b7d062186c0031964901f40630/deploy/compose.yml"><code>deploy/compose.yml</code></a>; this page adds what to read first, the rollback and why it
 works. The commands use the <code>dc</code> alias from <a href="../self-hosting.html"><code>docs/self-hosting.md</code></a> (a relay: the alias in
 <a href="../deploy/index.html"><code>deploy/README.md</code></a>), from the repository root.</p>
 <p>A server release is the git tag <code>v&lt;version&gt;</code> and the images
@@ -75,7 +75,7 @@ the new one, and after a skip that is not the release you ran.</li>
 release before.</li>
 </ol>
 <h2 id="upgrade">Upgrade <a class="anchor" href="#upgrade" aria-label="Link to this section">#</a></h2>
-<p><a href="https://github.com/rim-platform/rim-server/blob/7bc08f0c95e01769408e4756d418efea30c5b70b/deploy/upgrade.sh"><code>deploy/upgrade.sh</code></a> runs the steps of this section in one go. Put the new release&#39;s files in
+<p><a href="https://github.com/rim-platform/rim-server/blob/4111cb89af23b2b7d062186c0031964901f40630/deploy/upgrade.sh"><code>deploy/upgrade.sh</code></a> runs the steps of this section in one go. Put the new release&#39;s files in
 place first, then run it with the version:</p>
 <pre><code class="language-sh">git fetch --tags &amp;&amp; git checkout v&lt;version&gt;      # or copy the tag's deploy/ over yours
 deploy/upgrade.sh --dry-run &lt;version&gt;            # checks the images, prints the rest
@@ -87,7 +87,7 @@ when the web client runs; when one is not, it says which, changes nothing and ex
 <li>verifies the signatures against the release workflows, as <a href="../self-hosting.html"><code>docs/self-hosting.md</code></a>, &quot;Verify
 the images&quot;, says (cosign must be installed): <code>rim-web</code> against rim-ui&#39;s of the tag
 <code>v&lt;web client version&gt;</code>;</li>
-<li>runs <a href="https://github.com/rim-platform/rim-server/blob/7bc08f0c95e01769408e4756d418efea30c5b70b/deploy/backup.sh"><code>deploy/backup.sh</code></a>, or says there is nothing to back up when the deployment has no
+<li>runs <a href="https://github.com/rim-platform/rim-server/blob/4111cb89af23b2b7d062186c0031964901f40630/deploy/backup.sh"><code>deploy/backup.sh</code></a>, or says there is nothing to back up when the deployment has no
 data volume yet (the first start);</li>
 <li>writes <code>RIM_VERSION=&lt;version&gt;</code> into <code>deploy/.env</code>, keeping the file before as
 <code>deploy/.env.previous</code>. When the web client runs and <code>RIM_WEB_VERSION</code> is unset, it writes
@@ -124,7 +124,7 @@ dc run --rm migrate                           # applies the new migrations, then
 dc up -d
 dc logs -f rim</code></pre>
 <p>Between <code>dc pull</code> and the migrations, verify the new images&#39; signatures as
-<a href="../self-hosting.html"><code>docs/self-hosting.md</code></a>, &quot;Verify the images&quot;, says. With <a href="https://github.com/rim-platform/rim-server/blob/7bc08f0c95e01769408e4756d418efea30c5b70b/deploy/compose.dev.yml"><code>deploy/compose.dev.yml</code></a>, which builds
+<a href="../self-hosting.html"><code>docs/self-hosting.md</code></a>, &quot;Verify the images&quot;, says. With <a href="https://github.com/rim-platform/rim-server/blob/4111cb89af23b2b7d062186c0031964901f40630/deploy/compose.dev.yml"><code>deploy/compose.dev.yml</code></a>, which builds
 the images from checkouts, check out the rim-ui release the web client runs next to this
 repository and run <code>dc build</code> in place of <code>dc pull</code>.</p>
 <p><code>dc run --rm migrate</code> runs <code>/app/migration up</code> from the new image against the database while the
@@ -140,7 +140,7 @@ reason <code>N pending</code> means the migrations did not run.</p>
 keeps serving, <code>DATABASE_URL=… /app/migration up</code> (or <code>cargo run --release -p migration -- up</code>
 from a checkout), then restart <code>rim-server</code> on the new binary.</p>
 <p>While a container restarts, Caddy cannot reach it and answers in its place
-(<code>handle_errors 502 503 504</code> in <a href="https://github.com/rim-platform/rim-server/blob/7bc08f0c95e01769408e4756d418efea30c5b70b/deploy/Caddyfile"><code>deploy/Caddyfile</code></a> and <a href="https://github.com/rim-platform/rim-server/blob/7bc08f0c95e01769408e4756d418efea30c5b70b/deploy/Caddyfile.relay"><code>deploy/Caddyfile.relay</code></a>): <code>503</code> with
+(<code>handle_errors 502 503 504</code> in <a href="https://github.com/rim-platform/rim-server/blob/4111cb89af23b2b7d062186c0031964901f40630/deploy/Caddyfile"><code>deploy/Caddyfile</code></a> and <a href="https://github.com/rim-platform/rim-server/blob/4111cb89af23b2b7d062186c0031964901f40630/deploy/Caddyfile.relay"><code>deploy/Caddyfile.relay</code></a>): <code>503</code> with
 <code>Retry-After: 30</code> and <code>Cache-Control: no-store</code>. Requests to <code>/api</code>, <code>/s2s/</code> and <code>/.well-known/</code>
 get JSON (<code>{&quot;error&quot;:&quot;unavailable&quot;,&quot;message&quot;:&quot;The server is being updated. …&quot;}</code>), which the
 apps read as the server being unreachable and other servers retry; a browser gets a page saying
@@ -161,6 +161,20 @@ checkout, <code>deploy/upgrade.sh &lt;previous version&gt;</code> does the same 
 <code>/readyz</code> passes: it counts only the migrations it knows as pending. Until the next upgrade, a plain
 <code>dc up -d</code> stops at the failing <code>migrate</code>; use <code>--no-deps</code> as above. When you upgrade again there is
 no migration left to run.</p>
+<p><strong>Bots.</strong> After bots exist, calls naming a bot&#39;s id fail with an internal error on the older
+binary, because it can&#39;t read the new <code>kind</code>. Deactivate bots before rolling back.</p>
+<p><strong>Post as bot.</strong> Once a workspace stores a <code>PostAsBot</code> action, an older binary can&#39;t read it, and that
+workspace&#39;s pipelines stop listing and firing until the action is removed. The older binary can&#39;t remove
+it either, so remove these actions before rolling back. This lists them:</p>
+<pre><code class="language-sql">SELECT id, server_id FROM pipeline WHERE actions_data::text LIKE '%PostAsBot%';</code></pre>
+<p><strong>Webhook formats.</strong> An older binary ignores a webhook&#39;s <code>template</code>, so that webhook acts as a plain one:
+a body with a string <code>text</code> posts that text, and any other body answers <code>400</code> and posts nothing. It still
+lists and can be revoked, and the next upgrade brings its format back. A webhook on the GitHub preset with
+no format of its own keeps working.</p>
+<p><strong>Home layouts.</strong> The table stays, but an older binary has no <code>homeLayout</code>, <code>saveHomeLayout</code> or
+<code>resetHomeLayout</code> and doesn&#39;t list <code>home_layout</code>. The app then shows its default Home with no way
+to edit it, and a save it sends before it notices is refused as an unknown field and says the
+layout wasn&#39;t saved. The stored layouts are untouched and come back with the next upgrade.</p>
 <p><strong>Further back.</strong> Restore the backup taken before the upgrade (<a href="../self-hosting.html"><code>docs/self-hosting.md</code></a>,
 &quot;Restore&quot;). Everything written since that backup is lost.</p>
 <p><strong>The web client</strong> goes back as it goes forward, alone (below).</p>
@@ -195,7 +209,7 @@ it that the backup is their only way back.</p>
   </div>
 </div>
 <footer class="site-footer container"><span class="footer-brand"><img src="../../assets/rim-mark-inverse.svg" alt="" width="21" height="21"> RIM · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
-<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-server/blob/7bc08f0c95e01769408e4756d418efea30c5b70b/docs/operations/upgrade.md">rim-server/docs/operations/upgrade.md</a> at <code>7bc08f0</code></p>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-server/blob/4111cb89af23b2b7d062186c0031964901f40630/docs/operations/upgrade.md">rim-server/docs/operations/upgrade.md</a> at <code>4111cb8</code></p>
 <script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
 </body>
 </html>

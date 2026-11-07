@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en" class="documentation-page">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Navigation and window width · RIM</title>
+<meta name="description" content="Every place in the app can be reached from a visible control or a command, at every window width. Commands run from the palette and from a keybind. The commands this app adds itself, such as the ones for the audit log …">
+<link rel="icon" href="../../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;550;600;650;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<meta name="theme-color" content="#0b0c10">
+<link rel="stylesheet" href="../../assets/site-chrome.css">
+<link rel="stylesheet" href="../../assets/site.css">
+<script src="../../assets/site.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="../../index.html" aria-label="RIM home"><img src="../../assets/rim-mark-inverse.svg" alt="" width="32" height="32">RIM</a>
+    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-navigation">Menu</button>
+    <nav class="site-nav" id="site-navigation" data-open="false" aria-label="Main navigation">
+      <a href="../../index.html#uses">What it's for</a>
+      <a href="../../index.html#privacy">Privacy</a>
+      <a href="../../how-it-works/index.html">How it works</a>
+      <a href="../../index.html#download">Download</a>
+      <a href="../../index.html#community">Community</a>
+      <a href="getting-started.html">Get started</a>
+      <a href="../index.html" aria-current="location">Docs</a>
+    </nav>
+  </div>
+</header>
+<div class="docs-navigation"><nav class="container docs-links" aria-label="Documentation"><span>Documentation</span><a href="../index.html">Overview</a>
+<a href="../self-hosting.html">Self-host</a>
+<a href="../../configure/index.html">Configure</a>
+<a href="../../plugins/index.html">Plugins</a>
+<a href="../../api/index.html">API</a>
+<a href="../../specs/index.html">Specs</a></nav></div>
+<div class="container docs-wrap">
+  <div class="crumbs"><a href="../index.html">Docs</a><span aria-hidden="true">/</span><a href="../using-rim.html">Using RIM</a><span aria-hidden="true">/</span><span>Navigation and window width</span></div>
+  <div class="page">
+
+    <main id="content" class="prose">
+<h1 id="navigation-and-window-width">Navigation and window width</h1>
+<p>Every place in the app can be reached from a visible control or a command, at every window
+width. Commands run from the palette and from a keybind. The commands this app adds itself, such as the
+ones for the audit log and the panels, are not on the server&#39;s list, so macros and the AI agent do
+not get them.</p>
+<h2 id="window-widths">Window widths <a class="anchor" href="#window-widths" aria-label="Link to this section">#</a></h2>
+<p>The shell measures its own width and sorts it into one of three classes. The person&#39;s saved
+choices, such as the hidden conversation list and zen mode, are never changed by the class.</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Class</th>
+<th>Width</th>
+<th>What changes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>wide</td>
+<td>1100 px and up</td>
+<td>Nothing: the workspace rail and the tool panel sit beside the conversation, under the top bar, and a thread, the pinned messages and a plugin panel take their own columns.</td>
+</tr>
+<tr>
+<td>medium</td>
+<td>760 to 1099 px</td>
+<td>The side panel stays. A thread, the pinned messages and a plugin panel in the tool panel slot open over the right of the main area, up to 420 px wide, full height. Escape closes the one in front, and focus returns to where it was.</td>
+</tr>
+<tr>
+<td>narrow</td>
+<td>under 760 px</td>
+<td>The workspace rail and tool panel are hidden. The top bar stays, 48 px high: the menu button at its left opens them as a drawer over the main area, then the search field, Plugins and Notifications. Below 400 px the search field says only &quot;Search&quot; and its accessible name stays &quot;Search or run a command&quot;. Back and Forward are hidden. A press outside the drawer, Escape, or choosing a conversation, a page or a plugin panel closes it. A thread, the pinned messages and a plugin panel fill the main area. Settings lists its sections in one menu above the content.</td>
+</tr>
+</tbody></table></div>
+<p>The drawer holds the same workspace rail (Home, direct messages, the workspaces, audit log,
+settings, account menu) and conversation list as the wide layout. When a member list or a
+new-message or new-channel dialog is asked for in a narrow window, the drawer opens to show it.
+The notification inbox opens under the top bar at every width.</p>
+<h2 id="the-top-bar">The top bar <a class="anchor" href="#the-top-bar" aria-label="Link to this section">#</a></h2>
+<p>The top bar sits above the conversation list and the main area on every page, and zen mode hides
+it with the rails. It is a landmark named &quot;Top bar&quot;; Tab reaches it, and so does moving between
+panes (<code>workspace.navigate_panel_left</code> and <code>workspace.navigate_panel_right</code>), between the
+workspace rail and the conversation list. On the left are <strong>Back</strong> and <strong>Forward</strong>. In the middle
+is a button that looks like a search field and runs <code>workspace.open_search</code>, which opens the
+search box under it (<a href="search-ui.html#the-search-box">Search UI</a>). It names what it searches: the
+open workspace, the direct messages in the direct space, or everything on Home and Unreads, and it
+shows the keystroke bound to <code>workspace.open_search</code>. On the right, <strong>Plugins</strong> opens the menu of plugin panels under it
+and shows only while a running plugin has a panel, and <strong>Notifications</strong> opens the notification
+inbox under it. Escape closes either one and gives focus back to its button.</p>
+<p><strong>Back</strong> and <strong>Forward</strong> (<code>workspace.go_back</code>, <code>workspace.go_forward</code>) move through the places
+opened in this window: a workspace, a page, and the conversation open on it. The history keeps the
+newest 50, and opening a new place after Back drops the ones that were forward. It is the app&#39;s
+own: the browser&#39;s history is never changed, so the web app&#39;s own back button still leaves the
+page as before. Neither command has a default keystroke, since <kbd>Alt+ArrowLeft</kbd> is Back
+to Workspace; bind them in Settings &gt; Keybinds. The mouse&#39;s back and forward buttons are not
+used.</p>
+<p>In the desktop app, which draws its own window frame, the top bar is the title bar: its empty
+areas drag the window, and the window controls sit at its far right outside macOS. Zen mode, the
+sign-in screens and the workspace picker keep the plain title bar.</p>
+<p>These are narrow windows. The web app has no phone layout: there are no
+gestures and no bottom bar.</p>
+<h2 id="ways-in">Ways in <a class="anchor" href="#ways-in" aria-label="Link to this section">#</a></h2>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Place</th>
+<th>Control</th>
+<th>Command</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>A conversation</td>
+<td>Conversation list</td>
+<td><code>workspace.navigate_to_channel</code>, <code>workspace.next_channel</code>, <code>workspace.previous_channel</code>, <code>workspace.next_unread_channel</code>, <code>workspace.previous_unread_channel</code></td>
+</tr>
+<tr>
+<td>Settings and its tabs</td>
+<td>Settings at the foot of the workspace rail; the account menu; in a narrow window the sections menu</td>
+<td><code>workspace.open_settings</code></td>
+</tr>
+<tr>
+<td>Plugin panels</td>
+<td>Plugins in the top bar</td>
+<td><code>workspace.open_plugin_panel.&lt;plugin&gt;/&lt;panel&gt;</code> for each panel</td>
+</tr>
+<tr>
+<td>Marketplace</td>
+<td>none yet</td>
+<td><code>workspace.open_marketplace</code></td>
+</tr>
+<tr>
+<td>Home</td>
+<td>Home at the top of the workspace rail</td>
+<td><code>workspace.open_home</code></td>
+</tr>
+<tr>
+<td>Editing Home</td>
+<td>Edit Home on Home, where the server keeps Home layouts</td>
+<td><code>workspace.edit_home</code>, from the command palette only</td>
+</tr>
+<tr>
+<td>Unreads</td>
+<td>See all unread on Home; Unreads above the channels in the conversation list, while something is unread</td>
+<td><code>workspace.open_unreads</code></td>
+</tr>
+<tr>
+<td>Audit log</td>
+<td>Audit log at the foot of the workspace rail, while a workspace other than the direct space is open</td>
+<td><code>workspace.open_audit_log</code></td>
+</tr>
+<tr>
+<td>Message requests</td>
+<td>Requests row in the conversation list</td>
+<td><code>workspace.open_message_requests</code></td>
+</tr>
+<tr>
+<td>Search</td>
+<td>The search field in the top bar; Search all messages in the search box; the search button in a conversation header</td>
+<td><code>workspace.open_search</code>, <code>workspace.search_in_channel</code></td>
+</tr>
+<tr>
+<td>A thread</td>
+<td>Reply in thread on a message</td>
+<td><code>workspace.reopen_last_thread</code></td>
+</tr>
+<tr>
+<td>Pinned messages</td>
+<td>Pin button in a channel header</td>
+<td><code>workspace.toggle_pinned_messages</code></td>
+</tr>
+<tr>
+<td>Bots in this channel</td>
+<td>&quot;&lt;n&gt; bots&quot; after a channel&#39;s topic</td>
+<td><code>workspace.toggle_channel_bots</code></td>
+</tr>
+<tr>
+<td>A bot&#39;s card</td>
+<td>A bot in the Bots section of the conversation list</td>
+<td>none</td>
+</tr>
+<tr>
+<td>Notifications</td>
+<td>Bell in the top bar</td>
+<td><code>workspace.toggle_notifications</code></td>
+</tr>
+<tr>
+<td>A conversation&#39;s members</td>
+<td>Member count in a channel header</td>
+<td><code>workspace.toggle_conversation_members</code></td>
+</tr>
+<tr>
+<td>The workspace&#39;s members</td>
+<td>Members button above the conversation list</td>
+<td><code>workspace.toggle_member_directory</code></td>
+</tr>
+<tr>
+<td>Command palette</td>
+<td>The search field in the top bar, then <kbd>&gt;</kbd></td>
+<td><code>workspace.open_command_palette</code></td>
+</tr>
+<tr>
+<td>The place before or after this one</td>
+<td>Back and Forward in the top bar</td>
+<td><code>workspace.go_back</code>, <code>workspace.go_forward</code></td>
+</tr>
+<tr>
+<td>Agents</td>
+<td>Settings &gt; Agents</td>
+<td><code>workspace.open_agents</code></td>
+</tr>
+<tr>
+<td>Bots and webhooks</td>
+<td>Settings &gt; Bots</td>
+<td><code>workspace.open_bots</code></td>
+</tr>
+<tr>
+<td>A channel&#39;s incoming webhook</td>
+<td>New webhook… in the channel&#39;s menu</td>
+<td>none</td>
+</tr>
+<tr>
+<td>A webhook&#39;s format, and what a service sends to it</td>
+<td>Edit format on the webhook&#39;s row in Settings &gt; Bots, or Custom in New webhook</td>
+<td>none</td>
+</tr>
+<tr>
+<td>The conversation list, or the drawer in a narrow window</td>
+<td>Menu button in the top bar of a narrow window</td>
+<td><code>workspace.toggle_sidebar</code></td>
+</tr>
+</tbody></table></div>
+<p>Settings tabs: Profile, Account, Security, Desktop, Contacts, Messages, Direct messages,
+Notifications, History, Keybinds, Keyboard, Commands, Macros, Pipelines, Plugins, Plugin AI,
+State, Emoji, Agents, AI Agent, Workspace, Moderation, Bots, Instance moderation, About. Some are
+shown only to a role, a server feature or the desktop app, as the Settings page decides;
+<a href="https://github.com/rim-platform/rim-ui/blob/f02e7945f773e010eb37a2b331c82978e7c4c7b3/src/shell/reachable.test.tsx"><code>src/shell/reachable.test.tsx</code></a> checks that every tab is listed for someone who may see it.</p>
+
+    </main>
+  </div>
+</div>
+<footer class="site-footer container"><span class="footer-brand"><img src="../../assets/rim-mark-inverse.svg" alt="" width="21" height="21"> RIM · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/f02e7945f773e010eb37a2b331c82978e7c4c7b3/docs/navigation.md">rim-ui/docs/navigation.md</a> at <code>f02e794</code></p>
+
+</body>
+</html>

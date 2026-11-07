@@ -8,7 +8,7 @@
 <link rel="icon" href="../favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;550;600;650;700&family=JetBrains+Mono:wght@400;500&display=swap">
-<meta name="theme-color" content="#050910">
+<meta name="theme-color" content="#0b0c10">
 <link rel="stylesheet" href="../assets/site-chrome.css">
 <link rel="stylesheet" href="../assets/site.css">
 <script src="../assets/site.js" defer></script>
@@ -20,11 +20,11 @@
     <a class="brand" href="../index.html" aria-label="RIM home"><img src="../assets/rim-mark-inverse.svg" alt="" width="32" height="32">RIM</a>
     <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-navigation">Menu</button>
     <nav class="site-nav" id="site-navigation" data-open="false" aria-label="Main navigation">
+      <a href="../index.html#uses">What it's for</a>
       <a href="../index.html#privacy">Privacy</a>
-      <a href="../index.html#how">How it works</a>
-      <a href="../index.html#capabilities">Capabilities</a>
-      <a href="../index.html#community">Community</a>
+      <a href="../how-it-works/index.html">How it works</a>
       <a href="../index.html#download">Download</a>
+      <a href="../index.html#community">Community</a>
       <a href="../docs/client/getting-started.html">Get started</a>
       <a href="../docs/index.html" aria-current="location">Docs</a>
     </nav>
@@ -58,7 +58,7 @@
 </details></aside>
     <main id="content" class="prose">
 <h1 id="history-archive-format-version-1">History archive format, version 1</h1>
-<p class="status"><span><b>History archive format, version 1</b></span><span>version 1</span><span><a href="https://github.com/rim-platform/rim-ui/blob/625c78e7c352dd2300217ff4cf692350e410fa7e/docs/specs/history-archive-v1.md">rim-ui/docs/specs/history-archive-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-ui/commit/625c78e7c352dd2300217ff4cf692350e410fa7e">625c78e</a></span></p>
+<p class="status"><span><b>History archive format, version 1</b></span><span>version 1</span><span><a href="https://github.com/rim-platform/rim-ui/blob/f02e7945f773e010eb37a2b331c82978e7c4c7b3/docs/specs/history-archive-v1.md">rim-ui/docs/specs/history-archive-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-ui/commit/f02e7945f773e010eb37a2b331c82978e7c4c7b3">f02e794</a></span></p>
 <p>The desktop app writes the user&#39;s message history to a folder the user picks, encrypted, and
 reads it back on another device. There is no RIM server in this picture:
 the folder is the user&#39;s own (a local disk, a USB drive, a folder that Dropbox, Google Drive,
@@ -66,7 +66,7 @@ OneDrive, iCloud Drive or Syncthing keeps in sync, the app&#39;s own folder in t
 Drive, Dropbox or OneDrive, reached through their APIs, a bucket of S3-compatible storage, or a
 backup endpoint the user runs), and only someone with the passphrase can read it.</p>
 <p>This document is the format. Anyone may write a reader or writer from it. The implementation is
-<a href="https://github.com/rim-platform/rim-ui/tree/625c78e7c352dd2300217ff4cf692350e410fa7e/src-tauri/src/history_archive"><code>src-tauri/src/history_archive/</code></a>; the cache it is written from is <a href="../docs/client/local-message-cache.html"><code>docs/local-message-cache.md</code></a>.</p>
+<a href="https://github.com/rim-platform/rim-ui/tree/f02e7945f773e010eb37a2b331c82978e7c4c7b3/src-tauri/src/history_archive"><code>src-tauri/src/history_archive/</code></a>; the cache it is written from is <a href="../docs/client/local-message-cache.html"><code>docs/local-message-cache.md</code></a>.</p>
 <h2 id="goals">Goals <a class="anchor" href="#goals" aria-label="Link to this section">#</a></h2>
 <ul>
 <li>A new device with nothing but the folder and the passphrase gets the history back, and shows
@@ -547,7 +547,7 @@ release until the archive&#39;s manifest says otherwise.</li>
 whole (replacing it), create a file only if its name is free, list the directories in a
 directory, and check that the place can be written. Nothing appends or renames, so any storage
 with whole-file uploads can hold an archive. The implementation is
-<a href="https://github.com/rim-platform/rim-ui/blob/625c78e7c352dd2300217ff4cf692350e410fa7e/src-tauri/src/history_archive/provider.rs"><code>src-tauri/src/history_archive/provider.rs</code></a> and <code>cloud/</code>.</p>
+<a href="https://github.com/rim-platform/rim-ui/blob/f02e7945f773e010eb37a2b331c82978e7c4c7b3/src-tauri/src/history_archive/provider.rs"><code>src-tauri/src/history_archive/provider.rs</code></a> and <code>cloud/</code>.</p>
 <h3 id="local-folder">Local folder <a class="anchor" href="#local-folder" aria-label="Link to this section">#</a></h3>
 <p>Archive paths are paths under the folder. A write goes to a hidden temporary file
 (<code>.&lt;name&gt;.&lt;random&gt;.tmp</code>) and is renamed over the target; a create is a hard link of the
@@ -711,7 +711,7 @@ can have its archived copies of a reset conversation skipped. They are the serve
   </div>
 </div>
 <footer class="site-footer container"><span class="footer-brand"><img src="../assets/rim-mark-inverse.svg" alt="" width="21" height="21"> RIM · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
-<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/625c78e7c352dd2300217ff4cf692350e410fa7e/docs/specs/history-archive-v1.md">rim-ui/docs/specs/history-archive-v1.md</a> at <code>625c78e</code></p>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/f02e7945f773e010eb37a2b331c82978e7c4c7b3/docs/specs/history-archive-v1.md">rim-ui/docs/specs/history-archive-v1.md</a> at <code>f02e794</code></p>
 <script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
 </body>
 </html>

@@ -8,7 +8,7 @@
 <link rel="icon" href="../../favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;550;600;650;700&family=JetBrains+Mono:wght@400;500&display=swap">
-<meta name="theme-color" content="#050910">
+<meta name="theme-color" content="#0b0c10">
 <link rel="stylesheet" href="../../assets/site-chrome.css">
 <link rel="stylesheet" href="../../assets/site.css">
 <script src="../../assets/site.js" defer></script>
@@ -20,11 +20,11 @@
     <a class="brand" href="../../index.html" aria-label="RIM home"><img src="../../assets/rim-mark-inverse.svg" alt="" width="32" height="32">RIM</a>
     <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-navigation">Menu</button>
     <nav class="site-nav" id="site-navigation" data-open="false" aria-label="Main navigation">
+      <a href="../../index.html#uses">What it's for</a>
       <a href="../../index.html#privacy">Privacy</a>
-      <a href="../../index.html#how">How it works</a>
-      <a href="../../index.html#capabilities">Capabilities</a>
-      <a href="../../index.html#community">Community</a>
+      <a href="../../how-it-works/index.html">How it works</a>
       <a href="../../index.html#download">Download</a>
+      <a href="../../index.html#community">Community</a>
       <a href="getting-started.html">Get started</a>
       <a href="../index.html" aria-current="location">Docs</a>
     </nav>
@@ -81,6 +81,26 @@ such as marking it read or setting its notification level, therefore acts on the
 with none open it needs the conversation&#39;s id in its arguments. A plugin command that needs a
 conversation gets the open one; with none open, the palette leaves it out and its keybind says
 &quot;Open a conversation first&quot;.</p>
+<p><strong>From the message box.</strong> The suggestion list decides: a command runs only when it is picked from
+the open list, with Enter or Tab on the highlighted row or a click. Type <code>/</code> and the words of a
+command&#39;s id or title (<code>/list members</code>, <code>/List Members</code>, <code>/chat.list_members</code>): the list stays open
+across spaces, the first match is highlighted, and Enter runs it. Esc closes the list and keeps it
+closed for that line, until the line is emptied or the conversation changes; Enter then sends the
+text as an ordinary message, <code>/list members</code> included. Text that matches no command shows no list
+and is sent as a message as well.</p>
+<p>Arguments follow the name as <code>key=value</code> pairs, with a value that has spaces in double quotes:
+<code>/chat.post_message text=&quot;two words&quot;</code>. The command stays listed while you type them, and Enter runs
+it with them. Picking a command that needs arguments leaves <code>/admin.kick </code> to finish, keeps the list
+open and shows what the command needs in its row; Enter on a line that still lacks one says which
+and gives the form to type, and sends nothing. A thread&#39;s reply box has the same list and rule.
+A command that carries a message&#39;s text (<code>chat.post_message</code>, <code>chat.edit_message</code>, and any command
+with a <code>text</code> argument) refuses to run for an end-to-end encrypted conversation, so that text never
+reaches the server in plain; text sent after Esc goes through normal encrypted sending.
+<code>chat.mark_as_unread</code> needs a <code>message_id=</code>, and <code>chat.reply_to_selected_message</code>, which acts on a
+selected message the box cannot have, is not listed.</p>
+<p>A pipe (<code>/a | b</code>) has no list: a line with <code>|</code> that starts with a known command runs as a pipe on
+Enter, and after Esc, or in a thread, it is sent as text. The server reads a pipe&#39;s arguments
+without quotes.</p>
 <p><strong>Sensitivity.</strong> Every command has one of four tiers, and the server decides from it whether a
 run waits for your confirmation:</p>
 <div class="tablewrap"><table>
@@ -131,7 +151,10 @@ stages.</p>
 <code>admin.manage_members</code>, and the server lists only the commands your role in the workspace may
 run; a plugin&#39;s command acts only within the permissions you granted the plugin.</p>
 <h2 id="the-command-palette">The command palette <a class="anchor" href="#the-command-palette" aria-label="Link to this section">#</a></h2>
-<p><kbd>Ctrl+K</kbd> opens the palette, and so does <kbd>:</kbd> in Vim normal mode. &quot;Type a
+<p>The palette is the search box under the top bar with commands first. <kbd>Ctrl+K</kbd> opens it
+so, and so does <kbd>:</kbd> in Vim normal mode; in a box opened with search first,
+<kbd>Ctrl+K</kbd> or typing <kbd>&gt;</kbd> switches to commands, and <kbd>Backspace</kbd> in an
+empty field switches back (<a href="search-ui.html#the-search-box">Search UI</a>). &quot;Type a
 command...&quot; searches the title, description and category of every command, with the matched
 letters highlighted. The best match comes first: a match in the title ranks above one in the
 description or category, and a whole word or the start of one above letters inside a word or
@@ -156,8 +179,8 @@ at once; a toast gives its title and the result&#39;s message on success, such a
 channels found.&quot;, except for a command that opens or moves something in the app, which shows
 that instead, or &quot;&lt;title&gt;: &lt;message&gt;&quot; on failure, and a plugin command answers in its
 words.
-<strong>Search Messages</strong> run from the palette or a keybind without a <code>query</code> opens the search box,
-as <strong>Open Search</strong> does; with a <code>query</code>, such as a keybind&#39;s preset argument, or as a pipe stage,
+<strong>Search Messages</strong> run from the palette or a keybind without a <code>query</code> opens the full message
+search, as <strong>Search all messages</strong> in the search box does; with a <code>query</code>, such as a keybind&#39;s preset argument, or as a pipe stage,
 the server runs the search.</p>
 <p><strong>Pipes.</strong> Typing <kbd>|</kbd> locks the text before it as a stage: a command id, optionally
 followed by <code>key=value</code> arguments with no spaces in the values. The list then offers only the
@@ -216,7 +239,7 @@ new device:</p>
 </tr>
 <tr>
 <td><kbd>Ctrl+Shift+M</kbd></td>
-<td>Mark everything as read</td>
+<td>Mark everything as read, with an Undo for 6 seconds before the server is told</td>
 </tr>
 <tr>
 <td><kbd>Ctrl+Shift+K</kbd></td>
@@ -232,7 +255,7 @@ new device:</p>
 </tr>
 <tr>
 <td><kbd>Ctrl+B</kbd></td>
-<td>Toggle the sidebar</td>
+<td>Hide or show the conversation list</td>
 </tr>
 <tr>
 <td><kbd>Ctrl+E</kbd></td>
@@ -275,6 +298,7 @@ new device:</p>
 <td>Show keyboard shortcuts</td>
 </tr>
 </tbody></table></div>
+<p>On the Unreads page, while the focus is on the page, <kbd>J</kbd> and <kbd>K</kbd> move through the messages, <kbd>E</kbd> marks the selected conversation read up to the newest message shown, <kbd>Enter</kbd> opens the selected message and <kbd>U</kbd> takes back the last mark, for 10 seconds. These keys belong to the page and stay what they are. Each runs a command (<code>workspace.unreads_next</code>, <code>workspace.unreads_previous</code>, <code>workspace.unreads_mark_group</code>, <code>workspace.unreads_open</code>, <code>workspace.unreads_undo</code>) that the palette offers on that page and that you can bind to another key as well.</p>
 <p>On a Mac, <kbd>Cmd</kbd> works wherever <kbd>Ctrl</kbd> is written. The timeline&#39;s own message
 keys, such as <kbd>r</kbd> for a thread and <kbd>e</kbd> to edit, are in <a href="keyboard.html">Keyboard</a>.</p>
 <p><strong>Contexts.</strong> A binding belongs to a context: Global (everywhere), Composer, Message list,
@@ -391,7 +415,8 @@ one conversation.</li>
 user id; &quot;In conversation&quot;, by conversation id. A text filter never matches a message in an
 end-to-end encrypted DM or group, which the server cannot read.</li>
 <li><strong>Actions</strong> get the workspace as context, and the conversation for message and reaction
-triggers. Each action runs even when an earlier one failed.</li>
+triggers. Each action runs even when an earlier one failed. On the Member Joined trigger, an
+action can also post as a bot: see &quot;Post as bot&quot; below.</li>
 </ul>
 <p><strong>Where.</strong> Settings → Pipelines, which is not shown in Direct messages. <strong>New Pipeline</strong> opens
 &quot;Create Pipeline&quot; with <strong>Name</strong>, <strong>Description</strong>, <strong>Trigger</strong>, <strong>Filters</strong> (<strong>Add filter</strong>),
@@ -416,6 +441,22 @@ actions are not counted, and the toast is a warning when some did not run.</p>
 fires more than 10 times in 60 seconds is switched off, with &quot;Pipeline &quot;&lt;name&gt;&quot; suspended&quot;;
 the power button turns it back on. You can create 50 pipelines per workspace, and the page shows
 the server&#39;s own cap when it sets one.</p>
+<p><strong>Post as bot.</strong> With the Member Joined trigger, an Owner or Moderator on a server that has it
+sees <strong>Post as bot</strong> beside <strong>Add action</strong>: a bot (active bots only), a channel (only that bot&#39;s;
+&quot;This bot is in no channels yet. Add it to one in Settings &gt; Bots.&quot; otherwise) and a text. It says
+plainly above them: &quot;Posted by the bot, without asking anyone, each time someone joins.&quot; The text
+takes <code>{username}</code>, the person&#39;s username, at their home server if they&#39;re from another one, and
+<code>{name}</code>, their display name, or their username without one. What the server refuses, such as a
+mistyped placeholder, shows beside the field. A welcome mentions nobody, and a name can&#39;t add a
+mention or Markdown.</p>
+<p>The list shows it to every member as &quot;Post as Greeter in #welcome&quot; with its text. A channel you
+can&#39;t see shows as &quot;a channel you can&#39;t see&quot;, never its name or id, and a bot your list doesn&#39;t
+hold as &quot;a bot&quot;. Who can&#39;t change it, such as a creator who is no longer a Moderator, sees it
+read-only in the editor and can keep or remove it. A burst of joins is limited by the cooldown and
+the bot&#39;s budget, which skip a welcome rather than queue it. The 10-firings limit below applies too:
+a rush of people joining can switch the pipeline off. The list then shows it as Disabled like any
+other, since the server keeps no reason, and only the creator&#39;s &quot;suspended&quot; notice, if they had the
+workspace open, says why. The power button turns it back on.</p>
 <p><strong>Example.</strong> &quot;Deploy failed&quot;: trigger New Message, scoped to the id of #deploys, with the filter
 &quot;Message contains pattern&quot; <code>FAILED</code>, a cooldown of 300 and the action <code>chat.search_messages</code>
 with <code>{&quot;query&quot;: &quot;FAILED&quot;}</code>. Each failure posted to #deploys shows the pipeline&#39;s creator the
@@ -462,7 +503,7 @@ sensitivity, confirmations, macros and what the agent may call.</li>
   </div>
 </div>
 <footer class="site-footer container"><span class="footer-brand"><img src="../../assets/rim-mark-inverse.svg" alt="" width="21" height="21"> RIM · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
-<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/625c78e7c352dd2300217ff4cf692350e410fa7e/docs/commands-and-automation.md">rim-ui/docs/commands-and-automation.md</a> at <code>625c78e</code></p>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/f02e7945f773e010eb37a2b331c82978e7c4c7b3/docs/commands-and-automation.md">rim-ui/docs/commands-and-automation.md</a> at <code>f02e794</code></p>
 <script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
 </body>
 </html>

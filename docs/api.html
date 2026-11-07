@@ -8,7 +8,7 @@
 <link rel="icon" href="../favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;550;600;650;700&family=JetBrains+Mono:wght@400;500&display=swap">
-<meta name="theme-color" content="#050910">
+<meta name="theme-color" content="#0b0c10">
 <link rel="stylesheet" href="../assets/site-chrome.css">
 <link rel="stylesheet" href="../assets/site.css">
 <script src="../assets/site.js" defer></script>
@@ -20,11 +20,11 @@
     <a class="brand" href="../index.html" aria-label="RIM home"><img src="../assets/rim-mark-inverse.svg" alt="" width="32" height="32">RIM</a>
     <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-navigation">Menu</button>
     <nav class="site-nav" id="site-navigation" data-open="false" aria-label="Main navigation">
+      <a href="../index.html#uses">What it's for</a>
       <a href="../index.html#privacy">Privacy</a>
-      <a href="../index.html#how">How it works</a>
-      <a href="../index.html#capabilities">Capabilities</a>
-      <a href="../index.html#community">Community</a>
+      <a href="../how-it-works/index.html">How it works</a>
       <a href="../index.html#download">Download</a>
+      <a href="../index.html#community">Community</a>
       <a href="client/getting-started.html">Get started</a>
       <a href="index.html" aria-current="location">Docs</a>
     </nav>
@@ -46,11 +46,11 @@
 <li><a href="#origins">Origins</a></li>
 <li><a href="#limits">Limits</a></li>
 <li><a href="#instance-moderation">Instance moderation</a></li>
-<li><a href="#errors">Errors</a><ol><li><a href="#graphql-error-codes">GraphQL error codes</a></li><li><a href="#refusals-before-a-route-runs">Refusals before a route runs</a></li><li><a href="#errors-from-the-file-routes">Errors from the file routes</a></li></ol></li>
+<li><a href="#errors">Errors</a><ol><li><a href="#graphql-error-codes">GraphQL error codes</a></li><li><a href="#refusals-before-a-route-runs">Refusals before a route runs</a></li><li><a href="#errors-from-the-bot-api">Errors from the bot API</a></li><li><a href="#errors-from-the-file-routes">Errors from the file routes</a></li></ol></li>
 <li><a href="#pagination">Pagination</a></li>
 <li><a href="#telling-which-server-you-talk-to">Telling which server you talk to</a></li>
 <li><a href="#handles">Handles</a></li>
-<li><a href="#the-full-graphql-reference">The full GraphQL reference</a><ol><li><a href="#profile-picture-refresh">Profile picture refresh</a></li><li><a href="#pinned-plugin-link-fetch">Pinned plugin link fetch</a></li><li><a href="#flagged-messages">Flagged messages</a></li><li><a href="#deleting-a-persons-messages">Deleting a person's messages</a></li><li><a href="#rejoining-the-default-workspace-and-removal-notices">Rejoining the default workspace and removal notices</a></li><li><a href="#public-join-link-and-join-requests">Public join link and join requests</a></li><li><a href="#account-password">Account password</a></li></ol></li>
+<li><a href="#the-full-graphql-reference">The full GraphQL reference</a><ol><li><a href="#profile-picture-refresh">Profile picture refresh</a></li><li><a href="#pinned-plugin-link-fetch">Pinned plugin link fetch</a></li><li><a href="#flagged-messages">Flagged messages</a></li><li><a href="#agent-runs-in-the-audit-log">Agent runs in the audit log</a></li><li><a href="#deleting-a-persons-messages">Deleting a person's messages</a></li><li><a href="#rejoining-the-default-workspace-and-removal-notices">Rejoining the default workspace and removal notices</a></li><li><a href="#public-join-link-and-join-requests">Public join link and join requests</a></li><li><a href="#account-password">Account password</a></li><li><a href="#bots">Bots</a></li><li><a href="#home-layout">Home layout</a></li></ol></li>
 </ol>
 </details></aside>
     <main id="content" class="prose">
@@ -97,6 +97,12 @@ needs the <code>X-CSRF-Token</code> header (see &quot;Sessions and CSRF&quot;).<
 <td><code>/api/sdl</code></td>
 <td>Nothing</td>
 <td>The schema in SDL, as <code>text/plain</code>.</td>
+</tr>
+<tr>
+<td><code>GET</code>, <code>POST</code></td>
+<td><code>/api/bot/v1/...</code></td>
+<td>A bot token, never a session</td>
+<td>The bot API: the one set of routes a bot token works on (<a href="bots.html"><code>bots.md</code></a>).</td>
 </tr>
 <tr>
 <td><code>GET</code></td>
@@ -232,10 +238,10 @@ messages&quot;). A connection starts at most 10 subscriptions a second, in burst
 <code>subscribe</code> (or <code>start</code>) message past that closes it with <code>1008</code> (&quot;too many subscriptions
 started&quot;). The socket runs subscriptions only: a query or a mutation sent on it answers one
 error with the code <code>VALIDATION</code> and the message &quot;only subscriptions over the WebSocket&quot;, runs
-nothing, and completes; send those to <code>POST /api</code>. The subscription roots are <code>workspaceEvents</code> and
-<code>relayStream</code>; the schema describes both. A <code>TypingStarted</code> event, sent for direct conversations
-only, names the typing user by <code>user_id</code>, <code>username</code> and <code>display_name</code>, which is <code>null</code> when
-they have none.</p>
+nothing, and completes; send those to <code>POST /api</code>. The subscription roots are <code>workspaceEvents</code>,
+<code>notificationEvents</code> and <code>relayStream</code>; the schema describes them. A <code>TypingStarted</code> event, sent
+for direct conversations only, names the typing user by <code>user_id</code>, <code>username</code> and <code>display_name</code>,
+which is <code>null</code> when they have none.</p>
 <p>A session signed in without &quot;Keep me signed in&quot; opens its connection with the cookie alone,
 and its first message must be <code>connection_init</code> with the session secret as
 <code>payload.sessionSecret</code>. Any other first message, or a wrong secret, closes the connection with
@@ -1008,6 +1014,9 @@ JSON body naming the refusal:</p>
 <td>The client address is on the operator&#39;s IP deny list.</td>
 </tr>
 </tbody></table></div>
+<h3 id="errors-from-the-bot-api">Errors from the bot API <a class="anchor" href="#errors-from-the-bot-api" aria-label="Link to this section">#</a></h3>
+<p>Routes under <code>/api/bot/v1</code> answer <code>{&quot;refusal&quot;:&quot;...&quot;,&quot;message&quot;:&quot;...&quot;,&quot;retrySafe&quot;:bool}</code>, with the kinds of
+<a href="command_model.html"><code>command_model.md</code></a>, &quot;Refusals&quot; (<a href="bots.html"><code>bots.md</code></a>). The limits above still answer in their own shape first.</p>
 <h3 id="errors-from-the-file-routes">Errors from the file routes <a class="anchor" href="#errors-from-the-file-routes" aria-label="Link to this section">#</a></h3>
 <p>The file and plugin bundle routes answer <code>{&quot;error&quot;:&quot;&lt;message&gt;&quot;}</code> with:</p>
 <div class="tablewrap"><table>
@@ -1107,7 +1116,19 @@ and sends N back as <code>confirmedMinimumAge</code>.</li>
 <code>MessageReport.automatic</code> and <code>clearMessageFlag</code>; <code>delete_member_messages</code>:
 <code>memberMessageCounts</code>, <code>deleteMemberMessages</code> and the <code>MessagesDeleted</code> event;
 <code>member_timeout_changed</code>: <code>ServerMember.timeoutReason</code> and the <code>MemberTimeoutChanged</code> event;
-<code>conversation_member_removals</code>: <code>conversationMemberRemovals</code>). A client asks
+<code>conversation_member_removals</code>: <code>conversationMemberRemovals</code>; <code>bot_disclosure</code>: <code>User.isBot</code>,
+<code>User.bot</code>, <code>ServerMember.isBot</code> and <code>ServerMember.bot</code>; <code>command_run_id</code>:
+<code>ExecuteCommandInput.runId</code> and <code>AuditLogEntry.runId</code>; <code>incoming_webhooks</code>: <code>IncomingWebhook</code>,
+<code>incomingWebhooks</code>, <code>createIncomingWebhook</code> and <code>revokeIncomingWebhook</code>; <code>read_marker</code>:
+<code>UnreadCount.unreadAfter</code>, <code>markAsUnread</code> and the <code>ReadMarkerRewound</code> event; <code>bot_events</code>:
+<code>Bot.seesMemberJoins</code>, the same field of <code>CreateBotInput</code> and <code>UpdateBotInput</code>, and
+<code>/api/bot/v1/events</code>; <code>pipeline_post_as_bot</code>: <code>PipelineActionGql.postAsBot</code> and
+<code>PipelineActionInput.postAsBot</code>; <code>webhook_formats</code>: <code>IncomingWebhook.template</code>,
+<code>CreateIncomingWebhookInput.template</code>, <code>updateIncomingWebhookFormat</code>, <code>webhookFormats</code> and
+<code>previewWebhookFormat</code>; <code>webhook_test_sessions</code>: <code>startWebhookTestSession</code>, <code>endWebhookTestSession</code>,
+<code>webhookTestDeliveries</code>, <code>CreateIncomingWebhookInput.testSessionId</code> and
+<code>CreatedIncomingWebhook.keptTestUrl</code>; <code>home_layout</code>: <code>HomeLayout</code>, <code>HomeLayoutSaved</code>,
+<code>homeLayout</code>, <code>saveHomeLayout</code> and <code>resetHomeLayout</code>). A client asks
 for such a field only when its name is listed, so it keeps working against older servers; it
 ignores names it does not know.</li>
 </ul>
@@ -1132,7 +1153,7 @@ types from it:</p>
 <pre><code class="language-sh">curl -s http://localhost:8080/api/sdl &gt; ../rim-ui/schema.graphql
 cd ../rim-ui &amp;&amp; npm run codegen</code></pre>
 <p>Enum values appear in <code>SCREAMING_SNAKE</code> and fields in <code>camelCase</code>. The models in <a href="messaging.html"><code>messaging.md</code></a>,
-<a href="search.html"><code>search.md</code></a>, <a href="message-change-feed.html"><code>message-change-feed.md</code></a>, <a href="command_model.html"><code>command_model.md</code></a> and the specs in <a href="https://github.com/rim-platform/rim-server/tree/7bc08f0c95e01769408e4756d418efea30c5b70b/docs/specs"><code>specs/</code></a> explain what
+<a href="search.html"><code>search.md</code></a>, <a href="message-change-feed.html"><code>message-change-feed.md</code></a>, <a href="command_model.html"><code>command_model.md</code></a> and the specs in <a href="https://github.com/rim-platform/rim-server/tree/4111cb89af23b2b7d062186c0031964901f40630/docs/specs"><code>specs/</code></a> explain what
 the fields mean.</p>
 <h3 id="profile-picture-refresh">Profile picture refresh <a class="anchor" href="#profile-picture-refresh" aria-label="Link to this section">#</a></h3>
 <p>Avatar uploads are stored as <code>avatars/&lt;user id&gt;/avatar-&lt;16 lowercase SHA-256 hex&gt;.png</code>, the
@@ -1163,6 +1184,12 @@ not flagged. Anyone else gets <code>FORBIDDEN</code>; a conversation outside the
 outside the conversation is <code>NOT_FOUND</code>.</p>
 <p><code>MessageReport.reporterUserId</code> is null for a report the check filed, and
 <code>MessageReport.automatic: Boolean!</code> tells such a report from a member&#39;s.</p>
+<h3 id="agent-runs-in-the-audit-log">Agent runs in the audit log <a class="anchor" href="#agent-runs-in-the-audit-log" aria-label="Link to this section">#</a></h3>
+<p><code>ExecuteCommandInput.runId: String</code> is an identifier the desktop app gives one stretch of an
+agent&#39;s calls: 1 to 64 ASCII letters, digits, <code>_</code> or <code>-</code>, or <code>VALIDATION</code>. It is kept when the
+initiator is <code>AGENT</code> and ignored otherwise (<a href="command_model.html"><code>docs/command_model.md</code></a>). <code>AuditLogEntry.runId</code> returns
+it, null when there is none, and <code>AuditLogFilterInput.runId</code> narrows <code>listAuditLog</code> to the entries
+of that run, within what the caller may read (<a href="security/audit-access-matrix.html"><code>docs/security/audit-access-matrix.md</code></a>).</p>
 <h3 id="deleting-a-persons-messages">Deleting a person&#39;s messages <a class="anchor" href="#deleting-a-persons-messages" aria-label="Link to this section">#</a></h3>
 <p><code>memberMessageCounts(serverId: ID!, userId: ID!, since: DateTime): MemberMessageCounts!</code>
 answers how many of the person&#39;s messages in the workspace&#39;s channels, sent at or after <code>since</code>
@@ -1416,12 +1443,145 @@ person from another server signs in at a host with the key alone; their password
 their own server.</p>
 <p><strong>Tries.</strong> See &quot;Limits&quot;. A wrong password is <code>UNAUTHENTICATED</code>, a wait <code>RATE_LIMITED</code> with
 <code>retryAfterSeconds</code>, and a locked password <code>PASSWORD_LOCKED</code>.</p>
+<h3 id="bots">Bots <a class="anchor" href="#bots" aria-label="Link to this section">#</a></h3>
+<p>An Owner or Moderator of a workspace manages its bots (<a href="bots.html"><code>bots.md</code></a>; the contract is
+<a href="../specs/bots-v1.html"><code>specs/bots-v1.md</code></a>). Every root answers <code>FEATURE_DISABLED</code> while the <code>bots</code> feature is off, and so
+does <code>addConversationMembers</code> naming a bot; <code>removeConversationMember</code> still removes one.</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Root</th>
+<th>Who</th>
+<th>Does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>bots(serverId): [Bot!]!</code></td>
+<td>Any member</td>
+<td>The workspace&#39;s bots, deactivated ones included. <code>FORBIDDEN</code> for anyone else.</td>
+</tr>
+<tr>
+<td><code>botTokens(botUserId): [BotToken!]!</code></td>
+<td>Owner, Moderator</td>
+<td>The bot&#39;s tokens, revoked ones included, never their secret. <code>FORBIDDEN</code> for anyone else, <code>NOT_FOUND</code> for an unknown bot.</td>
+</tr>
+<tr>
+<td><code>createBot(input): CreatedBot!</code></td>
+<td>Owner, Moderator</td>
+<td>Creates a bot, a guest of the workspace in no channel, and its first token, labelled <code>default</code>. <code>CreatedBot.token</code> is shown this once. <code>seesMemberJoins</code> is off when left out. <code>VALIDATION</code> for the direct space, a bad field or a workspace with 25 active bots.</td>
+</tr>
+<tr>
+<td><code>updateBot(input): Bot!</code></td>
+<td>Owner, Moderator</td>
+<td>Changes the fields given, <code>seesMemberJoins</code> among them, which says whether the bot gets <code>member_joined</code> events.</td>
+</tr>
+<tr>
+<td><code>deactivateBot(botUserId): Bot!</code></td>
+<td>Owner, Moderator</td>
+<td>Revokes its tokens and webhooks and removes it from the workspace and its channels. Its messages stay. Doing it again changes nothing.</td>
+</tr>
+<tr>
+<td><code>createBotToken(botUserId, label): CreatedBotToken!</code></td>
+<td>Owner, Moderator</td>
+<td>A new token, shown this once. <code>VALIDATION</code> for a label that is not 1 to 64 characters, a deactivated bot or a bot with 5 active tokens.</td>
+</tr>
+<tr>
+<td><code>revokeBotToken(tokenId): BotToken!</code></td>
+<td>Owner, Moderator</td>
+<td>Revokes it. Doing it again changes nothing. <code>NOT_FOUND</code> for an unknown token and for a token of a bot in a workspace the caller does not moderate.</td>
+</tr>
+<tr>
+<td><code>incomingWebhooks(serverId): [IncomingWebhook!]!</code></td>
+<td>Owner, Moderator</td>
+<td>The workspace&#39;s webhooks, revoked ones included, never their token. <code>template</code> is the webhook&#39;s own format, and null for a plain webhook and an unedited GitHub one. <code>FORBIDDEN</code> for anyone else.</td>
+</tr>
+<tr>
+<td><code>createIncomingWebhook(input): CreatedIncomingWebhook!</code></td>
+<td>Owner, Moderator</td>
+<td>Creates the channel&#39;s webhook, bound to a bot, and adds the bot to the channel if it is not there. <code>CreatedIncomingWebhook.token</code> is shown this once. <code>FORBIDDEN</code> for anyone else and for a private channel the caller is not in. <code>VALIDATION</code> for anything but a plaintext channel that is not archived and for a bot of another workspace or a deactivated one. <code>CONFLICT</code> when the channel has a webhook that is not revoked. <code>NOT_FOUND</code> for an unknown conversation or bot. With <code>input.template</code>, <code>preset</code> must be <code>PLAIN</code>, and a format that is refused is <code>VALIDATION</code>, naming the rule. With <code>input.testSessionId</code> of the caller&#39;s open unbound session of that workspace, the webhook keeps that session&#39;s token, the session ends, <code>CreatedIncomingWebhook.keptTestUrl</code> is true and <code>token</code> is the empty string, since the server holds only the hash and the client already has the URL. An expired or ended session gives <code>keptTestUrl</code> false and a new <code>token</code>, shown once; someone else&#39;s or another workspace&#39;s is <code>VALIDATION</code>. Without <code>testSessionId</code>, <code>keptTestUrl</code> is false.</td>
+</tr>
+<tr>
+<td><code>updateIncomingWebhookFormat(id, preset, template): IncomingWebhook!</code></td>
+<td>Owner, Moderator</td>
+<td>Changes how the webhook turns a delivery into a message. The URL stays the same. <code>template</code> needs <code>preset</code> <code>PLAIN</code>; <code>PLAIN</code> or <code>GITHUB</code> with no <code>template</code> goes back to that preset. <code>VALIDATION</code> for a format that is refused, naming the rule, and for a revoked webhook. <code>FORBIDDEN</code> for a private channel the caller is not in. <code>NOT_FOUND</code> for an unknown webhook and for one of a workspace the caller does not moderate.</td>
+</tr>
+<tr>
+<td><code>webhookFormats: [WebhookFormatInfo!]!</code></td>
+<td>Anyone signed in</td>
+<td>The ready-made formats, the same for everyone: key, name, setup note, format, sample headers and sample body.</td>
+</tr>
+<tr>
+<td><code>previewWebhookFormat(serverId, template, headers, body): WebhookFormatPreview!</code></td>
+<td>Owner, Moderator</td>
+<td>Runs a format on a sample as a delivery would, and posts and stores nothing. <code>headers</code> are <code>WebhookHeaderInput</code>s and <code>body</code> the text of a delivery. <code>outcome</code> is <code>POSTS</code> with <code>rule</code>, <code>text</code> and <code>link</code>; <code>NO_RULE</code>; <code>NO_VALUE</code> with <code>rule</code> and the <code>placeholder</code>; <code>BODY_REFUSED</code> or <code>FORMAT_REFUSED</code> with the <code>reason</code>, and for a format the <code>rule</code> it names. <code>FORBIDDEN</code> for anyone else. <code>VALIDATION</code> for a sample over 256 KiB, its headers and body together.</td>
+</tr>
+<tr>
+<td><code>startWebhookTestSession(serverId, webhookId): WebhookTestSession!</code></td>
+<td>Owner, Moderator</td>
+<td>Opens a session that holds what arrives, in memory, for its starter alone. It answers <code>id</code> and <code>expiresAt</code>, and without <code>webhookId</code> a <code>token</code> for a URL that posts nothing; with one it copies the webhook&#39;s deliveries and <code>token</code> is null. <code>FORBIDDEN</code> without the standing of creating a webhook, or of changing that one&#39;s format. <code>NOT_FOUND</code> for an unknown webhook or one of another workspace. <code>RATE_LIMITED</code> past 3 open sessions in the workspace or 20 on the server.</td>
+</tr>
+<tr>
+<td><code>endWebhookTestSession(sessionId): Boolean!</code></td>
+<td>Its starter</td>
+<td>Drops the session and what it holds. <code>NOT_FOUND</code> for anyone else and for one that ended.</td>
+</tr>
+<tr>
+<td><code>webhookTestDeliveries(sessionId, after): WebhookTestDeliveries!</code></td>
+<td>Its starter</td>
+<td>What arrived after <code>after</code>, oldest first, and the expiry, which the read extends. <code>NOT_FOUND</code> for anyone else, for one that ended, and once the starter lacks the standing to start it.</td>
+</tr>
+<tr>
+<td><code>revokeIncomingWebhook(id): IncomingWebhook!</code></td>
+<td>Owner, Moderator</td>
+<td>Revokes it. Doing it again changes nothing. <code>NOT_FOUND</code> for an unknown webhook and for one of a workspace the caller does not moderate.</td>
+</tr>
+</tbody></table></div>
+<p><code>runBy</code> and <code>readsGoTo</code> are 1 to 200 characters of plain text, trimmed. Text with a control or format
+character is <code>VALIDATION</code>.</p>
+<p><code>User.isBot</code> and <code>ServerMember.isBot</code> mark a bot. <code>User.bot</code> and <code>ServerMember.bot</code> are a <code>BotInfo</code>,
+what the person who added it says about it, and null for anyone else: they answer while the feature
+is off too. <code>Message.author</code> is a <code>User</code>, so a client draws a bot&#39;s messages from it. A bot&#39;s
+<code>handle</code> and <code>principalId</code> are null.</p>
+<p>What a bot itself can call is not GraphQL: its token works on <code>/api/bot/v1</code> alone (<a href="bots.html"><code>bots.md</code></a>). An
+incoming webhook&#39;s token works on <code>POST /api/hooks/{token}</code> alone, and a client builds that URL from the
+address it is signed in to (<a href="bots.html"><code>bots.md</code></a>, &quot;Incoming webhooks&quot;).</p>
+<p><code>createConversation</code> naming a bot and <code>addConversationMembers</code> naming a bot for anything but a
+plaintext channel are <code>VALIDATION</code> (&quot;A bot can only be in a channel&quot;). <code>addConversationMembers</code>
+naming a bot is <code>FORBIDDEN</code> for anyone but an Owner or Moderator, and <code>setMemberRole</code> on a bot is
+<code>VALIDATION</code>.</p>
+<h3 id="home-layout">Home layout <a class="anchor" href="#home-layout" aria-label="Link to this section">#</a></h3>
+<p>A signed-in person&#39;s Home layout, one per account, kept on their home server (<a href="https://github.com/rim-platform/rim-server/blob/4111cb89af23b2b7d062186c0031964901f40630/docs/home-layout.md"><code>home-layout.md</code></a>
+has the layout&#39;s format, the checks and the rules). Each root needs a session; the mutations
+need the CSRF header.</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Root</th>
+<th>Does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>homeLayout: HomeLayout</code></td>
+<td>The caller&#39;s layout, <code>{ layout: JSON!, editedAt: DateTime!, updatedAt: DateTime! }</code>, or null when none is stored.</td>
+</tr>
+<tr>
+<td><code>saveHomeLayout(layout: JSON!, editedAt: DateTime!): HomeLayoutSaved!</code></td>
+<td>Stores the layout unless the stored one has a later <code>editedAt</code>, an <code>editedAt</code> later than the server&#39;s clock counting as the clock. Answers <code>{ kept: Boolean!, layout: HomeLayout! }</code>: <code>kept</code> true with the layout just stored, or false with the stored one that was kept. <code>VALIDATION</code> names the check a layout fails.</td>
+</tr>
+<tr>
+<td><code>resetHomeLayout: Boolean!</code></td>
+<td>Deletes the stored layout, so the default shows. Answers whether a layout was stored.</td>
+</tr>
+</tbody></table></div>
+<p>A person from another server gets <code>FORBIDDEN</code> from all three. The mutations count against
+<code>RIM_RATE_MUTATIONS_PER_MIN_PER_SESSION</code> like any other and write no audit entry. Present when
+<code>serverInfo.capabilities</code> lists <code>home_layout</code>.</p>
 
     </main>
   </div>
 </div>
 <footer class="site-footer container"><span class="footer-brand"><img src="../assets/rim-mark-inverse.svg" alt="" width="21" height="21"> RIM · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
-<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-server/blob/7bc08f0c95e01769408e4756d418efea30c5b70b/docs/api.md">rim-server/docs/api.md</a> at <code>7bc08f0</code></p>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-server/blob/4111cb89af23b2b7d062186c0031964901f40630/docs/api.md">rim-server/docs/api.md</a> at <code>4111cb8</code></p>
 <script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
 </body>
 </html>

@@ -8,7 +8,7 @@
 <link rel="icon" href="../favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;550;600;650;700&family=JetBrains+Mono:wght@400;500&display=swap">
-<meta name="theme-color" content="#050910">
+<meta name="theme-color" content="#0b0c10">
 <link rel="stylesheet" href="../assets/site-chrome.css">
 <link rel="stylesheet" href="../assets/site.css">
 <script src="../assets/site.js" defer></script>
@@ -20,11 +20,11 @@
     <a class="brand" href="../index.html" aria-label="RIM home"><img src="../assets/rim-mark-inverse.svg" alt="" width="32" height="32">RIM</a>
     <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-navigation">Menu</button>
     <nav class="site-nav" id="site-navigation" data-open="false" aria-label="Main navigation">
+      <a href="../index.html#uses">What it's for</a>
       <a href="../index.html#privacy">Privacy</a>
-      <a href="../index.html#how">How it works</a>
-      <a href="../index.html#capabilities">Capabilities</a>
-      <a href="../index.html#community">Community</a>
+      <a href="../how-it-works/index.html">How it works</a>
       <a href="../index.html#download">Download</a>
+      <a href="../index.html#community">Community</a>
       <a href="../docs/client/getting-started.html">Get started</a>
       <a href="../docs/index.html" aria-current="location">Docs</a>
     </nav>
@@ -42,12 +42,13 @@
     <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
 <ol>
 <li><a href="#group-workspace">Workspace (1)</a></li>
+<li><a href="#group-notification">Notification (1)</a></li>
 <li><a href="#group-relay">Relay (1)</a></li>
 </ol>
 </details></aside>
     <main id="content" class="prose">
 <h1>Subscription</h1>
-<p class="lede">2 subscriptions, grouped by the domain their name starts with or names, in the order the schema lists them. Subscriptions arrive over the WebSocket at <code>/api/ws</code>.</p>
+<p class="lede">3 subscriptions, grouped by the domain their name starts with or names, in the order the schema lists them. Subscriptions arrive over the WebSocket at <code>/api/ws</code>.</p>
 <input id="filter" class="search" type="search" placeholder="Filter fields by name" aria-label="Filter fields by name" autocomplete="off">
 <p id="filter-none" class="muted" hidden>Nothing matches.</p>
 <section data-group>
@@ -62,6 +63,20 @@ guest status follows their <code>MemberRoleChanged</code> events, and the stream
 <code>MemberLeft</code>. When the subscriber falls behind and events are dropped, their membership
 and role are loaded again before any further event is delivered; the stream ends when
 that load fails, including when they are no longer a member.</p>
+</div>
+
+</section>
+</section>
+<section data-group>
+<h2 id="group-notification">Notification <span class="faint">1</span></h2>
+<section class="entry" id="notificationEvents" data-name="notificationEvents">
+<h3><code>notificationEvents</code></h3>
+<div class="sig">notificationEvents: <a href="objects.html#NotificationDueEvent">NotificationDueEvent</a>!</div>
+<div class="desc"><p>The viewer&#39;s notifications from every workspace on this server, as they are stored: the
+same decisions as the <code>NotificationDue</code> event of <a href="subscription.html#workspaceEvents"><code>workspaceEvents</code></a>, with no other event.
+A conversation in the viewer&#39;s request inbox, or one they blocked, stays quiet as it does
+there. A notification dropped because the subscriber fell behind is still in the inbox.
+Listed in <code>serverInfo.capabilities</code> as <code>notification_events</code>.</p>
 </div>
 
 </section>
@@ -85,7 +100,7 @@ the hosts of the user&#39;s workspaces see them online.</p>
   </div>
 </div>
 <footer class="site-footer container"><span class="footer-brand"><img src="../assets/rim-mark-inverse.svg" alt="" width="21" height="21"> RIM · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
-<p class="source-provenance container">Generated from <a href="https://github.com/rim-platform/rim-ui/blob/625c78e7c352dd2300217ff4cf692350e410fa7e/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>625c78e</code></p>
+<p class="source-provenance container">Generated from <a href="https://github.com/rim-platform/rim-ui/blob/f02e7945f773e010eb37a2b331c82978e7c4c7b3/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>f02e794</code></p>
 <script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
 <script>
 (() => {

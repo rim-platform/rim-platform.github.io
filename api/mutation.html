@@ -8,7 +8,7 @@
 <link rel="icon" href="../favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;550;600;650;700&family=JetBrains+Mono:wght@400;500&display=swap">
-<meta name="theme-color" content="#050910">
+<meta name="theme-color" content="#0b0c10">
 <link rel="stylesheet" href="../assets/site-chrome.css">
 <link rel="stylesheet" href="../assets/site.css">
 <script src="../assets/site.js" defer></script>
@@ -20,11 +20,11 @@
     <a class="brand" href="../index.html" aria-label="RIM home"><img src="../assets/rim-mark-inverse.svg" alt="" width="32" height="32">RIM</a>
     <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-navigation">Menu</button>
     <nav class="site-nav" id="site-navigation" data-open="false" aria-label="Main navigation">
+      <a href="../index.html#uses">What it's for</a>
       <a href="../index.html#privacy">Privacy</a>
-      <a href="../index.html#how">How it works</a>
-      <a href="../index.html#capabilities">Capabilities</a>
-      <a href="../index.html#community">Community</a>
+      <a href="../how-it-works/index.html">How it works</a>
       <a href="../index.html#download">Download</a>
+      <a href="../index.html#community">Community</a>
       <a href="../docs/client/getting-started.html">Get started</a>
       <a href="../docs/index.html" aria-current="location">Docs</a>
     </nav>
@@ -59,12 +59,12 @@
 <li><a href="#group-key">Key (7)</a></li>
 <li><a href="#group-device">Device (7)</a></li>
 <li><a href="#group-relay">Relay (2)</a></li>
-<li><a href="#group-other">Other (52)</a></li>
+<li><a href="#group-other">Other (65)</a></li>
 </ol>
 </details></aside>
     <main id="content" class="prose">
 <h1>Mutation</h1>
-<p class="lede">139 mutations, grouped by the domain their name starts with or names, in the order the schema lists them.</p>
+<p class="lede">152 mutations, grouped by the domain their name starts with or names, in the order the schema lists them.</p>
 <input id="filter" class="search" type="search" placeholder="Filter fields by name" aria-label="Filter fields by name" autocomplete="off">
 <p id="filter-none" class="muted" hidden>Nothing matches.</p>
 <section data-group>
@@ -604,14 +604,20 @@ workspace.</p>
 <section class="entry" id="createPipeline" data-name="createPipeline">
 <h3><code>createPipeline</code></h3>
 <div class="sig">createPipeline(input: <a href="inputs.html#CreatePipelineInput">CreatePipelineInput</a>!): <a href="objects.html#PipelineGql">PipelineGql</a>!</div>
-<div class="desc"><p class="faint">No description in the schema.</p></div>
+<div class="desc"><p>Create a pipeline. Any member, but only an Owner or Moderator may give it a Post as bot
+action (<code>FORBIDDEN</code>), on the Member Joined trigger, with an active bot of the workspace and
+a plaintext channel that is not archived and that the bot is in (<code>VALIDATION</code>).</p>
+</div>
 
 </section>
 <section class="entry" id="updatePipeline" data-name="updatePipeline">
 <h3><code>updatePipeline</code></h3>
 <div class="sig">updatePipeline(input: <a href="inputs.html#UpdatePipelineInput">UpdatePipelineInput</a>!): <a href="objects.html#PipelineGql">PipelineGql</a>!</div>
 <div class="desc"><p>Replace a pipeline&#39;s definition. Allowed for its creator and for an Owner or Moderator
-of its workspace; anyone else gets <code>FORBIDDEN</code>.</p>
+of its workspace; anyone else gets <code>FORBIDDEN</code>. Adding or changing a Post as bot action
+takes an Owner or Moderator; keeping one unchanged takes only the right to change the
+pipeline. A client that does not know the action sends it back as <code>chat.post_message</code> with
+the <code>args</code> it was given, which keeps it; other <code>args</code> are <code>VALIDATION</code>.</p>
 </div>
 
 </section>
@@ -865,7 +871,7 @@ contacts and blocks on this relay.</p>
 </section>
 </section>
 <section data-group>
-<h2 id="group-other">Other <span class="faint">52</span></h2>
+<h2 id="group-other">Other <span class="faint">65</span></h2>
 <section class="entry" id="logout" data-name="logout">
 <h3><code>logout</code></h3>
 <div class="sig">logout: <a href="scalars.html#Boolean">Boolean</a>!</div>
@@ -889,6 +895,15 @@ contacts and blocks on this relay.</p>
 <h3><code>markAsRead</code></h3>
 <div class="sig">markAsRead(input: <a href="inputs.html#MarkAsReadInput">MarkAsReadInput</a>!): <a href="scalars.html#Boolean">Boolean</a>!</div>
 <div class="desc"><p class="faint">No description in the schema.</p></div>
+
+</section>
+<section class="entry" id="markAsUnread" data-name="markAsUnread">
+<h3><code>markAsUnread</code></h3>
+<div class="sig">markAsUnread(input: <a href="inputs.html#MarkAsUnreadInput">MarkAsUnreadInput</a>!): <a href="scalars.html#Boolean">Boolean</a>!</div>
+<div class="desc"><p>Moves the viewer&#39;s read marker back so that the message and every later one count as
+unread. Nothing becomes less unread: when they already count, the marker stays.
+Notifications already read stay read.</p>
+</div>
 
 </section>
 <section class="entry" id="markAllAsRead" data-name="markAllAsRead">
@@ -1420,13 +1435,127 @@ device.</p>
 </div>
 
 </section>
+<section class="entry" id="createBot" data-name="createBot">
+<h3><code>createBot</code></h3>
+<div class="sig">createBot(input: <a href="inputs.html#CreateBotInput">CreateBotInput</a>!): <a href="objects.html#CreatedBot">CreatedBot</a>!</div>
+<div class="desc"><p>Create a bot, a guest of the workspace in no channel, and its first token, shown this once.
+Owner or Moderator; <code>FORBIDDEN</code> for anyone else, <code>VALIDATION</code> for the direct space, a bad
+field or a workspace with 25 active bots, <code>FEATURE_DISABLED</code> while the <a href="query.html#bots"><code>bots</code></a> feature is
+off.</p>
+</div>
+
+</section>
+<section class="entry" id="updateBot" data-name="updateBot">
+<h3><code>updateBot</code></h3>
+<div class="sig">updateBot(input: <a href="inputs.html#UpdateBotInput">UpdateBotInput</a>!): <a href="objects.html#Bot">Bot</a>!</div>
+<div class="desc"><p>Change a bot&#39;s name, what is said about it or whether it sees members joining. Owner or
+Moderator of its workspace.</p>
+</div>
+
+</section>
+<section class="entry" id="deactivateBot" data-name="deactivateBot">
+<h3><code>deactivateBot</code></h3>
+<div class="sig">deactivateBot(botUserId: <a href="scalars.html#ID">ID</a>!): <a href="objects.html#Bot">Bot</a>!</div>
+<div class="desc"><p>Deactivate a bot: its tokens stop working, its webhooks are revoked and it leaves the
+workspace and its channels. Its messages stay. Doing it again changes nothing. There is no
+way back. Owner or Moderator of its workspace.</p>
+</div>
+
+</section>
+<section class="entry" id="createBotToken" data-name="createBotToken">
+<h3><code>createBotToken</code></h3>
+<div class="sig">createBotToken(botUserId: <a href="scalars.html#ID">ID</a>!, label: <a href="scalars.html#String">String</a>!): <a href="objects.html#CreatedBotToken">CreatedBotToken</a>!</div>
+<div class="desc"><p>Create a token for an active bot, shown this once; a label is 1 to 64 characters and a bot
+has at most 5 active tokens (<code>VALIDATION</code>). Owner or Moderator of its workspace.</p>
+</div>
+
+</section>
+<section class="entry" id="revokeBotToken" data-name="revokeBotToken">
+<h3><code>revokeBotToken</code></h3>
+<div class="sig">revokeBotToken(tokenId: <a href="scalars.html#ID">ID</a>!): <a href="objects.html#BotToken">BotToken</a>!</div>
+<div class="desc"><p>Revoke a token. Revoking it again changes nothing. <code>NOT_FOUND</code> for an unknown token and for
+a token of a bot in a workspace the caller does not moderate.</p>
+</div>
+
+</section>
+<section class="entry" id="createIncomingWebhook" data-name="createIncomingWebhook">
+<h3><code>createIncomingWebhook</code></h3>
+<div class="sig">createIncomingWebhook(input: <a href="inputs.html#CreateIncomingWebhookInput">CreateIncomingWebhookInput</a>!): <a href="objects.html#CreatedIncomingWebhook">CreatedIncomingWebhook</a>!</div>
+<div class="desc"><p>Create a channel&#39;s incoming webhook, bound to a bot of its workspace, and add the bot to the
+channel if it is not there. The token is shown this once. Owner or Moderator, and for a
+private channel one who is in it; <code>FORBIDDEN</code> for anyone else, <code>VALIDATION</code> for anything but
+a plaintext channel that is not archived and for a bot of another workspace or a deactivated
+one, <code>CONFLICT</code> when the channel already has a webhook that is not revoked.</p>
+</div>
+
+</section>
+<section class="entry" id="revokeIncomingWebhook" data-name="revokeIncomingWebhook">
+<h3><code>revokeIncomingWebhook</code></h3>
+<div class="sig">revokeIncomingWebhook(id: <a href="scalars.html#ID">ID</a>!): <a href="objects.html#IncomingWebhook">IncomingWebhook</a>!</div>
+<div class="desc"><p>Revoke a webhook. Revoking it again changes nothing. <code>NOT_FOUND</code> for an unknown webhook and
+for one of a workspace the caller does not moderate.</p>
+</div>
+
+</section>
+<section class="entry" id="updateIncomingWebhookFormat" data-name="updateIncomingWebhookFormat">
+<h3><code>updateIncomingWebhookFormat</code></h3>
+<div class="sig">updateIncomingWebhookFormat(
+  id: <a href="scalars.html#ID">ID</a>!
+  preset: <a href="enums.html#WebhookPreset">WebhookPreset</a>!
+  template: <a href="scalars.html#JSON">JSON</a>
+): <a href="objects.html#IncomingWebhook">IncomingWebhook</a>!</div>
+<div class="desc"><p>Change how a webhook turns a delivery into a message. The URL stays the same. A <code>template</code>
+needs the preset <code>PLAIN</code>; <code>PLAIN</code> or <code>GITHUB</code> with no <code>template</code> goes back to that preset.
+<code>VALIDATION</code> for a format that is refused, naming the rule, and for a revoked webhook;
+<code>FORBIDDEN</code> for a private channel the caller is not in; <code>NOT_FOUND</code> for an unknown webhook
+and for one of a workspace the caller does not moderate.</p>
+</div>
+
+</section>
+<section class="entry" id="startWebhookTestSession" data-name="startWebhookTestSession">
+<h3><code>startWebhookTestSession</code></h3>
+<div class="sig">startWebhookTestSession(serverId: <a href="scalars.html#ID">ID</a>!, webhookId: <a href="scalars.html#ID">ID</a>): <a href="objects.html#WebhookTestSession">WebhookTestSession</a>!</div>
+<div class="desc"><p>Open a test session that holds what arrives, in memory, for the caller alone. Without
+<code>webhookId</code> it answers a token for a URL that posts nothing; with one it copies that
+webhook&#39;s deliveries. Owner or Moderator; <code>FORBIDDEN</code> without the standing of creating a
+webhook or changing that one&#39;s format, <code>NOT_FOUND</code> for an unknown webhook or one of another
+workspace, <code>RATE_LIMITED</code> past 3 open sessions in the workspace or 20 on the server.</p>
+</div>
+
+</section>
+<section class="entry" id="endWebhookTestSession" data-name="endWebhookTestSession">
+<h3><code>endWebhookTestSession</code></h3>
+<div class="sig">endWebhookTestSession(sessionId: <a href="scalars.html#ID">ID</a>!): <a href="scalars.html#Boolean">Boolean</a>!</div>
+<div class="desc"><p>Drop a test session and what it holds. Its starter alone; <code>NOT_FOUND</code> for anyone else and
+for one that ended.</p>
+</div>
+
+</section>
+<section class="entry" id="saveHomeLayout" data-name="saveHomeLayout">
+<h3><code>saveHomeLayout</code></h3>
+<div class="sig">saveHomeLayout(layout: <a href="scalars.html#JSON">JSON</a>!, editedAt: <a href="scalars.html#DateTime">DateTime</a>!): <a href="objects.html#HomeLayoutSaved">HomeLayoutSaved</a>!</div>
+<div class="desc"><p>Save the signed-in person&#39;s Home layout, made at <code>editedAt</code> on their device. The stored
+layout is kept instead when its <code>editedAt</code> is later, an <code>editedAt</code> later than the
+server&#39;s clock counting as the clock; <code>kept</code> says which. <code>VALIDATION</code> names the check a
+layout fails; <code>FORBIDDEN</code> for a person from another server.</p>
+</div>
+
+</section>
+<section class="entry" id="resetHomeLayout" data-name="resetHomeLayout">
+<h3><code>resetHomeLayout</code></h3>
+<div class="sig">resetHomeLayout: <a href="scalars.html#Boolean">Boolean</a>!</div>
+<div class="desc"><p>Delete the signed-in person&#39;s Home layout, so every device shows the default. Answers
+whether one was stored. <code>FORBIDDEN</code> for a person from another server.</p>
+</div>
+
+</section>
 </section>
 
     </main>
   </div>
 </div>
 <footer class="site-footer container"><span class="footer-brand"><img src="../assets/rim-mark-inverse.svg" alt="" width="21" height="21"> RIM · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
-<p class="source-provenance container">Generated from <a href="https://github.com/rim-platform/rim-ui/blob/625c78e7c352dd2300217ff4cf692350e410fa7e/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>625c78e</code></p>
+<p class="source-provenance container">Generated from <a href="https://github.com/rim-platform/rim-ui/blob/f02e7945f773e010eb37a2b331c82978e7c4c7b3/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>f02e794</code></p>
 <script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
 <script>
 (() => {

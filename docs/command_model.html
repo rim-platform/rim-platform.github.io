@@ -8,7 +8,7 @@
 <link rel="icon" href="../favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;550;600;650;700&family=JetBrains+Mono:wght@400;500&display=swap">
-<meta name="theme-color" content="#050910">
+<meta name="theme-color" content="#0b0c10">
 <link rel="stylesheet" href="../assets/site-chrome.css">
 <link rel="stylesheet" href="../assets/site.css">
 <script src="../assets/site.js" defer></script>
@@ -20,11 +20,11 @@
     <a class="brand" href="../index.html" aria-label="RIM home"><img src="../assets/rim-mark-inverse.svg" alt="" width="32" height="32">RIM</a>
     <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-navigation">Menu</button>
     <nav class="site-nav" id="site-navigation" data-open="false" aria-label="Main navigation">
+      <a href="../index.html#uses">What it's for</a>
       <a href="../index.html#privacy">Privacy</a>
-      <a href="../index.html#how">How it works</a>
-      <a href="../index.html#capabilities">Capabilities</a>
-      <a href="../index.html#community">Community</a>
+      <a href="../how-it-works/index.html">How it works</a>
       <a href="../index.html#download">Download</a>
+      <a href="../index.html#community">Community</a>
       <a href="client/getting-started.html">Get started</a>
       <a href="index.html" aria-current="location">Docs</a>
     </nav>
@@ -48,7 +48,7 @@
 <li><a href="#command-kinds">Command Kinds</a><ol><li><a href="#built-in-commands">Built-in Commands</a></li><li><a href="#plugin-provided-commands">Plugin-Provided Commands</a></li><li><a href="#integration-provided-commands">Integration-Provided Commands</a></li><li><a href="#user-defined-commands">User-Defined Commands</a></li></ol></li>
 <li><a href="#user-commands-and-macros">User Commands And Macros</a></li>
 <li><a href="#size-limits">Size Limits</a></li>
-<li><a href="#command-contract">Command Contract</a><ol><li><a href="#required-fields">Required Fields</a></li><li><a href="#recommended-fields">Recommended Fields</a></li><li><a href="#confirmation-gate-h1">Confirmation gate (H1)</a></li><li><a href="#timeout-gate-t1">Timeout gate (T1)</a></li></ol></li>
+<li><a href="#command-contract">Command Contract</a><ol><li><a href="#required-fields">Required Fields</a></li><li><a href="#recommended-fields">Recommended Fields</a></li><li><a href="#confirmation-gate-h1">Confirmation gate (H1)</a></li><li><a href="#timeout-gate-t1">Timeout gate (T1)</a></li><li><a href="#refusals">Refusals</a></li></ol></li>
 <li><a href="#arguments">Arguments</a></li>
 <li><a href="#context-model-for-commands">Context Model For Commands</a></li>
 <li><a href="#invocation-sources">Invocation Sources</a><ol><li><a href="#command-palette">Command Palette</a></li><li><a href="#keybinds">Keybinds</a></li><li><a href="#context-actions">Context Actions</a></li><li><a href="#plugin-ui">Plugin UI</a></li><li><a href="#automations">Automations</a></li></ol></li>
@@ -297,6 +297,13 @@ which now lets an Owner/Moderator delete other people&#39;s messages.</p>
 <td>no</td>
 <td>Context menu; requires <code>workspace</code>, <code>conversation</code> and <code>selected_message</code> context</td>
 </tr>
+<tr>
+<td><code>chat.mark_as_unread</code></td>
+<td><code>server_id</code>, <code>conversation_id</code>, <code>message_id</code></td>
+<td>no</td>
+<td>no</td>
+<td><code>Mutating</code>, needs no capability: it changes only the caller&#39;s own read state. Palette, context menu and keybind. <code>conversation_id</code> falls back to the focused conversation and <code>message_id</code> to the selected message. The message and later ones count as unread (<a href="messaging.html"><code>docs/messaging.md</code></a>)</td>
+</tr>
 </tbody></table></div>
 <p>Notification builtins (<a href="messaging.html"><code>docs/messaging.md</code></a>, Notification Rules). All are
 <code>Backend</code>, <code>Mutating</code>, palette- and keybind-visible, AI-callable, in category <code>Notifications</code>,
@@ -431,8 +438,9 @@ stored values, including the caller&#39;s own <code>scope: user</code> entries, 
 in workspace state. Kept off the AI surface on purpose: <code>chat.edit_message</code>,
 <code>chat.delete_message</code>, <code>chat.reply_to_selected_message</code> and <code>chat.copy_message_text</code> (they act on
 the user&#39;s selected message, which the agent cannot supply), <code>admin.invite_member</code> (its result is
-an invite token that would pass through the model provider), and <code>chat.mark_all_as_read</code>
-(duplicates <code>notifications.mark_all_read</code>).</p>
+an invite token that would pass through the model provider), <code>chat.mark_all_as_read</code>
+(duplicates <code>notifications.mark_all_read</code>), and <code>chat.mark_as_unread</code> (an agent does not decide
+what someone has read).</p>
 <p>List arguments such as <code>user_ids</code> and <code>member_ids</code> accept a JSON array of ids or one
 comma-separated string, because the agent&#39;s tool schema types every argument as a scalar.</p>
 <p>AI-callable builtins: 42. They are seventeen chat, channel and navigation builtins
@@ -576,13 +584,29 @@ names it, such as &quot;command arguments may be at most 65536 bytes&quot;.</p>
 <p>Too large calls are refused before they run, so they write no audit row. The audit log keeps a
 call&#39;s redacted arguments when they serialize to 4,096 bytes or less; larger arguments are kept
 as <code>{&quot;truncated&quot;: true, &quot;bytes&quot;: &lt;size&gt;, &quot;prefix&quot;: &lt;the first 1,024 bytes of the redacted JSON&gt;}</code>.</p>
+<p>What a person wrote is left out of the redacted arguments, with only its length kept. A string
+under the name <code>text</code>, <code>query</code>, <code>reason</code>, <code>description</code>, <code>title</code> or <code>value</code>, at any depth and in
+any command, is kept as <code>{&quot;redacted_content&quot;: true, &quot;chars&quot;: &lt;count&gt;}</code>. A plugin command&#39;s other
+arguments are not known to the server by name, so they stay as they are, redacted only where their
+name or value looks secret.</p>
+<p>The same rules apply to a pipe expression, which the row keeps as its <code>commandId</code>: each stage&#39;s id
+stays, with its <code>key=value</code> pairs masked, so <code>chat.post_message text=hello</code> is kept as
+<code>chat.post_message text=[REDACTED:5]</code>, and a secret as <code>key=[REDACTED]</code>. An expression that does
+not parse is kept as <code>unparsed | pipe</code> with the error kind <code>InvalidPipeExpression</code>, while the caller
+still gets the message saying what is wrong with it.</p>
+<p>An <code>AGENT</code> call may carry a <code>runId</code>, an identifier the desktop app gives one stretch of an
+agent&#39;s calls. The audit entry keeps it, so <code>listAuditLog</code> can list that stretch; on a call with
+any other initiator it is ignored. It is the client&#39;s word, like the initiator. It must be 1 to
+64 ASCII letters, digits, <code>_</code> or <code>-</code>, or the call is refused with <code>VALIDATION</code> whatever the
+initiator. A macro&#39;s steps do not carry it.</p>
 <p>A pipeline action may not name a user command or a macro: each action runs as its own command
 call with its own budget of 100 builtin steps, and a pipeline fires on events other people cause.
 <code>createPipeline</code> and <code>updatePipeline</code> refuse such an action with &quot;pipeline actions must not
 reference user commands or macros&quot;. An action must name a builtin command: <code>createPipeline</code> and
 <code>updatePipeline</code> refuse any other id, a plugin command included, with <code>VALIDATION</code> &quot;Unknown
 command: &lt;id&gt;&quot;. A pipeline saved before these limits runs at most its first 10 actions and skips
-an action naming a user command or a macro.</p>
+an action naming a user command or a macro. A Post as bot action is the one that runs without a
+confirmation, as a bot rather than as the pipeline&#39;s creator (<a href="bots.html"><code>bots.md</code></a>).</p>
 <p>The server keeps at most 32 unanswered confirmation challenges per user; issuing one more drops
 that user&#39;s challenge closest to expiry, which then answers <code>CONFIRMATION_STALE</code>. A pipeline&#39;s
 action that needs a confirmation issues a challenge nobody answers, and this keeps such
@@ -617,6 +641,11 @@ status <code>CONFIRMATION_REQUIRED</code> and the challenge <code>confirmationRe
 after the challenge was issued. The proof is good once, for the same caller, command, arguments
 and context; one that expired or was used answers <code>CONFIRMATION_STALE</code>, and one made for
 something else <code>CONFIRMATION_FAILED</code>.</p>
+<p>A <code>BOT</code> call comes from the bot API (<a href="bots.html"><code>bots.md</code></a>), the one initiator the server sets itself: GraphQL has
+no value for it, so a client cannot claim it, and the audit log shows it as <code>bot</code>. It is not agentic,
+so a <code>Mutating</code> command such as <code>chat.post_message</code> needs no proof. Nobody is there to confirm, so a
+command that would answer <code>CONFIRMATION_REQUIRED</code> is refused as <code>DENIED</code> on that API, and the commands
+it runs need none.</p>
 <h3 id="timeout-gate-t1">Timeout gate (T1) <a class="anchor" href="#timeout-gate-t1" aria-label="Link to this section">#</a></h3>
 <p>After the capability and confirmation gates, <code>execute_command</code> refuses any command whose <code>sensitivity</code> is <code>Mutating</code> or
 <code>Restricted</code> with <code>ServiceError::TimedOut { until }</code> (GraphQL <code>TIMED_OUT</code>, extension <code>until</code>)
@@ -625,6 +654,50 @@ when the actor is timed out in the context&#39;s workspace (<code>ModerationServ
 steps, pipe stages), before the rate limiter, inside the audit wrapper. Without a workspace
 context it has nothing to check; the services behind the command apply their own write gates
 anyway. Gate order: C1 capability → H1 confirmation → T1 timeout → R1 rate limit.</p>
+<h3 id="refusals">Refusals <a class="anchor" href="#refusals" aria-label="Link to this section">#</a></h3>
+<p>An error from <code>executeCommand</code> or <code>executeMacro</code> carries a <code>refusal</code> extension next to its <code>code</code>,
+which says what the caller can do about it:</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th><code>refusal</code></th>
+<th>Meaning</th>
+<th>Other extensions</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>DENIED</code></td>
+<td>A policy decision: repeating the call does not help.</td>
+<td><code>missing</code>, the capability the caller lacks, when the capability gate refused; <code>until</code> when timed out; <code>feature</code> when the server has the feature off</td>
+</tr>
+<tr>
+<td><code>FAILED</code></td>
+<td>A technical problem, not a decision.</td>
+<td><code>retrySafe</code>; <code>retryAfterSeconds</code> when rate-limited</td>
+</tr>
+<tr>
+<td><code>EXPIRED</code></td>
+<td>The confirmation expired or was already used. Nothing ran.</td>
+<td>none</td>
+</tr>
+<tr>
+<td><code>INVALID</code></td>
+<td>The call itself is wrong: bad arguments, nothing by that name, or a conflict.</td>
+<td>none</td>
+</tr>
+</tbody></table></div>
+<p>A command that needs a confirmation is not refused: it answers status <code>CONFIRMATION_REQUIRED</code>.</p>
+<p><code>retrySafe</code> is true only when repeating the call cannot change anything twice: every command it
+reaches is <code>Safe</code> or <code>Sensitive</code> and none is dangerous, or the rate limiter stopped it before it
+started. A <code>Mutating</code> command that timed out may have run, so it is false even if nothing changed. A
+macro that fails outside its steps is false as well.</p>
+<p><code>missing</code> names a capability, never a workspace, channel or person, so it reveals nothing the caller
+cannot already see: a capability id is public on the command&#39;s definition. At the capability gate,
+someone who is not a member gets the same answer as someone whose role is too low, whether or not
+the workspace exists. A client that names the target takes it from what it already shows.</p>
+<p>A pipe that fails partway answers status <code>ERROR</code> with the failed stage&#39;s <code>message</code>, with no
+<code>refusal</code>. A macro&#39;s failed step is reported the same way. A server older than this has no
+<code>refusal</code>, so a client falls back on <code>code</code>.</p>
 <h2 id="arguments">Arguments <a class="anchor" href="#arguments" aria-label="Link to this section">#</a></h2>
 <p>Arguments should be typed from day one.</p>
 <p>Initial recommended argument kinds:</p>
@@ -891,7 +964,7 @@ still need a fresh invite after unban.</p>
   </div>
 </div>
 <footer class="site-footer container"><span class="footer-brand"><img src="../assets/rim-mark-inverse.svg" alt="" width="21" height="21"> RIM · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
-<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-server/blob/7bc08f0c95e01769408e4756d418efea30c5b70b/docs/command_model.md">rim-server/docs/command_model.md</a> at <code>7bc08f0</code></p>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-server/blob/4111cb89af23b2b7d062186c0031964901f40630/docs/command_model.md">rim-server/docs/command_model.md</a> at <code>4111cb8</code></p>
 <script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
 </body>
 </html>

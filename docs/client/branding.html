@@ -8,7 +8,7 @@
 <link rel="icon" href="../../favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;550;600;650;700&family=JetBrains+Mono:wght@400;500&display=swap">
-<meta name="theme-color" content="#050910">
+<meta name="theme-color" content="#0b0c10">
 <link rel="stylesheet" href="../../assets/site-chrome.css">
 <link rel="stylesheet" href="../../assets/site.css">
 <script src="../../assets/site.js" defer></script>
@@ -20,11 +20,11 @@
     <a class="brand" href="../../index.html" aria-label="RIM home"><img src="../../assets/rim-mark-inverse.svg" alt="" width="32" height="32">RIM</a>
     <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-navigation">Menu</button>
     <nav class="site-nav" id="site-navigation" data-open="false" aria-label="Main navigation">
+      <a href="../../index.html#uses">What it's for</a>
       <a href="../../index.html#privacy">Privacy</a>
-      <a href="../../index.html#how">How it works</a>
-      <a href="../../index.html#capabilities">Capabilities</a>
-      <a href="../../index.html#community">Community</a>
+      <a href="../../how-it-works/index.html">How it works</a>
       <a href="../../index.html#download">Download</a>
+      <a href="../../index.html#community">Community</a>
       <a href="getting-started.html">Get started</a>
       <a href="../index.html" aria-current="location">Docs</a>
     </nav>
@@ -53,17 +53,17 @@ file is for. They are the source of truth; this repository holds copies or rende
 </tr>
 </thead>
 <tbody><tr>
-<td><a href="https://github.com/rim-platform/rim-ui/blob/625c78e7c352dd2300217ff4cf692350e410fa7e/public/rim-favicon.svg"><code>public/rim-favicon.svg</code></a>, <a href="https://github.com/rim-platform/rim-ui/blob/625c78e7c352dd2300217ff4cf692350e410fa7e/public/favicon.ico"><code>public/favicon.ico</code></a></td>
+<td><a href="https://github.com/rim-platform/rim-ui/blob/f02e7945f773e010eb37a2b331c82978e7c4c7b3/public/rim-favicon.svg"><code>public/rim-favicon.svg</code></a>, <a href="https://github.com/rim-platform/rim-ui/blob/f02e7945f773e010eb37a2b331c82978e7c4c7b3/public/favicon.ico"><code>public/favicon.ico</code></a></td>
 <td>The browser tab icon, linked from <code>index.html</code></td>
 <td><code>rim-favicon.svg</code>, <code>favicon.ico</code>, copied as they are</td>
 </tr>
 <tr>
-<td><a href="https://github.com/rim-platform/rim-ui/blob/625c78e7c352dd2300217ff4cf692350e410fa7e/src/shared/brand/RimLogo.tsx"><code>src/shared/brand/RimLogo.tsx</code></a></td>
+<td><a href="https://github.com/rim-platform/rim-ui/blob/f02e7945f773e010eb37a2b331c82978e7c4c7b3/src/shared/brand/RimLogo.tsx"><code>src/shared/brand/RimLogo.tsx</code></a></td>
 <td><code>RimMark</code>, <code>RimLockup</code> and <code>RimSplash</code>, inline SVG components</td>
 <td>The path data of <code>rim-mark.svg</code>, <code>rim-lockup.svg</code> and <code>rim-splash.svg</code></td>
 </tr>
 <tr>
-<td><a href="https://github.com/rim-platform/rim-ui/tree/625c78e7c352dd2300217ff4cf692350e410fa7e/src-tauri/icons"><code>src-tauri/icons/</code></a></td>
+<td><a href="https://github.com/rim-platform/rim-ui/tree/f02e7945f773e010eb37a2b331c82978e7c4c7b3/src-tauri/icons"><code>src-tauri/icons/</code></a></td>
 <td>The desktop app icons listed in <code>tauri.conf.json</code>&#39;s <code>bundle.icon</code></td>
 <td><code>rim-app-icon-1024.png</code> through <code>tauri icon</code></td>
 </tr>
@@ -74,7 +74,7 @@ is the <code>rim-signal</code> colour token, which nothing else uses. The splash
 only, never as the logo, and holds still under <code>prefers-reduced-motion</code>.</p>
 <h2 id="updating-from-the-masters">Updating from the masters <a class="anchor" href="#updating-from-the-masters" aria-label="Link to this section">#</a></h2>
 <ul>
-<li><p>Favicon: copy <code>rim-favicon.svg</code> and <code>favicon.ico</code> into <a href="https://github.com/rim-platform/rim-ui/tree/625c78e7c352dd2300217ff4cf692350e410fa7e/public"><code>public/</code></a> over the old files.</p>
+<li><p>Favicon: copy <code>rim-favicon.svg</code> and <code>favicon.ico</code> into <a href="https://github.com/rim-platform/rim-ui/tree/f02e7945f773e010eb37a2b331c82978e7c4c7b3/public"><code>public/</code></a> over the old files.</p>
 </li>
 <li><p>Mark, wordmark or splash: copy the changed <code>d</code> attributes into the path constants of
 <code>RimLogo.tsx</code>, and the splash&#39;s per-letter <code>translate</code> values into <code>RimSplash</code>.</p>
@@ -94,7 +94,7 @@ app data directory are derived from it, and changing it would orphan existing in
   </div>
 </div>
 <footer class="site-footer container"><span class="footer-brand"><img src="../../assets/rim-mark-inverse.svg" alt="" width="21" height="21"> RIM · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
-<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/625c78e7c352dd2300217ff4cf692350e410fa7e/docs/branding.md">rim-ui/docs/branding.md</a> at <code>625c78e</code></p>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/f02e7945f773e010eb37a2b331c82978e7c4c7b3/docs/branding.md">rim-ui/docs/branding.md</a> at <code>f02e794</code></p>
 
 </body>
 </html>

@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en" class="documentation-page">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Home · RIM</title>
+<meta name="description" content="Home is made of boxes, each half or full width, in an order you choose. Your layout is saved to your account on your own server, so every device shows the same Home. The rules the server follows are in rim-server's …">
+<link rel="icon" href="../../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;550;600;650;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<meta name="theme-color" content="#0b0c10">
+<link rel="stylesheet" href="../../assets/site-chrome.css">
+<link rel="stylesheet" href="../../assets/site.css">
+<script src="../../assets/site.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="../../index.html" aria-label="RIM home"><img src="../../assets/rim-mark-inverse.svg" alt="" width="32" height="32">RIM</a>
+    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-navigation">Menu</button>
+    <nav class="site-nav" id="site-navigation" data-open="false" aria-label="Main navigation">
+      <a href="../../index.html#uses">What it's for</a>
+      <a href="../../index.html#privacy">Privacy</a>
+      <a href="../../how-it-works/index.html">How it works</a>
+      <a href="../../index.html#download">Download</a>
+      <a href="../../index.html#community">Community</a>
+      <a href="getting-started.html">Get started</a>
+      <a href="../index.html" aria-current="location">Docs</a>
+    </nav>
+  </div>
+</header>
+<div class="docs-navigation"><nav class="container docs-links" aria-label="Documentation"><span>Documentation</span><a href="../index.html">Overview</a>
+<a href="../self-hosting.html">Self-host</a>
+<a href="../../configure/index.html">Configure</a>
+<a href="../../plugins/index.html">Plugins</a>
+<a href="../../api/index.html">API</a>
+<a href="../../specs/index.html">Specs</a></nav></div>
+<div class="container docs-wrap">
+  <div class="crumbs"><a href="../index.html">Docs</a><span aria-hidden="true">/</span><a href="../using-rim.html">Using RIM</a><span aria-hidden="true">/</span><span>Home</span></div>
+  <div class="page with-toc">
+    <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
+<ol>
+<li><a href="#make-home-your-own">Make Home your own</a></li>
+<li><a href="#the-boxes">The boxes</a><ol><li><a href="#channel">Channel</a></li><li><a href="#direct-messages">Direct messages</a></li><li><a href="#quick-actions">Quick actions</a></li></ol></li>
+<li><a href="#editing-home">Editing Home</a></li>
+<li><a href="#what-each-device-keeps">What each device keeps</a></li>
+<li><a href="#two-devices">Two devices</a></li>
+<li><a href="#when-something-cant-run-here">When something can't run here</a></li>
+<li><a href="#encrypted-conversations-and-other-servers">Encrypted conversations and other servers</a></li>
+</ol>
+</details></aside>
+    <main id="content" class="prose">
+<h1 id="home">Home</h1>
+<p>Home is made of boxes, each half or full width, in an order you choose. Your layout is saved to
+your account on your own server, so every device shows the same Home. The rules the server
+follows are in rim-server&#39;s <code>docs/home-layout.md</code>; this page is how the app uses them.</p>
+<h2 id="make-home-your-own">Make Home your own <a class="anchor" href="#make-home-your-own" aria-label="Link to this section">#</a></h2>
+<ol>
+<li>Open <strong>Home</strong>, the house at the top of the workspace rail.</li>
+<li>Choose <strong>Edit Home</strong>.</li>
+<li><strong>Add a box</strong>, such as a channel you watch, your direct messages, or buttons for the commands
+you run most. A Channel or Quick actions box asks for its settings first.</li>
+<li><strong>Move up</strong> and <strong>Move down</strong> put the boxes in order. <strong>Half</strong> and <strong>Full</strong> set how wide each
+one is.</li>
+<li>Choose <strong>Done</strong>. Your other devices show the same Home.</li>
+</ol>
+<p><strong>Remove</strong> takes a box off, and <strong>Reset to default</strong> goes back to the start. Looking at Home marks
+nothing read.</p>
+<h2 id="the-boxes">The boxes <a class="anchor" href="#the-boxes" aria-label="Link to this section">#</a></h2>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Box</th>
+<th>Shows</th>
+<th>Runs</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Waiting for you</td>
+<td>Message requests and join requests to decide on</td>
+<td>everywhere</td>
+</tr>
+<tr>
+<td>Mentions and replies</td>
+<td>Unread mentions and replies across your workspaces</td>
+<td>everywhere</td>
+</tr>
+<tr>
+<td>Unread</td>
+<td>Unread messages per workspace, and See all unread</td>
+<td>everywhere</td>
+</tr>
+<tr>
+<td>Your agents&#39; runs</td>
+<td>The newest runs of the agents connected on this device</td>
+<td>the desktop app</td>
+</tr>
+<tr>
+<td>Direct messages</td>
+<td>Your latest direct messages and groups, 3, 5 or 10, with their unread counts</td>
+<td>everywhere</td>
+</tr>
+<tr>
+<td>Channel</td>
+<td>The latest 3, 5 or 10 messages of one channel you pick</td>
+<td>everywhere</td>
+</tr>
+<tr>
+<td>Quick actions</td>
+<td>1 to 6 buttons, each running a command you chose</td>
+<td>where the command runs</td>
+</tr>
+</tbody></table></div>
+<p>Channel and Quick actions can be on Home more than once, each with its own settings; the other
+boxes once.</p>
+<h3 id="channel">Channel <a class="anchor" href="#channel" aria-label="Link to this section">#</a></h3>
+<p>A channel box is named after its channel and workspace, such as &quot;#deploys in Platform&quot;. It reads
+the channel through the same query and cache as the channel&#39;s timeline and shows its messages the
+way the timeline does, condensed: a flagged message stays covered, and an encrypted message shows
+where the timeline would show it. Where this browser holds no text of encrypted messages, the box
+says how to link it, as the timeline does. Its messages arrive as they are sent while the
+channel&#39;s workspace is the open one, and are read again every minute for any other workspace. A
+workspace on another server is read from that server, as everywhere else in the app.</p>
+<p>Showing a channel box marks nothing read. A click on a message opens it in its channel.</p>
+<p>A channel you can no longer see, or one deleted or archived, says so in its box, with Remove,
+which takes the box off Home on every device.</p>
+<h3 id="direct-messages">Direct messages <a class="anchor" href="#direct-messages" aria-label="Link to this section">#</a></h3>
+<p>The latest conversations of the direct messages list, from what that list already loads, each
+with its unread count. A row opens its conversation; nothing is marked read.</p>
+<h3 id="quick-actions">Quick actions <a class="anchor" href="#quick-actions" aria-label="Link to this section">#</a></h3>
+<p>Each button runs its command as a click in the command palette does: a command that asks for
+confirmation still asks, and its outcome shows as it would from the palette. The commands offered
+are those a key can be bound to, with optional arguments as a JSON object of at most 4096 bytes,
+as for a personal keybind. Edit Home is never one of them. A command not offered on this device,
+such as one of a plugin that isn&#39;t installed here or one that needs the desktop app, is a
+disabled button with the reason beneath it.</p>
+<p>Until you change it, Home shows today&#39;s default: Waiting for you, Mentions and replies, Unread,
+and Your agents&#39; runs where agents are connected. The default comes from the app and is not
+saved: opening Home saves nothing, and your first Done is what saves a layout to your account.</p>
+<p>The workspace filter above the boxes still limits every box to one workspace while Home is open.</p>
+<h2 id="editing-home">Editing Home <a class="anchor" href="#editing-home" aria-label="Link to this section">#</a></h2>
+<p>Edit Home, on Home or in the command palette, turns each box into one you can change:</p>
+<ul>
+<li><strong>Move up</strong> and <strong>Move down</strong> reorder it. Focus stays on the button you pressed, and the new
+place is announced, such as &quot;Moved Mentions and replies to position 1 of 3&quot;.</li>
+<li><strong>Half</strong> and <strong>Full</strong> set its width.</li>
+<li><strong>Settings</strong>, on a box that has them, opens them in a dialog: Save keeps them, Cancel or
+Escape leaves them. The number of messages or conversations is 3, 5 or 10.</li>
+<li><strong>Remove</strong> takes it off Home. A box this device can&#39;t run asks first, since it is removed from
+every device.</li>
+<li><strong>Add a box</strong> lists the boxes that can be added: a panel beside the boxes, or a sheet in a
+narrow window. Adding a Channel or Quick actions box opens its settings first, and Cancel
+there adds nothing.</li>
+<li><strong>Done</strong> saves, <strong>Cancel</strong> drops the changes, and <strong>Escape</strong> is Cancel, asking first when
+something changed. <strong>Reset to default</strong> asks first, then deletes your saved layout, so every
+device goes back to the default.</li>
+</ul>
+<p>Edit Home is a command of this app only. It is not offered to keybinds, and nothing that runs
+commands, such as a macro, a pipeline or an agent, can change your Home.</p>
+<p>Under 760 pixels of room the boxes stand in one column; from there in two, with a full box across
+both. Dragging is not built: Move up and Move down are the way to reorder.</p>
+<h2 id="what-each-device-keeps">What each device keeps <a class="anchor" href="#what-each-device-keeps" aria-label="Link to this section">#</a></h2>
+<p>Each device keeps, for each account, sealed with the account&#39;s other values:</p>
+<ul>
+<li>a copy of the layout the server last answered;</li>
+<li>an edit not sent yet, with the time you pressed Done;</li>
+<li>the boxes you chose not to show on that device.</li>
+</ul>
+<p>Nothing a box shows is kept: what Home last loaded stays in memory as before, and the web app
+gets no offline mode from Home. A browser whose storage was cleared shows the default layout
+until the server answers.</p>
+<h2 id="two-devices">Two devices <a class="anchor" href="#two-devices" aria-label="Link to this section">#</a></h2>
+<p>The edit made last wins. Each save carries the time you pressed Done, and the server keeps the
+later one. When your save loses, or Home fetches a layout newer than this device&#39;s copy, Home
+shows that layout with &quot;Your layout changed on another device, so Home now shows that one.&quot; until
+you press OK.</p>
+<p>An edit made while your server can&#39;t be reached waits on the device and is sent when the server
+answers again. An edit the server refuses is dropped, and the app says it wasn&#39;t saved.</p>
+<h2 id="when-something-cant-run-here">When something can&#39;t run here <a class="anchor" href="#when-something-cant-run-here" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>A box this device can&#39;t run</strong>, today only Your agents&#39; runs in the web app, is one line in
+its place saying why. &quot;Don&#39;t show on this device&quot; hides it here alone; it stays in your layout
+for every other device. Edit Home lists the boxes hidden here under &quot;Not shown on this device&quot;,
+with Show here.</li>
+<li><strong>Settings this app can&#39;t read</strong>, such as a count of 7, make the box one line, &quot;This box&#39;s
+settings need fixing&quot;, with Fix settings, which opens them.</li>
+<li><strong>A box from a newer version of RIM</strong> is one line in its place, &quot;This box needs a newer version
+of RIM&quot;, and is saved back unchanged, its settings included.</li>
+<li><strong>Your server can&#39;t be reached:</strong> Home shows this device&#39;s copy of the layout and what it last
+loaded, says so above the boxes, and marks the boxes whose content comes from the servers &quot;not
+up to date&quot;. This follows the app&#39;s own connection state; Home checks nothing of its own.</li>
+<li><strong>A server without Home layouts</strong> (one that does not list <code>home_layout</code> in its capabilities):
+Home shows the default layout, asks nothing about layouts, and offers no Edit Home.</li>
+</ul>
+<h2 id="encrypted-conversations-and-other-servers">Encrypted conversations and other servers <a class="anchor" href="#encrypted-conversations-and-other-servers" aria-label="Link to this section">#</a></h2>
+<p>The layout holds box kinds, ids and settings: a channel box&#39;s workspace and channel ids and a
+quick action&#39;s command and arguments, never messages. A workspace on another server keeps updating
+its boxes while your own server is away, since its content comes from its own host; the layout
+itself lives on your own server only.</p>
+
+    </main>
+  </div>
+</div>
+<footer class="site-footer container"><span class="footer-brand"><img src="../../assets/rim-mark-inverse.svg" alt="" width="21" height="21"> RIM · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/f02e7945f773e010eb37a2b331c82978e7c4c7b3/docs/home.md">rim-ui/docs/home.md</a> at <code>f02e794</code></p>
+<script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
+</body>
+</html>

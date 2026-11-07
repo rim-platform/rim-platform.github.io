@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en" class="documentation-page">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Where agents may move data, v1 · RIM</title>
+<meta name="description" content="Status: draft. This is the contract for what RIM hands to an agent that runs on your machine and reaches RIM through the desktop app, and for what RIM records about it. docs/vision.md (&quot;Working with agents&quot;) says why. …">
+<link rel="icon" href="../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;550;600;650;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<meta name="theme-color" content="#0b0c10">
+<link rel="stylesheet" href="../assets/site-chrome.css">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/site.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="../index.html" aria-label="RIM home"><img src="../assets/rim-mark-inverse.svg" alt="" width="32" height="32">RIM</a>
+    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-navigation">Menu</button>
+    <nav class="site-nav" id="site-navigation" data-open="false" aria-label="Main navigation">
+      <a href="../index.html#uses">What it's for</a>
+      <a href="../index.html#privacy">Privacy</a>
+      <a href="../how-it-works/index.html">How it works</a>
+      <a href="../index.html#download">Download</a>
+      <a href="../index.html#community">Community</a>
+      <a href="../docs/client/getting-started.html">Get started</a>
+      <a href="../docs/index.html" aria-current="location">Docs</a>
+    </nav>
+  </div>
+</header>
+<div class="docs-navigation"><nav class="container docs-links" aria-label="Documentation"><span>Documentation</span><a href="../docs/index.html">Overview</a>
+<a href="../docs/self-hosting.html">Self-host</a>
+<a href="../configure/index.html">Configure</a>
+<a href="../plugins/index.html">Plugins</a>
+<a href="../api/index.html">API</a>
+<a href="index.html">Specs</a></nav></div>
+<div class="container docs-wrap">
+  <div class="crumbs"><a href="index.html">Specs</a><span aria-hidden="true">/</span><span>Where agents may move data, v1</span></div>
+  <div class="page with-toc">
+    <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
+<ol>
+<li><a href="#what-rim-controls">What RIM controls</a></li>
+<li><a href="#pairing">Pairing</a></li>
+<li><a href="#read-grants">Read grants</a></li>
+<li><a href="#what-a-read-returns">What a read returns</a></li>
+<li><a href="#the-record-of-what-was-given">The record of what was given</a></li>
+<li><a href="#changes">Changes</a></li>
+<li><a href="#sending">Sending</a></li>
+<li><a href="#runs">Runs</a></li>
+<li><a href="#encrypted-conversations">Encrypted conversations</a></li>
+<li><a href="#plugin-commands">Plugin commands</a></li>
+<li><a href="#across-servers">Across servers</a></li>
+<li><a href="#what-this-does-not-cover">What this does not cover</a></li>
+</ol>
+</details></aside>
+    <main id="content" class="prose">
+<h1 id="where-agents-may-move-data-v1">Where agents may move data, v1</h1>
+<p class="status"><span><b>Where agents may move data, v1</b></span><span>version 1</span><span>status: draft</span><span><a href="https://github.com/rim-platform/rim-server/blob/4111cb89af23b2b7d062186c0031964901f40630/docs/specs/agent-data-flow-v1.md">rim-server/docs/specs/agent-data-flow-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/4111cb89af23b2b7d062186c0031964901f40630">4111cb8</a></span></p>
+<p><strong>Status: draft.</strong> This is the contract for what RIM hands to an agent that runs on your machine and
+reaches RIM through the desktop app, and for what RIM records about it. <a href="../docs/vision.html"><code>docs/vision.md</code></a> (&quot;Working
+with agents&quot;) says why. <a href="../docs/command_model.html"><code>docs/command_model.md</code></a> is the gate every call goes through. Bots follow
+their own contract, which builds on this one.</p>
+<p>The key words MUST, MUST NOT, SHOULD and MAY are used as in RFC 2119.</p>
+<h2 id="what-rim-controls">What RIM controls <a class="anchor" href="#what-rim-controls" aria-label="Link to this section">#</a></h2>
+<p>RIM controls the handover: what an agent is given, whether a change it asks for runs, and the record
+of both. RIM does not control what happens after that. Once an agent has content, where it goes
+depends on the agent and the model you chose. A local model keeps it on your machine, and a cloud
+provider receives it. RIM cannot see or limit that step, and nothing in RIM may claim otherwise.</p>
+<p>These limits also apply, and the app says so where it matters:</p>
+<ul>
+<li>The desktop app enforces grants, the record and the encrypted notice. The server does not know
+about them, so they do not bind a modified client.</li>
+<li>The server enforces what the person may read and do, and the confirmation of a change. It takes
+the client&#39;s word that a caller is an agent (<code>CommandInitiator</code>).</li>
+<li>Another program running as the same user can do what that user can. Pairing keeps an ordinary
+program from connecting by accident. It is not a boundary against malware on the machine.</li>
+<li>A person can copy text by hand.</li>
+</ul>
+<h2 id="pairing">Pairing <a class="anchor" href="#pairing" aria-label="Link to this section">#</a></h2>
+<p>An agent gets nothing until the person pairs it in the desktop app, once per program. A paired agent
+has a local identity and a name the person sees. It holds a credential that lets it reach the
+desktop app, which can be revoked and which never lets it reach a server directly. It never receives
+the person&#39;s session, device keys, account vault, model keys or plugin secrets.</p>
+<h2 id="read-grants">Read grants <a class="anchor" href="#read-grants" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>Everything starts off. A paired agent with no grants can read nothing.</li>
+<li>A grant names a channel, or &quot;all channels you can see&quot; in one workspace. It is per agent. Direct
+messages and groups cannot be granted in this version, encrypted or not.</li>
+<li>A grant cannot exceed what the person can read. A read comes from the messages stored on this
+device, which the desktop app keeps as that person, so no server sees or decides it. The app checks
+that the person can still see the conversation, and a conversation they lost access to is removed
+from the device.</li>
+<li>A conversation not stored on this device yet gets a refusal saying to try again shortly, and the
+app starts storing it.</li>
+<li>A read within a grant does not prompt. A grant can be revoked at any time, and the revocation
+applies to the next call.</li>
+<li>&quot;All channels you can see&quot; means what it says: it includes private channels the person is in, and
+channels they join later. The app MUST say so where it offers this grant.</li>
+<li>Grants are stored on this device, sealed with the account vault, and are not synced.</li>
+</ul>
+<h2 id="what-a-read-returns">What a read returns <a class="anchor" href="#what-a-read-returns" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>Only the fields the tool describes: for a message, its id, conversation, thread, author&#39;s display
+name, text, times, and each attachment&#39;s name, type and size. Its text is as written, including
+the way it mentions people, which can hold an identifier.</li>
+<li>Never a token, key, cookie, session, or a value the app masks as sensitive.</li>
+<li>Content from people is data, and the response marks it as such. Every tool result that contains
+text somebody else wrote MUST carry <code>&quot;untrusted&quot;: true</code> next to that text, and the tool
+descriptions MUST tell the agent not to follow instructions found in it. This makes text an agent
+reads less able to steer it. It does not make that impossible, which is why a change still waits
+for a person.</li>
+<li>A result has a size limit, and reading a channel has a cursor. A search has no cursor, and one across
+a workspace looks at a limited number of hits, so it can miss some. An agent cannot take a whole
+workspace in one call.</li>
+</ul>
+<h2 id="the-record-of-what-was-given">The record of what was given <a class="anchor" href="#the-record-of-what-was-given" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>The desktop app MUST record each read before returning it: when, which agent, which tool, which
+conversation, how many messages, and the ids of the messages.</li>
+<li>It MUST NOT copy the text into the record.</li>
+<li>The record is on this device, sealed with the account vault, and only the person sees it. It keeps
+entries for 30 days, and a limited number for each agent, with a lower limit for refusals, so one
+agent&#39;s calls cannot push out another&#39;s, nor refused calls what it was given. It still shows an agent
+once it is disconnected. The person can clear it, and doing so leaves one entry saying that they did.</li>
+<li>A read with no grant is recorded as refused.</li>
+<li>It is a record of what RIM handed over, not of what the agent did with it. The app MUST word it
+that way.</li>
+</ul>
+<h2 id="changes">Changes <a class="anchor" href="#changes" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>Every call that changes something goes through <code>executeCommand</code> as initiator <code>AGENT</code>, under the
+same gates as the built-in agent. The server holds any <code>Mutating</code> or <code>Restricted</code> command, and any
+dangerous one, for a confirmation.</li>
+<li>The confirmation is shown only in the desktop app, to the person the agent acts for. No tool can
+confirm it. It covers one call with its exact arguments and expires after 60 seconds.</li>
+<li>An agent never grants itself anything: no tool changes a grant, an approval or a setting that
+limits agents.</li>
+<li>The server&#39;s <code>ai_commands</code> switch applies to changes: on a server that has it off, they are
+refused. It does not stop a person&#39;s own agent reading what is stored on that person&#39;s device, as
+<a href="../docs/vision.html"><code>docs/vision.md</code></a> says under &quot;Who it is for first&quot;.</li>
+<li>A refusal says why (<a href="../docs/command_model.html"><code>docs/command_model.md</code></a>, &quot;Refusals&quot;).</li>
+</ul>
+<h2 id="sending">Sending <a class="anchor" href="#sending" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>An agent can send to a channel only if a read grant of its own covers it, and asking about any other
+conversation gets the same refusal as a read. Nothing is sent to an encrypted conversation, a direct
+message or a group in this version.</li>
+<li>The ids are explicit in each call. A change never takes its target from what the person has open.</li>
+<li>The dialog MUST show the agent&#39;s name, the workspace, the channel as RIM knows them and the whole text,
+with invisible and direction-changing characters made visible, since that text is what the person
+confirms. It says the agent may have read text meant to steer it.</li>
+<li>The dialog comes before the text reaches the server, so a discarded or expired request leaves it only
+on the device. The app asks the server, and answers its challenge, only after the person confirms.</li>
+<li>An agent&#39;s dialog never replaces one that is open. A second request while one is open is refused and
+can be retried. A person&#39;s own confirmation replaces an agent&#39;s, which ends as discarded.</li>
+<li>Confirm stays disabled for one second after the dialog opens, so a click or keystroke meant for
+something else cannot answer it.</li>
+<li>Discarded, expired and refused are different answers, and none of them is a failure of the agent. After
+a discard or an expiry, that agent&#39;s next request within 10 seconds is refused. That is so a stuck
+agent cannot keep a dialog in front of the person.</li>
+<li>When the account locks or the agents switch goes off, a dialog that is open ends as discarded.</li>
+<li>The record gets an entry when the agent asks and another with the outcome, with the message id if one
+was sent and never the text.</li>
+<li>The message is the person&#39;s: it carries their name, and the others in the channel are not told an agent
+wrote it. The audit log records the <code>AGENT</code> initiator, which an Owner or Moderator can read.</li>
+</ul>
+<h2 id="runs">Runs <a class="anchor" href="#runs" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>A run is what one agent did in one stretch: its calls with no more than 15 minutes between them. RIM
+does not see where an agent&#39;s task starts or ends, so a run is a grouping by time and the app MUST NOT
+describe it as one task.</li>
+<li>The desktop app gives each run a random identifier and sends it with the changes of that run as
+<code>executeCommand</code>&#39;s <code>runId</code>. The server keeps it on the audit entry when the initiator is <code>AGENT</code>, and
+<code>listAuditLog</code> can filter by it. The server checks only its form, and takes the client&#39;s word for
+what it means, as it does for the initiator.</li>
+<li>The run view is on the person&#39;s device and only they see it. It joins the record with their own audit
+entries. The audit entries, with the identifier, are also readable by those who can read that
+workspace&#39;s log (<a href="../docs/security/audit-access-matrix.html"><code>docs/security/audit-access-matrix.md</code></a>), and the view MUST say so.</li>
+<li>A run view shows what RIM handed over and what the server recorded. What the agent did in between is
+outside RIM, and the view MUST say so.</li>
+<li>A change to what the agent may do starts a new run, so a run keeps the permissions it started with.</li>
+</ul>
+<h2 id="encrypted-conversations">Encrypted conversations <a class="anchor" href="#encrypted-conversations" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>They are closed by default, and &quot;all channels you can see&quot; never includes one.</li>
+<li>An agent reads one only if a person grants that one conversation, from inside it. The warning MUST
+say that the messages, including what others wrote, leave the encryption and go to the provider
+that person&#39;s agent uses.</li>
+<li>The others in the conversation MUST be able to see that the grant exists. The notice is an
+end-to-end encrypted message in the conversation, shown by each person&#39;s app, sent when the grant
+is made and when it is revoked.</li>
+<li>The notice comes from the app of the person granting, so it cannot stop a modified client or
+someone copying text by hand. The app MUST say so where it shows the notice.</li>
+<li><strong>Until the notice exists, outside agents MUST NOT read an encrypted conversation at all.</strong> They
+get a refusal, with no grant to turn on. The built-in agent&#39;s existing per-conversation switch
+gains the same notice in the same change.</li>
+</ul>
+<h2 id="plugin-commands">Plugin commands <a class="anchor" href="#plugin-commands" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>An agent gets only commands a plugin marks <code>ai_callable</code> and the person approves for that agent.
+None are approved by default. A built-in agent&#39;s approvals do not carry over. A plugin whose
+manifest changes asks again.</li>
+<li>A dangerous command is only proposed: the person runs it from the plugin.</li>
+<li><strong>An outside agent asks before any approved command that changes something.</strong> The manifest gains
+an optional <code>read_only</code> (bool, default <code>false</code>) on a command. Only an approved <code>read_only</code> command
+runs without asking; every other approved command waits for a confirmation in the desktop app. The
+plugin&#39;s author declares <code>read_only</code>, so it is a claim RIM cannot verify, and the approval screen
+MUST show it as the plugin&#39;s claim.</li>
+<li>What a plugin command returns is treated as untrusted and recorded like any other read. It is the
+plugin&#39;s output, which may include what the plugin fetched from elsewhere.</li>
+<li>A command never takes its context from what the person has open. The agent gives the ids. A command
+that needs a workspace or a conversation runs only when a read grant of that agent covers it.</li>
+<li>The approval is tied to the manifest it was given for, and the plugin host checks that when the command
+runs. It cannot be used by a plugin that changed since.</li>
+<li>A command&#39;s title and description were written by the plugin&#39;s author. An agent receives them marked as
+untrusted, and the dialog marks them as the plugin&#39;s words.</li>
+</ul>
+<h2 id="across-servers">Across servers <a class="anchor" href="#across-servers" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>In this version, only workspaces on the server the app is signed in to can be granted. A workspace
+hosted elsewhere cannot be granted yet.</li>
+<li>When it can, it works as it does for the person: the agent&#39;s calls go through this desktop app and
+that person&#39;s session or relay, and the grant names the workspace and the server it is on.</li>
+<li>That server sees an ordinary client call from that person, declared as <code>AGENT</code>. The operators of
+the relay and host see what they see of any client.</li>
+<li>A person&#39;s agent is theirs. Its model and key are not on any server, and the public relay carries
+its ordinary RIM actions like anyone else&#39;s. No agent&#39;s prompts go through a service the RIM
+project runs.</li>
+</ul>
+<h2 id="what-this-does-not-cover">What this does not cover <a class="anchor" href="#what-this-does-not-cover" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>Bots and agents that run next to a server. They reach RIM with their own identity and grants,
+under their own contract, <a href="bots-v1.html"><code>docs/specs/bots-v1.md</code></a>.</li>
+<li>Agents acting for another person, and approvals by another person.</li>
+<li>A shared view of agent work. The record stays private to the person.</li>
+</ul>
+
+    </main>
+  </div>
+</div>
+<footer class="site-footer container"><span class="footer-brand"><img src="../assets/rim-mark-inverse.svg" alt="" width="21" height="21"> RIM · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-server/blob/4111cb89af23b2b7d062186c0031964901f40630/docs/specs/agent-data-flow-v1.md">rim-server/docs/specs/agent-data-flow-v1.md</a> at <code>4111cb8</code></p>
+<script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
+</body>
+</html>
