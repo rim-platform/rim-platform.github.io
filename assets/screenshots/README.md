@@ -24,8 +24,8 @@ The workspace Fernhill, the people Maya Chen, Leo Okafor, Priya Raman and Sam Or
 message are made up, created through the application. The GitHub and Grafana posts are real
 deliveries to real webhooks of that instance, sent with `curl` in the shapes GitHub and Grafana
 send; nothing was sent from or to GitHub or Grafana, and the repository they name,
-`fernhill-demo/app`, is invented. The plugin's repository list shows what GitHub's public API
-answered for `rim-platform/rim-ui` and `rim-platform/rim-server`. No public RIM account was created
+`fernhill-demo/app`, is invented. The plugin's panel shows what GitHub's public API answered for the
+public repository `tauri-apps/tauri`: real pull requests, titles and authors, as GitHub lists them. No public RIM account was created
 and nothing was posted to a public workspace. Credentials, webhook URLs and recovery material are
 not part of these assets beyond what a screen shows of the throwaway local instance.
 
@@ -64,7 +64,7 @@ not part of these assets beyond what a screen shows of the throwaway local insta
 | `channel-alerts.webp` | Open `Fernhill` and `#deploys`. The Bots section lists the three bots. |
 | `webhook-format.webp` | Settings → Bots → New webhook: `backups`, bot Backups, format Custom → Write the format. Paste JSON with two rules (`status` equals `failed`, and `ok`), Start test URL, post an `ok` and a `failed` delivery to the test URL with `curl`, open the `failed` delivery, Use as sample, Try. Scroll to Try it and capture; then Create webhook, which keeps the test URL. |
 | `agent-approval.webp` | Inside the isolated desktop harness: create an account and the workspace Fernhill with `#deploys`, post two messages, Settings → Agents → Let agents on this computer connect. A scripted stand-in agent (not a model) asks to pair as "Deploy notes agent"; compare the code and choose The code matches, connect. Choose what it can read: `deploys`. The stand-in lists the workspaces and channels, reads `#deploys`, and calls `rim_send_message` with release notes. Capture the card, then Cancel. |
-| `plugins.webp` | Install the Pull requests plugin from its release link with `#sha256=` and the hash above, Approve and turn on, open `#deploys`, then Plugins in the top bar → Pull requests. |
+| `plugins.webp` | Recaptured on a second, fresh instance from the same commits, with Maya, Leo and Priya and four messages in `#deploys`. Install the Pull requests plugin from its release link with `#sha256=` and the hash above, Approve and turn on, open `#deploys`, then Plugins in the top bar → Pull requests. Remove the two repositories it starts with, add `tauri-apps/tauri`, and capture once the list has loaded. |
 | `commands.webp` | In `#general`, press Ctrl+K. |
 | `custom-command.webp` | Settings → Commands → New command. ID `clear_unread_badges`, title `Clear unread badges`, description `Mark workspace conversations and notifications as read.`, steps Mark All as Read and Mark All Notifications Read. Capture the filled form, then Create. |
 | `macros.webp` | Settings → Macros → New Macro. Name `Heads down`, description `Clear notifications and focus for two hours.`, steps `notifications.mark_all_read` with `{}` and `notifications.dnd` with `{"mode":"until","minutes":"120"}`. Save, then open it with the pencil and capture the edit form. |
