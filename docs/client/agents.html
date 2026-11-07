@@ -90,7 +90,7 @@ pressing Escape also refuses. A request nobody answers ends after two minutes.</
 <p>The name in the dialog is what the program calls itself. RIM can&#39;t check it, so the code is what
 tells you it&#39;s the program you started.</p>
 <p>Claude Code keeps its token in <code>~/.claude.json</code>, which any program running as you can read. The
-<a href="https://github.com/rim-platform/rim-ui/blob/f02e7945f773e010eb37a2b331c82978e7c4c7b3/integrations/claude-code/README.md">plugin&#39;s README</a> has the details.</p>
+<a href="https://github.com/rim-platform/rim-ui/blob/100f039a2fc9a41a473f5af19d14ff8252a9c58a/integrations/claude-code/README.md">plugin&#39;s README</a> has the details.</p>
 <p><strong>Other agents.</strong> Any program that speaks the Model Context Protocol over HTTP can connect the same
 way, but RIM has a ready-made setup only for Claude Code. The plugin&#39;s <code>scripts/pair.sh</code> shows the
 steps.</p>
@@ -122,10 +122,12 @@ for a message to steer the agent. It can&#39;t make it impossible.</p>
 <p>An agent can ask to post a message in a channel you let it read, and nowhere else. RIM then comes
 to the front with an approval card:</p>
 <ul>
-<li>the agent&#39;s name, &quot;wants to:&quot;, and &quot;Initiated by a program outside RIM&quot;;</li>
+<li>the agent&#39;s name, &quot;wants to: send a message&quot;, and an <strong>Agent outside RIM</strong> label;</li>
+<li>a warning that the request came from a program outside RIM, which may have read text meant to
+steer it;</li>
 <li>the workspace and the channel;</li>
-<li>the whole message, with its length. Invisible characters and characters that change text
-direction are shown by name, so nothing is hidden.</li>
+<li>the whole message, with how many lines and characters it has. Invisible characters and
+characters that change text direction are shown by name, so nothing is hidden.</li>
 </ul>
 <p>Read the text before you send it. The agent may have read something meant to steer it.</p>
 <ul>
@@ -203,7 +205,7 @@ screens.</p>
   </div>
 </div>
 <footer class="site-footer container"><span class="footer-brand"><img src="../../assets/rim-mark-inverse.svg" alt="" width="21" height="21"> RIM · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
-<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/f02e7945f773e010eb37a2b331c82978e7c4c7b3/docs/agents.md">rim-ui/docs/agents.md</a> at <code>f02e794</code></p>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/100f039a2fc9a41a473f5af19d14ff8252a9c58a/docs/agents.md">rim-ui/docs/agents.md</a> at <code>100f039</code></p>
 <script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
 </body>
 </html>
