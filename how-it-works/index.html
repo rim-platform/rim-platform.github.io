@@ -82,7 +82,7 @@
     <div class="hiw-grid">
       <article><h3>Devices are the members.</h3><p>Each encrypted conversation is an MLS group, and each of your devices is a member of it. A sending device encrypts; the others decrypt. Servers order and deliver what they can't read. <a href="../docs/client/rim-mls.html">The MLS engine ↗</a></p></article>
       <article><h3>Which conversations.</h3><p>A new direct message or group is encrypted when the person who starts it has encryption set up. Across servers it always is. An older one can be upgraded once, with a visible marker, and stays encrypted from then on. <a href="../docs/client/e2ee-desktop.html">Encrypted DMs and groups ↗</a></p></article>
-      <article><h3>Channels on purpose aren't.</h3><p>Channels, private ones too, can be read by their host. That's what lets server search, pipelines, bots and agents work there, and lets people who join later read the history. <a href="../docs/security-overview.html#encryption">Encryption ↗</a></p></article>
+      <article><h3>Channels aren't, on purpose.</h3><p>Channels, private ones too, can be read by their host. That's what lets server search, pipelines, bots and agents work there, and lets people who join later read the history. <a href="../docs/security-overview.html#encryption">Encryption ↗</a></p></article>
       <article><h3>Tools you let in.</h3><p>A plugin or agent you allow to read an encrypted conversation reads the decrypted text, and the text leaves end-to-end encryption with it. No setting opens one to an outside agent, but a plugin command it runs can return what that plugin may read. <a href="../specs/agent-data-flow-v1.html">What agents are given ↗</a></p></article>
     </div>
   </section>
@@ -97,7 +97,7 @@
   </section>
 
   <section class="section container" id="what-servers-see" aria-labelledby="see-title">
-    <div class="section-head"><div><p class="eyebrow">06 / What servers see</p><h2 id="see-title">Encryption hides the words,<br>not the conversation.</h2></div><p>Be clear about what each server learns. Nothing on this page hides who talks to whom. <a class="text-link" href="../docs/security-overview.html">Security overview ↗</a></p></div>
+    <div class="section-head"><div><p class="eyebrow">06 / What servers see</p><h2 id="see-title">Encryption hides the words,<br>not the conversation.</h2></div><p>What each server learns. Encryption doesn't hide who talks to whom, or when. <a class="text-link" href="../docs/security-overview.html">Security overview ↗</a></p></div>
     <div class="hiw-table" role="table" aria-label="What each server can see">
       <div role="row" class="hiw-row hiw-head"><span role="columnheader">Server</span><span role="columnheader">Can see</span><span role="columnheader">Can't do</span></div>
       <div role="row" class="hiw-row"><span role="rowheader">Your relay</span><span role="cell">Your account, devices and profile card; the channel events and direct message metadata it queues for you. It can drop or delay them.</span><span role="cell">Read your direct messages, sign as you, or change a host's events.</span></div>

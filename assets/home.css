@@ -181,7 +181,9 @@ figcaption { color: var(--faint); font-size: 11px; text-align: center; margin-to
 .use-card .text-link { margin-top: auto; padding-top: 6px; }
 .use-card-text { justify-content: center; }
 .use-card-text h3 { font-size: 26px; letter-spacing: -.035em; }
-.phone-frame { max-width: 220px; margin-inline: auto; }
+.use-card figure:has(.phone-frame) { align-self: center; }
+.phone-frame { width: 220px; }
+.phone-frame img { height: 300px; object-fit: cover; object-position: top; }
 .use-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; margin-top: 0; }
 .use-steps li { padding-bottom: 0; }
 .use-steps .text-link, .use-steps .link-row { margin-top: 12px; }
@@ -189,7 +191,7 @@ figcaption { color: var(--faint); font-size: 11px; text-align: center; margin-to
 .promise-grid.four { grid-template-columns: repeat(4, 1fr); }
 .status-note { border-left-color: var(--signal); }
 .inside-block { display: grid; grid-template-columns: 1fr 1.4fr; gap: 56px; padding-block: 40px; border-top: 1px solid var(--line); }
-.inside-block > div > p { color: var(--muted); font-size: 15px; }
+.inside-block > div > p:not(.section-subhead) { color: var(--muted); font-size: 15px; }
 .inside-block h3, .inside-split h3, .inside-title { font-size: 28px; letter-spacing: -.04em; }
 .inside-workflows { padding-block: 40px; border-top: 1px solid var(--line); }
 .inside-title { margin-bottom: 24px; }
