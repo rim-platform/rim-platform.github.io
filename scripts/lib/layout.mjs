@@ -54,7 +54,7 @@ export function renderPage(page) {
     title: esc(title),
     description: esc(page.description ?? page.title),
     root,
-    header: renderHeader(link, true),
+    header: renderHeader(link, "Docs"),
     docsNav: renderDocsNav(link, page.out),
     crumbs,
     layoutClass: withToc ? " with-toc" : "",
