@@ -50,7 +50,7 @@ that field.</p>
 <pre><code class="language-sh">npm run skew:check -- &lt;git ref&gt;   # e.g. v0.3.0, origin/release, HEAD~30
 npm run skew:check                # the most recent rim-ui v* tag</code></pre>
 <p>It takes <code>schema.graphql</code> as committed at the ref (the SDL exported from the server that the
-client was built against then), collects every <code>gql</code> document under <a href="https://github.com/rim-platform/rim-ui/tree/100f039a2fc9a41a473f5af19d14ff8252a9c58a/src"><code>src/</code></a> with its fragments
+client was built against then), collects every <code>gql</code> document under <a href="https://github.com/rim-platform/rim-ui/tree/8cd5f14c784f8667daf658ca823de5d2cb1a6720/src"><code>src/</code></a> with its fragments
 resolved the way the client sends it, validates each against that schema with <code>graphql</code>&#39;s
 <code>validate</code>, and prints the operations that fail, grouped by file. It exits 1 when any would be
 refused, 0 when none would, and 2 when it cannot run (no such ref, no <code>schema.graphql</code> there).
@@ -75,9 +75,9 @@ older server for.</li>
 not have at all: a bug today, not skew.</p>
 <h2 id="gating-a-new-field">Gating a new field <a class="anchor" href="#gating-a-new-field" aria-label="Link to this section">#</a></h2>
 <p>A field an older server lacks is asked for only when <code>serverInfo.capabilities</code> names it.
-<code>serverHasCapability</code> (<a href="https://github.com/rim-platform/rim-ui/blob/100f039a2fc9a41a473f5af19d14ff8252a9c58a/src/features/updater/api/serverCapabilities.ts"><code>src/features/updater/api/serverCapabilities.ts</code></a>) reads the cached server
+<code>serverHasCapability</code> (<a href="https://github.com/rim-platform/rim-ui/blob/8cd5f14c784f8667daf658ca823de5d2cb1a6720/src/features/updater/api/serverCapabilities.ts"><code>src/features/updater/api/serverCapabilities.ts</code></a>) reads the cached server
 info; the read keeps a second document with the field (<code>MessagesWithEdits</code> beside <code>Messages</code>),
-built from the same constants, and picks one per request. <a href="https://github.com/rim-platform/rim-ui/blob/100f039a2fc9a41a473f5af19d14ff8252a9c58a/scripts/skew-check.test.mjs"><code>scripts/skew-check.test.mjs</code></a> checks
+built from the same constants, and picks one per request. <a href="https://github.com/rim-platform/rim-ui/blob/8cd5f14c784f8667daf658ca823de5d2cb1a6720/scripts/skew-check.test.mjs"><code>scripts/skew-check.test.mjs</code></a> checks
 that only the gated documents fail against a schema without the field. <code>npm run skew:check</code>
 lists the gated documents; each listed one must be gated or have a fallback.</p>
 <p>A control that runs a new mutation is shown only when the capability names it: Leave workspace
@@ -95,7 +95,7 @@ counts brought then gates Mark unread from here and Mark as unread, also by the 
   </div>
 </div>
 <footer class="site-footer container"><span class="footer-brand"><img src="../../assets/rim-mark-inverse.svg" alt="" width="21" height="21"> RIM · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
-<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/100f039a2fc9a41a473f5af19d14ff8252a9c58a/docs/version-skew.md">rim-ui/docs/version-skew.md</a> at <code>100f039</code></p>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/8cd5f14c784f8667daf658ca823de5d2cb1a6720/docs/version-skew.md">rim-ui/docs/version-skew.md</a> at <code>8cd5f14</code></p>
 
 </body>
 </html>
