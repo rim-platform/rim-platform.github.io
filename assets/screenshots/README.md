@@ -16,16 +16,17 @@ scale factor 1, and `phone.webp` 360 × 780, using Chromium 156 driven by playwr
 - **Server:** `rim-platform/rim-server` commit `4111cb89` (`feature/agent-workspace`), a debug
   build of `rim_server` with a new, dedicated PostgreSQL 17 database and data directory: on port
   8094 for the web captures, and a second instance inside the desktop harness.
-- **Plugin:** `rim-platform/plugin-github-prs` v0.0.2, installed through Settings → Plugins →
-  Install from link, with the release bundle's SHA-256
-  `e180467d85dc82fcb130361fe5538251836e7e03f8c29bed80018fdb62fe4234`.
+- **Plugin:** `rim-platform/plugin-releases` v0.0.2, installed through Settings → Plugins →
+  Install from link, as its README describes, with the release bundle's SHA-256
+  `2769a8af396debbd0151d79ab103990763941e3725fe37454f358185f01f9d59`.
 
 The workspace Fernhill, the people Maya Chen, Leo Okafor, Priya Raman and Sam Ortiz, and every
 message are made up, created through the application. The GitHub and Grafana posts are real
 deliveries to real webhooks of that instance, sent with `curl` in the shapes GitHub and Grafana
 send; nothing was sent from or to GitHub or Grafana, and the repository they name,
-`fernhill-demo/app`, is invented. The plugin's panel shows what GitHub's public API answered for the
-public repository `tauri-apps/tauri`: real pull requests, titles and authors, as GitHub lists them. No public RIM account was created
+`fernhill-demo/app`, is invented. The Releases plugin's panel and the message it posted show RIM's own
+releases of `rim-platform/rim-ui`, as GitHub's public API answered; the link preview under that
+message is GitHub's card for the release, which shows no person. No public RIM account was created
 and nothing was posted to a public workspace. Credentials, webhook URLs and recovery material are
 not part of these assets beyond what a screen shows of the throwaway local instance.
 
@@ -64,7 +65,7 @@ not part of these assets beyond what a screen shows of the throwaway local insta
 | `channel-alerts.webp` | Open `Fernhill` and `#deploys`. The Bots section lists the three bots. |
 | `webhook-format.webp` | Settings → Bots → New webhook: `backups`, bot Backups, format Custom → Write the format. Paste JSON with two rules (`status` equals `failed`, and `ok`), Start test URL, post an `ok` and a `failed` delivery to the test URL with `curl`, open the `failed` delivery, Use as sample, Try. Scroll to Try it and capture; then Create webhook, which keeps the test URL. |
 | `agent-approval.webp` | Inside the isolated desktop harness: create an account and the workspace Fernhill with `#deploys`, post two messages, Settings → Agents → Let agents on this computer connect. A scripted stand-in agent (not a model) asks to pair as "Deploy notes agent"; compare the code and choose The code matches, connect. Choose what it can read: `deploys`. The stand-in lists the workspaces and channels, reads `#deploys`, and calls `rim_send_message` with release notes. Capture the card, then Cancel. |
-| `plugins.webp` | Recaptured on a second, fresh instance from the same commits, with Maya, Leo and Priya and four messages in `#deploys`. Install the Pull requests plugin from its release link with `#sha256=` and the hash above, Approve and turn on, open `#deploys`, then Plugins in the top bar → Pull requests. Remove the two repositories it starts with, add `tauri-apps/tauri`, and capture once the list has loaded. |
+| `plugins.webp` | Recaptured on 2026-11-08 on a fresh instance from the same commits, with Maya, Leo and Priya: in `#deploys` Leo's staging note and Priya's question about a new client. Install the Releases plugin from its release link with `#sha256=` and the hash above, Approve and turn on, open `#deploys`, then Plugins in the top bar → Releases. Remove every repository but `rim-platform/rim-ui`, run **Releases: Post to this conversation** from the palette, which posts the latest release as Maya, and let Priya reply. Open "4 earlier releases" in the panel and capture. |
 | `commands.webp` | In `#general`, press Ctrl+K. |
 | `custom-command.webp` | Settings → Commands → New command. ID `clear_unread_badges`, title `Clear unread badges`, description `Mark workspace conversations and notifications as read.`, steps Mark All as Read and Mark All Notifications Read. Capture the filled form, then Create. |
 | `macros.webp` | Settings → Macros → New Macro. Name `Heads down`, description `Clear notifications and focus for two hours.`, steps `notifications.mark_all_read` with `{}` and `notifications.dnd` with `{"mode":"until","minutes":"120"}`. Save, then open it with the pencil and capture the edit form. |
@@ -75,6 +76,8 @@ not part of these assets beyond what a screen shows of the throwaway local insta
 - Every webhook delivery answered `{"ok":true}` and posted, and the test URL answered
   `{"ok":true,"test":true}` and posted nothing until the webhook was saved.
 - The custom command, the macro and the pipeline saved; the pipeline shows as Active.
+- **Releases: Post to this conversation** answered "Posted 1 release" and the message appeared in
+  `#deploys` under Maya's name.
 - The stand-in agent's send ended as `discarded` after Cancel, and nothing was posted. The
   harness's guard printed the same fingerprint of the real session before and after the run.
 
