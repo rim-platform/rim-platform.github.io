@@ -195,6 +195,7 @@ figcaption { color: var(--faint); font-size: 11px; text-align: center; margin-to
 .use-steps li { padding-bottom: 0; }
 .use-steps .text-link, .use-steps .link-row { margin-top: 12px; }
 .use-steps .link-row { gap: 10px 18px; }
+.use-steps p a { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
 .promise-grid.four { grid-template-columns: repeat(4, 1fr); }
 .status-note { border-left-color: var(--signal); }
 .inside-block { display: grid; grid-template-columns: 1fr 1.4fr; gap: 56px; padding-block: 40px; border-top: 1px solid var(--line); }
