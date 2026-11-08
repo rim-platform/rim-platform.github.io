@@ -148,7 +148,7 @@ message text, and the desktop cache&#39;s FTS5 snippet, whose text is HTML-escap
 go in. In both, the <em>surrounding text</em> is user message content, which may contain arbitrary
 markup an attacker embedded in a message (<code>&lt;img onerror=...&gt;</code>, <code>&lt;script&gt;</code>, etc.) and Markdown
 syntax (code fences, emphasis, links). <code>SearchSnippet</code>
-(<a href="https://github.com/rim-platform/rim-ui/blob/e3a0cc5ca103b1dfd87ec18a8289736a1b746409/src/features/messages/components/SearchSnippet.tsx"><code>src/features/messages/components/SearchSnippet.tsx</code></a>) handles both the same way:</p>
+(<a href="https://github.com/rim-platform/rim-ui/blob/4b2931042ac25d5eca2f50c8ad6f683a3c12ccf1/src/features/messages/components/SearchSnippet.tsx"><code>src/features/messages/components/SearchSnippet.tsx</code></a>) handles both the same way:</p>
 <ol>
 <li><p><strong>Parse.</strong> DOMPurify parses the headline into a DOM fragment:</p>
 <pre><code class="language-ts">DOMPurify.sanitize(headline, {
@@ -163,7 +163,7 @@ so the desktop cache&#39;s <code>&amp;lt;b&amp;gt;</code> reads as <code>&lt;b&g
 private-use characters (U+E000 and U+E001) and any such characters in the message text
 itself are dropped, so the highlights survive as plain text.</p>
 </li>
-<li><p><strong>Name mentions.</strong> <code>plainMessagePreview</code> (<a href="https://github.com/rim-platform/rim-ui/blob/e3a0cc5ca103b1dfd87ec18a8289736a1b746409/src/features/messages/utils/snippetText.ts"><code>src/features/messages/utils/snippetText.ts</code></a>) turns
+<li><p><strong>Name mentions.</strong> <code>plainMessagePreview</code> (<a href="https://github.com/rim-platform/rim-ui/blob/4b2931042ac25d5eca2f50c8ad6f683a3c12ccf1/src/features/messages/utils/snippetText.ts"><code>src/features/messages/utils/snippetText.ts</code></a>) turns
 each mention token <code>&lt;@id&gt;</code> into <code>@</code> and the member&#39;s display name from the workspace member
 lookup the overlay already holds (<code>@member</code> for an id that names no member; the id of an
 encrypted message&#39;s mention is a principal id, which the overlay maps to the member). A
@@ -182,8 +182,8 @@ an empty mark is dropped. No HTML from the snippet ever reaches the page and the
 <code>dangerouslySetInnerHTML</code>.</p>
 </li>
 </ol>
-<p>This is the DOMPurify pattern applied to search snippets — see <a href="https://github.com/rim-platform/rim-ui/blob/e3a0cc5ca103b1dfd87ec18a8289736a1b746409/CLAUDE.md"><code>CLAUDE.md</code></a>&#39;s &quot;DOMPurify on all
-user-generated HTML&quot; rule and <a href="https://github.com/rim-platform/rim-ui/blob/e3a0cc5ca103b1dfd87ec18a8289736a1b746409/src/shared/ui/MarkdownRenderer.tsx"><code>src/shared/ui/MarkdownRenderer.tsx</code></a> for the sibling pattern used
+<p>This is the DOMPurify pattern applied to search snippets — see <a href="https://github.com/rim-platform/rim-ui/blob/4b2931042ac25d5eca2f50c8ad6f683a3c12ccf1/CLAUDE.md"><code>CLAUDE.md</code></a>&#39;s &quot;DOMPurify on all
+user-generated HTML&quot; rule and <a href="https://github.com/rim-platform/rim-ui/blob/4b2931042ac25d5eca2f50c8ad6f683a3c12ccf1/src/shared/ui/MarkdownRenderer.tsx"><code>src/shared/ui/MarkdownRenderer.tsx</code></a> for the sibling pattern used
 for message bodies.</p>
 <p>There is <strong>no client-side substring highlighting</strong> — the snippet is the single source of
 truth for match highlighting. When <code>headline</code> is <code>null</code> (a purely operator-based query with no
@@ -242,7 +242,7 @@ comment above <code>conversationId</code> in <code>SearchOverlay.tsx</code>.</p>
   </div>
 </div>
 <footer class="site-footer container"><span class="footer-brand"><img src="../../assets/rim-mark-inverse.svg" alt="" width="21" height="21"> RIM · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
-<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/e3a0cc5ca103b1dfd87ec18a8289736a1b746409/docs/search-ui.md">rim-ui/docs/search-ui.md</a> at <code>e3a0cc5</code></p>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/4b2931042ac25d5eca2f50c8ad6f683a3c12ccf1/docs/search-ui.md">rim-ui/docs/search-ui.md</a> at <code>4b29310</code></p>
 <script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
 </body>
 </html>

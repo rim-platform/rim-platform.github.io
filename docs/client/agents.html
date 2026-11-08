@@ -75,10 +75,21 @@ the tab says so.</p>
 <p>While the switch is off, nothing listens. Agents you connected earlier stay in the list, but they
 can&#39;t reach RIM until you turn it on again.</p>
 <h2 id="connect-claude-code">Connect Claude Code <a class="anchor" href="#connect-claude-code" aria-label="Link to this section">#</a></h2>
-<p>RIM ships a plugin for Claude Code. Install it once: open a terminal and run</p>
-<pre><code class="language-sh">claude plugin marketplace add rim-platform/rim-ui
+<p>RIM ships a plugin for Claude Code. Claude Code fetches it from GitHub itself, so there is nothing
+to clone or download by hand. Install it once: open a terminal and run</p>
+<pre><code class="language-sh">claude plugin marketplace add rim-platform/rim-ui --sparse .claude-plugin integrations/claude-code
 claude plugin install rim@rim-platform</code></pre>
-<p>These two lines go in a terminal, not in Claude Code&#39;s chat. Then:</p>
+<p>These two lines go in a terminal, not in Claude Code&#39;s chat.</p>
+<ul>
+<li><code>rim-platform/rim-ui</code> is the plugin&#39;s repository on GitHub. The full address,
+<code>https://github.com/rim-platform/rim-ui.git</code>, works the same.</li>
+<li><code>--sparse</code> makes Claude Code check out only the two folders the plugin needs, not the whole app.</li>
+<li>Claude Code reads the repository&#39;s default branch. To stay on one release, add <code>#</code> and its tag
+after the repository, as in <code>rim-platform/rim-ui#&lt;tag&gt;</code>.</li>
+<li>Building RIM from source, or trying the plugin before a release? Add it from your checkout
+instead: <code>claude plugin marketplace add /path/to/rim-ui</code>. <code>--sparse</code> doesn&#39;t apply to a folder.</li>
+</ul>
+<p>Then:</p>
 <ol>
 <li>Start Claude Code (<code>claude</code> in a terminal) and type &quot;connect to RIM&quot; in its chat.</li>
 <li>Claude Code shows a code. RIM comes to the front and shows a dialog with a code too.</li>
@@ -90,7 +101,7 @@ pressing Escape also refuses. A request nobody answers ends after two minutes.</
 <p>The name in the dialog is what the program calls itself. RIM can&#39;t check it, so the code is what
 tells you it&#39;s the program you started.</p>
 <p>Claude Code keeps its token in <code>~/.claude.json</code>, which any program running as you can read. The
-<a href="https://github.com/rim-platform/rim-ui/blob/e3a0cc5ca103b1dfd87ec18a8289736a1b746409/integrations/claude-code/README.md">plugin&#39;s README</a> has the details.</p>
+<a href="https://github.com/rim-platform/rim-ui/blob/4b2931042ac25d5eca2f50c8ad6f683a3c12ccf1/integrations/claude-code/README.md">plugin&#39;s README</a> has the details.</p>
 <p><strong>Other agents.</strong> Any program that speaks the Model Context Protocol over HTTP can connect the same
 way, but RIM has a ready-made setup only for Claude Code. The plugin&#39;s <code>scripts/pair.sh</code> shows the
 steps.</p>
@@ -205,7 +216,7 @@ screens.</p>
   </div>
 </div>
 <footer class="site-footer container"><span class="footer-brand"><img src="../../assets/rim-mark-inverse.svg" alt="" width="21" height="21"> RIM · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
-<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/e3a0cc5ca103b1dfd87ec18a8289736a1b746409/docs/agents.md">rim-ui/docs/agents.md</a> at <code>e3a0cc5</code></p>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/4b2931042ac25d5eca2f50c8ad6f683a3c12ccf1/docs/agents.md">rim-ui/docs/agents.md</a> at <code>4b29310</code></p>
 <script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
 </body>
 </html>

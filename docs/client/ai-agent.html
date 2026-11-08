@@ -359,11 +359,13 @@ malware. Another program running as you can do what you can, so connect only pro
 a modified client.</li>
 </ul>
 <h3 id="claude-code">Claude Code <a class="anchor" href="#claude-code" aria-label="Link to this section">#</a></h3>
-<p>Claude Code connects through a plugin in this repository:</p>
-<pre><code class="language-sh">claude plugin marketplace add rim-platform/rim-ui
+<p>Claude Code connects through a plugin in this repository, which Claude Code fetches from GitHub
+itself. In a terminal, run:</p>
+<pre><code class="language-sh">claude plugin marketplace add rim-platform/rim-ui --sparse .claude-plugin integrations/claude-code
 claude plugin install rim@rim-platform</code></pre>
-<p>Then say &quot;connect to RIM&quot; in Claude Code. The steps are in the
-<a href="https://github.com/rim-platform/rim-ui/blob/e3a0cc5ca103b1dfd87ec18a8289736a1b746409/integrations/claude-code/README.md">plugin&#39;s README</a>.</p>
+<p>Then type &quot;connect to RIM&quot; in Claude Code&#39;s chat. The steps, and how to add the plugin from a local
+checkout, are in <a href="agents.html#connect-claude-code">Connect an AI agent</a> and the
+<a href="https://github.com/rim-platform/rim-ui/blob/4b2931042ac25d5eca2f50c8ad6f683a3c12ccf1/integrations/claude-code/README.md">plugin&#39;s README</a>.</p>
 <h2 id="next">Next <a class="anchor" href="#next" aria-label="Link to this section">#</a></h2>
 <ul>
 <li><a href="agents.html">Connect an AI agent</a>: connecting Claude Code or another program on this computer.</li>
@@ -382,7 +384,7 @@ confirmations and the AI-callable set.</li>
   </div>
 </div>
 <footer class="site-footer container"><span class="footer-brand"><img src="../../assets/rim-mark-inverse.svg" alt="" width="21" height="21"> RIM · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
-<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/e3a0cc5ca103b1dfd87ec18a8289736a1b746409/docs/ai-agent.md">rim-ui/docs/ai-agent.md</a> at <code>e3a0cc5</code></p>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/4b2931042ac25d5eca2f50c8ad6f683a3c12ccf1/docs/ai-agent.md">rim-ui/docs/ai-agent.md</a> at <code>4b29310</code></p>
 <script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
 </body>
 </html>
