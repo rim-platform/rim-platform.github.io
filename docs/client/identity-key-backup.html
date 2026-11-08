@@ -82,17 +82,17 @@ how to try it.</p>
 </tbody></table></div>
 <p>The code:</p>
 <ul>
-<li><a href="https://github.com/rim-platform/rim-ui/blob/8cd5f14c784f8667daf658ca823de5d2cb1a6720/src-tauri/src/key_identity/backup.rs"><code>src-tauri/src/key_identity/backup.rs</code></a>: the backup record&#39;s plaintext, the archive key wrap
+<li><a href="https://github.com/rim-platform/rim-ui/blob/e3a0cc5ca103b1dfd87ec18a8289736a1b746409/src-tauri/src/key_identity/backup.rs"><code>src-tauri/src/key_identity/backup.rs</code></a>: the backup record&#39;s plaintext, the archive key wrap
 key, and the takeover against the replayed key log. <code>recovery_kit.rs</code> derives the backup key
 from a phrase or a <code>RK1-</code> key.</li>
-<li><a href="https://github.com/rim-platform/rim-ui/blob/8cd5f14c784f8667daf658ca823de5d2cb1a6720/src-tauri/src/history_archive/identity.rs"><code>src-tauri/src/history_archive/identity.rs</code></a>: writes and reads the backup files and the wrap
+<li><a href="https://github.com/rim-platform/rim-ui/blob/e3a0cc5ca103b1dfd87ec18a8289736a1b746409/src-tauri/src/history_archive/identity.rs"><code>src-tauri/src/history_archive/identity.rs</code></a>: writes and reads the backup files and the wrap
 files, and unlocks the archive from a wrap.</li>
-<li><a href="https://github.com/rim-platform/rim-ui/tree/8cd5f14c784f8667daf658ca823de5d2cb1a6720/src-tauri/src/identity_backup"><code>src-tauri/src/identity_backup/</code></a>: joins the two and holds the <code>identity_backup_*</code> commands. The
+<li><a href="https://github.com/rim-platform/rim-ui/tree/e3a0cc5ca103b1dfd87ec18a8289736a1b746409/src-tauri/src/identity_backup"><code>src-tauri/src/identity_backup/</code></a>: joins the two and holds the <code>identity_backup_*</code> commands. The
 webview passes the server&#39;s key log and, for a takeover or turning the backup on, the phrase
 once; seeds, the backup key and the wrap key never reach it.</li>
-<li><a href="https://github.com/rim-platform/rim-ui/blob/8cd5f14c784f8667daf658ca823de5d2cb1a6720/src/features/key-identity/api/identityBackup.ts"><code>src/features/key-identity/api/identityBackup.ts</code></a> and <code>components/IdentityKeyBackup.tsx</code>:
+<li><a href="https://github.com/rim-platform/rim-ui/blob/e3a0cc5ca103b1dfd87ec18a8289736a1b746409/src/features/key-identity/api/identityBackup.ts"><code>src/features/key-identity/api/identityBackup.ts</code></a> and <code>components/IdentityKeyBackup.tsx</code>:
 Settings &gt; Security, &quot;Identity key backup&quot;.</li>
-<li><a href="https://github.com/rim-platform/rim-ui/blob/8cd5f14c784f8667daf658ca823de5d2cb1a6720/src/features/history-archive/components/HistoryArchiveSettings.tsx"><code>src/features/history-archive/components/HistoryArchiveSettings.tsx</code></a>: &quot;Unlock with this
+<li><a href="https://github.com/rim-platform/rim-ui/blob/e3a0cc5ca103b1dfd87ec18a8289736a1b746409/src/features/history-archive/components/HistoryArchiveSettings.tsx"><code>src/features/history-archive/components/HistoryArchiveSettings.tsx</code></a>: &quot;Unlock with this
 device&#39;s keys&quot; when the archive is locked here and this computer&#39;s identity key opens a wrap,
 and a backup right after the archive is set up or unlocked.</li>
 </ul>
@@ -136,7 +136,7 @@ them replaces it.</li>
   </div>
 </div>
 <footer class="site-footer container"><span class="footer-brand"><img src="../../assets/rim-mark-inverse.svg" alt="" width="21" height="21"> RIM · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
-<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/8cd5f14c784f8667daf658ca823de5d2cb1a6720/docs/identity-key-backup.md">rim-ui/docs/identity-key-backup.md</a> at <code>8cd5f14</code></p>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/e3a0cc5ca103b1dfd87ec18a8289736a1b746409/docs/identity-key-backup.md">rim-ui/docs/identity-key-backup.md</a> at <code>e3a0cc5</code></p>
 <script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
 </body>
 </html>

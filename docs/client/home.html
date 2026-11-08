@@ -61,8 +61,8 @@ follows are in rim-server&#39;s <code>docs/home-layout.md</code>; this page is h
 <li>Choose <strong>Edit Home</strong>.</li>
 <li><strong>Add a box</strong>, such as a channel you watch, your direct messages, or buttons for the commands
 you run most. A Channel or Quick actions box asks for its settings first.</li>
-<li><strong>Move up</strong> and <strong>Move down</strong> put the boxes in order. <strong>Half</strong> and <strong>Full</strong> set how wide each
-one is.</li>
+<li>Drag a box by its header to put it in order, or use its <strong>⋯</strong> menu: <strong>Move up</strong> and <strong>Move
+down</strong>. <strong>Make full</strong> and <strong>Make half</strong> set how wide each one is.</li>
 <li>Choose <strong>Done</strong>. Your other devices show the same Home.</li>
 </ol>
 <p><strong>Remove</strong> takes a box off, and <strong>Reset to default</strong> goes back to the start. Looking at Home marks
@@ -142,13 +142,20 @@ saved: opening Home saves nothing, and your first Done is what saves a layout to
 <h2 id="editing-home">Editing Home <a class="anchor" href="#editing-home" aria-label="Link to this section">#</a></h2>
 <p>Edit Home, on Home or in the command palette, turns each box into one you can change:</p>
 <ul>
-<li><strong>Move up</strong> and <strong>Move down</strong> reorder it. Focus stays on the button you pressed, and the new
-place is announced, such as &quot;Moved Mentions and replies to position 1 of 3&quot;.</li>
-<li><strong>Half</strong> and <strong>Full</strong> set its width.</li>
-<li><strong>Settings</strong>, on a box that has them, opens them in a dialog: Save keeps them, Cancel or
-Escape leaves them. The number of messages or conversations is 3, 5 or 10.</li>
-<li><strong>Remove</strong> takes it off Home. A box this device can&#39;t run asks first, since it is removed from
-every device.</li>
+<li><strong>Drag it</strong> by its header, with a mouse or a finger, to another place; the other boxes shift to
+show where it will land. From the keyboard, its handle, <strong>Reorder</strong> and the box&#39;s name, picks
+it up with Space or Enter; the arrow keys move it, Space drops it and Escape cancels the drag,
+not the edit. Each step is announced, such as &quot;Picked up Mentions and replies, position 2 of 5&quot;,
+&quot;Moved to position 3 of 5&quot; and &quot;Dropped at position 3 of 5&quot;, and focus stays on the handle.</li>
+<li><strong>⋯</strong> opens the box&#39;s menu, the way to reorder without dragging: <strong>Move up</strong>, <strong>Move down</strong>,
+<strong>Settings</strong> on a box that has them, and <strong>Remove</strong>. Focus comes back to ⋯, and the new place
+is announced.</li>
+<li><strong>Make full</strong> and <strong>Make half</strong> say what pressing them does: a half box offers Make full, a
+full one Make half.</li>
+<li><strong>Settings</strong> open in a dialog: Save keeps them, Cancel or Escape leaves them. The number of
+messages or conversations is 3, 5 or 10.</li>
+<li><strong>Remove</strong>, also its own ✕ on each box, takes it off Home. A box this device can&#39;t run asks
+first, since it is removed from every device.</li>
 <li><strong>Add a box</strong> lists the boxes that can be added: a panel beside the boxes, or a sheet in a
 narrow window. Adding a Channel or Quick actions box opens its settings first, and Cancel
 there adds nothing.</li>
@@ -159,7 +166,7 @@ device goes back to the default.</li>
 <p>Edit Home is a command of this app only. It is not offered to keybinds, and nothing that runs
 commands, such as a macro, a pipeline or an agent, can change your Home.</p>
 <p>Under 760 pixels of room the boxes stand in one column; from there in two, with a full box across
-both. Dragging is not built: Move up and Move down are the way to reorder.</p>
+both.</p>
 <h2 id="what-each-device-keeps">What each device keeps <a class="anchor" href="#what-each-device-keeps" aria-label="Link to this section">#</a></h2>
 <p>Each device keeps, for each account, sealed with the account&#39;s other values:</p>
 <ul>
@@ -203,7 +210,7 @@ itself lives on your own server only.</p>
   </div>
 </div>
 <footer class="site-footer container"><span class="footer-brand"><img src="../../assets/rim-mark-inverse.svg" alt="" width="21" height="21"> RIM · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
-<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/8cd5f14c784f8667daf658ca823de5d2cb1a6720/docs/home.md">rim-ui/docs/home.md</a> at <code>8cd5f14</code></p>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/e3a0cc5ca103b1dfd87ec18a8289736a1b746409/docs/home.md">rim-ui/docs/home.md</a> at <code>e3a0cc5</code></p>
 <script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
 </body>
 </html>
