@@ -60,7 +60,7 @@ export function renderDocsNav(link, currentPage) {
 }
 
 export function renderFooter(link, source = "") {
-  return `<footer class="site-footer container"><span class="footer-brand"><img src="${link("assets/rim-lockup-inverse.svg")}" alt="RIM" width="43" height="16"> · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>${source ? `\n<p class="source-provenance container">${source}</p>` : ""}`;
+  return `<footer class="site-footer container"><span class="footer-brand"><img src="${link("assets/rim-lockup-glow-inverse.svg")}" alt="RIM" width="46" height="27"> · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>${source ? `\n<p class="source-provenance container">${source}</p>` : ""}`;
 }
 
 /** Writes only the marked shared header and footer blocks of each handwritten page. */
