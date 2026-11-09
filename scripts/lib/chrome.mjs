@@ -42,7 +42,7 @@ export function renderHeader(link, current = null) {
   }).join("\n");
   return `<header class="site-header">
   <div class="container header-inner">
-    <a class="brand" href="${link("index.html")}" aria-label="RIM home"><img src="${link("assets/rim-lockup-inverse.svg")}" alt="" width="67" height="25"></a>
+    <a class="brand" href="${link("index.html")}" aria-label="RIM home"><img src="${link("assets/rim-lockup-glow-inverse.svg")}" alt="" width="98" height="58"></a>
     <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-navigation">Menu</button>
     <nav class="site-nav" id="site-navigation" data-open="false" aria-label="Main navigation">
 ${links}
@@ -60,7 +60,7 @@ export function renderDocsNav(link, currentPage) {
 }
 
 export function renderFooter(link, source = "") {
-  return `<footer class="site-footer container"><span class="footer-brand"><img src="${link("assets/rim-lockup-inverse.svg")}" alt="RIM" width="43" height="16"> · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>${source ? `\n<p class="source-provenance container">${source}</p>` : ""}`;
+  return `<footer class="site-footer container"><span class="footer-brand"><img src="${link("assets/rim-lockup-glow-inverse.svg")}" alt="RIM" width="46" height="27"> · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>${source ? `\n<p class="source-provenance container">${source}</p>` : ""}`;
 }
 
 /** Writes only the marked shared header and footer blocks of each handwritten page. */
