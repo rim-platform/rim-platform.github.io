@@ -42,7 +42,7 @@ export function renderHeader(link, current = null) {
   }).join("\n");
   return `<header class="site-header">
   <div class="container header-inner">
-    <a class="brand" href="${link("index.html")}" aria-label="RIM home"><img src="${link("assets/rim-lockup-inverse.svg")}" alt="" width="67" height="25"></a>
+    <a class="brand" href="${link("index.html")}" aria-label="RIM home"><img src="${link("assets/rim-lockup-glow-inverse.svg")}" alt="" width="98" height="58"></a>
     <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-navigation">Menu</button>
     <nav class="site-nav" id="site-navigation" data-open="false" aria-label="Main navigation">
 ${links}
