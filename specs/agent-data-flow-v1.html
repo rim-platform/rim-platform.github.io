@@ -42,22 +42,24 @@
     <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
 <ol>
 <li><a href="#what-rim-controls">What RIM controls</a></li>
-<li><a href="#pairing">Pairing</a></li>
+<li><a href="#pairing">Pairing</a><ol><li><a href="#connecting-from-the-app">Connecting from the app</a></li></ol></li>
 <li><a href="#read-grants">Read grants</a></li>
 <li><a href="#what-a-read-returns">What a read returns</a></li>
 <li><a href="#the-record-of-what-was-given">The record of what was given</a></li>
 <li><a href="#changes">Changes</a></li>
 <li><a href="#sending">Sending</a></li>
 <li><a href="#runs">Runs</a></li>
+<li><a href="#agents-rim-starts">Agents RIM starts</a></li>
 <li><a href="#encrypted-conversations">Encrypted conversations</a></li>
 <li><a href="#plugin-commands">Plugin commands</a></li>
+<li><a href="#rims-own-commands">RIM's own commands</a></li>
 <li><a href="#across-servers">Across servers</a></li>
 <li><a href="#what-this-does-not-cover">What this does not cover</a></li>
 </ol>
 </details></aside>
     <main id="content" class="prose">
 <h1 id="where-agents-may-move-data-v1">Where agents may move data, v1</h1>
-<p class="status"><span><b>Where agents may move data, v1</b></span><span>version 1</span><span>status: draft</span><span><a href="https://github.com/rim-platform/rim-server/blob/4111cb89af23b2b7d062186c0031964901f40630/docs/specs/agent-data-flow-v1.md">rim-server/docs/specs/agent-data-flow-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/4111cb89af23b2b7d062186c0031964901f40630">4111cb8</a></span></p>
+<p class="status"><span><b>Where agents may move data, v1</b></span><span>version 1</span><span>status: draft</span><span><a href="https://github.com/rim-platform/rim-server/blob/beb5a48f892a3ac4ef53e7ee2238413e99ee35e0/docs/specs/agent-data-flow-v1.md">rim-server/docs/specs/agent-data-flow-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/beb5a48f892a3ac4ef53e7ee2238413e99ee35e0">beb5a48</a></span></p>
 <p><strong>Status: draft.</strong> This is the contract for what RIM hands to an agent that runs on your machine and
 reaches RIM through the desktop app, and for what RIM records about it. <a href="../docs/vision.html"><code>docs/vision.md</code></a> (&quot;Working
 with agents&quot;) says why. <a href="../docs/command_model.html"><code>docs/command_model.md</code></a> is the gate every call goes through. Bots follow
@@ -83,6 +85,18 @@ program from connecting by accident. It is not a boundary against malware on the
 has a local identity and a name the person sees. It holds a credential that lets it reach the
 desktop app, which can be revoked and which never lets it reach a server directly. It never receives
 the person&#39;s session, device keys, account vault, model keys or plugin secrets.</p>
+<h3 id="connecting-from-the-app">Connecting from the app <a class="anchor" href="#connecting-from-the-app" aria-label="Link to this section">#</a></h3>
+<p>The person can also start the connection inside the desktop app.</p>
+<ul>
+<li>They name the agent, and the app creates it with no grants.</li>
+<li>The app shows its address and credential once, so the person can put them in that agent&#39;s own
+settings.</li>
+<li>There is no code to compare, because the person started the connection in the app.</li>
+<li>The credential MUST NOT be shown again. Losing it means disconnecting the agent and connecting
+it again.</li>
+<li>The app MUST say that the credential sits in that agent&#39;s settings file, which other programs
+running as the person can read.</li>
+</ul>
 <h2 id="read-grants">Read grants <a class="anchor" href="#read-grants" aria-label="Link to this section">#</a></h2>
 <ul>
 <li>Everything starts off. A paired agent with no grants can read nothing.</li>
@@ -182,6 +196,43 @@ workspace&#39;s log (<a href="../docs/security/audit-access-matrix.html"><code>d
 outside RIM, and the view MUST say so.</li>
 <li>A change to what the agent may do starts a new run, so a run keeps the permissions it started with.</li>
 </ul>
+<h2 id="agents-rim-starts">Agents RIM starts <a class="anchor" href="#agents-rim-starts" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>The desktop app MAY start an agent program the person chose, on this computer, and talk to it
+over the Agent Client Protocol (ACP).</li>
+<li>The person adds each program. The app MUST show the exact command line and ask before saving
+it.</li>
+<li>The app MAY download and install the agent programs it names, and no others, each only when the
+person asks for that one. For each it MUST:<ul>
+<li>fix the source in its own code (an archive address or a package name) and refuse a listing
+that points anywhere else;</li>
+<li>check the download against its published checksum before using it;</li>
+<li>ask first, naming the agent, its version, its source and its licence, plus any runtime it also
+downloads (such as Node.js);</li>
+<li>install into the app&#39;s own folder, never system-wide, and add only the program it installed to
+the programs the person allowed.</li>
+</ul>
+</li>
+<li>Signing in to an agent is the agent&#39;s own flow. The app MAY start it, by opening a terminal that
+runs the allowed program, or by asking the agent to open the browser. The app never reads or
+keeps the agent&#39;s credentials.</li>
+<li>The agent runs as the person, in a folder they chose, with the agent&#39;s own tools and permission
+settings. RIM does not sandbox it, and the app MUST say so where sessions start.</li>
+<li><strong>Only the person, through the app&#39;s own controls, may send an agent a prompt or answer its
+permission requests.</strong> The app MUST NOT turn messages from other people or bots, macros,
+plugin actions, pipelines, or anything the agent itself sends through RIM&#39;s tools into prompts
+or answers.</li>
+<li>Each started program is a paired agent. RIM&#39;s tools in its sessions follow this contract
+unchanged: grants, the record, confirmations and the encrypted notice.</li>
+<li>When RIM&#39;s tools refuse it for a missing grant, the app MAY offer the grant, through the same
+confirmation as anywhere else.</li>
+<li>RIM keeps no session transcripts. The list of recent sessions (the agent, the folder, the
+agent&#39;s session id, a title and times) stays on this device, sealed with the account vault, and
+reaches no server. Reopening a session asks the agent to replay it.</li>
+<li>What the agent does outside RIM&#39;s tools (files, commands, its own tools, its model provider) is
+outside what RIM controls. See &quot;What RIM controls&quot;.</li>
+<li>The web app cannot start agents.</li>
+</ul>
 <h2 id="encrypted-conversations">Encrypted conversations <a class="anchor" href="#encrypted-conversations" aria-label="Link to this section">#</a></h2>
 <ul>
 <li>They are closed by default, and &quot;all channels you can see&quot; never includes one.</li>
@@ -217,6 +268,15 @@ runs. It cannot be used by a plugin that changed since.</li>
 <li>A command&#39;s title and description were written by the plugin&#39;s author. An agent receives them marked as
 untrusted, and the dialog marks them as the plugin&#39;s words.</li>
 </ul>
+<h2 id="rims-own-commands">RIM&#39;s own commands <a class="anchor" href="#rims-own-commands" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>An outside agent can also be offered built-in commands, under the same per-command approval as
+plugin commands: only <code>ai_callable</code> built-ins the server executes and that change something,
+never <code>chat.post_message</code> (the agent posts with its send tool) or the commands that manage
+agents. Every call asks the person, and a dangerous command is only proposed. Its context comes
+only from ids in the arguments, and each must be inside the agent&#39;s grants. <code>command_model.md</code>,
+&quot;Who Can Run Commands&quot;, is the full rule.</li>
+</ul>
 <h2 id="across-servers">Across servers <a class="anchor" href="#across-servers" aria-label="Link to this section">#</a></h2>
 <ul>
 <li>In this version, only workspaces on the server the app is signed in to can be granted. A workspace
@@ -235,13 +295,14 @@ project runs.</li>
 under their own contract, <a href="bots-v1.html"><code>docs/specs/bots-v1.md</code></a>.</li>
 <li>Agents acting for another person, and approvals by another person.</li>
 <li>A shared view of agent work. The record stays private to the person.</li>
+<li>Following or directing an agent session from another device.</li>
 </ul>
 
     </main>
   </div>
 </div>
 <footer class="site-footer container"><span class="footer-brand"><img src="../assets/rim-lockup-glow-inverse.svg" alt="RIM" width="46" height="27"> · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
-<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-server/blob/4111cb89af23b2b7d062186c0031964901f40630/docs/specs/agent-data-flow-v1.md">rim-server/docs/specs/agent-data-flow-v1.md</a> at <code>4111cb8</code></p>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-server/blob/beb5a48f892a3ac4ef53e7ee2238413e99ee35e0/docs/specs/agent-data-flow-v1.md">rim-server/docs/specs/agent-data-flow-v1.md</a> at <code>beb5a48</code></p>
 <script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
 </body>
 </html>

@@ -315,6 +315,13 @@ malformed addresses return a validation error.</p>
 <tr><td><code>title</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td></td></tr>
 <tr><td><code>description</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td></td></tr>
 <tr><td><code>steps</code></td><td><code>[<a href="inputs.html#UserCommandStepInput">UserCommandStepInput</a>!]!</code></td><td></td></tr>
+<tr><td><code>aiCallable</code></td><td><code><a href="scalars.html#Boolean">Boolean</a>!</code> <span class="faint">= false</span></td><td><p>Lets the AI agent run the macro; refused unless every step is an AI-callable built-in
+the server runs, with every argument fixed.</p>
+</td></tr>
+<tr><td><code>nlDescription</code></td><td><code><a href="scalars.html#String">String</a></code></td><td><p>How the macro is described to the AI agent, at most 1,000 characters.</p>
+</td></tr>
+<tr><td><code>intentSamples</code></td><td><code>[<a href="scalars.html#String">String</a>!]</code></td><td><p>Up to 10 example phrases for the AI agent, each at most 200 characters.</p>
+</td></tr>
 </tbody></table></div>
 <p class="faint">Used by <a href="mutation.html#createUserCommand">Mutation.createUserCommand</a></p>
 </section>
@@ -1136,6 +1143,13 @@ the link on for the first time issues its token.</p>
 <tr><td><code>description</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td></td></tr>
 <tr><td><code>steps</code></td><td><code>[<a href="inputs.html#UserCommandStepInput">UserCommandStepInput</a>!]!</code></td><td></td></tr>
 <tr><td><code>isEnabled</code></td><td><code><a href="scalars.html#Boolean">Boolean</a>!</code></td><td></td></tr>
+<tr><td><code>aiCallable</code></td><td><code><a href="scalars.html#Boolean">Boolean</a></code></td><td><p>Omitted, keeps the stored value, which turns off when the new steps no longer let the
+agent run the macro.</p>
+</td></tr>
+<tr><td><code>nlDescription</code></td><td><code><a href="scalars.html#String">String</a></code></td><td><p>Omitted, keeps the stored value.</p>
+</td></tr>
+<tr><td><code>intentSamples</code></td><td><code>[<a href="scalars.html#String">String</a>!]</code></td><td><p>Omitted, keeps the stored value.</p>
+</td></tr>
 </tbody></table></div>
 <p class="faint">Used by <a href="mutation.html#updateUserCommand">Mutation.updateUserCommand</a></p>
 </section>
@@ -1155,10 +1169,16 @@ the link on for the first time issues its token.</p>
 </section>
 <section class="entry" id="UserCommandStepInput" data-name="UserCommandStepInput">
 <h3><code>UserCommandStepInput</code><span class="kind">input</span></h3>
-<div class="desc"></div>
+<div class="desc"><p>One step of a macro.</p>
+</div>
 <div class="tablewrap"><table class="fields"><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
-<tr><td><code>commandId</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td></td></tr>
+<tr><td><code>commandId</code></td><td><code><a href="scalars.html#String">String</a>!</code></td><td><p>A built-in, app or plugin command id.</p>
+</td></tr>
 <tr><td><code>args</code></td><td><code><a href="scalars.html#JSON">JSON</a></code></td><td></td></tr>
+<tr><td><code>ask</code></td><td><code>[<a href="scalars.html#String">String</a>!]</code></td><td><p>Names of the arguments the client asks for when the macro runs: at most 32, each 1 to
+64 bytes, none twice and none a key of <code>args</code>. Omitted, none on create, and on update
+what the stored step at the same position asked for when it names the same command.</p>
+</td></tr>
 </tbody></table></div>
 <p class="faint">Used by <a href="inputs.html#CreateUserCommandInput">CreateUserCommandInput</a>, <a href="inputs.html#UpdateUserCommandInput">UpdateUserCommandInput</a></p>
 </section>
@@ -1186,7 +1206,7 @@ the link on for the first time issues its token.</p>
   </div>
 </div>
 <footer class="site-footer container"><span class="footer-brand"><img src="../assets/rim-lockup-glow-inverse.svg" alt="RIM" width="46" height="27"> · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
-<p class="source-provenance container">Generated from <a href="https://github.com/rim-platform/rim-ui/blob/4b2931042ac25d5eca2f50c8ad6f683a3c12ccf1/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>4b29310</code></p>
+<p class="source-provenance container">Generated from <a href="https://github.com/rim-platform/rim-ui/blob/ed1032eacc0d9b5084470131b2d34cc144406df8/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>ed1032e</code></p>
 <script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
 <script>
 (() => {

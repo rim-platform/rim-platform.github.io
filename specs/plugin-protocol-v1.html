@@ -50,10 +50,10 @@
 <li><a href="#6-connection-lifecycle">6. Connection lifecycle</a></li>
 <li><a href="#7-handshake-and-version-negotiation">7. Handshake and version negotiation</a><ol><li><a href="#request-rimhandshake-host-to-plugin">Request: rim.handshake (host to plugin)</a></li><li><a href="#response-plugin-to-host">Response (plugin to host)</a></li><li><a href="#negotiation-rules">Negotiation rules</a></li></ol></li>
 <li><a href="#8-errors">8. Errors</a></li>
-<li><a href="#9-running-commands">9. Running commands</a><ol><li><a href="#request-rimcommandexecute-host-to-plugin">Request: rim.command.execute (host to plugin)</a></li><li><a href="#response-plugin-to-host-1">Response (plugin to host)</a></li></ol></li>
+<li><a href="#9-running-commands">9. Running commands</a><ol><li><a href="#request-rimcommandexecute-host-to-plugin">Request: rim.command.execute (host to plugin)</a></li><li><a href="#response-plugin-to-host-1">Response (plugin to host)</a></li><li><a href="#request-rimcommandexecute-plugin-to-host">Request: rim.command.execute (plugin to host)</a></li></ol></li>
 <li><a href="#10-the-dangerous-command-confirmation-gate">10. The dangerous-command confirmation gate</a></li>
 <li><a href="#11-people-principals">11. People: principals</a><ol><li><a href="#what-a-plugin-sees-of-a-person">What a plugin sees of a person</a></li><li><a href="#the-signed-in-user-notice-rimprincipalchanged">The signed-in-user notice: rim.principal.changed</a></li><li><a href="#todays-ids-are-provisional-and-will-change-once">Today's ids are provisional, and will change once</a></li><li><a href="#the-id-switch-notice-rimprincipalsremapped">The id switch notice: rim.principals.remapped</a></li></ol></li>
-<li><a href="#12-capabilities">12. Capabilities</a><ol><li><a href="#capability-names">Capability names</a></li><li><a href="#what-the-host-enforces">What the host enforces</a></li><li><a href="#rules-for-v1">Rules for v1</a></li></ol></li>
+<li><a href="#12-capabilities">12. Capabilities</a><ol><li><a href="#capability-names">Capability names</a></li><li><a href="#what-the-host-enforces">What the host enforces</a></li><li><a href="#commands-a-plugin-runs-runs_commands">Commands a plugin runs: runs_commands</a></li><li><a href="#rules-for-v1">Rules for v1</a></li></ol></li>
 <li><a href="#13-heartbeats">13. Heartbeats</a></li>
 <li><a href="#14-logging">14. Logging</a></li>
 <li><a href="#15-settings">15. Settings</a><ol><li><a href="#the-schema-settings_schema">The schema: settings_schema</a></li><li><a href="#where-the-values-live">Where the values live</a></li><li><a href="#request-rimsettingsget-plugin-to-host">Request: rim.settings.get (plugin to host)</a></li><li><a href="#notification-rimsettingschanged-host-to-plugin">Notification: rim.settings.changed (host to plugin)</a></li><li><a href="#what-secret-settings-protect">What secret settings protect</a></li></ol></li>
@@ -68,7 +68,7 @@
 </details></aside>
     <main id="content" class="prose">
 <h1 id="rim-plugin-protocol-v1">RIM plugin protocol v1</h1>
-<p class="status"><span><b>RIM plugin protocol v1</b></span><span>version 1</span><span>status: frozen, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/4111cb89af23b2b7d062186c0031964901f40630/docs/specs/plugin-protocol-v1.md">rim-server/docs/specs/plugin-protocol-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/4111cb89af23b2b7d062186c0031964901f40630">4111cb8</a></span></p>
+<p class="status"><span><b>RIM plugin protocol v1</b></span><span>version 1</span><span>status: frozen, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/beb5a48f892a3ac4ef53e7ee2238413e99ee35e0/docs/specs/plugin-protocol-v1.md">rim-server/docs/specs/plugin-protocol-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/beb5a48f892a3ac4ef53e7ee2238413e99ee35e0">beb5a48</a></span></p>
 <p><strong>Status: frozen, normative.</strong> This is the contract between the RIM desktop host and a plugin
 process. It is written for someone building a plugin from scratch, in any language, without an
 SDK.</p>
@@ -120,6 +120,8 @@ both in the handshake and in <strong><code>rim.principal.changed</code></strong>
 <li>You may write to the host log with <strong><code>rim.log</code></strong>.</li>
 <li>You read the settings the user saved for your plugin with <strong><code>rim.settings.get</code></strong>, and the host
 sends <strong><code>rim.settings.changed</code></strong> when they change.</li>
+<li>You may run commands that are not yours, when the user granted them, with your own
+<strong><code>rim.command.execute</code></strong> request to the host (section 9).</li>
 <li>When the host sends <strong><code>rim.shutdown</code></strong> or closes your stdin, you exit.</li>
 </ul>
 <p>That is all of frozen v1. Everything else a plugin can do today is listed, with its real status,
@@ -596,6 +598,117 @@ unknown one with <code>INVALID_PARAMS</code>, never by crashing.</li>
 <li>Several commands can be in flight at once. A plugin MAY handle them one at a time; the host
 matches answers by <code>id</code>.</li>
 </ul>
+<h3 id="request-rimcommandexecute-plugin-to-host">Request: <code>rim.command.execute</code> (plugin to host) <a class="anchor" href="#request-rimcommandexecute-plugin-to-host" aria-label="Link to this section">#</a></h3>
+<p>A plugin may ask the host to run a command that is not its own: a built-in or app command whose
+id its manifest lists in <code>runs_commands</code> and the user granted (section 12). The request has the
+same name as the host&#39;s request above; which side sends it says which one it is. It was added
+within v1 (section 17), so a host before it answers <code>METHOD_NOT_FOUND</code>. It needs no capability:
+the <code>runs_commands</code> grant is the permission.</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>commandId</code></td>
+<td>string</td>
+<td>The command&#39;s full id, such as <code>workspace.open_settings</code>.</td>
+</tr>
+<tr>
+<td><code>args</code></td>
+<td>object, optional</td>
+<td>The command&#39;s arguments, keyed by argument name. Missing means <code>{}</code>.</td>
+</tr>
+</tbody></table></div>
+<pre><code class="language-json">{
+  &quot;jsonrpc&quot;: &quot;2.0&quot;,
+  &quot;id&quot;: 12,
+  &quot;method&quot;: &quot;rim.command.execute&quot;,
+  &quot;params&quot;: { &quot;commandId&quot;: &quot;chat.set_topic&quot;, &quot;args&quot;: { &quot;server_id&quot;: &quot;…&quot;, &quot;conversation_id&quot;: &quot;…&quot;, &quot;topic&quot;: &quot;Release day&quot; } }
+}</code></pre>
+<p>The <code>result</code> is an object:</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Result field</th>
+<th>Type</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>status</code></td>
+<td><code>&quot;success&quot;</code>, <code>&quot;error&quot;</code> or <code>&quot;refused&quot;</code></td>
+<td><code>success</code>: the command ran. <code>error</code>: it was started and failed. <code>refused</code>: it did not run.</td>
+</tr>
+<tr>
+<td><code>code</code></td>
+<td>string, optional</td>
+<td>Why it failed or was refused. For <code>error</code>, the command&#39;s own error code, such as <code>VALIDATION</code>; for <code>refused</code>, one of the codes below.</td>
+</tr>
+<tr>
+<td><code>message</code></td>
+<td>string, optional</td>
+<td>One line a person can read.</td>
+</tr>
+</tbody></table></div>
+<pre><code class="language-json">{ &quot;jsonrpc&quot;: &quot;2.0&quot;, &quot;id&quot;: 12, &quot;result&quot;: { &quot;status&quot;: &quot;refused&quot;, &quot;code&quot;: &quot;NOT_GRANTED&quot;, &quot;message&quot;: &quot;The user has not granted chat.set_topic to this plugin.&quot; } }</code></pre>
+<p>The plugin never receives the command&#39;s output data. A refusal is a <code>result</code>, not a JSON-RPC
+error; params of the wrong shape get <code>INVALID_PARAMS</code>.</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th><code>code</code> with <code>refused</code></th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>NOT_GRANTED</code></td>
+<td>The id is not in <code>runs_commands</code>, or the user has not granted it.</td>
+</tr>
+<tr>
+<td><code>NOT_ALLOWED</code></td>
+<td>No plugin may run it: it is dangerous, <code>Restricted</code>, an agent-management command, another plugin&#39;s command, one of the user&#39;s macros (<code>user.*</code>), or an app command not marked as runnable by plugins.</td>
+</tr>
+<tr>
+<td><code>CONFIRMATION_DISMISSED</code></td>
+<td>The user dismissed the confirmation for this call.</td>
+</tr>
+<tr>
+<td><code>COOLING_DOWN</code></td>
+<td>The user dismissed a confirmation for this plugin less than 60 seconds ago.</td>
+</tr>
+<tr>
+<td><code>RATE_LIMITED</code></td>
+<td>The plugin made more than 20 command calls in the last minute.</td>
+</tr>
+<tr>
+<td><code>BUSY</code></td>
+<td>Another confirmation is open.</td>
+</tr>
+<tr>
+<td><code>UNAVAILABLE</code></td>
+<td>The command does not exist on this server or in this client.</td>
+</tr>
+</tbody></table></div>
+<p>Rules:</p>
+<ul>
+<li>A built-in that changes something (<code>Mutating</code>) asks the user on every call, in a confirmation
+that names the plugin; the answer arrives after the user decided. Other granted commands run at
+once.</li>
+<li>A plugin&#39;s own commands, <code>plugin.&lt;pluginId&gt;.*</code>, are run by the host&#39;s request above, not by
+this one; another plugin&#39;s commands are always <code>NOT_ALLOWED</code>.</li>
+<li>A macro, <code>user.&lt;key&gt;</code>, is the user&#39;s own action and is always <code>NOT_ALLOWED</code>, granted or not.</li>
+<li>A built-in the server executes goes to the server with initiator <code>PLUGIN</code>. Its context is the
+user&#39;s current workspace, conversation and thread only, never a selected message;
+<code>server_id</code>, <code>conversation_id</code> and <code>thread_id</code> in <code>args</code> take precedence over it.</li>
+<li>A built-in is available to plugins only when the server lists it for the palette or the keybind
+picker; any other is <code>UNAVAILABLE</code>.</li>
+<li>Every run is recorded in the plugin&#39;s audit.</li>
+</ul>
+<p><code>command_model.md</code> in rim-server, &quot;Who Can Run Commands&quot;, is the full rule.</p>
 <h2 id="10-the-dangerous-command-confirmation-gate">10. The dangerous-command confirmation gate <a class="anchor" href="#10-the-dangerous-command-confirmation-gate" aria-label="Link to this section">#</a></h2>
 <p>A command whose manifest entry has <code>&quot;dangerous&quot;: true</code> (restarting a pod, deleting a branch,
 sending money) runs only after <strong>the user confirmed that run</strong>. The gate works like this:</p>
@@ -838,6 +951,22 @@ start-time list until it stopped.</li>
 </ul>
 </li>
 </ul>
+<h3 id="commands-a-plugin-runs-runs_commands">Commands a plugin runs: <code>runs_commands</code> <a class="anchor" href="#commands-a-plugin-runs-runs_commands" aria-label="Link to this section">#</a></h3>
+<p>The optional manifest field <code>runs_commands</code> lists the commands that are not the plugin&#39;s own and
+that it wants to run with its <code>rim.command.execute</code> request to the host (section 9). It is an
+array of at most <strong>32</strong> unique command ids. Each is 1 to 128 bytes of two or more segments
+joined by <code>.</code>, each segment one or more of <code>a-z</code>, <code>0-9</code>, <code>_</code> and <code>-</code>; none starts with
+<code>plugin.</code>; and none is an agent-management id: <code>agents.approve_request</code>,
+<code>agents.refuse_request</code>, <code>agents.approve_pairing</code>, <code>agents.refuse_pairing</code>, <code>agents.disconnect</code>,
+<code>agents.choose_reads</code>, <code>agents.choose_plugin_commands</code>, <code>agents.open_runs</code>,
+<code>agents.open_record</code> or <code>agents.clear_record</code>. A manifest that breaks these rules fails to
+install.</p>
+<p>An id the host does not know is allowed, since the server decides which commands exist; the
+install prompt shows it as not available, and a call to it is refused with <code>UNAVAILABLE</code>. The
+user grants the ids at install and can refuse them. When an update adds ids, the added ones stay
+ungranted until the user approves them. A dangerous or <code>Restricted</code> command, and a <code>user.*</code> id,
+which names one of the user&#39;s macros, are never run for a plugin, whatever the list says: a call
+to one is refused with <code>NOT_ALLOWED</code>.</p>
 <h3 id="rules-for-v1">Rules for v1 <a class="anchor" href="#rules-for-v1" aria-label="Link to this section">#</a></h3>
 <ul>
 <li><code>grantedCapabilities</code> is a list of strings. A plugin MUST ignore names it does not know.</li>
@@ -1226,6 +1355,12 @@ section 7, and the user sees why.</li>
 <td>notification</td>
 <td>15</td>
 </tr>
+<tr>
+<td><code>rim.command.execute</code></td>
+<td>plugin → host</td>
+<td>request</td>
+<td>9, 12; added within v1 (section 17), older hosts answer <code>METHOD_NOT_FOUND</code></td>
+</tr>
 </tbody></table></div>
 <h3 id="routed-by-the-host-but-not-part-of-v1">Routed by the host but not part of v1 <a class="anchor" href="#routed-by-the-host-but-not-part-of-v1" aria-label="Link to this section">#</a></h3>
 <p>The host&#39;s broker recognises these names, but their shapes are <strong>not frozen</strong>. The chat methods
@@ -1490,7 +1625,7 @@ is ignored.</li>
   </div>
 </div>
 <footer class="site-footer container"><span class="footer-brand"><img src="../assets/rim-lockup-glow-inverse.svg" alt="RIM" width="46" height="27"> · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
-<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-server/blob/4111cb89af23b2b7d062186c0031964901f40630/docs/specs/plugin-protocol-v1.md">rim-server/docs/specs/plugin-protocol-v1.md</a> at <code>4111cb8</code></p>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-server/blob/beb5a48f892a3ac4ef53e7ee2238413e99ee35e0/docs/specs/plugin-protocol-v1.md">rim-server/docs/specs/plugin-protocol-v1.md</a> at <code>beb5a48</code></p>
 <script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
 </body>
 </html>

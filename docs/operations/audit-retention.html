@@ -76,7 +76,7 @@
 </tbody></table></div>
 <p>With <code>RIM_AUDIT_RETENTION_DAYS</code> unset the table keeps every row forever, and with
 <code>RIM_AUDIT_EXPORT_RETENTION_DAYS</code> unset every export is kept. The public relay&#39;s overlay,
-<a href="https://github.com/rim-platform/rim-server/blob/4111cb89af23b2b7d062186c0031964901f40630/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a>, sets both to 90, so a command audit row is gone completely about
+<a href="https://github.com/rim-platform/rim-server/blob/beb5a48f892a3ac4ef53e7ee2238413e99ee35e0/deploy/compose.relay.yml"><code>deploy/compose.relay.yml</code></a>, sets both to 90, so a command audit row is gone completely about
 180 days after it was written.</p>
 <p>The admin audit view shows the retention in force. It reads <code>serverInfo.auditRetentionDays</code>,
 readable without a session: the configured days, or null when rows are kept forever.</p>
@@ -212,7 +212,7 @@ files hold IP addresses: the signup, login and rate-limit events carry the clien
   </div>
 </div>
 <footer class="site-footer container"><span class="footer-brand"><img src="../../assets/rim-lockup-glow-inverse.svg" alt="RIM" width="46" height="27"> · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
-<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-server/blob/4111cb89af23b2b7d062186c0031964901f40630/docs/operations/audit-retention.md">rim-server/docs/operations/audit-retention.md</a> at <code>4111cb8</code></p>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-server/blob/beb5a48f892a3ac4ef53e7ee2238413e99ee35e0/docs/operations/audit-retention.md">rim-server/docs/operations/audit-retention.md</a> at <code>beb5a48</code></p>
 <script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
 </body>
 </html>

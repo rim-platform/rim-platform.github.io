@@ -324,7 +324,7 @@ repository, who did it, the title and the link:</p>
 it points at <code>https://github.com/</code>. Any other event or action, or a handled one missing a field the line
 needs, answers <code>202</code> and posts nothing.</p>
 <p><strong>A webhook mentions nobody.</strong> <code>&lt;@id&gt;</code>, <code>@channel</code> and <code>@here</code> in what it receives are made plain text
-under every format. People whose notification level is <code>ALL</code> hear of the post as of any other message.</p>
+under every format, in the text and in the link. People whose notification level is <code>ALL</code> hear of the post as of any other message.</p>
 <p><strong>Answers.</strong></p>
 <div class="tablewrap"><table>
 <thead>
@@ -449,7 +449,8 @@ post is cut to 1,000 characters, counting the link.</li>
 <p><strong>The link.</strong> <code>link</code> is optional: a <code>value</code> written like <code>post</code> and an <code>origin</code> such as
 <code>https://github.com/</code>. It&#39;s added after the text only when it starts with the origin and holds nothing odd
 (<code>&lt;</code>, <code>&gt;</code>, brackets, quotes, a backtick, a backslash, <code>*</code>, <code>|</code>), up to 512 characters. Otherwise the message
-posts without it.</p>
+posts without it. The <code>@</code> of an <code>@channel</code> or <code>@here</code> in it, in any case, becomes <code>%40</code>, so the link goes to
+the same address and mentions nobody; any other <code>@</code> stays.</p>
 <p><strong>What it answers.</strong></p>
 <div class="tablewrap"><table>
 <thead>
@@ -651,7 +652,7 @@ disclosure.</p>
   </div>
 </div>
 <footer class="site-footer container"><span class="footer-brand"><img src="../assets/rim-lockup-glow-inverse.svg" alt="RIM" width="46" height="27"> · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
-<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-server/blob/4111cb89af23b2b7d062186c0031964901f40630/docs/bots.md">rim-server/docs/bots.md</a> at <code>4111cb8</code></p>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-server/blob/beb5a48f892a3ac4ef53e7ee2238413e99ee35e0/docs/bots.md">rim-server/docs/bots.md</a> at <code>beb5a48</code></p>
 <script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
 </body>
 </html>

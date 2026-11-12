@@ -96,7 +96,9 @@ community and an association start from the same core, and each adds what it nee
 <li><strong>Whoever runs an agent decides where.</strong> They also choose its model or key. The RIM project runs
 no model service for agents, and no agent&#39;s prompts go through one. Every agent reaches RIM as a
 client, with the same limits and checks as anyone else.</li>
-<li><strong>Your own agent runs on your machine.</strong> It talks directly to the provider you chose.</li>
+<li><strong>Your own agent runs on your machine.</strong> It talks directly to the provider you chose. The
+desktop app can start an agent you chose and let you direct it, with any agent that speaks the
+Agent Client Protocol.</li>
 <li><strong>A server&#39;s owner may run an agent on that server.</strong> It is their choice, and it is off until
 they turn it on. It can read only what the server can already read, never an encrypted
 conversation, and people on that server can see that it runs, who runs it and where what it
@@ -114,7 +116,9 @@ see or limit that step.</li>
 and expires.</li>
 <li><strong>Plugin commands are approved one by one.</strong> An agent gets only the commands a plugin offers to
 agents and you approve for that agent. An outside agent still asks before an approved command
-that changes something. A dangerous command is only proposed for you to run.</li>
+that changes something. A dangerous command is only proposed for you to run.
+An outside agent can also be given RIM&#39;s own commands, approved one by one in the same way;
+it asks you every time, and a dangerous one is only proposed.</li>
 <li><strong>A bot has its own identity.</strong> It has a token an Owner or Moderator can revoke, and whoever runs
 it chooses where, with their own model and key. It acts within its grants without a confirmation,
 and the people in a channel can see who runs it and where what it reads goes. Bots never join
@@ -180,7 +184,7 @@ the pods panel, the pull-request panel, the poll and release plugins.</li>
   </div>
 </div>
 <footer class="site-footer container"><span class="footer-brand"><img src="../assets/rim-lockup-glow-inverse.svg" alt="RIM" width="46" height="27"> · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
-<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-server/blob/4111cb89af23b2b7d062186c0031964901f40630/docs/vision.md">rim-server/docs/vision.md</a> at <code>4111cb8</code></p>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-server/blob/beb5a48f892a3ac4ef53e7ee2238413e99ee35e0/docs/vision.md">rim-server/docs/vision.md</a> at <code>beb5a48</code></p>
 <script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
 </body>
 </html>

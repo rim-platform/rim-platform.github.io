@@ -41,14 +41,23 @@
   <div class="page with-toc">
     <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
 <ol>
-<li><a href="#include">@include</a><ol><li><a href="#skip">@skip</a></li><li><a href="#specifiedBy">@specifiedBy</a></li></ol></li>
+<li><a href="#deprecated">@deprecated</a><ol><li><a href="#include">@include</a></li><li><a href="#skip">@skip</a></li><li><a href="#specifiedBy">@specifiedBy</a></li></ol></li>
 </ol>
 </details></aside>
     <main id="content" class="prose">
 <h1>Directives</h1>
-<p class="lede">3 directives, in the order the schema defines them.</p>
+<p class="lede">4 directives, in the order the schema defines them.</p>
 <input id="filter" class="search" type="search" placeholder="Filter directives by name" aria-label="Filter directives by name" autocomplete="off">
 <p id="filter-none" class="muted" hidden>Nothing matches.</p>
+<section class="entry" id="deprecated" data-name="@deprecated">
+<h3><code>@deprecated</code><span class="kind">directive</span></h3>
+<div class="desc"><p>Marks an element of a GraphQL schema as no longer supported.</p>
+</div>
+<div class="sig">directive @deprecated(reason: String = &quot;No longer supported&quot;) on FIELD_DEFINITION | ARGUMENT_DEFINITION | INPUT_FIELD_DEFINITION | ENUM_VALUE</div><div class="tablewrap"><table class="fields"><thead><tr><th>Argument</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>reason</code></td><td><code><a href="scalars.html#String">String</a></code> <span class="faint">= &quot;No longer supported&quot;</span></td><td></td></tr>
+</tbody></table></div>
+
+</section>
 <section class="entry" id="include" data-name="@include">
 <h3><code>@include</code><span class="kind">directive</span></h3>
 <div class="desc"><p>Directs the executor to include this field or fragment only when the <code>if</code> argument is true.</p>
@@ -75,7 +84,7 @@
   </div>
 </div>
 <footer class="site-footer container"><span class="footer-brand"><img src="../assets/rim-lockup-glow-inverse.svg" alt="RIM" width="46" height="27"> · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
-<p class="source-provenance container">Generated from <a href="https://github.com/rim-platform/rim-ui/blob/4b2931042ac25d5eca2f50c8ad6f683a3c12ccf1/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>4b29310</code></p>
+<p class="source-provenance container">Generated from <a href="https://github.com/rim-platform/rim-ui/blob/ed1032eacc0d9b5084470131b2d34cc144406df8/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>ed1032e</code></p>
 <script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
 <script>
 (() => {

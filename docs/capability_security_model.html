@@ -200,6 +200,11 @@ The contract is
 <li>integration commands use integration-granted capabilities only</li>
 <li>user-defined commands/macros cannot exceed the capabilities of the commands they compose plus any
 explicit local permissions granted by the user</li>
+<li>a plugin runs a command that is not its own only when its manifest lists the id in
+<code>runs_commands</code> and the person granted it; the command keeps its own permissions and gates, so
+the grant adds no capability, a <code>Mutating</code> command waits for the person&#39;s confirmation on every
+call, and a dangerous or <code>Restricted</code> command is never run for a plugin
+(<a href="command_model.html"><code>command_model.md</code></a>, Who Can Run Commands)</li>
 </ul>
 <p>This rule is required to avoid privilege escalation.</p>
 <h2 id="user-defined-commands-and-macros">User-Defined Commands And Macros <a class="anchor" href="#user-defined-commands-and-macros" aria-label="Link to this section">#</a></h2>
@@ -332,7 +337,7 @@ local behavior</li>
   </div>
 </div>
 <footer class="site-footer container"><span class="footer-brand"><img src="../assets/rim-lockup-glow-inverse.svg" alt="RIM" width="46" height="27"> · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
-<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-server/blob/4111cb89af23b2b7d062186c0031964901f40630/docs/capability_security_model.md">rim-server/docs/capability_security_model.md</a> at <code>4111cb8</code></p>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-server/blob/beb5a48f892a3ac4ef53e7ee2238413e99ee35e0/docs/capability_security_model.md">rim-server/docs/capability_security_model.md</a> at <code>beb5a48</code></p>
 <script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
 </body>
 </html>

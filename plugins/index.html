@@ -80,7 +80,7 @@ runs it.</li>
 <ul>
 <li>commands, listed in the command palette under the plugin&#39;s name, bindable to keys and, when
 the plugin marks them so and the user agrees, callable by the AI agent;</li>
-<li>panels, shown next to the tool panel or in place of the conversation;</li>
+<li>panels, shown as a narrow column at the left of the page or in its place;</li>
 <li>context actions in a message&#39;s context menu;</li>
 <li>keybind suggestions the user can assign.</li>
 </ul>
@@ -290,8 +290,12 @@ running plugin granted Render UI Panels, showing the plugin&#39;s name and the p
 below them, set apart, <strong>Manage plugins…</strong>, which opens Settings → Plugins. Choosing a row
 opens the panel. While no such plugin has a panel, the top bar shows no <strong>Plugins</strong>. A panel left open stops showing when its plugin loses that permission. A plugin&#39;s
 settings are not in this menu: they open from the places listed under <strong>Settings</strong>. The entry
-stays marked while a plugin panel is open. A panel opens next to the tool panel or, like the
-Pods panel, in place of the conversation. Its header shows the panel&#39;s title and a close
+stays marked while a plugin panel is open. A panel opens over the page shown, whichever it is:
+as a narrow column at its left, next to the tool panel beside a conversation, which stays
+open when you go to another page, or, like the Pods panel, in place of the page until you
+close it or go to another page. A panel learns which conversation is open only while the
+conversation is the page shown, and a plugin command that needs a conversation says &quot;Open a
+conversation first&quot; on any other page. Its header shows the panel&#39;s title and a close
 button, and under them the plugin&#39;s name, its kind and where it came from, in full. A long
 title is shortened and shows in full on hover. <a href="../docs/client/ui-shell.html">UI shell</a> describes the menu&#39;s
 keys.</li>
@@ -455,7 +459,7 @@ permissions, data, settings and files. To use it again, install it again.</li>
   </div>
 </div>
 <footer class="site-footer container"><span class="footer-brand"><img src="../assets/rim-lockup-glow-inverse.svg" alt="RIM" width="46" height="27"> · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
-<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/4b2931042ac25d5eca2f50c8ad6f683a3c12ccf1/docs/plugins.md">rim-ui/docs/plugins.md</a> at <code>4b29310</code></p>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/ed1032eacc0d9b5084470131b2d34cc144406df8/docs/plugins.md">rim-ui/docs/plugins.md</a> at <code>ed1032e</code></p>
 <script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
 </body>
 </html>

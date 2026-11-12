@@ -44,8 +44,14 @@
 <li><a href="#before-you-start">Before you start</a></li>
 <li><a href="#turn-it-on">Turn it on</a></li>
 <li><a href="#connect-claude-code">Connect Claude Code</a></li>
+<li><a href="#connect-another-agent">Connect another agent</a></li>
+<li><a href="#for-tool-authors-the-pairing-protocol">For tool authors: the pairing protocol</a></li>
+<li><a href="#agents-rim-can-start">Agents RIM can start</a></li>
+<li><a href="#sessions">Sessions</a></li>
+<li><a href="#ask-agent-about-a-message-or-channel">Ask agent about a message or channel</a><ol><li><a href="#the-reference-an-agent-is-given">The reference an agent is given</a></li></ol></li>
 <li><a href="#choose-what-it-can-read">Choose what it can read</a></li>
 <li><a href="#when-it-wants-to-post">When it wants to post</a></li>
+<li><a href="#rim-commands">RIM commands</a></li>
 <li><a href="#plugin-commands">Plugin commands</a></li>
 <li><a href="#see-what-it-was-given">See what it was given</a></li>
 <li><a href="#disconnect-it">Disconnect it</a></li>
@@ -101,10 +107,369 @@ pressing Escape also refuses. A request nobody answers ends after two minutes.</
 <p>The name in the dialog is what the program calls itself. RIM can&#39;t check it, so the code is what
 tells you it&#39;s the program you started.</p>
 <p>Claude Code keeps its token in <code>~/.claude.json</code>, which any program running as you can read. The
-<a href="https://github.com/rim-platform/rim-ui/blob/4b2931042ac25d5eca2f50c8ad6f683a3c12ccf1/integrations/claude-code/README.md">plugin&#39;s README</a> has the details.</p>
-<p><strong>Other agents.</strong> Any program that speaks the Model Context Protocol over HTTP can connect the same
-way, but RIM has a ready-made setup only for Claude Code. The plugin&#39;s <code>scripts/pair.sh</code> shows the
-steps.</p>
+<a href="https://github.com/rim-platform/rim-ui/blob/ed1032eacc0d9b5084470131b2d34cc144406df8/integrations/claude-code/README.md">plugin&#39;s README</a> has the details.</p>
+<p><strong>Other agents.</strong> Any other program that speaks the Model Context Protocol connects from RIM
+instead: see the next section.</p>
+<h2 id="connect-another-agent">Connect another agent <a class="anchor" href="#connect-another-agent" aria-label="Link to this section">#</a></h2>
+<p>Codex, opencode, Gemini CLI, Cursor, VS Code and other MCP tools connect from inside RIM. Claude
+Code can too, if you&#39;d rather not use the plugin.</p>
+<ol>
+<li>Open <strong>Settings &gt; Agents</strong> and choose <strong>Connect an agent</strong>. The command palette&#39;s <strong>Connect an
+Agent…</strong> opens the same dialog.</li>
+<li>Type a name: what you&#39;ll call it in RIM, for example &quot;Codex on laptop&quot;. Choose <strong>Connect</strong>.</li>
+<li>RIM adds the agent, with nothing granted, and shows its setup <strong>once</strong>:<ul>
+<li>the address, <code>http://127.0.0.1:47821/mcp</code>;</li>
+<li>the token, hidden until you choose <strong>Show</strong>, with <strong>Copy</strong>;</li>
+<li>a tab for each tool, with the setup to paste, the token already in it, and where it goes.</li>
+</ul>
+</li>
+<li>Paste the setup into the tool, then choose <strong>Done</strong>. The agent is in the list like one that
+paired, and can read nothing until you choose what.</li>
+</ol>
+<p>There is no code to compare: you started it inside RIM. While <strong>Let agents on this computer
+connect</strong> is off, the dialog says so and offers the switch, and connects nothing.</p>
+<p>The setup each tab gives, with your token in place of <code>TOKEN</code>:</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>Where it goes</th>
+<th>What it adds</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Claude Code</td>
+<td>a terminal; it saves to <code>~/.claude.json</code> for your user, so it works in every folder</td>
+<td><code>claude mcp add --transport http --scope user rim http://127.0.0.1:47821/mcp --header &quot;Authorization: Bearer TOKEN&quot;</code></td>
+</tr>
+<tr>
+<td>Codex</td>
+<td><code>~/.codex/config.toml</code></td>
+<td>a <code>[mcp_servers.rim]</code> table with <code>url</code> and <code>http_headers = { Authorization = &quot;Bearer TOKEN&quot; }</code></td>
+</tr>
+<tr>
+<td>opencode</td>
+<td><code>~/.config/opencode/opencode.json</code></td>
+<td><code>mcp.rim</code> with <code>&quot;type&quot;: &quot;remote&quot;</code>, <code>url</code>, <code>&quot;enabled&quot;: true</code> and <code>headers</code></td>
+</tr>
+<tr>
+<td>Gemini CLI</td>
+<td><code>~/.gemini/settings.json</code></td>
+<td><code>mcpServers.rim</code> with <code>httpUrl</code> and <code>headers</code></td>
+</tr>
+<tr>
+<td>Cursor</td>
+<td><code>~/.cursor/mcp.json</code></td>
+<td><code>mcpServers.rim</code> with <code>url</code> and <code>headers</code></td>
+</tr>
+<tr>
+<td>VS Code</td>
+<td>your user <code>mcp.json</code> (<strong>MCP: Open User Configuration</strong>)</td>
+<td><code>servers.rim</code> with <code>&quot;type&quot;: &quot;http&quot;</code>, <code>url</code> and <code>headers</code></td>
+</tr>
+<tr>
+<td>Generic</td>
+<td>any MCP client that speaks streamable HTTP</td>
+<td>the address, and the header <code>Authorization: Bearer TOKEN</code> on every request</td>
+</tr>
+</tbody></table></div>
+<p>Merge a JSON setup with what the file already holds. Use the file in your home folder, not one
+inside a project, so the token isn&#39;t shared or committed with the project.</p>
+<p><strong>Keep the token safe.</strong> The token is saved in that tool&#39;s settings file. Any program running as
+you can read it. RIM won&#39;t show it again. If you lose it, disconnect this agent and connect again.</p>
+<p><strong>If it doesn&#39;t connect:</strong></p>
+<ul>
+<li>The tool must use the streamable HTTP transport. RIM doesn&#39;t serve the older SSE transport, and
+answers anything but a <code>POST</code> with 405.</li>
+<li>VS Code and Gemini CLI fall back to SSE when streamable HTTP fails, so an error about SSE means
+the first attempt failed: check the address, the token and that the switch is on. In Gemini CLI,
+the key is <code>httpUrl</code>; <code>url</code> there means SSE.</li>
+<li>A wrong or disconnected token gets 401. opencode then starts its sign-in flow, which can&#39;t work
+with RIM: connect again and paste the new token.</li>
+<li>RIM must be running and unlocked. A locked account answers 423.</li>
+</ul>
+<h2 id="for-tool-authors-the-pairing-protocol">For tool authors: the pairing protocol <a class="anchor" href="#for-tool-authors-the-pairing-protocol" aria-label="Link to this section">#</a></h2>
+<p>A program can also ask to connect itself, the way RIM&#39;s Claude Code plugin does. The person
+compares a code and approves in RIM, and the program collects its token once.
+<a href="https://github.com/rim-platform/rim-ui/blob/ed1032eacc0d9b5084470131b2d34cc144406df8/integrations/claude-code/scripts/pair.sh"><code>pair.sh</code></a> is a working example.</p>
+<p>Every request is a <code>POST</code> to <code>http://127.0.0.1:47821</code> with <code>Content-Type: application/json</code>, a
+<code>Host</code> of <code>127.0.0.1:47821</code> or <code>localhost:47821</code>, no <code>Origin</code> header, and a body of at most 1 MiB.
+Answers are JSON.</p>
+<p><strong>1. Ask.</strong> <code>POST /pair</code> with <code>{&quot;name&quot;: &quot;&lt;what the program calls itself&gt;&quot;}</code>. RIM removes control
+and invisible characters from the name, collapses spaces and keeps the first 64 characters.</p>
+<ul>
+<li><code>200 {&quot;requestId&quot;: &quot;...&quot;, &quot;pollSecret&quot;: &quot;...&quot;, &quot;code&quot;: &quot;123456&quot;, &quot;expiresIn&quot;: 120}</code>: RIM shows
+the person the name and the code. Show the same six-digit code to the person, and keep the poll
+secret to yourself.</li>
+<li><code>400 {&quot;error&quot;: &quot;bad_name&quot;}</code>: nothing visible is left of the name.</li>
+<li><code>409 {&quot;error&quot;: &quot;pairing_in_progress&quot;}</code>: another request is waiting for the person.</li>
+<li><code>429 {&quot;error&quot;: &quot;try_later&quot;}</code>: a request was refused or expired less than 10 seconds ago.</li>
+</ul>
+<p><strong>2. Poll.</strong> <code>POST /pair/poll</code> with <code>{&quot;requestId&quot;: &quot;...&quot;, &quot;pollSecret&quot;: &quot;...&quot;}</code>, every couple of
+seconds:</p>
+<ul>
+<li><code>200 {&quot;status&quot;: &quot;pending&quot;}</code>: the person hasn&#39;t answered yet.</li>
+<li><code>200 {&quot;status&quot;: &quot;approved&quot;, &quot;token&quot;: &quot;rimagent_...&quot;}</code>: the person approved. This answer comes
+once; the token is never handed over again.</li>
+<li><code>200 {&quot;status&quot;: &quot;refused&quot;}</code> or <code>200 {&quot;status&quot;: &quot;expired&quot;}</code>: it&#39;s over. A request expires 120
+seconds after it started, and an approved token not collected within 120 seconds is thrown away.</li>
+<li><code>404 {&quot;error&quot;: &quot;unknown_request&quot;}</code>: no such request, or a wrong poll secret. The two are answered
+alike.</li>
+</ul>
+<p><strong>3. Use the token.</strong> Send MCP JSON-RPC messages as <code>POST /mcp</code> with <code>Authorization: Bearer &lt;token&gt;</code>. A token RIM doesn&#39;t know, or one whose agent was disconnected, gets
+<code>401 {&quot;error&quot;: &quot;not_paired&quot;}</code>.</p>
+<p><strong>Answers from any path:</strong></p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Status</th>
+<th><code>error</code></th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>400</td>
+<td><code>bad_body</code></td>
+<td>the body isn&#39;t a JSON object (<code>/pair</code> and <code>/pair/poll</code>)</td>
+</tr>
+<tr>
+<td>403</td>
+<td><code>bad_host</code>, <code>has_origin</code></td>
+<td>the <code>Host</code> isn&#39;t local, or an <code>Origin</code> header was sent</td>
+</tr>
+<tr>
+<td>404</td>
+<td><code>not_found</code></td>
+<td>another path</td>
+</tr>
+<tr>
+<td>405</td>
+<td><code>method_not_allowed</code></td>
+<td>not a <code>POST</code></td>
+</tr>
+<tr>
+<td>408</td>
+<td><code>slow_body</code></td>
+<td>the body didn&#39;t arrive within 10 seconds</td>
+</tr>
+<tr>
+<td>413</td>
+<td><code>too_large</code></td>
+<td>the body is over 1 MiB</td>
+</tr>
+<tr>
+<td>415</td>
+<td><code>bad_content_type</code></td>
+<td>not <code>application/json</code></td>
+</tr>
+<tr>
+<td>423</td>
+<td><code>locked</code></td>
+<td>the person&#39;s account is locked</td>
+</tr>
+<tr>
+<td>429</td>
+<td><code>busy</code></td>
+<td>too many requests at once</td>
+</tr>
+<tr>
+<td>503</td>
+<td><code>not_ready</code></td>
+<td>the app didn&#39;t take the request in time</td>
+</tr>
+<tr>
+<td>504</td>
+<td><code>timed_out</code></td>
+<td>the app took it but didn&#39;t answer within 120 seconds</td>
+</tr>
+<tr>
+<td>500</td>
+<td><code>internal</code></td>
+<td>answering failed</td>
+</tr>
+</tbody></table></div>
+<p>Store the token where only the person can read it, and never print it or put it in a model&#39;s
+context.</p>
+<h2 id="agents-rim-can-start">Agents RIM can start <a class="anchor" href="#agents-rim-can-start" aria-label="Link to this section">#</a></h2>
+<p>The desktop app can also keep a list of agent programs it may start itself, under <strong>Settings &gt;
+Agents</strong>, <strong>Agents RIM can start</strong>. The web app can&#39;t: it says &quot;Starting agents needs the desktop
+app&quot;. Each one is a program that speaks the Agent Client Protocol, and RIM starts it as you, with
+access to your files.</p>
+<p><strong>The supported agents.</strong> The section lists Claude Code, opencode, Goose, Codex and Gemini CLI,
+one row each, with what RIM finds for it on this computer:</p>
+<ul>
+<li><strong>Install</strong>, with the version and licence RIM would install, how big it is and where it comes
+from, when it isn&#39;t installed and isn&#39;t on your <code>PATH</code>. The size is the download for Claude
+Code, opencode and Goose, and what npm puts on disk for Codex and Gemini CLI.</li>
+<li><strong>Installed by RIM</strong> and its version, with what its files use, <strong>Update to</strong> a newer version
+when there is one, and <strong>Remove files</strong>.</li>
+<li><strong>Found on this computer</strong>, when it&#39;s on your <code>PATH</code> because you installed it yourself.</li>
+<li><strong>Not available on this computer</strong>, with the reason, when RIM can&#39;t install it here.</li>
+</ul>
+<p>Under the list, one line says what the agents RIM installed use on this computer in all,
+including RIM&#39;s Node.js and the agents that run on it.</p>
+<p><strong>RIM installs it for you.</strong> <strong>Install</strong> shows one system dialog, not a page of RIM, that names
+the agent, its version, its licence, where it&#39;s downloaded from and, when RIM could tell, how big
+it is and what Node.js adds. Only <strong>Install</strong> goes on:</p>
+<ul>
+<li>RIM takes the version from the Agent Client Protocol registry, and downloads only from the
+source fixed for each agent: the agent&#39;s own release on GitHub for Claude Code, opencode and
+Goose, the npm package for Codex and Gemini CLI. A registry entry that points elsewhere is
+refused.</li>
+<li>It checks each download against its checksum before it unpacks it, and npm checks its packages
+itself.</li>
+<li>Codex and Gemini CLI run on Node.js. RIM downloads its own Node.js once, from nodejs.org, and
+uses it even when your computer has its own. Their packages install without running their
+install scripts.</li>
+<li>Everything goes into RIM&#39;s own folder; nothing is installed for the whole computer. RIM keeps
+no download cache: each download and npm&#39;s cache are deleted once the install ends.</li>
+<li>RIM may then start the program it installed, so no second dialog asks. RIM adds it to
+<strong>Your agent programs</strong> and connects an agent for it, with nothing granted.</li>
+</ul>
+<p>The row says how far it got: downloading Node.js, downloading with how much of it arrived,
+checking, unpacking and installing. <strong>Update to</strong> installs the new version the same way, moves
+the agent to it and only then deletes the old one. <strong>Remove files</strong> asks first, deletes the
+agent&#39;s files, removes it from <strong>Your agent programs</strong> and disconnects its agent; RIM refuses
+while one of its sessions runs.</p>
+<p><strong>Or use one you installed.</strong> An agent on your <code>PATH</code> keeps working as before.</p>
+<ol>
+<li>Choose <strong>Add</strong>, then a preset or <strong>Custom…</strong>.<ul>
+<li>The presets are Claude Code (<code>claude-agent-acp</code>), Codex (<code>codex-acp</code>), Gemini CLI
+(<code>gemini --acp</code>), opencode (<code>opencode acp</code>) and Goose (<code>goose acp</code>).</li>
+<li><strong>Custom…</strong> asks for a name, the program (a full path, or a name found on your <code>PATH</code>) and
+its arguments, one per line.</li>
+<li>Each can have a default folder, the full path of the folder its sessions start in. Write it,
+or choose <strong>Browse…</strong> to pick it in your system&#39;s folder dialog.</li>
+</ul>
+</li>
+<li>Choose <strong>Add</strong>. A system dialog asks whether RIM may start that program with exactly those
+arguments. Only <strong>Allow</strong> saves it. Changing the program or its arguments later asks again;
+changing the name or the folder doesn&#39;t.</li>
+<li>RIM connects an agent for it, with nothing granted, as <strong>Connect an agent</strong> does. It&#39;s in the
+list above with the others, and you choose what it may read the same way.</li>
+</ol>
+<p>A program that RIM can&#39;t find on your <code>PATH</code> any more shows <strong>Not found</strong>: install it from its
+row, or <strong>Edit</strong> it to point at the one you installed.</p>
+<p><strong>Sign in.</strong> Each agent needs you to sign in to its own service once. Choose <strong>Sign in</strong> next to
+an agent in <strong>Your agent programs</strong>, or right after installing it. RIM starts the agent for a
+moment, asks how it signs in, and shows each way it offers, with its name and description:</p>
+<ul>
+<li><strong>Open terminal</strong> opens your computer&#39;s terminal running the agent&#39;s own sign-in, after a
+system dialog that shows the exact command. Finish signing in there, then come back. When RIM
+finds no terminal, it shows the command to copy and run in one. RIM doesn&#39;t open a terminal
+that would change variables such as <code>PATH</code>, <code>LD_PRELOAD</code>, <code>NODE_OPTIONS</code> or a proxy.</li>
+<li><strong>Sign in</strong> asks the agent to sign in itself: it usually opens your browser, and RIM waits up
+to ten minutes while you finish there.</li>
+<li>A way that reads environment variables names them. Set them before starting RIM: RIM doesn&#39;t
+set them for you.</li>
+<li>Goose and opencode set up with <code>goose configure</code> and <code>opencode auth login</code>; when they name no
+way of their own, <strong>Open terminal</strong> runs those.</li>
+</ul>
+<p>What you sign in with stays with the agent: RIM never sees your passwords, keys or tokens. When a
+session finds the agent isn&#39;t signed in, it shows <strong>Sign in to</strong> the agent; once you have,
+<strong>Try again</strong> starts the agent again in the same folder and sends the prompt it refused.</p>
+<p>The agent keeps its own settings, its own tools and its own permission rules. <strong>Remove</strong> stops
+RIM starting the program and disconnects its agent; the files of one RIM installed stay until
+you choose <strong>Remove files</strong>. Disconnecting that agent in the list above removes the program from
+this list too.</p>
+<h2 id="sessions">Sessions <a class="anchor" href="#sessions" aria-label="Link to this section">#</a></h2>
+<p>A session is one agent program, started by RIM in a folder you choose, that you direct from RIM.
+Sessions run in the desktop app only; the web app says &quot;Starting agents needs the desktop app&quot;.</p>
+<p><strong>Start one.</strong> Open <strong>Agent sessions</strong>: the <strong>Open agent sessions</strong> button in <strong>Settings &gt; Agents</strong>,
+or <strong>Open Agent Sessions</strong> in the command palette. Choose <strong>Start a session</strong>, or run <strong>Start
+Agent Session…</strong>. Pick one of your agent programs (one RIM can&#39;t find is shown but can&#39;t be
+picked) and the full path of the folder it works in, which starts as the program&#39;s default folder.
+Write the path, or choose <strong>Browse…</strong> to pick the folder in your system&#39;s folder dialog.
+RIM doesn&#39;t sandbox the agent: it runs as you in that folder, with its own tools and permission
+settings. The session says so under its header.</p>
+<p><strong>Tell it what to do.</strong> Write in the box at the bottom and press Enter; Shift+Enter adds a line.
+Only what you write there is sent to the agent: nothing it reads in RIM, no message from someone
+else, no macro, plugin or command, and nothing the agent itself sends becomes a prompt. The box
+waits while the agent works, and says why.</p>
+<p><strong>Follow it.</strong> The agent&#39;s answer appears as it writes it. Its thinking is folded under
+<strong>Thinking</strong>. Each tool call is a card with its kind, title and status (pending, running, done,
+failed or cancelled); open it to see the files it changed, as removed and added lines, the text it
+returned, the files it touched and what it was called with. A plan shows as a checklist. All of it
+is shown as plain text: nothing the agent sends runs in RIM.</p>
+<p><strong>Approve or refuse.</strong> When the agent asks before a step, a card shows what it wants to do and a
+button for each answer it offers, such as <strong>Allow once</strong>, <strong>Always allow</strong> or <strong>Reject</strong>. Only
+those buttons answer it: no command, keybind, macro, plugin or agent can. What &quot;always&quot; means is up
+to the agent and its own settings.</p>
+<p><strong>Cancel or stop.</strong> <strong>Cancel turn</strong> stops what the agent is doing now and refuses its waiting
+requests; the session stays open for your next prompt. <strong>Stop</strong> ends the agent program, after
+asking while a turn is running; <strong>Stop Agent Session</strong> does the same for the session that&#39;s open.
+Quitting RIM stops every session. Closing the window to the tray keeps them running, and signing
+out stops them.</p>
+<p><strong>The agent&#39;s settings.</strong> Under the header, the session shows the settings the agent offers, such
+as its model, reasoning effort or mode, each as a list with the agent&#39;s name for it, the model
+first. Changing one asks the agent, which answers with all its settings as they now are; when it
+refuses, the session says why. They can&#39;t change while a turn is running. An agent that offers no
+such settings but has a list of models gets a <strong>Model</strong> list, and one with only modes a <strong>Mode</strong>
+list. RIM remembers the model you chose last for each agent program, and a new session of it
+switches to that model before your first prompt when the agent still offers it; otherwise the
+agent&#39;s own default stays. Only you change these, from the session: nothing an agent or a message
+sends does.</p>
+<p><strong>RIM&#39;s tools.</strong> When <strong>Let agents on this computer connect</strong> is on and the agent can reach an
+MCP server over HTTP, the session gets RIM&#39;s tools under the agent RIM connected for the program,
+with what you granted it and nothing more. Otherwise the session says that RIM&#39;s tools are off, or
+that the agent can&#39;t use them, and the agent works with its own tools only.</p>
+<p><strong>Notifications.</strong> When an agent starts waiting for your answer, or finishes a turn, while the RIM
+window isn&#39;t in front, the desktop shows &quot;&lt;agent&gt; is waiting for you&quot; or &quot;&lt;agent&gt; finished&quot;, with
+the session&#39;s title and nothing else from the session. While RIM is in front but you&#39;re not on
+that session, the same words show as a notice in the app with <strong>Open</strong> instead, never both. On
+the session itself nothing shows. They follow your notification settings, and the open
+workspace&#39;s pause and quiet hours. Choosing one opens the session.</p>
+<p><strong>Running and recent.</strong> <strong>Agent sessions</strong> lists the sessions running now, as Working, Waiting
+for you, Ready or Failed, and up to 20 recent ones, with the agent, the title, the folder and when
+it last did something. The title is the one the agent gives the session, or the start of your
+first prompt. A dot marks a session that finished or started waiting since you last had it open.
+The <strong>Agent sessions</strong> box on Home shows the same, up to six, with <strong>New session</strong> and <strong>All
+sessions</strong> (<a href="home.html">Home</a>). So does the <strong>Agent sessions</strong> button in the top bar, once you&#39;ve
+added an agent program: it shows how many sessions wait for you, or a dot while one is working,
+and opens that list under the bar.</p>
+<p><strong>Transcripts aren&#39;t kept.</strong> RIM keeps a session&#39;s transcript in memory while the app runs, and
+never stores it. The recent list keeps only the agent, the folder, the agent&#39;s id for the session,
+the title and the times, sealed with your account on this device. The agent may keep its own
+history, in its own way.</p>
+<p><strong>Reopen one.</strong> Choosing a recent session that isn&#39;t running starts its program again and asks
+the agent to open that session, when the agent can: it shows the history it kept. An agent that
+can&#39;t says &quot;&lt;agent&gt; can&#39;t reopen past sessions. Start a new one.&quot; <strong>Remove</strong> only takes a session
+off the list.</p>
+<h2 id="ask-agent-about-a-message-or-channel">Ask agent about a message or channel <a class="anchor" href="#ask-agent-about-a-message-or-channel" aria-label="Link to this section">#</a></h2>
+<p>In the desktop app, a channel&#39;s menu has <strong>Ask agent about #channel</strong>, and a message&#39;s menu has
+<strong>Ask agent…</strong>. The commands <strong>Ask Agent About Conversation…</strong> and <strong>Ask Agent About Message…</strong> do
+the same for the open channel and the selected message; the web app says &quot;Starting agents needs
+the desktop app&quot;. Direct messages, groups and encrypted conversations can&#39;t be given to agents yet,
+so their menus don&#39;t offer it, and the commands say &quot;Agents can&#39;t be given direct messages or
+groups yet.&quot; or &quot;Agents can&#39;t read encrypted conversations yet.&quot;</p>
+<ol>
+<li><strong>Choose a session.</strong> RIM lists the sessions that are ready or working, with the agent, the
+title and the folder, and <strong>New session…</strong>, which opens <strong>Start an agent session</strong> and goes on
+once the new session is ready. A session without RIM&#39;s tools says &quot;&lt;agent&gt; can&#39;t read RIM in
+this session&quot;, with the reason; you can still pick it, since the agent may have other ways.</li>
+<li><strong>Let it read the channel.</strong> When nothing you let that agent read covers the channel, RIM asks
+&quot;&lt;agent&gt; can&#39;t read #channel yet. Let it read #channel?&quot;. <strong>Let it read #channel</strong> adds that
+one channel to what the agent can read, as ticking it in <strong>Choose what it can read</strong> does, and
+nothing else. <strong>Not now</strong> adds nothing, and the agent will be refused the channel.</li>
+<li><strong>Write your question.</strong> The session opens with &quot;About: #channel&quot; or &quot;About: a message in
+#channel&quot; above the box; × takes it off. Nothing is sent until you press Enter.</li>
+</ol>
+<p>The prompt holds your words and a link to the channel or the message, never its messages: the
+agent reads them through RIM&#39;s tools, under what you let it read, and the record shows what it
+was given.</p>
+<p><strong>When the agent is refused a channel.</strong> If an agent in a session asks RIM&#39;s tools for a channel
+you haven&#39;t let it read, the session shows &quot;&lt;agent&gt; asked to read #channel, which it can&#39;t read.&quot;
+with <strong>Let it read #channel</strong>, which asks as above, and <strong>Dismiss</strong>. Each channel is offered once
+per session. Only that button grants: no command, and nothing the agent sends, can.</p>
+<h3 id="the-reference-an-agent-is-given">The reference an agent is given <a class="anchor" href="#the-reference-an-agent-is-given" aria-label="Link to this section">#</a></h3>
+<p>For tool authors: the prompt carries an ACP <code>resource_link</code> block whose <code>uri</code> is</p>
+<pre><code>rim://workspace/&lt;workspaceId&gt;/conversation/&lt;conversationId&gt;
+rim://workspace/&lt;workspaceId&gt;/conversation/&lt;conversationId&gt;/message/&lt;messageId&gt;</code></pre>
+<p>with each id percent-encoded, and whose <code>name</code> is &quot;#channel in &lt;workspace&gt;&quot; or &quot;Message in
+#channel&quot;. A text block after it repeats the ids: &quot;About this RIM conversation: workspace &lt;id&gt;,
+conversation &lt;id&gt;, message &lt;id&gt;. Use RIM&#39;s tools to read it.&quot; The ids are the ones RIM&#39;s tools
+take: <code>workspaceId</code> and <code>channelId</code> for <code>rim_read_messages</code>, and the message&#39;s <code>id</code> in what it
+returns. RIM doesn&#39;t resolve <code>rim://</code> links itself; an agent reads them with its RIM tools.</p>
 <h2 id="choose-what-it-can-read">Choose what it can read <a class="anchor" href="#choose-what-it-can-read" aria-label="Link to this section">#</a></h2>
 <p>A new agent can read nothing. In <strong>Settings &gt; Agents</strong>, pick the agent, then <strong>Choose what it can
 read</strong>:</p>
@@ -152,10 +517,36 @@ something else can&#39;t send it.</li>
 it. The workspace&#39;s audit log records that an agent started it, and the workspace&#39;s Owner and
 Moderators can read that log.</p>
 <p>On a server whose operator switched off AI commands, posting is refused before you&#39;re asked.</p>
+<h2 id="rim-commands">RIM commands <a class="anchor" href="#rim-commands" aria-label="Link to this section">#</a></h2>
+<p>An agent can ask to run RIM&#39;s own commands, such as pinning a message or setting a channel&#39;s
+topic, but only the ones you tick. Pick the agent, then <strong>Choose its commands</strong>: the <strong>RIM
+commands</strong> section lists, by category, the commands RIM offers agents in the workspaces it can
+read. Nothing is ticked at first, and what you approved for the built-in agent doesn&#39;t count here.</p>
+<p>RIM offers a command only when the server lets agents call it, the server runs it, and it changes
+something. Commands that only move around the app or read are left out: the agent reads through its
+read tools. Sending a message has its own request, above. Commands that connect, answer or manage
+agents are never offered. Your own macros with <strong>The AI agent can run this</strong> ticked are offered
+too, under Macro, in the workspaces of your home server, each run as one command
+(<a href="commands-and-automation.html#macros">Macros</a>).</p>
+<ul>
+<li><strong>Every call asks you first</strong>, with an approval card like the one for posting: the agent&#39;s
+name, the command, the workspace, the channel when it names one, and every argument in full.
+Values that look like secrets are hidden. For a macro the card also lists its steps, each with
+the arguments fixed for it. A command the server marks as restricted also asks you to type its
+word.</li>
+<li><strong>A command marked &quot;Only proposed&quot;</strong> is dangerous. It never runs from an agent: the agent can only
+suggest it, and you run it yourself.</li>
+<li><strong>It acts only where you let the agent read.</strong> The agent names the workspace and every
+conversation and message itself; RIM never uses what you have open. A workspace it can&#39;t read, a
+channel outside its grant, a direct message, a group or an encrypted conversation is refused
+before you&#39;re asked. RIM checks the approval and the grant again after you confirm.</li>
+</ul>
+<p>Discards, expiries and the 10 seconds after them work as they do for posting. On a server whose
+operator switched off AI commands, RIM commands are refused before you&#39;re asked.</p>
 <h2 id="plugin-commands">Plugin commands <a class="anchor" href="#plugin-commands" aria-label="Link to this section">#</a></h2>
 <p>An agent can also run commands of your plugins, but only the ones you tick. Pick the agent, then
-<strong>Choose its plugin commands</strong>. Nothing is ticked at first, and what you approved for the built-in
-agent doesn&#39;t count here.</p>
+<strong>Choose its commands</strong>. Nothing is ticked at first, and what you approved for the built-in agent
+doesn&#39;t count here.</p>
 <ul>
 <li><strong>A command its plugin marks as read-only</strong> runs without asking. That mark is the plugin&#39;s own
 claim, and RIM can&#39;t check it.</li>
@@ -173,7 +564,8 @@ plugin changes, its ticks stop working until you choose again.</p>
 Two buttons show more:</p>
 <ul>
 <li><strong>What it was given</strong>: every request, with the time, the tool, the channel, the message ids,
-what it asked to post or run and how that ended, and what RIM refused. It never holds message
+what it asked to post or run, RIM&#39;s or a plugin&#39;s command, and how that ended, and what RIM
+refused. It never holds message
 text, search text, or a command&#39;s arguments or results.</li>
 <li><strong>Its runs</strong>: the same record, grouped. A run is that agent&#39;s requests with no more than 15
 minutes between them. It&#39;s a grouping by time: RIM can&#39;t see where the agent&#39;s task starts or
@@ -188,7 +580,7 @@ agent and leaves one line saying you did.</p>
 <h2 id="disconnect-it">Disconnect it <a class="anchor" href="#disconnect-it" aria-label="Link to this section">#</a></h2>
 <p>Pick the agent in <strong>Settings &gt; Agents</strong> and choose <strong>Disconnect</strong>. From then on it can&#39;t reach RIM.</p>
 <p>Disconnecting can&#39;t take anything back. What the agent already read stays with it.</p>
-<p>Removing RIM from Claude Code doesn&#39;t end its access, and neither does connecting it again: the
+<p>Removing RIM from Claude Code, or the setup from any other tool, doesn&#39;t end its access, and neither does connecting it again: the
 older entry keeps working. <strong>Disconnect</strong> in RIM is what ends it.</p>
 <h2 id="what-rim-cant-promise">What RIM can&#39;t promise <a class="anchor" href="#what-rim-cant-promise" aria-label="Link to this section">#</a></h2>
 <ul>
@@ -216,7 +608,7 @@ screens.</p>
   </div>
 </div>
 <footer class="site-footer container"><span class="footer-brand"><img src="../../assets/rim-lockup-glow-inverse.svg" alt="RIM" width="46" height="27"> · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
-<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/4b2931042ac25d5eca2f50c8ad6f683a3c12ccf1/docs/agents.md">rim-ui/docs/agents.md</a> at <code>4b29310</code></p>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/ed1032eacc0d9b5084470131b2d34cc144406df8/docs/agents.md">rim-ui/docs/agents.md</a> at <code>ed1032e</code></p>
 <script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
 </body>
 </html>

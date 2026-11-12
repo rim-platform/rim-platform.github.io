@@ -86,6 +86,8 @@ extensions. It is a package with a manifest (<code>rim-plugin.json</code>) that 
 <ul>
 <li>commands, which appear in the palette, can be bound to keys and, when the plugin marks them
 <code>ai_callable</code>, can be run by the AI agent;</li>
+<li>a list of other commands it wants to run, <code>runs_commands</code>: built-ins and app commands the
+person grants at install, never dangerous commands or the commands that manage agents;</li>
 <li>keybind suggestions, which the user approves;</li>
 <li>context actions on messages;</li>
 <li>panels, rendered in sandboxed iframes inside the shell;</li>
@@ -129,9 +131,9 @@ rim-ui&#39;s TypeScript SDK (<code>sdk/plugin-sdk</code>) builds both kinds from
 <p>Plugins run in the client. The server never runs plugin code.</p>
 <p><strong>The client&#39;s plugin host owns</strong> installation (from a local folder, a git URL, a pasted bundle
 link or a workspace registry entry), manifest validation, the capability consent and its
-revocation, starting and stopping plugins, routing commands to them, enforcing the
-dangerous-command confirmation, hosting panels, and the settings form and the values the user
-saves in it.</p>
+revocation, the grant of the commands a plugin may run and the limits on those runs, starting
+and stopping plugins, routing commands to them, enforcing the dangerous-command confirmation,
+hosting panels, and the settings form and the values the user saves in it.</p>
 <p><strong>The server owns</strong> what a workspace shares about plugins: the per-workspace registry of
 recommended or required plugins, each entry carrying a manifest its publisher signed with their
 identity key, and the storage of web plugin bundles for those entries. Owners and moderators
@@ -152,6 +154,12 @@ commands, so it shows up in the palette and the keybind picker and can be used i
 dialog. The agent can never confirm one, and a panel cannot confirm one for its own plugin.</li>
 <li>A command marked <code>ai_callable</code> is offered to the agent under the same confirmation gate as
 builtins, so the agent can operate whatever a workspace has plugged in.</li>
+<li>A plugin runs other commands only when its manifest lists them in <code>runs_commands</code> and the
+person granted them at install or update: a built-in that is neither dangerous nor
+<code>Restricted</code>, a <code>Mutating</code> one only after the person confirms that call, and the app commands
+marked as runnable by plugins. It never runs another plugin&#39;s commands or one that manages agents,
+and it gets back the status and message, not the output. The full rule is in
+<a href="command_model.html"><code>command_model.md</code></a>, Who Can Run Commands.</li>
 <li>Plugins see a person only as <code>{ principalId, displayName }</code>, never a server-local id.</li>
 </ul>
 <h2 id="security-model">Security model <a class="anchor" href="#security-model" aria-label="Link to this section">#</a></h2>
@@ -193,7 +201,7 @@ may be granted.</li>
   </div>
 </div>
 <footer class="site-footer container"><span class="footer-brand"><img src="../assets/rim-lockup-glow-inverse.svg" alt="RIM" width="46" height="27"> · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
-<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-server/blob/4111cb89af23b2b7d062186c0031964901f40630/docs/plugin_model.md">rim-server/docs/plugin_model.md</a> at <code>4111cb8</code></p>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-server/blob/beb5a48f892a3ac4ef53e7ee2238413e99ee35e0/docs/plugin_model.md">rim-server/docs/plugin_model.md</a> at <code>beb5a48</code></p>
 <script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
 </body>
 </html>

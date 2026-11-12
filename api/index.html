@@ -42,7 +42,7 @@
 
     <main id="content" class="prose">
 <h1>API</h1>
-<p class="lede">Everything a client does goes through one GraphQL endpoint, <code>POST /api</code>; subscriptions arrive over <code>/api/ws</code>. The server publishes its schema at <code>/api/sdl</code>. This reference is generated from it: 304 types, 79 queries, 152 mutations and 3 subscriptions.</p>
+<p class="lede">Everything a client does goes through one GraphQL endpoint, <code>POST /api</code>; subscriptions arrive over <code>/api/ws</code>. The server publishes its schema at <code>/api/sdl</code>. This reference is generated from it: 304 types, 80 queries, 152 mutations and 3 subscriptions.</p>
 <input id="filter" class="search" type="search" placeholder="Filter the whole schema by name" aria-label="Filter the whole schema by name" autocomplete="off">
 <p id="filter-none" class="muted" hidden>Nothing matches.</p>
 <div data-search-only><ul class="hits">
@@ -200,6 +200,9 @@
 <li data-name="resetHomeLayout"><a href="mutation.html#resetHomeLayout"><code>resetHomeLayout</code></a><span class="kind">mutation</span></li>
 <li data-name="commands"><a href="query.html#commands"><code>commands</code></a><span class="kind">query</span></li>
 <li data-name="commandDiscover"><a href="query.html#commandDiscover"><code>commandDiscover</code></a><span class="kind">query</span></li>
+<li data-name="macroStepCommands"><a href="query.html#macroStepCommands"><code>macroStepCommands</code></a><span class="kind">query</span></li>
+<li data-name="myMacros"><a href="query.html#myMacros"><code>myMacros</code></a><span class="kind">query</span></li>
+<li data-name="macroByName"><a href="query.html#macroByName"><code>macroByName</code></a><span class="kind">query</span></li>
 <li data-name="resolvedKeybinds"><a href="query.html#resolvedKeybinds"><code>resolvedKeybinds</code></a><span class="kind">query</span></li>
 <li data-name="conversation"><a href="query.html#conversation"><code>conversation</code></a><span class="kind">query</span></li>
 <li data-name="inboxConversations"><a href="query.html#inboxConversations"><code>inboxConversations</code></a><span class="kind">query</span></li>
@@ -230,8 +233,6 @@
 <li data-name="workspacePlugins"><a href="query.html#workspacePlugins"><code>workspacePlugins</code></a><span class="kind">query</span></li>
 <li data-name="workspaceInvites"><a href="query.html#workspaceInvites"><code>workspaceInvites</code></a><span class="kind">query</span></li>
 <li data-name="customEmojis"><a href="query.html#customEmojis"><code>customEmojis</code></a><span class="kind">query</span></li>
-<li data-name="myMacros"><a href="query.html#myMacros"><code>myMacros</code></a><span class="kind">query</span></li>
-<li data-name="macroByName"><a href="query.html#macroByName"><code>macroByName</code></a><span class="kind">query</span></li>
 <li data-name="pipelines"><a href="query.html#pipelines"><code>pipelines</code></a><span class="kind">query</span></li>
 <li data-name="listAuditLog"><a href="query.html#listAuditLog"><code>listAuditLog</code></a><span class="kind">query</span></li>
 <li data-name="previewInviteToken"><a href="query.html#previewInviteToken"><code>previewInviteToken</code></a><span class="kind">query</span></li>
@@ -589,27 +590,28 @@
 <li data-name="Float"><a href="scalars.html#Float"><code>Float</code></a><span class="kind">scalar</span></li>
 <li data-name="Boolean"><a href="scalars.html#Boolean"><code>Boolean</code></a><span class="kind">scalar</span></li>
 <li data-name="ID"><a href="scalars.html#ID"><code>ID</code></a><span class="kind">scalar</span></li>
+<li data-name="@deprecated"><a href="directives.html#deprecated"><code>@deprecated</code></a><span class="kind">directive</span></li>
 <li data-name="@include"><a href="directives.html#include"><code>@include</code></a><span class="kind">directive</span></li>
 <li data-name="@skip"><a href="directives.html#skip"><code>@skip</code></a><span class="kind">directive</span></li>
 <li data-name="@specifiedBy"><a href="directives.html#specifiedBy"><code>@specifiedBy</code></a><span class="kind">directive</span></li>
 </ul></div>
 <ul class="cards">
 <li><a href="../docs/api.html"><b>Talking to a server</b><span>The endpoints, the session cookie and CSRF, origins, limits, error codes and pagination: the contract around the schema.</span></a></li>
-<li><a href="query.html"><b>Query</b><span>79 fields, grouped by domain.</span></a></li>
+<li><a href="query.html"><b>Query</b><span>80 fields, grouped by domain.</span></a></li>
 <li><a href="mutation.html"><b>Mutation</b><span>152 fields, grouped by domain.</span></a></li>
 <li><a href="subscription.html"><b>Subscription</b><span>3 fields, grouped by domain.</span></a></li>
 <li><a href="objects.html"><b>Objects</b><span>155 objects.</span></a></li>
 <li><a href="inputs.html"><b>Inputs</b><span>92 inputs.</span></a></li>
 <li><a href="enums.html"><b>Enums</b><span>55 enums.</span></a></li>
 <li><a href="scalars.html"><b>Scalars</b><span>7 scalars.</span></a></li>
-<li><a href="directives.html"><b>Directives</b><span>3 directives.</span></a></li>
+<li><a href="directives.html"><b>Directives</b><span>4 directives.</span></a></li>
 </ul>
 
     </main>
   </div>
 </div>
 <footer class="site-footer container"><span class="footer-brand"><img src="../assets/rim-lockup-glow-inverse.svg" alt="RIM" width="46" height="27"> · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
-<p class="source-provenance container">Generated from <a href="https://github.com/rim-platform/rim-ui/blob/4b2931042ac25d5eca2f50c8ad6f683a3c12ccf1/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>4b29310</code></p>
+<p class="source-provenance container">Generated from <a href="https://github.com/rim-platform/rim-ui/blob/ed1032eacc0d9b5084470131b2d34cc144406df8/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>ed1032e</code></p>
 <script>
 (() => {
   const q = document.getElementById("filter");

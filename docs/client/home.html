@@ -97,6 +97,11 @@ nothing read.</p>
 <td>the desktop app</td>
 </tr>
 <tr>
+<td>Agent sessions</td>
+<td>The agents RIM started on this device, running ones first, with New session and All sessions</td>
+<td>the desktop app</td>
+</tr>
+<tr>
 <td>Direct messages</td>
 <td>Your latest direct messages and groups, 3, 5 or 10, with their unread counts</td>
 <td>everywhere</td>
@@ -131,12 +136,14 @@ with its unread count. A row opens its conversation; nothing is marked read.</p>
 <h3 id="quick-actions">Quick actions <a class="anchor" href="#quick-actions" aria-label="Link to this section">#</a></h3>
 <p>Each button runs its command as a click in the command palette does: a command that asks for
 confirmation still asks, and its outcome shows as it would from the palette. The commands offered
-are those a key can be bound to, with optional arguments as a JSON object of at most 4096 bytes,
-as for a personal keybind. Edit Home is never one of them. A command not offered on this device,
+are those a key can be bound to, with optional arguments as for a personal keybind: a server
+command&#39;s in the same fields as Settings &gt; Keybinds, with a required one left empty asked for when
+the button is pressed, and a plugin command&#39;s, or saved arguments the fields cannot show, as a
+JSON object of at most 4096 bytes. Saved arguments are used as given, as a keybind&#39;s are. Edit Home is never one of them. A command not offered on this device,
 such as one of a plugin that isn&#39;t installed here or one that needs the desktop app, is a
 disabled button with the reason beneath it.</p>
 <p>Until you change it, Home shows today&#39;s default: Waiting for you, Mentions and replies, Unread,
-and Your agents&#39; runs where agents are connected. The default comes from the app and is not
+Your agents&#39; runs where agents are connected, and Agent sessions in the desktop app. The default comes from the app and is not
 saved: opening Home saves nothing, and your first Done is what saves a layout to your account.</p>
 <p>The workspace filter above the boxes still limits every box to one workspace while Home is open.</p>
 <h2 id="editing-home">Editing Home <a class="anchor" href="#editing-home" aria-label="Link to this section">#</a></h2>
@@ -165,8 +172,8 @@ device goes back to the default.</li>
 </ul>
 <p>Edit Home is a command of this app only. It is not offered to keybinds, and nothing that runs
 commands, such as a macro, a pipeline or an agent, can change your Home.</p>
-<p>Under 760 pixels of room the boxes stand in one column; from there in two, with a full box across
-both.</p>
+<p>Home grows with the window up to 1536 pixels wide, then stays centred. Under 760 pixels of room
+the boxes stand in one column; from there in two, with a full box across both.</p>
 <h2 id="what-each-device-keeps">What each device keeps <a class="anchor" href="#what-each-device-keeps" aria-label="Link to this section">#</a></h2>
 <p>Each device keeps, for each account, sealed with the account&#39;s other values:</p>
 <ul>
@@ -210,7 +217,7 @@ itself lives on your own server only.</p>
   </div>
 </div>
 <footer class="site-footer container"><span class="footer-brand"><img src="../../assets/rim-lockup-glow-inverse.svg" alt="RIM" width="46" height="27"> · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
-<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/4b2931042ac25d5eca2f50c8ad6f683a3c12ccf1/docs/home.md">rim-ui/docs/home.md</a> at <code>4b29310</code></p>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/ed1032eacc0d9b5084470131b2d34cc144406df8/docs/home.md">rim-ui/docs/home.md</a> at <code>ed1032e</code></p>
 <script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
 </body>
 </html>

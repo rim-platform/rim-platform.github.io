@@ -42,6 +42,7 @@
     <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
 <ol>
 <li><a href="#group-command">Command (2)</a></li>
+<li><a href="#group-macro">Macro (3)</a></li>
 <li><a href="#group-keybind">Keybind (1)</a></li>
 <li><a href="#group-conversation">Conversation (4)</a></li>
 <li><a href="#group-channel">Channel (3)</a></li>
@@ -50,7 +51,6 @@
 <li><a href="#group-server">Server (6)</a></li>
 <li><a href="#group-workspace">Workspace (5)</a></li>
 <li><a href="#group-emoji">Emoji (1)</a></li>
-<li><a href="#group-macro">Macro (2)</a></li>
 <li><a href="#group-pipeline">Pipeline (1)</a></li>
 <li><a href="#group-audit">Audit (1)</a></li>
 <li><a href="#group-invite">Invite (1)</a></li>
@@ -65,7 +65,7 @@
 </details></aside>
     <main id="content" class="prose">
 <h1>Query</h1>
-<p class="lede">79 queries, grouped by the domain their name starts with or names, in the order the schema lists them.</p>
+<p class="lede">80 queries, grouped by the domain their name starts with or names, in the order the schema lists them.</p>
 <input id="filter" class="search" type="search" placeholder="Filter fields by name" aria-label="Filter fields by name" autocomplete="off">
 <p id="filter-none" class="muted" hidden>Nothing matches.</p>
 <section data-group>
@@ -80,8 +80,8 @@ its required capabilities. The commands the client runs itself are listed in eve
 context. A listed command is one <a href="mutation.html#executeCommand"><code>executeCommand</code></a> runs for the caller in that context,
 apart from a confirmation, a timeout in force and the arguments given. Naming the direct
 space makes the caller a guest of it.</p>
-<p><code>AI</code> lists only the AI-callable commands, plus the caller&#39;s AI-callable macros of the
-workspace, and fails with <code>FEATURE_DISABLED</code> while the AI command surface is off.</p>
+<p><code>AI</code> lists only the AI-callable commands, the caller&#39;s agent-callable macros among them,
+and fails with <code>FEATURE_DISABLED</code> while the AI command surface is off.</p>
 </div>
 
 </section>
@@ -100,11 +100,37 @@ always listed. A listed command is one <a href="mutation.html#executeCommand"><c
 workspace, apart from a confirmation, a timeout in force and the arguments given.</p>
 <p>With <code>intentPhrase</code> the commands are ranked by how well the phrase matches their
 intent samples, title and natural-language description. <code>limit</code> defaults to 50 and is
-capped at 100. <code>workspaceId</code> scopes the list to one workspace, including its AI-callable
-macros.</p>
+capped at 100. <code>workspaceId</code> scopes the list to one workspace; the caller&#39;s
+agent-callable macros are listed for a workspace where they may run every step.</p>
 <p>Limited to 5 calls per 60-second sliding window per user; more fail with
 <code>RATE_LIMITED</code>. Fails with <code>FEATURE_DISABLED</code> while the AI command surface is off.</p>
 </div>
+
+</section>
+</section>
+<section data-group>
+<h2 id="group-macro">Macro <span class="faint">3</span></h2>
+<section class="entry" id="macroStepCommands" data-name="macroStepCommands">
+<h3><code>macroStepCommands</code></h3>
+<div class="sig">macroStepCommands: [<a href="objects.html#Command">Command</a>!]!</div>
+<div class="desc"><p>Every built-in and app command a macro step may name, sorted by id, whatever the
+caller&#39;s role and workspace: the built-ins the server runs and those the client runs,
+and the app commands other than the agent-management ones. Plugin commands are not in
+it.</p>
+</div>
+
+</section>
+<section class="entry" id="myMacros" data-name="myMacros">
+<h3><code>myMacros</code> <span class="pill warm" title="&quot;Workspace macros are replaced by the person's macros: use userCommands, createUserCommand, updateUserCommand, deleteUserCommand and executeCommand&quot;">deprecated</span></h3>
+<div class="sig">myMacros(serverId: <a href="scalars.html#ID">ID</a>!): [<a href="objects.html#MacroDef">MacroDef</a>!]!</div>
+<div class="desc"><p>The caller&#39;s own macros in the workspace. <code>FORBIDDEN</code> for a non-member.</p>
+</div>
+
+</section>
+<section class="entry" id="macroByName" data-name="macroByName">
+<h3><code>macroByName</code> <span class="pill warm" title="&quot;Workspace macros are replaced by the person's macros: use userCommands, createUserCommand, updateUserCommand, deleteUserCommand and executeCommand&quot;">deprecated</span></h3>
+<div class="sig">macroByName(serverId: <a href="scalars.html#ID">ID</a>!, name: <a href="scalars.html#String">String</a>!): <a href="objects.html#MacroDef">MacroDef</a></div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
 
 </section>
 </section>
@@ -416,22 +442,6 @@ token is never listed.</p>
 <section class="entry" id="customEmojis" data-name="customEmojis">
 <h3><code>customEmojis</code></h3>
 <div class="sig">customEmojis(serverId: <a href="scalars.html#ID">ID</a>!): [<a href="objects.html#CustomEmoji">CustomEmoji</a>!]!</div>
-<div class="desc"><p class="faint">No description in the schema.</p></div>
-
-</section>
-</section>
-<section data-group>
-<h2 id="group-macro">Macro <span class="faint">2</span></h2>
-<section class="entry" id="myMacros" data-name="myMacros">
-<h3><code>myMacros</code></h3>
-<div class="sig">myMacros(serverId: <a href="scalars.html#ID">ID</a>!): [<a href="objects.html#MacroDef">MacroDef</a>!]!</div>
-<div class="desc"><p>The caller&#39;s own macros in the workspace. <code>FORBIDDEN</code> for a non-member.</p>
-</div>
-
-</section>
-<section class="entry" id="macroByName" data-name="macroByName">
-<h3><code>macroByName</code></h3>
-<div class="sig">macroByName(serverId: <a href="scalars.html#ID">ID</a>!, name: <a href="scalars.html#String">String</a>!): <a href="objects.html#MacroDef">MacroDef</a></div>
 <div class="desc"><p class="faint">No description in the schema.</p></div>
 
 </section>
@@ -866,7 +876,7 @@ own server.</p>
   </div>
 </div>
 <footer class="site-footer container"><span class="footer-brand"><img src="../assets/rim-lockup-glow-inverse.svg" alt="RIM" width="46" height="27"> · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
-<p class="source-provenance container">Generated from <a href="https://github.com/rim-platform/rim-ui/blob/4b2931042ac25d5eca2f50c8ad6f683a3c12ccf1/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>4b29310</code></p>
+<p class="source-provenance container">Generated from <a href="https://github.com/rim-platform/rim-ui/blob/ed1032eacc0d9b5084470131b2d34cc144406df8/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>ed1032e</code></p>
 <script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
 <script>
 (() => {

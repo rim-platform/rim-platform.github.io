@@ -58,7 +58,7 @@
 </details></aside>
     <main id="content" class="prose">
 <h1 id="bots-and-incoming-webhooks-v1">Bots and incoming webhooks, v1</h1>
-<p class="status"><span><b>Bots and incoming webhooks, v1</b></span><span>version 1</span><span>status: draft</span><span><a href="https://github.com/rim-platform/rim-server/blob/4111cb89af23b2b7d062186c0031964901f40630/docs/specs/bots-v1.md">rim-server/docs/specs/bots-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/4111cb89af23b2b7d062186c0031964901f40630">4111cb8</a></span></p>
+<p class="status"><span><b>Bots and incoming webhooks, v1</b></span><span>version 1</span><span>status: draft</span><span><a href="https://github.com/rim-platform/rim-server/blob/beb5a48f892a3ac4ef53e7ee2238413e99ee35e0/docs/specs/bots-v1.md">rim-server/docs/specs/bots-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/beb5a48f892a3ac4ef53e7ee2238413e99ee35e0">beb5a48</a></span></p>
 <p><strong>Status: draft.</strong> This is the contract for a bot account in a workspace and for an incoming webhook
 bound to one. <a href="../docs/vision.html"><code>docs/vision.md</code></a> (&quot;Working with agents&quot;) says why. <a href="agent-data-flow-v1.html"><code>docs/specs/agent-data-flow-v1.md</code></a>
 covers an agent that runs on a person&#39;s machine and acts as them; a bot is the other case, an
@@ -296,7 +296,9 @@ webhook. The result MUST then be cut to 1,000 characters, counting the link.</li
 an optional port and a single <code>/</code>, and nothing else. The finished value is added after the text only if
 it starts with the origin, has something after it, is at most 512 characters and is printable ASCII
 without <code>&lt;</code>, <code>&gt;</code>, <code>(</code>, <code>)</code>, <code>[</code>, <code>]</code>, <code>\</code>, a backtick, a quote, <code>*</code> or <code>|</code>. Otherwise, and when a
-placeholder in it has no value, the message MUST still post, without a link.</p>
+placeholder in it has no value, the message MUST still post, without a link. Each <code>@</code> that begins
+<code>@channel</code> or <code>@here</code>, in any case, MUST be written <code>%40</code> in the link, and the 512 characters count
+after that.</p>
 <p><strong>When the body is read.</strong> Header conditions are checked first, and the body MUST be parsed only when a
 rule that could still hold needs a field or a placeholder. So a <code>ping</code>, or an event no rule handles,
 answers <code>202</code> whatever its body. A body that must be read and isn&#39;t JSON answers <code>400</code> &quot;The body must be
@@ -486,7 +488,7 @@ limit.</li>
   </div>
 </div>
 <footer class="site-footer container"><span class="footer-brand"><img src="../assets/rim-lockup-glow-inverse.svg" alt="RIM" width="46" height="27"> · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
-<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-server/blob/4111cb89af23b2b7d062186c0031964901f40630/docs/specs/bots-v1.md">rim-server/docs/specs/bots-v1.md</a> at <code>4111cb8</code></p>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-server/blob/beb5a48f892a3ac4ef53e7ee2238413e99ee35e0/docs/specs/bots-v1.md">rim-server/docs/specs/bots-v1.md</a> at <code>beb5a48</code></p>
 <script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
 </body>
 </html>
