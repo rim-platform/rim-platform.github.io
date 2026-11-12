@@ -1,16 +1,21 @@
 // Checks the site as Pages will serve it: every internal link and fragment resolves, every
-// page has a title and the viewport meta, no page is over 1 MB, tags balance, and the handle
-// delegation at /.well-known/rim-server names the public server.
+// page has a title and the viewport meta, no page is over 1 MB, tags balance, every screenshot
+// is shown by a page, and the handle delegation at /.well-known/rim-server names the public
+// server.
 
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
+import { HANDWRITTEN } from "./lib/chrome.mjs";
 import { checkDownloads, releaseOf } from "./lib/downloads.mjs";
-import { SITE_ROOT, loadUiSource } from "./lib/sources.mjs";
+import { checkSelfhost, selfhostRelease } from "./lib/selfhost.mjs";
+import { SITE_ROOT, loadSources, loadUiSource } from "./lib/sources.mjs";
 
 export const OUTPUT_DIRS = ["docs", "plugins", "specs", "configure", "api"];
 const MAX_BYTES = 1024 * 1024;
+/** The application captures, each of which some handwritten page must show. */
+const SCREENSHOTS_DIR = "assets/screenshots";
 /** The discovery document of the handle domain: `@name:rim-platform.org` lives on the relay. */
 export const DELEGATION_FILE = ".well-known/rim-server";
 export const DELEGATE = "https://relay.rim-platform.org";
@@ -26,7 +31,7 @@ function walk(dir) {
 
 /** The site's HTML files, as site-root-relative paths, sorted. */
 export function siteFiles(root = SITE_ROOT) {
-  const files = ["index.html", "404.html"].filter((f) => existsSync(path.join(root, f)));
+  const files = [...HANDWRITTEN.map((p) => p.file), "404.html"].filter((f) => existsSync(path.join(root, f)));
   for (const d of OUTPUT_DIRS) files.push(...walk(path.join(root, d)).map((p) => path.relative(root, p).split(path.sep).join("/")));
   return files.sort();
 }
@@ -61,10 +66,11 @@ export function tagBalance(html) {
 
 /**
  * Runs every check over the site; returns errors, warnings, the page count and total size.
- * `release` is the rim-ui release the downloads block must name; without it the block is only
- * checked against its own links.
+ * `release` is the rim-ui release the downloads block must name, and `selfhost` the server and
+ * web versions the Compose snippet must name; without them each block is only checked against
+ * itself.
  */
-export function check(root = SITE_ROOT, release) {
+export function check(root = SITE_ROOT, release, selfhost) {
   const files = siteFiles(root);
   const errors = [];
   const warnings = [];
@@ -114,8 +120,21 @@ export function check(root = SITE_ROOT, release) {
   }
   errors.push(...checkDelegation(root));
   errors.push(...checkDownloads(release, root));
+  errors.push(...checkSelfhost(selfhost, root));
+  errors.push(...checkScreenshots(root, html));
   errors.push(...checkNavigation(html));
   return { files, errors, warnings, bytes };
+}
+
+/** Screenshot files that no handwritten page shows. */
+function checkScreenshots(root, pages) {
+  const dir = path.join(root, SCREENSHOTS_DIR);
+  if (!existsSync(dir)) return [];
+  const shown = HANDWRITTEN.map((p) => pages.get(p.file) ?? "").join("\n");
+  return readdirSync(dir)
+    .filter((name) => /\.(webp|png|jpe?g)$/.test(name))
+    .filter((name) => !shown.includes(`${SCREENSHOTS_DIR}/${name}"`))
+    .map((name) => `${SCREENSHOTS_DIR}/${name}: no page shows it`);
 }
 
 /** Main links agree across pages, and homepage section links follow their reading order. */
@@ -169,8 +188,14 @@ export function checkDelegation(root = SITE_ROOT) {
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  // With RIM_UI_DIR set the block is checked against that repository at RIM_UI_REF.
-  const r = check(SITE_ROOT, process.env.RIM_UI_DIR ? releaseOf(loadUiSource()) : undefined);
+  // With RIM_UI_DIR set the downloads block is checked against that repository at RIM_UI_REF,
+  // and with RIM_SERVER_DIR as well the Compose snippet against both.
+  const both = process.env.RIM_UI_DIR && process.env.RIM_SERVER_DIR;
+  const r = check(
+    SITE_ROOT,
+    process.env.RIM_UI_DIR ? releaseOf(loadUiSource()) : undefined,
+    both ? selfhostRelease(loadSources()) : undefined,
+  );
   for (const w of r.warnings) console.warn(`warning: ${w}`);
   for (const e of r.errors) console.error(`error: ${e}`);
   console.log(`${r.files.length} pages, ${(r.bytes / 1024).toFixed(0)} KiB, ${r.errors.length} errors`);

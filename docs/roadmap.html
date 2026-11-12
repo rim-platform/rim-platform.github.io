@@ -8,7 +8,7 @@
 <link rel="icon" href="../favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;550;600;650;700&family=JetBrains+Mono:wght@400;500&display=swap">
-<meta name="theme-color" content="#050910">
+<meta name="theme-color" content="#0b0c10">
 <link rel="stylesheet" href="../assets/site-chrome.css">
 <link rel="stylesheet" href="../assets/site.css">
 <script src="../assets/site.js" defer></script>
@@ -17,14 +17,14 @@
 <a class="skip" href="#content">Skip to content</a>
 <header class="site-header">
   <div class="container header-inner">
-    <a class="brand" href="../index.html" aria-label="RIM home"><img src="../assets/rim-mark-inverse.svg" alt="" width="32" height="32">RIM</a>
+    <a class="brand" href="../index.html" aria-label="RIM home"><img src="../assets/rim-lockup-glow-inverse.svg" alt="" width="98" height="58"></a>
     <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-navigation">Menu</button>
     <nav class="site-nav" id="site-navigation" data-open="false" aria-label="Main navigation">
+      <a href="../index.html#uses">What it's for</a>
       <a href="../index.html#privacy">Privacy</a>
-      <a href="../index.html#how">How it works</a>
-      <a href="../index.html#capabilities">Capabilities</a>
-      <a href="../index.html#community">Community</a>
+      <a href="../how-it-works/index.html">How it works</a>
       <a href="../index.html#download">Download</a>
+      <a href="../index.html#community">Community</a>
       <a href="client/getting-started.html">Get started</a>
       <a href="index.html" aria-current="location">Docs</a>
     </nav>
@@ -53,7 +53,7 @@
 <h1 id="roadmap">Roadmap</h1>
 <p>Where RIM is heading. <a href="vision.html"><code>docs/vision.md</code></a> says what RIM is for and the principles behind every item
 here; <a href="changelog.html"><code>CHANGELOG.md</code></a> says what each release changed. The roadmap names directions and their
-order, not dates. Each item becomes a pull request with its contract in <a href="https://github.com/rim-platform/rim-server/tree/7bc08f0c95e01769408e4756d418efea30c5b70b/docs"><code>docs/</code></a> first, so the
+order, not dates. Each item becomes a pull request with its contract in <a href="https://github.com/rim-platform/rim-server/tree/beb5a48f892a3ac4ef53e7ee2238413e99ee35e0/docs"><code>docs/</code></a> first, so the
 detail lives there once the work starts.</p>
 <h2 id="where-it-stands">Where it stands <a class="anchor" href="#where-it-stands" aria-label="Link to this section">#</a></h2>
 <p>RIM is <strong>pre-release</strong>. Early <code>0.0.x</code> releases of the server and clients are available, and the
@@ -72,7 +72,7 @@ that RIM is ready for production, waits for that outside review (<a href="securi
 </thead>
 <tbody><tr>
 <td>Chat</td>
-<td>Workspaces, public and private channels, DMs and groups, threads, replies, edits, forwards, attachments with quotas, reactions, pins, mentions, read state, an inbox, notification rules with an email digest, presence and typing, link previews, custom emoji, full-text search</td>
+<td>Workspaces, public and private channels, DMs and groups, threads, replies, edits, forwards, attachments with quotas, reactions, pins, mentions, read state with mark unread, an inbox, Home and Unreads pages, notification rules with an email digest, presence and typing, link previews, custom emoji, full-text search</td>
 </tr>
 <tr>
 <td>Moderation</td>
@@ -120,24 +120,49 @@ and Windows, with feedback from people trying them.</li>
 workspace every new account joins, with the web client on <code>chat.rim-platform.org</code>
 (<a href="operations/relay-public.html"><code>docs/operations/relay-public.md</code></a>).</li>
 <li>Make the four first-party plugins and their signed release bundles easy to discover and install.</li>
+<li>Move RIM&#39;s own development into a RIM workspace, so every agent feature is used daily before it
+ships.</li>
+<li>Have two or three small teams outside the project try it, so decisions rest on more than one
+person&#39;s use.</li>
+<li>Start scheduling the outside cryptographic review.</li>
 </ul>
 <h2 id="next">Next <a class="anchor" href="#next" aria-label="Link to this section">#</a></h2>
+<p><strong>The outside cryptographic review</strong>, then <code>0.1.0</code>. Before it: a &quot;why can&#39;t I read this&quot; view that
+explains an undecryptable message, and a manual multi-device test pass in the release checklist.
+The review runs on its own track: it does not wait for the items below, and if they slip, <code>0.1.0</code>
+does not.</p>
 <p>In order:</p>
 <ol>
-<li><strong>Bots and incoming webhooks.</strong> A bot account a workspace Owner or Moderator creates, with
-tokens it can revoke; one incoming webhook URL per channel, bound to a bot, with its own rate
-limit; a GitHub preset first, so releases post themselves. Bots never join encrypted
-conversations.</li>
+<li><strong>Refusals that say why.</strong> When the command dispatcher refuses a call it says whether it was
+denied by policy (naming what is missing, and the target only if you can already see it, so a
+refusal never reveals a private channel), needs a confirmation, failed for a technical reason
+(and whether retrying is safe), or expired. Clients show each as its own card instead of a
+generic error.</li>
+<li><strong>Where agents may move data.</strong> A contract in <a href="https://github.com/rim-platform/rim-server/tree/beb5a48f892a3ac4ef53e7ee2238413e99ee35e0/docs/specs"><code>docs/specs/</code></a>, written before the next item ships.
+It covers what RIM hands to an agent: read grants, the record of what was given, content marked
+as untrusted so text an agent reads is less able to steer it, the notice to others in an
+encrypted conversation, and what plugin commands return. It also states what RIM cannot control
+once an agent has the content.</li>
 <li><strong>RIM in Claude Code and other agents.</strong> The desktop app serves RIM as a local MCP server,
 and a Claude Code plugin packages it with a skill, so an agent on your machine can read your
 conversations, search, draft replies and run commands. It acts as you, through your desktop
 app: your keys stay on the device, encrypted conversations work, and every send or change
 waits for your confirmation in RIM, under the same command registry and gate as the built-in
 agent. Read-only by default; an encrypted conversation reaches the agent&#39;s model only with a
-grant for that conversation, and the audit log records what the agent did.</li>
-<li><strong>The outside cryptographic review</strong>, then <code>0.1.0</code>. Before it: a &quot;why can&#39;t I read this&quot; view
-that explains an undecryptable message, and a manual multi-device test pass in the release
-checklist.</li>
+grant for that conversation, and the audit log records what the agent did. An agent is paired
+with the desktop app, and it can read nothing until you grant a workspace or conversation.
+Read-only tools come first and sending follows. The desktop keeps a record of what the agent was
+given, and each task gets a run identifier that links its audit entries, in a run view only you
+see. Outside agents can use plugin commands you approve one by one and per agent. The desktop app
+has to be running for this, so it gains a way to stay in the tray.</li>
+<li><strong>Bots and incoming webhooks.</strong> A bot account a workspace Owner or Moderator creates, with
+tokens it can revoke; one incoming webhook URL per channel, bound to a bot, with its own rate
+limit; formats anyone can write, with ready-made ones such as GitHub, so releases post
+themselves. Bots never join encrypted conversations. A bot&#39;s token gives an agent an identity
+the server verifies, with its own grants. The agent behind a bot runs where its owner chooses,
+with its owner&#39;s model and key: on a personal machine it answers while that machine is on, and
+a server&#39;s owner can run it next to the server, as the content check runs. The channel shows
+who runs it and where what it reads goes. The public relay runs no such agent.</li>
 <li><strong>A first-run path</strong> in the clients that grows with the product: create a key and write down
 the phrase, choose a drive for the archive, pick a relay, install a first plugin.</li>
 <li><strong>Data export</strong> per person and per workspace.</li>
@@ -151,20 +176,26 @@ all at once, and handle lookup for <code>@username:rim-platform.org</code>.</li>
 <p>Not scheduled; picked up when the items above are done or when someone needs them enough to
 build them.</p>
 <ul>
+<li><strong>Agent work the team can see:</strong> a run card shared in a conversation, picked up only if daily use
+shows the need. It never reveals what the agent read somewhere more private.</li>
+<li><strong>Approvals by another person:</strong> a person with authority approves what a bot asked for, with
+stored run records, picked up after the agent items in &quot;Next&quot; have been in daily use.</li>
+<li><strong>Cards on Home:</strong> plugins adding their own cards to Home, once the SDK has a way to.</li>
 <li><strong>Calls:</strong> voice calls with the team, and video and screen sharing after them, because talking
 a thing through is sometimes better than writing it. They follow the same rules as messages:
 calls in DMs and private groups are end-to-end encrypted, and a self-hosted server can carry
 them without a third-party service. Whether the media runs through the server or a separate
 self-hosted media server is decided when the work starts.</li>
-<li><strong>The agent:</strong> local and self-hosted models (Ollama and OpenAI-compatible endpoints); macros
+<li><strong>The agent:</strong> local and self-hosted models first (Ollama and OpenAI-compatible endpoints); macros
 the agent runs step by step with a pause at each change; catch-me-up summaries with citations,
 acting through commands rather than as a separate chatbot.</li>
 <li><strong>More MCP:</strong> MCP servers installed as plugins, so the built-in agent can use them; and a
-headless MCP server with a bot token, for agents that run without a person at a desktop.</li>
+headless MCP server with a bot token, for agents that run without a person at a desktop. These
+follow the contract from &quot;Next&quot;, and on the public relay they stay on your own machine.</li>
 <li><strong><code>rim-cli</code>:</strong> <code>rim send</code>, <code>rim search</code>, <code>rim watch</code> and <code>rim macro run</code> with a host-local
 token; it doubles as a contract test of the GraphQL API.</li>
-<li><strong>Reach:</strong> the web app as an installable PWA with web push and a narrow layout. No native
-mobile app; the cache and encryption code is Rust a future mobile build can reuse.</li>
+<li><strong>Reach:</strong> the web app as an installable PWA with web push and a phone layout; narrow windows
+work today, with nothing built for touch. No native mobile app; the cache and encryption code is Rust a future mobile build can reuse.</li>
 <li><strong>Post-quantum signatures:</strong> Ed25519 + ML-DSA-44 for identity and device keys, profile cards,
 login proofs, MLS credentials and server-to-server signatures, after the review. The formats
 already carry an algorithm tag and room for the larger keys.</li>
@@ -174,7 +205,7 @@ top of the signed registries.</li>
 <li><strong>Keyboard and polish:</strong> macros and pipelines in shareable profiles, fuzzy jump to anything,
 a light theme, translations and an accessibility pass.</li>
 <li><strong>Operators:</strong> admin audit views and a pass over what is logged and kept, documented in
-<a href="https://github.com/rim-platform/rim-server/tree/7bc08f0c95e01769408e4756d418efea30c5b70b/docs/security"><code>docs/security/</code></a>.</li>
+<a href="https://github.com/rim-platform/rim-server/tree/beb5a48f892a3ac4ef53e7ee2238413e99ee35e0/docs/security"><code>docs/security/</code></a>.</li>
 </ul>
 <h2 id="not-planned">Not planned <a class="anchor" href="#not-planned" aria-label="Link to this section">#</a></h2>
 <ul>
@@ -189,6 +220,10 @@ working there; end-to-end encryption covers DMs and private groups.</li>
 (<a href="../specs/key-identity-v1.html"><code>docs/specs/key-identity-v1.md</code></a>).</li>
 <li><strong>A central RIM service</strong> anyone depends on, and marketplace monetization before there is a
 network of plugins.</li>
+<li><strong>A replacement for your project tracker, calendar or CI.</strong> RIM shows what needs you and links to
+the source.</li>
+<li><strong>A model service for agents run by the RIM project.</strong> No agent&#39;s prompts or model key go through
+a service the project runs; a server&#39;s owner decides what runs on their own server.</li>
 </ul>
 <h2 id="proposing-a-change-to-the-roadmap">Proposing a change to the roadmap <a class="anchor" href="#proposing-a-change-to-the-roadmap" aria-label="Link to this section">#</a></h2>
 <p>Open an issue in <code>rim-server</code> with the feature request template. It asks what you want, for
@@ -198,8 +233,8 @@ core&quot;) says where that line is.</p>
     </main>
   </div>
 </div>
-<footer class="site-footer container"><span class="footer-brand"><img src="../assets/rim-mark-inverse.svg" alt="" width="21" height="21"> RIM · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
-<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-server/blob/7bc08f0c95e01769408e4756d418efea30c5b70b/ROADMAP.md">rim-server/ROADMAP.md</a> at <code>7bc08f0</code></p>
+<footer class="site-footer container"><span class="footer-brand"><img src="../assets/rim-lockup-glow-inverse.svg" alt="RIM" width="46" height="27"> · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-server/blob/beb5a48f892a3ac4ef53e7ee2238413e99ee35e0/ROADMAP.md">rim-server/ROADMAP.md</a> at <code>beb5a48</code></p>
 <script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
 </body>
 </html>

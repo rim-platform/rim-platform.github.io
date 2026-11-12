@@ -8,7 +8,7 @@
 <link rel="icon" href="../../favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;550;600;650;700&family=JetBrains+Mono:wght@400;500&display=swap">
-<meta name="theme-color" content="#050910">
+<meta name="theme-color" content="#0b0c10">
 <link rel="stylesheet" href="../../assets/site-chrome.css">
 <link rel="stylesheet" href="../../assets/site.css">
 <script src="../../assets/site.js" defer></script>
@@ -17,14 +17,14 @@
 <a class="skip" href="#content">Skip to content</a>
 <header class="site-header">
   <div class="container header-inner">
-    <a class="brand" href="../../index.html" aria-label="RIM home"><img src="../../assets/rim-mark-inverse.svg" alt="" width="32" height="32">RIM</a>
+    <a class="brand" href="../../index.html" aria-label="RIM home"><img src="../../assets/rim-lockup-glow-inverse.svg" alt="" width="98" height="58"></a>
     <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-navigation">Menu</button>
     <nav class="site-nav" id="site-navigation" data-open="false" aria-label="Main navigation">
+      <a href="../../index.html#uses">What it's for</a>
       <a href="../../index.html#privacy">Privacy</a>
-      <a href="../../index.html#how">How it works</a>
-      <a href="../../index.html#capabilities">Capabilities</a>
-      <a href="../../index.html#community">Community</a>
+      <a href="../../how-it-works/index.html">How it works</a>
       <a href="../../index.html#download">Download</a>
+      <a href="../../index.html#community">Community</a>
       <a href="getting-started.html">Get started</a>
       <a href="../index.html" aria-current="location">Docs</a>
     </nav>
@@ -69,9 +69,9 @@ or its code to <strong>Create account</strong> in the app.</p>
 <p>Choose <strong>Create account</strong> on the sign-in page, or open your invite link. A workspace invite says
 &quot;You&#39;re joining &lt;workspace&gt;&quot; and who invited you. On an invite-only server the sign-in page says
 that creating an account takes an invite code or link. Where the app can hold keys (the desktop
-app, and any browser with WebCrypto Ed25519 and IndexedDB) the form creates an account with a key:
-no password and no email. The device keeps a key that signs you in, and a recovery kit gets the
-account back if you lose it.</p>
+app, and any browser with WebCrypto Ed25519 and IndexedDB) the form creates an account with a key
+and a password, and no email. The device keeps a key that signs you in together with the
+password, and a recovery kit gets the account back if you lose it.</p>
 <ul>
 <li><strong>Invite code</strong>, only when you did not open an invite link: the code you were given, or the
 whole invite link, which the app reads the code from. An invite-only server needs it; elsewhere
@@ -87,6 +87,9 @@ save, such as &quot;Saved as kuba.&quot; With the server&#39;s domain it makes y
 <li><strong>Display name (optional)</strong>: at most 64 characters. Left blank, your username is shown.</li>
 <li><strong>Name of this device</strong>: up to 64 characters, filled in with the computer&#39;s name or, in a
 browser, a name such as &quot;Firefox on Linux&quot;. It names this device in your device list.</li>
+<li><strong>Password</strong>: a <strong>PIN</strong> of at least 6 digits or a <strong>Passphrase</strong> of at least 12 characters,
+typed twice. You enter it every time you sign in, and if you forget it, your recovery phrase
+resets it. <strong>Keep me signed in on this device</strong> decides whether this device stays signed in.</li>
 <li><strong>I accept the terms of use</strong>, with a link to the server&#39;s terms, only when the server has
 terms. The account is not created without it.</li>
 <li><strong>I am at least N</strong>, only when the server asks for a minimum age: you confirm you are at least
@@ -136,8 +139,9 @@ Owner for an invite link.&quot;</li>
 <p>A server can hold a new account back for a while. A bar then says &quot;New account: you can create
 workspaces and message strangers after &lt;time&gt;.&quot;</p>
 <p><strong>The direct space.</strong> On a server that relays between servers, as the public relay does,
-<strong>Direct messages</strong> at the top of the workspace rail opens your direct space. It holds the DMs and
-groups that belong to no workspace, with people on this server or, through it, on other servers.
+<strong>Direct messages</strong>, under <strong>Home</strong> at the top of the workspace rail, opens your direct space. It
+holds the DMs and groups that belong to no workspace, with people on this server or, through it,
+on other servers.
 Its badge counts unread messages before you open it. The rail shows once a workspace is open.</p>
 <h2 id="join-or-create-a-workspace">Join or create a workspace <a class="anchor" href="#join-or-create-a-workspace" aria-label="Link to this section">#</a></h2>
 <ul>
@@ -218,7 +222,7 @@ While the link is on it shows with a copy button, and a line reads &quot;N joine
 hours · M in the last 7 days · K requests waiting&quot;. <strong>Issue a new link</strong>, after the confirmation
 &quot;The current link stops working everywhere you posted it.&quot;, ends the current link at once;
 people who joined with it stay, and open requests stay open.</p>
-<p><strong>Creating a channel.</strong> <strong>New channel</strong> (the <strong>+</strong> beside Channels in the tool panel, or
+<p><strong>Creating a channel.</strong> <strong>New channel</strong> (the <strong>+</strong> beside Channels in the conversation list, or
 <kbd>Ctrl+Shift+C</kbd>) asks for a <strong>Channel name</strong>. The <strong>Private</strong> switch says &quot;Only invited
 members can see this channel. This cannot be changed later.&quot; <strong>Add members (optional)</strong> picks
 people to add, and <strong>Create</strong> opens the channel. <strong>Browse channels</strong>, the compass beside
@@ -227,8 +231,9 @@ its Owner and Moderators create channels, and only they see <strong>New channel<
 <p>A channel&#39;s topic under its name is changed by the Owner and Moderators, and in a private
 channel by its creator; everyone else reads it.</p>
 <h2 id="talk">Talk <a class="anchor" href="#talk" aria-label="Link to this section">#</a></h2>
-<p><strong>Channels.</strong> A public channel is readable by every member of the workspace. The tool panel lists
-the channels you joined; one you have not joined shows <strong>Join channel</strong> above its timeline.</p>
+<p><strong>Channels.</strong> A public channel is readable by every member of the workspace. The conversation
+list shows the channels you joined; one you have not joined shows <strong>Join channel</strong> above its
+timeline.</p>
 <p><strong>Replies.</strong> <strong>Reply</strong> in a message&#39;s menu, the reply arrow on hover, or <kbd>r</kbd> on a
 selected message quotes it above the composer; what you send next shows that quote, and choosing
 the quote jumps to the original. <strong>Cancel reply</strong> (the ×) or <kbd>Esc</kbd> drops it.</p>
@@ -239,7 +244,7 @@ the thread. A message with a thread shows how many replies it has under it (<str
 <strong>View thread</strong> on a server that does not report the count; choose it, or <strong>Open thread</strong> on
 hover, to open the pane. The thread&#39;s reply box works like the composer: <code>@</code> mentions, <code>:</code> emoji,
 <strong>Insert emoji</strong> and <strong>Attach file</strong>. Commands with <code>/</code> run from the conversation&#39;s composer only.</p>
-<p><strong>DMs and groups.</strong> <strong>New message</strong> (the <strong>+</strong> at the top of the tool panel, or
+<p><strong>DMs and groups.</strong> <strong>New message</strong> (the <strong>+</strong> at the top of the conversation list, or
 <kbd>Ctrl+Shift+G</kbd>) lists the workspace&#39;s members. Pick one person for a DM or several for a
 group, then choose <strong>Start conversation</strong> or <strong>Start group</strong> (or press <kbd>Ctrl+Enter</kbd>). A
 DM opens as a draft and is created when you send its first message. A group is named
@@ -292,28 +297,42 @@ field; a server can turn attachments off. <kbd>Escape</kbd> moves from the compo
 list, where the arrow keys move between messages and <kbd>e</kbd> edits your own.</p>
 <p>An edited message shows <strong>(edited)</strong> after its text; hover or focus it to see when. A server older
 than edit times shows it only in encrypted conversations.</p>
-<p><strong>Inbox and notifications.</strong> <strong>Inbox</strong> on the side rail shows the conversation list in the tool
-panel, with the number of unread messages in the open workspace. The bell, <strong>Notifications</strong>,
-lists your mentions, DMs, thread replies, reactions and keyword matches in the open workspace,
-under any message requests; <strong>Mark all read</strong> clears them. Settings &gt; Notifications sets what
+<p><strong>Conversations and notifications.</strong> The conversation list beside the rail shows the open
+workspace&#39;s conversations and what is unread in them; <kbd>Ctrl+B</kbd> hides and shows it. The
+bell, <strong>Notifications</strong>, at the right of the top bar, opens under it a list of your mentions, DMs,
+thread replies, reactions and keyword matches in the open workspace, under any message requests;
+<strong>Mark all read</strong> clears them, and choosing one opens it. Settings &gt; Notifications sets what
 notifies you in the workspace and how this device shows it: sound, the <strong>Message preview</strong>
 (sender and text, sender only, or nothing, which hides who and where too), the <strong>Title</strong>
 (the conversation, the sender, or both), and <strong>Hide text of encrypted messages</strong>. An example
-under the settings shows the result.</p>
+under the settings shows the result. You get notifications from all your workspaces and Direct
+messages, not only the open workspace. One from another workspace ends its title with that
+workspace&#39;s name, and its badge on the rail updates.</p>
 <h2 id="find-your-way-around">Find your way around <a class="anchor" href="#find-your-way-around" aria-label="Link to this section">#</a></h2>
 <p>From left to right:</p>
 <ul>
-<li><strong>Workspace rail</strong>: <strong>Direct messages</strong>, one button per workspace with its unread count, and
-<strong>Add workspace</strong> at the bottom.</li>
-<li><strong>Side rail</strong>: <strong>Inbox</strong>, <strong>Plugins</strong>, <strong>Notifications</strong> and <strong>Search workspace</strong>, then
-<strong>Audit log</strong>, <strong>Settings</strong> and your avatar, whose menu has <strong>Set status...</strong>, <strong>Settings</strong> and
-<strong>Sign out</strong>.</li>
-<li><strong>Tool panel</strong>: Conversations, with Channels, archived channels and your DMs and groups, and
-<strong>Workspace members</strong> and <strong>New message</strong> at the top. Notifications and member lists take its
-place while open.</li>
-<li><strong>Main surface</strong>: the conversation&#39;s header, timeline and composer. Settings, message requests
-and some plugin panels take its place, and a thread opens in a pane to its right.</li>
+<li><strong>Top bar</strong>, across the top: <strong>Back</strong> and <strong>Forward</strong> on the left, the search box in the
+middle, which says what it searches, and <strong>Plugins</strong> and <strong>Notifications</strong> on the right. In the
+desktop app it is also the window&#39;s title bar. In a narrow window a menu button at its left
+opens the rail and the conversation list.</li>
+<li><strong>Workspace rail</strong>, down the left edge: <strong>Home</strong>, <strong>Direct messages</strong> under it, one button per
+workspace with its unread count, and <strong>Add workspace</strong>. At its foot: <strong>Audit log</strong> while a
+workspace is open, <strong>Settings</strong>, and your avatar, whose menu has <strong>Set status...</strong>, <strong>Settings</strong>
+and <strong>Sign out</strong>.</li>
+<li><strong>Conversation list</strong>: the open workspace&#39;s channels, archived channels and your DMs and groups,
+with <strong>Workspace members</strong> and <strong>New message</strong> at the top, and <strong>Unreads</strong> above the channels
+while something is unread. A <strong>Bots</strong> section under the channels lists the workspace&#39;s bots.
+Member lists take its place while open.</li>
+<li><strong>Main area</strong>: the conversation&#39;s header, timeline and composer. Home, Settings, message
+requests and some plugin panels take its place, and a thread opens in a pane to its right. A
+plugin panel opens over whichever page is shown.</li>
 </ul>
+<p><strong>Home</strong> shows what matters to you across your workspaces: what waits for you, mentions and
+replies, and what&#39;s unread, until you change it. <strong>Edit Home</strong> adds boxes such as a channel you
+watch, your direct messages or buttons for your most-used commands, and every device shows the
+same Home (<a href="home.html">Home</a>). <strong>See all unread</strong> on Home, or <strong>Unreads</strong> in the conversation list,
+opens every unread message on one page. Looking at it marks nothing read: <strong>Mark as read</strong> on a
+conversation does, and a conversation&#39;s menu also has <strong>Mark as unread</strong>.</p>
 <p>A person has one menu wherever they appear: right-click their name or avatar on a message, an
 @mention of them, or their row in a conversation&#39;s members or in <strong>Workspace members</strong> (the row&#39;s
 <strong>⋮</strong> button opens the same menu). It offers <strong>View profile</strong>, <strong>Send message</strong> and
@@ -376,8 +395,16 @@ keybind. Search takes filters such as <code>from:@user</code> (or a whole handle
 <code>in:#channel</code>, <code>has:link</code> and
 <code>before:2026-01-01</code>. The shortcuts panel lists the bindings as they stand; Settings &gt; Keybinds and
 Settings &gt; Keyboard change them, and <a href="keyboard.html">Keyboard</a> explains profiles and the Vim layer.</p>
-<p><strong>Plugins</strong> on the side rail opens a menu of the panels of your running plugins, or <strong>Manage
-plugins</strong> when none has a panel. <a href="../../plugins/index.html">Plugins</a> covers installing and trusting one, and
+<p>In the desktop app, closing the window asks whether RIM keeps running in the system tray or quits.
+In the tray you keep getting messages and notifications, and the tray icon&#39;s menu brings the window
+back. Settings &gt; Desktop changes the answer later. <kbd>Ctrl+Q</kbd> quits, after a confirmation.
+The icon shows a dot, never a number, while you have unread notifications, and its menu offers
+&quot;Restart to update&quot; when an update is ready. Clicking a message notification brings the window back
+and opens that conversation.</p>
+<p>Settings &gt; Desktop can also start RIM when you sign in to the computer. It is off by default, and
+the window always opens, so an account that needs its password asks for it right away.</p>
+<p><strong>Plugins</strong> in the top bar opens a menu of the panels of your running plugins and <strong>Manage
+plugins</strong>; it shows while a running plugin has a panel. <a href="../../plugins/index.html">Plugins</a> covers installing and trusting one, and
 <a href="ui-shell.html">UI shell</a> describes the shell&#39;s design.</p>
 <h2 id="keep-your-account-safe">Keep your account safe <a class="anchor" href="#keep-your-account-safe" aria-label="Link to this section">#</a></h2>
 <ul>
@@ -413,6 +440,11 @@ account, not its encrypted messages: those come back only from the history archi
 </ol>
 <h2 id="next">Next <a class="anchor" href="#next" aria-label="Link to this section">#</a></h2>
 <ul>
+<li><a href="home.html">Home</a>: making Home your own.</li>
+<li><a href="agents.html">Connect an AI agent</a>: letting a program such as Claude Code read the channels you
+choose and post with your approval.</li>
+<li><a href="webhooks.html">Post alerts from other services</a>: GitHub, Grafana or any service posting into a
+channel.</li>
 <li><a href="../../plugins/index.html">Plugins</a>: the official plugins, and installing, using, trusting and removing one.</li>
 <li><a href="e2ee-desktop.html">End-to-end encrypted DMs and groups on the desktop</a>, and
 <a href="e2ee-web.html">in the web app</a>: channels are never end-to-end encrypted, DMs and groups can be.</li>
@@ -423,8 +455,8 @@ default workspace for new accounts.</li>
     </main>
   </div>
 </div>
-<footer class="site-footer container"><span class="footer-brand"><img src="../../assets/rim-mark-inverse.svg" alt="" width="21" height="21"> RIM · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
-<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/625c78e7c352dd2300217ff4cf692350e410fa7e/docs/getting-started.md">rim-ui/docs/getting-started.md</a> at <code>625c78e</code></p>
+<footer class="site-footer container"><span class="footer-brand"><img src="../../assets/rim-lockup-glow-inverse.svg" alt="RIM" width="46" height="27"> · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/ed1032eacc0d9b5084470131b2d34cc144406df8/docs/getting-started.md">rim-ui/docs/getting-started.md</a> at <code>ed1032e</code></p>
 <script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
 </body>
 </html>

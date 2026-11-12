@@ -8,7 +8,7 @@
 <link rel="icon" href="../../favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;550;600;650;700&family=JetBrains+Mono:wght@400;500&display=swap">
-<meta name="theme-color" content="#050910">
+<meta name="theme-color" content="#0b0c10">
 <link rel="stylesheet" href="../../assets/site-chrome.css">
 <link rel="stylesheet" href="../../assets/site.css">
 <script src="../../assets/site.js" defer></script>
@@ -17,14 +17,14 @@
 <a class="skip" href="#content">Skip to content</a>
 <header class="site-header">
   <div class="container header-inner">
-    <a class="brand" href="../../index.html" aria-label="RIM home"><img src="../../assets/rim-mark-inverse.svg" alt="" width="32" height="32">RIM</a>
+    <a class="brand" href="../../index.html" aria-label="RIM home"><img src="../../assets/rim-lockup-glow-inverse.svg" alt="" width="98" height="58"></a>
     <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-navigation">Menu</button>
     <nav class="site-nav" id="site-navigation" data-open="false" aria-label="Main navigation">
+      <a href="../../index.html#uses">What it's for</a>
       <a href="../../index.html#privacy">Privacy</a>
-      <a href="../../index.html#how">How it works</a>
-      <a href="../../index.html#capabilities">Capabilities</a>
-      <a href="../../index.html#community">Community</a>
+      <a href="../../how-it-works/index.html">How it works</a>
       <a href="../../index.html#download">Download</a>
+      <a href="../../index.html#community">Community</a>
       <a href="getting-started.html">Get started</a>
       <a href="../index.html" aria-current="location">Docs</a>
     </nav>
@@ -50,7 +50,7 @@ that field.</p>
 <pre><code class="language-sh">npm run skew:check -- &lt;git ref&gt;   # e.g. v0.3.0, origin/release, HEAD~30
 npm run skew:check                # the most recent rim-ui v* tag</code></pre>
 <p>It takes <code>schema.graphql</code> as committed at the ref (the SDL exported from the server that the
-client was built against then), collects every <code>gql</code> document under <a href="https://github.com/rim-platform/rim-ui/tree/625c78e7c352dd2300217ff4cf692350e410fa7e/src"><code>src/</code></a> with its fragments
+client was built against then), collects every <code>gql</code> document under <a href="https://github.com/rim-platform/rim-ui/tree/ed1032eacc0d9b5084470131b2d34cc144406df8/src"><code>src/</code></a> with its fragments
 resolved the way the client sends it, validates each against that schema with <code>graphql</code>&#39;s
 <code>validate</code>, and prints the operations that fail, grouped by file. It exits 1 when any would be
 refused, 0 when none would, and 2 when it cannot run (no such ref, no <code>schema.graphql</code> there).
@@ -75,9 +75,9 @@ older server for.</li>
 not have at all: a bug today, not skew.</p>
 <h2 id="gating-a-new-field">Gating a new field <a class="anchor" href="#gating-a-new-field" aria-label="Link to this section">#</a></h2>
 <p>A field an older server lacks is asked for only when <code>serverInfo.capabilities</code> names it.
-<code>serverHasCapability</code> (<a href="https://github.com/rim-platform/rim-ui/blob/625c78e7c352dd2300217ff4cf692350e410fa7e/src/features/updater/api/serverCapabilities.ts"><code>src/features/updater/api/serverCapabilities.ts</code></a>) reads the cached server
+<code>serverHasCapability</code> (<a href="https://github.com/rim-platform/rim-ui/blob/ed1032eacc0d9b5084470131b2d34cc144406df8/src/features/updater/api/serverCapabilities.ts"><code>src/features/updater/api/serverCapabilities.ts</code></a>) reads the cached server
 info; the read keeps a second document with the field (<code>MessagesWithEdits</code> beside <code>Messages</code>),
-built from the same constants, and picks one per request. <a href="https://github.com/rim-platform/rim-ui/blob/625c78e7c352dd2300217ff4cf692350e410fa7e/scripts/skew-check.test.mjs"><code>scripts/skew-check.test.mjs</code></a> checks
+built from the same constants, and picks one per request. <a href="https://github.com/rim-platform/rim-ui/blob/ed1032eacc0d9b5084470131b2d34cc144406df8/scripts/skew-check.test.mjs"><code>scripts/skew-check.test.mjs</code></a> checks
 that only the gated documents fail against a schema without the field. <code>npm run skew:check</code>
 lists the gated documents; each listed one must be gated or have a fallback.</p>
 <p>A control that runs a new mutation is shown only when the capability names it: Leave workspace
@@ -85,12 +85,17 @@ lists the gated documents; each listed one must be gated or have a fallback.</p>
 dialog&#39;s message deletion (<code>delete_member_messages</code>). A workspace on another server is gated by
 the relay&#39;s capabilities; its host, if older, refuses the document, and the app says the
 workspace&#39;s server does not support it yet.</p>
+<p>A read every workspace depends on goes by the capabilities of the workspace&#39;s own host instead:
+<code>spaceHasCapability</code> asks that host through the same route as the workspace&#39;s other requests and
+keeps the answer for a few minutes. The unread counts ask for <code>unreadAfter</code> this way
+(<code>read_marker</code>), so a workspace on an older host keeps its badges under a newer relay. What those
+counts brought then gates Mark unread from here and Mark as unread, also by the workspace&#39;s host.</p>
 
     </main>
   </div>
 </div>
-<footer class="site-footer container"><span class="footer-brand"><img src="../../assets/rim-mark-inverse.svg" alt="" width="21" height="21"> RIM · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
-<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/625c78e7c352dd2300217ff4cf692350e410fa7e/docs/version-skew.md">rim-ui/docs/version-skew.md</a> at <code>625c78e</code></p>
+<footer class="site-footer container"><span class="footer-brand"><img src="../../assets/rim-lockup-glow-inverse.svg" alt="RIM" width="46" height="27"> · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/ed1032eacc0d9b5084470131b2d34cc144406df8/docs/version-skew.md">rim-ui/docs/version-skew.md</a> at <code>ed1032e</code></p>
 
 </body>
 </html>

@@ -8,7 +8,7 @@
 <link rel="icon" href="../favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;550;600;650;700&family=JetBrains+Mono:wght@400;500&display=swap">
-<meta name="theme-color" content="#050910">
+<meta name="theme-color" content="#0b0c10">
 <link rel="stylesheet" href="../assets/site-chrome.css">
 <link rel="stylesheet" href="../assets/site.css">
 <script src="../assets/site.js" defer></script>
@@ -17,14 +17,14 @@
 <a class="skip" href="#content">Skip to content</a>
 <header class="site-header">
   <div class="container header-inner">
-    <a class="brand" href="../index.html" aria-label="RIM home"><img src="../assets/rim-mark-inverse.svg" alt="" width="32" height="32">RIM</a>
+    <a class="brand" href="../index.html" aria-label="RIM home"><img src="../assets/rim-lockup-glow-inverse.svg" alt="" width="98" height="58"></a>
     <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-navigation">Menu</button>
     <nav class="site-nav" id="site-navigation" data-open="false" aria-label="Main navigation">
+      <a href="../index.html#uses">What it's for</a>
       <a href="../index.html#privacy">Privacy</a>
-      <a href="../index.html#how">How it works</a>
-      <a href="../index.html#capabilities">Capabilities</a>
-      <a href="../index.html#community">Community</a>
+      <a href="../how-it-works/index.html">How it works</a>
       <a href="../index.html#download">Download</a>
+      <a href="../index.html#community">Community</a>
       <a href="../docs/client/getting-started.html">Get started</a>
       <a href="../docs/index.html" aria-current="location">Docs</a>
     </nav>
@@ -56,7 +56,7 @@
 </details></aside>
     <main id="content" class="prose">
 <h1>Configure</h1>
-<p class="lede">The server is configured by environment variables, all prefixed <code>RIM_</code> except <code>DATABASE_URL</code> and the log filter <code>RUST_LOG</code>. In development an untracked <code>.env</code> file works too. This page is generated from <a href="https://github.com/rim-platform/rim-server/blob/7bc08f0c95e01769408e4756d418efea30c5b70b/rim_server/src/config.rs"><code>rim_server/src/config.rs</code></a>, cross-checked with the variable block of the <a href="https://github.com/rim-platform/rim-server/blob/7bc08f0c95e01769408e4756d418efea30c5b70b/Dockerfile"><code>Dockerfile</code></a>; the compose stack's own settings are in <a href="https://github.com/rim-platform/rim-server/blob/7bc08f0c95e01769408e4756d418efea30c5b70b/deploy/.env.example"><code>deploy/.env.example</code></a>.</p>
+<p class="lede">The server is configured by environment variables, all prefixed <code>RIM_</code> except <code>DATABASE_URL</code> and the log filter <code>RUST_LOG</code>. In development an untracked <code>.env</code> file works too. This page is generated from <a href="https://github.com/rim-platform/rim-server/blob/beb5a48f892a3ac4ef53e7ee2238413e99ee35e0/rim_server/src/config.rs"><code>rim_server/src/config.rs</code></a>, cross-checked with the variable block of the <a href="https://github.com/rim-platform/rim-server/blob/beb5a48f892a3ac4ef53e7ee2238413e99ee35e0/Dockerfile"><code>Dockerfile</code></a>; the compose stack's own settings are in <a href="https://github.com/rim-platform/rim-server/blob/beb5a48f892a3ac4ef53e7ee2238413e99ee35e0/deploy/.env.example"><code>deploy/.env.example</code></a>.</p>
 <h2 id="listening">Listening <a class="anchor" href="#listening" aria-label="Link to this section">#</a></h2>
 <p class="muted">Where the server listens, the origin clients reach it at, and how it treats the proxy in front of it.</p>
 <div class="tablewrap"><table class="vars">
@@ -224,7 +224,7 @@ Default: 900 (15 minutes); values below 60 are raised to 60.</p><p class="faint"
 <thead><tr><th>Variable</th><th>What it does</th></tr></thead>
 <tbody>
 <tr id="RIM_METRICS_ADDR"><td><code>RIM_METRICS_ADDR</code><span class="default">default off</span></td><td><p><code>host:port</code> of the Prometheus listener serving <code>GET /metrics</code>; unset turns metrics off.</p><p class="faint">Unset, it turns metrics off.</p><p class="faint">Refused at boot with a message naming the variable when the value is not an <code>ip:port</code> address.</p><p class="faint">Dockerfile: ip:port of the Prometheus /metrics listener. In a container bind 0.0.0.0:9090 and do not publish it: keep it on an internal network, never behind the public proxy.</p></td></tr>
-<tr id="RIM_AUDIT_LOG_PATH"><td><code>RIM_AUDIT_LOG_PATH</code><span class="default">default the working directory</span></td><td><p>Directory of the daily audit files <code>audit.&lt;YYYY-MM-DD&gt;.log</code></p><p class="note">Read by <a href="https://github.com/rim-platform/rim-server/blob/7bc08f0c95e01769408e4756d418efea30c5b70b/rim_logging/src/logging.rs"><code>rim_logging/src/logging.rs</code></a>, not config.rs.</p></td></tr>
+<tr id="RIM_AUDIT_LOG_PATH"><td><code>RIM_AUDIT_LOG_PATH</code><span class="default">default the working directory</span></td><td><p>Directory of the daily audit files <code>audit.&lt;YYYY-MM-DD&gt;.log</code></p><p class="note">Read by <a href="https://github.com/rim-platform/rim-server/blob/beb5a48f892a3ac4ef53e7ee2238413e99ee35e0/rim_logging/src/logging.rs"><code>rim_logging/src/logging.rs</code></a>, not config.rs.</p></td></tr>
 <tr id="RIM_AUDIT_RETENTION_DAYS"><td><code>RIM_AUDIT_RETENTION_DAYS</code><span class="default">default forever</span></td><td><p>Days command audit log rows are kept before the daily purge exports and deletes them;
 unset keeps them forever. 1 to 3650.</p><p class="faint">Unset, it keeps them forever.</p><p class="faint">Refused at boot with a message naming the variable when the value is outside 1 to 3650.</p><p class="faint">Dockerfile: days command audit rows are kept, 1-3650; older rows are exported to $RIM_DATA_DIR/audit-exports and deleted daily.</p></td></tr>
 <tr id="RIM_AUDIT_LOG_RETENTION_DAYS"><td><code>RIM_AUDIT_LOG_RETENTION_DAYS</code><span class="default">default <code>90</code></span></td><td><p>Days the daily audit files (<code>audit.&lt;YYYY-MM-DD&gt;.log</code> in the directory of
@@ -377,8 +377,8 @@ and IP blocks from the app (<a href="../docs/api.html"><code>docs/api.md</code><
     </main>
   </div>
 </div>
-<footer class="site-footer container"><span class="footer-brand"><img src="../assets/rim-mark-inverse.svg" alt="" width="21" height="21"> RIM · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
-<p class="source-provenance container">Generated from <a href="https://github.com/rim-platform/rim-server/blob/7bc08f0c95e01769408e4756d418efea30c5b70b/rim_server/src/config.rs">rim-server/rim_server/src/config.rs</a>, <a href="https://github.com/rim-platform/rim-server/blob/7bc08f0c95e01769408e4756d418efea30c5b70b/Dockerfile">Dockerfile</a> and <a href="https://github.com/rim-platform/rim-server/blob/7bc08f0c95e01769408e4756d418efea30c5b70b/README.md">README.md</a> at <code>7bc08f0</code></p>
+<footer class="site-footer container"><span class="footer-brand"><img src="../assets/rim-lockup-glow-inverse.svg" alt="RIM" width="46" height="27"> · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
+<p class="source-provenance container">Generated from <a href="https://github.com/rim-platform/rim-server/blob/beb5a48f892a3ac4ef53e7ee2238413e99ee35e0/rim_server/src/config.rs">rim-server/rim_server/src/config.rs</a>, <a href="https://github.com/rim-platform/rim-server/blob/beb5a48f892a3ac4ef53e7ee2238413e99ee35e0/Dockerfile">Dockerfile</a> and <a href="https://github.com/rim-platform/rim-server/blob/beb5a48f892a3ac4ef53e7ee2238413e99ee35e0/README.md">README.md</a> at <code>beb5a48</code></p>
 <script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
 </body>
 </html>

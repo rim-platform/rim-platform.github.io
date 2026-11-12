@@ -8,7 +8,7 @@
 <link rel="icon" href="../favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;550;600;650;700&family=JetBrains+Mono:wght@400;500&display=swap">
-<meta name="theme-color" content="#050910">
+<meta name="theme-color" content="#0b0c10">
 <link rel="stylesheet" href="../assets/site-chrome.css">
 <link rel="stylesheet" href="../assets/site.css">
 <script src="../assets/site.js" defer></script>
@@ -17,14 +17,14 @@
 <a class="skip" href="#content">Skip to content</a>
 <header class="site-header">
   <div class="container header-inner">
-    <a class="brand" href="../index.html" aria-label="RIM home"><img src="../assets/rim-mark-inverse.svg" alt="" width="32" height="32">RIM</a>
+    <a class="brand" href="../index.html" aria-label="RIM home"><img src="../assets/rim-lockup-glow-inverse.svg" alt="" width="98" height="58"></a>
     <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-navigation">Menu</button>
     <nav class="site-nav" id="site-navigation" data-open="false" aria-label="Main navigation">
+      <a href="../index.html#uses">What it's for</a>
       <a href="../index.html#privacy">Privacy</a>
-      <a href="../index.html#how">How it works</a>
-      <a href="../index.html#capabilities">Capabilities</a>
-      <a href="../index.html#community">Community</a>
+      <a href="../how-it-works/index.html">How it works</a>
       <a href="../index.html#download">Download</a>
+      <a href="../index.html#community">Community</a>
       <a href="client/getting-started.html">Get started</a>
       <a href="index.html" aria-current="location">Docs</a>
     </nav>
@@ -69,13 +69,14 @@
 <li><a href="relay.html">The relay</a></li>
 </ul>
 <h2 id="client-authors"><a href="client-authors.html">Client authors</a></h2>
-<p class="muted">Talking to a RIM server from your own client: the HTTP and GraphQL contract, sessions and CSRF, pagination, messaging, search and the change feed.</p>
+<p class="muted">Talking to a RIM server from your own client: the HTTP and GraphQL contract, sessions and CSRF, pagination, messaging, search and the change feed, and bots with their API and incoming webhooks.</p>
 <ul>
 <li><a href="api.html">Talking to a server over HTTP</a></li>
 <li><a href="pagination.html">Pagination Contract</a></li>
 <li><a href="messaging.html">Messaging Contract</a></li>
 <li><a href="search.html">Message Search (Full-Text Search)</a></li>
 <li><a href="message-change-feed.html">Message Change Feed</a></li>
+<li><a href="bots.html">Bots</a></li>
 </ul>
 <h2 id="plugin-authors"><a href="plugin-authors.html">Plugin authors</a></h2>
 <p class="muted">Extending the client: what a plugin is, the capabilities it asks for, a first plugin step by step, the TypeScript SDK and how it is published, the rim-plugin.json manifest, web plugins in a sandboxed frame, the desktop host and its example plugins, and signed workspace plugins.</p>
@@ -94,9 +95,12 @@
 <li><a href="client/release-sdk.html">Publishing the plugin SDK</a></li>
 </ul>
 <h2 id="using-rim"><a href="using-rim.html">Using RIM</a></h2>
-<p class="muted">The desktop and web client: getting started from a fresh install to a first conversation, commands, keybinds, macros and pipelines, the AI agent, installing it and signing in, building it, the keyboard, plugins, keys and recovery, and linking a device.</p>
+<p class="muted">The desktop and web client: getting started from a fresh install to a first conversation, making Home your own, connecting an AI agent, posting alerts from other services, commands, keybinds, macros and pipelines, the built-in AI agent, installing it and signing in, building it, the keyboard, plugins, keys and recovery, and linking a device.</p>
 <ul>
 <li><a href="client/getting-started.html">Getting started</a></li>
+<li><a href="client/home.html">Home</a></li>
+<li><a href="client/agents.html">Connect an AI agent</a></li>
+<li><a href="client/webhooks.html">Post alerts from other services</a></li>
 <li><a href="client/commands-and-automation.html">Commands and automation</a></li>
 <li><a href="client/ai-agent.html">The AI agent</a></li>
 <li><a href="client/install.html">Installing RIM</a></li>
@@ -111,6 +115,8 @@
 <li><a href="client/device-linking-desktop.html">Device linking (desktop)</a></li>
 <li><a href="client/web-linked-device.html">The web app as a linked device</a></li>
 <li><a href="client/account-password.html">Account password: the client crates</a></li>
+<li><a href="client/bots.html">Bots in the client</a></li>
+<li><a href="client/navigation.html">Navigation and window width</a></li>
 </ul>
 <h2 id="project"><a href="project.html">Project</a></h2>
 <p class="muted">Where RIM is heading and how it is built: the vision and the roadmap, the server architecture and the design models, how to contribute, security with its overview and threat model, and the client's internals: the shell, search, the message cache and secret vault, end-to-end encryption, relays and branding.</p>
@@ -145,8 +151,8 @@
     </main>
   </div>
 </div>
-<footer class="site-footer container"><span class="footer-brand"><img src="../assets/rim-mark-inverse.svg" alt="" width="21" height="21"> RIM · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
-<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-server/tree/7bc08f0c95e01769408e4756d418efea30c5b70b">rim-server</a> <code>7bc08f0</code> and <a href="https://github.com/rim-platform/rim-ui/tree/625c78e7c352dd2300217ff4cf692350e410fa7e">rim-ui</a> <code>625c78e</code></p>
+<footer class="site-footer container"><span class="footer-brand"><img src="../assets/rim-lockup-glow-inverse.svg" alt="RIM" width="46" height="27"> · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-server/tree/beb5a48f892a3ac4ef53e7ee2238413e99ee35e0">rim-server</a> <code>beb5a48</code> and <a href="https://github.com/rim-platform/rim-ui/tree/ed1032eacc0d9b5084470131b2d34cc144406df8">rim-ui</a> <code>ed1032e</code></p>
 <script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
 </body>
 </html>

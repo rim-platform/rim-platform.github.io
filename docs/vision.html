@@ -8,7 +8,7 @@
 <link rel="icon" href="../favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;550;600;650;700&family=JetBrains+Mono:wght@400;500&display=swap">
-<meta name="theme-color" content="#050910">
+<meta name="theme-color" content="#0b0c10">
 <link rel="stylesheet" href="../assets/site-chrome.css">
 <link rel="stylesheet" href="../assets/site.css">
 <script src="../assets/site.js" defer></script>
@@ -17,14 +17,14 @@
 <a class="skip" href="#content">Skip to content</a>
 <header class="site-header">
   <div class="container header-inner">
-    <a class="brand" href="../index.html" aria-label="RIM home"><img src="../assets/rim-mark-inverse.svg" alt="" width="32" height="32">RIM</a>
+    <a class="brand" href="../index.html" aria-label="RIM home"><img src="../assets/rim-lockup-glow-inverse.svg" alt="" width="98" height="58"></a>
     <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-navigation">Menu</button>
     <nav class="site-nav" id="site-navigation" data-open="false" aria-label="Main navigation">
+      <a href="../index.html#uses">What it's for</a>
       <a href="../index.html#privacy">Privacy</a>
-      <a href="../index.html#how">How it works</a>
-      <a href="../index.html#capabilities">Capabilities</a>
-      <a href="../index.html#community">Community</a>
+      <a href="../how-it-works/index.html">How it works</a>
       <a href="../index.html#download">Download</a>
+      <a href="../index.html#community">Community</a>
       <a href="client/getting-started.html">Get started</a>
       <a href="index.html" aria-current="location">Docs</a>
     </nav>
@@ -43,6 +43,8 @@
 <ol>
 <li><a href="#in-one-sentence">In one sentence</a></li>
 <li><a href="#your-own-workspace">Your own workspace</a></li>
+<li><a href="#working-with-agents">Working with agents</a></li>
+<li><a href="#who-it-is-for-first">Who it is for first</a></li>
 <li><a href="#what-it-does-not-do-yet">What it does not do yet</a></li>
 <li><a href="#what-makes-it-different">What makes it different</a></li>
 <li><a href="#principles">Principles</a></li>
@@ -57,6 +59,9 @@ principles every change is held to.</p>
 <p>RIM is the self-hosted communication workspace you program: commands, keybinds, macros,
 pipelines, plugins and an AI operator on top of chat, private and decentralized.</p>
 </blockquote>
+<p>RIM is a place for a team&#39;s daily work. It shows what needs you and links to the source, and it
+does not try to replace the project tracker, the calendar or CI. Agents are optional, and RIM
+works the same without them.</p>
 <h2 id="your-own-workspace">Your own workspace <a class="anchor" href="#your-own-workspace" aria-label="Link to this section">#</a></h2>
 <p>RIM is for teams, organizations and communities that want a workspace of their own: built
 around how they work, extended with their own plugins, and running where they choose, with
@@ -79,10 +84,58 @@ not accounts on someone&#39;s server, and their history is kept encrypted on the
 drives.</li>
 <li><strong>An AI assistant on your terms.</strong> Bring your own model provider and key. The agent works only
 through the same commands you use, can operate whatever your plugins add, and waits for a
-person to confirm anything that changes something.</li>
+person to confirm a built-in change. A plugin command runs without asking only if you approved
+it for the agent, and a dangerous one is only proposed.</li>
 </ul>
 <p>RIM does not ship a feature per kind of group. A development team, a company, an open-source
 community and an association start from the same core, and each adds what it needs.</p>
+<h2 id="working-with-agents">Working with agents <a class="anchor" href="#working-with-agents" aria-label="Link to this section">#</a></h2>
+<p>These are the rules every agent feature is held to; <a href="roadmap.html"><code>ROADMAP.md</code></a> says which exist yet.</p>
+<ul>
+<li><strong>Optional.</strong> A workspace can use RIM as plain chat.</li>
+<li><strong>Whoever runs an agent decides where.</strong> They also choose its model or key. The RIM project runs
+no model service for agents, and no agent&#39;s prompts go through one. Every agent reaches RIM as a
+client, with the same limits and checks as anyone else.</li>
+<li><strong>Your own agent runs on your machine.</strong> It talks directly to the provider you chose. The
+desktop app can start an agent you chose and let you direct it, with any agent that speaks the
+Agent Client Protocol.</li>
+<li><strong>A server&#39;s owner may run an agent on that server.</strong> It is their choice, and it is off until
+they turn it on. It can read only what the server can already read, never an encrypted
+conversation, and people on that server can see that it runs, who runs it and where what it
+reads goes. The content check in <a href="self-hosting.html"><code>docs/self-hosting.md</code></a> shows the pattern: it runs next to the
+server, what it scores leaves the host no further, and the owner can switch it off. It is a
+scoring service rather than an agent.</li>
+<li><strong>No more than the person it acts for.</strong> An agent is further limited by what that person
+granted. It may ask for more, but it never grants itself anything or confirms its own actions.</li>
+<li><strong>You decide what your agent can read, and RIM shows what it was given.</strong> Nothing private reaches
+it without your grant, and a read you granted does not prompt each time.</li>
+<li><strong>RIM stops at the handover.</strong> Once an agent has content, where it goes depends on the agent and
+model you chose. A local model keeps it on your machine; a cloud provider receives it. RIM cannot
+see or limit that step.</li>
+<li><strong>A built-in change waits for a person.</strong> A confirmation covers one call with its exact arguments
+and expires.</li>
+<li><strong>Plugin commands are approved one by one.</strong> An agent gets only the commands a plugin offers to
+agents and you approve for that agent. An outside agent still asks before an approved command
+that changes something. A dangerous command is only proposed for you to run.
+An outside agent can also be given RIM&#39;s own commands, approved one by one in the same way;
+it asks you every time, and a dangerous one is only proposed.</li>
+<li><strong>A bot has its own identity.</strong> It has a token an Owner or Moderator can revoke, and whoever runs
+it chooses where, with their own model and key. It acts within its grants without a confirmation,
+and the people in a channel can see who runs it and where what it reads goes. Bots never join
+encrypted conversations.</li>
+<li><strong>A refusal says why.</strong> Denied by policy, waiting for a confirmation, failed, cancelled and
+expired are different outcomes and look different.</li>
+<li><strong>A run keeps its scope.</strong> It keeps the workspace and permissions it started with.</li>
+<li><strong>Encrypted conversations stay closed.</strong> An agent reads one only if a person grants that one
+conversation, and the others in it can see that they did. That notice comes from each person&#39;s
+app: it cannot stop a modified client or someone copying text by hand.</li>
+</ul>
+<h2 id="who-it-is-for-first">Who it is for first <a class="anchor" href="#who-it-is-for-first" aria-label="Link to this section">#</a></h2>
+<p>Small development teams and open-source projects that run their own server come first, because
+RIM is built that way itself. Companies, associations and communities use the same core. A
+community can offer no bots or agent features and use RIM as plain chat, though that does not stop
+a member&#39;s own agent from reading what that member can read. This names an audience, not a
+vertical: &quot;No first-party verticals&quot; under &quot;Principles&quot; still holds.</p>
 <h2 id="what-it-does-not-do-yet">What it does not do yet <a class="anchor" href="#what-it-does-not-do-yet" aria-label="Link to this section">#</a></h2>
 <ul>
 <li><strong>Calls.</strong> Talking a thing through is sometimes better than writing it, so voice and video
@@ -96,11 +149,11 @@ cryptography (<a href="security-overview.html"><code>docs/security-overview.md</
 <p>Most of RIM&#39;s parts exist somewhere: Slack ships AI agents, Mattermost and Zulip run on your own
 server, Mattermost has client plugins, Element encrypts end to end, Discord lets you rebind
 keys. A feature checklist ages with every release of every product. What RIM offers is the four
-above together. One command registry is shared by the palette, keybinds, macros, pipelines,
-plugins and the agent, so a plugin&#39;s command is at once something you can bind, chain and ask
-the agent to do. Plugins extend the client rather than post into a channel, and a local plugin
-runs next to you with your own credentials, which is how a Kubernetes panel can exist at all.
-And the workspace runs on a server you choose, with no central server behind it.</p>
+points of &quot;Your own workspace&quot; together. One command registry is shared by the palette, keybinds,
+macros, pipelines, plugins and the agent, so a plugin&#39;s command is at once something you can bind,
+chain and ask the agent to do. Plugins extend the client rather than post into a channel, and a
+local plugin runs next to you with your own credentials, which is how a Kubernetes panel can
+exist at all. And the workspace runs on a server you choose, with no central server behind it.</p>
 <h2 id="principles">Principles <a class="anchor" href="#principles" aria-label="Link to this section">#</a></h2>
 <p>The rules a change is measured against. <a href="contributing.html"><code>CONTRIBUTING.md</code></a> turns them into what the core accepts,
 and <a href="architecture.html"><code>docs/architecture.md</code></a> into the design guardrails.</p>
@@ -121,6 +174,8 @@ convenience for trying RIM, and leaving it costs nothing but a move.</li>
 <li><strong>Capabilities are visible.</strong> Running a local process, reaching the network or the
 filesystem, acting as you: each is asked for in words that say exactly what is granted, and
 nothing gains power just because it is installed.</li>
+<li><strong>Agents are accountable.</strong> What an agent may do is visible before it acts, what RIM gave it and
+what it did in RIM are visible after, and it can never approve itself.</li>
 <li><strong>Prove it on ourselves.</strong> Each platform capability ships with something real built on it:
 the pods panel, the pull-request panel, the poll and release plugins.</li>
 </ul>
@@ -128,8 +183,8 @@ the pods panel, the pull-request panel, the poll and release plugins.</li>
     </main>
   </div>
 </div>
-<footer class="site-footer container"><span class="footer-brand"><img src="../assets/rim-mark-inverse.svg" alt="" width="21" height="21"> RIM · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
-<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-server/blob/7bc08f0c95e01769408e4756d418efea30c5b70b/docs/vision.md">rim-server/docs/vision.md</a> at <code>7bc08f0</code></p>
+<footer class="site-footer container"><span class="footer-brand"><img src="../assets/rim-lockup-glow-inverse.svg" alt="RIM" width="46" height="27"> · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-server/blob/beb5a48f892a3ac4ef53e7ee2238413e99ee35e0/docs/vision.md">rim-server/docs/vision.md</a> at <code>beb5a48</code></p>
 <script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
 </body>
 </html>

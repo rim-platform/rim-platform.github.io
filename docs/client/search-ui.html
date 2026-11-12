@@ -8,7 +8,7 @@
 <link rel="icon" href="../../favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;550;600;650;700&family=JetBrains+Mono:wght@400;500&display=swap">
-<meta name="theme-color" content="#050910">
+<meta name="theme-color" content="#0b0c10">
 <link rel="stylesheet" href="../../assets/site-chrome.css">
 <link rel="stylesheet" href="../../assets/site.css">
 <script src="../../assets/site.js" defer></script>
@@ -17,14 +17,14 @@
 <a class="skip" href="#content">Skip to content</a>
 <header class="site-header">
   <div class="container header-inner">
-    <a class="brand" href="../../index.html" aria-label="RIM home"><img src="../../assets/rim-mark-inverse.svg" alt="" width="32" height="32">RIM</a>
+    <a class="brand" href="../../index.html" aria-label="RIM home"><img src="../../assets/rim-lockup-glow-inverse.svg" alt="" width="98" height="58"></a>
     <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-navigation">Menu</button>
     <nav class="site-nav" id="site-navigation" data-open="false" aria-label="Main navigation">
+      <a href="../../index.html#uses">What it's for</a>
       <a href="../../index.html#privacy">Privacy</a>
-      <a href="../../index.html#how">How it works</a>
-      <a href="../../index.html#capabilities">Capabilities</a>
-      <a href="../../index.html#community">Community</a>
+      <a href="../../how-it-works/index.html">How it works</a>
       <a href="../../index.html#download">Download</a>
+      <a href="../../index.html#community">Community</a>
       <a href="getting-started.html">Get started</a>
       <a href="../index.html" aria-current="location">Docs</a>
     </nav>
@@ -41,6 +41,7 @@
   <div class="page with-toc">
     <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
 <ol>
+<li><a href="#the-search-box">The search box</a></li>
 <li><a href="#recency-ordering-not-relevance">Recency ordering, not relevance</a></li>
 <li><a href="#flat-list-not-grouped-by-conversation">Flat list, not grouped by conversation</a></li>
 <li><a href="#pagination-ux">Pagination UX</a></li>
@@ -55,6 +56,55 @@
 <code>useSearchMessages</code> hook, the <code>SearchOverlay</code> flat-list UI, <code>SearchSnippet</code>&#39;s
 sanitization, and the operator-discovery affordance. Backend contract and operator
 semantics: <code>../rim-server/docs/search.md</code>.</p>
+<h2 id="the-search-box">The search box <a class="anchor" href="#the-search-box" aria-label="Link to this section">#</a></h2>
+<p>The top bar&#39;s search field opens the search box under it. It is the command palette&#39;s dialog
+(<code>CommandPalette.tsx</code>) with search first: <kbd>Ctrl+Shift+F</kbd> (<code>workspace.open_search</code>) and a
+click on the field open it so, and <kbd>Ctrl+K</kbd> (<code>workspace.open_command_palette</code>) opens the
+same box with commands first. Typing <kbd>&gt;</kbd> at the start, or <kbd>Ctrl+K</kbd> in an
+open box, switches it to commands; <kbd>Backspace</kbd> in an empty field switches back.</p>
+<p>While you type, the results come in three groups, at most 5 each:</p>
+<ol>
+<li><strong>Channels and people</strong>: the conversations of the scope, by name, from the lists the
+conversation list and the palette&#39;s pickers already hold.</li>
+<li><strong>Messages</strong>: the newest matches from the server search below, after the same 300 ms pause.
+In one workspace, this is the search <code>SearchOverlay</code> runs (<code>useMessageSearchResults</code>), with
+this device&#39;s local matches added in the desktop app.</li>
+<li><strong>Commands</strong>: the palette&#39;s own list and ranking.</li>
+</ol>
+<p><strong>Scope.</strong> The chip beside the field shows it: the open workspace, the direct messages in the
+direct space, or All workspaces. <kbd>Tab</kbd> or a click on the chip switches between the open
+workspace and all of them; from Home and Unreads the box starts with all of them. Across
+workspaces, Channels and people also lists the channels joined in every workspace on the rail,
+the direct messages and the workspaces.</p>
+<p>Messages across workspaces asks each workspace for its 5 newest matches and shows the 5 newest of
+all, from the server only, with these limits:</p>
+<ul>
+<li>It waits for at least 2 characters and the 300 ms pause; below that it says &quot;Type at least 2
+characters to search messages in every workspace.&quot; A new text aborts the requests still
+running (the query client&#39;s abort signal).</li>
+<li>It asks at most 10 workspaces per pause: the open one first, then the rest in rail order
+(Direct messages, this server&#39;s workspaces, then other servers&#39;). Past 10 it says &quot;Searched 10
+of your &lt;n&gt; workspaces. Pick one to search the rest.&quot;</li>
+<li>A workspace that fails, or does not answer within 8 seconds, leaves the others&#39; results and
+adds a line naming it, such as &quot;Couldn&#39;t search Pixel Guild.&quot;; it never shows an error toast.</li>
+<li>Each request goes to its workspace&#39;s own host, as the overlay&#39;s does
+(<code>fetchMessageSearchPage</code>, routed by the client&#39;s space router), never through another
+server. The timeout also ends the wait for a workspace on another server, whose transport does
+not take the abort signal.</li>
+</ul>
+<p><strong>Encrypted conversations.</strong> The server cannot search them, so the box says what it covers under
+Messages. In the web app, which keeps no copy of them: &quot;Encrypted messages can&#39;t be searched in
+the web app.&quot; In the desktop app, in one workspace: &quot;Encrypted messages: only those saved on this
+device.&quot;; across workspaces, where the local index is not asked: &quot;Encrypted messages are searched
+one workspace at a time.&quot; With the server out of reach, it says it is showing matches saved on
+this device, as the overlay does.</p>
+<p><strong>Keys.</strong> The field is a combobox: the arrow keys move through every row of every group, the
+active row is its <code>aria-activedescendant</code>, each group is announced by its title, <kbd>Enter</kbd>
+opens the row (a conversation, a workspace, a message in its conversation, or runs the command)
+and <kbd>Esc</kbd> closes the box. The footer reads &quot;Enter open · Tab all workspaces · &gt;
+commands only&quot;, and <strong>Search all messages</strong> opens <code>SearchOverlay</code>, below, with the text as typed,
+filters included. <kbd>Ctrl+F</kbd> (<code>workspace.search_in_channel</code>) still opens the overlay on
+the open conversation.</p>
 <h2 id="recency-ordering-not-relevance">Recency ordering, not relevance <a class="anchor" href="#recency-ordering-not-relevance" aria-label="Link to this section">#</a></h2>
 <p><code>searchMessages</code> results are paginated by <strong>recency</strong> (<code>sentAt DESC, id DESC</code>), the
 same cursor contract as every other message list — <strong>not</strong> by <code>rank</code>. Each result
@@ -98,7 +148,7 @@ message text, and the desktop cache&#39;s FTS5 snippet, whose text is HTML-escap
 go in. In both, the <em>surrounding text</em> is user message content, which may contain arbitrary
 markup an attacker embedded in a message (<code>&lt;img onerror=...&gt;</code>, <code>&lt;script&gt;</code>, etc.) and Markdown
 syntax (code fences, emphasis, links). <code>SearchSnippet</code>
-(<a href="https://github.com/rim-platform/rim-ui/blob/625c78e7c352dd2300217ff4cf692350e410fa7e/src/features/messages/components/SearchSnippet.tsx"><code>src/features/messages/components/SearchSnippet.tsx</code></a>) handles both the same way:</p>
+(<a href="https://github.com/rim-platform/rim-ui/blob/ed1032eacc0d9b5084470131b2d34cc144406df8/src/features/messages/components/SearchSnippet.tsx"><code>src/features/messages/components/SearchSnippet.tsx</code></a>) handles both the same way:</p>
 <ol>
 <li><p><strong>Parse.</strong> DOMPurify parses the headline into a DOM fragment:</p>
 <pre><code class="language-ts">DOMPurify.sanitize(headline, {
@@ -113,7 +163,7 @@ so the desktop cache&#39;s <code>&amp;lt;b&amp;gt;</code> reads as <code>&lt;b&g
 private-use characters (U+E000 and U+E001) and any such characters in the message text
 itself are dropped, so the highlights survive as plain text.</p>
 </li>
-<li><p><strong>Name mentions.</strong> <code>plainMessagePreview</code> (<a href="https://github.com/rim-platform/rim-ui/blob/625c78e7c352dd2300217ff4cf692350e410fa7e/src/features/messages/utils/snippetText.ts"><code>src/features/messages/utils/snippetText.ts</code></a>) turns
+<li><p><strong>Name mentions.</strong> <code>plainMessagePreview</code> (<a href="https://github.com/rim-platform/rim-ui/blob/ed1032eacc0d9b5084470131b2d34cc144406df8/src/features/messages/utils/snippetText.ts"><code>src/features/messages/utils/snippetText.ts</code></a>) turns
 each mention token <code>&lt;@id&gt;</code> into <code>@</code> and the member&#39;s display name from the workspace member
 lookup the overlay already holds (<code>@member</code> for an id that names no member; the id of an
 encrypted message&#39;s mention is a principal id, which the overlay maps to the member). A
@@ -132,8 +182,8 @@ an empty mark is dropped. No HTML from the snippet ever reaches the page and the
 <code>dangerouslySetInnerHTML</code>.</p>
 </li>
 </ol>
-<p>This is the DOMPurify pattern applied to search snippets — see <a href="https://github.com/rim-platform/rim-ui/blob/625c78e7c352dd2300217ff4cf692350e410fa7e/CLAUDE.md"><code>CLAUDE.md</code></a>&#39;s &quot;DOMPurify on all
-user-generated HTML&quot; rule and <a href="https://github.com/rim-platform/rim-ui/blob/625c78e7c352dd2300217ff4cf692350e410fa7e/src/shared/ui/MarkdownRenderer.tsx"><code>src/shared/ui/MarkdownRenderer.tsx</code></a> for the sibling pattern used
+<p>This is the DOMPurify pattern applied to search snippets — see <a href="https://github.com/rim-platform/rim-ui/blob/ed1032eacc0d9b5084470131b2d34cc144406df8/CLAUDE.md"><code>CLAUDE.md</code></a>&#39;s &quot;DOMPurify on all
+user-generated HTML&quot; rule and <a href="https://github.com/rim-platform/rim-ui/blob/ed1032eacc0d9b5084470131b2d34cc144406df8/src/shared/ui/MarkdownRenderer.tsx"><code>src/shared/ui/MarkdownRenderer.tsx</code></a> for the sibling pattern used
 for message bodies.</p>
 <p>There is <strong>no client-side substring highlighting</strong> — the snippet is the single source of
 truth for match highlighting. When <code>headline</code> is <code>null</code> (a purely operator-based query with no
@@ -191,8 +241,8 @@ comment above <code>conversationId</code> in <code>SearchOverlay.tsx</code>.</p>
     </main>
   </div>
 </div>
-<footer class="site-footer container"><span class="footer-brand"><img src="../../assets/rim-mark-inverse.svg" alt="" width="21" height="21"> RIM · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
-<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/625c78e7c352dd2300217ff4cf692350e410fa7e/docs/search-ui.md">rim-ui/docs/search-ui.md</a> at <code>625c78e</code></p>
+<footer class="site-footer container"><span class="footer-brand"><img src="../../assets/rim-lockup-glow-inverse.svg" alt="RIM" width="46" height="27"> · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/ed1032eacc0d9b5084470131b2d34cc144406df8/docs/search-ui.md">rim-ui/docs/search-ui.md</a> at <code>ed1032e</code></p>
 <script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
 </body>
 </html>

@@ -8,7 +8,7 @@
 <link rel="icon" href="../favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;550;600;650;700&family=JetBrains+Mono:wght@400;500&display=swap">
-<meta name="theme-color" content="#050910">
+<meta name="theme-color" content="#0b0c10">
 <link rel="stylesheet" href="../assets/site-chrome.css">
 <link rel="stylesheet" href="../assets/site.css">
 <script src="../assets/site.js" defer></script>
@@ -17,14 +17,14 @@
 <a class="skip" href="#content">Skip to content</a>
 <header class="site-header">
   <div class="container header-inner">
-    <a class="brand" href="../index.html" aria-label="RIM home"><img src="../assets/rim-mark-inverse.svg" alt="" width="32" height="32">RIM</a>
+    <a class="brand" href="../index.html" aria-label="RIM home"><img src="../assets/rim-lockup-glow-inverse.svg" alt="" width="98" height="58"></a>
     <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-navigation">Menu</button>
     <nav class="site-nav" id="site-navigation" data-open="false" aria-label="Main navigation">
+      <a href="../index.html#uses">What it's for</a>
       <a href="../index.html#privacy">Privacy</a>
-      <a href="../index.html#how">How it works</a>
-      <a href="../index.html#capabilities">Capabilities</a>
-      <a href="../index.html#community">Community</a>
+      <a href="../how-it-works/index.html">How it works</a>
       <a href="../index.html#download">Download</a>
+      <a href="../index.html#community">Community</a>
       <a href="client/getting-started.html">Get started</a>
       <a href="index.html" aria-current="location">Docs</a>
     </nav>
@@ -45,13 +45,15 @@
 <li><a href="#current-backend-state">Current Backend State</a></li>
 <li><a href="#product-requirements">Product Requirements</a></li>
 <li><a href="#command-identity">Command Identity</a></li>
-<li><a href="#command-kinds">Command Kinds</a><ol><li><a href="#built-in-commands">Built-in Commands</a></li><li><a href="#plugin-provided-commands">Plugin-Provided Commands</a></li><li><a href="#integration-provided-commands">Integration-Provided Commands</a></li><li><a href="#user-defined-commands">User-Defined Commands</a></li></ol></li>
-<li><a href="#user-commands-and-macros">User Commands And Macros</a></li>
+<li><a href="#categories">Categories</a></li>
+<li><a href="#command-kinds">Command Kinds</a><ol><li><a href="#built-in-commands">Built-in Commands</a></li><li><a href="#app-commands">App Commands</a></li><li><a href="#plugin-provided-commands">Plugin-Provided Commands</a></li><li><a href="#integration-provided-commands">Integration-Provided Commands</a></li><li><a href="#macros">Macros</a></li></ol></li>
+<li><a href="#commands-and-macros">Commands And Macros</a><ol><li><a href="#steps">Steps</a></li><li><a href="#running-a-macro">Running a macro</a></li><li><a href="#workspace-macros-deprecated">Workspace macros, deprecated</a></li></ol></li>
 <li><a href="#size-limits">Size Limits</a></li>
-<li><a href="#command-contract">Command Contract</a><ol><li><a href="#required-fields">Required Fields</a></li><li><a href="#recommended-fields">Recommended Fields</a></li><li><a href="#confirmation-gate-h1">Confirmation gate (H1)</a></li><li><a href="#timeout-gate-t1">Timeout gate (T1)</a></li></ol></li>
+<li><a href="#command-contract">Command Contract</a><ol><li><a href="#required-fields">Required Fields</a></li><li><a href="#recommended-fields">Recommended Fields</a></li><li><a href="#confirmation-gate-h1">Confirmation gate (H1)</a></li><li><a href="#timeout-gate-t1">Timeout gate (T1)</a></li><li><a href="#audit-row">Audit row</a></li><li><a href="#refusals">Refusals</a></li></ol></li>
 <li><a href="#arguments">Arguments</a></li>
 <li><a href="#context-model-for-commands">Context Model For Commands</a></li>
-<li><a href="#invocation-sources">Invocation Sources</a><ol><li><a href="#command-palette">Command Palette</a></li><li><a href="#keybinds">Keybinds</a></li><li><a href="#context-actions">Context Actions</a></li><li><a href="#plugin-ui">Plugin UI</a></li><li><a href="#automations">Automations</a></li></ol></li>
+<li><a href="#invocation-sources">Invocation Sources</a><ol><li><a href="#command-palette">Command Palette</a></li><li><a href="#keybinds">Keybinds</a></li><li><a href="#context-actions">Context Actions</a></li><li><a href="#app-controls">App Controls</a></li><li><a href="#plugin-ui">Plugin UI</a></li><li><a href="#automations">Automations</a></li><li><a href="#the-initiator-of-a-call">The initiator of a call</a></li></ol></li>
+<li><a href="#who-can-run-commands">Who Can Run Commands</a></li>
 <li><a href="#execution-targets">Execution Targets</a></li>
 <li><a href="#command-results">Command Results</a></li>
 <li><a href="#dangerous-local-commands">Dangerous Local Commands</a></li>
@@ -92,7 +94,7 @@
 <li>context actions invoke commands</li>
 <li>plugins register commands</li>
 <li>automations may invoke commands</li>
-<li>user commands are commands too; a macro runs commands but is not one</li>
+<li>macros, a person&#39;s own actions made of commands, are commands too</li>
 </ul>
 <h2 id="current-backend-state">Current Backend State <a class="anchor" href="#current-backend-state" aria-label="Link to this section">#</a></h2>
 <p>The current backend/contracts implementation already provides:</p>
@@ -100,15 +102,13 @@
 <li>built-in command definitions</li>
 <li>command listing and single-command lookup</li>
 <li>backend command execution</li>
-<li>persisted user commands and macros</li>
-<li>user-defined command create/update/delete flows</li>
+<li>persisted macros, kept with the person&#39;s account on their home server</li>
+<li>macro create/update/delete flows</li>
 <li>command context-aware filtering for palette/context-menu/keybind use cases</li>
 </ul>
-<p>Current v1 constraint:</p>
-<ul>
-<li>persisted user-defined commands may only compose backend-executable commands</li>
-<li>desktop-local command composition belongs to a later client/runtime slice</li>
-</ul>
+<p>A macro&#39;s steps may name any command: a built-in the server lists, an app command or a plugin
+command. The client runs a macro step by step; the server runs one itself only when every step
+is a built-in it executes, with every argument fixed (Commands And Macros, below).</p>
 <h2 id="product-requirements">Product Requirements <a class="anchor" href="#product-requirements" aria-label="Link to this section">#</a></h2>
 <p>The command system must be:</p>
 <ul>
@@ -131,11 +131,151 @@
 </ul>
 <p>Namespacing rules:</p>
 <ul>
-<li>built-in commands should use product namespaces like <code>chat.*</code>, <code>workspace.*</code>, <code>call.*</code></li>
+<li>built-in commands use product namespaces like <code>chat.*</code>, <code>workspace.*</code>, <code>state.*</code></li>
 <li>integration commands should use <code>integration.&lt;name&gt;.*</code></li>
 <li>plugin commands should use <code>plugin.&lt;plugin_id&gt;.*</code></li>
-<li>user-defined commands should use <code>user.*</code></li>
+<li>macros, the person&#39;s own commands, use <code>user.*</code></li>
 </ul>
+<p>A built-in id never changes once it is released: keybinds, Home quick boxes, macros and
+pipelines store it. What a command means to a person comes from its title and its
+category, not from its id, so a released id whose namespace no longer fits stays as it is:
+<code>workspace.next_channel</code> moves through every conversation and is titled Next Conversation.</p>
+<p>A new built-in, whether the server lists it or it is an app command (below), takes the
+namespace of its feature:</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Namespace</th>
+<th>Feature</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>chat.</code></td>
+<td>Messages and conversations</td>
+</tr>
+<tr>
+<td><code>workspace.</code></td>
+<td>The workspace itself</td>
+</tr>
+<tr>
+<td><code>home.</code></td>
+<td>Home</td>
+</tr>
+<tr>
+<td><code>unreads.</code></td>
+<td>The Unreads page</td>
+</tr>
+<tr>
+<td><code>notifications.</code></td>
+<td>The notification inbox, do not disturb, levels and mutes</td>
+</tr>
+<tr>
+<td><code>people.</code></td>
+<td>Contacts, blocking, profiles, status and direct message requests</td>
+</tr>
+<tr>
+<td><code>moderation.</code></td>
+<td>Owner and moderator actions</td>
+</tr>
+<tr>
+<td><code>agents.</code></td>
+<td>Outside agents and the in-app AI agent</td>
+</tr>
+<tr>
+<td><code>bots.</code></td>
+<td>Bots and webhooks</td>
+</tr>
+<tr>
+<td><code>plugins.</code></td>
+<td>Managing plugins</td>
+</tr>
+<tr>
+<td><code>settings.</code></td>
+<td>The settings pages</td>
+</tr>
+<tr>
+<td><code>app.</code></td>
+<td>The app: its window, updates, signing out and quitting</td>
+</tr>
+</tbody></table></div>
+<h2 id="categories">Categories <a class="anchor" href="#categories" aria-label="Link to this section">#</a></h2>
+<p>Every command has a category, which groups it in the palette, the keybind picker and every
+other list a client shows. A built-in command, listed by the server or an app command, is in one
+of these and no other:</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Category</th>
+<th>What goes in it</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Navigation</td>
+<td>Moving between places: back and forward, next and previous conversation, jumping to a conversation, switching workspace, pane focus</td>
+</tr>
+<tr>
+<td>Messages</td>
+<td>Acting on one message: post, reply, edit, delete, pin, react, copy, thread, mark unread from here, scroll</td>
+</tr>
+<tr>
+<td>Conversations</td>
+<td>Channels, groups and direct messages as a whole: create, join, leave, invite, members, the pinned panel, topic, mark read, browse</td>
+</tr>
+<tr>
+<td>Search</td>
+<td>The search box, search in a conversation, message search</td>
+</tr>
+<tr>
+<td>People</td>
+<td>Contacts, blocking, profiles, status, direct message requests</td>
+</tr>
+<tr>
+<td>Home</td>
+<td>Home and its edit mode</td>
+</tr>
+<tr>
+<td>Unreads</td>
+<td>The Unreads page</td>
+</tr>
+<tr>
+<td>Notifications</td>
+<td>The inbox, do not disturb, levels, mutes</td>
+</tr>
+<tr>
+<td>Moderation</td>
+<td>Owner and moderator actions: kick, ban, roles, timeouts, slow mode, who can post, archive, reports</td>
+</tr>
+<tr>
+<td>Workspace</td>
+<td>The workspace itself: settings, rename, leave, invites, the member directory, the audit log, adding a workspace</td>
+</tr>
+<tr>
+<td>Agents</td>
+<td>Outside agents and the in-app AI agent</td>
+</tr>
+<tr>
+<td>Bots &amp; Webhooks</td>
+<td>Bots, webhooks, the channel&#39;s bots panel</td>
+</tr>
+<tr>
+<td>Plugins</td>
+<td>Managing plugins</td>
+</tr>
+<tr>
+<td>View</td>
+<td>Layout and appearance: sidebar, zen mode, density, layout preset, vim mode, the shortcuts list, the palette, closing a panel</td>
+</tr>
+<tr>
+<td>App</td>
+<td>The app: settings, quitting, updates, signing out, reloading commands, the window</td>
+</tr>
+<tr>
+<td>State</td>
+<td>The <code>state.*</code> commands</td>
+</tr>
+</tbody></table></div>
+<p>A plugin&#39;s own commands are in a category named after the plugin&#39;s display name. A macro is in
+<code>Macro</code>.</p>
 <h2 id="command-kinds">Command Kinds <a class="anchor" href="#command-kinds" aria-label="Link to this section">#</a></h2>
 <p>RIM should support the following command sources.</p>
 <h3 id="built-in-commands">Built-in Commands <a class="anchor" href="#built-in-commands" aria-label="Link to this section">#</a></h3>
@@ -217,6 +357,36 @@ never do more than the user it acts for.</p>
 <td>Owner/Moderator, or yourself; confirmation required</td>
 </tr>
 </tbody></table></div>
+<p>Pin and topic builtins. Both are <code>Backend</code>, <code>Mutating</code>, not dangerous, need <code>chat.write</code> and,
+like every <code>Mutating</code> command, the agent&#39;s confirmation. <code>conversation_id</code> falls back to the
+focused conversation. They call the service methods of the GraphQL mutations they mirror, which
+hold the rules (<a href="messaging.html"><code>docs/messaging.md</code></a>, Channel Visibility And Membership), so the command allows
+exactly what the mutation allows.</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Id</th>
+<th>Args</th>
+<th>AI-callable</th>
+<th>Category</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>chat.unpin_message</code></td>
+<td><code>server_id</code>, <code>conversation_id</code>, <code>message_id</code></td>
+<td>yes</td>
+<td>Messages</td>
+<td>Mirrors <code>unpinMessage</code> (<code>PinService</code>). Anyone who may write unpins what they pinned; a message someone else pinned in a channel is unpinned by an Owner, a Moderator or a private channel&#39;s creator (<code>FORBIDDEN</code> otherwise). <code>message_id</code> falls back to the selected message. Palette, not keybind, like <code>chat.pin_message</code>. Payload <code>{success, unpinned}</code></td>
+</tr>
+<tr>
+<td><code>chat.set_topic</code></td>
+<td><code>server_id</code>, <code>conversation_id</code>, <code>topic</code></td>
+<td>yes</td>
+<td>Conversations</td>
+<td>Title Edit Topic…. Mirrors <code>updateConversationTopic</code> (<code>ConversationService</code>): a channel&#39;s topic is changed by an Owner, a Moderator or a private channel&#39;s creator, a DM&#39;s or group&#39;s by any member (<code>FORBIDDEN</code> otherwise); archived conversations refuse it. <code>topic</code> is trimmed, control characters other than newlines are dropped, and an empty <code>topic</code> clears it; more than 512 characters is <code>VALIDATION</code>. Palette and keybind. Payload <code>{conversation_id, topic}</code> (<code>topic</code> null when cleared)</td>
+</tr>
+</tbody></table></div>
 <p>Moderation builtins. All are
 <code>Backend</code> and <code>Mutating</code>; the <code>admin.*</code> ones require <code>admin.manage_members</code>, the <code>chat.*</code> ones
 <code>chat.write</code>. They call <code>ModerationService</code>, which enforces the roles (Owner/Moderator, who may
@@ -243,10 +413,10 @@ which now lets an Owner/Moderator delete other people&#39;s messages.</p>
 </tr>
 <tr>
 <td><code>admin.ban</code></td>
-<td><code>server_id</code>, <code>user_id</code>, <code>reason?</code>, <code>expires_at?</code> (RFC 3339)</td>
+<td><code>server_id</code>, <code>user_id</code>, <code>reason?</code>, <code>expires_at?</code> (RFC 3339), <code>minutes?</code> (integer, 1 to 5256000)</td>
 <td>no</td>
 <td>yes</td>
-<td>Owner/Moderator; confirmation required</td>
+<td>Owner/Moderator; confirmation required. <code>minutes</code> ends the ban that many minutes from now and wins over <code>expires_at</code>; a value outside 1 to 5256000 (ten years) is <code>VALIDATION</code>. With neither, the ban lasts until it is lifted</td>
 </tr>
 <tr>
 <td><code>admin.unban</code></td>
@@ -261,6 +431,13 @@ which now lets an Owner/Moderator delete other people&#39;s messages.</p>
 <td>yes</td>
 <td>no</td>
 <td>Owner/Moderator</td>
+</tr>
+<tr>
+<td><code>admin.clear_timeout</code></td>
+<td><code>server_id</code>, <code>user_id</code></td>
+<td>yes</td>
+<td>no</td>
+<td>Mirrors <code>clearTimeout</code>: Owner/Moderator, with the targeting rules of <code>admin.timeout</code>. Category Moderation; palette, offered to Owners and Moderators, and keybind. Clearing a timeout in force is audited and emits <code>MemberTimeoutChanged</code>; clearing none succeeds and changes nothing. Payload <code>{user_id, cleared}</code></td>
 </tr>
 <tr>
 <td><code>admin.set_role</code></td>
@@ -292,18 +469,26 @@ which now lets an Owner/Moderator delete other people&#39;s messages.</p>
 </tr>
 <tr>
 <td><code>chat.report_message</code></td>
-<td><code>reason</code></td>
+<td><code>message_id?</code>, <code>reason</code></td>
 <td>yes</td>
 <td>no</td>
-<td>Context menu; requires <code>workspace</code>, <code>conversation</code> and <code>selected_message</code> context</td>
+<td>Needs <code>workspace</code> and <code>conversation</code> context; <code>message_id</code> falls back to the selected message. Offered in a context menu with a selected message</td>
+</tr>
+<tr>
+<td><code>chat.mark_as_unread</code></td>
+<td><code>server_id</code>, <code>conversation_id</code>, <code>message_id</code></td>
+<td>no</td>
+<td>no</td>
+<td><code>Mutating</code>, needs no capability: it changes only the caller&#39;s own read state. Palette, context menu and keybind. <code>conversation_id</code> falls back to the focused conversation and <code>message_id</code> to the selected message. The message and later ones count as unread (<a href="messaging.html"><code>docs/messaging.md</code></a>)</td>
 </tr>
 </tbody></table></div>
 <p>Notification builtins (<a href="messaging.html"><code>docs/messaging.md</code></a>, Notification Rules). All are
 <code>Backend</code>, <code>Mutating</code>, palette- and keybind-visible, AI-callable, in category <code>Notifications</code>,
 and need <strong>no capability</strong>: like <code>chat.mark_as_read</code> they change only the caller&#39;s own state.
-They call <code>NotificationService</code>, which requires workspace membership (and, for the level, read
-access to the conversation). Being <code>Mutating</code>, they are refused while the caller is timed out
-(T1); the GraphQL mutations are not.</p>
+They call <code>NotificationService</code>, or for the mutes <code>NotificationPreferenceService</code> (the service
+of <code>muteConversation</code> and <code>unmuteConversation</code>), which require workspace membership (and, for
+the level and the mutes, read access to the conversation). A timed-out caller runs them too, as
+the GraphQL mutations allow (Timeout gate), and they write no command audit row (Audit row).</p>
 <div class="tablewrap"><table>
 <thead>
 <tr>
@@ -326,7 +511,7 @@ access to the conversation). Being <code>Mutating</code>, they are refused while
 <td><code>server_id</code>, <code>mode</code> (<code>on</code>/<code>off</code>/<code>until</code>), <code>until?</code> (RFC 3339), <code>minutes?</code> (1..=10080)</td>
 <td>yes</td>
 <td>no</td>
-<td>The manual do-not-disturb pause (separate from the daily window); <code>until</code> mode needs <code>until</code> or <code>minutes</code>. Payload <code>{paused, until}</code></td>
+<td>Title Pause Notifications. The manual do-not-disturb pause (separate from the daily window); <code>until</code> mode needs <code>until</code> or <code>minutes</code>. Payload <code>{paused, until}</code></td>
 </tr>
 <tr>
 <td><code>notifications.mark_all_read</code></td>
@@ -335,16 +520,31 @@ access to the conversation). Being <code>Mutating</code>, they are refused while
 <td>no</td>
 <td>Marks every notification of the workspace read (not the conversations&#39; unread counts). Payload <code>{marked}</code></td>
 </tr>
+<tr>
+<td><code>notifications.mute_conversation</code></td>
+<td><code>server_id</code>, <code>conversation_id</code>, <code>duration</code> (<code>1h</code>/<code>8h</code>/<code>until_tomorrow</code>/<code>forever</code>/<code>until</code>/<code>minutes</code>), <code>until?</code> (RFC 3339), <code>minutes?</code> (integer, 1 to 525600)</td>
+<td>yes</td>
+<td>no</td>
+<td>Title Mute Conversation…. Mirrors <code>muteConversation</code>; <code>conversation_id</code> falls back to the focused conversation. <code>minutes</code> ends the mute that many minutes from now and needs <code>minutes</code>; a count outside 1 to 525600, or <code>minutes</code> with another duration, is <code>VALIDATION</code>. <code>1h</code> and <code>8h</code> count from now. <code>until_tomorrow</code> ends at 09:00 tomorrow in the timezone of the caller&#39;s daily do-not-disturb window in this workspace, or in UTC when they have none: the server knows no other timezone of theirs. <code>until</code> ends at the <code>until</code> time, which must be in the future, and <code>until</code> with another duration is <code>VALIDATION</code>; a client that knows the person&#39;s timezone sends it to end the mute at 09:00 their time. <code>forever</code> is <code>muteConversation</code> without <code>mutedUntil</code>: level <code>none</code> with no end. Payload <code>{conversation_id, muted_until}</code> (<code>muted_until</code> null for <code>forever</code>)</td>
+</tr>
+<tr>
+<td><code>notifications.unmute_conversation</code></td>
+<td><code>server_id</code>, <code>conversation_id</code></td>
+<td>yes</td>
+<td>no</td>
+<td>Mirrors <code>unmuteConversation</code>: ends a timed mute and clears a <code>none</code> level; <code>conversation_id</code> falls back to the focused conversation. Unmuting a conversation that is not muted succeeds. Payload <code>{conversation_id}</code></td>
+</tr>
 </tbody></table></div>
 <p>General builtins the agent may call. None declares a new capability. The navigation
 commands are <code>DesktopLocal</code>: the server refuses to execute them, so the desktop agent runs them
 through the client&#39;s local handlers, and only when they are <code>Safe</code> and not dangerous (anything
 stricter goes to <code>executeCommand</code>, which refuses it). The five writes were raised from <code>Safe</code> to
 <code>Mutating</code>, which has three effects beyond the agent&#39;s confirmation
-gate: a timed-out member can no longer run them through the command path (T1; the GraphQL
-<code>markAsRead</code> mutation is not affected), server-side pipelines (initiator <code>Plugin</code>) can no longer
-run them because nobody is there to confirm, and they count towards the agent&#39;s per-turn
-mutating-call cap. Palette and keybind still run them in one step.</p>
+gate: a timed-out member can no longer run the <code>state.*</code> writes and <code>chat.create_group</code> through
+the command path (T1; <code>chat.mark_as_read</code> changes only the caller&#39;s own state and is let
+through, as the GraphQL <code>markAsRead</code> mutation is), server-side pipelines (initiator <code>Plugin</code>)
+can no longer run them because nobody is there to confirm, and they count towards the agent&#39;s
+per-turn mutating-call cap. Palette and keybind still run them in one step.</p>
 <div class="tablewrap"><table>
 <thead>
 <tr>
@@ -371,24 +571,24 @@ mutating-call cap. Palette and keybind still run them in one step.</p>
 </tr>
 <tr>
 <td><code>state.list</code></td>
-<td><code>server_id</code>, <code>prefix?</code>, <code>scope?</code>, <code>limit?</code></td>
+<td><code>server_id</code>, <code>prefix?</code>, <code>scope?</code>, <code>limit?</code> (integer)</td>
 <td><code>Safe</code></td>
 <td>no</td>
 <td>Read</td>
 </tr>
 <tr>
 <td><code>state.set</code></td>
-<td><code>server_id</code>, <code>key</code>, <code>value</code>, <code>scope?</code>, <code>ttl?</code></td>
+<td><code>server_id</code>, <code>key</code>, <code>value</code>, <code>scope?</code>, <code>ttl?</code> (integer seconds)</td>
 <td><code>Mutating</code></td>
 <td>yes</td>
 <td></td>
 </tr>
 <tr>
 <td><code>state.incr</code></td>
-<td><code>server_id</code>, <code>key</code>, <code>delta?</code>, <code>scope?</code></td>
+<td><code>server_id</code>, <code>key</code>, <code>delta?</code> (integer), <code>scope?</code></td>
 <td><code>Mutating</code></td>
 <td>yes</td>
-<td></td>
+<td>The numbers <code>ttl</code>, <code>delta</code> and <code>limit</code> may also arrive as numeric strings</td>
 </tr>
 <tr>
 <td><code>state.delete</code></td>
@@ -431,27 +631,958 @@ stored values, including the caller&#39;s own <code>scope: user</code> entries, 
 in workspace state. Kept off the AI surface on purpose: <code>chat.edit_message</code>,
 <code>chat.delete_message</code>, <code>chat.reply_to_selected_message</code> and <code>chat.copy_message_text</code> (they act on
 the user&#39;s selected message, which the agent cannot supply), <code>admin.invite_member</code> (its result is
-an invite token that would pass through the model provider), and <code>chat.mark_all_as_read</code>
-(duplicates <code>notifications.mark_all_read</code>).</p>
+an invite token that would pass through the model provider), <code>chat.mark_all_as_read</code> (it marks
+every conversation of the workspace read at once, which is the person&#39;s call; it is not
+<code>notifications.mark_all_read</code>, which marks notifications and which the agent may call), and
+<code>chat.mark_as_unread</code> (an agent does not decide what someone has read).</p>
 <p>List arguments such as <code>user_ids</code> and <code>member_ids</code> accept a JSON array of ids or one
 comma-separated string, because the agent&#39;s tool schema types every argument as a scalar.</p>
-<p>AI-callable builtins: 42. They are seventeen chat, channel and navigation builtins
+<p>AI-callable builtins: 47. They are nineteen chat, channel and navigation builtins
 (<code>chat.post_message</code>, <code>chat.open_thread</code>, <code>workspace.open_settings</code>,
 <code>workspace.navigate_to_channel</code>, <code>workspace.switch_workspace</code>, <code>chat.list_channels</code>,
 <code>chat.create_channel</code>, <code>chat.list_members</code>, <code>chat.search_messages</code>, <code>chat.get_recent_messages</code>,
-<code>chat.pin_message</code>, <code>chat.toggle_reaction</code> and the five channel membership builtins above),
-<code>admin.timeout</code>, <code>chat.set_slow_mode</code>, <code>chat.set_channel_posting</code> and <code>chat.report_message</code>,
-the three <code>notifications.*</code> builtins, and the eighteen general builtins above. The set is
-pinned by <code>collect_ai_callable_inventory_matches_reviewed_set</code> (<code>registry/mod.rs</code>) and
-<code>list_commands_ai_surface_returns_forty_two_commands_with_caps</code> (<code>command_tests.rs</code>). The
+<code>chat.pin_message</code>, <code>chat.unpin_message</code>, <code>chat.set_topic</code>, <code>chat.toggle_reaction</code> and the five
+channel membership builtins above), <code>admin.timeout</code>, <code>admin.clear_timeout</code>,
+<code>chat.set_slow_mode</code>, <code>chat.set_channel_posting</code> and <code>chat.report_message</code>, the five
+<code>notifications.*</code> builtins, and the eighteen general builtins above. The set is pinned by
+<code>collect_ai_callable_inventory_matches_reviewed_set</code> (<code>registry/mod.rs</code>) and
+<code>list_commands_ai_surface_returns_forty_seven_commands_with_caps</code> (<code>command_tests.rs</code>). The
 capability union the AI surface checks is <code>admin.manage_members</code>, <code>chat.read</code> and <code>chat.write</code>;
 the notification and general builtins declare none.</p>
-<p><code>chat.post_message</code>, <code>chat.get_recent_messages</code>, <code>chat.pin_message</code> and
-<code>chat.toggle_reaction</code> take <code>conversation_id</code> from the focused conversation
-(<code>context.conversation_id</code>) when it is not given, and <code>chat.pin_message</code> and
-<code>chat.toggle_reaction</code> take <code>message_id</code> from the selected message
-(<code>context.selected_message_id</code>); an argument that is given wins. <code>chat.search_messages</code> has
-no such fallback: without <code>conversation_id</code> it searches the workspace.</p>
+<p>Each of the five that joined the set last mirrors a command the agent could already call, is
+checked by the same service, and is <code>Mutating</code>, so it waits for the person&#39;s confirmation:</p>
+<ul>
+<li><code>chat.unpin_message</code> undoes <code>chat.pin_message</code>, and unpinning someone else&#39;s pin takes the
+role the person already has.</li>
+<li><code>chat.set_topic</code> changes text members see, as <code>chat.post_message</code> does, and only for those
+who may change the topic.</li>
+<li><code>admin.clear_timeout</code> lifts what <code>admin.timeout</code> sets, with the same targeting rules.</li>
+<li><code>notifications.mute_conversation</code> and <code>notifications.unmute_conversation</code> change only the
+person&#39;s own notifications, as <code>notifications.set_level</code> does.</li>
+</ul>
+<p><code>chat.post_message</code>, <code>chat.get_recent_messages</code>, <code>chat.pin_message</code>, <code>chat.unpin_message</code>,
+<code>chat.set_topic</code>, <code>chat.toggle_reaction</code>, <code>notifications.mute_conversation</code> and
+<code>notifications.unmute_conversation</code> take <code>conversation_id</code> from the focused conversation
+(<code>context.conversation_id</code>) when it is not given, and <code>chat.pin_message</code>,
+<code>chat.unpin_message</code>, <code>chat.toggle_reaction</code> and <code>chat.report_message</code> take <code>message_id</code> from
+the selected message (<code>context.selected_message_id</code>); an argument that is given wins. The agent
+never sends a selected message, so it names the message by <code>message_id</code>.
+<code>chat.search_messages</code> has no such fallback: without <code>conversation_id</code> it searches the
+workspace.</p>
+<p><code>workspace.navigate_to_dm</code> (<code>DesktopLocal</code>, not AI-callable) takes a required
+<code>conversation_id</code>, the direct message or group to open. The three navigation builtins that move
+through the sidebar move through every conversation, not only channels, and are titled Previous
+Conversation (<code>workspace.previous_channel</code>), Next Conversation (<code>workspace.next_channel</code>) and
+Next Unread Conversation (<code>workspace.next_unread_channel</code>).</p>
+<h3 id="app-commands">App Commands <a class="anchor" href="#app-commands" aria-label="Link to this section">#</a></h3>
+<p>An app command is a built-in command the client runs itself and the server does not list:
+opening a page, toggling a panel, moving focus, changing the view, quitting the app. The client
+holds their definitions. The server knows their ids, so that a person&#39;s keybinds and a
+workspace&#39;s keybinds can name them:</p>
+<ul>
+<li><code>createKeybind</code> and <code>updateKeybind</code> accept an app command id as they accept the id of a
+built-in the server lists, for <code>user</code> and <code>workspace</code> keybinds alike, and <code>resolvedKeybinds</code>
+returns those keybinds, so they reach every device the person signs in on, the web app
+included. An app command changes nothing on the server, so the rule for workspace keybinds
+(<a href="keybind_model.html"><code>keybind_model.md</code></a>, Workspace Keybinds) admits it; a preset <code>server_id</code> must still name the
+keybind&#39;s own workspace. One the table marks as not bindable is refused like a built-in that
+is not keybind-capable.</li>
+<li><code>commands</code> never lists an app command, on any surface. <code>executeCommand</code> refuses one as it
+refuses an id that names no command, and the AI surface and <code>commandDiscover</code> never offer one
+to an agent. A pipeline action cannot name one. A macro step can, and the client runs it
+(Commands And Macros, below).</li>
+</ul>
+<p>A server that accepts these keybinds lists <code>app_command_keybinds</code> in <code>serverInfo.capabilities</code>.
+An older server refuses them with <code>VALIDATION</code>, and a client keeps such a binding on the device
+there.</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Id</th>
+<th>Title</th>
+<th>Category</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>workspace.show_shortcuts</code></td>
+<td>Show Keyboard Shortcuts</td>
+<td>View</td>
+<td></td>
+</tr>
+<tr>
+<td><code>workspace.toggle_vim_mode</code></td>
+<td>Toggle Vim Mode</td>
+<td>View</td>
+<td></td>
+</tr>
+<tr>
+<td><code>workspace.previous_unread_channel</code></td>
+<td>Previous Unread Conversation</td>
+<td>Navigation</td>
+<td></td>
+</tr>
+<tr>
+<td><code>workspace.navigate_panel_left</code></td>
+<td>Focus the Pane to the Left</td>
+<td>Navigation</td>
+<td></td>
+</tr>
+<tr>
+<td><code>workspace.navigate_panel_right</code></td>
+<td>Focus the Pane to the Right</td>
+<td>Navigation</td>
+<td></td>
+</tr>
+<tr>
+<td><code>workspace.cycle_layout_preset</code></td>
+<td>Cycle Layout Preset</td>
+<td>View</td>
+<td></td>
+</tr>
+<tr>
+<td><code>workspace.toggle_zen_mode</code></td>
+<td>Toggle Zen Mode</td>
+<td>View</td>
+<td></td>
+</tr>
+<tr>
+<td><code>workspace.back_to_workspace</code></td>
+<td>Back to Workspace</td>
+<td>Navigation</td>
+<td></td>
+</tr>
+<tr>
+<td><code>workspace.cycle_display_density</code></td>
+<td>Cycle Display Density</td>
+<td>View</td>
+<td></td>
+</tr>
+<tr>
+<td><code>workspace.rename</code></td>
+<td>Rename Workspace…</td>
+<td>Workspace</td>
+<td>Opens the rename dialog</td>
+</tr>
+<tr>
+<td><code>workspace.open_bots</code></td>
+<td>Open Bots</td>
+<td>Bots &amp; Webhooks</td>
+<td></td>
+</tr>
+<tr>
+<td><code>workspace.leave</code></td>
+<td>Leave Workspace…</td>
+<td>Workspace</td>
+<td>Opens the confirmation dialog</td>
+</tr>
+<tr>
+<td><code>workspace.open_agents</code></td>
+<td>Open Agents</td>
+<td>Agents</td>
+<td>Desktop only</td>
+</tr>
+<tr>
+<td><code>workspace.open_agent_sessions</code></td>
+<td>Open Agent Sessions</td>
+<td>Agents</td>
+<td>Desktop only</td>
+</tr>
+<tr>
+<td><code>workspace.open_unreads</code></td>
+<td>Open Unreads</td>
+<td>Unreads</td>
+<td></td>
+</tr>
+<tr>
+<td><code>workspace.unreads_next</code></td>
+<td>Unreads: Next Message</td>
+<td>Unreads</td>
+<td></td>
+</tr>
+<tr>
+<td><code>workspace.unreads_previous</code></td>
+<td>Unreads: Previous Message</td>
+<td>Unreads</td>
+<td></td>
+</tr>
+<tr>
+<td><code>workspace.unreads_mark_group</code></td>
+<td>Unreads: Mark Conversation as Read</td>
+<td>Unreads</td>
+<td></td>
+</tr>
+<tr>
+<td><code>workspace.unreads_open</code></td>
+<td>Unreads: Open Message</td>
+<td>Unreads</td>
+<td></td>
+</tr>
+<tr>
+<td><code>workspace.unreads_undo</code></td>
+<td>Unreads: Undo</td>
+<td>Unreads</td>
+<td></td>
+</tr>
+<tr>
+<td><code>workspace.open_home</code></td>
+<td>Open Home</td>
+<td>Home</td>
+<td></td>
+</tr>
+<tr>
+<td><code>workspace.edit_home</code></td>
+<td>Edit Home</td>
+<td>Home</td>
+<td>Not bindable: changing Home is the person&#39;s act from the palette or Home</td>
+</tr>
+<tr>
+<td><code>workspace.open_audit_log</code></td>
+<td>Open Audit Log</td>
+<td>Workspace</td>
+<td></td>
+</tr>
+<tr>
+<td><code>workspace.open_message_requests</code></td>
+<td>Open Message Requests</td>
+<td>People</td>
+<td></td>
+</tr>
+<tr>
+<td><code>workspace.toggle_pinned_messages</code></td>
+<td>Toggle Pinned Messages</td>
+<td>Conversations</td>
+<td></td>
+</tr>
+<tr>
+<td><code>workspace.toggle_channel_bots</code></td>
+<td>Toggle Bots in This Channel</td>
+<td>Bots &amp; Webhooks</td>
+<td></td>
+</tr>
+<tr>
+<td><code>workspace.toggle_notifications</code></td>
+<td>Toggle Notifications</td>
+<td>Notifications</td>
+<td></td>
+</tr>
+<tr>
+<td><code>workspace.toggle_conversation_members</code></td>
+<td>Toggle Conversation Members</td>
+<td>Conversations</td>
+<td></td>
+</tr>
+<tr>
+<td><code>workspace.toggle_member_directory</code></td>
+<td>Toggle Workspace Members</td>
+<td>Workspace</td>
+<td></td>
+</tr>
+<tr>
+<td><code>workspace.toggle_lens_picker</code></td>
+<td>Toggle Channel Lenses</td>
+<td>Conversations</td>
+<td></td>
+</tr>
+<tr>
+<td><code>workspace.go_back</code></td>
+<td>Go Back</td>
+<td>Navigation</td>
+<td></td>
+</tr>
+<tr>
+<td><code>workspace.go_forward</code></td>
+<td>Go Forward</td>
+<td>Navigation</td>
+<td></td>
+</tr>
+<tr>
+<td><code>app.quit</code></td>
+<td>Quit RIM</td>
+<td>App</td>
+<td>Desktop only; asks to confirm</td>
+</tr>
+<tr>
+<td><code>plugins.open_settings</code></td>
+<td>Open Plugin Settings</td>
+<td>Plugins</td>
+<td>Settings, Plugins tab</td>
+</tr>
+<tr>
+<td><code>workspace.open_direct_messages</code></td>
+<td>Open Direct Messages</td>
+<td>Navigation</td>
+<td></td>
+</tr>
+<tr>
+<td><code>workspace.add</code></td>
+<td>Add a Workspace…</td>
+<td>Workspace</td>
+<td>Opens the add dialog</td>
+</tr>
+<tr>
+<td><code>workspace.open_workspace_settings</code></td>
+<td>Open Workspace Settings</td>
+<td>Workspace</td>
+<td>Owners and moderators</td>
+</tr>
+<tr>
+<td><code>workspace.open_join_requests</code></td>
+<td>Open Join Requests</td>
+<td>Workspace</td>
+<td>Owners and moderators</td>
+</tr>
+<tr>
+<td><code>people.set_status</code></td>
+<td>Set Status…</td>
+<td>People</td>
+<td>Opens the status picker</td>
+</tr>
+<tr>
+<td><code>people.view_profile</code></td>
+<td>View Profile…</td>
+<td>People</td>
+<td>Opens a member picker</td>
+</tr>
+<tr>
+<td><code>people.message</code></td>
+<td>Message Someone…</td>
+<td>People</td>
+<td>Opens a member picker</td>
+</tr>
+<tr>
+<td><code>app.sign_out</code></td>
+<td>Sign Out…</td>
+<td>App</td>
+<td>Asks to confirm</td>
+</tr>
+<tr>
+<td><code>app.check_for_updates</code></td>
+<td>Check for Updates</td>
+<td>App</td>
+<td>Desktop only</td>
+</tr>
+<tr>
+<td><code>app.restart_to_update</code></td>
+<td>Restart to Update</td>
+<td>App</td>
+<td>Desktop only; offered while an update is ready</td>
+</tr>
+<tr>
+<td><code>app.open_log_folder</code></td>
+<td>Open Log Folder</td>
+<td>App</td>
+<td>Desktop only</td>
+</tr>
+<tr>
+<td><code>app.minimize_window</code></td>
+<td>Minimize Window</td>
+<td>App</td>
+<td>Desktop only</td>
+</tr>
+<tr>
+<td><code>app.toggle_maximize_window</code></td>
+<td>Maximize or Restore Window</td>
+<td>App</td>
+<td>Desktop only</td>
+</tr>
+<tr>
+<td><code>app.close_window</code></td>
+<td>Close Window</td>
+<td>App</td>
+<td>Desktop only; as the window&#39;s close button</td>
+</tr>
+<tr>
+<td><code>settings.open.profile</code></td>
+<td>Settings: Profile</td>
+<td>App</td>
+<td></td>
+</tr>
+<tr>
+<td><code>settings.open.account</code></td>
+<td>Settings: Account</td>
+<td>App</td>
+<td></td>
+</tr>
+<tr>
+<td><code>settings.open.security</code></td>
+<td>Settings: Security</td>
+<td>App</td>
+<td></td>
+</tr>
+<tr>
+<td><code>settings.open.desktop</code></td>
+<td>Settings: Desktop</td>
+<td>App</td>
+<td>Desktop only</td>
+</tr>
+<tr>
+<td><code>settings.open.contacts</code></td>
+<td>Settings: Contacts</td>
+<td>App</td>
+<td></td>
+</tr>
+<tr>
+<td><code>settings.open.messages</code></td>
+<td>Settings: Messages</td>
+<td>App</td>
+<td></td>
+</tr>
+<tr>
+<td><code>settings.open.direct_messages</code></td>
+<td>Settings: Direct messages</td>
+<td>App</td>
+<td></td>
+</tr>
+<tr>
+<td><code>settings.open.notifications</code></td>
+<td>Settings: Notifications</td>
+<td>App</td>
+<td></td>
+</tr>
+<tr>
+<td><code>settings.open.history</code></td>
+<td>Settings: History</td>
+<td>App</td>
+<td></td>
+</tr>
+<tr>
+<td><code>settings.open.keybinds</code></td>
+<td>Settings: Keybinds</td>
+<td>App</td>
+<td></td>
+</tr>
+<tr>
+<td><code>settings.open.keyboard</code></td>
+<td>Settings: Keyboard</td>
+<td>App</td>
+<td></td>
+</tr>
+<tr>
+<td><code>settings.open.commands</code></td>
+<td>Settings: Commands</td>
+<td>App</td>
+<td></td>
+</tr>
+<tr>
+<td><code>settings.open.macros</code></td>
+<td>Settings: Macros</td>
+<td>App</td>
+<td></td>
+</tr>
+<tr>
+<td><code>settings.open.pipelines</code></td>
+<td>Settings: Pipelines</td>
+<td>App</td>
+<td>Not in the direct space</td>
+</tr>
+<tr>
+<td><code>settings.open.plugins</code></td>
+<td>Settings: Plugins</td>
+<td>App</td>
+<td></td>
+</tr>
+<tr>
+<td><code>settings.open.plugin_ai</code></td>
+<td>Settings: Plugin AI</td>
+<td>App</td>
+<td>Desktop only</td>
+</tr>
+<tr>
+<td><code>settings.open.state</code></td>
+<td>Settings: State</td>
+<td>App</td>
+<td>Not in the direct space</td>
+</tr>
+<tr>
+<td><code>settings.open.emoji</code></td>
+<td>Settings: Emoji</td>
+<td>App</td>
+<td>Where the server has custom emoji; not in the direct space</td>
+</tr>
+<tr>
+<td><code>settings.open.agents</code></td>
+<td>Settings: Agents</td>
+<td>App</td>
+<td>Desktop only</td>
+</tr>
+<tr>
+<td><code>settings.open.agent</code></td>
+<td>Settings: AI Agent</td>
+<td>App</td>
+<td>Desktop only</td>
+</tr>
+<tr>
+<td><code>settings.open.workspace</code></td>
+<td>Settings: Workspace</td>
+<td>Workspace</td>
+<td>Owners and moderators; not in the direct space</td>
+</tr>
+<tr>
+<td><code>settings.open.workspace_moderation</code></td>
+<td>Settings: Moderation</td>
+<td>Workspace</td>
+<td>Owners and moderators; not in the direct space</td>
+</tr>
+<tr>
+<td><code>settings.open.bots</code></td>
+<td>Settings: Bots</td>
+<td>Workspace</td>
+<td>Those who manage the workspace&#39;s bots; not in the direct space</td>
+</tr>
+<tr>
+<td><code>settings.open.moderation</code></td>
+<td>Settings: Instance moderation</td>
+<td>App</td>
+<td>Instance operators</td>
+</tr>
+<tr>
+<td><code>settings.open.about</code></td>
+<td>Settings: About</td>
+<td>App</td>
+<td></td>
+</tr>
+<tr>
+<td><code>settings.assign_keybind</code></td>
+<td>Assign Keybind…</td>
+<td>App</td>
+<td>Opens the keybind assigner for the focused conversation, else the open workspace</td>
+</tr>
+<tr>
+<td><code>settings.back_up_history</code></td>
+<td>Back Up History Now</td>
+<td>App</td>
+<td>Desktop only</td>
+</tr>
+<tr>
+<td><code>app.run_macro</code></td>
+<td>Run Macro…</td>
+<td>App</td>
+<td>Opens a macro picker</td>
+</tr>
+<tr>
+<td><code>app.toggle_pipeline</code></td>
+<td>Turn Pipeline On or Off…</td>
+<td>App</td>
+<td>Opens a pipeline picker</td>
+</tr>
+<tr>
+<td><code>chat.start_reply</code></td>
+<td>Reply</td>
+<td>Messages</td>
+<td>The selected message</td>
+</tr>
+<tr>
+<td><code>chat.start_edit</code></td>
+<td>Edit Message</td>
+<td>Messages</td>
+<td>Your own selected message</td>
+</tr>
+<tr>
+<td><code>chat.forward_message</code></td>
+<td>Forward Message…</td>
+<td>Messages</td>
+<td>Opens the forward dialog</td>
+</tr>
+<tr>
+<td><code>chat.delete_attachment</code></td>
+<td>Delete Attachment…</td>
+<td>Messages</td>
+<td>Asks to confirm</td>
+</tr>
+<tr>
+<td><code>chat.attach_file</code></td>
+<td>Attach File…</td>
+<td>Messages</td>
+<td>Opens the file picker</td>
+</tr>
+<tr>
+<td><code>chat.insert_emoji</code></td>
+<td>Insert Emoji…</td>
+<td>Messages</td>
+<td>Opens the emoji picker</td>
+</tr>
+<tr>
+<td><code>chat.select_next_message</code></td>
+<td>Select Next Message</td>
+<td>Messages</td>
+<td></td>
+</tr>
+<tr>
+<td><code>chat.select_previous_message</code></td>
+<td>Select Previous Message</td>
+<td>Messages</td>
+<td></td>
+</tr>
+<tr>
+<td><code>chat.select_first_message</code></td>
+<td>Select First Message</td>
+<td>Messages</td>
+<td></td>
+</tr>
+<tr>
+<td><code>chat.select_last_message</code></td>
+<td>Select Last Message</td>
+<td>Messages</td>
+<td></td>
+</tr>
+<tr>
+<td><code>chat.toggle_fold</code></td>
+<td>Fold or Unfold Message</td>
+<td>Messages</td>
+<td></td>
+</tr>
+<tr>
+<td><code>chat.open_invite</code></td>
+<td>Invite People…</td>
+<td>Conversations</td>
+<td>Opens the invite dialog</td>
+</tr>
+<tr>
+<td><code>chat.browse_channels</code></td>
+<td>Browse Channels…</td>
+<td>Conversations</td>
+<td>Opens the browse dialog</td>
+</tr>
+<tr>
+<td><code>chat.accept_invitation</code></td>
+<td>Accept Invitation</td>
+<td>Conversations</td>
+<td></td>
+</tr>
+<tr>
+<td><code>chat.decline_invitation</code></td>
+<td>Decline Invitation</td>
+<td>Conversations</td>
+<td></td>
+</tr>
+<tr>
+<td><code>chat.mark_conversation_unread</code></td>
+<td>Mark Conversation Unread</td>
+<td>Conversations</td>
+<td></td>
+</tr>
+<tr>
+<td><code>chat.apply_lens</code></td>
+<td>Apply Lens…</td>
+<td>Conversations</td>
+<td>Channels; opens the lens picker</td>
+</tr>
+<tr>
+<td><code>chat.clear_lens</code></td>
+<td>Clear Lens</td>
+<td>Conversations</td>
+<td></td>
+</tr>
+<tr>
+<td><code>notifications.mark_read</code></td>
+<td>Mark Notification Read</td>
+<td>Notifications</td>
+<td>The inbox&#39;s selected notification</td>
+</tr>
+<tr>
+<td><code>unreads.mark_all_shown</code></td>
+<td>Unreads: Mark All Shown as Read</td>
+<td>Unreads</td>
+<td>Can be undone</td>
+</tr>
+<tr>
+<td><code>unreads.toggle_muted</code></td>
+<td>Unreads: Show or Hide Muted</td>
+<td>Unreads</td>
+<td></td>
+</tr>
+<tr>
+<td><code>agents.allow_in_encrypted_conversation</code></td>
+<td>Let the AI Agent Read This Conversation…</td>
+<td>Agents</td>
+<td>Desktop only; always shows the warning and asks to confirm</td>
+</tr>
+<tr>
+<td><code>moderation.open_reports</code></td>
+<td>Open Reports</td>
+<td>Moderation</td>
+<td>Owners and moderators</td>
+</tr>
+<tr>
+<td><code>moderation.resolve_report</code></td>
+<td>Resolve Report…</td>
+<td>Moderation</td>
+<td>Owners and moderators; opens a report picker</td>
+</tr>
+<tr>
+<td><code>moderation.dismiss_report</code></td>
+<td>Dismiss Report…</td>
+<td>Moderation</td>
+<td>Owners and moderators; opens a report picker</td>
+</tr>
+<tr>
+<td><code>moderation.clear_flag</code></td>
+<td>Clear Flag</td>
+<td>Moderation</td>
+<td>Owners and moderators; the selected flagged message</td>
+</tr>
+<tr>
+<td><code>moderation.block_principal</code></td>
+<td>Block Principal…</td>
+<td>Moderation</td>
+<td>Instance operators; asks to confirm</td>
+</tr>
+<tr>
+<td><code>moderation.unblock_principal</code></td>
+<td>Unblock Principal…</td>
+<td>Moderation</td>
+<td>Instance operators; opens a picker</td>
+</tr>
+<tr>
+<td><code>moderation.unblock_ip</code></td>
+<td>Unblock Address…</td>
+<td>Moderation</td>
+<td>Instance operators; opens a picker</td>
+</tr>
+<tr>
+<td><code>moderation.clear_profile</code></td>
+<td>Clear Profile…</td>
+<td>Moderation</td>
+<td>Instance operators; asks to confirm</td>
+</tr>
+<tr>
+<td><code>workspace.revoke_invite</code></td>
+<td>Revoke Invite…</td>
+<td>Workspace</td>
+<td>Opens an invite picker; asks to confirm</td>
+</tr>
+<tr>
+<td><code>workspace.accept_join_request</code></td>
+<td>Accept Join Request…</td>
+<td>Workspace</td>
+<td>Owners and moderators; opens a request picker</td>
+</tr>
+<tr>
+<td><code>workspace.decline_join_request</code></td>
+<td>Decline Join Request…</td>
+<td>Workspace</td>
+<td>Owners and moderators; opens a request picker</td>
+</tr>
+<tr>
+<td><code>bots.new</code></td>
+<td>New Bot…</td>
+<td>Bots &amp; Webhooks</td>
+<td>Opens the form</td>
+</tr>
+<tr>
+<td><code>bots.edit</code></td>
+<td>Edit Bot…</td>
+<td>Bots &amp; Webhooks</td>
+<td>Opens a bot picker</td>
+</tr>
+<tr>
+<td><code>bots.deactivate</code></td>
+<td>Deactivate Bot…</td>
+<td>Bots &amp; Webhooks</td>
+<td>Opens a bot picker; asks to confirm</td>
+</tr>
+<tr>
+<td><code>bots.new_webhook</code></td>
+<td>New Webhook…</td>
+<td>Bots &amp; Webhooks</td>
+<td>The focused channel; opens the dialog</td>
+</tr>
+<tr>
+<td><code>bots.revoke_webhook</code></td>
+<td>Revoke Webhook…</td>
+<td>Bots &amp; Webhooks</td>
+<td>Opens a webhook picker; asks to confirm</td>
+</tr>
+<tr>
+<td><code>plugins.install</code></td>
+<td>Install Plugin…</td>
+<td>Plugins</td>
+<td>Asks for consent as installing does</td>
+</tr>
+<tr>
+<td><code>plugins.toggle</code></td>
+<td>Turn Plugin On or Off…</td>
+<td>Plugins</td>
+<td>Opens a plugin picker</td>
+</tr>
+<tr>
+<td><code>plugins.update</code></td>
+<td>Update Plugin…</td>
+<td>Plugins</td>
+<td>Opens a picker of plugins with an update</td>
+</tr>
+<tr>
+<td><code>plugins.uninstall</code></td>
+<td>Uninstall Plugin…</td>
+<td>Plugins</td>
+<td>Opens a plugin picker; asks to confirm</td>
+</tr>
+<tr>
+<td><code>plugins.revoke_ai_access</code></td>
+<td>Revoke a Plugin&#39;s AI Access…</td>
+<td>Plugins</td>
+<td>Desktop only; opens a plugin picker</td>
+</tr>
+<tr>
+<td><code>people.add_contact</code></td>
+<td>Add to Contacts</td>
+<td>People</td>
+<td>The person in context, else a picker</td>
+</tr>
+<tr>
+<td><code>people.remove_contact</code></td>
+<td>Remove from Contacts</td>
+<td>People</td>
+<td>The person in context, else a picker</td>
+</tr>
+<tr>
+<td><code>people.block</code></td>
+<td>Block…</td>
+<td>People</td>
+<td>Opens the block dialog</td>
+</tr>
+<tr>
+<td><code>people.unblock</code></td>
+<td>Unblock…</td>
+<td>People</td>
+<td>Opens a picker of blocked people</td>
+</tr>
+<tr>
+<td><code>people.accept_request</code></td>
+<td>Accept Message Request</td>
+<td>People</td>
+<td>The open request</td>
+</tr>
+<tr>
+<td><code>people.ignore_request</code></td>
+<td>Ignore Message Request</td>
+<td>People</td>
+<td>The open request</td>
+</tr>
+<tr>
+<td><code>people.report_request</code></td>
+<td>Report Message Request…</td>
+<td>People</td>
+<td>The open request; opens the report dialog</td>
+</tr>
+<tr>
+<td><code>people.read_request_first</code></td>
+<td>Read Message Request First</td>
+<td>People</td>
+<td>The open request</td>
+</tr>
+<tr>
+<td><code>agents.approve_request</code></td>
+<td>Approve the Agent&#39;s Request…</td>
+<td>Agents</td>
+<td>Desktop only; always shows a loud warning and asks to confirm</td>
+</tr>
+<tr>
+<td><code>agents.refuse_request</code></td>
+<td>Refuse the Agent&#39;s Request</td>
+<td>Agents</td>
+<td>Desktop only; runs at once</td>
+</tr>
+<tr>
+<td><code>agents.approve_pairing</code></td>
+<td>Connect the Waiting Agent…</td>
+<td>Agents</td>
+<td>Desktop only; always shows a loud warning and asks to confirm</td>
+</tr>
+<tr>
+<td><code>agents.refuse_pairing</code></td>
+<td>Don&#39;t Connect the Waiting Agent</td>
+<td>Agents</td>
+<td>Desktop only; runs at once</td>
+</tr>
+<tr>
+<td><code>agents.disconnect</code></td>
+<td>Disconnect Agent…</td>
+<td>Agents</td>
+<td>Desktop only</td>
+</tr>
+<tr>
+<td><code>agents.choose_reads</code></td>
+<td>Choose What an Agent Can Read…</td>
+<td>Agents</td>
+<td>Desktop only</td>
+</tr>
+<tr>
+<td><code>agents.choose_plugin_commands</code></td>
+<td>Choose an Agent&#39;s Commands…</td>
+<td>Agents</td>
+<td>Desktop only</td>
+</tr>
+<tr>
+<td><code>agents.open_runs</code></td>
+<td>Open Agent Runs</td>
+<td>Agents</td>
+<td>Desktop only</td>
+</tr>
+<tr>
+<td><code>agents.connect_agent</code></td>
+<td>Connect an Agent…</td>
+<td>Agents</td>
+<td>Desktop only; shows a credential once</td>
+</tr>
+<tr>
+<td><code>agents.start_session</code></td>
+<td>Start Agent Session…</td>
+<td>Agents</td>
+<td>Desktop only</td>
+</tr>
+<tr>
+<td><code>agents.stop_session</code></td>
+<td>Stop Agent Session</td>
+<td>Agents</td>
+<td>Desktop only</td>
+</tr>
+<tr>
+<td><code>agents.ask_about_message</code></td>
+<td>Ask Agent About Message…</td>
+<td>Agents</td>
+<td>Desktop only</td>
+</tr>
+<tr>
+<td><code>agents.ask_about_conversation</code></td>
+<td>Ask Agent About Conversation…</td>
+<td>Agents</td>
+<td>Desktop only</td>
+</tr>
+<tr>
+<td><code>agents.open_record</code></td>
+<td>What Agents Were Given</td>
+<td>Agents</td>
+<td>Desktop only</td>
+</tr>
+<tr>
+<td><code>agents.clear_record</code></td>
+<td>Clear the Agents Record…</td>
+<td>Agents</td>
+<td>Desktop only</td>
+</tr>
+</tbody></table></div>
+<p>The <code>settings.open.*</code> commands open one settings tab each. The id is <code>settings.open.</code> and the
+tab&#39;s key with every run of characters other than <code>a</code>-<code>z</code> and <code>0</code>-<code>9</code> turned into <code>_</code>, and the
+title is <code>Settings: </code> and the tab&#39;s label. They are offered where the tab is shown. The tabs of
+the Workspace section are in category Workspace, the others in App.</p>
+<p>A new app command is added to this table, and to the server&#39;s list of app command ids, in the
+same release that ships it in the client. Until a server knows an id it refuses keybinds to it,
+and the client keeps them on the device.</p>
+<h4 id="agent-approval-commands">Agent approval commands <a class="anchor" href="#agent-approval-commands" aria-label="Link to this section">#</a></h4>
+<p>The commands that approve or refuse an outside agent&#39;s request, or its pairing, are app commands
+with reserved ids: <code>agents.approve_request</code>, <code>agents.refuse_request</code>, <code>agents.approve_pairing</code>
+and <code>agents.refuse_pairing</code>. Approving an agent is the person&#39;s own act:</p>
+<ul>
+<li>none of them is ever <code>ai_callable</code>, and no plugin, pipe, macro or pipeline runs one</li>
+<li>the two that approve, <code>agents.approve_request</code> and <code>agents.approve_pairing</code>, always show a loud
+warning and ask the person to confirm, naming the agent and what it asked for, whichever
+surface started them, a keybind or a Home quick box included</li>
+<li>the two that refuse, <code>agents.refuse_request</code> and <code>agents.refuse_pairing</code>, run at once with no
+warning: refusing grants nothing</li>
+<li>a test pins all four as app commands offered on no agent surface</li>
+</ul>
 <h3 id="plugin-provided-commands">Plugin-Provided Commands <a class="anchor" href="#plugin-provided-commands" aria-label="Link to this section">#</a></h3>
 <ul>
 <li>Registered by plugins.</li>
@@ -463,84 +1594,171 @@ no such fallback: without <code>conversation_id</code> it searches the workspace
 <li>Registered by integrations such as bots, webhooks, or external tool connectors.</li>
 <li>Usually remote or backend-oriented.</li>
 </ul>
-<h3 id="user-defined-commands">User-Defined Commands <a class="anchor" href="#user-defined-commands" aria-label="Link to this section">#</a></h3>
+<h3 id="macros">Macros <a class="anchor" href="#macros" aria-label="Link to this section">#</a></h3>
 <ul>
-<li>Created by the user.</li>
-<li>May wrap built-in, plugin, or integration commands.</li>
-<li>May compose multiple commands into a single workflow.</li>
+<li>Created by the person: a macro is their own action, made of commands.</li>
+<li>Its steps name built-in, app and plugin commands, each with its arguments.</li>
+<li>Every macro is a command, in category <code>Macro</code>.</li>
 </ul>
-<p>Current v1 backend constraint:</p>
+<h2 id="commands-and-macros">Commands And Macros <a class="anchor" href="#commands-and-macros" aria-label="Link to this section">#</a></h2>
+<p>A <strong>command</strong> is one action that RIM or a plugin gives you: a built-in the server lists, an app
+command the client runs, or a plugin&#39;s command. Nobody creates a command. A <strong>macro</strong> is a
+person&#39;s own action, made of commands that run in order. Every macro is a command too: it is
+in category <code>Macro</code>, it shows in the palette, the keybind picker, Home quick boxes and the
+message box&#39;s <code>/</code> list, and a keybind names it.</p>
+<p>Macros are stored as user commands, and the API keeps that name: <code>createUserCommand</code>,
+<code>updateUserCommand</code>, <code>deleteUserCommand</code>, <code>userCommand</code> and <code>userCommands</code>. A macro&#39;s id is
+<code>user.&lt;key&gt;</code>. <code>&lt;key&gt;</code> is one or more lowercase letters, numbers, dots, dashes or underscores;
+<code>createUserCommand</code> refuses any other id with <code>VALIDATION</code> (&quot;a user command id may use only
+lowercase letters, numbers, dots, dashes or underscores after <code>user.</code>&quot;), and macros saved before
+this rule keep their ids. A client makes the key from the title.</p>
+<p>A macro belongs to the account that created it, on that account&#39;s home server, and nobody else
+sees it. Like the person&#39;s keybinds, it follows them into every workspace, on this server or
+another: the client reads macros and keybinds from the home server. The commands a person runs
+in a workspace, a macro&#39;s steps included, go to the server that hosts the workspace; the client
+routes each call there.</p>
+<p><code>commands</code> lists a macro as a <code>Command</code> while it is enabled, without its steps. <code>userCommand(id)</code>
+returns one of the caller&#39;s macros as a <code>UserCommand</code>, enabled or not, with its title,
+description, steps in the order they run, <code>isEnabled</code>, <code>aiCallable</code>, <code>nlDescription</code> and
+<code>intentSamples</code>: the fields <code>updateUserCommand</code> takes, so an edit form loads the saved macro
+instead of asking for it again. It answers null for an id that is not one of the caller&#39;s
+macros: a built-in id, another user&#39;s macro and an unknown one alike. <code>userCommands</code> lists the
+caller&#39;s macros in the same shape, enabled or not, sorted by id.</p>
+<h3 id="steps">Steps <a class="anchor" href="#steps" aria-label="Link to this section">#</a></h3>
+<p>A macro lists 1 to 20 steps. Each step is a <code>commandId</code>, its fixed <code>args</code> and the names of the
+arguments it asks for when the macro runs (<code>ask</code>). The step&#39;s command is one of:</p>
 <ul>
-<li>persisted user-defined commands may only compose backend-executable commands</li>
-<li>desktop-local command composition belongs to a later client/runtime slice</li>
+<li>a built-in the server lists, one the server runs or one the client runs (<code>DesktopLocal</code>)</li>
+<li>an app command (App Commands, above), except the agent-management ones:
+<code>agents.approve_request</code>, <code>agents.refuse_request</code>, <code>agents.approve_pairing</code>,
+<code>agents.refuse_pairing</code>, <code>agents.disconnect</code>, <code>agents.choose_reads</code>,
+<code>agents.choose_plugin_commands</code>, <code>agents.open_runs</code>, <code>agents.open_record</code>,
+<code>agents.clear_record</code>, <code>agents.connect_agent</code>, <code>agents.start_session</code>, <code>agents.stop_session</code>,
+<code>agents.ask_about_message</code>, <code>agents.ask_about_conversation</code> and
+<code>workspace.open_agent_sessions</code></li>
+<li>a plugin command, <code>plugin.&lt;pluginId&gt;.&lt;command&gt;</code>: the plugin id has at least three segments
+of ASCII letters, digits and hyphens (<a href="../specs/plugin-protocol-v1.html"><code>specs/plugin-protocol-v1.md</code></a>, section 2), the command&#39;s
+own id one or more segments of ASCII letters, digits, <code>_</code> and <code>-</code>, all joined by <code>.</code>. The
+server does not know which plugins a person installs, so it checks only the id&#39;s shape; the
+client says a step&#39;s plugin is not installed when the macro runs</li>
 </ul>
-<p>A user command belongs to the user who created it and nobody else sees it. <code>commands</code> lists it
-as a <code>Command</code> while it is enabled, without its steps. <code>userCommand(id)</code> returns one of the
-caller&#39;s user commands as a <code>UserCommand</code>, enabled or not, with its title, description, steps
-in the order they run (each a <code>commandId</code> and its <code>args</code>) and <code>isEnabled</code>: the fields
-<code>updateUserCommand</code> takes, so an edit form loads the saved steps instead of asking for them
-again. It answers null for an id that is not one of the caller&#39;s user commands: a built-in id,
-another user&#39;s command and an unknown one alike. <code>userCommands</code> lists the caller&#39;s user
-commands in the same shape, enabled or not, sorted by id.</p>
-<h2 id="user-commands-and-macros">User Commands And Macros <a class="anchor" href="#user-commands-and-macros" aria-label="Link to this section">#</a></h2>
-<p>Two things compose commands, and only one of them is a command:</p>
+<p><code>macroStepCommands</code> lists every built-in and app command a step may name, whatever the caller&#39;s
+role and workspace, sorted by id; the client adds the plugins&#39; commands it knows. Every argument
+of a step&#39;s command is either fixed in <code>args</code>, filled from the context the macro runs in, or
+asked for: <code>ask</code> names at most 32 arguments, each 1 to 64 bytes, none twice and none also a key
+of <code>args</code>.</p>
+<p><code>createUserCommand</code> and <code>updateUserCommand</code> refuse a step they cannot accept with <code>VALIDATION</code>:
+&quot;unknown command step <code>&lt;id&gt;</code>&quot; for an id that names none of the above, &quot;macro steps must not
+manage agents (<code>&lt;id&gt;</code>)&quot; for an agent-management command, and &quot;a step may ask for at most 32
+arguments&quot;, &quot;an asked argument name may be 1 to 64 bytes&quot;, &quot;a step asks for <code>&lt;name&gt;</code> twice&quot; or
+&quot;a step both fixes and asks for <code>&lt;name&gt;</code>&quot; for its <code>ask</code>. A step omitting <code>ask</code> asks for nothing,
+except on <code>updateUserCommand</code>, where it keeps what the stored step at the same position asked
+for when that step names the same command.</p>
+<p>A step names another macro only where it did before macros took app and plugin steps:
+<code>createUserCommand</code> refuses a <code>user.*</code> step with &quot;macro steps must not reference other macros&quot;,
+and <code>updateUserCommand</code> accepts one only when the stored macro already has a step naming that
+macro. Such nested macros keep working, within these limits:</p>
 <ul>
-<li>a <strong>user command</strong> (<code>createUserCommand</code>, id <code>user.&lt;key&gt;</code>) is a command: it is listed with the
-others, so it shows in the palette and a keybind can name it; its steps run in order, each
-with its own arguments, in the context the user command runs in. <code>&lt;key&gt;</code> is one or more
-lowercase letters, numbers, dots, dashes or underscores; <code>createUserCommand</code> refuses any other
-id with <code>VALIDATION</code> (&quot;a user command id may use only lowercase letters, numbers, dots, dashes
-or underscores after <code>user.</code>&quot;), and user commands saved before this rule keep their ids</li>
-<li>a <strong>macro</strong> (<code>createMacro</code>, <code>MacroDef</code>) is a list of up to 20 steps, each a builtin command id
-with its own arguments; a step may not name another macro or a user command, so one run
-performs at most 20 builtin steps. It is not in the command registry, so the palette does not
-list it and no keybind names it. It runs through <code>executeMacro</code> (from Settings or <code>/macro</code> in the client),
-its steps in order, each with its own arguments, in the context of the run. <code>commands</code> on the
-<code>AI</code> surface and <code>commandDiscover</code> offer an <code>ai_callable</code> macro to the agent as <code>macro.&lt;id&gt;</code></li>
+<li>a person keeps at most 100 macros</li>
+<li>a chain of macros naming macros holds at most eight</li>
+<li>one run performs at most 100 built-in steps: a nested macro counts its own steps each time a
+step names it, and the stages of a pipe count together</li>
 </ul>
-<p>A user holds at most 50 macros (and 50 pipelines) in a workspace, and one who is neither Owner
-nor Moderator at most a fifth of <code>RIM_LIMIT_MACROS_PER_WORKSPACE</code> (<code>RIM_LIMIT_PIPELINES_PER_WORKSPACE</code>)
-when it is set. In the server&#39;s default workspace, which every account joins, that share is the
-only bound: the per-workspace caps do not apply there, since macros and pipelines belong to
-their author and no account may fill a cap for everyone, and an account in probation creates
-none (<code>VALIDATION</code> saying when it can).</p>
-<p>Neither pipes: each step&#39;s payload is collected under its command id in the result, and no step
-receives another step&#39;s result. Only <code>executeCommand</code> with <code>isPipe</code> (the palette&#39;s <code>|</code>) passes
-one command&#39;s result to the next stage.</p>
-<p>A user command has limits that keep one run, and one lookup of its definition, bounded:</p>
-<ul>
-<li>it lists at most 20 steps, and a user keeps at most 100 user commands</li>
-<li>a chain of user commands naming user commands holds at most eight</li>
-<li>one run performs at most 100 built-in steps: a nested user command counts its own steps each
-time a step names it, and the stages of a pipe count together</li>
-</ul>
-<p><code>createUserCommand</code> and <code>updateUserCommand</code> refuse a command over a limit with a <code>VALIDATION</code>
+<p><code>createUserCommand</code> and <code>updateUserCommand</code> refuse a macro over a limit with a <code>VALIDATION</code>
 error that names it: &quot;a user command may have at most 20 steps&quot;, &quot;a user may have at most 100
 user commands&quot;, &quot;user command recursion depth exceeded&quot; or &quot;a user command expands to more
-than 100 steps&quot;. An update is refused the same way when it would take a stored command that
-names the updated one past 100 steps. A stored user command that nests deeper than eight or
-expands past 100 steps, saved before these limits, is refused when it runs, before any of its
-steps runs; a pipe over 100 steps is refused with &quot;a pipe expands to more than 100 steps&quot;.
-<code>commands</code> leaves out a user command whose definition cannot be resolved (one past 100 steps,
-or with a step naming an unknown or disabled command, or a cycle) and lists the rest. A
-disabled user command does not run: <code>executeCommand</code> answers <code>NOT_FOUND</code> for it, as for an id
-that names no command.</p>
+than 100 steps&quot;. An update is refused the same way when it would take a stored macro that
+names the updated one past 100 steps. A stored macro that nests deeper than eight or expands
+past 100 steps, saved before these limits, is refused when it runs, before any of its steps
+runs; a pipe over 100 steps is refused with &quot;a pipe expands to more than 100 steps&quot;. <code>commands</code>
+leaves out a macro whose definition cannot be resolved (one past 100 steps, or with a step
+naming an unknown or disabled command, or a cycle) and lists the rest. A disabled macro does
+not run: <code>executeCommand</code> answers <code>NOT_FOUND</code> for it, as for an id that names no command.</p>
+<p>A macro&#39;s definition adds up its steps: its required context and capabilities are those of
+every step, it is dangerous when a step is, its sensitivity is the strictest of its steps&#39;, and
+a keybind may name it when every step&#39;s command is keybind-capable. A plugin step counts as
+keybind-capable and <code>Safe</code>; the client applies the plugin&#39;s own rules when it runs it.</p>
+<h3 id="running-a-macro">Running a macro <a class="anchor" href="#running-a-macro" aria-label="Link to this section">#</a></h3>
+<p><strong>The person.</strong> The client runs the steps one by one, in order, in the context the macro runs
+in. Before the first step it asks, in one form, for every argument the steps <code>ask</code> for;
+cancelling the form runs nothing. A server step is its own <code>executeCommand</code> call with initiator
+<code>MACRO</code>, sent to the server that hosts the workspace, with its own gates, confirmation and audit
+row. An app step and a plugin step run in the client. The first step that fails or is cancelled
+stops the rest, and the client says which step it was and why. A step that opens a form or a
+picker does not wait for the person to finish it, so such a step goes last. Neither the client
+nor the server pipes: no step receives another step&#39;s result. Only <code>executeCommand</code> with
+<code>isPipe</code> (the palette&#39;s <code>|</code>) passes one command&#39;s result to the next stage.</p>
+<p><strong>The server.</strong> <code>executeCommand</code> naming <code>user.&lt;key&gt;</code> runs the macro on the server when its
+execution target is <code>Backend</code>: every step, nested macros&#39; steps included, is a built-in the
+server runs, and no step asks for an argument. The capability and confirmation gates judge the
+call once for the whole macro, each step still passes the role and timeout gates, and the call
+writes one audit row. The steps run in order with their own arguments, and each step&#39;s payload
+is collected under its command id. The first step that fails stops the run and its
+error is the call&#39;s. A macro with an app step, a plugin step or an asked argument has the
+execution target <code>DesktopLocal</code>, as has a macro naming one, and <code>executeCommand</code> refuses it
+with <code>VALIDATION</code> &quot;this macro has steps only the app runs; run it from the app&quot;, before any
+step runs.</p>
+<p><strong>The AI agent.</strong> A macro runs for an agent only when its owner turned on &quot;The AI agent can run
+this&quot; (<code>aiCallable</code>). That takes a macro whose steps are all built-ins the server runs and the
+agent may run itself (<code>ai_callable</code>), with every argument fixed: no app step, no plugin step, no
+other macro, no <code>ask</code>, and no built-in kept off the AI surface, such as <code>admin.invite_member</code>
+or <code>chat.delete_message</code>. A macro does not reach further than the agent alone.
+<code>createUserCommand</code> and <code>updateUserCommand</code> refuse <code>aiCallable: true</code> on any other macro with
+<code>VALIDATION</code> &quot;only a macro whose steps are all commands the AI agent may run, run on the server
+with every argument fixed, can be run by the AI agent&quot;. <code>updateUserCommand</code> without <code>aiCallable</code>
+keeps the stored value, and turns it off when the new steps no longer allow it. A stored macro
+whose step stops qualifying, such as a built-in that is no longer <code>ai_callable</code>, is not offered
+to the agent and its <code>AGENT</code> calls are refused, while the stored option stays as it is. The macro&#39;s <code>nlDescription</code> (its description when
+empty) and <code>intentSamples</code> describe it to the agent; they are checked as a built-in&#39;s are, and a
+text that looks like an instruction to the model is refused with <code>VALIDATION</code>.</p>
+<p>The <code>AI</code> surface of <code>commands</code> and <code>commandDiscover</code> list such a macro for a workspace on its
+home server where the owner may run every step. The agent runs it as one call,
+<code>executeCommand(&quot;user.&lt;key&gt;&quot;)</code> with initiator <code>AGENT</code> on the home server: the confirmation gate
+judges the macro as a whole, so a <code>Mutating</code> or dangerous step makes the call need the person&#39;s
+confirmation once, and the run counts as one call against the agent&#39;s limits. A macro on
+another server, or in a workspace hosted elsewhere, is not offered to the agent. <code>executeCommand</code>
+with initiator <code>AGENT</code> refuses a macro that is not agent-callable, or no longer meets the rule,
+with <code>FORBIDDEN</code> (refusal <code>DENIED</code>).</p>
+<h3 id="workspace-macros-deprecated">Workspace macros, deprecated <a class="anchor" href="#workspace-macros-deprecated" aria-label="Link to this section">#</a></h3>
+<p>Before macros were commands, a macro (<code>MacroDef</code>) was kept per workspace on the server hosting
+it: <code>createMacro</code>, <code>updateMacro</code>, <code>deleteMacro</code>, <code>executeMacro</code>, <code>myMacros</code> and <code>macroByName</code>.
+They are deprecated and keep working as described here until a later release removes them. The
+<code>AI</code> surface and <code>commandDiscover</code> no longer offer an <code>ai_callable</code> workspace macro as
+<code>macro.&lt;id&gt;</code>.</p>
+<p>A client that finds <code>account_macros</code> in the home server&#39;s <code>serverInfo.capabilities</code> moves the
+person&#39;s workspace macros once: for each workspace macro it creates a macro with the same title,
+description and steps on the home server, and then deletes the workspace macro on the server
+hosting it. A workspace macro with the same title and steps as an existing macro is only
+deleted. A moved macro&#39;s own <code>sensitivity</code> is dropped: each step keeps its own gates, and the
+macro&#39;s sensitivity is the strictest of its steps&#39;. When the person reaches 100 macros the rest
+stay in their workspaces. The server moves nothing itself.</p>
+<p>A workspace macro is a list of up to 20 steps, each a builtin command id with its own
+arguments; a step may not name a workspace macro or a user command. It is not a command. It runs
+through <code>executeMacro</code>, its steps in order, each with its own arguments, in the context of the
+run.</p>
+<p>A user holds at most 50 workspace macros (and 50 pipelines) in a workspace, and one who is
+neither Owner nor Moderator at most a fifth of <code>RIM_LIMIT_MACROS_PER_WORKSPACE</code>
+(<code>RIM_LIMIT_PIPELINES_PER_WORKSPACE</code>) when it is set. In the server&#39;s default workspace, which
+every account joins, that share is the only bound: the per-workspace caps do not apply there,
+since macros and pipelines belong to their author and no account may fill a cap for everyone,
+and an account in probation creates none (<code>VALIDATION</code> saying when it can).</p>
 <p><code>createMacro</code> and <code>updateMacro</code> refuse a step naming a user command with a <code>VALIDATION</code> error,
-&quot;macro steps must not reference user commands&quot;; <code>executeMacro</code> refuses a stored macro with such
-a step the same way, before any of its steps runs. A step must name a builtin command:
-<code>createMacro</code> and <code>updateMacro</code> refuse any other id, a plugin command included, since plugin
-commands run only in the client, with <code>VALIDATION</code> &quot;Unknown command: &lt;id&gt;&quot;. A step that fails
-stops the run: later steps do not run, and <code>executeMacro</code> answers <code>ERROR</code> with the message
-<code>Step &lt;n&gt; (&lt;title&gt;) failed: &lt;reason&gt;</code>, where <code>n</code> counts from 1, the title is the command&#39;s
-registry title (its id when the registry has none) and the reason is the step&#39;s own error. A
-macro saved before the check with an unknown step fails at that step the same way.</p>
-<p>A macro run asks for one confirmation up front when the macro&#39;s own <code>sensitivity</code> is
+&quot;macro steps must not reference user commands&quot;; <code>executeMacro</code> refuses a stored workspace macro
+with such a step the same way, before any of its steps runs. A step must name a builtin
+command: <code>createMacro</code> and <code>updateMacro</code> refuse any other id, a plugin command included, with
+<code>VALIDATION</code> &quot;Unknown command: &lt;id&gt;&quot;. A step that fails stops the run: later steps do not run,
+and <code>executeMacro</code> answers <code>ERROR</code> with the message <code>Step &lt;n&gt; (&lt;title&gt;) failed: &lt;reason&gt;</code>, where
+<code>n</code> counts from 1, the title is the command&#39;s registry title (its id when the registry has none)
+and the reason is the step&#39;s own error. A workspace macro saved before the check with an
+unknown step fails at that step the same way.</p>
+<p>A workspace macro run asks for one confirmation up front when the macro&#39;s own <code>sensitivity</code> is
 <code>Restricted</code> or when any step needs one under the confirmation gate below, judged with the
 run&#39;s initiator: a dangerous step, a <code>Restricted</code> one, or a <code>Mutating</code> one the agent or a plugin
 started. Without a proof <code>executeMacro</code> runs no step and answers <code>CONFIRMATION_REQUIRED</code> with a
 challenge for the macro, and its <code>message</code> names the reason: the sensitivity tier, the steps,
 or both. The call made again with that proof runs the steps, and the one confirmation covers
-every step of the run that needs one. A macro with no such step runs without a confirmation.</p>
+every step of the run that needs one. A workspace macro with no such step runs without a
+confirmation.</p>
 <h2 id="size-limits">Size Limits <a class="anchor" href="#size-limits" aria-label="Link to this section">#</a></h2>
 <p>Each call and each stored definition has a size limit, so one request costs a bounded amount of
 work, storage and audit log. A request over a limit is refused with a <code>VALIDATION</code> error that
@@ -561,11 +1779,11 @@ names it, such as &quot;command arguments may be at most 65536 bytes&quot;.</p>
 <td>256 bytes; a pipe expression (<code>isPipe</code>) 4,096 bytes</td>
 </tr>
 <tr>
-<td>User command (<code>createUserCommand</code>, <code>updateUserCommand</code>)</td>
-<td>id 256 bytes, title 128 characters, description 1,000 characters, each step&#39;s id 256 bytes and <code>args</code> 4,096 bytes</td>
+<td>Macro (<code>createUserCommand</code>, <code>updateUserCommand</code>)</td>
+<td>id 256 bytes, title 128 characters, description and <code>nlDescription</code> 1,000 characters each, up to 10 <code>intentSamples</code> of 200 characters, up to 20 steps, each step&#39;s id 256 bytes, <code>args</code> 4,096 bytes and up to 32 <code>ask</code> names of 64 bytes</td>
 </tr>
 <tr>
-<td>Macro (<code>createMacro</code>, <code>updateMacro</code>)</td>
+<td>Workspace macro (<code>createMacro</code>, <code>updateMacro</code>, deprecated)</td>
 <td>description and <code>nlDescription</code> 1,000 characters each, up to 10 <code>intentSamples</code> of 200 characters, each step&#39;s id 256 bytes and <code>args</code> 4,096 bytes</td>
 </tr>
 <tr>
@@ -576,13 +1794,35 @@ names it, such as &quot;command arguments may be at most 65536 bytes&quot;.</p>
 <p>Too large calls are refused before they run, so they write no audit row. The audit log keeps a
 call&#39;s redacted arguments when they serialize to 4,096 bytes or less; larger arguments are kept
 as <code>{&quot;truncated&quot;: true, &quot;bytes&quot;: &lt;size&gt;, &quot;prefix&quot;: &lt;the first 1,024 bytes of the redacted JSON&gt;}</code>.</p>
-<p>A pipeline action may not name a user command or a macro: each action runs as its own command
-call with its own budget of 100 builtin steps, and a pipeline fires on events other people cause.
-<code>createPipeline</code> and <code>updatePipeline</code> refuse such an action with &quot;pipeline actions must not
+<p>What a person wrote is left out of the redacted arguments, with only its length kept. A string
+under the name <code>text</code>, <code>query</code>, <code>reason</code>, <code>description</code>, <code>title</code> or <code>value</code>, at any depth and in
+any command, is kept as <code>{&quot;redacted_content&quot;: true, &quot;chars&quot;: &lt;count&gt;}</code>. A plugin command&#39;s other
+arguments are not known to the server by name, so they stay as they are, redacted only where their
+name or value looks secret.</p>
+<p>The same rules apply to a pipe expression, which the row keeps as its <code>commandId</code>: each stage&#39;s id
+stays, with its <code>key=value</code> pairs masked, so <code>chat.post_message text=hello</code> is kept as
+<code>chat.post_message text=[REDACTED:5]</code>, and a secret as <code>key=[REDACTED]</code>. An expression that does
+not parse is kept as <code>unparsed | pipe</code> with the error kind <code>InvalidPipeExpression</code>, while the caller
+still gets the message saying what is wrong with it.</p>
+<p>An <code>AGENT</code> call may carry a <code>runId</code>, an identifier the desktop app gives one stretch of an
+agent&#39;s calls. The audit entry keeps it, so <code>listAuditLog</code> can list that stretch; on a call with
+any other initiator it is ignored. It is the client&#39;s word, like the initiator. It must be 1 to
+64 ASCII letters, digits, <code>_</code> or <code>-</code>, or the call is refused with <code>VALIDATION</code> whatever the
+initiator. A macro the agent runs is one call and carries it there; the steps of a macro the
+client runs are <code>MACRO</code> calls and do not.</p>
+<p>A pipeline action may not name a macro or a workspace macro: each action runs as its own
+command call with its own budget of 100 builtin steps, and a pipeline fires on events other
+people cause. <code>createPipeline</code> and <code>updatePipeline</code> refuse such an action with &quot;pipeline actions must not
 reference user commands or macros&quot;. An action must name a builtin command: <code>createPipeline</code> and
 <code>updatePipeline</code> refuse any other id, a plugin command included, with <code>VALIDATION</code> &quot;Unknown
 command: &lt;id&gt;&quot;. A pipeline saved before these limits runs at most its first 10 actions and skips
-an action naming a user command or a macro.</p>
+an action naming a macro or a workspace macro. A Post as bot action is the one that runs without a
+confirmation, as a bot rather than as the pipeline&#39;s creator (<a href="bots.html"><code>bots.md</code></a>).</p>
+<p>Each action runs in the pipeline&#39;s workspace. For New Message, Message Updated, Message Deleted
+and Reactions Updated, its context also holds the event&#39;s conversation, so an action&#39;s
+<code>conversation_id</code> may be left out; for Member Joined and Workspace State Changed it holds none.
+An action&#39;s context never holds a thread, a selected message or selected text, so an argument
+that needs one must be given in <code>args</code>.</p>
 <p>The server keeps at most 32 unanswered confirmation challenges per user; issuing one more drops
 that user&#39;s challenge closest to expiry, which then answers <code>CONFIRMATION_STALE</code>. A pipeline&#39;s
 action that needs a confirmation issues a challenge nobody answers, and this keeps such
@@ -611,20 +1851,83 @@ challenges from piling up.</p>
 </ul>
 <h3 id="confirmation-gate-h1">Confirmation gate (H1) <a class="anchor" href="#confirmation-gate-h1" aria-label="Link to this section">#</a></h3>
 <p>A call needs a confirmation when the command is dangerous or <code>Restricted</code>, or when it is
-<code>Mutating</code> and the agent or a plugin started it. Without a proof, <code>executeCommand</code> answers with
+<code>Mutating</code> and the agent or a plugin started it. The human initiators, <code>PALETTE</code>, <code>UI</code>,
+<code>CONTEXT_MENU</code>, <code>KEYBIND</code>, <code>MACRO</code> and <code>CLI</code>, run a <code>Mutating</code> command that is neither dangerous
+nor <code>Restricted</code> without one. Without a proof, <code>executeCommand</code> answers with
 status <code>CONFIRMATION_REQUIRED</code> and the challenge <code>confirmationRequired { token, argsHash, expiresAt }</code>. The client asks the person to confirm and calls again with
 <code>confirmation: { inBandToken: { token, argsHash } }</code> before <code>expiresAt</code>, which is 60 seconds
 after the challenge was issued. The proof is good once, for the same caller, command, arguments
 and context; one that expired or was used answers <code>CONFIRMATION_STALE</code>, and one made for
 something else <code>CONFIRMATION_FAILED</code>.</p>
+<p>A <code>BOT</code> call comes from the bot API (<a href="bots.html"><code>bots.md</code></a>), the one initiator the server sets itself: GraphQL has
+no value for it, so a client cannot claim it, and the audit log shows it as <code>bot</code>. It is not agentic,
+so a <code>Mutating</code> command such as <code>chat.post_message</code> needs no proof. Nobody is there to confirm, so a
+command that would answer <code>CONFIRMATION_REQUIRED</code> is refused as <code>DENIED</code> on that API, and the commands
+it runs need none.</p>
 <h3 id="timeout-gate-t1">Timeout gate (T1) <a class="anchor" href="#timeout-gate-t1" aria-label="Link to this section">#</a></h3>
 <p>After the capability and confirmation gates, <code>execute_command</code> refuses any command whose <code>sensitivity</code> is <code>Mutating</code> or
 <code>Restricted</code> with <code>ServiceError::TimedOut { until }</code> (GraphQL <code>TIMED_OUT</code>, extension <code>until</code>)
 when the actor is timed out in the context&#39;s workspace (<code>ModerationService::active_timeout</code>).
-<code>Safe</code> and <code>Sensitive</code> commands still run. The gate also runs on nested dispatch (user-command
-steps, pipe stages), before the rate limiter, inside the audit wrapper. Without a workspace
-context it has nothing to check; the services behind the command apply their own write gates
-anyway. Gate order: C1 capability → H1 confirmation → T1 timeout → R1 rate limit.</p>
+<code>Safe</code> and <code>Sensitive</code> commands still run, and so do the commands that change only the caller&#39;s
+own state: <code>chat.mark_as_read</code>, <code>chat.mark_as_unread</code>, <code>chat.leave_conversation</code> and every
+<code>notifications.*</code> command. A timeout is about speaking, and the GraphQL mutations behind these
+allow them to a timed-out member as well. A macro the server runs is let through only when every
+step is one of these. The gate also runs on nested dispatch (macro steps, pipe stages), before
+the rate limiter, inside the audit wrapper. Without a workspace context it has nothing to check;
+the services behind the command apply their own write gates anyway. Gate order: C1 capability → H1 confirmation → T1 timeout → R1 rate limit.</p>
+<h3 id="audit-row">Audit row <a class="anchor" href="#audit-row" aria-label="Link to this section">#</a></h3>
+<p>Every <code>executeCommand</code> call writes one row to the command audit log, which the workspace&#39;s
+Owners and Moderators read (<a href="security/audit-access-matrix.html"><code>security/audit-access-matrix.md</code></a>). A call of <code>chat.mark_as_read</code>,
+<code>chat.mark_as_unread</code> or a <code>notifications.*</code> command writes none: these change only the caller&#39;s
+own view, and a row for every conversation read or notification setting changed would show the
+Owners and Moderators a person&#39;s reading habits. The same holds for such a step of a workspace
+macro (<code>executeMacro</code>), whose macro row stays. A macro (<code>user.*</code>) or a pipe that reaches them
+writes its own row as before, under its own id or expression. <code>chat.leave_conversation</code>, which
+the other members see, keeps its row.</p>
+<h3 id="refusals">Refusals <a class="anchor" href="#refusals" aria-label="Link to this section">#</a></h3>
+<p>An error from <code>executeCommand</code> or <code>executeMacro</code> carries a <code>refusal</code> extension next to its <code>code</code>,
+which says what the caller can do about it:</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th><code>refusal</code></th>
+<th>Meaning</th>
+<th>Other extensions</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>DENIED</code></td>
+<td>A policy decision: repeating the call does not help.</td>
+<td><code>missing</code>, the capability the caller lacks, when the capability gate refused; <code>until</code> when timed out; <code>feature</code> when the server has the feature off</td>
+</tr>
+<tr>
+<td><code>FAILED</code></td>
+<td>A technical problem, not a decision.</td>
+<td><code>retrySafe</code>; <code>retryAfterSeconds</code> when rate-limited</td>
+</tr>
+<tr>
+<td><code>EXPIRED</code></td>
+<td>The confirmation expired or was already used. Nothing ran.</td>
+<td>none</td>
+</tr>
+<tr>
+<td><code>INVALID</code></td>
+<td>The call itself is wrong: bad arguments, nothing by that name, or a conflict.</td>
+<td>none</td>
+</tr>
+</tbody></table></div>
+<p>A command that needs a confirmation is not refused: it answers status <code>CONFIRMATION_REQUIRED</code>.</p>
+<p><code>retrySafe</code> is true only when repeating the call cannot change anything twice: every command it
+reaches is <code>Safe</code> or <code>Sensitive</code> and none is dangerous, or the rate limiter stopped it before it
+started. A <code>Mutating</code> command that timed out may have run, so it is false even if nothing changed. A
+macro that fails outside its steps is false as well.</p>
+<p><code>missing</code> names a capability, never a workspace, channel or person, so it reveals nothing the caller
+cannot already see: a capability id is public on the command&#39;s definition. At the capability gate,
+someone who is not a member gets the same answer as someone whose role is too low, whether or not
+the workspace exists. A client that names the target takes it from what it already shows.</p>
+<p>A pipe that fails partway answers status <code>ERROR</code> with the failed stage&#39;s <code>message</code>, with no
+<code>refusal</code>. A macro&#39;s failed step is reported the same way. A server older than this has no
+<code>refusal</code>, so a client falls back on <code>code</code>.</p>
 <h2 id="arguments">Arguments <a class="anchor" href="#arguments" aria-label="Link to this section">#</a></h2>
 <p>Arguments should be typed from day one.</p>
 <p>Initial recommended argument kinds:</p>
@@ -655,7 +1958,7 @@ anyway. Gate order: C1 capability → H1 confirmation → T1 timeout → R1 rate
 <ul>
 <li>command palette forms</li>
 <li>plugin-provided UIs</li>
-<li>the steps of user commands and macros</li>
+<li>the steps of macros, fixed or asked for when the macro runs</li>
 <li>API surfaces later</li>
 </ul>
 <h2 id="context-model-for-commands">Context Model For Commands <a class="anchor" href="#context-model-for-commands" aria-label="Link to this section">#</a></h2>
@@ -695,14 +1998,132 @@ anyway. Gate order: C1 capability → H1 confirmation → T1 timeout → R1 rate
 <li>Text selection, message menus, thread actions, channel actions, etc.</li>
 <li>A context action should usually map to a command invocation.</li>
 </ul>
+<h3 id="app-controls">App Controls <a class="anchor" href="#app-controls" aria-label="Link to this section">#</a></h3>
+<ul>
+<li>Buttons, toggles, dialog actions and Home quick boxes run the command they stand for through
+<code>executeCommand</code>, as the palette does, so a click and the same command from the palette pass
+the same gates and give the same result.</li>
+</ul>
 <h3 id="plugin-ui">Plugin UI <a class="anchor" href="#plugin-ui" aria-label="Link to this section">#</a></h3>
 <ul>
-<li>Buttons, panels, modals, or toolbars can invoke commands.</li>
+<li>Buttons, panels, modals, or toolbars can invoke commands: the plugin&#39;s own commands and the
+ids it was granted in <code>runs_commands</code> (Who Can Run Commands).</li>
 </ul>
 <h3 id="automations">Automations <a class="anchor" href="#automations" aria-label="Link to this section">#</a></h3>
 <ul>
 <li>Event-driven or scheduled workflows may invoke commands later.</li>
 </ul>
+<h3 id="the-initiator-of-a-call">The initiator of a call <a class="anchor" href="#the-initiator-of-a-call" aria-label="Link to this section">#</a></h3>
+<p>Each surface names itself in <code>ExecuteCommandInput.initiator</code>, which the audit row keeps:</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Surface</th>
+<th>Initiator</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>The command palette</td>
+<td><code>PALETTE</code></td>
+</tr>
+<tr>
+<td>App controls: buttons, toggles, dialog actions, Home quick boxes</td>
+<td><code>UI</code></td>
+</tr>
+<tr>
+<td>Menus: context menus and the menus of messages, channels, people and rows</td>
+<td><code>CONTEXT_MENU</code></td>
+</tr>
+<tr>
+<td>Keybinds and list keys</td>
+<td><code>KEYBIND</code></td>
+</tr>
+<tr>
+<td>A step of a macro the client runs</td>
+<td><code>MACRO</code></td>
+</tr>
+<tr>
+<td>The AI agent and outside agents</td>
+<td><code>AGENT</code></td>
+</tr>
+<tr>
+<td>A plugin</td>
+<td><code>PLUGIN</code></td>
+</tr>
+<tr>
+<td>The command-line client</td>
+<td><code>CLI</code></td>
+</tr>
+</tbody></table></div>
+<p>A client sends <code>UI</code> only to a server whose <code>serverInfo.capabilities</code> lists <code>command_initiator_ui</code>;
+to an older server it omits the initiator, which that server records as <code>palette</code>. The initiator
+is the client&#39;s word: the server does not check where a call came from. Only the bot API sets
+<code>BOT</code>, which GraphQL has no value for.</p>
+<p><code>admin.ban</code> takes a <code>minutes</code> argument that ends the ban that many minutes from now, and
+<code>notifications.mute_conversation</code> the duration <code>minutes</code> with a <code>minutes</code> count. A server that
+lacks them ignores <code>minutes</code> on a ban, which would then never end, so a client offers a duration
+only to a server whose <code>serverInfo.capabilities</code> lists <code>command_relative_minutes</code>.
+<code>admin.invite_member</code> takes only the workspace: it creates a one-use invite link, and a <code>user_id</code>
+sent by an older caller is ignored.</p>
+<h2 id="who-can-run-commands">Who Can Run Commands <a class="anchor" href="#who-can-run-commands" aria-label="Link to this section">#</a></h2>
+<p>Every caller runs the same commands. What differs is which commands each one is offered and who
+confirms a call. The client enforces the rules for agents and plugins; the server sees an
+ordinary call with its initiator and applies its gates (Confirmation gate, Timeout gate, below)
+as for any other.</p>
+<p><strong>The person</strong> runs every command, from every surface: the palette, keybinds, Home quick boxes,
+the message box and menus. The client sends each call to the server that hosts the workspace it
+runs in.</p>
+<p><strong>A macro</strong> runs any command as a step: built-in, app and plugin commands, each in turn,
+started by the person (Commands And Macros, above). The person&#39;s own macros are the only ones
+anyone runs.</p>
+<p><strong>The in-app agent</strong> runs <code>ai_callable</code> built-ins under the confirmation gate, and the person&#39;s
+agent-callable macros on their home server (Running a macro, above). App commands are never
+offered to an agent: a command only a person runs is an app command.</p>
+<p><strong>An outside agent</strong> is one connected through the desktop app&#39;s agent bridge, such as an MCP
+client:</p>
+<ul>
+<li>It is offered the <code>ai_callable</code> built-ins that the server executes and whose sensitivity is
+not <code>Safe</code>. It is never offered a <code>DesktopLocal</code> built-in, an agent-management command (the
+<code>agents.*</code> app commands) or <code>chat.post_message</code>: it posts with its send tool, which handles
+encrypted conversations. It reads only through its read tools, which keep to the conversations
+the person chose. It is also offered the person&#39;s agent-callable macros (Running a macro,
+above) whose sensitivity is not <code>Safe</code>, under the same rules: each approved per agent and
+asked for on every call.</li>
+<li>It runs a command only after the person approved that command for that agent, in the same
+dialog as plugin commands. An approval is per agent and per command id.</li>
+<li>Every call shows the outside-agent card and runs only if the person approves it. A <code>dangerous</code>
+command is only proposed, never run.</li>
+<li>Its context comes only from ids in the arguments, never from what the person has open, and
+each id must be inside the agent&#39;s grants.</li>
+<li>The call runs with initiator <code>AGENT</code>. The card is the person&#39;s confirmation: a command the
+confirmation gate stops is confirmed with the person&#39;s answer to the card, and they are not
+asked twice.</li>
+</ul>
+<p><strong>A plugin</strong> runs its own commands (Plugin-Provided Commands, above), and the command ids its
+manifest lists in <code>runs_commands</code> that the person granted at install or update:</p>
+<ul>
+<li>A built-in that is neither <code>dangerous</code> nor <code>Restricted</code> runs with initiator <code>PLUGIN</code>. A
+<code>Mutating</code> one asks the person on every call, in a confirmation that names the plugin: the
+server answers <code>CONFIRMATION_REQUIRED</code>, and the client confirms only when the person does.</li>
+<li>A <code>Safe</code> <code>DesktopLocal</code> built-in, and an app command the client marks as runnable by plugins,
+runs at once. Only app commands that open or show something, move focus or the selection, or
+start a form the person finishes are marked.</li>
+<li>A plugin never runs another plugin&#39;s commands, an agent-management command, a macro
+(<code>user.*</code>: a macro is the person&#39;s own), or a <code>dangerous</code> or <code>Restricted</code> command, whatever
+its manifest lists.</li>
+<li>A built-in&#39;s context is the person&#39;s current workspace, conversation and thread, never a
+selected message; <code>server_id</code>, <code>conversation_id</code> and <code>thread_id</code> in the arguments take
+precedence over it.</li>
+<li>The plugin receives the status, an error code and the message, never the command&#39;s output
+data.</li>
+<li>A plugin makes at most 20 command calls a minute. After the person dismisses a confirmation,
+that plugin&#39;s command calls are refused for 60 seconds. Every run is recorded in the plugin&#39;s
+audit.</li>
+<li>When an update adds ids to <code>runs_commands</code>, the added ones are not granted until the person
+approves them.</li>
+</ul>
+<p>The manifest field and the plugin&#39;s call are in <a href="../specs/plugin-protocol-v1.html"><code>specs/plugin-protocol-v1.md</code></a>, sections 12
+and 9, and work the same for web plugins (<a href="../specs/web-plugins-v1.html"><code>specs/web-plugins-v1.md</code></a>).</p>
 <h2 id="execution-targets">Execution Targets <a class="anchor" href="#execution-targets" aria-label="Link to this section">#</a></h2>
 <p>Every command should declare where it runs.</p>
 <p>Initial execution targets:</p>
@@ -800,7 +2221,7 @@ execution permissions explicitly granted by the user</li>
 run in the given context, so the palette and the AI agent never offer one that <code>executeCommand</code>
 refuses for who the caller is. A command the server runs (<code>backend</code>) is listed only when the
 context names a workspace the caller is a member of, their role there may run it, and each of its
-required capabilities passes the capability gate; a user command needs the role every step
+required capabilities passes the capability gate; a macro needs the role every step
 needs. The role a builtin needs is the one the service behind it enforces: the Owner for
 <code>admin.invite_member</code>; an Owner or Moderator for <code>admin.kick</code>, <code>admin.ban</code>, <code>admin.unban</code>,
 <code>admin.timeout</code>, <code>admin.set_role</code>, <code>admin.delete_member_messages</code>, <code>chat.set_slow_mode</code>,
@@ -858,8 +2279,8 @@ timeout in force.</p>
 <h2 id="non-goals">Non-Goals <a class="anchor" href="#non-goals" aria-label="Link to this section">#</a></h2>
 <p>The command model does not define:</p>
 <ul>
-<li>a scripting language: a pipe passes one command&#39;s result to the next stage, macros and user
-commands run fixed steps, and anything beyond that belongs in a plugin</li>
+<li>a scripting language: a pipe passes one command&#39;s result to the next stage, a macro runs its
+steps in order with arguments fixed or asked for, and anything beyond that belongs in a plugin</li>
 <li>dataflow beyond a linear pipe</li>
 <li>distributed workflow execution</li>
 <li>a typed payload schema per command result: results share one envelope</li>
@@ -869,9 +2290,26 @@ commands run fixed steps, and anything beyond that belongs in a plugin</li>
 <ul>
 <li>Commands are the common execution unit across palette, keybinds, context actions, plugins, and
 automations.</li>
-<li>Command ids are namespaced.</li>
-<li>User-defined commands may compose other commands.</li>
-<li>User commands are composed commands; macros are lists of steps with arguments, not commands.</li>
+<li>Command ids are namespaced, and a released built-in id never changes; new built-ins use the
+namespace of their feature.</li>
+<li>Every built-in is in one of sixteen fixed categories.</li>
+<li>App commands run in the client only; the server knows their ids for keybinds and nothing else.</li>
+<li>Approving or refusing an outside agent is an app command no agent, plugin or pipe can run, and
+it always asks the person with a warning.</li>
+<li>The person runs every command. An outside agent runs only the built-ins the person approved
+for it, asking each time; a plugin runs only its own commands and the ids the person granted
+in its <code>runs_commands</code> (Who Can Run Commands).</li>
+<li>A command is one action RIM or a plugin gives you; a macro is the person&#39;s own action made of
+commands, and every macro is a command, in category <code>Macro</code>, with an id <code>user.&lt;key&gt;</code>.</li>
+<li>A macro&#39;s steps may be built-in, app or plugin commands, each argument fixed or asked for when
+it runs. The client runs a macro step by step and the first failing step stops the rest.</li>
+<li>Macros and keybinds live with the account on its home server; command calls go to the server
+that hosts the workspace.</li>
+<li>The AI agent runs a macro only when the person allowed it and every step is a built-in the
+server runs and the agent may run itself, with every argument fixed; it runs as one call on
+the home server.</li>
+<li>Workspace macros (<code>createMacro</code> and the rest) are deprecated; the client moves them into the
+person&#39;s macros once.</li>
 <li>Commands use typed arguments.</li>
 <li>Commands declare required context.</li>
 <li>Commands declare execution target.</li>
@@ -890,8 +2328,8 @@ still need a fresh invite after unban.</p>
     </main>
   </div>
 </div>
-<footer class="site-footer container"><span class="footer-brand"><img src="../assets/rim-mark-inverse.svg" alt="" width="21" height="21"> RIM · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
-<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-server/blob/7bc08f0c95e01769408e4756d418efea30c5b70b/docs/command_model.md">rim-server/docs/command_model.md</a> at <code>7bc08f0</code></p>
+<footer class="site-footer container"><span class="footer-brand"><img src="../assets/rim-lockup-glow-inverse.svg" alt="RIM" width="46" height="27"> · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-server/blob/beb5a48f892a3ac4ef53e7ee2238413e99ee35e0/docs/command_model.md">rim-server/docs/command_model.md</a> at <code>beb5a48</code></p>
 <script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
 </body>
 </html>

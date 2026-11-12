@@ -8,7 +8,7 @@
 <link rel="icon" href="../../favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;550;600;650;700&family=JetBrains+Mono:wght@400;500&display=swap">
-<meta name="theme-color" content="#050910">
+<meta name="theme-color" content="#0b0c10">
 <link rel="stylesheet" href="../../assets/site-chrome.css">
 <link rel="stylesheet" href="../../assets/site.css">
 <script src="../../assets/site.js" defer></script>
@@ -17,14 +17,14 @@
 <a class="skip" href="#content">Skip to content</a>
 <header class="site-header">
   <div class="container header-inner">
-    <a class="brand" href="../../index.html" aria-label="RIM home"><img src="../../assets/rim-mark-inverse.svg" alt="" width="32" height="32">RIM</a>
+    <a class="brand" href="../../index.html" aria-label="RIM home"><img src="../../assets/rim-lockup-glow-inverse.svg" alt="" width="98" height="58"></a>
     <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-navigation">Menu</button>
     <nav class="site-nav" id="site-navigation" data-open="false" aria-label="Main navigation">
+      <a href="../../index.html#uses">What it's for</a>
       <a href="../../index.html#privacy">Privacy</a>
-      <a href="../../index.html#how">How it works</a>
-      <a href="../../index.html#capabilities">Capabilities</a>
-      <a href="../../index.html#community">Community</a>
+      <a href="../../how-it-works/index.html">How it works</a>
       <a href="../../index.html#download">Download</a>
+      <a href="../../index.html#community">Community</a>
       <a href="getting-started.html">Get started</a>
       <a href="../index.html" aria-current="location">Docs</a>
     </nav>
@@ -49,6 +49,7 @@
 <li><a href="#keybind_suggestions-and-context_actions">keybind_suggestions and context_actions</a></li>
 <li><a href="#panels">panels</a></li>
 <li><a href="#settings_schema">settings_schema</a></li>
+<li><a href="#runs_commands">runs_commands</a></li>
 <li><a href="#the-content-hash">The content hash</a></li>
 <li><a href="#example">Example</a></li>
 </ol>
@@ -57,8 +58,8 @@
 <h1 id="the-plugin-manifest">The plugin manifest</h1>
 <p>Every plugin carries <code>rim-plugin.json</code> at the root of its folder or bundle. This page lists each
 field the desktop parser accepts, in the order of <code>PluginManifest</code> in <code>manifest.rs</code>, with the
-install rules of <code>validation.rs</code>, both in <a href="https://github.com/rim-platform/rim-ui/tree/625c78e7c352dd2300217ff4cf692350e410fa7e/src-tauri/src/plugin_host"><code>src-tauri/src/plugin_host/</code></a>. The web app installs by
-their port in the SDK, <code>manifestRules.ts</code>; both pass <a href="https://github.com/rim-platform/rim-ui/blob/625c78e7c352dd2300217ff4cf692350e410fa7e/protocol/manifest-vectors.json"><code>protocol/manifest-vectors.json</code></a>, and a
+install rules of <code>validation.rs</code>, both in <a href="https://github.com/rim-platform/rim-ui/tree/ed1032eacc0d9b5084470131b2d34cc144406df8/src-tauri/src/plugin_host"><code>src-tauri/src/plugin_host/</code></a>. The web app installs by
+their port in the SDK, <code>manifestRules.ts</code>; both pass <a href="https://github.com/rim-platform/rim-ui/blob/ed1032eacc0d9b5084470131b2d34cc144406df8/protocol/manifest-vectors.json"><code>protocol/manifest-vectors.json</code></a>, and a
 plugin&#39;s tests run them with <code>validateManifest</code> (<a href="plugin-sdk.html">the SDK</a>).</p>
 <h2 id="reading-and-checking">Reading and checking <a class="anchor" href="#reading-and-checking" aria-label="Link to this section">#</a></h2>
 <ul>
@@ -81,7 +82,7 @@ three dot-separated segments of ASCII letters, digits and <code>-</code> (<code>
 starting <code>dev.rim.</code> or <code>com.rim.</code> fail with <code>reserved plugin_id prefix: &lt;id&gt;</code>. The id names the
 install folder, <code>~/.rim/plugins/&lt;plugin_id&gt;/</code>, and every command, <code>plugin.&lt;plugin_id&gt;.&lt;id&gt;</code>.</li>
 <li><strong><code>display_name</code></strong> (string, required, not empty): the name in Settings, in the permission
-prompt, as the palette category of the plugin&#39;s commands and in the side rail&#39;s Plugins menu.</li>
+prompt, as the palette category of the plugin&#39;s commands and in the top bar&#39;s Plugins menu.</li>
 <li><strong><code>version</code></strong> (string, required, not empty): free-form. The bundler names its file
 <code>&lt;plugin_id&gt;-&lt;version&gt;.rimbundle</code>.</li>
 <li><strong><code>description</code></strong> (string, required, may be empty) and <strong><code>author</code></strong> (string or <code>null</code>, default
@@ -197,6 +198,10 @@ runs, or it fails with <code>CAPABILITY_DENIED</code>. Each must be a name <code
 <li><strong><code>ai_callable</code></strong> (bool, default <code>false</code>): offers the command to the agent once the user allows
 it in the plugin&#39;s AI access settings. The tool name <code>plugin__&lt;plugin_id, dots as _&gt;__&lt;id&gt;</code> must
 match <code>[A-Za-z0-9_-]{1,64}</code>, or the command is not offered.</li>
+<li><strong><code>read_only</code></strong> (bool, default <code>false</code>): the plugin&#39;s claim that the command changes nothing. An
+agent outside RIM runs an approved <code>read_only</code> command without asking; every other approved
+command waits for a confirmation. RIM cannot verify the claim, and the approval screen says it is
+the plugin&#39;s. It cannot be combined with <code>dangerous</code>: <code>command `&lt;id&gt;` cannot be both read_only and dangerous</code>. It has no effect on the built-in agent.</li>
 <li><strong><code>output_schema</code></strong> (JSON or <code>null</code>, default <code>null</code>): the JSON Schema of the payload. An
 <code>ai_callable</code> command fails with <code>REQUIRES_MANUAL_REVIEW</code>, and does not install, without one or
 when its root is not <code>&quot;type&quot;: &quot;object&quot;</code>, sets <code>&quot;additionalProperties&quot;: true</code>, or has neither
@@ -223,11 +228,13 @@ sandboxed frame while its plugin runs (<a href="web-plugins.html#how-a-plugin-ru
 <li><strong><code>id</code></strong> (string, required): the folder&#39;s name; for <code>WebSandboxed</code>, one bundle path segment,
 or <code>INVALID_PANEL</code>.</li>
 <li><strong><code>title</code></strong> (string, required) and <strong><code>description</code></strong> (string, default <code>&quot;&quot;</code>): the title names
-the panel&#39;s row in the side rail&#39;s Plugins menu, beside the plugin&#39;s name, and the palette
+the panel&#39;s row in the top bar&#39;s Plugins menu, beside the plugin&#39;s name, and the palette
 command &quot;Open &lt;title&gt;&quot;.</li>
-<li><strong><code>slot</code></strong> (string or <code>null</code>, optional): <code>&quot;tool_panel&quot;</code>, the default, is a narrow column beside
-the tool panel, next to the conversation; <code>&quot;main_area&quot;</code> takes the main area in place of the
-conversation. Panels show while a conversation is the main surface. Other values fail to parse.</li>
+<li><strong><code>slot</code></strong> (string or <code>null</code>, optional): <code>&quot;tool_panel&quot;</code>, the default, is a narrow column at the
+left of the page shown, next to the tool panel beside a conversation, and stays open when you
+go to another page; <code>&quot;main_area&quot;</code> takes the place of the page shown until it is closed or you
+go to another page. A panel opens over any page: the conversation, Home, Unreads, Settings and
+the rest. Other values fail to parse.</li>
 </ul>
 <h2 id="settings_schema"><code>settings_schema</code> <a class="anchor" href="#settings_schema" aria-label="Link to this section">#</a></h2>
 <p>A list, default <code>[]</code>, with one entry per setting the user fills in. A plugin with at least one
@@ -336,13 +343,46 @@ checks each value it uses and ignores keys it does not know. The plugin reads th
   { &quot;key&quot;: &quot;output&quot;, &quot;title&quot;: &quot;Output&quot;, &quot;value_type&quot;: &quot;enum&quot;, &quot;options&quot;: [&quot;table&quot;, &quot;json&quot;], &quot;default&quot;: &quot;table&quot; },
   { &quot;key&quot;: &quot;api_token&quot;, &quot;title&quot;: &quot;API server token&quot;, &quot;value_type&quot;: &quot;string&quot;, &quot;is_secret&quot;: true }
 ]</code></pre>
+<h2 id="runs_commands"><code>runs_commands</code> <a class="anchor" href="#runs_commands" aria-label="Link to this section">#</a></h2>
+<p>A list of strings, default <code>[]</code>: the built-in and app commands the plugin asks to run as the
+person, such as <code>workspace.open_home</code> or <code>chat.post_message</code>. A plugin runs its own commands
+without listing them. Install refuses, with <code>INVALID_RUNS_COMMANDS</code> and <code>invalid runs_commands: &lt;reason&gt;</code>:</p>
+<ul>
+<li>more than 32 ids, or one listed twice;</li>
+<li>an id that is not two or more dot-separated segments of <code>a-z 0-9 _ -</code>, at most 128 bytes;</li>
+<li>an id starting <code>plugin.</code>: another plugin&#39;s commands, and its own, are never run this way;</li>
+<li>one of the commands that answer and manage agents: <code>agents.approve_request</code>,
+<code>agents.refuse_request</code>, <code>agents.approve_pairing</code>, <code>agents.refuse_pairing</code>,
+<code>agents.disconnect</code>, <code>agents.choose_reads</code>, <code>agents.choose_plugin_commands</code>,
+<code>agents.open_runs</code>, <code>agents.open_record</code>, <code>agents.clear_record</code>, <code>agents.connect_agent</code>,
+<code>agents.start_session</code>, <code>agents.stop_session</code>, <code>agents.ask_about_message</code>,
+<code>agents.ask_about_conversation</code> and <code>workspace.open_agent_sessions</code>.</li>
+</ul>
+<p>An id neither the workspace nor the app knows installs: the permission prompt shows it as &quot;Not
+available here&quot;. The prompt lists every id under &quot;Commands it can run&quot; with its title and
+category, a box per one the person may grant and none ticked. Plugins can run a built-in that is
+neither <code>dangerous</code> nor <code>RESTRICTED</code> (one that changes something is labelled &quot;asks you each
+time&quot;) and the app commands marked for plugins, which only open, show, move focus or selection,
+or start a form the person finishes. The others are greyed with &quot;Plugins can&#39;t run this&quot;. An
+update that lists new ids opens the prompt again; grants of ids it drops are gone. Settings →
+Plugins → the plugin&#39;s row lists the granted commands, each with Revoke, and the runs.</p>
+<p>A plugin asks with <code>host.commands.execute(commandId, args)</code> in the SDK, <code>rim.command.execute</code>
+from a local process, or <code>rim.command.execute</code> from its panel. Each run is checked as the person
+stands then: granted and the plugin on, offered here, at most 20 a minute. It runs as the person
+in their current workspace, conversation and thread, never on their selected message, with a
+<code>workspace_id</code>, <code>conversation_id</code> or <code>thread_id</code> in <code>args</code> in place of theirs, and the server
+checks every permission as the person. A built-in that changes something shows a card, &quot;&lt;plugin&gt;
+wants to run &lt;command&gt;&quot;, with the arguments and the conversation; dismissing it holds the
+plugin&#39;s requests for a minute. The plugin hears only <code>{ status, code?, message? }</code>, never the
+command&#39;s output: <code>code</code> is why a refused run did not run, or the command&#39;s own error code on an
+error. Every run is recorded in its audit, except calls over the per-minute limit.</p>
 <h2 id="the-content-hash">The content hash <a class="anchor" href="#the-content-hash" aria-label="Link to this section">#</a></h2>
 <p>The desktop records a hash of the manifest at install and when the user approves AI commands: the
 SHA-256, in lowercase hex, of the parsed manifest serialized as compact JSON, with the fields in
 the order above, defaults filled in and unknown fields gone. Whitespace, key order and spelled-out
 defaults do not change it. <code>network_origins</code>, a panel&#39;s <code>slot</code> and a setting&#39;s <code>default</code>, <code>min</code>,
-<code>max</code>, <code>options</code> and <code>placeholder</code> are left out when absent, so a manifest without them hashes as
-on a host without those fields; other absent options are <code>null</code>.</p>
+<code>max</code>, <code>options</code> and <code>placeholder</code> are left out when absent, and <code>runs_commands</code> when empty, so a
+manifest without them hashes as on a host without those fields; other absent options are <code>null</code>.</p>
 <p>It gates AI consent. When the hash differs from the recorded one and the manifest declares
 <code>ai_callable</code> commands, or the user approved some, the agent runs none of the plugin&#39;s commands
 until the user consents again (<code>manifest changed — re-consent required for AI commands</code>). Any
@@ -419,8 +459,8 @@ plugin with a network permission, a tool panel and a secret setting, verbatim:</
     </main>
   </div>
 </div>
-<footer class="site-footer container"><span class="footer-brand"><img src="../../assets/rim-mark-inverse.svg" alt="" width="21" height="21"> RIM · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
-<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/625c78e7c352dd2300217ff4cf692350e410fa7e/docs/plugin-manifest.md">rim-ui/docs/plugin-manifest.md</a> at <code>625c78e</code></p>
+<footer class="site-footer container"><span class="footer-brand"><img src="../../assets/rim-lockup-glow-inverse.svg" alt="RIM" width="46" height="27"> · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/ed1032eacc0d9b5084470131b2d34cc144406df8/docs/plugin-manifest.md">rim-ui/docs/plugin-manifest.md</a> at <code>ed1032e</code></p>
 <script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
 </body>
 </html>

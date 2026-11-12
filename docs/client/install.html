@@ -8,7 +8,7 @@
 <link rel="icon" href="../../favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;550;600;650;700&family=JetBrains+Mono:wght@400;500&display=swap">
-<meta name="theme-color" content="#050910">
+<meta name="theme-color" content="#0b0c10">
 <link rel="stylesheet" href="../../assets/site-chrome.css">
 <link rel="stylesheet" href="../../assets/site.css">
 <script src="../../assets/site.js" defer></script>
@@ -17,14 +17,14 @@
 <a class="skip" href="#content">Skip to content</a>
 <header class="site-header">
   <div class="container header-inner">
-    <a class="brand" href="../../index.html" aria-label="RIM home"><img src="../../assets/rim-mark-inverse.svg" alt="" width="32" height="32">RIM</a>
+    <a class="brand" href="../../index.html" aria-label="RIM home"><img src="../../assets/rim-lockup-glow-inverse.svg" alt="" width="98" height="58"></a>
     <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-navigation">Menu</button>
     <nav class="site-nav" id="site-navigation" data-open="false" aria-label="Main navigation">
+      <a href="../../index.html#uses">What it's for</a>
       <a href="../../index.html#privacy">Privacy</a>
-      <a href="../../index.html#how">How it works</a>
-      <a href="../../index.html#capabilities">Capabilities</a>
-      <a href="../../index.html#community">Community</a>
+      <a href="../../how-it-works/index.html">How it works</a>
       <a href="../../index.html#download">Download</a>
+      <a href="../../index.html#community">Community</a>
       <a href="getting-started.html">Get started</a>
       <a href="../index.html" aria-current="location">Docs</a>
     </nav>
@@ -110,6 +110,10 @@ sudo dnf install ./RIM-&lt;version&gt;-1.x86_64.rpm   # Fedora</code></pre>
 <p>Or run the AppImage:</p>
 <pre><code class="language-sh">chmod +x RIM_&lt;version&gt;_amd64.AppImage
 ./RIM_&lt;version&gt;_amd64.AppImage</code></pre>
+<p>If you turned on &quot;Start RIM when I sign in to this computer&quot; in Settings &gt; Desktop and then move the
+AppImage, open it once from the new place. That mends the entry, so RIM starts from there next time.
+Not every Linux desktop can start RIM from a path containing any of <code>$ &quot; ' \</code> <code>`</code> <code>% * ? [</code>, so with
+one of those in the path the setting says so and stays off until you move RIM to another folder.</p>
 <p>What the app needs at run time:</p>
 <ul>
 <li><strong>glibc 2.34 or newer</strong>, as on Debian 12, Ubuntu 22.04 and newer releases.</li>
@@ -121,6 +125,11 @@ your device key and the other keys of this computer. Without one, signing in wit
 the encrypted message cache and opening offline fail with an error that says so. GNOME and
 KDE desktops run one by default; on a minimal window manager, start <code>gnome-keyring-daemon</code> or
 KeePassXC&#39;s Secret Service integration.</li>
+<li><strong>AppIndicator</strong>, for the tray icon (<code>libayatana-appindicator3-1</code> on Debian and Ubuntu,
+<code>libayatana-appindicator-gtk3</code> on Fedora). The packages install it; the AppImage carries it. Your
+desktop also has to show AppIndicator icons: KDE does, and GNOME needs the AppIndicator extension.
+Without either, RIM still keeps running when you choose the tray, and starting it again brings the
+window back.</li>
 <li><strong>FUSE 2</strong>, for the AppImage only (<code>libfuse2</code> on Debian and Ubuntu up to 22.04, <code>libfuse2t64</code>
 on Ubuntu 24.04, <code>fuse-libs</code> on Fedora). Without it the AppImage stops with a message about
 FUSE; <code>./RIM_&lt;version&gt;_amd64.AppImage --appimage-extract-and-run</code> runs it without.</li>
@@ -229,19 +238,24 @@ those of the libraries it uses.</li>
 <p>In the web app, the browser&#39;s developer console (F12) shows the client&#39;s errors.</p>
 <h2 id="remove-the-app">Remove the app <a class="anchor" href="#remove-the-app" aria-label="Link to this section">#</a></h2>
 <ol>
-<li>Uninstall it:<ul>
+<li><p>Uninstall it:</p>
+<ul>
 <li><code>.deb</code>: <code>sudo apt remove rim</code>.</li>
 <li><code>.rpm</code>: <code>sudo dnf remove rim</code>.</li>
 <li>AppImage: delete the file.</li>
 <li>Windows: Settings &gt; Apps &gt; Installed apps, RIM, Uninstall. An <code>.msi</code> install is removed
 the same way or with <code>msiexec /x RIM_&lt;version&gt;_x64_en-US.msi</code>.</li>
 </ul>
+<p>Uninstalling leaves the entry behind if you turned on &quot;Start RIM when I sign in to this
+computer&quot;, and that entry then does nothing. To remove it, turn the setting off in
+Settings &gt; Desktop first.</p>
 </li>
-<li>Uninstalling leaves your data in place, so a reinstall picks up where you left off. To remove
+<li><p>Uninstalling leaves your data in place, so a reinstall picks up where you left off. To remove
 it too, delete the folders under <a href="#where-the-app-keeps-its-data">Where the app keeps its data</a>
 and the log folder (<a href="#logs">Logs</a>), and the <code>vault-key-v1</code> entry from the credential store
 (Seahorse or KWalletManager on Linux, Keychain Access on macOS, Credential Manager on
-Windows).</li>
+Windows).</p>
+</li>
 </ol>
 <p>Deleting the data removes this computer&#39;s device key and its keys for encrypted conversations.
 Keep your recovery kit, or another device linked to your account, before you do.</p>
@@ -304,8 +318,8 @@ server that serves it.</li>
     </main>
   </div>
 </div>
-<footer class="site-footer container"><span class="footer-brand"><img src="../../assets/rim-mark-inverse.svg" alt="" width="21" height="21"> RIM · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
-<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/625c78e7c352dd2300217ff4cf692350e410fa7e/docs/install.md">rim-ui/docs/install.md</a> at <code>625c78e</code></p>
+<footer class="site-footer container"><span class="footer-brand"><img src="../../assets/rim-lockup-glow-inverse.svg" alt="RIM" width="46" height="27"> · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/ed1032eacc0d9b5084470131b2d34cc144406df8/docs/install.md">rim-ui/docs/install.md</a> at <code>ed1032e</code></p>
 <script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
 </body>
 </html>

@@ -3,7 +3,7 @@
 a { color: var(--accent); text-decoration: none; }
 a:hover { text-decoration: underline; }
 code, kbd, pre, .mono { font-family: var(--font-mono); }
-.docs-navigation { position: sticky; top: var(--site-header-height); z-index: 19; border-bottom: 1px solid var(--line); background: #080f18; }
+.docs-navigation { position: sticky; top: var(--site-header-height); z-index: 19; border-bottom: 1px solid var(--line); background: var(--panel); }
 .docs-links { display: flex; align-items: center; gap: 27px; padding-block: 15px; overflow-x: auto; white-space: nowrap; font-size: 12px; }
 .docs-links span { color: var(--faint); font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .1em; margin-right: auto; }
 .docs-links a { color: var(--muted); }
@@ -11,7 +11,7 @@ code, kbd, pre, .mono { font-family: var(--font-mono); }
 .docs-links a[aria-current] { text-decoration: underline; text-underline-offset: 7px; }
 .crumbs { font-family: var(--font-mono); font-size: 11px; color: var(--faint); padding-top: 28px; display: flex; flex-wrap: wrap; gap: 8px; }
 .crumbs a { color: var(--muted); }
-.crumbs span[aria-hidden] { color: #465a6d; }
+.crumbs span[aria-hidden] { color: var(--line-strong); }
 .page { padding-block: 38px 72px; }
 .page.with-toc { display: grid; grid-template-columns: 230px minmax(0, 1fr); gap: 56px; align-items: start; }
 .toc { position: sticky; top: var(--docs-content-offset); max-height: calc(100vh - var(--docs-content-offset) - 24px); overflow-y: auto; font-size: 12px; padding: 4px 20px 0 0; border-right: 1px solid var(--line); }
@@ -86,7 +86,7 @@ kbd { font-size: 11px; padding: 2px 6px; border: 1px solid var(--line); border-b
 .vars td p { margin: 0 0 6px; }
 
 /* GraphQL reference */
-.search { display: block; width: 100%; max-width: 420px; margin: 0 0 20px; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); font: inherit; font-size: 15px; }
+.search { display: block; width: 100%; max-width: 420px; margin: 0 0 20px; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--faint); background: var(--panel); color: var(--fg); font: inherit; font-size: 15px; }
 .search:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
 .entry { border-top: 1px solid var(--line); padding-top: 14px; margin-top: 18px; }
 .entry > h3 { margin: 0 0 6px; font-size: 17px; }

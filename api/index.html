@@ -8,7 +8,7 @@
 <link rel="icon" href="../favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;550;600;650;700&family=JetBrains+Mono:wght@400;500&display=swap">
-<meta name="theme-color" content="#050910">
+<meta name="theme-color" content="#0b0c10">
 <link rel="stylesheet" href="../assets/site-chrome.css">
 <link rel="stylesheet" href="../assets/site.css">
 <script src="../assets/site.js" defer></script>
@@ -17,14 +17,14 @@
 <a class="skip" href="#content">Skip to content</a>
 <header class="site-header">
   <div class="container header-inner">
-    <a class="brand" href="../index.html" aria-label="RIM home"><img src="../assets/rim-mark-inverse.svg" alt="" width="32" height="32">RIM</a>
+    <a class="brand" href="../index.html" aria-label="RIM home"><img src="../assets/rim-lockup-glow-inverse.svg" alt="" width="98" height="58"></a>
     <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-navigation">Menu</button>
     <nav class="site-nav" id="site-navigation" data-open="false" aria-label="Main navigation">
+      <a href="../index.html#uses">What it's for</a>
       <a href="../index.html#privacy">Privacy</a>
-      <a href="../index.html#how">How it works</a>
-      <a href="../index.html#capabilities">Capabilities</a>
-      <a href="../index.html#community">Community</a>
+      <a href="../how-it-works/index.html">How it works</a>
       <a href="../index.html#download">Download</a>
+      <a href="../index.html#community">Community</a>
       <a href="../docs/client/getting-started.html">Get started</a>
       <a href="../docs/index.html" aria-current="location">Docs</a>
     </nav>
@@ -42,7 +42,7 @@
 
     <main id="content" class="prose">
 <h1>API</h1>
-<p class="lede">Everything a client does goes through one GraphQL endpoint, <code>POST /api</code>; subscriptions arrive over <code>/api/ws</code>. The server publishes its schema at <code>/api/sdl</code>. This reference is generated from it: 278 types, 72 queries, 139 mutations and 2 subscriptions.</p>
+<p class="lede">Everything a client does goes through one GraphQL endpoint, <code>POST /api</code>; subscriptions arrive over <code>/api/ws</code>. The server publishes its schema at <code>/api/sdl</code>. This reference is generated from it: 304 types, 80 queries, 152 mutations and 3 subscriptions.</p>
 <input id="filter" class="search" type="search" placeholder="Filter the whole schema by name" aria-label="Filter the whole schema by name" autocomplete="off">
 <p id="filter-none" class="muted" hidden>Nothing matches.</p>
 <div data-search-only><ul class="hits">
@@ -137,6 +137,7 @@
 <li data-name="logoutOtherSessions"><a href="mutation.html#logoutOtherSessions"><code>logoutOtherSessions</code></a><span class="kind">mutation</span></li>
 <li data-name="toggleReaction"><a href="mutation.html#toggleReaction"><code>toggleReaction</code></a><span class="kind">mutation</span></li>
 <li data-name="markAsRead"><a href="mutation.html#markAsRead"><code>markAsRead</code></a><span class="kind">mutation</span></li>
+<li data-name="markAsUnread"><a href="mutation.html#markAsUnread"><code>markAsUnread</code></a><span class="kind">mutation</span></li>
 <li data-name="markAllAsRead"><a href="mutation.html#markAllAsRead"><code>markAllAsRead</code></a><span class="kind">mutation</span></li>
 <li data-name="startTyping"><a href="mutation.html#startTyping"><code>startTyping</code></a><span class="kind">mutation</span></li>
 <li data-name="heartbeat"><a href="mutation.html#heartbeat"><code>heartbeat</code></a><span class="kind">mutation</span></li>
@@ -185,8 +186,23 @@
 <li data-name="passwordResetStart"><a href="mutation.html#passwordResetStart"><code>passwordResetStart</code></a><span class="kind">mutation</span></li>
 <li data-name="passwordResetFinish"><a href="mutation.html#passwordResetFinish"><code>passwordResetFinish</code></a><span class="kind">mutation</span></li>
 <li data-name="reloadSession"><a href="mutation.html#reloadSession"><code>reloadSession</code></a><span class="kind">mutation</span></li>
+<li data-name="createBot"><a href="mutation.html#createBot"><code>createBot</code></a><span class="kind">mutation</span></li>
+<li data-name="updateBot"><a href="mutation.html#updateBot"><code>updateBot</code></a><span class="kind">mutation</span></li>
+<li data-name="deactivateBot"><a href="mutation.html#deactivateBot"><code>deactivateBot</code></a><span class="kind">mutation</span></li>
+<li data-name="createBotToken"><a href="mutation.html#createBotToken"><code>createBotToken</code></a><span class="kind">mutation</span></li>
+<li data-name="revokeBotToken"><a href="mutation.html#revokeBotToken"><code>revokeBotToken</code></a><span class="kind">mutation</span></li>
+<li data-name="createIncomingWebhook"><a href="mutation.html#createIncomingWebhook"><code>createIncomingWebhook</code></a><span class="kind">mutation</span></li>
+<li data-name="revokeIncomingWebhook"><a href="mutation.html#revokeIncomingWebhook"><code>revokeIncomingWebhook</code></a><span class="kind">mutation</span></li>
+<li data-name="updateIncomingWebhookFormat"><a href="mutation.html#updateIncomingWebhookFormat"><code>updateIncomingWebhookFormat</code></a><span class="kind">mutation</span></li>
+<li data-name="startWebhookTestSession"><a href="mutation.html#startWebhookTestSession"><code>startWebhookTestSession</code></a><span class="kind">mutation</span></li>
+<li data-name="endWebhookTestSession"><a href="mutation.html#endWebhookTestSession"><code>endWebhookTestSession</code></a><span class="kind">mutation</span></li>
+<li data-name="saveHomeLayout"><a href="mutation.html#saveHomeLayout"><code>saveHomeLayout</code></a><span class="kind">mutation</span></li>
+<li data-name="resetHomeLayout"><a href="mutation.html#resetHomeLayout"><code>resetHomeLayout</code></a><span class="kind">mutation</span></li>
 <li data-name="commands"><a href="query.html#commands"><code>commands</code></a><span class="kind">query</span></li>
 <li data-name="commandDiscover"><a href="query.html#commandDiscover"><code>commandDiscover</code></a><span class="kind">query</span></li>
+<li data-name="macroStepCommands"><a href="query.html#macroStepCommands"><code>macroStepCommands</code></a><span class="kind">query</span></li>
+<li data-name="myMacros"><a href="query.html#myMacros"><code>myMacros</code></a><span class="kind">query</span></li>
+<li data-name="macroByName"><a href="query.html#macroByName"><code>macroByName</code></a><span class="kind">query</span></li>
 <li data-name="resolvedKeybinds"><a href="query.html#resolvedKeybinds"><code>resolvedKeybinds</code></a><span class="kind">query</span></li>
 <li data-name="conversation"><a href="query.html#conversation"><code>conversation</code></a><span class="kind">query</span></li>
 <li data-name="inboxConversations"><a href="query.html#inboxConversations"><code>inboxConversations</code></a><span class="kind">query</span></li>
@@ -217,8 +233,6 @@
 <li data-name="workspacePlugins"><a href="query.html#workspacePlugins"><code>workspacePlugins</code></a><span class="kind">query</span></li>
 <li data-name="workspaceInvites"><a href="query.html#workspaceInvites"><code>workspaceInvites</code></a><span class="kind">query</span></li>
 <li data-name="customEmojis"><a href="query.html#customEmojis"><code>customEmojis</code></a><span class="kind">query</span></li>
-<li data-name="myMacros"><a href="query.html#myMacros"><code>myMacros</code></a><span class="kind">query</span></li>
-<li data-name="macroByName"><a href="query.html#macroByName"><code>macroByName</code></a><span class="kind">query</span></li>
 <li data-name="pipelines"><a href="query.html#pipelines"><code>pipelines</code></a><span class="kind">query</span></li>
 <li data-name="listAuditLog"><a href="query.html#listAuditLog"><code>listAuditLog</code></a><span class="kind">query</span></li>
 <li data-name="previewInviteToken"><a href="query.html#previewInviteToken"><code>previewInviteToken</code></a><span class="kind">query</span></li>
@@ -257,7 +271,15 @@
 <li data-name="publicJoinLinkPreview"><a href="query.html#publicJoinLinkPreview"><code>publicJoinLinkPreview</code></a><span class="kind">query</span></li>
 <li data-name="joinRequests"><a href="query.html#joinRequests"><code>joinRequests</code></a><span class="kind">query</span></li>
 <li data-name="myJoinRequests"><a href="query.html#myJoinRequests"><code>myJoinRequests</code></a><span class="kind">query</span></li>
+<li data-name="bots"><a href="query.html#bots"><code>bots</code></a><span class="kind">query</span></li>
+<li data-name="botTokens"><a href="query.html#botTokens"><code>botTokens</code></a><span class="kind">query</span></li>
+<li data-name="incomingWebhooks"><a href="query.html#incomingWebhooks"><code>incomingWebhooks</code></a><span class="kind">query</span></li>
+<li data-name="webhookFormats"><a href="query.html#webhookFormats"><code>webhookFormats</code></a><span class="kind">query</span></li>
+<li data-name="previewWebhookFormat"><a href="query.html#previewWebhookFormat"><code>previewWebhookFormat</code></a><span class="kind">query</span></li>
+<li data-name="webhookTestDeliveries"><a href="query.html#webhookTestDeliveries"><code>webhookTestDeliveries</code></a><span class="kind">query</span></li>
+<li data-name="homeLayout"><a href="query.html#homeLayout"><code>homeLayout</code></a><span class="kind">query</span></li>
 <li data-name="workspaceEvents"><a href="subscription.html#workspaceEvents"><code>workspaceEvents</code></a><span class="kind">subscription</span></li>
+<li data-name="notificationEvents"><a href="subscription.html#notificationEvents"><code>notificationEvents</code></a><span class="kind">subscription</span></li>
 <li data-name="relayStream"><a href="subscription.html#relayStream"><code>relayStream</code></a><span class="kind">subscription</span></li>
 <li data-name="AccountDeletionSchedule"><a href="objects.html#AccountDeletionSchedule"><code>AccountDeletionSchedule</code></a><span class="kind">object</span></li>
 <li data-name="Attachment"><a href="objects.html#Attachment"><code>Attachment</code></a><span class="kind">object</span></li>
@@ -265,6 +287,9 @@
 <li data-name="AuditLogPage"><a href="objects.html#AuditLogPage"><code>AuditLogPage</code></a><span class="kind">object</span></li>
 <li data-name="AuditLogPageInfo"><a href="objects.html#AuditLogPageInfo"><code>AuditLogPageInfo</code></a><span class="kind">object</span></li>
 <li data-name="BlockedPrincipal"><a href="objects.html#BlockedPrincipal"><code>BlockedPrincipal</code></a><span class="kind">object</span></li>
+<li data-name="Bot"><a href="objects.html#Bot"><code>Bot</code></a><span class="kind">object</span></li>
+<li data-name="BotInfo"><a href="objects.html#BotInfo"><code>BotInfo</code></a><span class="kind">object</span></li>
+<li data-name="BotToken"><a href="objects.html#BotToken"><code>BotToken</code></a><span class="kind">object</span></li>
 <li data-name="ChannelCursorOutput"><a href="objects.html#ChannelCursorOutput"><code>ChannelCursorOutput</code></a><span class="kind">object</span></li>
 <li data-name="ChannelLens"><a href="objects.html#ChannelLens"><code>ChannelLens</code></a><span class="kind">object</span></li>
 <li data-name="ChannelPage"><a href="objects.html#ChannelPage"><code>ChannelPage</code></a><span class="kind">object</span></li>
@@ -281,6 +306,9 @@
 <li data-name="ConversationPage"><a href="objects.html#ConversationPage"><code>ConversationPage</code></a><span class="kind">object</span></li>
 <li data-name="ConversationPredecessor"><a href="objects.html#ConversationPredecessor"><code>ConversationPredecessor</code></a><span class="kind">object</span></li>
 <li data-name="CreateInvitePayload"><a href="objects.html#CreateInvitePayload"><code>CreateInvitePayload</code></a><span class="kind">object</span></li>
+<li data-name="CreatedBot"><a href="objects.html#CreatedBot"><code>CreatedBot</code></a><span class="kind">object</span></li>
+<li data-name="CreatedBotToken"><a href="objects.html#CreatedBotToken"><code>CreatedBotToken</code></a><span class="kind">object</span></li>
+<li data-name="CreatedIncomingWebhook"><a href="objects.html#CreatedIncomingWebhook"><code>CreatedIncomingWebhook</code></a><span class="kind">object</span></li>
 <li data-name="CustomEmoji"><a href="objects.html#CustomEmoji"><code>CustomEmoji</code></a><span class="kind">object</span></li>
 <li data-name="DeleteWorkspacePayload"><a href="objects.html#DeleteWorkspacePayload"><code>DeleteWorkspacePayload</code></a><span class="kind">object</span></li>
 <li data-name="DeletedMemberMessages"><a href="objects.html#DeletedMemberMessages"><code>DeletedMemberMessages</code></a><span class="kind">object</span></li>
@@ -291,7 +319,10 @@
 <li data-name="DndWindow"><a href="objects.html#DndWindow"><code>DndWindow</code></a><span class="kind">object</span></li>
 <li data-name="FilterConditionGql"><a href="objects.html#FilterConditionGql"><code>FilterConditionGql</code></a><span class="kind">object</span></li>
 <li data-name="FilterSpecGql"><a href="objects.html#FilterSpecGql"><code>FilterSpecGql</code></a><span class="kind">object</span></li>
+<li data-name="HomeLayout"><a href="objects.html#HomeLayout"><code>HomeLayout</code></a><span class="kind">object</span></li>
+<li data-name="HomeLayoutSaved"><a href="objects.html#HomeLayoutSaved"><code>HomeLayoutSaved</code></a><span class="kind">object</span></li>
 <li data-name="InboxCursorOutput"><a href="objects.html#InboxCursorOutput"><code>InboxCursorOutput</code></a><span class="kind">object</span></li>
+<li data-name="IncomingWebhook"><a href="objects.html#IncomingWebhook"><code>IncomingWebhook</code></a><span class="kind">object</span></li>
 <li data-name="InstanceAbuseReport"><a href="objects.html#InstanceAbuseReport"><code>InstanceAbuseReport</code></a><span class="kind">object</span></li>
 <li data-name="InstanceAccount"><a href="objects.html#InstanceAccount"><code>InstanceAccount</code></a><span class="kind">object</span></li>
 <li data-name="InstanceIpBlock"><a href="objects.html#InstanceIpBlock"><code>InstanceIpBlock</code></a><span class="kind">object</span></li>
@@ -337,6 +368,7 @@
 <li data-name="MyDmSettings"><a href="objects.html#MyDmSettings"><code>MyDmSettings</code></a><span class="kind">object</span></li>
 <li data-name="Notification"><a href="objects.html#Notification"><code>Notification</code></a><span class="kind">object</span></li>
 <li data-name="NotificationCursorOutput"><a href="objects.html#NotificationCursorOutput"><code>NotificationCursorOutput</code></a><span class="kind">object</span></li>
+<li data-name="NotificationDueEvent"><a href="objects.html#NotificationDueEvent"><code>NotificationDueEvent</code></a><span class="kind">object</span></li>
 <li data-name="NotificationPage"><a href="objects.html#NotificationPage"><code>NotificationPage</code></a><span class="kind">object</span></li>
 <li data-name="NotificationSettings"><a href="objects.html#NotificationSettings"><code>NotificationSettings</code></a><span class="kind">object</span></li>
 <li data-name="PageInfo"><a href="objects.html#PageInfo"><code>PageInfo</code></a><span class="kind">object</span></li>
@@ -350,6 +382,7 @@
 <li data-name="PipelineFilterConditionGql"><a href="objects.html#PipelineFilterConditionGql"><code>PipelineFilterConditionGql</code></a><span class="kind">object</span></li>
 <li data-name="PipelineFilterGql"><a href="objects.html#PipelineFilterGql"><code>PipelineFilterGql</code></a><span class="kind">object</span></li>
 <li data-name="PipelineGql"><a href="objects.html#PipelineGql"><code>PipelineGql</code></a><span class="kind">object</span></li>
+<li data-name="PipelinePostAsBotGql"><a href="objects.html#PipelinePostAsBotGql"><code>PipelinePostAsBotGql</code></a><span class="kind">object</span></li>
 <li data-name="PipelineTriggerGql"><a href="objects.html#PipelineTriggerGql"><code>PipelineTriggerGql</code></a><span class="kind">object</span></li>
 <li data-name="PluginSource"><a href="objects.html#PluginSource"><code>PluginSource</code></a><span class="kind">object</span></li>
 <li data-name="PrincipalDevice"><a href="objects.html#PrincipalDevice"><code>PrincipalDevice</code></a><span class="kind">object</span></li>
@@ -389,6 +422,12 @@
 <li data-name="UserCommand"><a href="objects.html#UserCommand"><code>UserCommand</code></a><span class="kind">object</span></li>
 <li data-name="UserCommandStep"><a href="objects.html#UserCommandStep"><code>UserCommandStep</code></a><span class="kind">object</span></li>
 <li data-name="UserPresenceGql"><a href="objects.html#UserPresenceGql"><code>UserPresenceGql</code></a><span class="kind">object</span></li>
+<li data-name="WebhookFormatInfo"><a href="objects.html#WebhookFormatInfo"><code>WebhookFormatInfo</code></a><span class="kind">object</span></li>
+<li data-name="WebhookFormatPreview"><a href="objects.html#WebhookFormatPreview"><code>WebhookFormatPreview</code></a><span class="kind">object</span></li>
+<li data-name="WebhookHeader"><a href="objects.html#WebhookHeader"><code>WebhookHeader</code></a><span class="kind">object</span></li>
+<li data-name="WebhookTestDeliveries"><a href="objects.html#WebhookTestDeliveries"><code>WebhookTestDeliveries</code></a><span class="kind">object</span></li>
+<li data-name="WebhookTestDelivery"><a href="objects.html#WebhookTestDelivery"><code>WebhookTestDelivery</code></a><span class="kind">object</span></li>
+<li data-name="WebhookTestSession"><a href="objects.html#WebhookTestSession"><code>WebhookTestSession</code></a><span class="kind">object</span></li>
 <li data-name="WorkspaceDmPolicy"><a href="objects.html#WorkspaceDmPolicy"><code>WorkspaceDmPolicy</code></a><span class="kind">object</span></li>
 <li data-name="WorkspaceDmSetting"><a href="objects.html#WorkspaceDmSetting"><code>WorkspaceDmSetting</code></a><span class="kind">object</span></li>
 <li data-name="WorkspaceInvite"><a href="objects.html#WorkspaceInvite"><code>WorkspaceInvite</code></a><span class="kind">object</span></li>
@@ -406,9 +445,11 @@
 <li data-name="CommandContextInput"><a href="inputs.html#CommandContextInput"><code>CommandContextInput</code></a><span class="kind">input</span></li>
 <li data-name="ConfirmationProofInput"><a href="inputs.html#ConfirmationProofInput"><code>ConfirmationProofInput</code></a><span class="kind">input</span></li>
 <li data-name="CreateAttachmentInput"><a href="inputs.html#CreateAttachmentInput"><code>CreateAttachmentInput</code></a><span class="kind">input</span></li>
+<li data-name="CreateBotInput"><a href="inputs.html#CreateBotInput"><code>CreateBotInput</code></a><span class="kind">input</span></li>
 <li data-name="CreateChannelLensInput"><a href="inputs.html#CreateChannelLensInput"><code>CreateChannelLensInput</code></a><span class="kind">input</span></li>
 <li data-name="CreateConversationInput"><a href="inputs.html#CreateConversationInput"><code>CreateConversationInput</code></a><span class="kind">input</span></li>
 <li data-name="CreateCustomEmojiInput"><a href="inputs.html#CreateCustomEmojiInput"><code>CreateCustomEmojiInput</code></a><span class="kind">input</span></li>
+<li data-name="CreateIncomingWebhookInput"><a href="inputs.html#CreateIncomingWebhookInput"><code>CreateIncomingWebhookInput</code></a><span class="kind">input</span></li>
 <li data-name="CreateInviteInput"><a href="inputs.html#CreateInviteInput"><code>CreateInviteInput</code></a><span class="kind">input</span></li>
 <li data-name="CreateKeybindInput"><a href="inputs.html#CreateKeybindInput"><code>CreateKeybindInput</code></a><span class="kind">input</span></li>
 <li data-name="CreateMacroInput"><a href="inputs.html#CreateMacroInput"><code>CreateMacroInput</code></a><span class="kind">input</span></li>
@@ -439,6 +480,7 @@
 <li data-name="MacroStepInput"><a href="inputs.html#MacroStepInput"><code>MacroStepInput</code></a><span class="kind">input</span></li>
 <li data-name="MarkAllAsReadInput"><a href="inputs.html#MarkAllAsReadInput"><code>MarkAllAsReadInput</code></a><span class="kind">input</span></li>
 <li data-name="MarkAsReadInput"><a href="inputs.html#MarkAsReadInput"><code>MarkAsReadInput</code></a><span class="kind">input</span></li>
+<li data-name="MarkAsUnreadInput"><a href="inputs.html#MarkAsUnreadInput"><code>MarkAsUnreadInput</code></a><span class="kind">input</span></li>
 <li data-name="MessageChangeCursorInput"><a href="inputs.html#MessageChangeCursorInput"><code>MessageChangeCursorInput</code></a><span class="kind">input</span></li>
 <li data-name="MessageChangesInput"><a href="inputs.html#MessageChangesInput"><code>MessageChangesInput</code></a><span class="kind">input</span></li>
 <li data-name="MessageCursorInput"><a href="inputs.html#MessageCursorInput"><code>MessageCursorInput</code></a><span class="kind">input</span></li>
@@ -451,6 +493,7 @@
 <li data-name="PipelineActionInput"><a href="inputs.html#PipelineActionInput"><code>PipelineActionInput</code></a><span class="kind">input</span></li>
 <li data-name="PipelineFilterConditionInput"><a href="inputs.html#PipelineFilterConditionInput"><code>PipelineFilterConditionInput</code></a><span class="kind">input</span></li>
 <li data-name="PipelineFilterInput"><a href="inputs.html#PipelineFilterInput"><code>PipelineFilterInput</code></a><span class="kind">input</span></li>
+<li data-name="PipelinePostAsBotInput"><a href="inputs.html#PipelinePostAsBotInput"><code>PipelinePostAsBotInput</code></a><span class="kind">input</span></li>
 <li data-name="PipelineTriggerInput"><a href="inputs.html#PipelineTriggerInput"><code>PipelineTriggerInput</code></a><span class="kind">input</span></li>
 <li data-name="PredecessorInput"><a href="inputs.html#PredecessorInput"><code>PredecessorInput</code></a><span class="kind">input</span></li>
 <li data-name="RemoteMemberInput"><a href="inputs.html#RemoteMemberInput"><code>RemoteMemberInput</code></a><span class="kind">input</span></li>
@@ -471,6 +514,7 @@
 <li data-name="TransferWorkspaceOwnershipInput"><a href="inputs.html#TransferWorkspaceOwnershipInput"><code>TransferWorkspaceOwnershipInput</code></a><span class="kind">input</span></li>
 <li data-name="UnmuteConversationInput"><a href="inputs.html#UnmuteConversationInput"><code>UnmuteConversationInput</code></a><span class="kind">input</span></li>
 <li data-name="UnpinMessageInput"><a href="inputs.html#UnpinMessageInput"><code>UnpinMessageInput</code></a><span class="kind">input</span></li>
+<li data-name="UpdateBotInput"><a href="inputs.html#UpdateBotInput"><code>UpdateBotInput</code></a><span class="kind">input</span></li>
 <li data-name="UpdateChannelLensInput"><a href="inputs.html#UpdateChannelLensInput"><code>UpdateChannelLensInput</code></a><span class="kind">input</span></li>
 <li data-name="UpdateConversationTopicInput"><a href="inputs.html#UpdateConversationTopicInput"><code>UpdateConversationTopicInput</code></a><span class="kind">input</span></li>
 <li data-name="UpdateKeybindInput"><a href="inputs.html#UpdateKeybindInput"><code>UpdateKeybindInput</code></a><span class="kind">input</span></li>
@@ -482,6 +526,7 @@
 <li data-name="UpdateUserCommandInput"><a href="inputs.html#UpdateUserCommandInput"><code>UpdateUserCommandInput</code></a><span class="kind">input</span></li>
 <li data-name="UpdateWorkspacePluginInput"><a href="inputs.html#UpdateWorkspacePluginInput"><code>UpdateWorkspacePluginInput</code></a><span class="kind">input</span></li>
 <li data-name="UserCommandStepInput"><a href="inputs.html#UserCommandStepInput"><code>UserCommandStepInput</code></a><span class="kind">input</span></li>
+<li data-name="WebhookHeaderInput"><a href="inputs.html#WebhookHeaderInput"><code>WebhookHeaderInput</code></a><span class="kind">input</span></li>
 <li data-name="WorkspaceInviteCursorInput"><a href="inputs.html#WorkspaceInviteCursorInput"><code>WorkspaceInviteCursorInput</code></a><span class="kind">input</span></li>
 <li data-name="AttachmentStatusEnum"><a href="enums.html#AttachmentStatusEnum"><code>AttachmentStatusEnum</code></a><span class="kind">enum</span></li>
 <li data-name="AuditOutcomeGql"><a href="enums.html#AuditOutcomeGql"><code>AuditOutcomeGql</code></a><span class="kind">enum</span></li>
@@ -532,6 +577,9 @@
 <li data-name="ServerFeatureState"><a href="enums.html#ServerFeatureState"><code>ServerFeatureState</code></a><span class="kind">enum</span></li>
 <li data-name="ServerMemberRoleGql"><a href="enums.html#ServerMemberRoleGql"><code>ServerMemberRoleGql</code></a><span class="kind">enum</span></li>
 <li data-name="TypedVerbGql"><a href="enums.html#TypedVerbGql"><code>TypedVerbGql</code></a><span class="kind">enum</span></li>
+<li data-name="WebhookPreset"><a href="enums.html#WebhookPreset"><code>WebhookPreset</code></a><span class="kind">enum</span></li>
+<li data-name="WebhookPreviewOutcome"><a href="enums.html#WebhookPreviewOutcome"><code>WebhookPreviewOutcome</code></a><span class="kind">enum</span></li>
+<li data-name="WebhookTestBodyState"><a href="enums.html#WebhookTestBodyState"><code>WebhookTestBodyState</code></a><span class="kind">enum</span></li>
 <li data-name="WorkspaceInviteState"><a href="enums.html#WorkspaceInviteState"><code>WorkspaceInviteState</code></a><span class="kind">enum</span></li>
 <li data-name="WorkspacePluginStatus"><a href="enums.html#WorkspacePluginStatus"><code>WorkspacePluginStatus</code></a><span class="kind">enum</span></li>
 <li data-name="WorkspaceStateScopeGql"><a href="enums.html#WorkspaceStateScopeGql"><code>WorkspaceStateScopeGql</code></a><span class="kind">enum</span></li>
@@ -542,27 +590,28 @@
 <li data-name="Float"><a href="scalars.html#Float"><code>Float</code></a><span class="kind">scalar</span></li>
 <li data-name="Boolean"><a href="scalars.html#Boolean"><code>Boolean</code></a><span class="kind">scalar</span></li>
 <li data-name="ID"><a href="scalars.html#ID"><code>ID</code></a><span class="kind">scalar</span></li>
+<li data-name="@deprecated"><a href="directives.html#deprecated"><code>@deprecated</code></a><span class="kind">directive</span></li>
 <li data-name="@include"><a href="directives.html#include"><code>@include</code></a><span class="kind">directive</span></li>
 <li data-name="@skip"><a href="directives.html#skip"><code>@skip</code></a><span class="kind">directive</span></li>
 <li data-name="@specifiedBy"><a href="directives.html#specifiedBy"><code>@specifiedBy</code></a><span class="kind">directive</span></li>
 </ul></div>
 <ul class="cards">
 <li><a href="../docs/api.html"><b>Talking to a server</b><span>The endpoints, the session cookie and CSRF, origins, limits, error codes and pagination: the contract around the schema.</span></a></li>
-<li><a href="query.html"><b>Query</b><span>72 fields, grouped by domain.</span></a></li>
-<li><a href="mutation.html"><b>Mutation</b><span>139 fields, grouped by domain.</span></a></li>
-<li><a href="subscription.html"><b>Subscription</b><span>2 fields, grouped by domain.</span></a></li>
-<li><a href="objects.html"><b>Objects</b><span>138 objects.</span></a></li>
-<li><a href="inputs.html"><b>Inputs</b><span>86 inputs.</span></a></li>
-<li><a href="enums.html"><b>Enums</b><span>52 enums.</span></a></li>
+<li><a href="query.html"><b>Query</b><span>80 fields, grouped by domain.</span></a></li>
+<li><a href="mutation.html"><b>Mutation</b><span>152 fields, grouped by domain.</span></a></li>
+<li><a href="subscription.html"><b>Subscription</b><span>3 fields, grouped by domain.</span></a></li>
+<li><a href="objects.html"><b>Objects</b><span>155 objects.</span></a></li>
+<li><a href="inputs.html"><b>Inputs</b><span>92 inputs.</span></a></li>
+<li><a href="enums.html"><b>Enums</b><span>55 enums.</span></a></li>
 <li><a href="scalars.html"><b>Scalars</b><span>7 scalars.</span></a></li>
-<li><a href="directives.html"><b>Directives</b><span>3 directives.</span></a></li>
+<li><a href="directives.html"><b>Directives</b><span>4 directives.</span></a></li>
 </ul>
 
     </main>
   </div>
 </div>
-<footer class="site-footer container"><span class="footer-brand"><img src="../assets/rim-mark-inverse.svg" alt="" width="21" height="21"> RIM · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
-<p class="source-provenance container">Generated from <a href="https://github.com/rim-platform/rim-ui/blob/625c78e7c352dd2300217ff4cf692350e410fa7e/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>625c78e</code></p>
+<footer class="site-footer container"><span class="footer-brand"><img src="../assets/rim-lockup-glow-inverse.svg" alt="RIM" width="46" height="27"> · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
+<p class="source-provenance container">Generated from <a href="https://github.com/rim-platform/rim-ui/blob/ed1032eacc0d9b5084470131b2d34cc144406df8/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>ed1032e</code></p>
 <script>
 (() => {
   const q = document.getElementById("filter");

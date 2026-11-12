@@ -8,7 +8,7 @@
 <link rel="icon" href="../favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;550;600;650;700&family=JetBrains+Mono:wght@400;500&display=swap">
-<meta name="theme-color" content="#050910">
+<meta name="theme-color" content="#0b0c10">
 <link rel="stylesheet" href="../assets/site-chrome.css">
 <link rel="stylesheet" href="../assets/site.css">
 <script src="../assets/site.js" defer></script>
@@ -17,14 +17,14 @@
 <a class="skip" href="#content">Skip to content</a>
 <header class="site-header">
   <div class="container header-inner">
-    <a class="brand" href="../index.html" aria-label="RIM home"><img src="../assets/rim-mark-inverse.svg" alt="" width="32" height="32">RIM</a>
+    <a class="brand" href="../index.html" aria-label="RIM home"><img src="../assets/rim-lockup-glow-inverse.svg" alt="" width="98" height="58"></a>
     <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-navigation">Menu</button>
     <nav class="site-nav" id="site-navigation" data-open="false" aria-label="Main navigation">
+      <a href="../index.html#uses">What it's for</a>
       <a href="../index.html#privacy">Privacy</a>
-      <a href="../index.html#how">How it works</a>
-      <a href="../index.html#capabilities">Capabilities</a>
-      <a href="../index.html#community">Community</a>
+      <a href="../how-it-works/index.html">How it works</a>
       <a href="../index.html#download">Download</a>
+      <a href="../index.html#community">Community</a>
       <a href="../docs/client/getting-started.html">Get started</a>
       <a href="../docs/index.html" aria-current="location">Docs</a>
     </nav>
@@ -42,6 +42,7 @@
     <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
 <ol>
 <li><a href="#group-command">Command (2)</a></li>
+<li><a href="#group-macro">Macro (3)</a></li>
 <li><a href="#group-keybind">Keybind (1)</a></li>
 <li><a href="#group-conversation">Conversation (4)</a></li>
 <li><a href="#group-channel">Channel (3)</a></li>
@@ -50,7 +51,6 @@
 <li><a href="#group-server">Server (6)</a></li>
 <li><a href="#group-workspace">Workspace (5)</a></li>
 <li><a href="#group-emoji">Emoji (1)</a></li>
-<li><a href="#group-macro">Macro (2)</a></li>
 <li><a href="#group-pipeline">Pipeline (1)</a></li>
 <li><a href="#group-audit">Audit (1)</a></li>
 <li><a href="#group-invite">Invite (1)</a></li>
@@ -60,12 +60,12 @@
 <li><a href="#group-relay">Relay (2)</a></li>
 <li><a href="#group-report">Report (1)</a></li>
 <li><a href="#group-user">User (2)</a></li>
-<li><a href="#group-other">Other (19)</a></li>
+<li><a href="#group-other">Other (26)</a></li>
 </ol>
 </details></aside>
     <main id="content" class="prose">
 <h1>Query</h1>
-<p class="lede">72 queries, grouped by the domain their name starts with or names, in the order the schema lists them.</p>
+<p class="lede">80 queries, grouped by the domain their name starts with or names, in the order the schema lists them.</p>
 <input id="filter" class="search" type="search" placeholder="Filter fields by name" aria-label="Filter fields by name" autocomplete="off">
 <p id="filter-none" class="muted" hidden>Nothing matches.</p>
 <section data-group>
@@ -80,8 +80,8 @@ its required capabilities. The commands the client runs itself are listed in eve
 context. A listed command is one <a href="mutation.html#executeCommand"><code>executeCommand</code></a> runs for the caller in that context,
 apart from a confirmation, a timeout in force and the arguments given. Naming the direct
 space makes the caller a guest of it.</p>
-<p><code>AI</code> lists only the AI-callable commands, plus the caller&#39;s AI-callable macros of the
-workspace, and fails with <code>FEATURE_DISABLED</code> while the AI command surface is off.</p>
+<p><code>AI</code> lists only the AI-callable commands, the caller&#39;s agent-callable macros among them,
+and fails with <code>FEATURE_DISABLED</code> while the AI command surface is off.</p>
 </div>
 
 </section>
@@ -100,11 +100,37 @@ always listed. A listed command is one <a href="mutation.html#executeCommand"><c
 workspace, apart from a confirmation, a timeout in force and the arguments given.</p>
 <p>With <code>intentPhrase</code> the commands are ranked by how well the phrase matches their
 intent samples, title and natural-language description. <code>limit</code> defaults to 50 and is
-capped at 100. <code>workspaceId</code> scopes the list to one workspace, including its AI-callable
-macros.</p>
+capped at 100. <code>workspaceId</code> scopes the list to one workspace; the caller&#39;s
+agent-callable macros are listed for a workspace where they may run every step.</p>
 <p>Limited to 5 calls per 60-second sliding window per user; more fail with
 <code>RATE_LIMITED</code>. Fails with <code>FEATURE_DISABLED</code> while the AI command surface is off.</p>
 </div>
+
+</section>
+</section>
+<section data-group>
+<h2 id="group-macro">Macro <span class="faint">3</span></h2>
+<section class="entry" id="macroStepCommands" data-name="macroStepCommands">
+<h3><code>macroStepCommands</code></h3>
+<div class="sig">macroStepCommands: [<a href="objects.html#Command">Command</a>!]!</div>
+<div class="desc"><p>Every built-in and app command a macro step may name, sorted by id, whatever the
+caller&#39;s role and workspace: the built-ins the server runs and those the client runs,
+and the app commands other than the agent-management ones. Plugin commands are not in
+it.</p>
+</div>
+
+</section>
+<section class="entry" id="myMacros" data-name="myMacros">
+<h3><code>myMacros</code> <span class="pill warm" title="&quot;Workspace macros are replaced by the person's macros: use userCommands, createUserCommand, updateUserCommand, deleteUserCommand and executeCommand&quot;">deprecated</span></h3>
+<div class="sig">myMacros(serverId: <a href="scalars.html#ID">ID</a>!): [<a href="objects.html#MacroDef">MacroDef</a>!]!</div>
+<div class="desc"><p>The caller&#39;s own macros in the workspace. <code>FORBIDDEN</code> for a non-member.</p>
+</div>
+
+</section>
+<section class="entry" id="macroByName" data-name="macroByName">
+<h3><code>macroByName</code> <span class="pill warm" title="&quot;Workspace macros are replaced by the person's macros: use userCommands, createUserCommand, updateUserCommand, deleteUserCommand and executeCommand&quot;">deprecated</span></h3>
+<div class="sig">macroByName(serverId: <a href="scalars.html#ID">ID</a>!, name: <a href="scalars.html#String">String</a>!): <a href="objects.html#MacroDef">MacroDef</a></div>
+<div class="desc"><p class="faint">No description in the schema.</p></div>
 
 </section>
 </section>
@@ -421,22 +447,6 @@ token is never listed.</p>
 </section>
 </section>
 <section data-group>
-<h2 id="group-macro">Macro <span class="faint">2</span></h2>
-<section class="entry" id="myMacros" data-name="myMacros">
-<h3><code>myMacros</code></h3>
-<div class="sig">myMacros(serverId: <a href="scalars.html#ID">ID</a>!): [<a href="objects.html#MacroDef">MacroDef</a>!]!</div>
-<div class="desc"><p>The caller&#39;s own macros in the workspace. <code>FORBIDDEN</code> for a non-member.</p>
-</div>
-
-</section>
-<section class="entry" id="macroByName" data-name="macroByName">
-<h3><code>macroByName</code></h3>
-<div class="sig">macroByName(serverId: <a href="scalars.html#ID">ID</a>!, name: <a href="scalars.html#String">String</a>!): <a href="objects.html#MacroDef">MacroDef</a></div>
-<div class="desc"><p class="faint">No description in the schema.</p></div>
-
-</section>
-</section>
-<section data-group>
 <h2 id="group-pipeline">Pipeline <span class="faint">1</span></h2>
 <section class="entry" id="pipelines" data-name="pipelines">
 <h3><code>pipelines</code></h3>
@@ -633,7 +643,7 @@ built-in id, another user&#39;s command and an unknown one all answer null.</p>
 </section>
 </section>
 <section data-group>
-<h2 id="group-other">Other <span class="faint">19</span></h2>
+<h2 id="group-other">Other <span class="faint">26</span></h2>
 <section class="entry" id="thread" data-name="thread">
 <h3><code>thread</code></h3>
 <div class="sig">thread(
@@ -795,13 +805,78 @@ and Moderators only: anyone else gets <code>FORBIDDEN</code>.</p>
 </div>
 
 </section>
+<section class="entry" id="bots" data-name="bots">
+<h3><code>bots</code></h3>
+<div class="sig">bots(serverId: <a href="scalars.html#ID">ID</a>!): [<a href="objects.html#Bot">Bot</a>!]!</div>
+<div class="desc"><p>The workspace&#39;s bots, deactivated ones included. Any member; <code>FORBIDDEN</code> for anyone else,
+<code>FEATURE_DISABLED</code> while the <a href="query.html#bots"><code>bots</code></a> feature is off.</p>
+</div>
+
+</section>
+<section class="entry" id="botTokens" data-name="botTokens">
+<h3><code>botTokens</code></h3>
+<div class="sig">botTokens(botUserId: <a href="scalars.html#ID">ID</a>!): [<a href="objects.html#BotToken">BotToken</a>!]!</div>
+<div class="desc"><p>The bot&#39;s tokens, revoked ones included, never their secret. Owner or Moderator of its
+workspace; <code>FORBIDDEN</code> for anyone else, <code>NOT_FOUND</code> for an unknown bot, <code>FEATURE_DISABLED</code>
+while the <a href="query.html#bots"><code>bots</code></a> feature is off.</p>
+</div>
+
+</section>
+<section class="entry" id="incomingWebhooks" data-name="incomingWebhooks">
+<h3><code>incomingWebhooks</code></h3>
+<div class="sig">incomingWebhooks(serverId: <a href="scalars.html#ID">ID</a>!): [<a href="objects.html#IncomingWebhook">IncomingWebhook</a>!]!</div>
+<div class="desc"><p>The workspace&#39;s incoming webhooks, revoked ones included, never their token. Owner or
+Moderator; <code>FORBIDDEN</code> for anyone else, <code>FEATURE_DISABLED</code> while the <a href="query.html#bots"><code>bots</code></a> feature is off.</p>
+</div>
+
+</section>
+<section class="entry" id="webhookFormats" data-name="webhookFormats">
+<h3><code>webhookFormats</code></h3>
+<div class="sig">webhookFormats: [<a href="objects.html#WebhookFormatInfo">WebhookFormatInfo</a>!]!</div>
+<div class="desc"><p>The ready-made webhook formats, the same for everyone signed in. <code>FEATURE_DISABLED</code> while
+the <a href="query.html#bots"><code>bots</code></a> feature is off.</p>
+</div>
+
+</section>
+<section class="entry" id="previewWebhookFormat" data-name="previewWebhookFormat">
+<h3><code>previewWebhookFormat</code></h3>
+<div class="sig">previewWebhookFormat(
+  serverId: <a href="scalars.html#ID">ID</a>!
+  template: <a href="scalars.html#JSON">JSON</a>!
+  headers: [<a href="inputs.html#WebhookHeaderInput">WebhookHeaderInput</a>!]!
+  body: <a href="scalars.html#String">String</a>!
+): <a href="objects.html#WebhookFormatPreview">WebhookFormatPreview</a>!</div>
+<div class="desc"><p>What a sample delivery would come to under <code>template</code>, as a delivery runs it. Nothing is
+posted or stored. Owner or Moderator of the workspace; <code>FORBIDDEN</code> for anyone else,
+<code>VALIDATION</code> for a sample over 256 KiB.</p>
+</div>
+
+</section>
+<section class="entry" id="webhookTestDeliveries" data-name="webhookTestDeliveries">
+<h3><code>webhookTestDeliveries</code></h3>
+<div class="sig">webhookTestDeliveries(sessionId: <a href="scalars.html#ID">ID</a>!, after: <a href="scalars.html#Int">Int</a>): <a href="objects.html#WebhookTestDeliveries">WebhookTestDeliveries</a>!</div>
+<div class="desc"><p>What a test session holds after <code>after</code>, oldest first, and its expiry, which this read
+extends. Its starter alone; <code>NOT_FOUND</code> for anyone else, for one that ended and once the
+starter lacks the standing to start it.</p>
+</div>
+
+</section>
+<section class="entry" id="homeLayout" data-name="homeLayout">
+<h3><code>homeLayout</code></h3>
+<div class="sig">homeLayout: <a href="objects.html#HomeLayout">HomeLayout</a></div>
+<div class="desc"><p>The signed-in person&#39;s Home layout, or null when none is stored and the client shows its
+default Home. <code>FORBIDDEN</code> for a person from another server, whose layout lives at their
+own server.</p>
+</div>
+
+</section>
 </section>
 
     </main>
   </div>
 </div>
-<footer class="site-footer container"><span class="footer-brand"><img src="../assets/rim-mark-inverse.svg" alt="" width="21" height="21"> RIM · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
-<p class="source-provenance container">Generated from <a href="https://github.com/rim-platform/rim-ui/blob/625c78e7c352dd2300217ff4cf692350e410fa7e/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>625c78e</code></p>
+<footer class="site-footer container"><span class="footer-brand"><img src="../assets/rim-lockup-glow-inverse.svg" alt="RIM" width="46" height="27"> · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
+<p class="source-provenance container">Generated from <a href="https://github.com/rim-platform/rim-ui/blob/ed1032eacc0d9b5084470131b2d34cc144406df8/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>ed1032e</code></p>
 <script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
 <script>
 (() => {

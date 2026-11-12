@@ -8,7 +8,7 @@
 <link rel="icon" href="../favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;550;600;650;700&family=JetBrains+Mono:wght@400;500&display=swap">
-<meta name="theme-color" content="#050910">
+<meta name="theme-color" content="#0b0c10">
 <link rel="stylesheet" href="../assets/site-chrome.css">
 <link rel="stylesheet" href="../assets/site.css">
 <script src="../assets/site.js" defer></script>
@@ -17,14 +17,14 @@
 <a class="skip" href="#content">Skip to content</a>
 <header class="site-header">
   <div class="container header-inner">
-    <a class="brand" href="../index.html" aria-label="RIM home"><img src="../assets/rim-mark-inverse.svg" alt="" width="32" height="32">RIM</a>
+    <a class="brand" href="../index.html" aria-label="RIM home"><img src="../assets/rim-lockup-glow-inverse.svg" alt="" width="98" height="58"></a>
     <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-navigation">Menu</button>
     <nav class="site-nav" id="site-navigation" data-open="false" aria-label="Main navigation">
+      <a href="../index.html#uses">What it's for</a>
       <a href="../index.html#privacy">Privacy</a>
-      <a href="../index.html#how">How it works</a>
-      <a href="../index.html#capabilities">Capabilities</a>
-      <a href="../index.html#community">Community</a>
+      <a href="../how-it-works/index.html">How it works</a>
       <a href="../index.html#download">Download</a>
+      <a href="../index.html#community">Community</a>
       <a href="client/getting-started.html">Get started</a>
       <a href="index.html" aria-current="location">Docs</a>
     </nav>
@@ -86,20 +86,28 @@ built-in and extended workflows fast to trigger without becoming a separate scri
 <ul>
 <li>command logic centralized</li>
 <li>plugin behavior compatible with built-ins</li>
-<li>user commands, which compose other commands, bindable</li>
+<li>macros, which compose other commands, bindable</li>
 <li>complex behavior reusable from other invocation surfaces</li>
 </ul>
 <h2 id="what-a-keybind-can-target">What A Keybind Can Target <a class="anchor" href="#what-a-keybind-can-target" aria-label="Link to this section">#</a></h2>
 <p>A keybind may target any command marked <code>keybind-capable</code>.</p>
 <p>That includes:</p>
 <ul>
-<li>built-in commands</li>
+<li>built-in commands, those the server lists and the app commands the client runs itself
+(<a href="command_model.html"><code>command_model.md</code></a>, App Commands)</li>
 <li>plugin commands</li>
 <li>integration commands</li>
-<li>user-defined commands (<code>user.&lt;key&gt;</code>), including ones that compose other commands</li>
+<li>macros (<code>user.&lt;key&gt;</code>), the person&#39;s own commands made of other commands</li>
 </ul>
-<p>A macro (<code>macro.&lt;id&gt;</code>) is not in the command registry, so no keybind targets it; a user command
-with the same steps can be bound instead.</p>
+<p>The server stores a <code>user</code> or <code>workspace</code> keybind to a built-in it lists or to an app command
+it knows. A keybind to a plugin command, or to an app command a server does not know yet (one
+that lacks <code>app_command_keybinds</code> in <code>serverInfo.capabilities</code> knows none), is refused there
+with <code>VALIDATION</code>, and the client keeps it on the device.</p>
+<p>A macro is bindable as <code>user.&lt;key&gt;</code> when every step&#39;s command is keybind-capable. A <code>user</code>
+keybind to a macro is stored on the person&#39;s home server with their other keybinds, so it
+follows them into every workspace, as the macro does (<a href="command_model.html"><code>command_model.md</code></a>, Commands And Macros).
+A workspace macro (<code>macro.&lt;id&gt;</code>, deprecated) is not in the command registry, so no keybind
+targets it.</p>
 <p>Not every command has to be keybind-capable.</p>
 <h2 id="keybind-capable-commands">Keybind-Capable Commands <a class="anchor" href="#keybind-capable-commands" aria-label="Link to this section">#</a></h2>
 <p>Commands should explicitly declare whether they support keybind invocation.</p>
@@ -247,12 +255,14 @@ press. So a workspace keybind is limited to commands that change nothing:</p>
 <ul>
 <li><code>createKeybind</code> and <code>updateKeybind</code> refuse a workspace keybind whose command is <code>Mutating</code> or
 <code>Restricted</code>, as the Owner resolves it, with a <code>VALIDATION</code> error naming the command. A
-read-only or navigation command (<code>Safe</code> or <code>Sensitive</code>) can be bound.</li>
+read-only or navigation command (<code>Safe</code> or <code>Sensitive</code>) can be bound, and so can an app
+command, which changes nothing on the server and asks the person itself before any act that
+does.</li>
 <li>They refuse a workspace keybind whose <code>presetArgs</code> hold a <code>server_id</code> other than the
 keybind&#39;s own workspace.</li>
 <li><code>resolvedKeybinds</code> leaves out a stored workspace keybind that breaks either rule, judged with
 the command as the member asking resolves it, so a binding saved before these rules, or naming
-a user command that changes data for that member, is not offered.</li>
+a macro that changes data for that member, is not offered.</li>
 </ul>
 <p>A <code>user</code> keybind is the member&#39;s own choice and may bind any keybind-capable command.</p>
 <h2 id="multiple-bindings">Multiple Bindings <a class="anchor" href="#multiple-bindings" aria-label="Link to this section">#</a></h2>
@@ -276,7 +286,8 @@ a user command that changes data for that member, is not offered.</li>
 </ul>
 <p>In the current backend shape:</p>
 <ul>
-<li>the backend stores <code>user</code> and <code>workspace</code> keybinds</li>
+<li>the backend stores <code>user</code> and <code>workspace</code> keybinds, to app commands as well, so a person&#39;s
+bindings follow them across devices and a workspace can share them</li>
 <li>the backend exposes <code>default</code> keybind suggestions as a separate layer, not as persisted keybind
 records</li>
 <li>the client/runtime is expected to own <code>device_local</code> keybinds and final runtime keypress handling</li>
@@ -354,8 +365,8 @@ future client-side layer on top of backend-resolved data</li>
     </main>
   </div>
 </div>
-<footer class="site-footer container"><span class="footer-brand"><img src="../assets/rim-mark-inverse.svg" alt="" width="21" height="21"> RIM · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
-<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-server/blob/7bc08f0c95e01769408e4756d418efea30c5b70b/docs/keybind_model.md">rim-server/docs/keybind_model.md</a> at <code>7bc08f0</code></p>
+<footer class="site-footer container"><span class="footer-brand"><img src="../assets/rim-lockup-glow-inverse.svg" alt="RIM" width="46" height="27"> · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-server/blob/beb5a48f892a3ac4ef53e7ee2238413e99ee35e0/docs/keybind_model.md">rim-server/docs/keybind_model.md</a> at <code>beb5a48</code></p>
 <script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
 </body>
 </html>

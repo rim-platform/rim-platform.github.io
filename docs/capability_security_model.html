@@ -8,7 +8,7 @@
 <link rel="icon" href="../favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;550;600;650;700&family=JetBrains+Mono:wght@400;500&display=swap">
-<meta name="theme-color" content="#050910">
+<meta name="theme-color" content="#0b0c10">
 <link rel="stylesheet" href="../assets/site-chrome.css">
 <link rel="stylesheet" href="../assets/site.css">
 <script src="../assets/site.js" defer></script>
@@ -17,14 +17,14 @@
 <a class="skip" href="#content">Skip to content</a>
 <header class="site-header">
   <div class="container header-inner">
-    <a class="brand" href="../index.html" aria-label="RIM home"><img src="../assets/rim-mark-inverse.svg" alt="" width="32" height="32">RIM</a>
+    <a class="brand" href="../index.html" aria-label="RIM home"><img src="../assets/rim-lockup-glow-inverse.svg" alt="" width="98" height="58"></a>
     <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-navigation">Menu</button>
     <nav class="site-nav" id="site-navigation" data-open="false" aria-label="Main navigation">
+      <a href="../index.html#uses">What it's for</a>
       <a href="../index.html#privacy">Privacy</a>
-      <a href="../index.html#how">How it works</a>
-      <a href="../index.html#capabilities">Capabilities</a>
-      <a href="../index.html#community">Community</a>
+      <a href="../how-it-works/index.html">How it works</a>
       <a href="../index.html#download">Download</a>
+      <a href="../index.html#community">Community</a>
       <a href="client/getting-started.html">Get started</a>
       <a href="index.html" aria-current="location">Docs</a>
     </nav>
@@ -200,6 +200,11 @@ The contract is
 <li>integration commands use integration-granted capabilities only</li>
 <li>user-defined commands/macros cannot exceed the capabilities of the commands they compose plus any
 explicit local permissions granted by the user</li>
+<li>a plugin runs a command that is not its own only when its manifest lists the id in
+<code>runs_commands</code> and the person granted it; the command keeps its own permissions and gates, so
+the grant adds no capability, a <code>Mutating</code> command waits for the person&#39;s confirmation on every
+call, and a dangerous or <code>Restricted</code> command is never run for a plugin
+(<a href="command_model.html"><code>command_model.md</code></a>, Who Can Run Commands)</li>
 </ul>
 <p>This rule is required to avoid privilege escalation.</p>
 <h2 id="user-defined-commands-and-macros">User-Defined Commands And Macros <a class="anchor" href="#user-defined-commands-and-macros" aria-label="Link to this section">#</a></h2>
@@ -264,7 +269,9 @@ And Moderation), so a command can never do more than the same action through Gra
 <li><code>plugin</code></li>
 <li><code>integration</code></li>
 </ul>
-<p>Later, bot/app/webhook principals should also become explicit trust-bearing identities.</p>
+<p>A bot is an account of a workspace with tokens of its own (<a href="bots.html"><code>bots.md</code></a>); what it can reach follows
+from its <code>GUEST</code> role. Later, app and webhook principals should also become explicit trust-bearing
+identities.</p>
 <p>Trust boundaries should be visible in:</p>
 <ul>
 <li>installation prompts</li>
@@ -329,8 +336,8 @@ local behavior</li>
     </main>
   </div>
 </div>
-<footer class="site-footer container"><span class="footer-brand"><img src="../assets/rim-mark-inverse.svg" alt="" width="21" height="21"> RIM · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
-<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-server/blob/7bc08f0c95e01769408e4756d418efea30c5b70b/docs/capability_security_model.md">rim-server/docs/capability_security_model.md</a> at <code>7bc08f0</code></p>
+<footer class="site-footer container"><span class="footer-brand"><img src="../assets/rim-lockup-glow-inverse.svg" alt="RIM" width="46" height="27"> · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-server/blob/beb5a48f892a3ac4ef53e7ee2238413e99ee35e0/docs/capability_security_model.md">rim-server/docs/capability_security_model.md</a> at <code>beb5a48</code></p>
 <script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
 </body>
 </html>

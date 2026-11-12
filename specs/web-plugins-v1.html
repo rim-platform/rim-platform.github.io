@@ -8,7 +8,7 @@
 <link rel="icon" href="../favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;550;600;650;700&family=JetBrains+Mono:wght@400;500&display=swap">
-<meta name="theme-color" content="#050910">
+<meta name="theme-color" content="#0b0c10">
 <link rel="stylesheet" href="../assets/site-chrome.css">
 <link rel="stylesheet" href="../assets/site.css">
 <script src="../assets/site.js" defer></script>
@@ -17,14 +17,14 @@
 <a class="skip" href="#content">Skip to content</a>
 <header class="site-header">
   <div class="container header-inner">
-    <a class="brand" href="../index.html" aria-label="RIM home"><img src="../assets/rim-mark-inverse.svg" alt="" width="32" height="32">RIM</a>
+    <a class="brand" href="../index.html" aria-label="RIM home"><img src="../assets/rim-lockup-glow-inverse.svg" alt="" width="98" height="58"></a>
     <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-navigation">Menu</button>
     <nav class="site-nav" id="site-navigation" data-open="false" aria-label="Main navigation">
+      <a href="../index.html#uses">What it's for</a>
       <a href="../index.html#privacy">Privacy</a>
-      <a href="../index.html#how">How it works</a>
-      <a href="../index.html#capabilities">Capabilities</a>
-      <a href="../index.html#community">Community</a>
+      <a href="../how-it-works/index.html">How it works</a>
       <a href="../index.html#download">Download</a>
+      <a href="../index.html#community">Community</a>
       <a href="../docs/client/getting-started.html">Get started</a>
       <a href="../docs/index.html" aria-current="location">Docs</a>
     </nav>
@@ -62,7 +62,7 @@
 </details></aside>
     <main id="content" class="prose">
 <h1 id="web-plugins-v1">Web plugins v1</h1>
-<p class="status"><span><b>Web plugins v1</b></span><span>version 1</span><span>status: implemented, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/7bc08f0c95e01769408e4756d418efea30c5b70b/docs/specs/web-plugins-v1.md">rim-server/docs/specs/web-plugins-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/7bc08f0c95e01769408e4756d418efea30c5b70b">7bc08f0</a></span></p>
+<p class="status"><span><b>Web plugins v1</b></span><span>version 1</span><span>status: implemented, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/beb5a48f892a3ac4ef53e7ee2238413e99ee35e0/docs/specs/web-plugins-v1.md">rim-server/docs/specs/web-plugins-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/beb5a48f892a3ac4ef53e7ee2238413e99ee35e0">beb5a48</a></span></p>
 <p><em>Status: implemented, normative. Extends <a href="plugin-protocol-v1.html"><code>docs/specs/plugin-protocol-v1.md</code></a> (read it first:
 the messages, the handshake, capabilities and the dangerous-command gate are defined there and do
 not change). This document is the contract between the RIM host, on the desktop and on the web,
@@ -386,6 +386,11 @@ changes.</p>
 <td>The client message service, as for a local process (routed, not frozen; <a href="e2ee-mls-v1.html"><code>e2ee-mls-v1.md</code></a>, &quot;Plugins and the client message service&quot;). Reads need a local message store; until the web app&#39;s service reads the browser&#39;s encrypted store, it answers them <code>INTERNAL_ERROR</code> with <code>data.reason: &quot;noCache&quot;</code></td>
 </tr>
 <tr>
+<td><code>rim.command.execute</code></td>
+<td>none; the <code>runs_commands</code> grant</td>
+<td>As v1 section 9 (plugin to host): runs a granted command that is not the plugin&#39;s own, with the same rules, refusals and limits</td>
+</tr>
+<tr>
 <td><code>rim.events.subscribe</code></td>
 <td><code>events.read</code></td>
 <td><code>CAPABILITY_DENIED</code>, as v1 section 18</td>
@@ -466,9 +471,10 @@ Absolute URLs stay and fall under the policy. Not supported: module
 scripts that import other files (bundle them), CSS <code>url()</code> and <code>@import</code> of panel files (use
 <code>data:</code> URIs), and inline event handler attributes, which the policy forbids. The k8s panel&#39;s shape
 (an <code>index.html</code> with a <code>&lt;style&gt;</code> block and <code>&lt;script src=&quot;app.js&quot;&gt;</code>) works unchanged.</p>
-<p>The bridge is unchanged: the host accepts a panel&#39;s message only with origin <code>&quot;null&quot;</code> and
-<code>event.source</code> that panel&#39;s iframe, takes the plugin id from the iframe, lets <code>rim.command.execute</code>
-run only the plugin&#39;s own commands, and sends <code>theme.changed</code> and <code>panel.state_update</code>. A panel
+<p>The bridge works as for a local process: the host accepts a panel&#39;s message only with origin
+<code>&quot;null&quot;</code> and <code>event.source</code> that panel&#39;s iframe, takes the plugin id from the iframe, lets
+<code>rim.command.execute</code> run the plugin&#39;s own commands and the ids it was granted in
+<code>runs_commands</code> (v1 section 12), and sends <code>theme.changed</code> and <code>panel.state_update</code>. A panel
 frame gets its plugin&#39;s policy, so it can show images from the listed origins. The TypeScript relay
 keeps <code>PanelRelay</code>&#39;s semantics (replace or shallow merge, 1 MiB per plugin, <code>state: null</code> to open
 panels when the plugin stops). Focus and Escape work as for other panels.</p>
@@ -923,8 +929,8 @@ bundles return 422, and exhausted attempt budgets return 429.</p>
     </main>
   </div>
 </div>
-<footer class="site-footer container"><span class="footer-brand"><img src="../assets/rim-mark-inverse.svg" alt="" width="21" height="21"> RIM · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
-<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-server/blob/7bc08f0c95e01769408e4756d418efea30c5b70b/docs/specs/web-plugins-v1.md">rim-server/docs/specs/web-plugins-v1.md</a> at <code>7bc08f0</code></p>
+<footer class="site-footer container"><span class="footer-brand"><img src="../assets/rim-lockup-glow-inverse.svg" alt="RIM" width="46" height="27"> · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-server/blob/beb5a48f892a3ac4ef53e7ee2238413e99ee35e0/docs/specs/web-plugins-v1.md">rim-server/docs/specs/web-plugins-v1.md</a> at <code>beb5a48</code></p>
 <script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
 </body>
 </html>

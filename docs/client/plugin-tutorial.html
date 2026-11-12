@@ -8,7 +8,7 @@
 <link rel="icon" href="../../favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;550;600;650;700&family=JetBrains+Mono:wght@400;500&display=swap">
-<meta name="theme-color" content="#050910">
+<meta name="theme-color" content="#0b0c10">
 <link rel="stylesheet" href="../../assets/site-chrome.css">
 <link rel="stylesheet" href="../../assets/site.css">
 <script src="../../assets/site.js" defer></script>
@@ -17,14 +17,14 @@
 <a class="skip" href="#content">Skip to content</a>
 <header class="site-header">
   <div class="container header-inner">
-    <a class="brand" href="../../index.html" aria-label="RIM home"><img src="../../assets/rim-mark-inverse.svg" alt="" width="32" height="32">RIM</a>
+    <a class="brand" href="../../index.html" aria-label="RIM home"><img src="../../assets/rim-lockup-glow-inverse.svg" alt="" width="98" height="58"></a>
     <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-navigation">Menu</button>
     <nav class="site-nav" id="site-navigation" data-open="false" aria-label="Main navigation">
+      <a href="../../index.html#uses">What it's for</a>
       <a href="../../index.html#privacy">Privacy</a>
-      <a href="../../index.html#how">How it works</a>
-      <a href="../../index.html#capabilities">Capabilities</a>
-      <a href="../../index.html#community">Community</a>
+      <a href="../../how-it-works/index.html">How it works</a>
       <a href="../../index.html#download">Download</a>
+      <a href="../../index.html#community">Community</a>
       <a href="getting-started.html">Get started</a>
       <a href="../index.html" aria-current="location">Docs</a>
     </nav>
@@ -161,8 +161,12 @@ document.getElementById(&quot;greet&quot;).addEventListener(&quot;click&quot;, (
 <p>A panel does not use the SDK: it speaks the panel bridge over <code>postMessage</code>, not frozen in
 protocol v1. The host sends <code>theme.changed</code> with the <code>--color-rim-*</code> tokens, <code>panel.state_update</code>
 on opening, after every <code>set</code> and as <code>null</code> once the plugin stops, and <code>rim.command.result</code> for a
-<code>requestId</code>. A panel runs only its own plugin&#39;s commands, never confirms a dangerous one, loads
-only the files <code>index.html</code> names, runs no inline handlers, and has no network.</p>
+<code>requestId</code>. A panel runs its own plugin&#39;s commands and, by the same message, the app&#39;s commands
+the person granted in <a href="plugin-manifest.html#runs_commands"><code>runs_commands</code></a>, whose answer carries
+only <code>status</code> and <code>code</code>. It never confirms a dangerous one, loads only the files <code>index.html</code>
+names, runs no inline handlers, and has no network. A panel whose plugin holds <code>chat.read</code> also
+gets <code>conversation.changed</code> with the <code>conversationId</code> of the conversation shown, and <code>null</code>
+while no conversation is shown, as on Home or another page.</p>
 <h2 id="5-test-it-plugintestts">5. Test it, <code>plugin.test.ts</code> <a class="anchor" href="#5-test-it-plugintestts" aria-label="Link to this section">#</a></h2>
 <pre><code class="language-ts">import { readFileSync } from &quot;node:fs&quot;;
 import { expect, it } from &quot;vitest&quot;;
@@ -201,7 +205,7 @@ author:&quot;, the warning that a local process runs with your account&#39;s acc
 &quot;Render UI Panels&quot;. <strong>Approve and turn on</strong> grants it and starts the plugin.</p>
 <h2 id="7-try-it">7. Try it <a class="anchor" href="#7-try-it" aria-label="Link to this section">#</a></h2>
 <p>Open a conversation. The palette lists <strong>Greeter: Greet</strong> under Greeter; running it shows the toast
-&quot;Greeter: Greet: Hello, &lt;your name&gt;!&quot;. <strong>Open Greetings</strong> in the palette, or the side rail&#39;s
+&quot;Greeter: Greet: Hello, &lt;your name&gt;!&quot;. <strong>Open Greetings</strong> in the palette, or the top bar&#39;s
 Plugins menu, one row per running panel (&quot;Greeter&quot;, then &quot;Greetings&quot;), shows the panel beside the
 tool panel; its button runs the same command. <code>host.log</code> lines and stderr go to the app&#39;s log.</p>
 <h2 id="8-ask-for-a-permission">8. Ask for a permission <a class="anchor" href="#8-ask-for-a-permission" aria-label="Link to this section">#</a></h2>
@@ -281,8 +285,8 @@ adds it in Workspace settings → Plugins → Add from files. Members find it in
     </main>
   </div>
 </div>
-<footer class="site-footer container"><span class="footer-brand"><img src="../../assets/rim-mark-inverse.svg" alt="" width="21" height="21"> RIM · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
-<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/625c78e7c352dd2300217ff4cf692350e410fa7e/docs/plugin-tutorial.md">rim-ui/docs/plugin-tutorial.md</a> at <code>625c78e</code></p>
+<footer class="site-footer container"><span class="footer-brand"><img src="../../assets/rim-lockup-glow-inverse.svg" alt="RIM" width="46" height="27"> · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/ed1032eacc0d9b5084470131b2d34cc144406df8/docs/plugin-tutorial.md">rim-ui/docs/plugin-tutorial.md</a> at <code>ed1032e</code></p>
 <script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
 </body>
 </html>

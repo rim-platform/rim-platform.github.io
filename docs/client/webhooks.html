@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en" class="documentation-page">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Post alerts from other services · RIM</title>
+<meta name="description" content="A webhook is a web address that posts into one channel. Give it to GitHub, Grafana, a backup script or any service that can call a URL, and what the service sends shows up in the channel as a message. Nothing has to run …">
+<link rel="icon" href="../../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;550;600;650;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<meta name="theme-color" content="#0b0c10">
+<link rel="stylesheet" href="../../assets/site-chrome.css">
+<link rel="stylesheet" href="../../assets/site.css">
+<script src="../../assets/site.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="../../index.html" aria-label="RIM home"><img src="../../assets/rim-lockup-glow-inverse.svg" alt="" width="98" height="58"></a>
+    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-navigation">Menu</button>
+    <nav class="site-nav" id="site-navigation" data-open="false" aria-label="Main navigation">
+      <a href="../../index.html#uses">What it's for</a>
+      <a href="../../index.html#privacy">Privacy</a>
+      <a href="../../how-it-works/index.html">How it works</a>
+      <a href="../../index.html#download">Download</a>
+      <a href="../../index.html#community">Community</a>
+      <a href="getting-started.html">Get started</a>
+      <a href="../index.html" aria-current="location">Docs</a>
+    </nav>
+  </div>
+</header>
+<div class="docs-navigation"><nav class="container docs-links" aria-label="Documentation"><span>Documentation</span><a href="../index.html">Overview</a>
+<a href="../self-hosting.html">Self-host</a>
+<a href="../../configure/index.html">Configure</a>
+<a href="../../plugins/index.html">Plugins</a>
+<a href="../../api/index.html">API</a>
+<a href="../../specs/index.html">Specs</a></nav></div>
+<div class="container docs-wrap">
+  <div class="crumbs"><a href="../index.html">Docs</a><span aria-hidden="true">/</span><a href="../using-rim.html">Using RIM</a><span aria-hidden="true">/</span><span>Post alerts from other services</span></div>
+  <div class="page with-toc">
+    <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
+<ol>
+<li><a href="#keep-the-url-secret">Keep the URL secret</a></li>
+<li><a href="#before-you-start">Before you start</a></li>
+<li><a href="#make-a-webhook">Make a webhook</a></li>
+<li><a href="#choose-a-format">Choose a format</a></li>
+<li><a href="#write-your-own-format">Write your own format</a><ol><li><a href="#try-it">Try it</a></li><li><a href="#see-what-a-service-really-sends">See what a service really sends</a></li><li><a href="#build-with-ai">Build with AI</a></li></ol></li>
+<li><a href="#look-after-your-webhooks">Look after your webhooks</a></li>
+<li><a href="#what-a-webhook-cant-do">What a webhook can't do</a></li>
+<li><a href="#next">Next</a></li>
+</ol>
+</details></aside>
+    <main id="content" class="prose">
+<h1 id="post-alerts-from-other-services">Post alerts from other services</h1>
+<p>A webhook is a web address that posts into one channel. Give it to GitHub, Grafana, a backup
+script or any service that can call a URL, and what the service sends shows up in the channel as
+a message. Nothing has to run on your side.</p>
+<p>This page shows how to set one up. It&#39;s for a workspace&#39;s Owner or a Moderator. The full reference
+is <a href="bots.html">Bots in the client</a> and rim-server&#39;s <a href="../bots.html">Bots</a>.</p>
+<h2 id="keep-the-url-secret">Keep the URL secret <a class="anchor" href="#keep-the-url-secret" aria-label="Link to this section">#</a></h2>
+<p><strong>Anyone who has the URL can post to that channel.</strong> RIM checks no password or signature on what
+arrives, so the URL itself is the key. Treat it like a password:</p>
+<ul>
+<li>Paste it only into the service that should post.</li>
+<li>Don&#39;t post it in a chat, a ticket or a public repository.</li>
+<li>If it leaks, revoke the webhook and make a new one. The old URL stops working at once.</li>
+</ul>
+<p>A post from a webhook can&#39;t mention people: <code>@channel</code>, <code>@here</code> and mentions of a person arrive as
+plain text.</p>
+<h2 id="before-you-start">Before you start <a class="anchor" href="#before-you-start" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>You&#39;re the workspace&#39;s <strong>Owner or a Moderator</strong>.</li>
+<li>The workspace has a <strong>bot</strong>. Every webhook posts as a bot, so the channel shows who posted. Make
+one in <strong>Settings &gt; Bots</strong> with <strong>New bot</strong>: give it a name, say <strong>Who runs it</strong> and <strong>Where what
+it reads goes</strong>. Everyone in the workspace sees those two lines.</li>
+<li>The channel is <strong>not encrypted and not archived</strong>. Encrypted channels can&#39;t have webhooks.</li>
+<li>A channel has <strong>one webhook at a time</strong>.</li>
+</ul>
+<p>Your server must support bots and webhooks. If you don&#39;t see the options below, it doesn&#39;t, or its
+operator switched them off.</p>
+<h2 id="make-a-webhook">Make a webhook <a class="anchor" href="#make-a-webhook" aria-label="Link to this section">#</a></h2>
+<p>There are two ways in:</p>
+<ul>
+<li><strong>From the channel:</strong> open the channel&#39;s menu (right-click it in the list, or <strong>…</strong> in its header)
+and choose <strong>New webhook…</strong>. The channel is filled in for you.</li>
+<li><strong>From Settings:</strong> <strong>Settings &gt; Bots</strong>, then <strong>New webhook</strong> under <strong>Incoming webhooks</strong>, and
+choose the channel.</li>
+</ul>
+<p>Then choose the bot and a <strong>Format</strong>, and press <strong>Create webhook</strong>. The bot joins the channel if it
+isn&#39;t in it yet.</p>
+<p>The next dialog shows the URL <strong>once</strong>. Copy it, then press <strong>Done</strong>. RIM keeps only a fingerprint
+of it, so it can&#39;t show it again. If you lose it, revoke the webhook and make another.</p>
+<h2 id="choose-a-format">Choose a format <a class="anchor" href="#choose-a-format" aria-label="Link to this section">#</a></h2>
+<p>The format decides what a delivery posts.</p>
+<ul>
+<li><p><strong>Plain.</strong> The service sends JSON with a <code>text</code> field, and that text is posted. Good for your own
+scripts. To try it, run this in a terminal, or send the same request from your script:</p>
+<pre><code class="language-sh">curl -H 'Content-Type: application/json' -d '{&quot;text&quot;:&quot;The deploy is **done**.&quot;}' \
+  &quot;https://rim.example/api/hooks/rimhook_…&quot;</code></pre>
+</li>
+<li><p><strong>GitHub.</strong> Posts new releases, pull requests opened, closed or merged, and issues opened or
+closed, one line each with a link. In the repository, open <strong>Settings &gt; Webhooks &gt; Add webhook</strong>.
+Paste the URL as the <strong>Payload URL</strong>, choose <code>application/json</code>, and leave <strong>Secret</strong> empty. Under
+events, pick <strong>Releases</strong>, <strong>Pull requests</strong> and <strong>Issues</strong>. Other events post nothing.</p>
+</li>
+<li><p><strong>Grafana.</strong> Posts firing and resolved alerts with the alert&#39;s name and summary. In Grafana, open
+<strong>Alerting &gt; Contact points</strong>, add a <strong>Webhook</strong> integration, paste the URL and choose the method
+<code>POST</code>.</p>
+</li>
+<li><p><strong>Custom.</strong> You write the rules yourself. See the next section.</p>
+</li>
+</ul>
+<p>A GitHub webhook you leave as it is gets RIM&#39;s fixes to that format with each release. Grafana&#39;s, a
+custom one, and a GitHub one you&#39;ve edited are copies that belong to the webhook, so they stay as
+they are.</p>
+<h2 id="write-your-own-format">Write your own format <a class="anchor" href="#write-your-own-format" aria-label="Link to this section">#</a></h2>
+<p>Choose <strong>Custom</strong> and press <strong>Write the format</strong>, or <strong>Edit format</strong> on a webhook&#39;s row in
+<strong>Settings &gt; Bots</strong>. Editing keeps the same URL, so nothing changes in the service.</p>
+<p>A format is a list of <strong>rules</strong>. The first rule that holds decides the post:</p>
+<ul>
+<li><strong>When:</strong> conditions such as &quot;the field <code>status</code> equals <code>failed</code>&quot;. Each is a <strong>Field</strong> of the JSON
+body or a <strong>Header</strong> whose name starts with <code>x-</code>, and what it must equal, exactly. A rule with no
+conditions always holds.</li>
+<li><strong>Post:</strong> the text, with <code>{field}</code> placeholders such as <code>{host}</code> or <code>{alerts.0.labels.alertname}</code>.
+Markdown works. <strong>Insert a field</strong> offers the fields of your sample.</li>
+<li><strong>Link</strong> (optional): a link added after the text, only if it starts with the address you give.</li>
+</ul>
+<p><strong>Start from</strong> copies a ready-made format, GitHub or Grafana, with its sample, if you&#39;d rather edit
+than start blank.</p>
+<p>If no rule holds, nothing is posted. A condition chooses what to post; it doesn&#39;t keep anyone out,
+since anyone with the URL can send any header. Don&#39;t put secrets in a format: every Owner and
+Moderator of the workspace can read it.</p>
+<h3 id="try-it">Try it <a class="anchor" href="#try-it" aria-label="Link to this section">#</a></h3>
+<p><strong>Try it</strong> takes headers, one <code>Name: value</code> per line, and a body. It tells you which rule matches
+and shows the message as it would look, or why nothing would post. Trying posts nothing.</p>
+<h3 id="see-what-a-service-really-sends">See what a service really sends <a class="anchor" href="#see-what-a-service-really-sends" aria-label="Link to this section">#</a></h3>
+<p>Writing a format is easiest against a real delivery:</p>
+<ul>
+<li><strong>For a new webhook, Start test URL</strong> gives a URL that posts nothing. Paste it into the service
+and send a test from there. When you save, the webhook keeps that same URL, so you don&#39;t have to
+change the service again.</li>
+<li><strong>For an existing webhook, Listen</strong> shows what reaches it, while it keeps posting as before.</li>
+</ul>
+<p>Each delivery appears in a list, newest first, with what your format would do with it. Open one to
+see its headers and body, and <strong>Use as sample</strong> to load it into Try it. If a body arrives
+form-encoded, set the service to send <code>application/json</code>.</p>
+<p>What arrives is held on the server in memory for a short while, at most an hour. Only you can see
+it, and closing the editor ends it.</p>
+<h3 id="build-with-ai">Build with AI <a class="anchor" href="#build-with-ai" aria-label="Link to this section">#</a></h3>
+<p><strong>Build with AI</strong> drafts the rules for you from a sentence, such as &quot;One line when a backup fails,
+with the host and the reason&quot;, and the sample in Try it.</p>
+<ul>
+<li>In the desktop app, with your own AI key set up (<a href="ai-agent.html">The AI agent</a>), it asks your model
+directly. It says what it will send, and to which provider, before anything is sent. RIM runs no
+model of its own.</li>
+<li>In the web app, or without a key, <strong>Copy prompt</strong> copies the same request for any AI you like.
+Bring the answer back with <strong>Paste JSON</strong>.</li>
+</ul>
+<p>The answer is only a draft. RIM checks it against the sample, and nothing is saved until you press
+<strong>Create webhook</strong> or <strong>Save format</strong>.</p>
+<p><strong>Copy as JSON</strong> and <strong>Paste JSON</strong> also let you share a format with another webhook or workspace.</p>
+<h2 id="look-after-your-webhooks">Look after your webhooks <a class="anchor" href="#look-after-your-webhooks" aria-label="Link to this section">#</a></h2>
+<p><strong>Settings &gt; Bots</strong> lists each webhook with its channel, bot, format and when it was last used. A
+webhook with a ready-made format other than GitHub, or one you edited, shows as Custom.</p>
+<ul>
+<li><strong>Edit format</strong> changes what it posts. The URL stays the same.</li>
+<li><strong>Revoke</strong> stops the URL at once. Then you can make a new webhook for the channel.</li>
+<li><strong>Deactivating the bot</strong> stops all of its webhooks.</li>
+</ul>
+<p>A webhook takes at most 30 calls a minute. Calls past that post nothing.</p>
+<h2 id="what-a-webhook-cant-do">What a webhook can&#39;t do <a class="anchor" href="#what-a-webhook-cant-do" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><strong>Read anything.</strong> It only posts. It can&#39;t see the channel or call the service back.</li>
+<li><strong>Post in encrypted conversations,</strong> direct messages or groups.</li>
+<li><strong>Check who sent a delivery.</strong> Whoever has the URL can post. That&#39;s why it must stay secret.</li>
+</ul>
+<p>For a bot that reads, reacts or answers, use the bot API in rim-server&#39;s
+<a href="../bots.html">Bots</a>.</p>
+<h2 id="next">Next <a class="anchor" href="#next" aria-label="Link to this section">#</a></h2>
+<ul>
+<li><a href="bots.html">Bots in the client</a>: how bots are marked, and everything in Settings &gt; Bots.</li>
+<li><a href="agents.html">Connect an AI agent</a>: letting a program on your computer read and post, with your
+approval.</li>
+<li><a href="commands-and-automation.html">Commands and automation</a>: pipelines that post as a bot.</li>
+</ul>
+
+    </main>
+  </div>
+</div>
+<footer class="site-footer container"><span class="footer-brand"><img src="../../assets/rim-lockup-glow-inverse.svg" alt="RIM" width="46" height="27"> · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/ed1032eacc0d9b5084470131b2d34cc144406df8/docs/webhooks.md">rim-ui/docs/webhooks.md</a> at <code>ed1032e</code></p>
+<script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
+</body>
+</html>

@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How RIM works · RIM</title>
+<meta name="description" content="How a message travels in RIM: relays and hosts, identity and keys, end-to-end encryption with MLS, signed traffic between servers, and what servers can see.">
+<link rel="canonical" href="https://rim-platform.org/how-it-works/">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://rim-platform.org/how-it-works/">
+<meta property="og:title" content="How RIM works">
+<meta property="og:description" content="Relays and hosts, identity and keys, end-to-end encryption, signed traffic between servers, and what servers can see.">
+<meta property="og:image" content="https://rim-platform.org/assets/social-preview.jpg">
+<meta name="theme-color" content="#0b0c10">
+<link rel="icon" href="../favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;550;600;650;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../assets/site-chrome.css">
+<link rel="stylesheet" href="../assets/home.css">
+<script src="../assets/site.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<!-- site-header:start -->
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="../index.html" aria-label="RIM home"><img src="../assets/rim-lockup-glow-inverse.svg" alt="" width="98" height="58"></a>
+    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-navigation">Menu</button>
+    <nav class="site-nav" id="site-navigation" data-open="false" aria-label="Main navigation">
+      <a href="../index.html#uses">What it's for</a>
+      <a href="../index.html#privacy">Privacy</a>
+      <a href="index.html" aria-current="location">How it works</a>
+      <a href="../index.html#download">Download</a>
+      <a href="../index.html#community">Community</a>
+      <a href="../docs/client/getting-started.html">Get started</a>
+      <a href="../docs/index.html">Docs</a>
+    </nav>
+  </div>
+</header>
+<!-- site-header:end -->
+<main id="content">
+  <section class="hero hiw-hero container" aria-labelledby="hiw-title">
+    <p class="eyebrow">How it works</p>
+    <h1 id="hiw-title" class="hiw-title">How RIM works.</h1>
+    <p class="hiw-lede">What happens to a message between your device and everyone else's, who holds which keys, and what each server can and can't see. Every claim links the document or specification it summarises.</p>
+    <nav class="hiw-index" aria-label="On this page"><a href="#message">How a message travels</a><a href="#roles">Relay and host</a><a href="#identity">Identity and keys</a><a href="#encryption">End-to-end encryption</a><a href="#between-servers">Between servers</a><a href="#what-servers-see">What servers see</a><a href="#questions">Questions</a></nav>
+  </section>
+
+  <section class="section container" id="message" aria-labelledby="message-title">
+    <div class="section-head"><div><p class="eyebrow">01 / A message</p><h2 id="message-title">One server to start.<br>Connect across servers.</h2></div><p>RIM separates your connection to the network from the place a workspace runs. A relay delivers. A host runs workspaces. The same server program can be either, or both.</p></div>
+    <div class="flow" role="figure" aria-label="A client talks to its relay, which forwards signed requests to an independent workspace host. Hosts push signed events to each member's relay for delivery to their devices.">
+      <div class="flow-label"><span>WORKSPACE COMMUNICATION</span><span>Explanatory diagram · not a screenshot</span></div>
+      <div class="flow-track"><div class="flow-node"><div class="node-icon" aria-hidden="true">[ : ]</div><strong>Your devices</strong><p>Desktop or web app.<br>Private keys and local state.</p></div><div class="flow-arrow" aria-hidden="true"></div><div class="flow-node featured"><div class="node-icon" aria-hidden="true">⇄</div><strong>Your relay</strong><p>Your account and devices.<br>Routes requests and queues events.</p></div><div class="flow-arrow" aria-hidden="true"></div><div class="flow-node"><div class="node-icon" aria-hidden="true">{ # }</div><strong>Workspace host</strong><p>Channels, membership and roles.<br>Serves members from other relays.</p></div></div>
+      <p class="flow-caption">Other members connect through their own relays. Servers exchange signed requests and responses.</p>
+    </div>
+    <ol class="steps hiw-steps">
+      <li><div><strong>Your device signs it.</strong><p>Your app prepares the message and signs the request with its device key. In an encrypted conversation it encrypts the text first. <a href="../specs/server-to-server-v1.html">Server to server ↗</a></p></div></li>
+      <li><div><strong>Your relay forwards it.</strong><p>If the workspace or conversation lives on another server, your relay forwards the request there. If it lives on your own server, nothing leaves it. <a href="../docs/relay.html">The relay ↗</a></p></div></li>
+      <li><div><strong>The host decides.</strong><p>The server that hosts the conversation checks membership and permissions, stores the message, and sends signed events to each member's relay. <a href="../docs/messaging.html">Messaging ↗</a></p></div></li>
+      <li><div><strong>Devices check it.</strong><p>Each member's relay queues the event for their devices. The apps check the host's signature, and in an encrypted conversation decrypt the text. <a href="../docs/security-overview.html#servers-and-federation">Security overview ↗</a></p></div></li>
+    </ol>
+  </section>
+
+  <section class="section container" id="roles" aria-labelledby="roles-title">
+    <div class="section-head"><div><p class="eyebrow">02 / Relay and host</p><h2 id="roles-title">Two jobs.<br>One program.</h2></div><p>A server's operator picks its job with <code>RIM_ROLE</code>. Most teams start with one server that does both. <a class="text-link" href="../docs/relay.html#configuration">Configuration ↗</a></p></div>
+    <div class="role-grid"><article><code>RIM_ROLE=relay</code><h3>A person's connection.</h3><p>Holds local accounts, devices and profile cards, and queues events for their devices. It forwards workspace requests and can be home to direct messages and private groups. A relay-only server can't create workspaces.</p><a class="text-link" href="../docs/deploy/index.html#deploying-a-public-relay">Run your own relay ↗</a></article><article><code>RIM_ROLE=host</code><h3>A workspace's home.</h3><p>Runs workspaces and checks membership, permissions and moderation. People with accounts on other relays can join. It refuses a relay's jobs: contacts, direct message requests and deliveries.</p><a class="text-link" href="../docs/relay.html">The relay and the host ↗</a></article><article><code>RIM_ROLE=both</code><h3>The simple start.</h3><p>The default. One server runs your team's workspaces and is its members' relay. The Docker Compose setup uses it.</p><a class="text-link" href="../docs/self-hosting.html">Self-hosting ↗</a></article></div>
+    <div class="privacy-note"><span class="eyebrow">The public relay</span><p>The desktop app signs in to <code>relay.rim-platform.org</code> unless you choose another server. It's the project's own server, running as both relay and host: it also hosts the RIM community workspace, which every new account joins. It's a test run, with no promise about availability. <a href="../docs/operations/relay-public.html">Running the public relay ↗</a></p></div>
+  </section>
+
+  <section class="section container" id="identity" aria-labelledby="identity-title">
+    <div class="section-head"><div><p class="eyebrow">03 / Identity and keys</p><h2 id="identity-title">You are a key,<br>not a row in a database.</h2></div><p>A person is a key pair, and servers store what that person signs. A server can refuse service, but it can't sign as you. <a class="text-link" href="../specs/key-identity-v1.html">Key identity ↗</a></p></div>
+    <div class="hiw-grid">
+      <article><h3>Your account id.</h3><p>Your id, <code>rimp1_…</code>, comes from the first entry of your key log. That entry names an identity key and a recovery key. The log only grows by signed changes, and apps refuse a log that was cut short or forked. <a href="../docs/security-overview.html#identity">Identity ↗</a></p></article>
+      <article><h3>A key on each device.</h3><p>Each device has its own key, certified by your identity key. Only device keys sign in, together with your password. Linking a new device means checking a short fingerprint on both screens. <a href="../specs/device-linking-v1.html">Device linking ↗</a></p></article>
+      <article><h3>Twelve words to recover.</h3><p>Your recovery phrase makes the recovery key, which is never stored anywhere. With every device lost, it gets the account back and signs out every other device. <a href="../docs/client/identity-key-backup.html">Keys, recovery and backup ↗</a></p></article>
+      <article><h3>Your history is separate.</h3><p>Recovering the account doesn't bring back old encrypted messages. Those come back only from your history archive, if you set one up. <a href="../specs/history-archive-v1.html">History archive ↗</a></p></article>
+    </div>
+  </section>
+
+  <section class="section container" id="encryption" aria-labelledby="encryption-title">
+    <div class="section-head"><div><p class="eyebrow">04 / End-to-end encryption</p><h2 id="encryption-title">Encrypted on your devices.<br>Not on the server.</h2></div><p>Direct messages and groups are encrypted with MLS, the standard in RFC 9420, through the OpenMLS library. <a class="text-link" href="../specs/e2ee-mls-v1.html">Encryption specification ↗</a></p></div>
+    <div class="hiw-grid">
+      <article><h3>Devices are the members.</h3><p>Each encrypted conversation is an MLS group, and each of your devices is a member of it. A sending device encrypts; the others decrypt. Servers order and deliver what they can't read. <a href="../docs/client/rim-mls.html">The MLS engine ↗</a></p></article>
+      <article><h3>Which conversations.</h3><p>A new direct message or group is encrypted when the person who starts it has encryption set up. Across servers it always is. An older one can be upgraded once, with a visible marker, and stays encrypted from then on. <a href="../docs/client/e2ee-desktop.html">Encrypted DMs and groups ↗</a></p></article>
+      <article><h3>Channels aren't, on purpose.</h3><p>Channels, private ones too, can be read by their host. That's what lets server search, pipelines, bots and agents work there, and lets people who join later read the history. <a href="../docs/security-overview.html#encryption">Encryption ↗</a></p></article>
+      <article><h3>Tools you let in.</h3><p>A plugin or agent you allow to read an encrypted conversation reads the decrypted text, and the text leaves end-to-end encryption with it. No setting opens one to an outside agent, but a plugin command it runs can return what that plugin may read. <a href="../specs/agent-data-flow-v1.html">What agents are given ↗</a></p></article>
+    </div>
+  </section>
+
+  <section class="section container" id="between-servers" aria-labelledby="between-title">
+    <div class="section-head"><div><p class="eyebrow">05 / Between servers</p><h2 id="between-title">Every request<br>is signed.</h2></div><p>Each server has its own key and id, <code>rims1_…</code>, published in a signed descriptor. Servers sign what they send and check what they get. <a class="text-link" href="../docs/server-identity.html">Server identity ↗</a></p></div>
+    <div class="hiw-grid">
+      <article><h3>Signed both ways.</h3><p>Requests between servers carry HTTP Message Signatures, with a five-minute window and a single-use nonce, over TLS. Responses are signed too. <a href="../specs/server-to-server-v1.html">Server to server ↗</a></p></article>
+      <article><h3>Pinned on first contact.</h3><p>A server remembers each peer's key log the first time they talk. A peer whose log forks is refused until its operator checks it another way. <a href="../docs/security-overview.html#servers-and-federation">Servers and federation ↗</a></p></article>
+      <article><h3>Your device signs your writes.</h3><p>A relay can't forge something you wrote, because a write needs your device's signature. It can't change a host's events either, because apps check the host's key. <a href="../docs/relay.html">The relay ↗</a></p></article>
+    </div>
+  </section>
+
+  <section class="section container" id="what-servers-see" aria-labelledby="see-title">
+    <div class="section-head"><div><p class="eyebrow">06 / What servers see</p><h2 id="see-title">Encryption hides the words,<br>not the conversation.</h2></div><p>What each server learns. Encryption doesn't hide who talks to whom, or when. <a class="text-link" href="../docs/security-overview.html">Security overview ↗</a></p></div>
+    <div class="hiw-table" role="table" aria-label="What each server can see">
+      <div role="row" class="hiw-row hiw-head"><span role="columnheader">Server</span><span role="columnheader">Can see</span><span role="columnheader">Can't do</span></div>
+      <div role="row" class="hiw-row"><span role="rowheader">Your relay</span><span role="cell">Your account, devices and profile card; the channel events and direct message metadata it queues for you. It can drop or delay them.</span><span role="cell">Read your direct messages, sign as you, or change a host's events.</span></div>
+      <div role="row" class="hiw-row"><span role="rowheader">A workspace host</span><span role="cell">Its channels' messages, private ones too; who is a member, their devices and activity, including members from other servers.</span><span role="cell">Read direct messages homed elsewhere, sign as a device, or see your IP address unless you connect to it directly.</span></div>
+      <div role="row" class="hiw-row"><span role="rowheader">Every server</span><span role="cell">Metadata: members, devices, senders, times, sizes, mentions, reactions, pins and threads.</span><span role="cell">Read encrypted messages, which it stores and delivers without the keys.</span></div>
+    </div>
+    <div class="privacy-note"><span class="eyebrow">Not reviewed yet</span><p>An outside review of RIM's cryptography is still to come. These are early, pre-review releases. <a href="../docs/security-overview.html#known-gaps-and-review-status">Known gaps and review status ↗</a></p></div>
+  </section>
+
+  <section class="section container" id="questions" aria-labelledby="questions-title">
+    <div class="section-head"><div><p class="eyebrow">Questions</p><h2 id="questions-title">The three people ask most.</h2></div><p>Each answer links the page with the details.</p></div>
+    <div class="explainers">
+      <details><summary>Where does my account live? Where are my keys?</summary><div class="details-body"><p>Your identity is based on a key pair. Your relay holds your account, profile, public device records and sign-in records. Private identity and device keys stay on your devices; the recovery phrase lets you recover your identity if your devices are lost.</p><p>A workspace host keeps your membership and role in its workspace. Joining a workspace on another host doesn't move your account there. Recovering your identity and restoring old encrypted history are separate: old history needs your archive.</p><a href="../docs/client/identity-key-backup.html">Keys, recovery and identity backup ↗</a></div></details>
+      <details><summary>What happens when I send a message across servers?</summary><div class="details-body"><ol><li>Your app prepares the action and signs the cross-server request with its device key.</li><li>Your relay forwards the request to the server responsible for that conversation or workspace.</li><li>The responsible server checks permissions, processes the action and sends signed events through members' relays. Apps check the host's events.</li></ol><p>Server discovery uses signed descriptors and pinned server identities. Traffic between servers uses HTTP Message Signatures with replay protection, over TLS.</p><a href="../specs/server-to-server-v1.html">Read the server-to-server protocol ↗</a></div></details>
+      <details><summary>Where does end-to-end encryption happen?</summary><div class="details-body"><p>In the apps. New direct messages and groups are encrypted when their creator has encryption set up; older plaintext conversations stay as they are until upgraded. Direct messages and groups across servers require encryption. Each encrypted conversation is an MLS group, with devices as members. A sending device encrypts the content; recipient devices decrypt it. Servers order and deliver ciphertext without holding the conversation's keys.</p><p>Channels are deliberately readable by their server, for shared history, server search and workflows. Encryption doesn't hide metadata such as membership and message timing. Letting a plugin or the built-in agent read decrypted content gives that tool access to it.</p><a href="../specs/e2ee-mls-v1.html">Read the encryption specification ↗</a></div></details>
+    </div>
+    <div class="link-row"><a class="text-link" href="../docs/architecture.html">Architecture ↗</a><a class="text-link" href="../docs/self-hosting.html">Run your own instance ↗</a><a class="text-link" href="../docs/deploy/index.html#deploying-a-public-relay">Run a relay only ↗</a><a class="text-link" href="../index.html">Back to the overview ↗</a></div>
+  </section>
+</main>
+<!-- site-footer:start -->
+<footer class="site-footer container"><span class="footer-brand"><img src="../assets/rim-lockup-glow-inverse.svg" alt="RIM" width="46" height="27"> · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
+<!-- site-footer:end -->
+</body>
+</html>

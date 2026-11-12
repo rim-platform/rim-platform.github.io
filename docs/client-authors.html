@@ -4,11 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Client authors · RIM</title>
-<meta name="description" content="Talking to a RIM server from your own client: the HTTP and GraphQL contract, sessions and CSRF, pagination, messaging, search and the change feed.">
+<meta name="description" content="Talking to a RIM server from your own client: the HTTP and GraphQL contract, sessions and CSRF, pagination, messaging, search and the change feed, and bots with their API and incoming webhooks.">
 <link rel="icon" href="../favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;550;600;650;700&family=JetBrains+Mono:wght@400;500&display=swap">
-<meta name="theme-color" content="#050910">
+<meta name="theme-color" content="#0b0c10">
 <link rel="stylesheet" href="../assets/site-chrome.css">
 <link rel="stylesheet" href="../assets/site.css">
 <script src="../assets/site.js" defer></script>
@@ -17,14 +17,14 @@
 <a class="skip" href="#content">Skip to content</a>
 <header class="site-header">
   <div class="container header-inner">
-    <a class="brand" href="../index.html" aria-label="RIM home"><img src="../assets/rim-mark-inverse.svg" alt="" width="32" height="32">RIM</a>
+    <a class="brand" href="../index.html" aria-label="RIM home"><img src="../assets/rim-lockup-glow-inverse.svg" alt="" width="98" height="58"></a>
     <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-navigation">Menu</button>
     <nav class="site-nav" id="site-navigation" data-open="false" aria-label="Main navigation">
+      <a href="../index.html#uses">What it's for</a>
       <a href="../index.html#privacy">Privacy</a>
-      <a href="../index.html#how">How it works</a>
-      <a href="../index.html#capabilities">Capabilities</a>
-      <a href="../index.html#community">Community</a>
+      <a href="../how-it-works/index.html">How it works</a>
       <a href="../index.html#download">Download</a>
+      <a href="../index.html#community">Community</a>
       <a href="client/getting-started.html">Get started</a>
       <a href="index.html" aria-current="location">Docs</a>
     </nav>
@@ -42,7 +42,7 @@
 
     <main id="content" class="prose">
 <h1>Client authors</h1>
-<p class="lede">Talking to a RIM server from your own client: the HTTP and GraphQL contract, sessions and CSRF, pagination, messaging, search and the change feed.</p>
+<p class="lede">Talking to a RIM server from your own client: the HTTP and GraphQL contract, sessions and CSRF, pagination, messaging, search and the change feed, and bots with their API and incoming webhooks.</p>
 <h2 id="the-api">The API</h2>
 <ul class="cards">
 <li><a href="api.html"><b>Talking to a server over HTTP</b><span>The HTTP contract a client sees: the routes, how a session and its CSRF token work, which origins a browser may call from, the error codes, pagination and how a client tells which server version it talks to. The GraphQL …</span><span class="src">rim-server/docs/api.md</span></a></li>
@@ -50,6 +50,10 @@
 <li><a href="messaging.html"><b>Messaging Contract</b><span>This document describes the backend contract for conversations, messages, threads, and attachments.</span><span class="src">rim-server/docs/messaging.md</span></a></li>
 <li><a href="search.html"><b>Message Search (Full-Text Search)</b><span>searchMessages runs Postgres full-text search over message text, scoped to conversations the requesting actor can see. This document covers the query operator syntax, the ranking/pagination design, and the visibility …</span><span class="src">rim-server/docs/search.md</span></a></li>
 <li><a href="message-change-feed.html"><b>Message Change Feed</b><span>The change feed lets a client ask &quot;what changed in these channels since I last synced&quot; and get every message created, edited or deleted since then, in order, with a cursor it can store. It is the server half of the …</span><span class="src">rim-server/docs/message-change-feed.md</span></a></li>
+</ul>
+<h2 id="bots-and-webhooks">Bots and webhooks</h2>
+<ul class="cards">
+<li><a href="bots.html"><b>Bots</b><span>A bot is an account of one workspace that software runs instead of a person. An Owner or a Moderator creates it, and it reads and writes only in the channels they add it to. The contract is specs/bots-v1.md; this page …</span><span class="src">rim-server/docs/bots.md</span></a></li>
 </ul>
 <h2 id="see-also">See also</h2>
 <ul class="cards">
@@ -59,8 +63,8 @@
     </main>
   </div>
 </div>
-<footer class="site-footer container"><span class="footer-brand"><img src="../assets/rim-mark-inverse.svg" alt="" width="21" height="21"> RIM · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
-<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-server/tree/7bc08f0c95e01769408e4756d418efea30c5b70b">rim-server</a> <code>7bc08f0</code> and <a href="https://github.com/rim-platform/rim-ui/tree/625c78e7c352dd2300217ff4cf692350e410fa7e">rim-ui</a> <code>625c78e</code></p>
+<footer class="site-footer container"><span class="footer-brand"><img src="../assets/rim-lockup-glow-inverse.svg" alt="RIM" width="46" height="27"> · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-server/tree/beb5a48f892a3ac4ef53e7ee2238413e99ee35e0">rim-server</a> <code>beb5a48</code> and <a href="https://github.com/rim-platform/rim-ui/tree/ed1032eacc0d9b5084470131b2d34cc144406df8">rim-ui</a> <code>ed1032e</code></p>
 
 </body>
 </html>

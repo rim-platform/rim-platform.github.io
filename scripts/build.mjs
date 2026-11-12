@@ -7,13 +7,14 @@ import { copyFileSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 import { OUTPUT_DIRS, check } from "./check.mjs";
-import { writeHomepageChrome } from "./lib/chrome.mjs";
+import { writeHandwrittenChrome } from "./lib/chrome.mjs";
 import { writeDownloads, releaseOf } from "./lib/downloads.mjs";
 import { renderApi } from "./lib/graphql.mjs";
 import { renderConfigure } from "./lib/configure.mjs";
 import { planDocs, renderDocIndexes, renderDocs, renderSpecIndex, renderedFrom } from "./lib/docs.mjs";
 import { renderPage } from "./lib/layout.mjs";
 import { Linker } from "./lib/markdown.mjs";
+import { selfhostRelease, writeSelfhost } from "./lib/selfhost.mjs";
 import { SITE_ROOT, loadSources } from "./lib/sources.mjs";
 
 const sources = loadSources();
@@ -55,8 +56,10 @@ for (const p of pages) {
   writeFileSync(file, renderPage(p));
 }
 const release = releaseOf(sources.ui);
-writeHomepageChrome();
+const selfhost = selfhostRelease(sources);
+writeHandwrittenChrome();
 writeDownloads(release);
+writeSelfhost(selfhost);
 copyFileSync(path.join(SITE_ROOT, "templates", "site.css"), path.join(SITE_ROOT, "assets", "site.css"));
 
 const count = (prefix) => pages.filter((p) => p.out.startsWith(prefix)).length;
@@ -81,7 +84,7 @@ console.log(`  root fields in "other": ${ar.other} (first word only: ${ar.strict
 list("other", ar.otherFields);
 for (const w of linker.warnings) console.warn(`warning: ${w}`);
 
-const result = check(undefined, release);
+const result = check(undefined, release, selfhost);
 for (const e of result.errors) console.error(`error: ${e}`);
 console.log(`check: ${result.files.length} pages, ${(result.bytes / 1024).toFixed(0)} KiB, ${result.errors.length} errors`);
 if (result.errors.length) process.exit(1);

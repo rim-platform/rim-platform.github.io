@@ -50,7 +50,7 @@ const GROUPS = [
   {
     key: "client-authors",
     title: "Client authors",
-    lede: "Talking to a RIM server from your own client: the HTTP and GraphQL contract, sessions and CSRF, pagination, messaging, search and the change feed.",
+    lede: "Talking to a RIM server from your own client: the HTTP and GraphQL contract, sessions and CSRF, pagination, messaging, search and the change feed, and bots with their API and incoming webhooks.",
     subs: [
       {
         title: "The API",
@@ -62,6 +62,7 @@ const GROUPS = [
           ["server", "docs/message-change-feed.md"],
         ],
       },
+      { title: "Bots and webhooks", items: [["server", "docs/bots.md"]] },
     ],
     extra: [{ href: "api/index.html", title: "GraphQL reference", text: "Every query, mutation, subscription and type, generated from the schema." }],
   },
@@ -101,12 +102,15 @@ const GROUPS = [
   {
     key: "using-rim",
     title: "Using RIM",
-    lede: "The desktop and web client: getting started from a fresh install to a first conversation, commands, keybinds, macros and pipelines, the AI agent, installing it and signing in, building it, the keyboard, plugins, keys and recovery, and linking a device.",
+    lede: "The desktop and web client: getting started from a fresh install to a first conversation, making Home your own, connecting an AI agent, posting alerts from other services, commands, keybinds, macros and pipelines, the built-in AI agent, installing it and signing in, building it, the keyboard, plugins, keys and recovery, and linking a device.",
     subs: [
       {
         title: "Start here",
         items: [
           ["ui", "docs/getting-started.md"],
+          ["ui", "docs/home.md"],
+          ["ui", "docs/agents.md"],
+          ["ui", "docs/webhooks.md"],
           ["ui", "docs/commands-and-automation.md"],
           ["ui", "docs/ai-agent.md"],
         ],
