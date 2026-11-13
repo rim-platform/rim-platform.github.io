@@ -67,7 +67,6 @@ not part of these assets beyond what a screen shows of the throwaway local insta
 | `agent-approval.webp` | Inside the isolated desktop harness: create an account and the workspace Fernhill with `#deploys`, post two messages, Settings → Agents → Let agents on this computer connect. A scripted stand-in agent (not a model) asks to pair as "Deploy notes agent"; compare the code and choose The code matches, connect. Choose what it can read: `deploys`. The stand-in lists the workspaces and channels, reads `#deploys`, and calls `rim_send_message` with release notes. Capture the card, then Cancel. |
 | `plugins.webp` | Recaptured on 2026-11-08 on a fresh instance from the same commits, with Maya, Leo and Priya: in `#deploys` Leo's staging note and Priya's question about a new client. Install the Releases plugin from its release link with `#sha256=` and the hash above, Approve and turn on, open `#deploys`, then Plugins in the top bar → Releases. Remove every repository but `rim-platform/rim-ui`, run **Releases: Post to this conversation** from the palette, which posts the latest release as Maya, and let Priya reply. Open "4 earlier releases" in the panel and capture. |
 | `commands.webp` | In `#general`, press Ctrl+K. |
-| `custom-command.webp` | Settings → Commands → New command. ID `clear_unread_badges`, title `Clear unread badges`, description `Mark workspace conversations and notifications as read.`, steps Mark All as Read and Mark All Notifications Read. Capture the filled form, then Create. |
 | `macros.webp` | Settings → Macros → New Macro. Name `Heads down`, description `Clear notifications and focus for two hours.`, steps `notifications.mark_all_read` with `{}` and `notifications.dnd` with `{"mode":"until","minutes":"120"}`. Save, then open it with the pencil and capture the edit form. |
 | `pipelines.webp` | Settings → Pipelines → New Pipeline. Name `Follow deployment failures`, description `Look up earlier failures when a deploy fails.`, trigger New Message in `#deploys`, filter Message contains pattern `FAILED`, action `chat.search_messages` with `{"query":"FAILED"}`, cooldown 300. Capture the filled editor, then Save. |
 
@@ -75,7 +74,7 @@ not part of these assets beyond what a screen shows of the throwaway local insta
 
 - Every webhook delivery answered `{"ok":true}` and posted, and the test URL answered
   `{"ok":true,"test":true}` and posted nothing until the webhook was saved.
-- The custom command, the macro and the pipeline saved; the pipeline shows as Active.
+- The macro and the pipeline saved; the pipeline shows as Active.
 - **Releases: Post to this conversation** answered "Posted 1 release" and the message appeared in
   `#deploys` under Maya's name.
 - The stand-in agent's send ended as `discarded` after Cancel, and nothing was posted. The
