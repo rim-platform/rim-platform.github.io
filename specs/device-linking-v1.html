@@ -58,7 +58,7 @@
 </details></aside>
     <main id="content" class="prose">
 <h1 id="device-linking-v1">Device linking v1</h1>
-<p class="status"><span><b>Device linking v1</b></span><span>version 1</span><span>status: implemented, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/beb5a48f892a3ac4ef53e7ee2238413e99ee35e0/docs/specs/device-linking-v1.md">rim-server/docs/specs/device-linking-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/beb5a48f892a3ac4ef53e7ee2238413e99ee35e0">beb5a48</a></span></p>
+<p class="status"><span><b>Device linking v1</b></span><span>version 1</span><span>status: implemented, normative</span><span><a href="https://github.com/rim-platform/rim-server/blob/9bc8d78d85b4b2c8af407e28afb8aa37e8079dc2/docs/specs/device-linking-v1.md">rim-server/docs/specs/device-linking-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/9bc8d78d85b4b2c8af407e28afb8aa37e8079dc2">9bc8d78</a></span></p>
 <p><em>Status: implemented, normative. Extends <a href="key-identity-v1.html"><code>docs/specs/key-identity-v1.md</code></a>
 (read it first: keys, tagged encodings, device certificates and challenge login are defined
 there). This document is the contract between the server (<code>DeviceLinkService</code>), the desktop
@@ -658,7 +658,7 @@ errors tables, idempotent repeats, expiry at the boundary, answer resetting expi
 <li><code>rim_infra_db</code> (<code>db-tests</code>): two concurrent offers on one link, exactly one wins; transitions
 refuse expired rows; cleanup deletes only rows past one hour; terminal states clear sealed
 columns; the partial unique index; cascade on user delete; migration up and down.</li>
-<li><a href="https://github.com/rim-platform/rim-server/blob/beb5a48f892a3ac4ef53e7ee2238413e99ee35e0/rim_api/tests/device_link_e2e.rs"><code>rim_api/tests/device_link_e2e.rs</code></a> (<code>e2e-tests</code>), with real sealed messages from
+<li><a href="https://github.com/rim-platform/rim-server/blob/9bc8d78d85b4b2c8af407e28afb8aa37e8079dc2/rim_api/tests/device_link_e2e.rs"><code>rim_api/tests/device_link_e2e.rs</code></a> (<code>e2e-tests</code>), with real sealed messages from
 <code>rim_identity::device_link</code>: the whole flow from <code>startDeviceLink</code> to <code>loginWithKey</code> with the
 linked device and <code>CONSUMED</code> on the old side; anonymous calls on unknown, malformed, expired,
 cancelled and consumed links all <code>UNAUTHENTICATED</code> with identical bodies; another user&#39;s link
@@ -744,7 +744,7 @@ these bytes reproducible; readers do not depend on field order.</p>
   </div>
 </div>
 <footer class="site-footer container"><span class="footer-brand"><img src="../assets/rim-lockup-glow-inverse.svg" alt="RIM" width="46" height="27"> · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
-<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-server/blob/beb5a48f892a3ac4ef53e7ee2238413e99ee35e0/docs/specs/device-linking-v1.md">rim-server/docs/specs/device-linking-v1.md</a> at <code>beb5a48</code></p>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-server/blob/9bc8d78d85b4b2c8af407e28afb8aa37e8079dc2/docs/specs/device-linking-v1.md">rim-server/docs/specs/device-linking-v1.md</a> at <code>9bc8d78</code></p>
 <script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
 </body>
 </html>

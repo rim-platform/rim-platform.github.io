@@ -180,7 +180,7 @@ revoked.</p>
 <p>A user can ask for unread notifications by email: <code>digest</code> in their workspace notification
 settings is <code>OFF</code> (default), <code>HOURLY</code> or <code>DAILY</code> (<a href="messaging.html"><code>docs/messaging.md</code></a>, Notification rules). A
 periodic job (<code>rim_infra_services::notification::DefaultNotificationJobs</code>, driven from
-<a href="https://github.com/rim-platform/rim-server/blob/beb5a48f892a3ac4ef53e7ee2238413e99ee35e0/rim_server/src/app.rs"><code>rim_server/src/app.rs</code></a>, every <code>RIM_NOTIFICATION_DIGEST_INTERVAL_SECS</code> seconds, default 900, minimum 60) sends one email per user per workspace when all of these hold:</p>
+<a href="https://github.com/rim-platform/rim-server/blob/9bc8d78d85b4b2c8af407e28afb8aa37e8079dc2/rim_server/src/app.rs"><code>rim_server/src/app.rs</code></a>, every <code>RIM_NOTIFICATION_DIGEST_INTERVAL_SECS</code> seconds, default 900, minimum 60) sends one email per user per workspace when all of these hold:</p>
 <ul>
 <li>the oldest unread, un-emailed notification is at least one interval old (hourly: 60 minutes,
 daily: 24 hours);</li>
@@ -230,7 +230,7 @@ would be the path if one is wanted.</li>
   </div>
 </div>
 <footer class="site-footer container"><span class="footer-brand"><img src="../assets/rim-lockup-glow-inverse.svg" alt="RIM" width="46" height="27"> · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
-<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-server/blob/beb5a48f892a3ac4ef53e7ee2238413e99ee35e0/docs/email.md">rim-server/docs/email.md</a> at <code>beb5a48</code></p>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-server/blob/9bc8d78d85b4b2c8af407e28afb8aa37e8079dc2/docs/email.md">rim-server/docs/email.md</a> at <code>9bc8d78</code></p>
 <script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
 </body>
 </html>
