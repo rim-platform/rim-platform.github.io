@@ -118,9 +118,10 @@ there is no username and password sign-in and no reset by email.</li>
 checked with OPAQUE (<a href="../specs/key-identity-v1.html">key identity</a>, &quot;Account password&quot;): the
 server stores a record that checks the password without revealing it, and a sign-in needs the
 device key&#39;s proof and the password together. The server counts every login start as a wrong
-try until a login finishes: three are free, the 4th to the 9th make the next wait from one
-minute to twelve hours, and the 10th locks the password until a reset signed by the recovery
-key. A finished login returns the account&#39;s server share, sealed under the login&#39;s session
+try until a login finishes, and an account takes 10 starts an hour: the 11th waits until the
+hour&#39;s window ends. Nothing locks the password, since anyone who knows a principal id can send
+starts; each start also counts against its address (20 failures per 15 minutes, shared with
+the key sign-in). A finished login returns the account&#39;s server share, sealed under the login&#39;s session
 key; the client needs it with the password to open its local data. The records need the
 password key file <code>&lt;RIM_DATA_DIR&gt;/password-key.json</code> (<code>RIM_PASSWORD_KEY_FILE</code>), which also
 seals the shares, which <code>/readyz</code> checks and which the backups hold; without it every account
@@ -361,7 +362,7 @@ sets a retention (<a href="operations/audit-retention.html">audit retention</a>)
 <tr>
 <td>Another person using the same browser profile or OS account</td>
 <td>Open the app on a device where the account was used</td>
-<td>The account password at every sign-in, checked by the server with the counted, slowed and locked tries; the server share only after the password; the device key alone signs in no account of this server that has a password</td>
+<td>The account password at every sign-in, checked by the server with counted tries, 10 an hour per account and 20 failures per 15 minutes per address; the server share only after the password; the device key alone signs in no account of this server that has a password</td>
 <td>What the device holds unencrypted until the clients seal it under the data key; a kept session left open; an unkept one&#39;s file downloads while its cookie lives</td>
 </tr>
 <tr>
@@ -439,7 +440,7 @@ query strings or bundle contents. This route stores no workspace bundle.</p>
   </div>
 </div>
 <footer class="site-footer container"><span class="footer-brand"><img src="../assets/rim-lockup-glow-inverse.svg" alt="RIM" width="46" height="27"> · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
-<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-server/blob/9bc8d78d85b4b2c8af407e28afb8aa37e8079dc2/docs/security-overview.md">rim-server/docs/security-overview.md</a> at <code>9bc8d78</code></p>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-server/blob/f984dc62e25bbe96c8ff2c0319af1faa5ebbc595/docs/security-overview.md">rim-server/docs/security-overview.md</a> at <code>f984dc6</code></p>
 <script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
 </body>
 </html>

@@ -49,7 +49,7 @@
 <li><a href="#command-kinds">Command Kinds</a><ol><li><a href="#built-in-commands">Built-in Commands</a></li><li><a href="#app-commands">App Commands</a></li><li><a href="#plugin-provided-commands">Plugin-Provided Commands</a></li><li><a href="#integration-provided-commands">Integration-Provided Commands</a></li><li><a href="#macros">Macros</a></li></ol></li>
 <li><a href="#commands-and-macros">Commands And Macros</a><ol><li><a href="#steps">Steps</a></li><li><a href="#running-a-macro">Running a macro</a></li><li><a href="#workspace-macros-deprecated">Workspace macros, deprecated</a></li></ol></li>
 <li><a href="#size-limits">Size Limits</a></li>
-<li><a href="#command-contract">Command Contract</a><ol><li><a href="#required-fields">Required Fields</a></li><li><a href="#recommended-fields">Recommended Fields</a></li><li><a href="#confirmation-gate-h1">Confirmation gate (H1)</a></li><li><a href="#timeout-gate-t1">Timeout gate (T1)</a></li><li><a href="#audit-row">Audit row</a></li><li><a href="#refusals">Refusals</a></li></ol></li>
+<li><a href="#command-contract">Command Contract</a><ol><li><a href="#required-fields">Required Fields</a></li><li><a href="#recommended-fields">Recommended Fields</a></li><li><a href="#target-workspace">Target workspace</a></li><li><a href="#confirmation-gate-h1">Confirmation gate (H1)</a></li><li><a href="#timeout-gate-t1">Timeout gate (T1)</a></li><li><a href="#audit-row">Audit row</a></li><li><a href="#refusals">Refusals</a></li></ol></li>
 <li><a href="#arguments">Arguments</a></li>
 <li><a href="#context-model-for-commands">Context Model For Commands</a></li>
 <li><a href="#invocation-sources">Invocation Sources</a><ol><li><a href="#command-palette">Command Palette</a></li><li><a href="#keybinds">Keybinds</a></li><li><a href="#context-actions">Context Actions</a></li><li><a href="#app-controls">App Controls</a></li><li><a href="#plugin-ui">Plugin UI</a></li><li><a href="#automations">Automations</a></li><li><a href="#the-initiator-of-a-call">The initiator of a call</a></li></ol></li>
@@ -1084,7 +1084,7 @@ there.</p>
 </tr>
 <tr>
 <td><code>settings.open.plugin_ai</code></td>
-<td>Settings: Plugin AI</td>
+<td>Settings: Assistant&#39;s Plugin Commands</td>
 <td>App</td>
 <td>Desktop only</td>
 </tr>
@@ -1108,7 +1108,7 @@ there.</p>
 </tr>
 <tr>
 <td><code>settings.open.agent</code></td>
-<td>Settings: AI Agent</td>
+<td>Settings: Assistant</td>
 <td>App</td>
 <td>Desktop only</td>
 </tr>
@@ -1126,7 +1126,7 @@ there.</p>
 </tr>
 <tr>
 <td><code>settings.open.bots</code></td>
-<td>Settings: Bots</td>
+<td>Settings: Bots &amp; webhooks</td>
 <td>Workspace</td>
 <td>Those who manage the workspace&#39;s bots; not in the direct space</td>
 </tr>
@@ -1294,7 +1294,7 @@ there.</p>
 </tr>
 <tr>
 <td><code>agents.allow_in_encrypted_conversation</code></td>
-<td>Let the AI Agent Read This Conversation…</td>
+<td>Let the Assistant Read This Conversation…</td>
 <td>Agents</td>
 <td>Desktop only; always shows the warning and asks to confirm</td>
 </tr>
@@ -1324,13 +1324,13 @@ there.</p>
 </tr>
 <tr>
 <td><code>moderation.block_principal</code></td>
-<td>Block Principal…</td>
+<td>Block Account…</td>
 <td>Moderation</td>
 <td>Instance operators; asks to confirm</td>
 </tr>
 <tr>
 <td><code>moderation.unblock_principal</code></td>
-<td>Unblock Principal…</td>
+<td>Unblock Account…</td>
 <td>Moderation</td>
 <td>Instance operators; opens a picker</td>
 </tr>
@@ -1849,6 +1849,13 @@ challenges from piling up.</p>
 <li><code>supports_preview</code></li>
 <li><code>supports_dry_run</code></li>
 </ul>
+<h3 id="target-workspace">Target workspace <a class="anchor" href="#target-workspace" aria-label="Link to this section">#</a></h3>
+<p><code>executeCommand</code> resolves once the workspace a call acts on: its <code>server_id</code> argument when one is
+given, else <code>commandContext.workspaceId</code>. A call whose <code>commandContext.workspaceId</code> names another
+workspace than its <code>server_id</code> argument is refused with <code>VALIDATION</code> before anything runs, and
+writes no audit row. The capability gate (C1) and the timeout gate (T1) check that workspace, and
+the audit row is written under it. A macro step or a pipe stage is judged by its own <code>server_id</code>
+argument, else the call&#39;s context, at the role and timeout gates.</p>
 <h3 id="confirmation-gate-h1">Confirmation gate (H1) <a class="anchor" href="#confirmation-gate-h1" aria-label="Link to this section">#</a></h3>
 <p>A call needs a confirmation when the command is dangerous or <code>Restricted</code>, or when it is
 <code>Mutating</code> and the agent or a plugin started it. The human initiators, <code>PALETTE</code>, <code>UI</code>,
@@ -1867,17 +1874,21 @@ it runs need none.</p>
 <h3 id="timeout-gate-t1">Timeout gate (T1) <a class="anchor" href="#timeout-gate-t1" aria-label="Link to this section">#</a></h3>
 <p>After the capability and confirmation gates, <code>execute_command</code> refuses any command whose <code>sensitivity</code> is <code>Mutating</code> or
 <code>Restricted</code> with <code>ServiceError::TimedOut { until }</code> (GraphQL <code>TIMED_OUT</code>, extension <code>until</code>)
-when the actor is timed out in the context&#39;s workspace (<code>ModerationService::active_timeout</code>).
+when the actor is timed out in the workspace the call acts on (&quot;Target workspace&quot;;
+<code>ModerationService::active_timeout</code>).
 <code>Safe</code> and <code>Sensitive</code> commands still run, and so do the commands that change only the caller&#39;s
 own state: <code>chat.mark_as_read</code>, <code>chat.mark_as_unread</code>, <code>chat.leave_conversation</code> and every
 <code>notifications.*</code> command. A timeout is about speaking, and the GraphQL mutations behind these
 allow them to a timed-out member as well. A macro the server runs is let through only when every
 step is one of these. The gate also runs on nested dispatch (macro steps, pipe stages), before
-the rate limiter, inside the audit wrapper. Without a workspace context it has nothing to check;
+the rate limiter, inside the audit wrapper. Without a target workspace it has nothing to check;
 the services behind the command apply their own write gates anyway. Gate order: C1 capability → H1 confirmation → T1 timeout → R1 rate limit.</p>
 <h3 id="audit-row">Audit row <a class="anchor" href="#audit-row" aria-label="Link to this section">#</a></h3>
 <p>Every <code>executeCommand</code> call writes one row to the command audit log, which the workspace&#39;s
-Owners and Moderators read (<a href="security/audit-access-matrix.html"><code>security/audit-access-matrix.md</code></a>). A call of <code>chat.mark_as_read</code>,
+Owners and Moderators read (<a href="security/audit-access-matrix.html"><code>security/audit-access-matrix.md</code></a>). The row goes to the call&#39;s target
+workspace (&quot;Target workspace&quot;) when the caller is a member there, looked up before the command
+runs; otherwise, and for a call that names no workspace, it goes to no workspace, and only the
+caller&#39;s own reads of the log show it. A call of <code>chat.mark_as_read</code>,
 <code>chat.mark_as_unread</code> or a <code>notifications.*</code> command writes none: these change only the caller&#39;s
 own view, and a row for every conversation read or notification setting changed would show the
 Owners and Moderators a person&#39;s reading habits. The same holds for such a step of a workspace
@@ -2329,7 +2340,7 @@ still need a fresh invite after unban.</p>
   </div>
 </div>
 <footer class="site-footer container"><span class="footer-brand"><img src="../assets/rim-lockup-glow-inverse.svg" alt="RIM" width="46" height="27"> · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
-<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-server/blob/9bc8d78d85b4b2c8af407e28afb8aa37e8079dc2/docs/command_model.md">rim-server/docs/command_model.md</a> at <code>9bc8d78</code></p>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-server/blob/f984dc62e25bbe96c8ff2c0319af1faa5ebbc595/docs/command_model.md">rim-server/docs/command_model.md</a> at <code>f984dc6</code></p>
 <script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
 </body>
 </html>

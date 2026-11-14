@@ -45,6 +45,7 @@
 <li><a href="#a-bot">A bot</a></li>
 <li><a href="#who-runs-it">Who runs it</a></li>
 <li><a href="#tokens">Tokens</a></li>
+<li><a href="#when-someone-stops-being-an-owner-or-moderator">When someone stops being an Owner or Moderator</a></li>
 <li><a href="#what-a-bot-can-reach">What a bot can reach</a></li>
 <li><a href="#encrypted-conversations">Encrypted conversations</a></li>
 <li><a href="#the-bot-api">The bot API</a></li>
@@ -58,7 +59,7 @@
 </details></aside>
     <main id="content" class="prose">
 <h1 id="bots-and-incoming-webhooks-v1">Bots and incoming webhooks, v1</h1>
-<p class="status"><span><b>Bots and incoming webhooks, v1</b></span><span>version 1</span><span>status: draft</span><span><a href="https://github.com/rim-platform/rim-server/blob/9bc8d78d85b4b2c8af407e28afb8aa37e8079dc2/docs/specs/bots-v1.md">rim-server/docs/specs/bots-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/9bc8d78d85b4b2c8af407e28afb8aa37e8079dc2">9bc8d78</a></span></p>
+<p class="status"><span><b>Bots and incoming webhooks, v1</b></span><span>version 1</span><span>status: draft</span><span><a href="https://github.com/rim-platform/rim-server/blob/f984dc62e25bbe96c8ff2c0319af1faa5ebbc595/docs/specs/bots-v1.md">rim-server/docs/specs/bots-v1.md</a></span><span>commit <a href="https://github.com/rim-platform/rim-server/commit/f984dc62e25bbe96c8ff2c0319af1faa5ebbc595">f984dc6</a></span></p>
 <p><strong>Status: draft.</strong> This is the contract for a bot account in a workspace and for an incoming webhook
 bound to one. <a href="../docs/vision.html"><code>docs/vision.md</code></a> (&quot;Working with agents&quot;) says why. <a href="agent-data-flow-v1.html"><code>docs/specs/agent-data-flow-v1.md</code></a>
 covers an agent that runs on a person&#39;s machine and acts as them; a bot is the other case, an
@@ -108,6 +109,23 @@ routes or anything else, and a session cookie MUST NOT be accepted on the bot AP
 way to reach any other query, mutation or command.</li>
 <li>A token that is unknown, revoked or belongs to a deactivated bot or one no longer in its workspace
 gets the same <code>401</code>.</li>
+</ul>
+<h2 id="when-someone-stops-being-an-owner-or-moderator">When someone stops being an Owner or Moderator <a class="anchor" href="#when-someone-stops-being-an-owner-or-moderator" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>A raw token or webhook URL is shown only to the person who creates it, who may keep it. So when a
+person stops being an Owner or Moderator of a workspace, the server revokes, in that workspace:<ul>
+<li>every token and webhook of each bot they created, whoever made the token or webhook;</li>
+<li>every token and webhook they made for any other bot.</li>
+</ul>
+</li>
+<li>This happens when they are made a Member or a Guest, kicked, banned, or leave, before the change
+itself, so a change that fails part way leaves none of them working. It happens in every workspace
+when an operator blocks their account on the instance, or when their account is deleted.</li>
+<li>The bots stay, with their channels and messages. Each revoked token and webhook keeps its
+<code>revokedAt</code> in <code>botTokens</code> and <code>incomingWebhooks</code>, so an Owner or Moderator sees what needs a new
+token or URL. A change in a workspace that revoked any is recorded in its audit log as
+<code>bot.revoke_on_role_loss</code>, with the person and how many tokens and webhooks went.</li>
+<li>A handover of ownership leaves the former Owner a Moderator, so it revokes nothing.</li>
 </ul>
 <h2 id="what-a-bot-can-reach">What a bot can reach <a class="anchor" href="#what-a-bot-can-reach" aria-label="Link to this section">#</a></h2>
 <ul>
@@ -219,8 +237,9 @@ cannot be created for a conversation that is not a channel. An Owner or Moderato
 private channel only if they are in it, since they can&#39;t post where they can&#39;t read.</li>
 <li>The URL is <code>POST /api/hooks/{token}</code>, with the token <code>rimhook_</code> followed by 43 base64url
 characters, shown once. Only its SHA-256 is stored. It is revoked by an Owner or Moderator, and it
-stops working with its bot. Deactivating a bot revokes its webhooks. The last time it was used is
-shown.</li>
+stops working with its bot. Deactivating a bot revokes its webhooks, and so does its creator&#39;s
+loss of Owner or Moderator (see &quot;When someone stops being an Owner or Moderator&quot;). The last time it
+was used is shown.</li>
 <li>Anyone holding the URL can post to that one channel as that bot, within the limit. A proxy&#39;s access
 log can hold the URL, so <a href="../docs/self-hosting.html"><code>docs/self-hosting.md</code></a> says to keep such logs private. RIM itself MUST NOT
 log the token. A leaked URL is revoked and a new one made.</li>
@@ -285,9 +304,14 @@ and a lone brace MUST be refused when saved, and so MUST a <code>post</code> tha
 blank, <code>null</code>, an object or an array), the rule MUST post nothing and answer <code>202</code>, without trying
 later rules.</li>
 <li>A value MUST be put on one line, with whitespace and control characters turned into single spaces and
-format characters removed, so a bidi override can&#39;t reorder the message, and have its Markdown escaped.
-A joined emoji in a value can come apart. A value left blank by this has none. It MUST NOT be expanded
-again: a title of <code>{sender.login}</code> shows as that text.</li>
+format characters removed, so a bidi override can&#39;t reorder the message, and have its Markdown escaped,
+including the <code>:</code> of a <code>://</code> and the <code>.</code> of a <code>www.</code>, so the value never becomes a link. Only a link a
+format&#39;s link field names, under the origin the format allows, is one. A joined emoji in a value can
+come apart. A value left blank by this has none. It MUST NOT be expanded again: a title of
+<code>{sender.login}</code> shows as that text. A string value is read only up to its first 1,000 characters after
+its leading whitespace, since no message holds more, and a value for a link up to 513. Once the filled
+text runs past the 1,000 characters, later pieces MAY be left out unread, but each placeholder MUST
+still have a value.</li>
 <li>The literal text is what the Owner or Moderator wrote, so its Markdown and line breaks stay.</li>
 <li>Every mention in the result, the literal text&#39;s own included, MUST be made plain text, as for any
 webhook. The result MUST then be cut to 1,000 characters, counting the link.</li>
@@ -387,7 +411,8 @@ URL changed. Someone else&#39;s session, or one of another workspace, MUST be re
 once. A client that never sends <code>testSessionId</code> always gets a real token.</p>
 <p><strong>What a delivery holds.</strong> When it arrived, its <code>Content-Type</code>, the <code>x-</code> headers as a format reads them, and the
 body as text. The header names a format may not use (see &quot;Webhook formats&quot;) MUST be dropped, by the same list,
-so a header such as <code>x-gitlab-token</code> is never kept. No address, <code>Authorization</code>, cookie or other header is kept.</p>
+so a header such as <code>x-gitlab-token</code> is never kept. No address, <code>Authorization</code>, cookie or other header is kept: the headers a proxy adds with the sender&#39;s address
+(<code>Forwarded</code>, <code>X-Forwarded-*</code>, <code>X-Real-IP</code>, <code>X-Client-IP</code>) are dropped, and a format can&#39;t test them.</p>
 <ul>
 <li>A body over 256 KiB is held as &quot;too large&quot; without its bytes, and an unbound session answers <code>413</code>.</li>
 <li>A body that isn&#39;t UTF-8 is held as &quot;not text&quot; without its bytes.</li>
@@ -399,7 +424,8 @@ it is showing.</li>
 <p><strong>Limits.</strong> This is an unauthenticated route that fills memory, so each of these is enforced:</p>
 <ul>
 <li>20 deliveries and 1 MiB a session. Past either, the oldest are dropped.</li>
-<li>3 open sessions a workspace and 20 an instance. Starting one past either answers <code>RATE_LIMITED</code>.</li>
+<li>3 open sessions a workspace, 3 an account across all its workspaces, and 20 an instance. Starting one past
+any of them answers <code>RATE_LIMITED</code>.</li>
 <li>30 deliveries a minute to an unbound session, then <code>429</code>. The per-address limit of <code>/api</code> applies too. A bound
 session takes nothing from the webhook&#39;s own limit.</li>
 <li>A session lasts 15 minutes from its start or its last read, and never more than an hour from its start. Expired
@@ -488,7 +514,7 @@ limit.</li>
   </div>
 </div>
 <footer class="site-footer container"><span class="footer-brand"><img src="../assets/rim-lockup-glow-inverse.svg" alt="RIM" width="46" height="27"> · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
-<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-server/blob/9bc8d78d85b4b2c8af407e28afb8aa37e8079dc2/docs/specs/bots-v1.md">rim-server/docs/specs/bots-v1.md</a> at <code>9bc8d78</code></p>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-server/blob/f984dc62e25bbe96c8ff2c0319af1faa5ebbc595/docs/specs/bots-v1.md">rim-server/docs/specs/bots-v1.md</a> at <code>f984dc6</code></p>
 <script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
 </body>
 </html>

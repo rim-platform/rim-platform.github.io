@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Commands and automation · RIM</title>
-<meta name="description" content="Everything RIM does runs as a command: the command palette, keybinds, macros, pipelines, plugins and the AI agent all run them. This page is for the person using the app and goes deeper than Getting started. The …">
+<meta name="description" content="Everything RIM does runs as a command: the command palette, keybinds, macros, pipelines, plugins and the assistant all run them. This page is for the person using the app and goes deeper than Getting started. The …">
 <link rel="icon" href="../../favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;550;600;650;700&family=JetBrains+Mono:wght@400;500&display=swap">
@@ -47,15 +47,16 @@
 <li><a href="#keybinds">Keybinds</a></li>
 <li><a href="#macros">Macros</a></li>
 <li><a href="#pipelines">Pipelines</a></li>
+<li><a href="#lenses">Lenses</a></li>
 <li><a href="#workspace-state">Workspace state</a></li>
-<li><a href="#the-ai-agent">The AI agent</a></li>
+<li><a href="#the-assistant">The assistant</a></li>
 <li><a href="#next">Next</a></li>
 </ol>
 </details></aside>
     <main id="content" class="prose">
 <h1 id="commands-and-automation">Commands and automation</h1>
 <p>Everything RIM does runs as a command: the command palette, keybinds, macros, pipelines,
-plugins and the AI agent all run them. This page is for the person using the app and
+plugins and the assistant all run them. This page is for the person using the app and
 goes deeper than <a href="getting-started.html">Getting started</a>. The contract behind it is rim-server&#39;s
 <a href="../command_model.html">command model</a>.</p>
 <h2 id="what-a-command-is">What a command is <a class="anchor" href="#what-a-command-is" aria-label="Link to this section">#</a></h2>
@@ -75,7 +76,7 @@ account (<a href="#macros">Macros</a>).</li>
 piece of text. Context is where you are when it runs: the open workspace, the open conversation,
 a selected message. A command whose workspace or conversation argument is empty takes it from the
 context; one given in its arguments, such as a keybind&#39;s preset arguments, wins. The palette,
-keybinds, the composer&#39;s <code>/</code> list, a macro run and the AI agent send the open workspace, the open
+keybinds, the composer&#39;s <code>/</code> list, a macro run and the assistant send the open workspace, the open
 conversation and the thread open beside it; a message&#39;s context menu sends the message&#39;s
 conversation, its thread and the message instead. A server command that needs a conversation,
 such as marking it read or setting its notification level, therefore acts on the open one, and
@@ -270,7 +271,7 @@ new device:</p>
 </tr>
 <tr>
 <td><kbd>Ctrl+Shift+A</kbd></td>
-<td>Open the AI agent (desktop app)</td>
+<td>Open the assistant (desktop app)</td>
 </tr>
 <tr>
 <td><kbd>Ctrl+Shift+C</kbd></td>
@@ -460,12 +461,13 @@ macro that finishes says <code>Macro &quot;&lt;title&gt;&quot; ran</code>.</li>
 <li><strong>Plugins never run your macros.</strong> A plugin step whose plugin is not installed on this device
 fails with &quot;its plugin isn&#39;t installed on this device&quot;.</li>
 </ul>
-<p><strong>The AI agent.</strong> Tick <strong>The AI agent can run this</strong> to let the agent run a macro as one
-command, in the workspaces of your home server. It can be ticked only when every step is a
-command the AI agent may run, which RIM&#39;s server runs, with every argument fixed; otherwise the
-form says &quot;Only commands the AI agent may run, run on RIM&#39;s server, with every argument fixed&quot;.
-When the agent asks to run it, the confirmation lists the macro&#39;s steps with their arguments
-(<a href="#the-ai-agent">The AI agent</a>).</p>
+<p><strong>The assistant and agents.</strong> Tick <strong>The assistant and agents can run this</strong> to let the
+assistant, and agents you approve it for, run a macro as one command, in the workspaces of your
+home server. It can be ticked only when every step is a command the assistant and agents may run,
+which RIM&#39;s server runs, with every argument fixed; otherwise the form says &quot;Only commands the
+assistant and agents may run, run on RIM&#39;s server, with every argument fixed&quot;. When the assistant
+asks to run it, the confirmation lists the macro&#39;s steps with their arguments
+(<a href="#the-assistant">The assistant</a>).</p>
 <p><strong>Limits.</strong> You keep at most 100 macros, each with at most 20 steps and a title of at most 128
 characters. A macro saved before steps could name other commands keeps any step that runs
 another macro, shown as &quot;Another macro (kept, no longer offered)&quot;.</p>
@@ -488,6 +490,9 @@ counts the standups in workspace state.</li>
 it</strong> on its pause: each run asks how long to pause your notifications.</li>
 </ul>
 <h2 id="pipelines">Pipelines <a class="anchor" href="#pipelines" aria-label="Link to this section">#</a></h2>
+<p>A pipeline does something when something happens in this workspace. When a new message matches
+a filter, someone joins or a state entry changes, it runs commands that need no confirmation, or
+posts a welcome as a bot. A cooldown keeps it from running too often.</p>
 <p>A pipeline runs commands on the server when something happens in the workspace: a trigger, up
 to five filters that must all match, and up to ten actions, each a command with arguments. It
 runs them as the person who created it.</p>
@@ -536,7 +541,7 @@ the power button turns it back on. You can create 50 pipelines per workspace, an
 the server&#39;s own cap when it sets one.</p>
 <p><strong>Post as bot.</strong> With the Member Joined trigger, an Owner or Moderator on a server that has it
 sees <strong>Post as bot</strong> beside <strong>Add action</strong>: a bot (active bots only), a channel (only that bot&#39;s;
-&quot;This bot is in no channels yet. Add it to one in Settings &gt; Bots.&quot; otherwise) and a text. It says
+&quot;This bot is in no channels yet. Add it to one in Settings &gt; Bots &amp; webhooks.&quot; otherwise) and a text. It says
 plainly above them: &quot;Posted by the bot, without asking anyone, each time someone joins.&quot; The text
 takes <code>{username}</code>, the person&#39;s username, at their home server if they&#39;re from another one, and
 <code>{name}</code>, their display name, or their username without one. What the server refuses, such as a
@@ -555,8 +560,20 @@ workspace open, says why. The power button turns it back on.</p>
 with <code>{&quot;query&quot;: &quot;FAILED&quot;}</code> (the Query field). Each failure posted to #deploys shows the pipeline&#39;s creator the
 firing, at most once in five minutes. The action&#39;s result is not shown anywhere, and an action
 such as <code>chat.post_message</code> would be skipped.</p>
+<h2 id="lenses">Lenses <a class="anchor" href="#lenses" aria-label="Link to this section">#</a></h2>
+<p>A lens shows only the messages of a channel that match its filters, such as those with links or
+from one person. The lens button in the channel&#39;s header opens the picker: it lists the channel&#39;s
+lenses, with <strong>Clear lens</strong> while one is applied, and <strong>Create lens</strong> opens the editor, with a
+<strong>Name</strong>, a <strong>Match</strong> setting, conditions (Has Links, Has Attachments, Is Pinned, Author, Text
+Contains) and <strong>Share with channel members</strong>. A shared lens is listed for every member of the
+channel; only its creator edits or deletes it. In the command palette, <strong>Apply Lens…</strong> chooses a
+lens for the open channel, <strong>Clear Lens</strong> removes it and <strong>Toggle Channel Lenses</strong> shows or hides
+the picker.</p>
 <h2 id="workspace-state">Workspace state <a class="anchor" href="#workspace-state" aria-label="Link to this section">#</a></h2>
-<p>Workspace state is a key-value store the server keeps for each workspace. Commands, macros and
+<p>Workspace state is named values this workspace keeps, such as a release freeze switch or a
+counter. Macros, pipelines and plugins can read and change them. An entry belongs to the
+workspace or only to you, and can expire.</p>
+<p>It is a key-value store the server keeps for each workspace. Commands, macros and
 the agent use it through <code>state.get</code>, <code>state.list</code>, <code>state.set</code>, <code>state.incr</code> and <code>state.delete</code>,
 and a pipeline can react when it changes. Plugins have no access to it. An entry belongs to one
 of two scopes: the workspace&#39;s, which every member reads and writes, or your own, which only you
@@ -574,33 +591,35 @@ is new or breaks these rules, and refuses <code>system.</code> keys to <code>sta
 <code>state.delete</code>. <code>state.set</code> shows the key&#39;s value now under its value field.</li>
 <li>A value has at most 64 KB and lives at most 30 days when it has a TTL. The workspace&#39;s scope
 holds 10,000 entries and yours 1,000.</li>
-<li>Anything that reads a scope sees its values, the AI agent and its model provider included. Do
+<li>Anything that reads a scope sees its values, the assistant and its model provider included. Do
 not keep secrets there.</li>
 </ul>
-<h2 id="the-ai-agent">The AI agent <a class="anchor" href="#the-ai-agent" aria-label="Link to this section">#</a></h2>
-<p>On the desktop, the AI agent (<kbd>Ctrl+Shift+A</kbd>, or <code>/agent</code> in the composer) works
+<h2 id="the-assistant">The assistant <a class="anchor" href="#the-assistant" aria-label="Link to this section">#</a></h2>
+<p>On the desktop, the assistant (<kbd>Ctrl+Shift+A</kbd>, or <code>/agent</code> in the composer) works
 through the same commands and the same gates as you do. It sees only commands marked callable by
-an AI: a reviewed set of built-ins, the plugin commands you approved in Settings → Plugin AI,
-and your macros with <strong>The AI agent can run this</strong> ticked, each run as one command. A call that
-changes anything waits for you in the confirmation dialog, headed &quot;Agent wants to:&quot;, which lists
-a macro&#39;s steps with their arguments, and the agent runs at most three such actions per run. Settings → AI Agent sets its provider and key, and
-<a href="../../plugins/index.html#using-a-plugin">Using a plugin</a> covers approving a plugin&#39;s commands for it. A
+an AI: a reviewed set of built-ins, the plugin commands you approved in Settings &gt; Assistant,
+under &quot;Plugin commands it may run&quot;, and your macros with <strong>The assistant and agents can run this</strong>
+ticked, each run as one command. A call that changes anything waits for you in the confirmation
+dialog, headed &quot;Assistant wants to:&quot;, which lists a macro&#39;s steps with their arguments, and the
+assistant runs at most three such actions per run. Settings &gt; Assistant sets its provider and key,
+and <a href="../../plugins/index.html#using-a-plugin">Using a plugin</a> covers approving a plugin&#39;s commands for it. A
 server&#39;s operator can turn its access off. In the web app it is not offered: the palette, the
 keybind, the <code>/agent</code> suggestion and <strong>Build with AI</strong> are left out, and <code>/agent</code> typed in full
-shows &quot;The AI agent is available in the desktop app.&quot;</p>
+shows &quot;The assistant is available in the desktop app.&quot; Programs on your computer, such as Claude
+Code, are agents, not the assistant: <a href="agents.html">Connect an AI agent</a>.</p>
 <h2 id="next">Next <a class="anchor" href="#next" aria-label="Link to this section">#</a></h2>
 <ul>
 <li><a href="keyboard.html">Keyboard</a>: how a key is resolved, the profile file and the Vim layer in full.</li>
 <li><a href="../../plugins/index.html">Plugins</a>: installing, trusting and using plugins and their commands.</li>
 <li><a href="../command_model.html">Command model</a>: rim-server&#39;s contract for commands,
-sensitivity, confirmations, macros and what the agent may call.</li>
+sensitivity, confirmations, macros and what the assistant may call.</li>
 </ul>
 
     </main>
   </div>
 </div>
 <footer class="site-footer container"><span class="footer-brand"><img src="../../assets/rim-lockup-glow-inverse.svg" alt="RIM" width="46" height="27"> · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
-<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/ed1032eacc0d9b5084470131b2d34cc144406df8/docs/commands-and-automation.md">rim-ui/docs/commands-and-automation.md</a> at <code>ed1032e</code></p>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/4dc6a3ddd00369928c3fd9f4633814cfc6dadb13/docs/commands-and-automation.md">rim-ui/docs/commands-and-automation.md</a> at <code>4dc6a3d</code></p>
 <script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
 </body>
 </html>

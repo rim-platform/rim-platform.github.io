@@ -58,8 +58,8 @@
 <h1 id="the-plugin-manifest">The plugin manifest</h1>
 <p>Every plugin carries <code>rim-plugin.json</code> at the root of its folder or bundle. This page lists each
 field the desktop parser accepts, in the order of <code>PluginManifest</code> in <code>manifest.rs</code>, with the
-install rules of <code>validation.rs</code>, both in <a href="https://github.com/rim-platform/rim-ui/tree/ed1032eacc0d9b5084470131b2d34cc144406df8/src-tauri/src/plugin_host"><code>src-tauri/src/plugin_host/</code></a>. The web app installs by
-their port in the SDK, <code>manifestRules.ts</code>; both pass <a href="https://github.com/rim-platform/rim-ui/blob/ed1032eacc0d9b5084470131b2d34cc144406df8/protocol/manifest-vectors.json"><code>protocol/manifest-vectors.json</code></a>, and a
+install rules of <code>validation.rs</code>, both in <a href="https://github.com/rim-platform/rim-ui/tree/4dc6a3ddd00369928c3fd9f4633814cfc6dadb13/src-tauri/src/plugin_host"><code>src-tauri/src/plugin_host/</code></a>. The web app installs by
+their port in the SDK, <code>manifestRules.ts</code>; both pass <a href="https://github.com/rim-platform/rim-ui/blob/4dc6a3ddd00369928c3fd9f4633814cfc6dadb13/protocol/manifest-vectors.json"><code>protocol/manifest-vectors.json</code></a>, and a
 plugin&#39;s tests run them with <code>validateManifest</code> (<a href="plugin-sdk.html">the SDK</a>).</p>
 <h2 id="reading-and-checking">Reading and checking <a class="anchor" href="#reading-and-checking" aria-label="Link to this section">#</a></h2>
 <ul>
@@ -177,12 +177,13 @@ exceeds 65535;</li>
 </ul>
 <h2 id="commands"><code>commands</code> <a class="anchor" href="#commands" aria-label="Link to this section">#</a></h2>
 <p>A list, default <code>[]</code>. Each entry joins the shared command registry as <code>plugin.&lt;plugin_id&gt;.&lt;id&gt;</code>:
-the palette, keybinds, macros and, when allowed, the AI agent.</p>
+the palette, keybinds, macros and, when allowed, the assistant and agents.</p>
 <ul>
 <li><strong><code>id</code></strong>, <strong><code>title</code></strong>, <strong><code>description</code></strong> (strings, required): the key in the SDK&#39;s <code>commands</code>,
 the palette&#39;s line and its detail.</li>
 <li><strong><code>keybind_capable</code></strong> (bool, default <code>false</code>): offered when binding a key.</li>
-<li><strong><code>dangerous</code></strong> (bool, default <code>false</code>): the user confirms every run, the agent only proposes it.</li>
+<li><strong><code>dangerous</code></strong> (bool, default <code>false</code>): the user confirms every run, the assistant or an agent
+only proposes it.</li>
 <li><strong><code>required_context</code></strong> (strings, default <code>[]</code>): <code>&quot;conversation&quot;</code>, <code>&quot;message&quot;</code> or <code>&quot;workspace&quot;</code>.
 It runs only there, with <code>conversation_id</code> and <code>thread_id</code>, <code>message_id</code>, <code>conversation_id</code> and
 <code>thread_id</code>, or <code>workspace_id</code> added to <code>args</code>; an argument of one of those names fails with
@@ -193,15 +194,16 @@ runs, or it fails with <code>CAPABILITY_DENIED</code>. Each must be a name <code
 <code>capabilities</code> declares, or <code>UNDECLARED_CAPABILITY</code>: <code>command `&lt;id&gt;` requires capability `&lt;key&gt;`, which the manifest's capabilities do not declare</code>.</li>
 <li><strong><code>arguments</code></strong> (list, default <code>[]</code>): by convention objects with <code>name</code>, <code>type</code>, <code>required</code> and
 <code>description</code>. The palette and keybinds pass no arguments, so they leave out a command with a
-<code>required</code> one. The agent&#39;s tool schema takes <code>description</code>, and <code>type</code> when it is <code>string</code>,
+<code>required</code> one. The assistant&#39;s tool schema takes <code>description</code>, and <code>type</code> when it is <code>string</code>,
 <code>integer</code>, <code>number</code>, <code>boolean</code>, <code>object</code> or <code>array</code>.</li>
-<li><strong><code>ai_callable</code></strong> (bool, default <code>false</code>): offers the command to the agent once the user allows
-it in the plugin&#39;s AI access settings. The tool name <code>plugin__&lt;plugin_id, dots as _&gt;__&lt;id&gt;</code> must
+<li><strong><code>ai_callable</code></strong> (bool, default <code>false</code>): offers the command to the assistant once the user
+allows it in Settings &gt; Assistant, under &quot;Plugin commands it may run&quot;, and to an agent once the
+user approves it for that agent. The tool name <code>plugin__&lt;plugin_id, dots as _&gt;__&lt;id&gt;</code> must
 match <code>[A-Za-z0-9_-]{1,64}</code>, or the command is not offered.</li>
 <li><strong><code>read_only</code></strong> (bool, default <code>false</code>): the plugin&#39;s claim that the command changes nothing. An
 agent outside RIM runs an approved <code>read_only</code> command without asking; every other approved
 command waits for a confirmation. RIM cannot verify the claim, and the approval screen says it is
-the plugin&#39;s. It cannot be combined with <code>dangerous</code>: <code>command `&lt;id&gt;` cannot be both read_only and dangerous</code>. It has no effect on the built-in agent.</li>
+the plugin&#39;s. It cannot be combined with <code>dangerous</code>: <code>command `&lt;id&gt;` cannot be both read_only and dangerous</code>. It has no effect on the assistant.</li>
 <li><strong><code>output_schema</code></strong> (JSON or <code>null</code>, default <code>null</code>): the JSON Schema of the payload. An
 <code>ai_callable</code> command fails with <code>REQUIRES_MANUAL_REVIEW</code>, and does not install, without one or
 when its root is not <code>&quot;type&quot;: &quot;object&quot;</code>, sets <code>&quot;additionalProperties&quot;: true</code>, or has neither
@@ -384,7 +386,7 @@ defaults do not change it. <code>network_origins</code>, a panel&#39;s <code>slo
 <code>max</code>, <code>options</code> and <code>placeholder</code> are left out when absent, and <code>runs_commands</code> when empty, so a
 manifest without them hashes as on a host without those fields; other absent options are <code>null</code>.</p>
 <p>It gates AI consent. When the hash differs from the recorded one and the manifest declares
-<code>ai_callable</code> commands, or the user approved some, the agent runs none of the plugin&#39;s commands
+<code>ai_callable</code> commands, or the user approved some, the assistant runs none of the plugin&#39;s commands
 until the user consents again (<code>manifest changed — re-consent required for AI commands</code>). Any
 change counts, since the old command set cannot be read from a hash: adding, removing or changing
 a <code>settings_schema</code> entry asks for AI consent again too.</p>
@@ -460,7 +462,7 @@ plugin with a network permission, a tool panel and a secret setting, verbatim:</
   </div>
 </div>
 <footer class="site-footer container"><span class="footer-brand"><img src="../../assets/rim-lockup-glow-inverse.svg" alt="RIM" width="46" height="27"> · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
-<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/ed1032eacc0d9b5084470131b2d34cc144406df8/docs/plugin-manifest.md">rim-ui/docs/plugin-manifest.md</a> at <code>ed1032e</code></p>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/4dc6a3ddd00369928c3fd9f4633814cfc6dadb13/docs/plugin-manifest.md">rim-ui/docs/plugin-manifest.md</a> at <code>4dc6a3d</code></p>
 <script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
 </body>
 </html>

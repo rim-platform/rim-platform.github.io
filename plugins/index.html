@@ -79,14 +79,14 @@ runs it.</li>
 <p>A plugin contributes some of these:</p>
 <ul>
 <li>commands, listed in the command palette under the plugin&#39;s name, bindable to keys and, when
-the plugin marks them so and the user agrees, callable by the AI agent;</li>
+the plugin marks them so and the user agrees, callable by the assistant and by agents;</li>
 <li>panels, shown as a narrow column at the left of the page or in its place;</li>
 <li>context actions in a message&#39;s context menu;</li>
 <li>keybind suggestions the user can assign.</li>
 </ul>
 <p>Without the matching permission the app does not show a plugin&#39;s panel, read or post messages
 for it, or show its notifications, and a sandboxed plugin cannot exchange data with any site. A
-command the plugin marks dangerous runs only after the user confirms that run: the AI agent can
+command the plugin marks dangerous runs only after the user confirms that run: the assistant can
 never confirm one, and a plugin&#39;s panel cannot confirm one for its own plugin.</p>
 <h2 id="the-official-plugins">The official plugins <a class="anchor" href="#the-official-plugins" aria-label="Link to this section">#</a></h2>
 <p>The project publishes four plugins, each in its own repository, all at version 0.0.x. Each
@@ -106,30 +106,31 @@ README lists the plugin&#39;s commands and the ways to install it.</p>
 <td>Runs a quick poll in the open conversation; the poll and every vote are messages</td>
 <td>Sandboxed</td>
 <td><code>ui.panel</code>, <code>chat.read</code>, <code>chat.write</code>; optionally <code>chat.read.encrypted</code> and <code>chat.write.encrypted</code></td>
-<td><a href="https://github.com/rim-platform/plugin-poll">plugin-poll</a></td>
+<td><a href="https://github.com/rim-platform/plugin-poll">plugin-poll</a>, <a href="https://github.com/rim-platform/plugin-poll/releases/latest">latest release</a></td>
 </tr>
 <tr>
 <td>GitHub Pull Requests</td>
 <td>Lists the open pull requests of up to 10 GitHub repositories; public repositories without a token</td>
 <td>Sandboxed</td>
 <td><code>ui.panel</code>, <code>network.fetch</code> for <code>api.github.com</code> and <code>avatars.githubusercontent.com</code></td>
-<td><a href="https://github.com/rim-platform/plugin-github-prs">plugin-github-prs</a></td>
+<td><a href="https://github.com/rim-platform/plugin-github-prs">plugin-github-prs</a>, <a href="https://github.com/rim-platform/plugin-github-prs/releases/latest">latest release</a></td>
 </tr>
 <tr>
 <td>Kubernetes Pods</td>
 <td>Lists a namespace&#39;s pods, shows and follows a container&#39;s logs, restarts a pod after you confirm</td>
 <td>Runs on this computer</td>
 <td><code>ui.panel</code>, <code>ui.notify</code></td>
-<td><a href="https://github.com/rim-platform/plugin-k8s-pods">plugin-k8s-pods</a></td>
+<td><a href="https://github.com/rim-platform/plugin-k8s-pods">plugin-k8s-pods</a>, <a href="https://github.com/rim-platform/plugin-k8s-pods/releases/latest">latest release</a></td>
 </tr>
 <tr>
 <td>Releases</td>
 <td>Watches GitHub releases and posts one into an unencrypted conversation when asked</td>
 <td>Sandboxed</td>
 <td><code>ui.panel</code>, <code>network.fetch</code> for <code>api.github.com</code>, <code>chat.write</code></td>
-<td><a href="https://github.com/rim-platform/plugin-releases">plugin-releases</a></td>
+<td><a href="https://github.com/rim-platform/plugin-releases">plugin-releases</a>, <a href="https://github.com/rim-platform/plugin-releases/releases/latest">latest release</a></td>
 </tr>
 </tbody></table></div>
+<p>The web app installs one from the link in that release&#39;s notes, under Install from link.</p>
 <ul>
 <li><strong>Poll</strong> needs the two encrypted permissions to work in encrypted DMs and groups; without them
 it works in plaintext channels only. On the web it reads messages only in a browser set up as
@@ -141,8 +142,9 @@ repositories when its token permits it; their titles and authors appear in the p
 Releases, use a public-only token: posting a release shares its details with everyone in the
 conversation. Each plugin’s README explains the token permissions.</li>
 <li><strong>Kubernetes Pods</strong> needs the desktop app, Node.js 22 or newer and <code>kubectl</code>, which it runs
-with your own kubeconfig. Four of its commands can be called by the AI agent once approved in
-Settings → Plugin AI; <strong>Pods: Restart pod</strong> is dangerous, so the agent can only propose it.
+with your own kubeconfig. Four of its commands can be called by the assistant once approved in
+Settings &gt; Assistant, under &quot;Plugin commands it may run&quot;; <strong>Pods: Restart pod</strong> is dangerous, so
+the assistant can only propose it.
 Run it manually from the plugin and confirm that run. It suggests <kbd>Ctrl+Alt+P</kbd> for
 <strong>Pods: Refresh</strong>.</li>
 </ul>
@@ -218,9 +220,9 @@ permission prompt; a git source&#39;s install steps ask for consent as above.</l
 <p>On workspace open, and whenever the registry changes, each plugin installed from it is compared
 with its entry. A new version installs on its own, with the notice &quot;Updated &lt;name&gt; to
 &lt;version&gt;&quot;, when it keeps the kind and the publisher, asks for no new permission, adds no
-new command the AI agent can run and, with <code>network.fetch</code> approved, lists the same sites; the
+new command the assistant and agents can run and, with <code>network.fetch</code> approved, lists the same sites; the
 approvals carry over. Anything else waits behind <strong>Update &lt;name&gt;?</strong>, which lists what is new:
-another publisher, another kind, new permissions, new commands the AI agent can run, other
+another publisher, another kind, new permissions, new commands the assistant and agents can run, other
 sites, or install steps. <strong>Review update</strong> opens the install dialog; <strong>Later</strong> keeps the
 installed version running. A failed update keeps the old copy.</p>
 <p>When an entry leaves the registry, its plugin is stopped and <strong>&lt;name&gt; was removed</strong> offers
@@ -239,8 +241,9 @@ the new version needs open <strong>Run plugin install scripts?</strong> first, a
 Approvals carry over for the permissions the new version still asks for and are dropped for
 those it no longer does, and <code>network.fetch</code> is dropped too when the new version lists other
 sites; a new permission, or <code>network.fetch</code> for other sites, opens the <strong>Plugin Permissions</strong>
-dialog, and the plugin cannot use it until it is approved. A plugin with commands the AI
-agent can run asks for that consent again in Settings → Plugin AI.</li>
+dialog, and the plugin cannot use it until it is approved. A plugin with commands the
+assistant can run asks for that consent again in Settings &gt; Assistant, under &quot;Plugin commands it
+may run&quot;.</li>
 <li><strong>From a link.</strong> A link names one bundle by its hash, so it cannot change, and the row says
 &quot;Installed from a link pinned to one bundle: install the new version&#39;s link to update it.&quot;
 Installing that link opens <strong>Replace &lt;name&gt;?</strong>, described under <a href="#installing">Installing</a>.</li>
@@ -312,11 +315,14 @@ None of the official plugins declares one.</li>
 that are not bound yet under <strong>Plugin Suggestions</strong>; <strong>Assign</strong> binds one. A plugin command
 marked keybind-capable can also be bound like any other command. Bindings to plugin commands
 stay on this device, marked <strong>This device</strong>; <a href="../docs/client/keyboard.html">Keyboard</a> explains the layers.</li>
-<li><strong>The AI agent.</strong> On the desktop, Settings → Plugin AI lists the plugins with commands the
-agent can call. The first approval for a plugin, of one command or with <strong>Approve all</strong>,
-asks in <strong>Grant AI Access?</strong>; the agent then calls an approved command without asking each
-time. <strong>Revoke all</strong> on a plugin and <strong>Revoke all grants</strong> for every plugin take the approvals
-back.</li>
+<li><strong>The assistant and agents.</strong> On the desktop, Settings &gt; Assistant lists, under &quot;Plugin
+commands it may run&quot;, the plugins with commands the assistant can run; a plugin that needs it
+says &quot;Needs your approval&quot;. The first approval for a plugin, of one command or with <strong>Approve
+all</strong>, asks in <strong>Let the assistant run these commands?</strong>; the assistant then runs an approved
+command without asking each time. <strong>Revoke all</strong> on a plugin and <strong>Revoke all grants</strong> for
+every plugin take the approvals back. A plugin&#39;s row in Settings &gt; Plugins has the same under
+&quot;What the assistant and agents can do with it&quot;. Programs connected from outside are approved per
+agent, in Settings &gt; Agents (<a href="../docs/client/agents.html">Connect an AI agent</a>).</li>
 </ul>
 <h2 id="trust-and-permissions">Trust and permissions <a class="anchor" href="#trust-and-permissions" aria-label="Link to this section">#</a></h2>
 <p>The <strong>Plugin Permissions</strong> dialog opens after every install and from <strong>Permissions</strong> in a
@@ -332,7 +338,8 @@ not sandboxed: it can read your files and use the network whatever you approve b
 it only if you trust its author.&quot;</li>
 </ul>
 <p>Each permission has a checkbox, checked at first. Unchecking one denies it, and <strong>Approve</strong>
-grants the rest; right after an install the button is <strong>Approve and turn on</strong>, which also starts
+grants the rest and takes back an approved one that was unchecked (which stops the plugin, as
+revoking it from its details does, and it starts again if it was running); right after an install the button is <strong>Approve and turn on</strong>, which also starts
 the plugin. The prompt names them like this:</p>
 <div class="tablewrap"><table>
 <thead>
@@ -459,7 +466,7 @@ permissions, data, settings and files. To use it again, install it again.</li>
   </div>
 </div>
 <footer class="site-footer container"><span class="footer-brand"><img src="../assets/rim-lockup-glow-inverse.svg" alt="RIM" width="46" height="27"> · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
-<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/ed1032eacc0d9b5084470131b2d34cc144406df8/docs/plugins.md">rim-ui/docs/plugins.md</a> at <code>ed1032e</code></p>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/4dc6a3ddd00369928c3fd9f4633814cfc6dadb13/docs/plugins.md">rim-ui/docs/plugins.md</a> at <code>4dc6a3d</code></p>
 <script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
 </body>
 </html>

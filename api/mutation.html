@@ -1351,11 +1351,11 @@ session needed. <code>CONFLICT</code> when an account of this server has the pri
 <h3><code>passwordLoginStart</code></h3>
 <div class="sig">passwordLoginStart(principalId: <a href="scalars.html#String">String</a>!, request: <a href="scalars.html#String">String</a>!): <a href="objects.html#PasswordLoginStart">PasswordLoginStart</a>!</div>
 <div class="desc"><p>Start a password login, before <a href="mutation.html#passwordLoginFinish"><code>passwordLoginFinish</code></a>: the OPAQUE <code>CredentialRequest</code> for
-<code>principalId</code>. Every start counts as a wrong try until a login finishes: tries 1 to 3
-are free, the 4th to the 9th make the next one wait (<code>RATE_LIMITED</code> with
-<code>retryAfterSeconds</code>), and the 10th locks the password (<code>PASSWORD_LOCKED</code>) until a reset
-with the recovery phrase. A principal without a password here gets an answer of the same
-shape that no password finishes. No session needed.</p>
+<code>principalId</code>. Every start counts as a wrong try until a login finishes. An account takes
+ten starts an hour; past that a start is <code>RATE_LIMITED</code> with <code>retryAfterSeconds</code>, the
+time until the hour&#39;s window ends. Nothing locks the password. A principal without a
+password here gets an answer of the same shape that no password finishes. No session
+needed.</p>
 </div>
 
 </section>
@@ -1555,7 +1555,7 @@ whether one was stored. <code>FORBIDDEN</code> for a person from another server.
   </div>
 </div>
 <footer class="site-footer container"><span class="footer-brand"><img src="../assets/rim-lockup-glow-inverse.svg" alt="RIM" width="46" height="27"> · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
-<p class="source-provenance container">Generated from <a href="https://github.com/rim-platform/rim-ui/blob/ed1032eacc0d9b5084470131b2d34cc144406df8/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>ed1032e</code></p>
+<p class="source-provenance container">Generated from <a href="https://github.com/rim-platform/rim-ui/blob/4dc6a3ddd00369928c3fd9f4633814cfc6dadb13/schema.graphql">rim-ui/schema.graphql</a>, the committed copy of the server's <code>/api/sdl</code>, at <code>4dc6a3d</code></p>
 <script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
 <script>
 (() => {

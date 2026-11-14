@@ -267,7 +267,9 @@ session again, before the subscriptions-only refusal. An ended session closes th
 with <code>4401</code> instead of answering the operation.</li>
 </ul>
 <h3 id="the-schema-get-apisdl">The schema: <code>GET /api/sdl</code> <a class="anchor" href="#the-schema-get-apisdl" aria-label="Link to this section">#</a></h3>
-<p>The whole GraphQL schema of the running build, in SDL, without a session.</p>
+<p>The whole GraphQL schema of the running build, in SDL, without a session. It is rendered once
+when the server starts, and the answer may be cached for five minutes
+(<code>Cache-Control: public, max-age=300</code>).</p>
 <h3 id="discovery-get-well-knownrim-server">Discovery: <code>GET /.well-known/rim-server</code> <a class="anchor" href="#discovery-get-well-knownrim-server" aria-label="Link to this section">#</a></h3>
 <p>A JSON document, readable from any origin (<code>Access-Control-Allow-Origin: *</code>) and cacheable for
 five minutes:</p>
@@ -630,8 +632,18 @@ a number above 0, so a private server limits nothing but the batch size.</p>
 </tr>
 <tr>
 <td>none (fixed)</td>
-<td>Account password tries: every <code>passwordLoginStart</code> and <code>passwordChangeStart</code> counts against the account until a login finishes. Tries 1 to 3 are free; the 4th makes the next wait 1 minute, the 5th 5 minutes, the 6th 15 minutes, the 7th 1 hour, the 8th 4 hours, the 9th 12 hours; the 10th locks the password until a reset with the recovery key. Each <code>passwordLoginStart</code> also counts against the address, sharing the 20 failed key sign-ins per 15 minutes.</td>
-<td><code>RATE_LIMITED</code> with <code>retryAfterSeconds</code> during a wait; <code>PASSWORD_LOCKED</code> once locked</td>
+<td>Query root fields in one request: 32 across a batch, each alias, repeated field and fragment expansion counted, a fragment spread twice counting twice, with or without a session, whether sent here or forwarded by another server.</td>
+<td>One error with the code <code>TOO_MANY_ROOT_FIELDS</code> and <code>limit</code> 32; nothing in the request runs</td>
+</tr>
+<tr>
+<td>none (fixed)</td>
+<td><code>remoteServer</code>, <code>remoteIdentity</code> and <code>previewWebhookFormat</code> in one request: 4 together across a batch, counted as above. Each may fetch from another server or render a webhook format.</td>
+<td>One error with the code <code>TOO_MANY_ROOT_FIELDS</code> and <code>limit</code> 4; nothing in the request runs</td>
+</tr>
+<tr>
+<td>none (fixed)</td>
+<td>Account password tries: every <code>passwordLoginStart</code> and <code>passwordChangeStart</code> counts against the account until a login finishes, 10 in a window of one hour that the first start after the last window opens. Nothing locks the password. Each <code>passwordLoginStart</code> also counts against the address, sharing the 20 failed key sign-ins per 15 minutes.</td>
+<td><code>RATE_LIMITED</code> with <code>retryAfterSeconds</code>, the time until the account&#39;s window ends or the address may try again</td>
 </tr>
 <tr>
 <td>none (fixed)</td>
@@ -905,6 +917,11 @@ on the message.</p>
 <td><code>limit</code></td>
 </tr>
 <tr>
+<td><code>TOO_MANY_ROOT_FIELDS</code></td>
+<td>The request runs more query root fields, or more of the costly ones, than one request may (see &quot;Limits&quot;); nothing in it ran.</td>
+<td><code>limit</code></td>
+</tr>
+<tr>
 <td><code>CONFIRMATION_STALE</code></td>
 <td>A command confirmation expired or was already used; ask again.</td>
 <td></td>
@@ -946,7 +963,7 @@ on the message.</p>
 </tr>
 <tr>
 <td><code>PASSWORD_LOCKED</code></td>
-<td>The account&#39;s password locked after ten tries without a success; only a reset with the recovery phrase (<code>passwordResetStart</code>) opens it.</td>
+<td>Not sent by this server, which never locks a password; a client may still meet it from an older server, which locked a password after ten tries until a reset with the recovery phrase (<code>passwordResetStart</code>).</td>
 <td></td>
 </tr>
 <tr>
@@ -1160,7 +1177,7 @@ types from it:</p>
 <pre><code class="language-sh">curl -s http://localhost:8080/api/sdl &gt; ../rim-ui/schema.graphql
 cd ../rim-ui &amp;&amp; npm run codegen</code></pre>
 <p>Enum values appear in <code>SCREAMING_SNAKE</code> and fields in <code>camelCase</code>. The models in <a href="messaging.html"><code>messaging.md</code></a>,
-<a href="search.html"><code>search.md</code></a>, <a href="message-change-feed.html"><code>message-change-feed.md</code></a>, <a href="command_model.html"><code>command_model.md</code></a> and the specs in <a href="https://github.com/rim-platform/rim-server/tree/9bc8d78d85b4b2c8af407e28afb8aa37e8079dc2/docs/specs"><code>specs/</code></a> explain what
+<a href="search.html"><code>search.md</code></a>, <a href="message-change-feed.html"><code>message-change-feed.md</code></a>, <a href="command_model.html"><code>command_model.md</code></a> and the specs in <a href="https://github.com/rim-platform/rim-server/tree/f984dc62e25bbe96c8ff2c0319af1faa5ebbc595/docs/specs"><code>specs/</code></a> explain what
 the fields mean.</p>
 <h3 id="profile-picture-refresh">Profile picture refresh <a class="anchor" href="#profile-picture-refresh" aria-label="Link to this section">#</a></h3>
 <p>Avatar uploads are stored as <code>avatars/&lt;user id&gt;/avatar-&lt;16 lowercase SHA-256 hex&gt;.png</code>, the
@@ -1176,8 +1193,9 @@ Clients refetch the directory and, for their own user id, <code>me</code> when t
 <p><code>POST /api/plugin-bundles/fetch</code> takes JSON <code>{url, sha256}</code>, at most 8 KiB, with a session and
 CSRF token. It returns a validated, hash-pinned bundle as an attachment, at most 8 MiB. The
 <code>plugin_link_fetch</code> feature is enabled by default, independent of <code>workspace_plugins</code>. Only
-public HTTPS targets are accepted, with at most ten safe redirects and a 120-second timeout.
-Twenty attempts per account per hour are allowed, with four concurrent downloads per server.
+public HTTPS targets are accepted, with at most ten safe redirects and a 30-second timeout.
+Twenty attempts per account per hour are allowed, with four concurrent downloads per server and
+one per account: another request of the account while its download runs answers <code>429</code> at once.
 Failures use the normal feature/auth/rate responses; invalid pins or bundles return 422.</p>
 <h3 id="flagged-messages">Flagged messages <a class="anchor" href="#flagged-messages" aria-label="Link to this section">#</a></h3>
 <p><code>Message.flagged: Boolean!</code> is true while the automatic text art check holds a flag on the
@@ -1438,7 +1456,7 @@ must use the suite of the spec byte for byte.</p>
 <tr>
 <td><code>passwordResetFinish(resetId, registrationUpload): Boolean!</code></td>
 <td>none</td>
-<td>Replaces the password, keeps the server share, deletes the rewraps, clears the tries and the lock, and ends every session of the account.</td>
+<td>Replaces the password, keeps the server share, deletes the rewraps, clears the tries, and ends every session of the account.</td>
 </tr>
 </tbody></table></div>
 <p><strong>Sign-in.</strong> The client runs the password login first (<code>passwordLoginStart</code>, then
@@ -1449,7 +1467,7 @@ password does not sign in: <code>loginWithKey</code> answers <code>UNAUTHENTICAT
 person from another server signs in at a host with the key alone; their password lives at
 their own server.</p>
 <p><strong>Tries.</strong> See &quot;Limits&quot;. A wrong password is <code>UNAUTHENTICATED</code>, a wait <code>RATE_LIMITED</code> with
-<code>retryAfterSeconds</code>, and a locked password <code>PASSWORD_LOCKED</code>.</p>
+<code>retryAfterSeconds</code>; nothing locks the password.</p>
 <h3 id="bots">Bots <a class="anchor" href="#bots" aria-label="Link to this section">#</a></h3>
 <p>An Owner or Moderator of a workspace manages its bots (<a href="bots.html"><code>bots.md</code></a>; the contract is
 <a href="../specs/bots-v1.html"><code>specs/bots-v1.md</code></a>). Every root answers <code>FEATURE_DISABLED</code> while the <code>bots</code> feature is off, and so
@@ -1557,7 +1575,7 @@ plaintext channel are <code>VALIDATION</code> (&quot;A bot can only be in a chan
 naming a bot is <code>FORBIDDEN</code> for anyone but an Owner or Moderator, and <code>setMemberRole</code> on a bot is
 <code>VALIDATION</code>.</p>
 <h3 id="home-layout">Home layout <a class="anchor" href="#home-layout" aria-label="Link to this section">#</a></h3>
-<p>A signed-in person&#39;s Home layout, one per account, kept on their home server (<a href="https://github.com/rim-platform/rim-server/blob/9bc8d78d85b4b2c8af407e28afb8aa37e8079dc2/docs/home-layout.md"><code>home-layout.md</code></a>
+<p>A signed-in person&#39;s Home layout, one per account, kept on their home server (<a href="https://github.com/rim-platform/rim-server/blob/f984dc62e25bbe96c8ff2c0319af1faa5ebbc595/docs/home-layout.md"><code>home-layout.md</code></a>
 has the layout&#39;s format, the checks and the rules). Each root needs a session; the mutations
 need the CSRF header.</p>
 <div class="tablewrap"><table>
@@ -1627,7 +1645,7 @@ list the caller&#39;s agent-callable macros as <code>user.&lt;key&gt;</code>.</p
   </div>
 </div>
 <footer class="site-footer container"><span class="footer-brand"><img src="../assets/rim-lockup-glow-inverse.svg" alt="RIM" width="46" height="27"> · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
-<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-server/blob/9bc8d78d85b4b2c8af407e28afb8aa37e8079dc2/docs/api.md">rim-server/docs/api.md</a> at <code>9bc8d78</code></p>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-server/blob/f984dc62e25bbe96c8ff2c0319af1faa5ebbc595/docs/api.md">rim-server/docs/api.md</a> at <code>f984dc6</code></p>
 <script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
 </body>
 </html>
