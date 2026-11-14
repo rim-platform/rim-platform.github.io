@@ -441,8 +441,10 @@ Each part is letters, digits, <code>_</code> and <code>-</code>. A key with a do
 anything else in braces is refused when you save.</li>
 <li>A value is put on one line: whitespace and control characters become single spaces, and format characters
 are removed, so a bidi override can&#39;t reorder the message and a joined emoji can come apart. Its Markdown is
-escaped. It is never expanded again, so a title of <code>{sender.login}</code> shows as that text. A header can&#39;t be a
-placeholder, so a format can&#39;t print one.</li>
+escaped, and so is the <code>:</code> of a <code>://</code> and the <code>.</code> of a <code>www.</code>, so a value never turns into a link. It is never
+expanded again, so a title of <code>{sender.login}</code> shows as that text. A header can&#39;t be a
+placeholder, so a format can&#39;t print one. Only a string&#39;s first 1,000 characters, after its leading
+whitespace, are read, since a post holds no more.</li>
 <li><code>&lt;@id&gt;</code>, <code>@channel</code> and <code>@here</code> are made plain text in the whole post, your own text included, and the
 post is cut to 1,000 characters, counting the link.</li>
 </ul>
@@ -529,7 +531,8 @@ edited it. To share a format, copy its JSON. <code>updateIncomingWebhookFormat</
 <code>template</code> goes back to that preset.</p>
 <p><strong>Trying one.</strong> <code>previewWebhookFormat</code> takes a format, sample headers and a sample body of at most 256 KiB, and
 says which rule would decide and what it would post, or why nothing would. It runs what a delivery runs, and it
-posts and stores nothing.</p>
+posts and stores nothing. One request runs at most 4 previews, counted with <code>remoteServer</code> and <code>remoteIdentity</code>
+and each alias counted.</p>
 <p><strong>An older app</strong> shows a webhook with a format as Plain, and revoking it still works.</p>
 <p><strong>Rolling the server back</strong> to a release without formats leaves a webhook with one acting as plain: a body with
 a string <code>text</code> posts that text, and any other body answers <code>400</code>. It still lists and can be revoked, and the
@@ -555,7 +558,8 @@ delivery has when it arrived, its <code>Content-Type</code>, its <code>x-</code>
 <code>Content-Type</code> is the usual reason a body isn&#39;t JSON: choose <code>application/json</code> in the service&#39;s settings. To see
 what a delivery would post, give it to <code>previewWebhookFormat</code> with the format you&#39;re writing.</p>
 <p><strong>What isn&#39;t kept.</strong> No address, <code>Authorization</code>, cookie or header but the <code>x-</code> ones, and none of those whose name
-a format refuses, such as <code>x-gitlab-token</code>. A body over 256 KiB is held as too large without its bytes, and one
+a format refuses, such as <code>x-gitlab-token</code>, or that a proxy adds with the sender&#39;s address (<code>X-Forwarded-For</code>,
+<code>X-Real-IP</code>). A body over 256 KiB is held as too large without its bytes, and one
 that isn&#39;t UTF-8 as not text. Nothing a session holds reaches the database, a log line, an audit entry or a
 metric. The audit log has <code>bot.webhook.test_session.start</code> and <code>bot.webhook.test_session.end</code>, with ids alone.</p>
 <p><strong>Limits.</strong></p>
@@ -576,7 +580,7 @@ metric. The audit log has <code>bot.webhook.test_session.start</code> and <code>
 </tr>
 <tr>
 <td>Open sessions</td>
-<td>3 a workspace, 20 on the server. Past that, starting one is <code>RATE_LIMITED</code></td>
+<td>3 a workspace, 3 an account, 20 on the server. Past that, starting one is <code>RATE_LIMITED</code></td>
 </tr>
 <tr>
 <td>Deliveries to a new webhook&#39;s test URL</td>
@@ -652,7 +656,7 @@ disclosure.</p>
   </div>
 </div>
 <footer class="site-footer container"><span class="footer-brand"><img src="../assets/rim-lockup-glow-inverse.svg" alt="RIM" width="46" height="27"> · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
-<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-server/blob/9bc8d78d85b4b2c8af407e28afb8aa37e8079dc2/docs/bots.md">rim-server/docs/bots.md</a> at <code>9bc8d78</code></p>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-server/blob/f984dc62e25bbe96c8ff2c0319af1faa5ebbc595/docs/bots.md">rim-server/docs/bots.md</a> at <code>f984dc6</code></p>
 <script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
 </body>
 </html>

@@ -983,15 +983,19 @@ counted; <code>0</code> once every reply is deleted</li>
 only the message&#39;s author, at most 25 MB. The declared size is reserved against the
 workspace quota (<code>RIM_MAX_WORKSPACE_STORAGE_BYTES</code>), the attachment is stored as pending
 upload, the message&#39;s <code>has_attachments</code> is set, and the answer is an upload ticket: the
-attachment id, an upload token, the size limit and an expiry.</li>
+attachment id, an upload token, the size limit and an expiry. A ticket lasts 5 minutes, and
+one account holds at most 5 open tickets at once; a further call is refused until one is used
+or has expired.</li>
 <li><code>POST /api/files/upload</code> (multipart: <code>upload_token</code>, <code>attachment_id</code> and one file) stores the
 bytes and marks the attachment uploaded; a file larger than declared is refused.</li>
 <li><code>finalizeAttachment</code> marks an uploaded attachment ready. <code>deleteAttachment</code> removes it and
 refreshes <code>has_attachments</code>.</li>
-<li>An upload still pending 15 minutes after it started is marked failed by the stale-attachment
+<li>An upload still pending 5 minutes after it started is marked failed by the stale-attachment
 cleanup job (<a href="operations/background-jobs.html"><code>docs/operations/background-jobs.md</code></a>).</li>
 <li>Reading an attachment (<code>GET /api/attachments/{id}/download</code>) needs workspace membership and read
-access to the conversation of its message.</li>
+access to the conversation of its message. The attachments of a deleted message answer 404 at
+once, and the hourly cleanup job deletes their files, except those of a reported message, which
+stay for the report.</li>
 <li>In an encrypted conversation the client uploads the encrypted blob: <code>createAttachment</code> then
 requires <code>blobSha256</code>, a fixed file name and type, and the upload is checked against the hash
 (<a href="../specs/e2ee-mls-v1.html"><code>docs/specs/e2ee-mls-v1.md</code></a>, &quot;Attachments&quot;).</li>
@@ -1031,7 +1035,7 @@ and the next query, without a scheduled event.</p>
   </div>
 </div>
 <footer class="site-footer container"><span class="footer-brand"><img src="../assets/rim-lockup-glow-inverse.svg" alt="RIM" width="46" height="27"> · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
-<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-server/blob/9bc8d78d85b4b2c8af407e28afb8aa37e8079dc2/docs/messaging.md">rim-server/docs/messaging.md</a> at <code>9bc8d78</code></p>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-server/blob/f984dc62e25bbe96c8ff2c0319af1faa5ebbc595/docs/messaging.md">rim-server/docs/messaging.md</a> at <code>f984dc6</code></p>
 <script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
 </body>
 </html>

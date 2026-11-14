@@ -147,17 +147,17 @@
   <section class="section container" id="download" aria-labelledby="download-title"><div class="section-head"><div><p class="eyebrow">Come explore</p><h2 id="download-title">Try the early release.</h2></div><p>The web app has chat, encrypted direct messages and groups, plugins, commands, macros, pipelines and webhooks. The desktop app adds plugins that run programs, the AI agents and the history archive.</p></div>
     <!-- downloads:start -->
     <div class="grid three">
-      <div class="card"><span class="tag">v0.0.12</span><h3>Windows 10 and 11</h3>
+      <div class="card"><span class="tag">v0.0.13</span><h3>Windows 10 and 11</h3>
         <ul class="dl">
-          <li><a href="https://github.com/rim-platform/rim-ui/releases/download/v0.0.12/RIM_0.0.12_x64-setup.exe" rel="noopener">Installer (.exe)</a> <span>for one user, no administrator needed</span></li>
-          <li><a href="https://github.com/rim-platform/rim-ui/releases/download/v0.0.12/RIM_0.0.12_x64_en-US.msi" rel="noopener">Installer (.msi)</a> <span>for managed installs</span></li>
+          <li><a href="https://github.com/rim-platform/rim-ui/releases/download/v0.0.13/RIM_0.0.13_x64-setup.exe" rel="noopener">Installer (.exe)</a> <span>for one user, no administrator needed</span></li>
+          <li><a href="https://github.com/rim-platform/rim-ui/releases/download/v0.0.13/RIM_0.0.13_x64_en-US.msi" rel="noopener">Installer (.msi)</a> <span>for managed installs</span></li>
         </ul>
         <p>The installers are not code-signed yet, so SmartScreen warns on each new version.</p></div>
-      <div class="card"><span class="tag">v0.0.12</span><h3>Linux, x86-64</h3>
+      <div class="card"><span class="tag">v0.0.13</span><h3>Linux, x86-64</h3>
         <ul class="dl">
-          <li><a href="https://github.com/rim-platform/rim-ui/releases/download/v0.0.12/RIM_0.0.12_amd64.deb" rel="noopener">Debian, Ubuntu (.deb)</a></li>
-          <li><a href="https://github.com/rim-platform/rim-ui/releases/download/v0.0.12/RIM-0.0.12-1.x86_64.rpm" rel="noopener">Fedora, openSUSE (.rpm)</a></li>
-          <li><a href="https://github.com/rim-platform/rim-ui/releases/download/v0.0.12/RIM_0.0.12_amd64.AppImage" rel="noopener">Any distribution (.AppImage)</a></li>
+          <li><a href="https://github.com/rim-platform/rim-ui/releases/download/v0.0.13/RIM_0.0.13_amd64.deb" rel="noopener">Debian, Ubuntu (.deb)</a></li>
+          <li><a href="https://github.com/rim-platform/rim-ui/releases/download/v0.0.13/RIM-0.0.13-1.x86_64.rpm" rel="noopener">Fedora, openSUSE (.rpm)</a></li>
+          <li><a href="https://github.com/rim-platform/rim-ui/releases/download/v0.0.13/RIM_0.0.13_amd64.AppImage" rel="noopener">Any distribution (.AppImage)</a></li>
         </ul>
         <p>The packages pull in what the app needs; the AppImage carries it.</p></div>
       <div class="card"><span class="tag">source</span><h3>macOS</h3>
@@ -165,11 +165,11 @@
     </div>
     <!-- downloads:end -->
     <div class="download-extra"><span>Nothing to install: <a href="https://chat.rim-platform.org">try the web app ↗</a></span><span><a href="docs/client/getting-started.html">Getting started ↗</a> · <a href="docs/client/install.html#verify-a-download">Verify a download ↗</a></span></div>
-    <div class="selfhost" id="selfhost"><div><h3>Run your own server.</h3><p>The Docker Compose setup runs PostgreSQL, RIM, the web app and HTTPS. One server is both relay and host, which is how most teams start.</p><div class="link-row"><a class="text-link" href="docs/self-hosting.html">Full instance guide ↗</a><a class="text-link" href="docs/deploy/index.html#deploying-a-public-relay">Run a relay only ↗</a><a class="text-link" id="config" href="configure/index.html">Configuration reference ↗</a></div></div><div><!-- selfhost:start --><pre aria-label="Preparing a self-hosted RIM checkout"><code>git clone --branch v0.0.9 https://github.com/rim-platform/rim-server.git
+    <div class="selfhost" id="selfhost"><div><h3>Run your own server.</h3><p>The Docker Compose setup runs PostgreSQL, RIM, the web app and HTTPS. One server is both relay and host, which is how most teams start.</p><div class="link-row"><a class="text-link" href="docs/self-hosting.html">Full instance guide ↗</a><a class="text-link" href="docs/deploy/index.html#deploying-a-public-relay">Run a relay only ↗</a><a class="text-link" id="config" href="configure/index.html">Configuration reference ↗</a></div></div><div><!-- selfhost:start --><pre aria-label="Preparing a self-hosted RIM checkout"><code>git clone --branch v0.0.11 https://github.com/rim-platform/rim-server.git
 cd rim-server
 cp deploy/.env.example deploy/.env
 # Set POSTGRES_PASSWORD and RIM_DOMAIN.
-# Set RIM_VERSION=0.0.9 and RIM_WEB_VERSION=0.0.12.</code></pre><!-- selfhost:end --><p>Before starting, follow the guide for DNS, HTTPS, image checks and optional email. <a class="text-link" href="docs/self-hosting.html#first-start">First start covers the recovery key and your first account ↗</a></p></div></div>
+# Set RIM_VERSION=0.0.11 and RIM_WEB_VERSION=0.0.13.</code></pre><!-- selfhost:end --><p>Before starting, follow the guide for DNS, HTTPS, image checks and optional email. <a class="text-link" href="docs/self-hosting.html#first-start">First start covers the recovery key and your first account ↗</a></p></div></div>
     <div class="privacy-note status-note" id="status"><span class="eyebrow">Early means early</span><p>These are pre-release builds. The outside cryptographic review is still to come, and there are no calls yet. The Windows installers aren't signed, macOS needs a build from source, and the AI agents and history archive need the desktop app. <a href="docs/roadmap.html">Read the current roadmap ↗</a></p></div>
   </section>
 

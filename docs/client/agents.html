@@ -41,12 +41,13 @@
   <div class="page with-toc">
     <aside class="toc" aria-label="On this page"><details open><summary>On this page</summary>
 <ol>
+<li><a href="#which-one-do-i-need">Which one do I need?</a></li>
 <li><a href="#before-you-start">Before you start</a></li>
 <li><a href="#turn-it-on">Turn it on</a></li>
 <li><a href="#connect-claude-code">Connect Claude Code</a></li>
 <li><a href="#connect-another-agent">Connect another agent</a></li>
 <li><a href="#for-tool-authors-the-pairing-protocol">For tool authors: the pairing protocol</a></li>
-<li><a href="#agents-rim-can-start">Agents RIM can start</a></li>
+<li><a href="#agents-rim-starts">Agents RIM starts</a></li>
 <li><a href="#sessions">Sessions</a></li>
 <li><a href="#ask-agent-about-a-message-or-channel">Ask agent about a message or channel</a><ol><li><a href="#the-reference-an-agent-is-given">The reference an agent is given</a></li></ol></li>
 <li><a href="#choose-what-it-can-read">Choose what it can read</a></li>
@@ -64,9 +65,16 @@
 <p>An outside agent is a program on your computer that works with its own AI model, such as Claude
 Code. You can connect it to the RIM desktop app, choose which channels it may read, and approve
 each message before it posts. This page shows how. It is for the person using RIM.</p>
-<p>RIM also has an agent of its own, built into the desktop app, that runs with your API key. That
-one is <a href="ai-agent.html">The AI agent</a>. The two are separate: what you allow one doesn&#39;t carry over to
-the other.</p>
+<h2 id="which-one-do-i-need">Which one do I need? <a class="anchor" href="#which-one-do-i-need" aria-label="Link to this section">#</a></h2>
+<ul>
+<li>The <strong>Assistant</strong> is built into RIM, uses your own AI provider key and answers in a panel
+(<kbd>Ctrl+Shift+A</kbd>). It is set up in Settings &gt; Assistant (<a href="ai-agent.html">The assistant</a>).</li>
+<li><strong>Agents</strong> are programs on your computer, such as Claude Code or Codex, that you connect to RIM
+or that RIM starts, and they see only what you grant. This page is about them.</li>
+<li>Both are in the desktop app only, and RIM works the same without either.</li>
+</ul>
+<p>The two are separate: what you allow one doesn&#39;t carry over to the other. Settings &gt; Agents
+starts with a line saying what agents are for, with a link to Assistant.</p>
 <h2 id="before-you-start">Before you start <a class="anchor" href="#before-you-start" aria-label="Link to this section">#</a></h2>
 <ul>
 <li><strong>You need the desktop app.</strong> The web app can&#39;t connect agents.</li>
@@ -80,6 +88,23 @@ listens on a port that only this computer can reach. If another program already 
 the tab says so.</p>
 <p>While the switch is off, nothing listens. Agents you connected earlier stay in the list, but they
 can&#39;t reach RIM until you turn it on again.</p>
+<p><strong>On a computer other people sign in to.</strong> The port, 47821, is the same for everyone, and every
+account on the computer can reach it. Nothing proves to an agent that RIM is the program
+answering there: an agent sends its token to whatever holds the port. If another account&#39;s
+program takes the port first, RIM&#39;s tab says the port is in use, and an agent you set up with a
+token (the setups below, or Claude Code&#39;s plugin) would send its token to that program and
+take its answers as RIM&#39;s. That program could later use the token against RIM. On such a
+computer:</p>
+<ul>
+<li>When the tab says the port is in use, don&#39;t start agents set up for RIM. Find out what holds
+the port before you do.</li>
+<li>If an agent may have run while the port was in use, disconnect it in RIM and connect it again,
+so its old token stops working.</li>
+<li>Agents RIM starts itself (<a href="#agents-rim-starts">Agents RIM starts</a>) get their token only while
+RIM is listening, so they never send it elsewhere.</li>
+</ul>
+<p>On a computer only you use, this doesn&#39;t apply: a program running as you can already do what you
+can.</p>
 <h2 id="connect-claude-code">Connect Claude Code <a class="anchor" href="#connect-claude-code" aria-label="Link to this section">#</a></h2>
 <p>RIM ships a plugin for Claude Code. Claude Code fetches it from GitHub itself, so there is nothing
 to clone or download by hand. Install it once: open a terminal and run</p>
@@ -107,7 +132,7 @@ pressing Escape also refuses. A request nobody answers ends after two minutes.</
 <p>The name in the dialog is what the program calls itself. RIM can&#39;t check it, so the code is what
 tells you it&#39;s the program you started.</p>
 <p>Claude Code keeps its token in <code>~/.claude.json</code>, which any program running as you can read. The
-<a href="https://github.com/rim-platform/rim-ui/blob/ed1032eacc0d9b5084470131b2d34cc144406df8/integrations/claude-code/README.md">plugin&#39;s README</a> has the details.</p>
+<a href="https://github.com/rim-platform/rim-ui/blob/4dc6a3ddd00369928c3fd9f4633814cfc6dadb13/integrations/claude-code/README.md">plugin&#39;s README</a> has the details.</p>
 <p><strong>Other agents.</strong> Any other program that speaks the Model Context Protocol connects from RIM
 instead: see the next section.</p>
 <h2 id="connect-another-agent">Connect another agent <a class="anchor" href="#connect-another-agent" aria-label="Link to this section">#</a></h2>
@@ -191,7 +216,7 @@ with RIM: connect again and paste the new token.</li>
 <h2 id="for-tool-authors-the-pairing-protocol">For tool authors: the pairing protocol <a class="anchor" href="#for-tool-authors-the-pairing-protocol" aria-label="Link to this section">#</a></h2>
 <p>A program can also ask to connect itself, the way RIM&#39;s Claude Code plugin does. The person
 compares a code and approves in RIM, and the program collects its token once.
-<a href="https://github.com/rim-platform/rim-ui/blob/ed1032eacc0d9b5084470131b2d34cc144406df8/integrations/claude-code/scripts/pair.sh"><code>pair.sh</code></a> is a working example.</p>
+<a href="https://github.com/rim-platform/rim-ui/blob/4dc6a3ddd00369928c3fd9f4633814cfc6dadb13/integrations/claude-code/scripts/pair.sh"><code>pair.sh</code></a> is a working example.</p>
 <p>Every request is a <code>POST</code> to <code>http://127.0.0.1:47821</code> with <code>Content-Type: application/json</code>, a
 <code>Host</code> of <code>127.0.0.1:47821</code> or <code>localhost:47821</code>, no <code>Origin</code> header, and a body of at most 1 MiB.
 Answers are JSON.</p>
@@ -290,9 +315,9 @@ alike.</li>
 </tbody></table></div>
 <p>Store the token where only the person can read it, and never print it or put it in a model&#39;s
 context.</p>
-<h2 id="agents-rim-can-start">Agents RIM can start <a class="anchor" href="#agents-rim-can-start" aria-label="Link to this section">#</a></h2>
+<h2 id="agents-rim-starts">Agents RIM starts <a class="anchor" href="#agents-rim-starts" aria-label="Link to this section">#</a></h2>
 <p>The desktop app can also keep a list of agent programs it may start itself, under <strong>Settings &gt;
-Agents</strong>, <strong>Agents RIM can start</strong>. The web app can&#39;t: it says &quot;Starting agents needs the desktop
+Agents</strong>, <strong>Agents RIM starts</strong>. The web app can&#39;t: it says &quot;Starting agents needs the desktop
 app&quot;. Each one is a program that speaks the Agent Client Protocol, and RIM starts it as you, with
 access to your files.</p>
 <p><strong>The supported agents.</strong> The section lists Claude Code, opencode, Goose, Codex and Gemini CLI,
@@ -419,8 +444,8 @@ the session&#39;s title and nothing else from the session. While RIM is in front
 that session, the same words show as a notice in the app with <strong>Open</strong> instead, never both. On
 the session itself nothing shows. They follow your notification settings, and the open
 workspace&#39;s pause and quiet hours. Choosing one opens the session.</p>
-<p><strong>Running and recent.</strong> <strong>Agent sessions</strong> lists the sessions running now, as Working, Waiting
-for you, Ready or Failed, and up to 20 recent ones, with the agent, the title, the folder and when
+<p><strong>Running and recent.</strong> <strong>Agent sessions</strong> lists the sessions running now, as Working, Needs
+you, Ready or Failed, and up to 20 recent ones, with the agent, the title, the folder and when
 it last did something. The title is the one the agent gives the session, or the start of your
 first prompt. A dot marks a session that finished or started waiting since you last had it open.
 The <strong>Agent sessions</strong> box on Home shows the same, up to six, with <strong>New session</strong> and <strong>All
@@ -521,19 +546,20 @@ Moderators can read that log.</p>
 <p>An agent can ask to run RIM&#39;s own commands, such as pinning a message or setting a channel&#39;s
 topic, but only the ones you tick. Pick the agent, then <strong>Choose its commands</strong>: the <strong>RIM
 commands</strong> section lists, by category, the commands RIM offers agents in the workspaces it can
-read. Nothing is ticked at first, and what you approved for the built-in agent doesn&#39;t count here.</p>
+read. Nothing is ticked at first, and what you approved for the assistant doesn&#39;t count here.</p>
 <p>RIM offers a command only when the server lets agents call it, the server runs it, and it changes
 something. Commands that only move around the app or read are left out: the agent reads through its
 read tools. Sending a message has its own request, above. Commands that connect, answer or manage
-agents are never offered. Your own macros with <strong>The AI agent can run this</strong> ticked are offered
+agents are never offered. Your own macros with <strong>The assistant and agents can run this</strong> ticked are offered
 too, under Macro, in the workspaces of your home server, each run as one command
 (<a href="commands-and-automation.html#macros">Macros</a>).</p>
 <ul>
 <li><strong>Every call asks you first</strong>, with an approval card like the one for posting: the agent&#39;s
 name, the command, the workspace, the channel when it names one, and every argument in full.
-Values that look like secrets are hidden. For a macro the card also lists its steps, each with
-the arguments fixed for it. A command the server marks as restricted also asks you to type its
-word.</li>
+Nothing is hidden, since the agent chose the values: one that looks like a secret, such as a
+token, shows in full with the note &quot;Looks like a secret&quot;. For a macro the card also lists its
+steps, each with the arguments fixed for it. A command the server marks as restricted also asks
+you to type its word.</li>
 <li><strong>A command marked &quot;Only proposed&quot;</strong> is dangerous. It never runs from an agent: the agent can only
 suggest it, and you run it yourself.</li>
 <li><strong>It acts only where you let the agent read.</strong> The agent names the workspace and every
@@ -545,13 +571,13 @@ before you&#39;re asked. RIM checks the approval and the grant again after you c
 operator switched off AI commands, RIM commands are refused before you&#39;re asked.</p>
 <h2 id="plugin-commands">Plugin commands <a class="anchor" href="#plugin-commands" aria-label="Link to this section">#</a></h2>
 <p>An agent can also run commands of your plugins, but only the ones you tick. Pick the agent, then
-<strong>Choose its commands</strong>. Nothing is ticked at first, and what you approved for the built-in agent
+<strong>Choose its commands</strong>. Nothing is ticked at first, and what you approved for the assistant
 doesn&#39;t count here.</p>
 <ul>
 <li><strong>A command its plugin marks as read-only</strong> runs without asking. That mark is the plugin&#39;s own
 claim, and RIM can&#39;t check it.</li>
 <li><strong>Any other command</strong> you ticked shows an approval card first, like the one for posting, with
-every argument in full. Values that look like secrets are hidden.</li>
+every argument in full, including any that looks like a secret, which carries a note saying so.</li>
 <li><strong>A dangerous command</strong> never runs from an agent. The agent can only suggest it, and you run it
 yourself.</li>
 </ul>
@@ -595,11 +621,11 @@ know about agents, their channels or their record.</li>
 </ul>
 <p>The rules RIM follows are written down in rim-server&#39;s
 <a href="../../specs/agent-data-flow-v1.html">agent data flow contract</a>. The
-<a href="ai-agent.html#agents-on-this-computer">agents section of The AI agent</a> has every detail of the
+<a href="ai-agent.html#agents-that-connect-to-rim">agents section of The assistant</a> has every detail of the
 screens.</p>
 <h2 id="next">Next <a class="anchor" href="#next" aria-label="Link to this section">#</a></h2>
 <ul>
-<li><a href="ai-agent.html">The AI agent</a>: the agent built into the desktop app.</li>
+<li><a href="ai-agent.html">The assistant</a>: the assistant built into the desktop app.</li>
 <li><a href="../../plugins/index.html">Plugins</a>: installing and trusting plugins.</li>
 <li><a href="webhooks.html">Post alerts from other services</a>: webhooks, for services that post on their own.</li>
 </ul>
@@ -608,7 +634,7 @@ screens.</p>
   </div>
 </div>
 <footer class="site-footer container"><span class="footer-brand"><img src="../../assets/rim-lockup-glow-inverse.svg" alt="RIM" width="46" height="27"> · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
-<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/ed1032eacc0d9b5084470131b2d34cc144406df8/docs/agents.md">rim-ui/docs/agents.md</a> at <code>ed1032e</code></p>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/4dc6a3ddd00369928c3fd9f4633814cfc6dadb13/docs/agents.md">rim-ui/docs/agents.md</a> at <code>4dc6a3d</code></p>
 <script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
 </body>
 </html>

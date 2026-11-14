@@ -44,6 +44,7 @@
 <li><a href="#before-you-start">Before you start</a></li>
 <li><a href="#create-your-account">Create your account</a></li>
 <li><a href="#where-you-land">Where you land</a></li>
+<li><a href="#what-do-you-want-to-do">What do you want to do?</a></li>
 <li><a href="#join-or-create-a-workspace">Join or create a workspace</a></li>
 <li><a href="#talk">Talk</a></li>
 <li><a href="#find-your-way-around">Find your way around</a></li>
@@ -136,6 +137,9 @@ a Member and is in its public channels from the start.</li>
 <strong>+ Create workspace</strong>, <strong>Join with an invite code</strong>, and &quot;No invite yet? Ask a workspace&#39;s
 Owner for an invite link.&quot;</li>
 </ul>
+<p>Once a workspace is open with no conversation chosen, a new account opens that workspace&#39;s first
+channel, the first one under <strong>Channels</strong>, once. Signing in later, or switching workspace, opens
+nothing for you.</p>
 <p>A server can hold a new account back for a while. A bar then says &quot;New account: you can create
 workspaces and message strangers after &lt;time&gt;.&quot;</p>
 <p><strong>The direct space.</strong> On a server that relays between servers, as the public relay does,
@@ -143,6 +147,77 @@ workspaces and message strangers after &lt;time&gt;.&quot;</p>
 holds the DMs and groups that belong to no workspace, with people on this server or, through it,
 on other servers.
 Its badge counts unread messages before you open it. The rail shows once a workspace is open.</p>
+<h2 id="what-do-you-want-to-do">What do you want to do? <a class="anchor" href="#what-do-you-want-to-do" aria-label="Link to this section">#</a></h2>
+<p>Eight things people come to RIM for, each as a few steps. Every step uses the name the app shows;
+the page at the end of each task says more. The <strong>Getting started</strong> box on <strong>Home</strong> has a button
+for several of them.</p>
+<p><strong>Bring GitHub or Grafana alerts into a channel.</strong> You need to be the workspace&#39;s Owner or a
+Moderator.</p>
+<ol>
+<li>Open <strong>Settings &gt; Bots &amp; webhooks</strong> and choose <strong>New bot</strong>. Every webhook posts as a bot.</li>
+<li>In the same tab, under <strong>Incoming webhooks</strong>, choose <strong>New webhook</strong>. Pick the <strong>Channel</strong>, the
+bot and a <strong>Format</strong>: Plain, GitHub, Grafana or Custom.</li>
+<li>Choose <strong>Create webhook</strong>, copy the <strong>Webhook URL</strong> and paste it into the service. RIM shows it
+once.</li>
+</ol>
+<p>More: <a href="webhooks.html">Webhooks</a>.</p>
+<p><strong>Ask the assistant about a conversation.</strong> The Assistant is the desktop app&#39;s built-in AI panel
+and uses your own provider key.</p>
+<ol>
+<li>Open <strong>Settings &gt; Assistant</strong>, choose a <strong>Provider</strong>, paste your <strong>API Key</strong> and accept the data
+sharing notice.</li>
+<li>Open the conversation and press <kbd>Ctrl+Shift+A</kbd>.</li>
+<li>Ask in &quot;Ask the agent...&quot;. It reads the conversation only through commands you can run too.</li>
+</ol>
+<p>More: <a href="ai-agent.html">The Assistant</a>. The web app has no Assistant.</p>
+<p><strong>Let Claude Code on your computer read a channel.</strong> This is for the desktop app only.</p>
+<ol>
+<li>Open <strong>Settings &gt; Agents</strong> and turn on <strong>Let agents on this computer connect</strong>.</li>
+<li>In a terminal, install RIM&#39;s plugin for Claude Code, then type &quot;connect to RIM&quot; in Claude Code
+and check that the two codes match.</li>
+<li>Select the agent under <strong>Agents on this computer</strong>, choose <strong>Choose what it can read</strong> and pick
+the channels.</li>
+</ol>
+<p>More: <a href="agents.html">Agents</a>.</p>
+<p><strong>Save an action you repeat, as a macro.</strong></p>
+<ol>
+<li>Open <strong>Settings &gt; Macros</strong> and choose <strong>New macro</strong>.</li>
+<li>Give it a <strong>Title</strong> and add <strong>Steps</strong>, each a command with its arguments.</li>
+<li>Run it from the command palette (<strong>Run Macro…</strong>), with <code>/macro</code> in the composer, or from a
+keybind or a Quick actions box on Home.</li>
+</ol>
+<p>More: <a href="commands-and-automation.html#macros">Macros</a>.</p>
+<p><strong>Do something when someone joins, with a pipeline.</strong></p>
+<ol>
+<li>Make a bot in <strong>Settings &gt; Bots &amp; webhooks</strong> if the workspace has none.</li>
+<li>Open <strong>Settings &gt; Pipelines</strong> and choose <strong>New Pipeline</strong>.</li>
+<li>Set the <strong>Trigger</strong> to Member Joined and add an action that posts as the bot in a channel, with
+text such as &quot;Welcome, {name}!&quot;. Only commands that need no confirmation run.</li>
+</ol>
+<p>More: <a href="commands-and-automation.html#pipelines">Pipelines</a>.</p>
+<p><strong>See everything waiting for you.</strong></p>
+<ol>
+<li>Open <strong>Home</strong>, the house at the top of the workspace rail: <strong>Waiting for you</strong>, <strong>Mentions and
+replies</strong> and <strong>Unread</strong>.</li>
+<li>Open <strong>Unreads</strong> in the sidebar or from the palette for every message you haven&#39;t read.</li>
+<li>Open the bell for <strong>Notifications</strong>.</li>
+</ol>
+<p>More: <a href="home.html">Home</a>.</p>
+<p><strong>Add a tool beside the conversation, with a plugin.</strong></p>
+<ol>
+<li>Open <strong>Settings &gt; Plugins</strong> and install one, from a git URL or folder in the desktop app or from
+a link in either app.</li>
+<li>Read the <strong>Plugin Permissions</strong> dialog and choose <strong>Approve and turn on</strong>.</li>
+<li>Choose <strong>Plugins</strong> in the top bar and pick a panel. It opens next to your chat.</li>
+</ol>
+<p>More: <a href="../../plugins/index.html">Plugins</a>.</p>
+<p><strong>Catch up after a day away.</strong></p>
+<ol>
+<li>Open <strong>Unreads</strong> and read down the list. Looking at the page marks nothing read; <strong>Mark all
+shown as read</strong> clears it when you are done. Replies in threads are not on it.</li>
+<li>Open <strong>Home</strong> and read <strong>Mentions and replies</strong>, which includes thread replies, then <strong>Unread</strong>.</li>
+</ol>
+<p>More: <a href="home.html">Home</a>.</p>
 <h2 id="join-or-create-a-workspace">Join or create a workspace <a class="anchor" href="#join-or-create-a-workspace" aria-label="Link to this section">#</a></h2>
 <ul>
 <li><strong>Join with an invite link.</strong> Opened in a browser while you are signed in, the link says &quot;You
@@ -289,7 +364,8 @@ server from their messages; until then their card shows no handle, only their na
 <p><strong>The composer.</strong> &quot;Write a message...&quot; takes Markdown. An image from another site shows as a link
 marked &quot;image&quot;: the app loads images only from its own server. A single line break shows as one.
 Besides bold, italics, code, lists, quotes and links, a message can hold <del>strikethrough</del>, tables,
-horizontal rules (<code>---</code>) and task lists (<code>- [ ]</code>, <code>- [x]</code>), whose boxes are read-only.
+horizontal rules (<code>---</code>) and task lists (<code>- [ ]</code>, <code>- [x]</code>), whose boxes are read-only. HTML
+shows as the text you typed, so <code>&lt;number&gt;</code> stays <code>&lt;number&gt;</code>.
 <kbd>Enter</kbd> sends and <kbd>Shift+Enter</kbd> starts a new line. <code>/</code> at the start lists
 commands, and <code>:</code> followed by the start of a name suggests emoji. A workspace&#39;s custom emoji
 written as <code>:name:</code> show as their images. <strong>Insert emoji</strong> and <strong>Attach file</strong> sit beside the
@@ -456,7 +532,7 @@ default workspace for new accounts.</li>
   </div>
 </div>
 <footer class="site-footer container"><span class="footer-brand"><img src="../../assets/rim-lockup-glow-inverse.svg" alt="RIM" width="46" height="27"> · Apache-2.0</span><span>Open source. Decentralized. Yours to shape.</span><a href="https://github.com/rim-platform">Explore the source ↗</a></footer>
-<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/ed1032eacc0d9b5084470131b2d34cc144406df8/docs/getting-started.md">rim-ui/docs/getting-started.md</a> at <code>ed1032e</code></p>
+<p class="source-provenance container">Rendered from <a href="https://github.com/rim-platform/rim-ui/blob/4dc6a3ddd00369928c3fd9f4633814cfc6dadb13/docs/getting-started.md">rim-ui/docs/getting-started.md</a> at <code>4dc6a3d</code></p>
 <script>if(matchMedia('(max-width: 900px)').matches){for(const d of document.querySelectorAll('.toc details'))d.open=false}</script>
 </body>
 </html>
